@@ -12,7 +12,7 @@ interface BulkUploadDialogProps {
   onOpenChange: (open: boolean) => void;
   title: string;
   uploadType?: "upload" | "update";
-  context?: "assets" | "custom_forms"; // New prop to determine context
+  context?: "assets" | "custom_forms" | "measurements"; // New prop to determine context
   onImport?: (file: File) => void;
 }
 
@@ -95,10 +95,20 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
 
     try {
       // Determine the endpoint based on context
-      const endpoint = context === "custom_forms" 
-        ? ENDPOINTS.CHECKLIST_SAMPLE_FORMAT 
-        : '/assets/asset.xlsx';
-      
+      let endpoint: string;
+      let filename: string;
+
+      if (context === "custom_forms") {
+        endpoint = ENDPOINTS.CHECKLIST_SAMPLE_FORMAT;
+        filename = 'checklist_sample_format.xlsx';
+      } else if (context === "measurements") {
+        endpoint = ENDPOINTS.ASSET_MEASUREMENT_SAMPLE;
+        filename = 'measurement_sample_format.xlsx';
+      } else {
+        endpoint = '/assets/asset.xlsx';
+        filename = 'asset_sample_format.xlsx';
+      }
+
       // Call the API to download the sample file
       const response = await apiClient.get(endpoint, {
         responseType: 'blob'
@@ -109,9 +119,7 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = context === "custom_forms" 
-        ? 'checklist_sample_format.xlsx' 
-        : 'asset_sample_format.xlsx';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
@@ -166,6 +174,10 @@ export const BulkUploadDialog: React.FC<BulkUploadDialogProps> = ({
         endpoint = ENDPOINTS.CUSTOM_FORMS_BULK_UPLOAD;
         formData = new FormData();
         formData.append('custom_form_file', selectedFile); // Use specific parameter name
+      } else if (context === "measurements") {
+        endpoint = ENDPOINTS.ASSET_MEASUREMENT_IMPORT;
+        formData = new FormData();
+        formData.append('measurement_file', selectedFile); // Use specific parameter name
       } else {
         // Default assets context
         endpoint = uploadType === "upload"

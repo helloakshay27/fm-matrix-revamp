@@ -170,7 +170,7 @@ export const ViewFMUserPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2 text-sm text-gray-600">
-          <button onClick={() => navigate('/master/user/fm-users')} className='flex items-center gap-2'>
+          <button onClick={() => navigate(-1)} className='flex items-center gap-2'>
             <ArrowLeft className="w-4 h-4" />
             Back
           </button>

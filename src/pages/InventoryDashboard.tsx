@@ -65,7 +65,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import bio from "@/assets/bio.png";
-import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+import { InventorySelectionPanel } from "@/components/InventorySelectionPanel";
 import { toast } from "sonner";
 
 // Map API field names to display field names for backward compatibility
@@ -168,6 +168,8 @@ export const InventoryDashboard = () => {
     "categoryChart",
   ]);
   const [showActionPanel, setShowActionPanel] = useState(false);
+  const [panelManuallyClosed, setPanelManuallyClosed] = useState(false);
+  const [keepOpenWithoutSelection, setKeepOpenWithoutSelection] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([
     "statusChart",
     "criticalityChart",
@@ -176,18 +178,21 @@ export const InventoryDashboard = () => {
   const [activeTab, setActiveTab] = useState<string>("list");
   const [showDateFilter, setShowDateFilter] = useState(false);
   const [dateRange, setDateRange] = useState({
-  // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
-  startDate: new Date(2025, 6, 1), // 01 July 2025
-  endDate: new Date(2025, 7, 15), // 15 August 2025
+    // Updated default range per request: 01/07/2025 - 15/08/2025 (DD/MM/YYYY)
+    startDate: new Date(2025, 6, 1), // 01 July 2025
+    endDate: new Date(2025, 7, 15), // 15 August 2025
   });
   const [inventory, setInventory] = useState([]);
+  const [downloadingQR, setDownloadingQR] = useState(false);
+  // Track currently applied server-side filters so pagination & refresh honor them
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
-  // String form (DD/MM/YYYY) aligned with new default dateRange
-  startDate: '01/07/2025',
-  endDate: '15/08/2025',
+    // String form (DD/MM/YYYY) aligned with new default dateRange
+    startDate: '01/07/2025',
+    endDate: '15/08/2025',
   });
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsData, setAnalyticsData] = useState<any>({
@@ -199,6 +204,11 @@ export const InventoryDashboard = () => {
     'items_status',
     'category_wise',
     'green_consumption',
+    'consumption_report_green',
+    'consumption_report_non_green',
+    'current_minimum_stock_green',
+    'current_minimum_stock_non_green',
+    'inventory_cost_over_month',
   ]);
   // Maintain explicit draggable order for analytics cards
   const [analyticsCardOrder, setAnalyticsCardOrder] = useState<string[]>([]);
@@ -382,22 +392,43 @@ export const InventoryDashboard = () => {
     }
   };
 
-  const handleFilter = async (filter: any) => {
-    const { name, code, category, criticality } = filter;
-    try {
-      const response = await axios.get(
-        `https://${localStorage.getItem('baseUrl')}/pms/inventories.json?q[name_cont]=${name}&q[code_cont]=${code}&q[category_cont]=${category}&q[criticality_eq]=${criticality}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        }
-      );
-      setInventory(response.data.inventories);
-    } catch (error) {
-      console.error('Filter error:', error);
-      toast.error('Failed to apply filters');
+  // Removed auto toggle of action panel so outside-click logic in panel doesn't interfere with multi-select
+  // User will open the panel manually via the Action button after selecting rows.
+  // Re-enable auto open, but adjust onClearSelection so we don't lose selections; outside click will only hide panel.
+  useEffect(() => {
+    // Auto open when first item selected (if not manually closed earlier)
+    if (selectedItems.length > 0 && !showActionPanel && !panelManuallyClosed) {
+      setShowActionPanel(true);
     }
+    // Auto-hide only if no selection AND panel was not opened explicitly for Add/Import
+    if (selectedItems.length === 0 && showActionPanel && !keepOpenWithoutSelection) {
+      setShowActionPanel(false);
+      if (panelManuallyClosed) setPanelManuallyClosed(false);
+    }
+    // If we now have a selection, no need to keep the empty-open flag
+    if (selectedItems.length > 0 && keepOpenWithoutSelection) {
+      setKeepOpenWithoutSelection(false);
+    }
+  }, [selectedItems, showActionPanel, panelManuallyClosed, keepOpenWithoutSelection]);
+
+  // Explicit action button to manually open panel (even if no selection yet)
+  const handleActionClick = () => {
+    setKeepOpenWithoutSelection(true); // allow panel to stay open with zero selection
+    setShowActionPanel(true);
+  };
+
+  const handleFilter = async (filter: any) => {
+    const { name, code, category, criticality, groupId, subGroupId } = filter;
+    const newFilters: Record<string, string> = {};
+    if (name) newFilters['q[name_cont]'] = name;
+    if (code) newFilters['q[code_cont]'] = code;
+    if (category) newFilters['q[category_cont]'] = category;
+    if (criticality) newFilters['q[criticality_eq]'] = criticality;
+    if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
+    if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
+    setActiveFilters(newFilters);
+    setLocalCurrentPage(1);
+    dispatch(fetchInventoryData({ page: 1, pageSize, filters: newFilters }));
   };
 
   const handleViewItem = (itemId: string) => {
@@ -548,7 +579,7 @@ export const InventoryDashboard = () => {
     if (columnKey === "actions") {
       const itemId = typeof item.id === "string" ? item.id : String(item.id || "");
       return (
-        <div className="flex items-center justify-center w-full gap-2" onClick={(e)=>e.stopPropagation()}>
+        <div className="flex items-center justify-center w-full gap-2" onClick={(e) => e.stopPropagation()}>
           <Button
             variant="ghost"
             size="sm"
@@ -584,8 +615,8 @@ export const InventoryDashboard = () => {
       return (
         <span
           className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
-              ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-700"
+            ? "bg-red-100 text-red-700"
+            : "bg-gray-100 text-gray-700"
             }`}
         >
           {item.criticality}
@@ -625,6 +656,7 @@ export const InventoryDashboard = () => {
     setLocalCurrentPage(page);
     dispatch(setCurrentPage(page));
     setSelectedItems([]);
+    dispatch(fetchInventoryData({ page, pageSize, filters: activeFilters }));
   };
 
   const renderPaginationItems = () => {
@@ -696,12 +728,21 @@ export const InventoryDashboard = () => {
     return items;
   };
 
-  const handleFiltersClick = () => {
-    setShowFilter(true);
+  // Global name search (uses server-side filter q[name_cont])
+  const handleGlobalNameSearch = (term: string) => {
+    setLocalCurrentPage(1);
+    if (term && term.trim()) {
+      const nf = { 'q[name_cont]': term.trim() };
+      setActiveFilters(nf);
+      dispatch(fetchInventoryData({ page: 1, pageSize, filters: nf }));
+    } else {
+      setActiveFilters({});
+      dispatch(fetchInventoryData({ page: 1, pageSize }));
+    }
   };
 
-  const handleActionClick = () => {
-    setShowActionPanel(true);
+  const handleFiltersClick = () => {
+    setShowFilter(true);
   };
 
   const handleImportClick = () => {
@@ -709,10 +750,11 @@ export const InventoryDashboard = () => {
   };
 
   const renderCustomActions = () => (
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap gap-3 items-center">
       <Button
         onClick={handleActionClick}
         className="bg-primary text-primary-foreground hover:bg-primary/90"
+        variant="default"
       >
         <Plus className="w-4 h-4" /> Action
       </Button>
@@ -763,6 +805,40 @@ export const InventoryDashboard = () => {
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export inventory data');
+    }
+  };
+
+  // Bulk / single QR code PDF download similar to ServiceDashboard pattern
+  const handlePrintQR = async () => {
+    if (selectedItems.length === 0 || downloadingQR) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      toast.error('Missing base URL or token');
+      return;
+    }
+    try {
+      setDownloadingQR(true);
+      // API (single existing pattern) used inventory_ids=[id]; extend for multiple by comma joining
+      const idsParam = selectedItems.join(',');
+      const url = `https://${baseUrl}/pms/inventories/inventory_qr_codes.pdf?inventory_ids=[${idsParam}]`;
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error('Failed to generate QR PDF');
+      const blob = await resp.blob();
+      const dlUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = dlUrl;
+      link.download = selectedItems.length === 1 ? `inventory-qr-${selectedItems[0]}.pdf` : `inventory-qr-bulk-${selectedItems.length}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(dlUrl);
+      toast.success('QR code PDF downloaded');
+    } catch (e: any) {
+      console.error('QR download error', e);
+      toast.error(e.message || 'Failed to download QR codes');
+    } finally {
+      setDownloadingQR(false);
     }
   };
 
@@ -920,13 +996,16 @@ export const InventoryDashboard = () => {
 
   const resetFilters = () => {
     setDateRange({
-  // Reset to updated default range
-  startDate: new Date(2025, 6, 1),
-  endDate: new Date(2025, 7, 15),
+      // Reset to updated default range
+      startDate: new Date(2025, 6, 1),
+      endDate: new Date(2025, 7, 15),
     });
     setSelectedItems([]);
     setShowFilter(false);
     setShowDateFilter(false);
+    setActiveFilters({});
+    setLocalCurrentPage(1);
+    dispatch(fetchInventoryData({ page: 1, pageSize }));
   };
 
   return (
@@ -1119,10 +1198,30 @@ export const InventoryDashboard = () => {
               </div>
             </div>
             {showActionPanel && (
-              <SelectionPanel
+              <InventorySelectionPanel
+                selectedIds={selectedItems}
+                printing={downloadingQR}
+                onPrintQR={handlePrintQR}
+                onAddConsumable={() => {
+                  const firstId = selectedItems[0];
+                  if (!firstId) return;
+                  const now = new Date();
+                  const year = now.getFullYear();
+                  const month = String(now.getMonth() + 1).padStart(2, '0');
+                  const day = String(now.getDate()).padStart(2, '0');
+                  const startDateStr = `${year}-${month}-01`;
+                  const endDateStr = `${year}-${month}-${day}`;
+                  navigate(`/maintenance/inventory-consumption/view/${firstId}?start_date=${startDateStr}&end_date=${endDateStr}`);
+                }}
                 onAdd={handleAddInventory}
                 onImport={handleImportClick}
-                onClearSelection={() => setShowActionPanel(false)}
+                onClose={() => {
+                  // Close panel and clear selection as requested
+                  setShowActionPanel(false);
+                  setSelectedItems([]); // unselect all checkboxes
+                  setPanelManuallyClosed(false);
+                  setKeepOpenWithoutSelection(false); // reset manual open state
+                }}
               />
             )}
             <EnhancedTable
@@ -1147,6 +1246,9 @@ export const InventoryDashboard = () => {
               }
               leftActions={renderCustomActions()}
               onFilterClick={handleFiltersClick}
+              enableGlobalSearch={true}
+              onGlobalSearch={handleGlobalNameSearch}
+              searchPlaceholder="Search name..."
             />
           </div>
           <div className="flex justify-center mt-6">

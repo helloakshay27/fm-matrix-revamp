@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Settings,
   Search,
+  Loader2,
 } from "lucide-react";
 import {
   Table,
@@ -25,62 +26,26 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-
-// Mock data for incidents
-const mockIncidents = [
-  {
-    id: "INC001",
-    title: "Fire Safety Equipment Malfunction",
-    type: "Safety Critical",
-    severity: "High",
-    status: "Open",
-    reportedBy: "John Smith",
-    reportedDate: "2024-01-15",
-    location: "Building A - Floor 3",
-    description: "Fire extinguisher pressure low",
-  },
-  {
-    id: "INC002", 
-    title: "Slip and Fall Incident",
-    type: "Personal Injury",
-    severity: "Medium",
-    status: "Under Investigation",
-    reportedBy: "Jane Doe",
-    reportedDate: "2024-01-14",
-    location: "Main Lobby",
-    description: "Employee slipped on wet floor",
-  },
-  {
-    id: "INC003",
-    title: "Chemical Spill",
-    type: "Environmental",
-    severity: "High",
-    status: "Closed",
-    reportedBy: "Mike Johnson",
-    reportedDate: "2024-01-12",
-    location: "Laboratory - Room 205",
-    description: "Minor chemical spill contained and cleaned",
-  },
-];
+import { incidentService, type Incident } from "@/services/incidentService";
 
 // Stats calculation
 const calculateStats = (incidents: any[]) => {
   return {
     total: incidents.length,
-    open: incidents.filter(i => i.status === "Open").length,
-    underInvestigation: incidents.filter(i => i.status === "Under Investigation").length,
-    closed: incidents.filter(i => i.status === "Closed").length,
-    highSeverity: incidents.filter(i => i.severity === "High").length,
-    mediumSeverity: incidents.filter(i => i.severity === "Medium").length,
-    lowSeverity: incidents.filter(i => i.severity === "Low").length,
+    open: incidents.filter(i => i.current_status === "Open").length,
+    underInvestigation: incidents.filter(i => i.current_status === "Under Investigation").length,
+    closed: incidents.filter(i => i.current_status === "Closed").length,
+    highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
+    mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
+    lowRisk: incidents.filter(i => i.inc_level_name === "Low Risk").length,
   };
 };
 
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case "High": return "bg-red-100 text-red-800";
-    case "Medium": return "bg-yellow-100 text-yellow-800";
-    case "Low": return "bg-green-100 text-green-800";
+const getLevelColor = (level: string) => {
+  switch (level) {
+    case "High Risk": return "bg-red-100 text-red-800";
+    case "Medium Risk": return "bg-yellow-100 text-yellow-800";
+    case "Low Risk": return "bg-green-100 text-green-800";
     default: return "bg-gray-100 text-gray-800";
   }
 };
@@ -98,11 +63,32 @@ export const IncidentDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedIncidents, setSelectedIncidents] = useState<string[]>([]);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = calculateStats(mockIncidents);
-  const filteredIncidents = mockIncidents.filter(incident =>
-    incident.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    incident.id.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
+  const fetchIncidents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await incidentService.getIncidents();
+      setIncidents(response.data.incidents);
+    } catch (err) {
+      setError("Failed to fetch incidents");
+      console.error("Error fetching incidents:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = calculateStats(incidents);
+  const filteredIncidents = incidents.filter(incident =>
+    incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    incident.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddIncident = () => {
@@ -110,7 +96,7 @@ export const IncidentDashboard = () => {
   };
 
   const handleViewIncident = (incidentId: string) => {
-    navigate(`/safety/incident/details/${incidentId}`);
+    navigate(`/safety/incident/${incidentId}`);
   };
 
   const StatCard = ({ icon, label, value, color }: any) => (
@@ -152,9 +138,9 @@ export const IncidentDashboard = () => {
             <StatCard icon={<Clock />} label="Open" value={stats.open} />
             <StatCard icon={<Search />} label="Under Investigation" value={stats.underInvestigation} />
             <StatCard icon={<CheckCircle />} label="Closed" value={stats.closed} />
-            <StatCard icon={<XCircle />} label="High Severity" value={stats.highSeverity} />
-            <StatCard icon={<AlertTriangle />} label="Medium Severity" value={stats.mediumSeverity} />
-            <StatCard icon={<CheckCircle />} label="Low Severity" value={stats.lowSeverity} />
+            <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
+            <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
+            <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} />
           </div>
 
           {/* Action Bar */}
@@ -182,8 +168,8 @@ export const IncidentDashboard = () => {
               <Button variant="outline" size="icon">
                 <Filter className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon">
-                <RefreshCw className="w-4 h-4" />
+              <Button variant="outline" size="icon" onClick={fetchIncidents} disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
               </Button>
               <Button variant="outline" size="icon">
                 <Download className="w-4 h-4" />
@@ -192,54 +178,93 @@ export const IncidentDashboard = () => {
           </div>
 
           {/* Incidents Table */}
-          <div className="bg-white rounded-lg shadow-sm border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Incident ID</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Severity</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Reported By</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredIncidents.map((incident) => (
-                  <TableRow key={incident.id}>
-                    <TableCell className="font-medium">{incident.id}</TableCell>
-                    <TableCell>{incident.title}</TableCell>
-                    <TableCell>{incident.type}</TableCell>
-                    <TableCell>
-                      <Badge className={getSeverityColor(incident.severity)}>
-                        {incident.severity}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(incident.status)}>
-                        {incident.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{incident.reportedBy}</TableCell>
-                    <TableCell>{incident.reportedDate}</TableCell>
-                    <TableCell>{incident.location}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewIncident(incident.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+          {loading ? (
+            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin mr-2" />
+              <span>Loading incidents...</span>
+            </div>
+          ) : error ? (
+            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
+              <div className="text-center">
+                <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={fetchIncidents} variant="outline">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          ) : filteredIncidents.length === 0 ? (
+            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
+              <div className="text-center">
+                <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No incidents found</p>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-lg shadow-sm border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Action</TableHead>
+                    <TableHead className="w-[100px]">ID</TableHead>
+                    <TableHead>Description</TableHead>
+                    <TableHead>Site</TableHead>
+                    <TableHead>Region</TableHead>
+                    <TableHead>Tower</TableHead>
+                    <TableHead>Incident Time</TableHead>
+                    <TableHead>Level</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Sub Category</TableHead>
+                    <TableHead>Support Required</TableHead>
+                    <TableHead>Assigned To</TableHead>
+                    <TableHead>Current Status</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filteredIncidents.map((incident) => (
+                    <TableRow key={incident.id}>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleViewIncident(incident.id.toString())}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
+                      <TableCell className="font-medium">#{incident.id}</TableCell>
+                      <TableCell>{incident.description}</TableCell>
+                      <TableCell>{incident.building_name || "-"}</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>{incident.tower_name || "-"}</TableCell>
+                      <TableCell>
+                        {incident.inc_time ? new Date(incident.inc_time).toLocaleString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getLevelColor(incident.inc_level_name)}>
+                          {incident.inc_level_name}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{incident.category_name || "-"}</TableCell>
+                      <TableCell>{incident.sub_category_name || "-"}</TableCell>
+                      <TableCell>
+                        <Badge className={incident.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+                          {incident.support_required ? "Yes" : "No"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{incident.assigned_to_user_name || "-"}</TableCell>
+                      <TableCell>
+                        <Badge className={getStatusColor(incident.current_status)}>
+                          {incident.current_status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
@@ -249,33 +274,33 @@ export const IncidentDashboard = () => {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span>Open: {stats.open}</span>
-                  <span>{((stats.open / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.open / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Under Investigation: {stats.underInvestigation}</span>
-                  <span>{((stats.underInvestigation / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.underInvestigation / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Closed: {stats.closed}</span>
-                  <span>{((stats.closed / stats.total) * 100).toFixed(1)}%</span>
+                  <span>{stats.total > 0 ? ((stats.closed / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Severity Distribution</h3>
+              <h3 className="text-lg font-semibold mb-4">Risk Level Distribution</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>High: {stats.highSeverity}</span>
-                  <span>{((stats.highSeverity / stats.total) * 100).toFixed(1)}%</span>
+                  <span>High Risk: {stats.highRisk}</span>
+                  <span>{stats.total > 0 ? ((stats.highRisk / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Medium: {stats.mediumSeverity}</span>
-                  <span>{((stats.mediumSeverity / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Medium Risk: {stats.mediumRisk}</span>
+                  <span>{stats.total > 0 ? ((stats.mediumRisk / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Low: {stats.lowSeverity}</span>
-                  <span>{((stats.lowSeverity / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Low Risk: {stats.lowRisk}</span>
+                  <span>{stats.total > 0 ? ((stats.lowRisk / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>

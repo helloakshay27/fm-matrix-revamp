@@ -18,10 +18,11 @@ import helpdeskCategoriesReducer from './slices/helpdeskCategoriesSlice'
 import responseEscalationReducer from './slices/responseEscalationSlice'
 import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
-import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer, filterBookingsReducer } from './slices/facilityBookingsSlice'
+import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer, filterBookingsReducer, getLogsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
-import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
+import facilitySetupsReducer, { fetchActiveFacilitiesReducer, fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
+import { waterAssetsReducer } from './slices/waterAssetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
 import { inventoryReducer } from './slices/inventorySlice'
@@ -51,7 +52,8 @@ import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, ge
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
-import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer } from './slices/grnSlice'
+import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer } from './slices/grnSlice'
+import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -78,6 +80,7 @@ export const store = configureStore({
     entities: entitiesReducer,
     facilitySetups: facilitySetupsReducer,
     assets: assetsReducer,
+    waterAssets: waterAssetsReducer,
     suppliers: suppliersReducer,
     amcCreate: amcCreateReducer,
     inventory: inventoryReducer,
@@ -124,6 +127,8 @@ export const store = configureStore({
     exportOrders: exportOrdersReducer,
     editFacilityBookingSetup: editFacilityBookingSetupReducer,
     filterBookings: filterBookingsReducer,
+    getLogs: getLogsReducer,
+    fetchActiveFacilities: fetchActiveFacilitiesReducer,
 
     // Unit Master
     fetchMasterUnits: fetchMasterUnitsReducer,
@@ -202,6 +207,12 @@ export const store = configureStore({
     fetchItemDetails: fetchItemDetailsReducer,
     createGRN: createGRNReducer,
     getPurchaseOrdersList: getPurchaseOrdersReducer,
+    fetchSingleGRN: fetchSingleGRNReducer,
+    approveGRN: approveGRNReducer,
+
+    // Customer List
+    getCustomerList: getCustomerListReducer,
+    getCustomerById: getCustomerByIdReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

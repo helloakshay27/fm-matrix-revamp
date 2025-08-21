@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader2, Loader } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { ChevronDown, ChevronUp, Store, Clock, Ban, Users, ShoppingCart, Paperclip, ArrowLeft, Loader } from 'lucide-react';
 import { TextField, Select, MenuItem, FormControl, InputLabel, Checkbox as MuiCheckbox, FormControlLabel } from '@mui/material';
 import { FileUploadSection } from '@/components/FileUploadSection';
 import { useAppDispatch } from '@/store/hooks';
@@ -333,7 +331,12 @@ export const AddRestaurantPage = () => {
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true
+                }}
               />
             </div>
             <div>
@@ -357,7 +360,12 @@ export const AddRestaurantPage = () => {
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true
+                }}
               />
             </div>
             <div>
@@ -385,7 +393,12 @@ export const AddRestaurantPage = () => {
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true
+                }}
               />
             </div>
             <div>
@@ -440,7 +453,12 @@ export const AddRestaurantPage = () => {
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true
+                }}
               />
             </div>
             <div>
@@ -466,7 +484,12 @@ export const AddRestaurantPage = () => {
                 fullWidth
                 variant="outlined"
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true
+                }}
               />
             </div>
             <div>
@@ -482,7 +505,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required shrink>Serves Alcohol</InputLabel>
+                <InputLabel shrink>Serves Alcohol<span className='text-red-500'>*</span></InputLabel>
                 <Select
                   value={formData.servesAlcohol}
                   onChange={(e) => setFormData(prev => ({ ...prev, servesAlcohol: e.target.value }))}
@@ -497,7 +520,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required shrink>Wheelchair Accessible</InputLabel>
+                <InputLabel shrink>Wheelchair Accessible<span className='text-red-500'>*</span></InputLabel>
                 <Select
                   value={formData.wheelchairAccessible}
                   onChange={(e) => setFormData(prev => ({ ...prev, wheelchairAccessible: e.target.value }))}
@@ -512,7 +535,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required shrink>Cash on Delivery</InputLabel>
+                <InputLabel shrink>Cash on Delivery<span className='text-red-500'>*</span></InputLabel>
                 <Select
                   value={formData.cashOnDelivery}
                   onChange={(e) => setFormData(prev => ({ ...prev, cashOnDelivery: e.target.value }))}
@@ -527,7 +550,7 @@ export const AddRestaurantPage = () => {
             </div>
             <div>
               <FormControl fullWidth variant="outlined" sx={fieldStyles}>
-                <InputLabel required shrink>Pure Veg</InputLabel>
+                <InputLabel shrink>Pure Veg<span className='text-red-500'>*</span></InputLabel>
                 <Select
                   value={formData.pureVeg}
                   onChange={(e) => setFormData(prev => ({ ...prev, pureVeg: e.target.value }))}
@@ -550,7 +573,12 @@ export const AddRestaurantPage = () => {
                 multiline
                 rows={3}
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true,
+                }}
               />
             </div>
             <div>
@@ -564,7 +592,12 @@ export const AddRestaurantPage = () => {
                 multiline
                 rows={3}
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true,
+                }}
               />
             </div>
             <div>
@@ -578,7 +611,12 @@ export const AddRestaurantPage = () => {
                 multiline
                 rows={3}
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true,
+                }}
               />
             </div>
             <div>
@@ -592,7 +630,12 @@ export const AddRestaurantPage = () => {
                 multiline
                 rows={3}
                 sx={fieldStyles}
-                InputLabelProps={{ shrink: true }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500", // Tailwind class for red color
+                  },
+                  shrink: true,
+                }}
               />
             </div>
           </div>

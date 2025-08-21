@@ -15,6 +15,7 @@ import { Eye } from 'lucide-react';
 interface AMCDetailsData {
   id: number;
   asset_id: number | null;
+  service_id?: number | null; // added optional service_id to fix TS error when referencing amcDetails.service_id
   amc_vendor_name: string | null;
   amc_vendor_mobile: string | null;
   amc_vendor_email: string | null;
@@ -54,6 +55,13 @@ interface AmcVisitLog {
   updated_at: string;
   asset_period: string;
   technician: Technician | null;
+  // Added optional attachment to align with runtime usage (visit.attachment?.document / id)
+  attachment?: {
+    id?: number;
+    document?: string;          // image URL or file URL
+    document_url?: string;      // sometimes APIs use document_url
+    [key: string]: any;         // allow extra backend-provided fields
+  } | null;
 
 }
 
@@ -505,39 +513,85 @@ export const AMCDetailsPage = () => {
                     </TableHeader>
                     <TableBody className="bg-white">
                       {amcVisitData.length > 0 ? (
-                        amcVisitData.map((visit: any, index: number) => (
-                          <TableRow key={visit.id || index}>
-                            <TableCell>{visit.asset_period}</TableCell>
-                            <TableCell>{visit.visit_number}</TableCell>
-                            <TableCell>
-                              {new Date(visit.visit_date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              {visit.technician ? visit.technician.name : "Not Assigned"}
-                            </TableCell>
-                            <TableCell>{visit.remarks || "—"}</TableCell>
-                            <TableCell>
-                              {visit.attachment?.document ? (
-                                <div className="relative flex flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm">
-                                  <img
-                                    src={visit.attachment.document}
-                                    alt="QR Code"
-                                    className="w-16 h-16 object-cover rounded border cursor-pointer"
-                                    onClick={() => setSelectedImage(visit.attachment.document)}
-                                  />
-                                  <button
-                                    className="absolute top-1 right-1 p-1 hover:text-black text-gray-600"
-                                    onClick={() => setSelectedImage(visit.attachment.document)}
-                                  >
-                                    {/* <Eye className="w-4 h-4" /> */}
-                                  </button>
-                                </div>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))
+                        amcVisitData.map((visit: any, index: number) => {
+                          const fileUrl = visit.attachment?.document || visit.attachment?.document_url;
+                          const isImage = fileUrl && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileUrl);
+                          const isPdf = fileUrl && /\.pdf$/i.test(fileUrl);
+                          const isExcel = fileUrl && /\.(xls|xlsx|csv)$/i.test(fileUrl);
+                          const isWord = fileUrl && /\.(doc|docx)$/i.test(fileUrl);
+                          let icon: React.ReactNode = <FileText className="w-6 h-6 text-gray-600" />;
+                          if (isPdf) icon = <FileText className="w-6 h-6 text-red-600" />;
+                          else if (isExcel) icon = <FileSpreadsheet className="w-6 h-6 text-green-600" />;
+                          else if (isWord) icon = <FileText className="w-6 h-6 text-blue-600" />;
+                          return (
+                            <TableRow key={visit.id || index}>
+                              <TableCell>{visit.asset_period}</TableCell>
+                              <TableCell>{visit.visit_number}</TableCell>
+                              <TableCell>{new Date(visit.visit_date).toLocaleDateString()}</TableCell>
+                              <TableCell>{visit.technician ? visit.technician.name : 'Not Assigned'}</TableCell>
+                              <TableCell>{visit.remarks || '—'}</TableCell>
+                              <TableCell>
+                                {fileUrl ? (
+                                  isImage ? (
+                                    <div className="flex relative flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm">
+                                      <img
+                                        src={fileUrl}
+                                        alt={visit.attachment?.document_name || 'Attachment'}
+                                        className="w-16 h-16 object-cover rounded border cursor-pointer"
+                                        onClick={() => setSelectedImage(fileUrl)}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <div
+                                      className="flex relative flex-col items-center bg-[#F6F4EE] border rounded-lg p-2 w-[100px] shadow-sm cursor-pointer hover:ring-1 hover:ring-[#C72030]"
+                                      onClick={async () => {
+                                        try {
+                                          const attachmentId = visit.attachment?.id;
+                                          const token = localStorage.getItem('token');
+                                          const baseUrl = localStorage.getItem('baseUrl');
+                                          if (attachmentId && token && baseUrl) {
+                                            const apiUrl = `https://${baseUrl}/attachfiles/${attachmentId}?show_file=true`;
+                                            const response = await fetch(apiUrl, {
+                                              method: 'GET',
+                                              headers: { Authorization: `Bearer ${token}` },
+                                            });
+                                            if (!response.ok) throw new Error('Download failed');
+                                            const blob = await response.blob();
+                                            const url = window.URL.createObjectURL(blob);
+                                            const link = document.createElement('a');
+                                            link.href = url;
+                                            const originalName = visit.attachment?.document_name || 'file';
+                                            link.download = originalName;
+                                            document.body.appendChild(link);
+                                            link.click();
+                                            document.body.removeChild(link);
+                                            window.URL.revokeObjectURL(url);
+                                          } else {
+                                            // Fallback: open direct URL if available
+                                            window.open(fileUrl, '_blank');
+                                          }
+                                        } catch (e) {
+                                          console.error('Attachment download error', e);
+                                        }
+                                      }}
+                                      title="Download file"
+                                    >
+                                      <div className="w-16 h-16 flex items-center justify-center bg-white rounded border">
+                                        {icon}
+                                      </div>
+                                      <span className="mt-1 text-[10px] text-center break-all px-1">
+                                        {/* {(visit.attachment?.document_name || 'File').slice(0, 40)} */}
+                                      </span>
+                                      {/* <span className="absolute top-1 right-1 text-[9px] text-[#C72030] font-semibold">DL</span> */}
+                                    </div>
+                                  )
+                                ) : (
+                                  '—'
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
                       ) : (
                         <TableRow>
                           <TableCell colSpan={6} className="text-center text-gray-600">
@@ -666,8 +720,8 @@ export const AMCDetailsPage = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Action</TableHead>
+                          <TableHead>Asset ID</TableHead>
                           <TableHead>Name</TableHead>
-                          <TableHead>Code</TableHead>
                           <TableHead>Under Warranty</TableHead>
                           <TableHead>Status</TableHead>
                         </TableRow>
@@ -685,8 +739,8 @@ export const AMCDetailsPage = () => {
                                   <Eye className="w-4 h-4" />
                                 </a>
                               </TableCell>
+                              <TableCell>{asset.asset_id || '—'}</TableCell>
                               <TableCell>{asset.asset_name || '—'}</TableCell>
-                              <TableCell>{asset.sset_code || '—'}</TableCell>
                               <TableCell>
                                 {asset.warranty === true
                                   ? 'Yes'

@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 import { apiClient } from '@/utils/apiClient'
+import type { AxiosError } from 'axios'
 
 // Types for inventory edit data
 export interface InventoryEditData {
@@ -61,14 +62,51 @@ export const fetchInventory = createAsyncThunk(
 // Async thunk for updating inventory item
 export const updateInventory = createAsyncThunk(
   'inventoryEdit/updateInventory',
-  async ({ id, inventoryData }: { id: string; inventoryData: any }) => {
-    const baseUrl = localStorage.getItem('baseUrl');
-    const response = await apiClient.put(`https://${baseUrl}/pms/inventories/${id}.json`, {
-      pms_inventory: inventoryData
-    })
-    return response.data
+  async ({ id, inventoryData }: { id: string; inventoryData: any }, { rejectWithValue }) => {
+    try {
+      const baseUrl = localStorage.getItem('baseUrl');
+      const response = await apiClient.put(`https://${baseUrl}/pms/inventories/${id}.json`, {
+        pms_inventory: inventoryData
+      })
+      return response.data
+    } catch (err) {
+      const error = err as AxiosError<any>
+      const payload = error.response?.data
+      // Return server validation payload (e.g., { name: ["Inventory name already exists..."] })
+      if (payload) {
+        return rejectWithValue(payload)
+      }
+      return rejectWithValue({ message: error.message || 'Failed to update inventory' })
+    }
   }
 )
+
+// Helper to flatten various error payload shapes into a readable string
+const flattenError = (payload: any): string => {
+  if (!payload) return 'Unknown error'
+  if (typeof payload === 'string') return payload
+  if (Array.isArray(payload)) return payload.join(', ')
+  if (typeof payload === 'object') {
+    const parts: string[] = []
+    for (const key of Object.keys(payload)) {
+      const val = (payload as any)[key]
+      if (!val) continue
+      if (Array.isArray(val)) {
+        parts.push(val.join(', '))
+      } else if (typeof val === 'string') {
+        parts.push(val)
+      } else {
+        try {
+          parts.push(JSON.stringify(val))
+        } catch {
+          // ignore
+        }
+      }
+    }
+    return parts.filter(Boolean).join(' | ') || 'Unknown error'
+  }
+  return 'Unknown error'
+}
 
 const inventoryEditSlice = createSlice({
   name: 'inventoryEdit',
@@ -109,7 +147,12 @@ const inventoryEditSlice = createSlice({
       })
       .addCase(updateInventory.rejected, (state, action) => {
         state.loading = false
-        state.error = action.error.message || 'Failed to update inventory'
+        // Prefer payload (server validation) over generic message
+        if (action.payload) {
+          state.error = flattenError(action.payload)
+        } else {
+          state.error = action.error.message || 'Failed to update inventory'
+        }
       })
   }
 })

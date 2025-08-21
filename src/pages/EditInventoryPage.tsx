@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -9,13 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 // Removed custom ResponsiveDatePicker in favor of simple MUI date input
 
 export const EditInventoryPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
 
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
@@ -34,6 +33,32 @@ export const EditInventoryPage = () => {
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
   const [sacList, setSacList] = useState([]);
+  // Main form data state (moved up so suggestion filtering can reference it)
+  const [formData, setFormData] = useState({
+    assetName: '',
+    inventoryName: '',
+    inventoryCode: '',
+    serialNumber: '',
+    quantity: '',
+    cost: '',
+    unit: '',
+    expiryDate: '',
+    category: '',
+    vendor: '',
+    maxStockLevel: '',
+    minStockLevel: '',
+    minOrderLevel: '',
+    sacHsnCode: '',
+    sgstRate: '',
+    cgstRate: '',
+    igstRate: ''
+  });
+  // Inventory name suggestion state
+  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
+  const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false); // actual dropdown visibility (only when filtered matches exist)
+  const nameDebounceRef = useRef<number | null>(null);
+  const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
   const fetchSAC = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -59,25 +84,58 @@ export const EditInventoryPage = () => {
     fetchSAC();
   }, []);
 
-  const [formData, setFormData] = useState({
-    assetName: '',
-    inventoryName: '',
-    inventoryCode: '',
-    serialNumber: '',
-    quantity: '',
-    cost: '',
-    unit: '',
-    expiryDate: '',
-    category: '',
-    vendor: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '',
-    sacHsnCode: '',
-    sgstRate: '',
-    cgstRate: '',
-    igstRate: ''
-  });
+  // Fetch inventory name suggestions (Edit page)
+  const fetchNameSuggestions = async (query: string) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) return;
+    setNameSuggestLoading(true);
+    try {
+      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?q=${encodeURIComponent(query)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Failed suggestions');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setNameSuggestions(data);
+      } else if (Array.isArray(data?.suggestions)) { // fallback shape
+        setNameSuggestions(data.suggestions);
+      } else {
+        setNameSuggestions([]);
+      }
+    } catch (e) {
+      setNameSuggestions([]);
+    } finally { setNameSuggestLoading(false); }
+  };
+
+  // Filter suggestions client-side against current input so stale unmatched results don't show.
+  const filteredNameSuggestions = useMemo(() => {
+    const input = formData.inventoryName.trim().toLowerCase();
+    if (input.length < 2) return [];
+    return nameSuggestions.filter(s => (s?.name || '').toLowerCase().includes(input));
+  }, [formData.inventoryName, nameSuggestions]);
+
+  // Control dropdown visibility strictly by presence of filtered matches
+  useEffect(() => {
+    if (filteredNameSuggestions.length > 0) {
+      setShowNameSuggestions(true);
+    } else {
+      setShowNameSuggestions(false);
+    }
+  }, [filteredNameSuggestions]);
+
+  // Outside click to close suggestions
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (!inventoryNameWrapperRef.current) return;
+      if (!inventoryNameWrapperRef.current.contains(e.target as Node)) {
+        setShowNameSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
 
   // Helper: convert an incoming ISO / zoned date string to YYYY-MM-DD for <input type="date">
   const formatDateForInput = (isoString: string): string => {
@@ -117,6 +175,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
+      // Prefer vendor name over id for display
+      const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
         assetName: fetchedInventory.asset_id?.toString() || '',
         inventoryName: fetchedInventory.name || '',
@@ -128,11 +188,16 @@ export const EditInventoryPage = () => {
         // Store only the date part (YYYY-MM-DD) for the date input field
         expiryDate: normalizedExpiry,
         category: fetchedInventory.category || '',
-        vendor: fetchedInventory.vendor_id?.toString() || '',
+        // Display vendor name if available; fallback to vendor_id (will be converted later when suppliers list loads)
+        vendor: vendorName || fetchedInventory.vendor_id?.toString() || '',
         maxStockLevel: fetchedInventory.max_stock_level?.toString() || '',
         minStockLevel: fetchedInventory.min_stock_level?.toString() || '',
         minOrderLevel: fetchedInventory.min_order_level?.toString() || '',
-        sacHsnCode: fetchedInventory.hsc_hsn_code || '',
+        // Prefer hsn_id (numeric) for dropdown value; fallback to hsc_hsn_code if API only returns code
+        sacHsnCode: ( (fetchedInventory as any)?.hsn_id != null
+          ? String((fetchedInventory as any).hsn_id)
+          : ((fetchedInventory as any).hsc_hsn_code ? String((fetchedInventory as any).hsc_hsn_code) : '')
+        ),
         sgstRate: fetchedInventory.sgst_rate?.toString() || '',
         cgstRate: fetchedInventory.cgst_rate?.toString() || '',
         igstRate: fetchedInventory.igst_rate?.toString() || ''
@@ -154,28 +219,32 @@ export const EditInventoryPage = () => {
     }
   }, [fetchedInventory]);
 
+  // Once suppliers list is loaded, if formData.vendor is still a numeric id string, convert it to the supplier name for display
+  useEffect(() => {
+    if (!formData.vendor) return;
+    if (/^\d+$/.test(formData.vendor) && suppliers.length > 0) {
+      const match = suppliers.find((s: any) => String(s.id) === formData.vendor);
+      if (match && match.company_name && formData.vendor !== match.company_name) {
+        setFormData(prev => ({ ...prev, vendor: match.company_name }));
+      }
+    }
+  }, [suppliers, formData.vendor]);
+
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive"
-      });
+      toast.error(error);
       dispatch(clearError());
     }
-  }, [error, toast, dispatch]);
+  }, [error, dispatch]);
 
   // Handle successful update
   useEffect(() => {
     if (updatedInventory) {
-      toast({
-        title: "Inventory Updated",
-        description: "Inventory has been updated successfully.",
-      });
+      toast.success('Inventory has been updated successfully.');
       navigate('/maintenance/inventory');
     }
-  }, [updatedInventory, toast, navigate]);
+  }, [updatedInventory, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -196,25 +265,44 @@ export const EditInventoryPage = () => {
 
     // Map criticality: 0 for Non-Critical, 1 for Critical
     const criticalityValue = criticality === 'critical' ? 1 : 0;
+    // Map inventory type: 1 for Spares, 2 for Consumable
+    const inventoryTypeNumeric = inventoryType === 'consumable' ? 2 : 1;
 
-    const inventoryData = {
+    const inventoryData: any = {
       asset_id: formData.assetName ? parseInt(formData.assetName) : null,
       name: formData.inventoryName || "",
       code: formData.inventoryCode || "",
       serial_number: formData.serialNumber || "",
       quantity: parseFloat(formData.quantity) || 0,
       active: true,
+      inventory_type: inventoryTypeNumeric,
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: formData.minStockLevel || "0",
       min_order_level: formData.minOrderLevel || "0",
-      rate_contract_vendor_code: formData.vendor || "",
+      // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
+      // Map vendor name back to id
+      rate_contract_vendor_code: (() => {
+        if (!formData.vendor) return null;
+        if (/^\d+$/.test(formData.vendor)) return parseInt(formData.vendor);
+        const found = suppliers.find((s: any) => s.company_name === formData.vendor);
+        return found ? found.id : null;
+      })(),
       criticality: criticalityValue,
       expiry_date: formatExpiryDate(formData.expiryDate),
       unit: formData.unit || "",
-      hsn_id: formData.sacHsnCode ? parseInt(formData.sacHsnCode) : 1,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+
+    if (taxApplicable) {
+      inventoryData.hsn_id = formData.sacHsnCode ? parseInt(formData.sacHsnCode) : null;
+      inventoryData.sgst_rate = formData.sgstRate ? parseFloat(formData.sgstRate) : 0;
+      inventoryData.cgst_rate = formData.cgstRate ? parseFloat(formData.cgstRate) : 0;
+      inventoryData.igst_rate = formData.igstRate ? parseFloat(formData.igstRate) : 0;
+      inventoryData.tax_applicable = 1;
+    } else {
+      inventoryData.tax_applicable = 0;
+    }
 
     dispatch(updateInventory({ id, inventoryData }));
   };
@@ -387,16 +475,55 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
-                    placeholder="Name"
-                    value={formData.inventoryName}
-                    onChange={(e) => handleInputChange('inventoryName', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  <div ref={inventoryNameWrapperRef} className="relative">
+                    <TextField
+                      label={<>Inventory Name<span style={{ color: '#C72030' }}>*</span></>}
+                      placeholder="Name"
+                      value={formData.inventoryName}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleInputChange('inventoryName', val);
+                        if (nameDebounceRef.current) window.clearTimeout(nameDebounceRef.current);
+                        if (val.trim().length < 2) {
+                          setNameSuggestions([]); setShowNameSuggestions(false); return;
+                        }
+                        nameDebounceRef.current = window.setTimeout(() => {
+                          fetchNameSuggestions(val.trim());
+                        }, 350);
+                      }}
+                      onFocus={() => {
+                        if (filteredNameSuggestions.length > 0) setShowNameSuggestions(true);
+                      }}
+                      onBlur={() => {
+                        // Delay to allow click on option
+                        setTimeout(() => setShowNameSuggestions(false), 180);
+                      }}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+          {showNameSuggestions && (
+                      <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
+                        {nameSuggestLoading && (
+                          <div className="px-3 py-2 text-gray-500">Loading...</div>
+                        )}
+            {!nameSuggestLoading && filteredNameSuggestions.map(s => (
+                          <button
+                            type="button"
+                            key={s.id}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, inventoryName: s.name }));
+                              setShowNameSuggestions(false);
+                            }}
+                            className={`block w-full text-left px-3 py-2 hover:bg-red-50 ${s.name === formData.inventoryName ? 'bg-red-50' : ''}`}
+                          >
+                            {s.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div>
@@ -427,7 +554,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity<span style={{ color: '#C72030' }}>*</span></>}
+                    label="Quantity"
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
@@ -539,7 +666,11 @@ export const EditInventoryPage = () => {
                     <InputLabel shrink>Vendor</InputLabel>
                     <MuiSelect
                       value={formData.vendor}
-                      onChange={handleSelectChange('vendor')}
+                      // Store vendor name as value
+                      onChange={(e) => {
+                        const val = e.target.value as string;
+                        setFormData(prev => ({ ...prev, vendor: val }));
+                      }}
                       label="Vendor"
                       notched
                       displayEmpty
@@ -549,7 +680,7 @@ export const EditInventoryPage = () => {
                         {suppliersLoading ? 'Loading...' : 'Select Vendor'}
                       </MenuItem>
                       {suppliers.map((supplier: any) => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                        <MenuItem key={supplier.id} value={supplier.company_name}>
                           {supplier.company_name}
                         </MenuItem>
                       ))}

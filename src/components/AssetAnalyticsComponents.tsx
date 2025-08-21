@@ -373,6 +373,11 @@ export const AssetAnalyticsComponents: React.FC<AssetAnalyticsProps> = ({
                 value: assetStatus?.info?.total_assets_in_breakdown || assetStatistics.assets_in_breakdown || 0,
                 color: '#d8dcdd',
             },
+             {
+                name: 'In Store',
+                value: assetStatus?.info?.total_assets_in_store || 0,
+                color: '#C72030',
+            },
         ];
 
         // Asset type distribution data

@@ -99,7 +99,7 @@ export const EditBookingSetupPage = () => {
         isBookable: true,
         isRequest: false,
         active: "",
-        department: null,
+        department: "",
         appKey: "",
         postpaid: false,
         prepaid: false,
@@ -220,7 +220,7 @@ export const EditBookingSetupPage = () => {
                 isBookable: responseData.fac_type === "bookable",
                 isRequest: responseData.fac_type === "request",
                 active: responseData.active,
-                department: responseData.department_id,
+                department: responseData.department_id || "",
                 appKey: responseData.app_key,
                 postpaid: responseData.postpaid,
                 prepaid: responseData.prepaid,
@@ -383,9 +383,6 @@ export const EditBookingSetupPage = () => {
             return false;
         } else if (!formData.active) {
             toast.error("Please select Active");
-            return false;
-        } else if (!formData.description) {
-            toast.error("Please enter Description");
             return false;
         } else if (!formData.termsConditions) {
             toast.error("Please enter Terms and Conditions");
@@ -709,21 +706,6 @@ export const EditBookingSetupPage = () => {
                                         variant="outlined"
                                     />
                                     <FormControl>
-                                        <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
-                                        <Select
-                                            value={formData.active}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, active: e.target.value })
-                                            }
-                                            label="Active*"
-                                            defaultValue="Select"
-                                        >
-                                            <MenuItem value="Select">Select</MenuItem>
-                                            <MenuItem value="1">Yes</MenuItem>
-                                            <MenuItem value="0">No</MenuItem>
-                                        </Select>
-                                    </FormControl>
-                                    <FormControl>
                                         <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                                         <Select
                                             value={formData.department}
@@ -732,12 +714,12 @@ export const EditBookingSetupPage = () => {
                                             }
                                             onFocus={fetchDepartments}
                                             label="Department"
-                                            defaultValue="Select Department"
+                                            displayEmpty
                                         >
-                                            <MenuItem value="Select Department">
+                                            <MenuItem value="">
                                                 {loadingDepartments
                                                     ? "Loading..."
-                                                    : "Select Department"}
+                                                    : "All"}
                                             </MenuItem>
                                             {Array.isArray(departments) &&
                                                 departments.map((dept, index) => (
@@ -1488,7 +1470,7 @@ export const EditBookingSetupPage = () => {
                                         7
                                     </div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
-                                        TERMS & CONDITIONS
+                                        TERMS & CONDITIONS*
                                     </h3>
                                 </div>
                                 <div
@@ -1517,7 +1499,7 @@ export const EditBookingSetupPage = () => {
                                         8
                                     </div>
                                     <h3 className="text-lg font-semibold text-[#C72030]">
-                                        CANCELLATION POLICY
+                                        CANCELLATION POLICY*
                                     </h3>
                                 </div>
                                 <div

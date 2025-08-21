@@ -45,6 +45,20 @@ export const fetchFacilitySetup = createAsyncThunk("fetchFacilitySetup", async (
   }
 })
 
+export const fetchActiveFacilities = createAsyncThunk("fetchActiveFacilities", async ({ baseUrl, token }: { baseUrl: string; token: string }, { rejectWithValue }) => {
+  try {
+    const response = await axios.get(`https://${baseUrl}/pms/admin/facility_setups.json?q[active_eq]=1`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    const message = error.response?.data?.message || error.message || 'Failed to fetch active facilities';
+    return rejectWithValue(message);
+  }
+})
+
 // Create the facility setups slice
 const facilitySetupsSlice = createApiSlice<FacilitySetupsResponse>(
   "facilitySetups",
@@ -54,6 +68,11 @@ const fetchFacilitySetupSlice = createApiSlice<FacilitySetupsResponse>(
   "fetchFacilitySetup",
   fetchFacilitySetup
 );
+const fetchActiveFacilitiesSlice = createApiSlice<FacilitySetupsResponse>(
+  "fetchActiveFacilities",
+  fetchActiveFacilities
+);
 
 export default facilitySetupsSlice.reducer;
 export const fetchFacilitySetupReducer = fetchFacilitySetupSlice.reducer;
+export const fetchActiveFacilitiesReducer = fetchActiveFacilitiesSlice.reducer;

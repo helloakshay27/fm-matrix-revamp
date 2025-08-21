@@ -12,7 +12,9 @@ import {
   ChevronRight, ChevronLeft, Plus, Search, Filter, Download, Upload,
   Briefcase, BookOpen, FileSpreadsheet, Target,
   Archive, TreePine, FlaskConical, Mail, ClipboardList,
-  Currency
+  Currency,
+  User,
+  BarChart
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -29,7 +31,9 @@ const navigationStructure = {
           { name: 'Language', href: '/settings/account/language' },
           { name: 'Company Logo Upload', href: '/settings/account/company-logo-upload' },
           { name: 'Report Setup', href: '/settings/account/report-setup' },
-          { name: 'Notification Setup', href: '/settings/account/notification-setup' }
+          { name: 'Notification Setup', href: '/settings/account/notification-setup' },
+          { name: 'Shift', href: '/settings/account/shift' },
+          { name: 'Roster', href: '/settings/account/roster' }
         ]
       },
       {
@@ -316,9 +320,9 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-    {
-      name: 'M Safe',
-      icon: Shield,
+   {
+      name: 'MSafe User',
+      icon: User,
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
@@ -326,6 +330,9 @@ const modulesByPackage = {
       ]
     },
     { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
+    { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
+    { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
+    { name: 'Training List', icon: BookOpen, href: '/maintenance/training-list' },
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
@@ -489,7 +496,11 @@ const modulesByPackage = {
         { name: 'Language', href: '/settings/account/language' },
         { name: 'Company Logo Upload', href: '/settings/account/company-logo-upload' },
         { name: 'Report Setup', href: '/settings/account/report-setup' },
-        { name: 'Notification Setup', href: '/settings/account/notification-setup' }
+        { name: 'Notification Setup', href: '/settings/account/notification-setup' },
+        { name: 'Shift', href: '/settings/account/shift' },
+                  { name: 'Roster', href: '/settings/account/roster' }
+
+
       ]
     },
     {
@@ -633,7 +644,6 @@ const modulesByPackage = {
         },
         {
           name: 'Parking Management',
-          href: '/settings/vas/parking-management',
           subItems: [
             { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
             { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
@@ -687,7 +697,9 @@ export const Sidebar = () => {
 
   React.useEffect(() => {
     const path = location.pathname;
-    if (path.startsWith('/utility')) {
+    if (path.startsWith('/settings')) {
+      setCurrentSection('Settings');
+    } else if (path.startsWith('/utility')) {
       setCurrentSection('Utility');
     } else if (path.startsWith('/transitioning')) {
       setCurrentSection('Transitioning');
@@ -707,8 +719,6 @@ export const Sidebar = () => {
       setCurrentSection('Market Place');
     } else if (path.startsWith('/master')) {
       setCurrentSection('Master');
-    } else if (path.startsWith('/settings')) {
-      setCurrentSection('Settings');
     }
   }, [location.pathname, setCurrentSection]);
 
@@ -732,16 +742,16 @@ export const Sidebar = () => {
     return isActive;
   };
 
-  // Auto-expand functionality for Settings section
+  // Auto-expand functionality for all sections
   React.useEffect(() => {
     // Determine which items to expand based on current route
-    if (currentSection === 'Settings') {
-      const path = location.pathname;
-      const settingsItems = modulesByPackage['Settings'];
-      const itemsToExpand = [];
+    const path = location.pathname;
+    const currentSectionItems = modulesByPackage[currentSection];
+    const itemsToExpand = [];
 
+    if (currentSectionItems) {
       // Find the active item and its parent
-      settingsItems.forEach(item => {
+      currentSectionItems.forEach(item => {
         if (item.href && path.startsWith(item.href)) {
           itemsToExpand.push(item.name);
         }
@@ -759,6 +769,14 @@ export const Sidebar = () => {
                   }
                 });
               }
+            } else if ((subItem as any).subItems) {
+              // Check nested items for parking management and other nested structures
+              (subItem as any).subItems.forEach((nestedItem: any) => {
+                if (nestedItem.href && path.startsWith(nestedItem.href)) {
+                  itemsToExpand.push(item.name); // Add top parent (Value Added Services)
+                  itemsToExpand.push(subItem.name); // Add middle parent (Parking Management)
+                }
+              });
             }
           });
         }
@@ -816,12 +834,12 @@ export const Sidebar = () => {
                       {expandedItems.includes(subItem.name) && (
                         <div className="ml-4 mt-1 space-y-1">
                           {subItem.subItems.map((nestedItem: any) => (
-                            <button
-                              key={nestedItem.name}
-                              onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
-                                }`}
-                            >
+                             <button
+                               key={nestedItem.name}
+                               onClick={() => handleNavigation(nestedItem.href)}
+                               className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
+                                 }`}
+                             >
                               {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
                             </button>

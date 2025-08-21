@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { X, Plus, Type, CalendarRange, ListChecks, Clock, MapPin, Loader2 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, InputAdornment, CircularProgress } from '@mui/material';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, InputAdornment, CircularProgress, Radio, RadioGroup, FormControlLabel, Autocomplete } from '@mui/material';
 import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '@/store/store';
@@ -25,6 +25,7 @@ import {
 } from '@/store/slices/serviceLocationSlice';
 import { userService, User } from '@/services/userService';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { TimeSetupStep } from '@/components/schedule/TimeSetupStep';
 
 // Section component defined outside to prevent re-creation on every render
 const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
@@ -280,14 +281,29 @@ export const PatrollingCreatePage: React.FC = () => {
     options?: string[];
     optionsText?: string; // Store raw input text for options
   };
+  type TimeSetupDataType = {
+    hourMode: string;
+    minuteMode: string;
+    dayMode: string;
+    monthMode: string;
+    selectedHours: string[];
+    selectedMinutes: string[];
+    selectedWeekdays: string[];
+    selectedDays: string[];
+    selectedMonths: string[];
+    betweenMinuteStart: string;
+    betweenMinuteEnd: string;
+    betweenMonthStart: string;
+    betweenMonthEnd: string;
+  };
   type Shift = {
     id: string;
-    name: string;
     start: string;
     end: string;
     assignee: string;
     supervisor: string;
     scheduleId: string;
+    timeSetup: TimeSetupDataType;
   };
   type Checkpoint = {
     id: string;
@@ -301,7 +317,6 @@ export const PatrollingCreatePage: React.FC = () => {
     scheduleIds: string[];
   };
 
-  const [autoTicket, setAutoTicket] = useState(false);
   const [patrolName, setPatrolName] = useState('');
   const [description, setDescription] = useState('');
   const [estimatedDuration, setEstimatedDuration] = useState('');
@@ -330,14 +345,84 @@ export const PatrollingCreatePage: React.FC = () => {
     options: [],
     optionsText: ''
   }]);
+
+  // Checklist dropdown state
+  const [checklistOptions, setChecklistOptions] = useState<{ id: string; name: string; raw?: any }[]>([]);
+  const [selectedChecklist, setSelectedChecklist] = useState<{ id: string; name: string; raw?: any } | null>(null);
+  const [isChecklistLoading, setIsChecklistLoading] = useState(false);
+
+  // Fetch checklist options on mount
+  useEffect(() => {
+    const fetchChecklists = async () => {
+      setIsChecklistLoading(true);
+      try {
+        const url = `${API_CONFIG.BASE_URL}/pms/admin/snag_checklists.json?q[check_type_eq]=patrolling`;
+        const response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error('Failed to fetch checklists');
+        const data = await response.json();
+        // Support both array and single object response
+        let checklists = [];
+        if (Array.isArray(data)) {
+          checklists = data;
+        } else if (Array.isArray(data.snag_checklists)) {
+          checklists = data.snag_checklists;
+        } else if (data.id && data.name) {
+          checklists = [data];
+        }
+        const options = checklists.map((item) => ({ id: item.id.toString(), name: item.name, raw: item }));
+        setChecklistOptions(options);
+      } catch (error) {
+        setChecklistOptions([]);
+      } finally {
+        setIsChecklistLoading(false);
+      }
+    };
+    fetchChecklists();
+  }, []);
+
+  // When checklist is selected, fill questions and disable editing
+  useEffect(() => {
+    if (selectedChecklist && selectedChecklist.raw && selectedChecklist.raw.snag_questions) {
+      const filledQuestions = selectedChecklist.raw.snag_questions.map((q: any) => ({
+        id: q.id.toString(),
+        task: q.descr,
+        inputType: q.qtype === 'multiple' ? 'multiple_choice' : (q.qtype === 'yesno' ? 'yes_no' : ''),
+        mandatory: !!q.quest_mandatory,
+        options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
+        optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+      }));
+      setQuestions(filledQuestions);
+    }
+  }, [selectedChecklist]);
+  const defaultTimeSetup: TimeSetupDataType = {
+    hourMode: 'specific',
+    minuteMode: 'specific',
+    dayMode: 'weekdays',
+    monthMode: 'all',
+    selectedHours: ['12'],
+    selectedMinutes: ['00'],
+    selectedWeekdays: [],
+    selectedDays: [],
+    selectedMonths: [],
+    betweenMinuteStart: '00',
+    betweenMinuteEnd: '59',
+    betweenMonthStart: 'January',
+    betweenMonthEnd: 'December'
+  };
   const [shifts, setShifts] = useState<Shift[]>([{
     id: `s-${Date.now()}`,
-    name: '',
     start: '',
     end: '',
     assignee: '',
     supervisor: '',
-    scheduleId: Date.now().toString()
+    scheduleId: Date.now().toString(),
+    timeSetup: { ...defaultTimeSetup }
   }]);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([
     {
@@ -370,49 +455,48 @@ export const PatrollingCreatePage: React.FC = () => {
     loadFmUsers();
   }, []);
 
-  // Input change handlers with error clearing
-  const handlePatrolNameChange = (value: string) => {
-    setPatrolName(value);
-    if (value.trim() !== '') {
-      setErrors(prev => ({ ...prev, patrolName: false }));
-    }
-  };
-
-  const handleDescriptionChange = (value: string) => {
-    setDescription(value);
-    if (value.trim() !== '') {
-      setErrors(prev => ({ ...prev, description: false }));
-    }
-  };
-
-  const handleEstimatedDurationChange = (value: string) => {
-    setEstimatedDuration(value);
-    if (value.trim() !== '') {
-      setErrors(prev => ({ ...prev, estimatedDuration: false }));
-    }
-  };
-
-  const handleStartDateChange = (value: string) => {
-    setStartDate(value);
-    if (value !== '') {
-      setErrors(prev => ({ ...prev, startDate: false }));
-    }
-  };
-
-  const handleEndDateChange = (value: string) => {
-    setEndDate(value);
-    if (value !== '') {
-      setErrors(prev => ({ ...prev, endDate: false }));
-    }
-  };
-
-
-
   const fieldStyles = {
     height: { xs: 28, sm: 36, md: 45 },
     '& .MuiInputBase-input, & .MuiSelect-select': {
       padding: { xs: '8px', sm: '10px', md: '12px' },
     },
+  };
+
+  // Input change handlers for controlled fields
+  const handlePatrolNameChange = (value: string) => setPatrolName(value);
+  const handleDescriptionChange = (value: string) => setDescription(value);
+  const handleEstimatedDurationChange = (value: string) => setEstimatedDuration(value);
+  const handleStartDateChange = (value: string) => setStartDate(value);
+  const handleEndDateChange = (value: string) => setEndDate(value);
+
+  // Time setup validation for each shift (copied from AddSchedulePage)
+  const validateTimeSetup = (timeSetup) => {
+    if (timeSetup.hourMode === 'specific' && (!Array.isArray(timeSetup.selectedHours) || timeSetup.selectedHours.length === 0)) {
+      return 'At least one hour must be selected when using specific hours';
+    }
+    if (timeSetup.minuteMode === 'specific' && (!Array.isArray(timeSetup.selectedMinutes) || timeSetup.selectedMinutes.length === 0)) {
+      return 'At least one minute must be selected when using specific minutes';
+    }
+    if (timeSetup.minuteMode === 'between') {
+      if (!timeSetup.betweenMinuteStart || !timeSetup.betweenMinuteEnd) {
+        return 'Both start and end minutes are required for between minute range';
+      }
+    }
+    if (timeSetup.dayMode === 'weekdays' && (!Array.isArray(timeSetup.selectedWeekdays) || timeSetup.selectedWeekdays.length === 0)) {
+      return 'At least one weekday must be selected when using weekdays';
+    }
+    if (timeSetup.dayMode === 'specific' && (!Array.isArray(timeSetup.selectedDays) || timeSetup.selectedDays.length === 0)) {
+      return 'At least one day must be selected when using specific days';
+    }
+    if (timeSetup.monthMode === 'specific' && (!Array.isArray(timeSetup.selectedMonths) || timeSetup.selectedMonths.length === 0)) {
+      return 'At least one month must be selected when using specific months';
+    }
+    if (timeSetup.monthMode === 'between') {
+      if (!timeSetup.betweenMonthStart || !timeSetup.betweenMonthEnd) {
+        return 'Both start and end months are required for between month range';
+      }
+    }
+    return null;
   };
 
   // Update functions
@@ -444,12 +528,12 @@ export const PatrollingCreatePage: React.FC = () => {
   }]);
   const addShift = () => setShifts(prev => [...prev, {
     id: Date.now().toString(),
-    name: '',
     start: '',
     end: '',
     assignee: '',
     supervisor: '',
-    scheduleId: Date.now().toString()
+    scheduleId: Date.now().toString(),
+    timeSetup: { ...defaultTimeSetup }
   }]);
   const addCheckpoint = () => setCheckpoints(prev => [...prev, {
     id: Date.now().toString(),
@@ -503,7 +587,7 @@ export const PatrollingCreatePage: React.FC = () => {
   const getShiftNamesByScheduleIds = (scheduleIds: string[]) => {
     return scheduleIds.map(scheduleId => {
       const shift = shifts.find(s => s.scheduleId === scheduleId);
-      return shift?.name || 'Unknown Shift';
+      return shift ? `Shift ${shift.id}` : 'Unknown Shift';
     });
   };
 
@@ -513,15 +597,14 @@ export const PatrollingCreatePage: React.FC = () => {
 
     // Basic field validation
     const hasPatrolNameError = patrolName.trim() === '';
-    const hasDescriptionError = description.trim() === '';
     const hasEstimatedDurationError = estimatedDuration.trim() === '';
     const hasStartDateError = startDate === '';
     const hasEndDateError = endDate === '';
 
-    if (hasPatrolNameError || hasDescriptionError || hasEstimatedDurationError || hasStartDateError || hasEndDateError) {
+    if (hasPatrolNameError || hasEstimatedDurationError || hasStartDateError || hasEndDateError) {
       setErrors({
         patrolName: hasPatrolNameError,
-        description: hasDescriptionError,
+        description: false, // Description is now optional
         estimatedDuration: hasEstimatedDurationError,
         startDate: hasStartDateError,
         endDate: hasEndDateError,
@@ -529,7 +612,6 @@ export const PatrollingCreatePage: React.FC = () => {
 
       const errorFields = [];
       if (hasPatrolNameError) errorFields.push('Patrol Name');
-      if (hasDescriptionError) errorFields.push('Description');
       if (hasEstimatedDurationError) errorFields.push('Estimated Duration');
       if (hasStartDateError) errorFields.push('Start Date');
       if (hasEndDateError) errorFields.push('End Date');
@@ -597,24 +679,19 @@ export const PatrollingCreatePage: React.FC = () => {
     }
 
     // Shifts/Schedules validation
-    const validShifts = shifts.filter(s => s.name.trim() !== '');
-    if (validShifts.length === 0) {
-      toast.error('At least one schedule is required', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    const validShifts = shifts;
 
     // Validate shift times
-    const shiftsWithoutStartTime = validShifts.filter(s => !s.start || s.start.trim() === '');
-    if (shiftsWithoutStartTime.length > 0) {
-      toast.error('All schedules must have a start time', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
+    // Validate time setup for each shift
+    for (const s of validShifts) {
+      const timeSetupError = validateTimeSetup(s.timeSetup);
+      if (timeSetupError) {
+        toast.error(`Schedule time setup error: ${timeSetupError}`, { duration: 5000 });
+        setIsSubmitting(false);
+        return;
+      }
     }
+   
 
     // Validate shift assignees
     const shiftsWithoutAssignee = validShifts.filter(s => !s.assignee || s.assignee.trim() === '');
@@ -646,16 +723,6 @@ export const PatrollingCreatePage: React.FC = () => {
       return;
     }
 
-    // Validate checkpoint descriptions
-    const checkpointsWithoutDescription = validCheckpoints.filter(c => !c.description || c.description.trim() === '');
-    if (checkpointsWithoutDescription.length > 0) {
-      toast.error('All checkpoints must have a description', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
     // Validate checkpoint locations
     const checkpointsWithoutLocation = validCheckpoints.filter(c => {
       const hasBuilding = c.buildingId && c.buildingId > 0;
@@ -673,29 +740,10 @@ export const PatrollingCreatePage: React.FC = () => {
     }
 
     // Validate checkpoint schedule assignments
-    const checkpointsWithoutSchedules = validCheckpoints.filter(c =>
-      !c.scheduleIds || c.scheduleIds.length === 0
-    );
-    if (checkpointsWithoutSchedules.length > 0) {
-      toast.error('All checkpoints must be assigned to at least one schedule', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    // Removed checkpoint schedule assignment validation
 
     // Validate that assigned schedules exist and are valid
-    const allScheduleIds = validShifts.map(s => s.scheduleId);
-    const checkpointsWithInvalidSchedules = validCheckpoints.filter(c =>
-      c.scheduleIds.some(scheduleId => !allScheduleIds.includes(scheduleId))
-    );
-    if (checkpointsWithInvalidSchedules.length > 0) {
-      toast.error('Some checkpoints are assigned to invalid schedules. Please reassign them.', {
-        duration: 5000,
-      });
-      setIsSubmitting(false);
-      return;
-    }
+    // Removed checkpoint schedule ID validation
 
     // Clear all errors
     setErrors({
@@ -706,40 +754,198 @@ export const PatrollingCreatePage: React.FC = () => {
       endDate: false,
     });
 
+
+    // Helper function for cron expression
+    const buildCronExpression = (setup) => {
+      let minute = '*';
+      let hour = '*';
+      let dayOfMonth = '?';
+      let month = '*';
+      let dayOfWeek = '?';
+
+      if (setup.minuteMode === 'specific' && setup.selectedMinutes.length > 0) {
+        minute = setup.selectedMinutes.join(',');
+      } else if (setup.minuteMode === 'between') {
+        const start = parseInt(setup.betweenMinuteStart);
+        const end = parseInt(setup.betweenMinuteEnd);
+        minute = `${start}-${end}`;
+      }
+      if (setup.hourMode === 'specific' && setup.selectedHours.length > 0) {
+        hour = setup.selectedHours.join(',');
+      }
+      if (setup.dayMode === 'weekdays' && setup.selectedWeekdays.length > 0) {
+        const weekdayMap = {
+          'Sunday': '1',
+          'Monday': '2',
+          'Tuesday': '3',
+          'Wednesday': '4',
+          'Thursday': '5',
+          'Friday': '6',
+          'Saturday': '7'
+        };
+        dayOfWeek = setup.selectedWeekdays.map(day => weekdayMap[day]).join(',');
+        dayOfMonth = '?';
+      } else if (setup.dayMode === 'specific' && setup.selectedDays.length > 0) {
+        dayOfMonth = setup.selectedDays.join(',');
+        dayOfWeek = '?';
+      }
+      if (setup.monthMode === 'specific' && setup.selectedMonths.length > 0) {
+        const monthMap = {
+          'January': '1', 'February': '2', 'March': '3', 'April': '4',
+          'May': '5', 'June': '6', 'July': '7', 'August': '8',
+          'September': '9', 'October': '10', 'November': '11', 'December': '12'
+        };
+        month = setup.selectedMonths.map(m => monthMap[m]).join(',');
+      } else if (setup.monthMode === 'between') {
+        const monthMap = {
+          'January': 1, 'February': 2, 'March': 3, 'April': 4,
+          'May': 5, 'June': 6, 'July': 7, 'August': 8,
+          'September': 9, 'October': 10, 'November': 11, 'December': 12
+        };
+        const startMonth = monthMap[setup.betweenMonthStart];
+        const endMonth = monthMap[setup.betweenMonthEnd];
+        month = `${startMonth}-${endMonth}`;
+      }
+      return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+    };
+
+    
+
     // Build the payload structure to match API
     const payload = {
       "patrolling": {
         "name": patrolName,
         "description": description,
-        "auto_ticket": autoTicket,
         "validity_start_date": startDate,
+        ...(selectedChecklist && { "checklist_id": selectedChecklist.id }),
         "validity_end_date": endDate,
         "grace_period_minutes": parseInt(estimatedDuration) || 0,
-        "questions": questions.filter(q => q.task.trim() !== '').map(q => ({
-          "task": q.task,
-          "inputType": q.inputType,
-          "mandatory": q.mandatory,
-          ...(q.inputType === 'multiple_choice' && q.options && q.options.length > 0 && { "options": q.options })
-        })),
-        "schedules": shifts.filter(s => s.name.trim() !== '').map(s => {
+       
+        "schedules": shifts.map(s => {
           const assigneeUser = fmUsers.find(u => u.id.toString() === s.assignee);
           const supervisorUser = fmUsers.find(u => u.id.toString() === s.supervisor);
+
+          // Build cron fields for this shift's time setup
+          let cronMinute = "off";
+          let cronMinuteSpecificSpecific = "";
+          if (s.timeSetup.minuteMode === 'specific' && s.timeSetup.selectedMinutes.length > 0) {
+            cronMinute = "on";
+            cronMinuteSpecificSpecific = s.timeSetup.selectedMinutes.join(',');
+          }
+
+          let cronHour = "off";
+          let cronHourSpecificSpecific = "";
+          if (s.timeSetup.hourMode === 'specific' && s.timeSetup.selectedHours.length > 0) {
+            cronHour = "on";
+            cronHourSpecificSpecific = s.timeSetup.selectedHours.join(',');
+          }
+
+          let cronDay = "off";
+          if (s.timeSetup.dayMode === 'weekdays' && s.timeSetup.selectedWeekdays.length > 0) {
+            cronDay = "on";
+          } else if (s.timeSetup.dayMode === 'specific' && s.timeSetup.selectedDays.length > 0) {
+            cronDay = "on";
+          }
+
+          let cronMonth = "off";
+          if (s.timeSetup.monthMode === 'specific' && s.timeSetup.selectedMonths.length > 0) {
+            cronMonth = "on";
+          } else if (s.timeSetup.monthMode === 'between') {
+            cronMonth = "on";
+          } else if (s.timeSetup.monthMode === 'all') {
+            cronMonth = "on";
+          }
+
+          // Build cron expression for this shift
+          const buildCronExpression = (setup) => {
+            let minute = '*';
+            let hour = '*';
+            let dayOfMonth = '?';
+            let month = '*';
+            let dayOfWeek = '?';
+
+            if (setup.minuteMode === 'specific' && setup.selectedMinutes.length > 0) {
+              minute = setup.selectedMinutes.join(',');
+            } else if (setup.minuteMode === 'between') {
+              const start = parseInt(setup.betweenMinuteStart);
+              const end = parseInt(setup.betweenMinuteEnd);
+              minute = `${start}-${end}`;
+            }
+            if (setup.hourMode === 'specific' && setup.selectedHours.length > 0) {
+              hour = setup.selectedHours.join(',');
+            }
+            if (setup.dayMode === 'weekdays' && setup.selectedWeekdays.length > 0) {
+              const weekdayMap = {
+                'Sunday': '1',
+                'Monday': '2',
+                'Tuesday': '3',
+                'Wednesday': '4',
+                'Thursday': '5',
+                'Friday': '6',
+                'Saturday': '7'
+              };
+              dayOfWeek = setup.selectedWeekdays.map(day => weekdayMap[day]).join(',');
+              dayOfMonth = '?';
+            } else if (setup.dayMode === 'specific' && setup.selectedDays.length > 0) {
+              dayOfMonth = setup.selectedDays.join(',');
+              dayOfWeek = '?';
+            }
+            if (setup.monthMode === 'specific' && setup.selectedMonths.length > 0) {
+              const monthMap = {
+                'January': '1', 'February': '2', 'March': '3', 'April': '4',
+                'May': '5', 'June': '6', 'July': '7', 'August': '8',
+                'September': '9', 'October': '10', 'November': '11', 'December': '12'
+              };
+              month = setup.selectedMonths.map(m => monthMap[m]).join(',');
+            } else if (setup.monthMode === 'between') {
+              const monthMap = {
+                'January': 1, 'February': 2, 'March': 3, 'April': 4,
+                'May': 5, 'June': 6, 'July': 7, 'August': 8,
+                'September': 9, 'October': 10, 'November': 11, 'December': 12
+              };
+              const startMonth = monthMap[setup.betweenMonthStart];
+              const endMonth = monthMap[setup.betweenMonthEnd];
+              month = `${startMonth}-${endMonth}`;
+            }
+            return `${minute} ${hour} ${dayOfMonth} ${month} ${dayOfWeek}`;
+          };
+
+          const cron_expression = buildCronExpression(s.timeSetup);
+
           return {
-            "name": s.name,
-            "start_time": s.start,
-            "end_time": s.end,
+            // Removed schedule name
             "assigned_guard_id": s.assignee ? parseInt(s.assignee) : null,
             "supervisor_id": s.supervisor ? parseInt(s.supervisor) : null,
-            "schedule_id": parseInt(s.scheduleId) || Date.now()
+            "schedule_id": parseInt(s.scheduleId) || Date.now(),
+            "time_setup": {
+              hour_mode: s.timeSetup.hourMode,
+              minute_mode: s.timeSetup.minuteMode,
+              day_mode: s.timeSetup.dayMode,
+              month_mode: s.timeSetup.monthMode,
+              selected_hours: s.timeSetup.selectedHours,
+              selected_minutes: s.timeSetup.selectedMinutes,
+              selected_weekdays: s.timeSetup.selectedWeekdays,
+              selected_days: s.timeSetup.selectedDays,
+              selected_months: s.timeSetup.selectedMonths,
+              between_minute_start: s.timeSetup.betweenMinuteStart,
+              between_minute_end: s.timeSetup.betweenMinuteEnd,
+              between_month_start: s.timeSetup.betweenMonthStart,
+              between_month_end: s.timeSetup.betweenMonthEnd,
+              cronMinute,
+              cronMinuteSpecificSpecific,
+              cronHour,
+              cronHourSpecificSpecific,
+              cronDay,
+              cronMonth,
+              cron_expression
+            }
           };
         }),
         "checkpoints": checkpoints.filter(c => c.name.trim() !== '').map(c => {
-          // Filter schedule IDs to only include those that correspond to valid shifts with names
           const validScheduleIds = c.scheduleIds.filter(scheduleId => {
             const correspondingShift = shifts.find(s => s.scheduleId === scheduleId);
-            return correspondingShift && correspondingShift.name.trim() !== '';
+            return !!correspondingShift;
           });
-
           return {
             "name": c.name,
             "description": c.description,
@@ -755,13 +961,7 @@ export const PatrollingCreatePage: React.FC = () => {
     };
 
     console.log('📤 Payload Structure:', JSON.stringify(payload, null, 2));
-    console.log('📊 Payload Summary:', {
-      questionsCount: payload.patrolling.questions.length,
-      schedulesCount: payload.patrolling.schedules.length,
-      checkpointsCount: payload.patrolling.checkpoints.length,
-      questionsWithOptions: payload.patrolling.questions.filter(q => q.options).length,
-      checkpointsWithSchedules: payload.patrolling.checkpoints.filter(c => c.schedule_ids.length > 0).length
-    });
+    // Removed payload summary logging for questions and schedule name
 
     try {
       // Dynamic API Configuration
@@ -835,10 +1035,6 @@ export const PatrollingCreatePage: React.FC = () => {
       )}
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold tracking-wide uppercase">Patrolling</h1>
-        <div className="flex items-center gap-3 text-sm">
-          <span>Auto-ticket</span>
-          <Switch checked={autoTicket} onCheckedChange={setAutoTicket} />
-        </div>
       </header>
 
       <Section title="Patrol Details" icon={<Type className="w-3.5 h-3.5" />}>
@@ -872,11 +1068,7 @@ export const PatrollingCreatePage: React.FC = () => {
             </div>
             <div>
               <TextField
-                label={
-                  <>
-                    Description<span className="text-red-500">*</span>
-                  </>
-                }
+                label="Description"
                 value={description}
                 onChange={(e) => handleDescriptionChange(e.target.value)}
                 fullWidth
@@ -989,26 +1181,54 @@ export const PatrollingCreatePage: React.FC = () => {
 
       <Section title="Question" icon={<ListChecks className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
+          {/* Checklist Dropdown */}
+          <div className="mb-4">
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Checklist</InputLabel>
+              <MuiSelect
+                value={selectedChecklist?.id || ''}
+                onChange={e => {
+                  const selected = checklistOptions.find(opt => opt.id === e.target.value);
+                  setSelectedChecklist(selected || null);
+                }}
+                label="Checklist"
+                notched
+                displayEmpty
+                disabled={isSubmitting || isChecklistLoading}
+              >
+                <MenuItem value="">Select Checklist</MenuItem>
+                {checklistOptions.map(opt => (
+                  <MenuItem key={opt.id} value={opt.id}>{opt.name}</MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            {selectedChecklist && (
+              <div className="mt-2 text-xs text-gray-600">Selected: <span className="font-semibold">{selectedChecklist.name}</span></div>
+            )}
+          </div>
           {questions.map((q, idx) => (
             <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-              {idx > 0 && (
-                <button
-                  type="button"
-                  onClick={() => removeQuestion(idx)}
-                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Remove question"
-                  disabled={isSubmitting}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label className="mb-1 block">Mandatory</Label>
-                  <div className="flex items-center gap-2 bg-muted rounded-md p-2 border border-border">
-                    <Switch checked={q.mandatory} onCheckedChange={(v) => updateQuestion(idx, 'mandatory', Boolean(v))} />
-                  </div>
+              {/* First Row - Mandatory Checkbox */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={`mandatory-${idx}`}
+                    checked={q.mandatory}
+                    className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
+                    disabled
+                  />
+                  <label 
+                    htmlFor={`mandatory-${idx}`}
+                    className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                  >
+                    Mandatory
+                  </label>
                 </div>
+              </div>
+
+              {/* Second Row - Task and Input Type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <TextField
                     label={
@@ -1018,7 +1238,6 @@ export const PatrollingCreatePage: React.FC = () => {
                     }
                     placeholder="Enter Task"
                     value={q.task}
-                    onChange={(e) => updateQuestion(idx, 'task', e.target.value)}
                     fullWidth
                     variant="outlined"
                     slotProps={{
@@ -1029,7 +1248,7 @@ export const PatrollingCreatePage: React.FC = () => {
                     InputProps={{
                       sx: fieldStyles,
                     }}
-                    disabled={isSubmitting}
+                    disabled
                   />
                 </div>
                 <div>
@@ -1037,11 +1256,10 @@ export const PatrollingCreatePage: React.FC = () => {
                     <InputLabel shrink>Input Type<span className="text-red-500">*</span></InputLabel>
                     <MuiSelect
                       value={q.inputType}
-                      onChange={(e) => updateQuestion(idx, 'inputType', String(e.target.value))}
                       label="Input Type*"
                       notched
                       displayEmpty
-                      disabled={isSubmitting}
+                      disabled
                     >
                       <MenuItem value="">Select Input Type</MenuItem>
                       <MenuItem value="yes_no">Yes/No</MenuItem>
@@ -1063,32 +1281,7 @@ export const PatrollingCreatePage: React.FC = () => {
                         className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-sm"
                         placeholder="Option 1, Option 2, Option 3"
                         value={q.optionsText || ''}
-                        onChange={(e) => {
-                          const inputValue = e.target.value;
-                          // Parse options for preview/validation
-                          const optionsArray = inputValue
-                            .split(',')
-                            .map(opt => opt.trim())
-                            .filter(opt => opt !== '');
-
-                          // Update both raw text and parsed options
-                          updateQuestion(idx, 'optionsText', inputValue);
-                          updateQuestion(idx, 'options', optionsArray);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const inputValue = e.currentTarget.value;
-                            const optionsArray = inputValue
-                              .split(',')
-                              .map(opt => opt.trim())
-                              .filter(opt => opt !== '');
-                            updateQuestion(idx, 'options', optionsArray);
-                          }
-                        }}
-                        autoComplete="off"
-                        spellCheck={false}
-                        disabled={isSubmitting}
+                        disabled
                         style={{
                           height: '45px',
                           fontSize: '14px',
@@ -1124,19 +1317,7 @@ export const PatrollingCreatePage: React.FC = () => {
                                 className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded group"
                               >
                                 {option}
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    const newOptions = q.options?.filter((_, i) => i !== optIdx) || [];
-                                    const newOptionsText = newOptions.join(', ');
-                                    updateQuestion(idx, 'options', newOptions);
-                                    updateQuestion(idx, 'optionsText', newOptionsText);
-                                  }}
-                                  className="ml-1 text-gray-600 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
-                                  disabled={isSubmitting}
-                                >
-                                  ×
-                                </button>
+                              {/* Remove button not shown, always read-only */}
                               </span>
                             ))}
                           </div>
@@ -1153,15 +1334,13 @@ export const PatrollingCreatePage: React.FC = () => {
               )}
             </div>
           ))}
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={addQuestion} disabled={isSubmitting}>
-              <Plus className="w-4 h-4 mr-2" /> Add Question
-            </Button>
-          </div>
+          {/* Add Question button removed, always read-only */}
         </div>
       </Section>
 
-      <Section title="Shift Type Setup" icon={<Clock className="w-3.5 h-3.5" />}>
+
+
+      <Section title="Assignment" icon={<Clock className="w-3.5 h-3.5" />}>
         <div className="space-y-4">
           {shifts.map((s, idx) => (
             <div key={s.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
@@ -1176,73 +1355,8 @@ export const PatrollingCreatePage: React.FC = () => {
                   <X className="w-4 h-4" />
                 </button>
               )}
-              <p className="mb-3 text-sm font-medium text-muted-foreground">Schedule {idx + 1}</p>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <TextField
-                    label={
-                      <>
-                        Schedule Name<span className="text-red-500">*</span>
-                      </>
-                    }
-                    placeholder="Enter Schedule Name"
-                    value={s.name}
-                    onChange={(e) => updateShift(idx, 'name', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                    }}
-                    InputProps={{
-                      sx: fieldStyles,
-                    }}
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    type="time"
-                    label={
-                      <>
-                        Start Time<span className="text-red-500">*</span>
-                      </>
-                    }
-                    value={s.start}
-                    onChange={(e) => updateShift(idx, 'start', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                    }}
-                    InputProps={{
-                      sx: fieldStyles,
-                    }}
-                    disabled={isSubmitting}
-                  />
-                </div>
-                <div>
-                  <TextField
-                    type="time"
-                    label="End Time"
-                    value={s.end}
-                    onChange={(e) => updateShift(idx, 'end', e.target.value)}
-                    fullWidth
-                    variant="outlined"
-                    slotProps={{
-                      inputLabel: {
-                        shrink: true,
-                      },
-                    }}
-                    InputProps={{
-                      sx: fieldStyles,
-                    }}
-                    disabled={isSubmitting}
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Assignee Dropdown */}
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Assignee<span className="text-red-500">*</span></InputLabel>
@@ -1267,9 +1381,11 @@ export const PatrollingCreatePage: React.FC = () => {
                           </MenuItem>
                         ))
                       )}
+                      <MenuItem value="bhai">bhai</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
+                {/* Supervisor Dropdown */}
                 <div>
                   <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Supervisor<span className="text-red-500">*</span></InputLabel>
@@ -1294,10 +1410,23 @@ export const PatrollingCreatePage: React.FC = () => {
                           </MenuItem>
                         ))
                       )}
+                      <MenuItem value="bhai">bhai</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
+                {/* Time Setup UI for each shift */}
+               
               </div>
+               <div>
+                  <TimeSetupStep
+                    data={s.timeSetup}
+                    onChange={(field, value) => {
+                      updateShift(idx, 'timeSetup', { ...s.timeSetup, [field]: value });
+                    }}
+                    disabled={isSubmitting}
+                    hideTitle={true}
+                  />
+                </div>
             </div>
           ))}
           <div className="flex justify-end">
@@ -1352,11 +1481,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   </div>
                   <div>
                     <TextField
-                      label={
-                        <>
-                          Description<span className="text-red-500">*</span>
-                        </>
-                      }
+                      label="Description"
                       placeholder="Enter checkpoint description"
                       value={c.description}
                       onChange={(e) => updateCheckpoint(idx, 'description', e.target.value)}
@@ -1391,62 +1516,10 @@ export const PatrollingCreatePage: React.FC = () => {
                 />
 
                 {/* Schedule Selection - Only show if there are named shifts */}
-                {shifts.some(s => s.name.trim() !== '') && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
-                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                        <InputLabel shrink>Schedules</InputLabel>
-                        <MuiSelect
-                          multiple
-                          value={c.scheduleIds.filter(scheduleId => {
-                            const shift = shifts.find(s => s.scheduleId === scheduleId);
-                            return shift && shift.name.trim() !== '';
-                          })}
-                          onChange={(e) => {
-                            const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
-                            // Only keep valid schedule IDs that correspond to named shifts
-                            const validScheduleIds = value.filter(scheduleId => {
-                              const shift = shifts.find(s => s.scheduleId === scheduleId);
-                              return shift && shift.name.trim() !== '';
-                            });
-                            updateCheckpoint(idx, 'scheduleIds', validScheduleIds);
-                          }}
-                          label="Schedules"
-                          notched
-                          displayEmpty
-                          disabled={isSubmitting}
-                          renderValue={(selected) => {
-                            if (selected.length === 0) return 'Select Schedules';
-                            return selected.map(scheduleId => {
-                              const shift = shifts.find(s => s.scheduleId === scheduleId);
-                              return shift?.name || 'Unknown';
-                            }).filter(name => name !== 'Unknown').join(', ');
-                          }}
-                        >
-                          <MenuItem value="">
-                            <em>Select Schedules</em>
-                          </MenuItem>
-                          {shifts.filter(s => s.name.trim() !== '').map((s) => (
-                            <MenuItem key={s.scheduleId} value={s.scheduleId}>
-                              {s.name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
-                    </div>
-                  </div>
-                )}
+            
 
                 {/* Message when no shifts are available */}
-                {!shifts.some(s => s.name.trim() !== '') && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex items-center justify-center p-4 bg-gray-50 border border-dashed border-gray-300 rounded-md">
-                      <p className="text-sm text-gray-500">
-                        Create shifts in the Schedule Setup section to assign them to checkpoints
-                      </p>
-                    </div>
-                  </div>
-                )}
+           
               </div>
             </div>
           ))}

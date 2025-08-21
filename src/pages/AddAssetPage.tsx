@@ -467,7 +467,7 @@ const AddAssetPage = () => {
   const [showFreshWaterOptions, setShowFreshWaterOptions] = useState(false);
   const [showWaterSourceOptions, setShowWaterSourceOptions] = useState(false);
   const [showWaterDistributionOptions, setShowWaterDistributionOptions] = useState(false);
-  
+
   // Additional state for tracking the third level selection
   const [tertiaryCategory, setTertiaryCategory] = useState("");
   const [allocationBasedOn, setAllocationBasedOn] = useState("department");
@@ -541,6 +541,7 @@ const AddAssetPage = () => {
     indiv_group: "",
     similar_product_type: "",
     selected_asset_id: "",
+    selected_asset_ids: [],
     selected_group_id: "",
     selected_sub_group_id: "",
     allocation_type: "department",
@@ -1302,14 +1303,14 @@ const AddAssetPage = () => {
       },
       // DG category
       "dg": 1, // DG
-      
+
       // Renewable energy mappings
       "renewable": {
         "solar": 7,      // Solar Panel
         "bio-methanol": 10, // Bio Methanol
         "wind": 11,       // Wind
       },
-      
+
       // Fresh water mappings (three-level hierarchy)
       "fresh-water": {
         "source": {
@@ -1326,25 +1327,25 @@ const AddAssetPage = () => {
           "output": 18, // Domestic (as a placeholder for destination)
         }
       },
-      
+
       // Recycled water
       "recycled": 6, // Recycled Water
-      
+
       // Water distribution mappings
       "water-distribution": {
         "irrigation": 17,  // Irrigation
         "domestic": 18,    // Domestic
         "flushing": 19,    // Flushing
       },
-      
+
       // IEX-GDAM
       "iex-gdam": 21, // IEX GDAM
     };
 
     // Handle three-level hierarchy (for fresh-water with source/destination)
-    if (tertiaryCategory && meterTypeMapping[meterCategory] && 
-        meterTypeMapping[meterCategory][subCategory] && 
-        typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
+    if (tertiaryCategory && meterTypeMapping[meterCategory] &&
+      meterTypeMapping[meterCategory][subCategory] &&
+      typeof meterTypeMapping[meterCategory][subCategory] === 'object') {
       return meterTypeMapping[meterCategory][subCategory][tertiaryCategory] || null;
     }
     // Handle two-level hierarchy - but make sure we don't return nested objects
@@ -1352,12 +1353,12 @@ const AddAssetPage = () => {
       const result = meterTypeMapping[meterCategory][subCategory];
       // If the result is still an object (nested structure), return null instead
       return (typeof result === 'number') ? result : null;
-    } 
+    }
     // Handle single-level
     else if (typeof meterTypeMapping[meterCategory] === 'number') {
       return meterTypeMapping[meterCategory];
     }
-    
+
     return null;
   };
 
@@ -1379,7 +1380,8 @@ const AddAssetPage = () => {
       setShowFreshWaterOptions(false);
       setShowWaterSourceOptions(false);
       setShowWaterDistributionOptions(false);
-    } else if (value === "renewable") {sp
+    } else if (value === "renewable") {
+      sp
       setShowRenewableOptions(true);
       setShowBoardRatioOptions(false);
       setShowFreshWaterOptions(false);
@@ -1724,6 +1726,14 @@ const AddAssetPage = () => {
     let extraFields = [];
     console.log("Building extra fields attributes...", customFields);
 
+    // Helper function to check if a value is empty
+    const isEmpty = (value) => {
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      return false;
+    };
+
     // Helper function to format dates properly
     const formatDateValue = (value, fieldType) => {
       if (fieldType === "date" && value) {
@@ -1740,11 +1750,12 @@ const AddAssetPage = () => {
       return value;
     };
 
-    // Custom fields - only include fields with values
+    // Custom fields - only include fields with non-empty values
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a value (not empty, null, or undefined)
-        if (field.value && field.value.toString().trim() !== "") {
+        // Only add field if it has a non-empty value
+        if (!isEmpty(field.value)) {
+          console.log(`Including custom field: ${field.name} = ${field.value}`);
           extraFields.push({
             field_name: field.name,
             field_value: field.value,
@@ -1752,15 +1763,18 @@ const AddAssetPage = () => {
             field_description: field.name,
             _destroy: false,
           });
+        } else {
+          console.log(`Skipping empty custom field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // IT Assets custom fields - only include fields with values
+    // IT Assets custom fields - only include fields with non-empty values
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a value (not empty, null, or undefined)
-        if (field.value && field.value.toString().trim() !== "") {
+        // Only add field if it has a non-empty value
+        if (!isEmpty(field.value)) {
+          console.log(`Including IT assets field: ${field.name} = ${field.value}`);
           extraFields.push({
             field_name: field.name,
             field_value: field.value,
@@ -1768,17 +1782,16 @@ const AddAssetPage = () => {
             field_description: field.name,
             _destroy: false,
           });
+        } else {
+          console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
     // Standard extra fields (dynamic) - with proper date formatting
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
-      if (
-        fieldObj?.value !== undefined &&
-        fieldObj?.value !== "" &&
-        fieldObj?.value !== null
-      ) {
+      if (!isEmpty(fieldObj?.value)) {
+        console.log(`Including standard field: ${key} = ${fieldObj.value}`);
         // Format date values properly
         let processedValue = formatDateValue(
           fieldObj.value,
@@ -1792,9 +1805,12 @@ const AddAssetPage = () => {
           field_description: fieldObj.fieldDescription,
           _destroy: false,
         });
+      } else {
+        console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
       }
     });
 
+    console.log("Final extra fields to send:", extraFields);
     return extraFields;
   };
 
@@ -3128,11 +3144,32 @@ const AddAssetPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.indiv_group,
+        indiv_group: formData.depreciation_applicable_for === "similar_product"
+          ? formData.similar_product_type === "individual"
+            ? "individual"
+            : formData.similar_product_type === "group"
+              ? "group"
+              : formData.indiv_group
+          : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
-        // Array fields
-        asset_ids: formData.asset_ids,
+        // Depreciation similar product fields
+        similar_product_type: formData.similar_product_type,
+        selected_asset_id: formData.selected_asset_id,
+        selected_asset_ids: formData.selected_asset_ids,
+        // Include group_id and sub_group_id when asset group is selected for depreciation
+        ...(formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "group" && {
+          group_id: formData.selected_group_id,
+          sub_group_id: formData.selected_sub_group_id,
+        }),
+
+        // Array fields - include selected asset IDs when individual asset is selected for depreciation
+        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "individual" &&
+          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
+          ? formData.selected_asset_ids
+          : formData.asset_ids,
 
         // Single allocation field
         allocation_id: formData.allocation_id,
@@ -3627,11 +3664,32 @@ const AddAssetPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.indiv_group,
+        indiv_group: formData.depreciation_applicable_for === "similar_product"
+          ? formData.similar_product_type === "individual"
+            ? "individual"
+            : formData.similar_product_type === "group"
+              ? "group"
+              : formData.indiv_group
+          : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
-        // Array fields
-        asset_ids: formData.asset_ids,
+        // Depreciation similar product fields
+        similar_product_type: formData.similar_product_type,
+        selected_asset_id: formData.selected_asset_id,
+        selected_asset_ids: formData.selected_asset_ids,
+        // Include group_id and sub_group_id when asset group is selected for depreciation
+        ...(formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "group" && {
+          group_id: formData.selected_group_id,
+          sub_group_id: formData.selected_sub_group_id,
+        }),
+
+        // Array fields - include selected asset IDs when individual asset is selected for depreciation
+        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "individual" &&
+          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
+          ? formData.selected_asset_ids
+          : formData.asset_ids,
 
         // Single allocation field
         allocation_id: formData.allocation_id,
@@ -6679,7 +6737,7 @@ const AddAssetPage = () => {
                           />
                           <label
                             htmlFor="vehicle-warranty-yes"
-                            className="text-sm" 
+                            className="text-sm"
                           >
                             Yes
                           </label>
@@ -8201,10 +8259,10 @@ const AddAssetPage = () => {
                         defaultValue=""
                         onChange={(e) =>
                           handleExtraFieldChange(
-                            "building_use",
+                            "usage_and_compliance",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Building Use"
                           )
                         }
@@ -8233,7 +8291,7 @@ const AddAssetPage = () => {
                             "fire_safety_certification",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Fire Safety Certification"
                           )
                         }
@@ -8259,7 +8317,7 @@ const AddAssetPage = () => {
                           "occupancy_certificate_no",
                           (e.target as HTMLInputElement).value,
                           "text",
-                          "buildingUsage",
+                          "usage_and_compliance",
                           "Occupancy Certificate No."
                         )
                       }
@@ -8281,7 +8339,7 @@ const AddAssetPage = () => {
                             "structural_safety_certificate",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Structural Safety Certificate"
                           )
                         }
@@ -8311,7 +8369,7 @@ const AddAssetPage = () => {
                             "utility_connections",
                             (e.target as HTMLInputElement).value,
                             "select",
-                            "buildingUsage",
+                            "usage_and_compliance",
                             "Utility Connections"
                           )
                         }
@@ -8870,7 +8928,9 @@ const AddAssetPage = () => {
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) =>
-                                  handleFieldChange("breakdown", e.target.value)
+                                  {handleFieldChange("breakdown", e.target.value)
+                                  handleFieldChange("status", "in_use")
+                                  }
                                 }
                               />
                               <label htmlFor="status-inuse" className="text-sm">
@@ -8888,7 +8948,9 @@ const AddAssetPage = () => {
                                   accentColor: "#C72030",
                                 }}
                                 onChange={(e) =>
-                                  handleFieldChange("breakdown", e.target.value)
+                                 {handleFieldChange("breakdown", e.target.value)
+                                  handleFieldChange("status", "breakdown")
+                                  }
                                 }
                               />
                               <label htmlFor="status-breakdown" className="text-sm">
@@ -9001,8 +9063,8 @@ const AddAssetPage = () => {
                       </div>
                     </div>
 
-                  
-                    
+
+
 
                     {/* Custom Fields for Asset Details */}
                     {(customFields.assetDetails || []).map((field) => (
@@ -10781,14 +10843,19 @@ const AddAssetPage = () => {
                             {formData.similar_product_type === "individual" && (
                               <div className="mt-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Select Asset{" "}
+                                  Select Assets{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
                                 <Select
-                                  value={formData.selected_asset_id || ""}
-                                  onValueChange={(value) =>
-                                    handleFieldChange("selected_asset_id", value)
-                                  }
+                                  value=""
+                                  onValueChange={(value) => {
+                                    // Handle multiple selection
+                                    const currentAssets = formData.selected_asset_ids || [];
+                                    if (!currentAssets.includes(value)) {
+                                      const newAssets = [...currentAssets, value];
+                                      handleFieldChange("selected_asset_ids", newAssets);
+                                    }
+                                  }}
                                   disabled={!depreciationToggle || assetsLoading}
                                 >
                                   <SelectTrigger className="w-full h-[45px] bg-white">
@@ -10796,7 +10863,7 @@ const AddAssetPage = () => {
                                       placeholder={
                                         assetsLoading
                                           ? "Loading assets..."
-                                          : "Select an asset"
+                                          : "Select assets"
                                       }
                                     />
                                   </SelectTrigger>
@@ -10811,6 +10878,35 @@ const AddAssetPage = () => {
                                     ))}
                                   </SelectContent>
                                 </Select>
+
+                                {/* Display selected assets */}
+                                {formData.selected_asset_ids && formData.selected_asset_ids.length > 0 && (
+                                  <div className="mt-3">
+                                    <div className="flex flex-wrap gap-2">
+                                      {formData.selected_asset_ids.map((assetId) => {
+                                        const asset = assets.find(a => a.id.toString() === assetId);
+                                        return asset ? (
+                                          <div
+                                            key={assetId}
+                                            className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                                          >
+                                            {asset.name}
+                                            <button
+                                              type="button"
+                                              className="ml-2 text-blue-600 hover:text-blue-800"
+                                              onClick={() => {
+                                                const newAssets = formData.selected_asset_ids.filter(id => id !== assetId);
+                                                handleFieldChange("selected_asset_ids", newAssets);
+                                              }}
+                                            >
+                                              ×
+                                            </button>
+                                          </div>
+                                        ) : null;
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
 

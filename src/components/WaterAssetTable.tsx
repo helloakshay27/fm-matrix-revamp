@@ -53,7 +53,7 @@ export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
   ];
 
   // Filter water assets based on search term
-  const filteredWaterAssets = allWaterAssets.filter(asset => 
+  const filteredWaterAssets = allWaterAssets.filter(asset =>
     asset.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.assetId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     asset.assetCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -71,9 +71,8 @@ export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
     return <span className="bg-gray-500 text-white px-2 py-1 rounded text-xs">{status}</span>;
   };
 
-  const handleEyeClick = (assetId: string) => {
-    console.log('Navigating to water asset details for ID:', assetId);
-    navigate(`/utility/water/details/${assetId}`);
+  const handleViewAsset = (assetId: string) => {
+    navigate(`/maintenance/asset/details/${assetId}`);
   };
 
   const handleEditClick = (assetId: string) => {
@@ -152,15 +151,15 @@ export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
-                      onClick={() => handleEyeClick(asset.assetId)}
+                      onClick={() => handleViewAsset(asset.assetId)}
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       onClick={() => handleEditClick(asset.assetId)}
                     >
@@ -170,7 +169,7 @@ export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
                 </td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetName}</td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetId}</td>
-                <td className="px-4 py-3 text-sm text-[#1a1a1a] font-mono text-xs">{asset.assetCode}</td>
+                <td className="px-4 py-3 text-xs text-[#1a1a1a] font-mono">{asset.assetCode}</td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.assetNo}</td>
                 <td className="px-4 py-3">{getStatusBadge(asset.status)}</td>
                 <td className="px-4 py-3 text-sm text-[#1a1a1a]">{asset.equipmentId}</td>
@@ -196,7 +195,7 @@ export const WaterAssetTable = ({ searchTerm = '' }: WaterAssetTableProps) => {
       )}
 
       {/* Edit Status Modal */}
-      <EditStatusModal 
+      <EditStatusModal
         isOpen={isEditStatusOpen}
         onClose={() => setIsEditStatusOpen(false)}
       />

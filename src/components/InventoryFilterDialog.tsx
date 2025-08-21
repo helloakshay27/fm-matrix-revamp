@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -33,7 +33,70 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
     code: '',
     category: '',
     criticality: '',
+    groupId: '',
+    subGroupId: '',
   });
+
+  const [groups, setGroups] = useState<any[]>([]);
+  const [subGroups, setSubGroups] = useState<any[]>([]);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+  const [loadingSubGroups, setLoadingSubGroups] = useState(false);
+
+  // Fetch groups when dialog opens
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (!open) return;
+      setLoadingGroups(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/assets/get_asset_group_sub_group.json`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+            if (Array.isArray(data?.asset_groups)) {
+              setGroups(data.asset_groups);
+            }
+        }
+      } catch (e) {
+        console.error('Failed to load groups', e);
+      } finally {
+        setLoadingGroups(false);
+      }
+    };
+    fetchGroups();
+  }, [open]);
+
+  // Fetch sub groups when group changes
+  useEffect(() => {
+    const fetchSubGroups = async () => {
+      if (!filters.groupId) { setSubGroups([]); setFilters(f => ({ ...f, subGroupId: '' })); return; }
+      setLoadingSubGroups(true);
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/assets/get_asset_group_sub_group.json?group_id=${filters.groupId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data?.asset_groups)) {
+            setSubGroups(data.asset_groups);
+          } else {
+            setSubGroups([]);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load sub groups', e);
+      } finally {
+        setLoadingSubGroups(false);
+      }
+    };
+    fetchSubGroups();
+  }, [filters.groupId]);
 
   const handleApply = () => {
     onApply(filters);
@@ -41,12 +104,21 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
   };
 
   const handleReset = () => {
-    setFilters({
+    const empty = {
       name: '',
       code: '',
       category: '',
       criticality: '',
-    });
+      groupId: '',
+      subGroupId: '',
+    };
+    // Clear local state
+    setFilters(empty);
+    setSubGroups([]);
+    // Propagate empty filters to parent so table resets
+    onApply(empty);
+    // Close dialog after reset
+    onOpenChange(false);
   };
 
   const handleChange = (field: string) => (event: SelectChangeEvent<string>) => {
@@ -74,9 +146,9 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
 
       <DialogContent dividers>
         <Box sx={{ mt: 1 }}>
-          <Grid container spacing={2}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
             {/* Row 1 */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
               <TextField
                 label="Name"
                 placeholder="Enter Name"
@@ -87,9 +159,9 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldHeightSx }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
               <FormControl fullWidth>
                 <InputLabel shrink id="category-label" sx={{ backgroundColor: 'white', px: 1 }}>
                   Category
@@ -112,10 +184,10 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
                   <MenuItem value="Pantry">Pantry</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
+            </Box>
 
             {/* Row 2 */}
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
               <TextField
                 label="Code"
                 placeholder="Find Code"
@@ -126,9 +198,9 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldHeightSx }}
               />
-            </Grid>
+            </Box>
 
-            <Grid item xs={12} sm={6}>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
               <FormControl fullWidth>
                 <InputLabel shrink id="criticality-label" sx={{ backgroundColor: 'white', px: 1 }}>
                   Criticality
@@ -148,8 +220,51 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
                   <MenuItem value="non-critical">Non-Critical</MenuItem>
                 </Select>
               </FormControl>
-            </Grid>
-          </Grid>
+            </Box>
+            {/* Row 3: Group / Sub Group */}
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <FormControl fullWidth>
+                <InputLabel shrink id="group-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Group
+                </InputLabel>
+                <Select
+                  labelId="group-label"
+                  value={filters.groupId}
+                  onChange={(e) => setFilters({ ...filters, groupId: e.target.value as string, subGroupId: '' })}
+                  displayEmpty
+                  sx={fieldHeightSx}
+                >
+                  <MenuItem value="">
+                    <em>{loadingGroups ? 'Loading...' : 'Select Group'}</em>
+                  </MenuItem>
+                  {groups.map((g: any) => (
+                    <MenuItem key={g.id} value={g.id}>{g.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+            <Box sx={{ flex: '1 1 300px', minWidth: { xs: '100%', sm: '48%' } }}>
+              <FormControl fullWidth disabled={!filters.groupId || loadingSubGroups}>
+                <InputLabel shrink id="subgroup-label" sx={{ backgroundColor: 'white', px: 1 }}>
+                  Sub Group
+                </InputLabel>
+                <Select
+                  labelId="subgroup-label"
+                  value={filters.subGroupId}
+                  onChange={(e) => setFilters({ ...filters, subGroupId: e.target.value as string })}
+                  displayEmpty
+                  sx={fieldHeightSx}
+                >
+                  <MenuItem value="">
+                    <em>{loadingSubGroups ? 'Loading...' : 'Select Sub Group'}</em>
+                  </MenuItem>
+                  {subGroups.map((sg: any) => (
+                    <MenuItem key={sg.id} value={sg.id}>{sg.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+          </Box>
         </Box>
       </DialogContent>
 

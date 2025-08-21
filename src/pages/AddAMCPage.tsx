@@ -8,7 +8,6 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Form
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAssetsData } from '@/store/slices/assetsSlice';
 import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
-import { fetchServicesData } from '@/store/slices/servicesSlice';
 import { createAMC, resetAmcCreate } from '@/store/slices/amcCreateSlice';
 import { apiClient } from '@/utils/apiClient';
 import { useSelector } from 'react-redux';
@@ -282,10 +281,6 @@ export const AddAMCPage = () => {
         newErrors.supplier = 'Please select a supplier.';
         isValid = false;
       }
-      if (formData.details === 'Service' && !formData.service) {
-        newErrors.service = 'Please select a service.';
-        isValid = false;
-      }
     }
 
     if (!formData.startDate) {
@@ -357,7 +352,7 @@ export const AddAMCPage = () => {
 
     if (formData.details === 'Asset') {
       if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-        sendData.append('pms_asset_amc[asset_id]', formData.asset_ids[0]);
+  sendData.append('pms_asset_amc[asset_id]', String(formData.asset_ids[0]));
         formData.asset_ids.forEach((id: number) => {
           sendData.append('asset_ids[]', id.toString());
         });
@@ -371,14 +366,6 @@ export const AddAMCPage = () => {
     } else if (formData.details === 'Service') {
       if (formData.type === 'Individual' && formData.assetName) {
         sendData.append('pms_asset_amc[service_id]', formData.assetName);
-      } else if (formData.type === 'Group' && formData.service) {
-        sendData.append('pms_asset_amc[service_id]', formData.service);
-        if (formData.group) {
-          sendData.append('group_id', formData.group);
-        }
-        if (formData.subgroup) {
-          sendData.append('sub_group_id', formData.subgroup);
-        }
       }
     }
 
@@ -623,7 +610,11 @@ export const AddAMCPage = () => {
                       <TextField
                         {...params}
                         variant="outlined"
-                        label="Assets"
+                        label={
+                          <span>
+                            Assets<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Search Assets..."
                         fullWidth
                         size="small"
@@ -662,7 +653,9 @@ export const AddAMCPage = () => {
                   />
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                    <InputLabel id="service-select-label" shrink>Service</InputLabel>
+                    <InputLabel id="service-select-label" shrink>
+                      Service <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="service-select-label"
                       label="Service"
@@ -685,7 +678,9 @@ export const AddAMCPage = () => {
 
                 <div>
                   <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
-                    <InputLabel id="vendor-select-label" shrink>Supplier</InputLabel>
+                    <InputLabel id="vendor-select-label" shrink>
+                      Supplier <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
                     <MuiSelect
                       labelId="vendor-select-label"
                       label="Supplier"
@@ -754,40 +749,11 @@ export const AddAMCPage = () => {
                     </FormControl>
                   </div>
 
-                  {formData.details === 'Service' && (
-                    <div>
-                      <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                        <InputLabel id="group-service-select-label" shrink>Service</InputLabel>
-                        <MuiSelect
-                          labelId="group-service-select-label"
-                          label="Service"
-                          displayEmpty
-                          value={formData.service}
-                          onChange={e => handleInputChange('service', e.target.value)}
-                          sx={fieldStyles}
-                          disabled={loading || servicesLoading || isSubmitting}
-                          renderValue={(selected) => {
-                            if (!selected) {
-                              return <em>Select a Service...</em>;
-                            }
-                            const service = services.find(s => s.id.toString() === selected);
-                            return service ? service.service_name : selected;
-                          }}
-                        >
-                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                          {Array.isArray(services) && services.map((service) => (
-                            <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.service_name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
-                      </FormControl>
-                    </div>
-                  )}
                   <div>
                     <FormControl fullWidth variant="outlined" error={!!errors.supplier}>
-                      <InputLabel id="group-supplier-select-label" shrink>Supplier</InputLabel>
+                      <InputLabel id="group-supplier-select-label" shrink>
+                        Supplier <span style={{ color: '#C72030' }}>*</span>
+                      </InputLabel>
                       <MuiSelect
                         labelId="group-supplier-select-label"
                         label="Supplier"

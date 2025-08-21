@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch } from "@/store/hooks";
 import {
   FacilityBookingDetails,
   fetchBookingDetails,
+  getLogs,
 } from "@/store/slices/facilityBookingsSlice";
 
 export const BookingDetailsPage = () => {
@@ -12,6 +13,7 @@ export const BookingDetailsPage = () => {
   const dispatch = useAppDispatch();
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
+  const [logs, setLogs] = useState<any[]>([]);
 
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
@@ -28,7 +30,19 @@ export const BookingDetailsPage = () => {
       }
     };
 
+    const fetchLogs = async () => {
+      try {
+        const response = await dispatch(
+          getLogs({ baseUrl, token, id })
+        ).unwrap();
+        setLogs(response.logs);
+      } catch (error) {
+        console.error("Error fetching logs:", error);
+      }
+    };
+
     fetchDetails();
+    fetchLogs();
   }, []);
 
   if (!bookings) {
@@ -93,7 +107,7 @@ export const BookingDetailsPage = () => {
                   <span className="text-[#1A1A1A80] w-32 text-14">Payment Method</span>
                   <span className="font-medium text-16">
                     {" "}
-                    {bookings.payment_method}
+                    {bookings.payment_method === "NA" ? "Complimentory" : bookings.payment_method}
                   </span>
                 </div>
               </div>
@@ -124,7 +138,7 @@ export const BookingDetailsPage = () => {
               <div className="space-y-4">
                 <div className="flex">
                   <span className="text-[#1A1A1A80] w-32 text-14">Schedule Slot</span>
-                  <span className="font-medium text-16">
+                  <span className="font-medium text-16 truncate max-w-[170px] overflow-hidden whitespace-nowrap" title={bookings.show_schedule_24_hour}>
                     {" "}
                     {bookings.show_schedule_24_hour}
                   </span>
@@ -160,11 +174,25 @@ export const BookingDetailsPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent
-          className="p-6 bg-[#F6F7F7]"
+          className="px-6 bg-[#F6F7F7]"
           style={{ border: "1px solid #D9D9D9" }}
         >
-          <div className="text-gray-500 text-center py-8">
-            No logs available for this booking.
+          <div className="text-gray-500">
+            {/* No logs available for this booking. */}
+
+            <div className="timeline">
+              {logs.map((item, index) => (
+                <div key={index} className="timeline-item">
+                  <div className="timeline-icon"></div>
+                  <div className="timeline-content">
+                    <span className="date">
+                      {item.date} <span className="time">{item.time}</span>
+                    </span>
+                    <p className="mb-0">{item.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>

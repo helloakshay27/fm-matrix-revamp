@@ -100,13 +100,7 @@ const columns: ColumnConfig[] = [{
   sortable: true,
   hideable: true,
   draggable: true
-}, {
-  key: 'shift_type',
-  label: 'Shift Type',
-  sortable: true,
-  hideable: true,
-  draggable: true
-}, {
+},  {
   key: 'grace_time',
   label: 'Grace Time',
   sortable: true,
@@ -259,8 +253,9 @@ export const PatrollingDashboard = () => {
   // Helper function to get shift type (frequency type)
   const getShiftType = (schedules: PatrollingItem['schedules']) => {
     if (schedules.length === 0) return 'No shifts';
-    // Get unique frequency types
-    const frequencies = [...new Set(schedules.map(s => s.frequency_type))];
+    // Get unique frequency types, filtering out null/undefined values
+    const frequencies = [...new Set(schedules.map(s => s.frequency_type).filter(f => f != null && f !== ''))];
+    if (frequencies.length === 0) return 'No frequency set';
     if (frequencies.length === 1) {
       return frequencies[0].charAt(0).toUpperCase() + frequencies[0].slice(1);
     }

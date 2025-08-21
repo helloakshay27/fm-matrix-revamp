@@ -115,6 +115,7 @@ const UpdateTicketsPage: React.FC = () => {
     preventiveAction: "",
     reviewTracking: "",
     categoryType: "",
+    complaintType: "",
     subCategoryType: "",
     externalPriority: "",
     impact: "",
@@ -289,6 +290,7 @@ const UpdateTicketsPage: React.FC = () => {
         assignTo: matchingUser?.id.toString() || "",
         mode: matchingMode?.id.toString() || "",
         responsiblePerson: matchingResponsiblePerson?.id.toString() || "",
+        complaintType: ticketData.issue_type || "",
         issueRelatedTo: ticketData.issue_related_to || "",
         refNumber: ticketData.reference_number || "",
         correctiveAction: ticketData.corrective_action || "",
@@ -1001,7 +1003,7 @@ const UpdateTicketsPage: React.FC = () => {
       );
 
       // Complaint data
-      formDataToSend.append("complaint[complaint_type]", "Request");
+      formDataToSend.append("complaint[complaint_type]", formData.complaintType || "");
       formDataToSend.append(
         "complaint[preventive_action]",
         formData.preventiveAction || ""

@@ -8,7 +8,8 @@ import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
-import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
+import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
+import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 
@@ -16,21 +17,23 @@ export const AddFacilityBookingPage = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Get FM users from Redux store
   const { data: fmUsersResponse, loading: fmUsersLoading, error: fmUsersError } = useAppSelector((state) => state.fmUsers);
   const fmUsers = fmUsersResponse?.fm_users || [];
 
-  // Get entities from Redux store
+  const occupantUsersState = useAppSelector((state) => state.occupantUsers);
+  const occupantUsers = occupantUsersState?.users?.transformedUsers || [];
+  const occupantUsersLoading = occupantUsersState?.loading;
+  const occupantUsersError = occupantUsersState?.error;
+
   const { data: entitiesResponse, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
     Array.isArray(entitiesResponse) ? entitiesResponse : [];
 
-  // Get facility setups from Redux store
-  const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.facilitySetups);
+  const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.fetchActiveFacilities);
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
-  const [userType, setUserType] = useState('occupant');
+  const [userType, setUserType] = useState('fm');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedFacility, setSelectedFacility] = useState('');
   const [selectedCompany, setSelectedCompany] = useState('');
@@ -63,10 +66,14 @@ export const AddFacilityBookingPage = () => {
 
   // Fetch data on component mount
   useEffect(() => {
-    dispatch(fetchFMUsers());
-    dispatch(fetchEntities());
-    dispatch(fetchFacilitySetups());
-  }, [dispatch]);
+    if (userType === 'occupant') {
+      dispatch(fetchOccupantUsers({ page: 1, perPage: 100 }));
+      dispatch(fetchEntities());
+    } else {
+      dispatch(fetchFMUsers());
+    }
+    dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
+  }, [dispatch, userType]);
 
   // Fetch facility details when facility is selected
   const fetchFacilityDetails = async (facilityId: string) => {
@@ -95,7 +102,6 @@ export const AddFacilityBookingPage = () => {
 
   const fetchSlots = async (facilityId: string, date: string, userId: string) => {
     try {
-      // Convert date from YYYY-MM-DD to YYYY/MM/DD format
       const formattedDate = date.replace(/-/g, '/');
       const response = await apiClient.get(`/pms/admin/facility_setups/${facilityId}/get_schedules.json`, {
         params: {
@@ -279,76 +285,101 @@ export const AddFacilityBookingPage = () => {
         <div>
           <RadioGroup value={userType} onValueChange={setUserType} className="flex gap-6">
             <div className="flex items-center space-x-2">
-              <RadioGroupItem value="occupant" id="occupant" />
-              <Label htmlFor="occupant">Occupant User</Label>
-            </div>
-            <div className="flex items-center space-x-2">
               <RadioGroupItem value="fm" id="fm" />
               <Label htmlFor="fm">FM User</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="occupant" id="occupant" />
+              <Label htmlFor="occupant">Occupant User</Label>
             </div>
           </RadioGroup>
         </div>
 
         {/* Form Fields Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="space-y-2">
-            <TextField
-              select
-              label="Company"
-              value={selectedCompany}
-              onChange={(e) => setSelectedCompany(e.target.value)}
-              variant="outlined"
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-              sx={fieldStyles}
-              disabled={entitiesLoading}
-              helperText={entitiesError ? "Error loading companies" : ""}
-              error={!!entitiesError}
-            >
-              {entitiesLoading && (
-                <MenuItem value="" disabled>
-                  Loading companies...
-                </MenuItem>
-              )}
-              {!entitiesLoading && !entitiesError && entities.length === 0 && (
-                <MenuItem value="" disabled>
-                  No companies available
-                </MenuItem>
-              )}
-              {entities.map((entity) => (
-                <MenuItem key={entity.id} value={entity.id.toString()}>
-                  {entity.name}
-                </MenuItem>
-              ))}
-            </TextField>
-          </div>
+          {/* Client Dropdown - only for occupant users */}
+          {userType === 'occupant' && (
+            <div className="space-y-2">
+              <TextField
+                select
+                label="Client"
+                value={selectedCompany}
+                onChange={(e) => setSelectedCompany(e.target.value)}
+                variant="outlined"
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+                disabled={entitiesLoading}
+                helperText={entitiesError ? "Error loading companies" : ""}
+                error={!!entitiesError}
+              >
+                {entitiesLoading && (
+                  <MenuItem value="" disabled>
+                    Loading companies...
+                  </MenuItem>
+                )}
+                {!entitiesLoading && !entitiesError && entities.length === 0 && (
+                  <MenuItem value="" disabled>
+                    No companies available
+                  </MenuItem>
+                )}
+                {entities.map((entity) => (
+                  <MenuItem key={entity.id} value={entity.id.toString()}>
+                    {entity.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </div>
+          )}
 
-          {/* User Selection */}
+          {/* User Selection - occupant or fm users */}
           <div className="space-y-2">
             <TextField
               select
+              required
               label="User"
               value={selectedUser}
               onChange={(e) => setSelectedUser(e.target.value)}
               variant="outlined"
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{
+                classes: {
+                  asterisk: "text-red-500", // Tailwind class for red color
+                },
+                shrink: true
+              }}
               sx={fieldStyles}
-              disabled={fmUsersLoading}
-              helperText={fmUsersError ? "Error loading users" : ""}
-              error={!!fmUsersError}
+              disabled={userType === 'occupant' ? occupantUsersLoading : fmUsersLoading}
+              helperText={userType === 'occupant' ? (occupantUsersError ? "Error loading users" : "") : (fmUsersError ? "Error loading users" : "")}
+              error={userType === 'occupant' ? !!occupantUsersError : !!fmUsersError}
             >
-              {fmUsersLoading && (
+              {userType === 'occupant' && occupantUsersLoading && (
                 <MenuItem value="" disabled>
                   Loading users...
                 </MenuItem>
               )}
-              {!fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
+              {userType === 'occupant' && !occupantUsersLoading && !occupantUsersError && occupantUsers.length === 0 && (
                 <MenuItem value="" disabled>
                   No users available
                 </MenuItem>
               )}
-              {fmUsers.map((user) => (
+              {userType === 'occupant' && occupantUsers.map((user) => (
+                <MenuItem key={user.id} value={user.id.toString()}>
+                  {user.name}
+                </MenuItem>
+              ))}
+
+              {userType === 'fm' && fmUsersLoading && (
+                <MenuItem value="" disabled>
+                  Loading users...
+                </MenuItem>
+              )}
+              {userType === 'fm' && !fmUsersLoading && !fmUsersError && fmUsers.length === 0 && (
+                <MenuItem value="" disabled>
+                  No users available
+                </MenuItem>
+              )}
+              {userType === 'fm' && fmUsers.map((user) => (
                 <MenuItem key={user.id} value={user.id.toString()}>
                   {user.firstname} {user.lastname}
                 </MenuItem>
@@ -360,12 +391,18 @@ export const AddFacilityBookingPage = () => {
           <div className="space-y-2">
             <TextField
               select
+              required
               label="Facility"
               value={selectedFacility}
               onChange={(e) => handleFacilityChange(e.target.value)}
               variant="outlined"
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{
+                classes: {
+                  asterisk: "text-red-500", // Tailwind class for red color
+                },
+                shrink: true
+              }}
               sx={fieldStyles}
               disabled={facilitySetupsLoading}
               helperText={facilitySetupsError ? "Error loading facilities" : ""}
@@ -394,11 +431,17 @@ export const AddFacilityBookingPage = () => {
             <TextField
               type="date"
               label="Date"
+              required
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               variant="outlined"
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              InputLabelProps={{
+                classes: {
+                  asterisk: "text-red-500", // Tailwind class for red color
+                },
+                shrink: true
+              }}
               sx={fieldStyles}
             />
           </div>
@@ -429,7 +472,7 @@ export const AddFacilityBookingPage = () => {
 
         {/* Select Slot Section */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">Select Slot</h2>
+          <h2 className="text-lg font-semibold mb-4">Select Slot<span className="text-red-500"> *</span></h2>
           {slots.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {slots.map((slot) => (
@@ -462,7 +505,7 @@ export const AddFacilityBookingPage = () => {
 
         {/* Payment Method Section */}
         <div>
-          <h2 className="text-lg font-semibold mb-4">Payment Method</h2>
+          <h2 className="text-lg font-semibold mb-4">Payment Method<span className="text-red-500"> *</span></h2>
           {facilityDetails && (
             <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
               {facilityDetails.postpaid === 1 && (

@@ -351,27 +351,31 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
                     {/* Left Section - Asset Info */}
                     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
-                      {/* Asset No */}
-                      <div className="flex items-start">
-                        <span className="w-28 text-gray-500 text-sm">
-                          Asset No
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-semibold text-black">
-                          {asset.asset_number || "-"}
-                        </span>
-                      </div>
+                      {/* Asset No - Hidden for Furniture & Fixtures */}
+                      {asset.asset_type_category !== "Furniture & Fixtures" && (
+                        <div className="flex items-start">
+                          <span className="w-28 text-gray-500 text-sm">
+                            Asset No
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.asset_number || "-"}
+                          </span>
+                        </div>
+                      )}
 
-                      {/* Series No */}
-                      <div className="flex items-start">
-                        <span className="w-28 text-gray-500 text-sm">
-                          Series No
-                        </span>
-                        <span className="mx-2 text-gray-500">:</span>
-                        <span className="font-semibold text-black">
-                          {asset.serial_number || "-"}
-                        </span>
-                      </div>
+                      {/* Series No - Hidden for Furniture & Fixtures */}
+                      {asset.asset_type_category !== "Furniture & Fixtures" && (
+                        <div className="flex items-start">
+                          <span className="w-28 text-gray-500 text-sm">
+                            Series No
+                          </span>
+                          <span className="mx-2 text-gray-500">:</span>
+                          <span className="font-semibold text-black">
+                            {asset.serial_number || "-"}
+                          </span>
+                        </div>
+                      )}
 
                       {/* Group */}
                       <div className="flex items-start">

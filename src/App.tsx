@@ -87,6 +87,7 @@ import { AddAssetDashboard } from './pages/AddAssetDashboard';
 import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
+import { EditWaterAssetDashboard } from './pages/EditWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
@@ -203,17 +204,22 @@ import { StaffDetailsPage } from "./pages/StaffDetailsPage";
 // Import Edit Staff page
 import { EditStaffPage } from "./pages/EditStaffPage";
 
-// Import Value Added Services pages
-import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
-import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
-import { ProductSetupDetailPage } from "./pages/ProductSetupDetailPage";
-import { ProductEditPage } from "./pages/ProductEditPage";
-import { RestaurantOrderDetailPage } from "./pages/RestaurantOrderDetailPage";
-import { FnBDiscountsPage } from "./pages/FnBDiscountsPage";
-import { AddRestaurantPage } from "./pages/AddRestaurantPage";
-import ParkingDashboard from "./pages/ParkingDashboard";
-import ParkingDetailsPage from "./pages/ParkingDetailsPage";
-import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
+
+import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
+import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
+import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
+import { ProductEditPage } from './pages/ProductEditPage';
+import { RestaurantOrderDetailPage } from './pages/RestaurantOrderDetailPage';
+import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
+import { AddRestaurantPage } from './pages/AddRestaurantPage';
+import ParkingDashboard from './pages/ParkingDashboard';
+import ParkingDetailsPage from './pages/ParkingDetailsPage';
+import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
+import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
+import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
+import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
+import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
 
 // Import Design Insights pages
 import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
@@ -254,6 +260,11 @@ import { SeatTypeDashboard } from "./pages/SeatTypeDashboard";
 
 // Import Shift page
 import { ShiftDashboard } from "./pages/setup/ShiftDashboard";
+import { ShiftDashboard as AccountShiftDashboard } from "./pages/ShiftDashboard";
+import { RosterDashboard as AccountRosterDashboard } from "./pages/RosterDashboard";
+import { RosterCreatePage } from "./pages/RosterCreatePage";
+import { RosterDetailPage } from "./pages/RosterDetailPage";
+import { RosterEditPage } from "./pages/RosterEditPage";
 
 // Import Setup User pages
 import { FMUserDashboard } from "./pages/setup/FMUserDashboard";
@@ -611,6 +622,20 @@ import CRMFMUserDashboard from "./pages/CRMFMUserDashboard";
 import CRMCustomersDashboard from "./pages/CRMCustomersDashboard";
 import { PatrollingDetailPage } from "./pages/PatrollingDetailPage";
 import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
+import LMCDashboard from "./pages/LMCDashboard";
+import LMCUserDetail from "./pages/LMCUserDetail";
+import TrainingDashboard from "./pages/TrainingDashboard";
+import TrainingDetailPage from "./pages/TrainingDetailPage";
+import SMTDashboard from "./pages/SMTDashboard";
+import SMTDetailPage from "./pages/SMTDetailPage";
+import RoleConfigList from './pages/RoleConfigList';
+import RoleConfigCreate from './pages/RoleConfigCreate';
+import LockFunctionList from './pages/LockFunctionList';
+import LockFunctionCreate from './pages/LockFunctionCreate';
+import LockSubFunctionList from './pages/LockSubFunctionList';
+import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
+import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
+import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 
 
 const queryClient = new QueryClient();
@@ -748,6 +773,13 @@ function App() {
                 <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
                 <Route path="/settings/account" element={<AccountDashboard />} />
                 <Route path="/settings/account/holiday-calendar" element={<SettingsHolidayCalendarPage />} />
+                <Route path="/settings/account/shift" element={<AccountShiftDashboard />} />
+                <Route path="/settings/account/roster" element={<AccountRosterDashboard />} />
+                <Route path="/settings/account/roster/create" element={<RosterCreatePage />} />
+                <Route path="/roster" element={<AccountRosterDashboard />} />
+                <Route path="/roster/create" element={<RosterCreatePage />} />
+                <Route path="/roster/detail/:id" element={<RosterDetailPage />} />
+                <Route path="/roster/edit/:id" element={<RosterEditPage />} />
                 <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
                 <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
@@ -859,6 +891,8 @@ function App() {
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
+                <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
+                <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
@@ -1468,6 +1502,10 @@ function App() {
                   path="/utility/water/details/:id"
                   element={<WaterAssetDetailsPage />}
                 />
+                <Route
+                  path="/utility/water/edit/:id"
+                  element={<EditWaterAssetDashboard />}
+                />
 
                 {/* Security/Visitors Routes */}
                 <Route
@@ -1770,6 +1808,12 @@ function App() {
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
                 <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
                 <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
+                <Route path="/maintenance/lmc" element={<LMCDashboard />} />
+                <Route path="/maintenance/lmc/:id" element={<LMCUserDetail />} />
+                <Route path="/maintenance/training-list" element={<TrainingDashboard />} />
+                <Route path="/maintenance/training-list/:id" element={<TrainingDetailPage />} />
+                <Route path="/maintenance/smt" element={<SMTDashboard />} />
+                <Route path="/maintenance/smt/:id" element={<SMTDetailPage />} />
 
                 {/* Market Place Routes */}
                 <Route
@@ -1921,7 +1965,18 @@ function App() {
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
                 <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
                 <Route path="/settings/vas/booking/setup/edit/:id" element={<EditBookingSetupPage />} />
+                <Route path="/settings/vas/parking-management/parking-category" element={<ParkingCategoryPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration" element={<SlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration/add" element={<AddSlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/slot-configuration/edit/:id" element={<EditSlotConfigurationPage />} />
+                <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+                <Route path="/settings/role-config/list" element={<RoleConfigList />} />
+                <Route path="/settings/role-config/create" element={<RoleConfigCreate />} />
+                <Route path="/settings/lock-function/list" element={<LockFunctionList />} />
+                <Route path="/settings/lock-function/create" element={<LockFunctionCreate />} />
+                <Route path="/settings/lock-sub-function/list" element={<LockSubFunctionList />} />
+                <Route path="/settings/lock-sub-function/create" element={<LockSubFunctionCreate />} />
               </Route>
 
               {/* Setup Routes - Outside of settings parent route */}

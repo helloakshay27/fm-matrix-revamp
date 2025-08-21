@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -15,6 +15,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
+import { useToast } from '@/hooks/use-toast';
 
 interface VisitorFilterDialogProps {
     isOpen: boolean;
@@ -39,7 +41,34 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
     onApplyFilters,
     onResetFilters,
 }) => {
+    const { toast } = useToast();
     const [filters, setFilters] = useState<VisitorFilters>({});
+    const [fmUsers, setFmUsers] = useState<{ id: number; name: string }[]>([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
+
+    // Fetch FM Users when dialog opens
+    useEffect(() => {
+        if (isOpen) {
+            fetchFMUsers();
+        }
+    }, [isOpen]);
+
+    const fetchFMUsers = async () => {
+        setLoadingUsers(true);
+        try {
+            const users = await ticketManagementAPI.getFMUsers();
+            setFmUsers(users);
+        } catch (error) {
+            console.error('Error fetching FM users:', error);
+            toast({
+                title: "Error",
+                description: "Failed to fetch users. Please try again.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoadingUsers(false);
+        }
+    };
 
     const handleFilterChange = (key: keyof VisitorFilters, value: any) => {
         setFilters(prev => ({
@@ -65,7 +94,7 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-visible">
                 <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <DialogTitle className="text-lg font-semibold">Filter Visitors</DialogTitle>
                     <Button
@@ -85,23 +114,42 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                         <Select
                             value={filters.personToMeet || 'all'}
                             onValueChange={(value) => handleFilterChange('personToMeet', value === 'all' ? undefined : value)}
+                            disabled={loadingUsers}
                         >
                             <SelectTrigger className="w-full bg-white border border-gray-300">
-                                <SelectValue placeholder="Select Person To Meet" />
+                                <SelectValue placeholder={loadingUsers ? "Loading users..." : "Select Person To Meet"} />
                             </SelectTrigger>
-                            <SelectContent className="bg-white border border-gray-200 shadow-lg z-50">
+                            <SelectContent 
+                                className="bg-white border border-gray-200 shadow-lg z-[9999] max-h-[200px] overflow-y-auto"
+                                position="popper"
+                                side="bottom"
+                                align="start"
+                                sideOffset={8}
+                                avoidCollisions={false}
+                                sticky="always"
+                            >
                                 <SelectItem value="all">All Persons</SelectItem>
-                                <SelectItem value="person1">Abdul Ghaffar</SelectItem>
-                                <SelectItem value="person2">Arun</SelectItem>
-                                <SelectItem value="person3">Aryan</SelectItem>
-                                <SelectItem value="person4">Vinayak Mane</SelectItem>
-                                <SelectItem value="person5">Sohail Ansari</SelectItem>
+                                {loadingUsers ? (
+                                    <SelectItem value="loading" disabled className="text-gray-400">
+                                        Loading users...
+                                    </SelectItem>
+                                ) : fmUsers.length > 0 ? (
+                                    fmUsers.map((user) => (
+                                        <SelectItem key={user.id} value={user.id.toString()}>
+                                            {user.name}
+                                        </SelectItem>
+                                    ))
+                                ) : (
+                                    <SelectItem value="no-users" disabled className="text-gray-400">
+                                        No users available
+                                    </SelectItem>
+                                )}
                             </SelectContent>
                         </Select>
                     </div>
 
                     {/* Visitor Name */}
-                    <div className="grid gap-2">
+                    {/* <div className="grid gap-2">
                         <Label htmlFor="visitorName">Visitor Name</Label>
                         <Input
                             id="visitorName"
@@ -109,10 +157,10 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                             value={filters.visitorName || ''}
                             onChange={(e) => handleFilterChange('visitorName', e.target.value)}
                         />
-                    </div>
+                    </div> */}
 
                     {/* Host Name */}
-                    <div className="grid gap-2">
+                    {/* <div className="grid gap-2">
                         <Label htmlFor="hostName">Host Name</Label>
                         <Input
                             id="hostName"
@@ -120,10 +168,10 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                             value={filters.hostName || ''}
                             onChange={(e) => handleFilterChange('hostName', e.target.value)}
                         />
-                    </div>
+                    </div> */}
 
                     {/* Purpose */}
-                    <div className="grid gap-2">
+                    {/* <div className="grid gap-2">
                         <Label htmlFor="purpose">Purpose</Label>
                         <Input
                             id="purpose"
@@ -131,10 +179,10 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                             value={filters.purpose || ''}
                             onChange={(e) => handleFilterChange('purpose', e.target.value)}
                         />
-                    </div>
+                    </div> */}
 
                     {/* Status */}
-                    <div className="grid gap-2">
+                    {/* <div className="grid gap-2">
                         <Label>Status</Label>
                         <Select
                             value={filters.status || 'all'}
@@ -153,10 +201,10 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                                 <SelectItem value="Checked Out">Checked Out</SelectItem>
                             </SelectContent>
                         </Select>
-                    </div>
+                    </div> */}
 
                     {/* Date Range */}
-                    <div className="grid grid-cols-2 gap-4">
+                    {/* <div className="grid grid-cols-2 gap-4">
                         <div className="grid gap-2">
                             <Label>From Date</Label>
                             <Popover>
@@ -211,7 +259,7 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                                 </PopoverContent>
                             </Popover>
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 <DialogFooter className="flex gap-2">

@@ -18,6 +18,7 @@ export const InventoryDetailsPage = () => {
   const [feedsLoading, setFeedsLoading] = useState(false);
   const [feedsError, setFeedsError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
+  const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>('');
 
   useEffect(() => {
     const fetchInventoryDetails = async () => {
@@ -35,6 +36,35 @@ export const InventoryDetailsPage = () => {
     };
     fetchInventoryDetails();
   }, [id]);
+
+  // Derive or fetch human readable HSN/SAC code
+  useEffect(() => {
+    if (!inventoryData) return;
+    // Try common fields first
+    const direct = (inventoryData as any)?.hsc_hsn_code || (inventoryData as any)?.hsn_code || (inventoryData as any)?.hsn?.code;
+    if (direct) { setHsnCodeDisplay(direct); return; }
+    // If we only have an id, attempt fetch list and map
+    const hsnId = (inventoryData as any)?.hsn_id;
+    if (!hsnId) { setHsnCodeDisplay(''); return; }
+    let aborted = false;
+    const load = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const resp = await fetch(`https://${baseUrl}/pms/hsns/get_hsns.json`, { headers: { Authorization: `Bearer ${token}` } });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (aborted) return;
+        if (Array.isArray(data)) {
+          const match = data.find((d:any) => String(d.id) === String(hsnId));
+          if (match?.code) setHsnCodeDisplay(match.code);
+        }
+      } catch { /* silent */ }
+    };
+    load();
+    return () => { aborted = true; };
+  }, [inventoryData]);
 
   // Fetch feeds immediately on page load (once) instead of waiting for history tab
   useEffect(() => {
@@ -95,6 +125,18 @@ export const InventoryDetailsPage = () => {
         hour: '2-digit',
         minute: '2-digit'
       });
+    } catch {
+      return '—';
+    }
+  };
+
+  // Date only formatter (DD/MM/YYYY)
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return '—';
+    try {
+      const d = new Date(dateString);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
     } catch {
       return '—';
     }
@@ -290,15 +332,15 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">SGST Rate</span>
-                    <span>: NA</span>
+                    <span>: {inventoryData?.sgst_rate || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">IGST Rate</span>
-                    <span>: NA</span>
+                    <span>: {inventoryData?.igst_rate || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Site</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.site || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Active</span>
@@ -308,7 +350,7 @@ export const InventoryDetailsPage = () => {
                 <div className="space-y-3">
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Rate Contract Vendor</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.rate_contract_vendor_code || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Max Stock Level</span>
@@ -320,7 +362,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">SAC/HSN</span>
-                    <span>: {inventoryData?.hsc_hsn_code || '—'}</span>
+                    <span>: {hsnCodeDisplay || (inventoryData?.hsn_id ? String((inventoryData as any).hsn_id) : '—')}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Cost</span>
@@ -332,7 +374,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Eco-friendly</span>
-                    <span>: -</span>
+                    <span>: {inventoryData?.green_product ? 'Yes' : 'No'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Unit</span>
@@ -344,7 +386,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Expiry Date</span>
-                    <span>: -</span>
+                    <span>: {formatDateOnly(inventoryData?.expiry_date)}</span>
                   </div>
                 </div>
               </div>

@@ -152,6 +152,25 @@ export const API_CONFIG = {
     PERFORMANCE_EXPORT: '/pms/custom_forms', // Base path, will append /{customFormCode}/export_performance
     // Patrolling endpoints
     PATROLLING_SETUP: '/patrolling/setup',
+    // Measurements endpoints
+    MEASUREMENTS: '/pms/measurements.json',
+    // Asset measurement export endpoint
+    ASSET_MEASUREMENT_EXPORT: '/pms/assets/asset_measurement_list.xlsx',
+    // Asset measurement import endpoint  
+    ASSET_MEASUREMENT_IMPORT: '/pms/assets/import',
+    // Asset measurement sample download endpoint
+    ASSET_MEASUREMENT_SAMPLE: '/assets/measurement.xlsx',
+    // Parking categories endpoint
+    PARKING_CATEGORIES: '/pms/admin/parking_categories.json',
+    // Update parking category endpoint (append /{id}.json)
+    UPDATE_PARKING_CATEGORY: '/pms/admin/parking_categories',
+    // Parking slot details endpoint
+    PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details.json',
+    // Update parking slot details endpoint (append /{id}.json)
+    UPDATE_PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details',
+    // Permit tags endpoint
+    PERMIT_TAGS: '/pms/permit_tags.json',
+
     
   },
 } as const

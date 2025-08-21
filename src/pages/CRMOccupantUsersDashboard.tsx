@@ -60,6 +60,8 @@ const CRMOccupantUsersDashboard = () => {
     }
   }, [occupantUsersData.transformedUsers])
 
+  console.log(occupantUsers)
+
   useEffect(() => {
     dispatch(fetchOccupantUsers({ page: pagination.current_page, perPage: 10 }));
   }, [dispatch]);
@@ -263,7 +265,7 @@ const CRMOccupantUsersDashboard = () => {
   return (
     <div className="p-6 space-y-6">
       <EnhancedTable
-        data={occupantUsers}
+        data={occupantUsers || []}
         columns={columns}
         renderActions={renderActions}
         renderCell={renderCell}

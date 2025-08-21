@@ -205,7 +205,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Site */}
         <FormControl fullWidth variant="outlined" error={errors.siteId}>
           <InputLabel id="site-select-label" shrink>
-            Site<span >*</span>
+            Site<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
           </InputLabel>
           <MuiSelect
             labelId="site-select-label"
@@ -236,7 +236,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Building */}
         <FormControl fullWidth variant="outlined" error={errors.buildingId}>
           <InputLabel id="building-select-label" shrink>
-            Building<span >*</span>
+            Building<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
           </InputLabel>
           <MuiSelect
             labelId="building-select-label"
@@ -267,7 +267,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Wing */}
         <FormControl fullWidth variant="outlined" error={errors.wingId}>
           <InputLabel id="wing-select-label" shrink>
-            Wing<span >*</span>
+            Wing<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
           </InputLabel>
           <MuiSelect
             labelId="wing-select-label"
@@ -298,7 +298,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Area */}
         <FormControl fullWidth variant="outlined" error={errors.areaId}>
           <InputLabel id="area-select-label" shrink>
-            Area<span >*</span>
+            Area<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
           </InputLabel>
           <MuiSelect
             labelId="area-select-label"
@@ -332,7 +332,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
         {/* Floor */}
         <FormControl fullWidth variant="outlined" error={errors.floorId}>
           <InputLabel id="floor-select-label" shrink>
-            Floor<span >*</span>
+            Floor<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
           </InputLabel>
           <MuiSelect
             labelId="floor-select-label"
