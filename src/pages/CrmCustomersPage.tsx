@@ -4,15 +4,33 @@ import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Edit2 } from 'lucide-react';
+import { Edit2, X } from 'lucide-react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
 
 export const CrmCustomersPage = () => {
   const { id } = useParams();
   const { setCurrentSection } = useLayout();
+  const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState('');
 
   useEffect(() => {
     setCurrentSection('CRM');
   }, [setCurrentSection]);
+
+  const handleTopUpClick = () => {
+    setTopUpDialogOpen(true);
+  };
+
+  const handleTopUpClose = () => {
+    setTopUpDialogOpen(false);
+    setTopUpAmount('');
+  };
+
+  const handleTopUpSubmit = () => {
+    console.log('Top-up amount:', topUpAmount);
+    // Handle top-up logic here
+    handleTopUpClose();
+  };
 
   // Sample customer data
   const customerData = {
@@ -106,7 +124,10 @@ export const CrmCustomersPage = () => {
             <Edit2 className="w-4 h-4" />
           </Button>
           <span className="text-sm text-gray-600">Wallet Balance: 0 Points</span>
-          <Button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm">
+          <Button 
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm"
+            onClick={handleTopUpClick}
+          >
             Top-Up Wallet
           </Button>
         </div>
@@ -229,6 +250,75 @@ export const CrmCustomersPage = () => {
           </Table>
         </div>
       </div>
+
+      {/* Top-Up Wallet Dialog */}
+      <Dialog 
+        open={topUpDialogOpen} 
+        onClose={handleTopUpClose}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          style: {
+            borderRadius: '12px',
+            padding: '8px'
+          }
+        }}
+      >
+        <DialogTitle 
+          sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            fontSize: '1.5rem',
+            fontWeight: 600,
+            pb: 2
+          }}
+        >
+          Top-Up Wallet
+          <IconButton 
+            onClick={handleTopUpClose}
+            sx={{ 
+              color: 'gray',
+              '&:hover': { backgroundColor: 'rgba(0,0,0,0.1)' }
+            }}
+          >
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent sx={{ pb: 3 }}>
+          <TextField
+            label="Amount to Top-Up"
+            variant="outlined"
+            fullWidth
+            value={topUpAmount}
+            onChange={(e) => setTopUpAmount(e.target.value)}
+            type="number"
+            sx={{ 
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '8px'
+              }
+            }}
+          />
+        </DialogContent>
+        
+        <DialogActions sx={{ px: 3, pb: 3, gap: 2 }}>
+          <Button 
+            variant="outline"
+            onClick={handleTopUpClose}
+            className="px-6 py-2"
+          >
+            Close
+          </Button>
+          <Button 
+            onClick={handleTopUpSubmit}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2"
+            disabled={!topUpAmount}
+          >
+            Top-Up
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };
