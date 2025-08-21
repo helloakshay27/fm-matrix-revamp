@@ -26,10 +26,7 @@ export const TimeSlotSetupPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
-    slotName: true,
-    startTime: true,
-    endTime: true,
-    active: true,
+    timings: true,
     createdOn: true
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -177,10 +174,7 @@ export const TimeSlotSetupPage = () => {
   // Column definitions for visibility control
   const columns = [
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'slotName', label: 'Slot Name', visible: visibleColumns.slotName },
-    { key: 'startTime', label: 'Start Time', visible: visibleColumns.startTime },
-    { key: 'endTime', label: 'End Time', visible: visibleColumns.endTime },
-    { key: 'active', label: 'Active/Inactive', visible: visibleColumns.active },
+    { key: 'timings', label: 'Timings', visible: visibleColumns.timings },
     { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn }
   ];
 
@@ -219,10 +213,7 @@ export const TimeSlotSetupPage = () => {
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
               {visibleColumns.actions && <TableHead className="text-center">Actions</TableHead>}
-              {visibleColumns.slotName && <TableHead>Slot Name</TableHead>}
-              {visibleColumns.startTime && <TableHead>Start Time</TableHead>}
-              {visibleColumns.endTime && <TableHead>End Time</TableHead>}
-              {visibleColumns.active && <TableHead className="text-center">Active/Inactive</TableHead>}
+              {visibleColumns.timings && <TableHead className="text-center">Timings</TableHead>}
               {visibleColumns.createdOn && <TableHead>Created On</TableHead>}
             </TableRow>
           </TableHeader>
@@ -242,16 +233,9 @@ export const TimeSlotSetupPage = () => {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.slotName && <TableCell className="font-medium">{item.slotName}</TableCell>}
-                {visibleColumns.startTime && <TableCell>{item.startTime}</TableCell>}
-                {visibleColumns.endTime && <TableCell>{item.endTime}</TableCell>}
-                {visibleColumns.active && (
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={item.active}
-                      onCheckedChange={() => handleStatusToggle(item.id)}
-                      className="data-[state=checked]:bg-green-500"
-                    />
+                {visibleColumns.timings && (
+                  <TableCell className="text-center font-medium">
+                    {item.startTime} to {item.endTime}
                   </TableCell>
                 )}
                 {visibleColumns.createdOn && <TableCell>{item.createdOn}</TableCell>}
