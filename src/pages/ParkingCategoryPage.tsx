@@ -160,30 +160,6 @@ export const ParkingCategoryPage = () => {
                       >
                         <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
                       </button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <button
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-500" />
-                          </button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Parking Category</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{item.name}"? This action cannot be undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDelete(item.id)}>
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
                     </div>
                   </TableCell>
                 )}
