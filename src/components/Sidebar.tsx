@@ -796,10 +796,7 @@ export const Sidebar = () => {
                           {subItem.subItems.map((nestedItem: any) => (
                              <button
                                key={nestedItem.name}
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 handleNavigation(nestedItem.href, 'Settings');
-                               }}
+                               onClick={() => handleNavigation(nestedItem.href)}
                                className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
                                  }`}
                              >
