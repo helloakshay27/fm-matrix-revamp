@@ -3,26 +3,103 @@ import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { MaterialPRFilterDialog } from "@/components/MaterialPRFilterDialog";
-import { ColumnConfig } from "@/hooks/useEnhancedTable"; // Adjust the import path as needed
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getMaterialPR } from "@/store/slices/materialPRSlice";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "prNo",
+    label: "PR No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "referenceNo",
+    label: "Reference No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "supplierName",
+    label: "Supplier Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "createdBy",
+    label: "Created By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "createdOn",
+    label: "Created On",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "lastApprovedBy",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approvedStatus",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "prAmount",
+    label: "PR Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "activeInactive",
+    label: "Active/Inactive",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const MaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const { loading } = useAppSelector(state => state.getMaterialPR)
+
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  const [materialPR, setMaterialPR] = useState([])
+  const [materialPR, setMaterialPR] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await dispatch(getMaterialPR({ baseUrl, token })).unwrap();
+        const response = await dispatch(
+          getMaterialPR({ baseUrl, token })
+        ).unwrap();
         const formatedResponse = response.purchase_orders.map((item: any) => ({
           id: item.id,
           prNo: item.external_id,
@@ -30,22 +107,29 @@ export const MaterialPRDashboard = () => {
           supplierName: item.supplier.company_name,
           createdBy: item.user.full_name,
           createdOn: item.created_at,
-          lastApprovedBy: Array.isArray(item.approval_levels) && item.approval_levels.length > 0
-            ? item.approval_levels[item.approval_levels.length - 1].approved_by
-            : null,
-          approvedStatus: item.all_level_approved ? "Approved" : item.all_level_approved === false ? "Rejected" : "Pending",
+          lastApprovedBy:
+            Array.isArray(item.approval_levels) &&
+              item.approval_levels.length > 0
+              ? item.approval_levels[item.approval_levels.length - 1]
+                .approved_by
+              : null,
+          approvedStatus: item.all_level_approved
+            ? "Approved"
+            : item.all_level_approved === false
+              ? "Rejected"
+              : "Pending",
           prAmount: item.total_amount,
-          activeInactive: item.active
-        }))
-        setMaterialPR(formatedResponse)
+          activeInactive: item.active,
+        }));
+        setMaterialPR(formatedResponse);
       } catch (error) {
-        console.log(error)
-        toast.error(error)
+        console.log(error);
+        toast.error(error);
       }
-    }
+    };
 
     fetchData();
-  }, [])
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -62,13 +146,6 @@ export const MaterialPRDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case "prNumber":
-      case "referenceNo":
-        return (
-          <span className="text-blue-600 hover:underline cursor-pointer">
-            {item[columnKey]}
-          </span>
-        );
       case "approvedStatus":
         return (
           <span
@@ -91,22 +168,9 @@ export const MaterialPRDashboard = () => {
       case "prAmount":
         return <span className="font-medium">{item.prAmount}</span>;
       default:
-        return item[columnKey] || "";
+        return item[columnKey] || "-";
     }
   };
-
-  const columns: ColumnConfig[] = [
-    { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
-    { key: "prNumber", label: "PR No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "referenceNo", label: "Reference No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "supplierName", label: "Supplier Name", sortable: true, draggable: true, defaultVisible: true },
-    { key: "createdBy", label: "Created By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "createdOn", label: "Created On", sortable: true, draggable: true, defaultVisible: true },
-    { key: "lastApprovedBy", label: "Last Approved By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "approvedStatus", label: "Approved Status", sortable: true, draggable: true, defaultVisible: true },
-    { key: "prAmount", label: "PR Amount", sortable: true, draggable: true, defaultVisible: true },
-    { key: "activeInactive", label: "Active/Inactive", sortable: false, draggable: true, defaultVisible: true },
-  ];
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
@@ -149,7 +213,6 @@ export const MaterialPRDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Table */}
       <EnhancedTable
         data={materialPR || []}
         columns={columns}
@@ -170,9 +233,9 @@ export const MaterialPRDashboard = () => {
         enableSelection={true}
         leftActions={leftActions}
         onFilterClick={() => setFilterDialogOpen(true)}
+        loading={loading}
       />
 
-      {/* Filter Dialog */}
       <MaterialPRFilterDialog
         open={filterDialogOpen}
         onOpenChange={setFilterDialogOpen}

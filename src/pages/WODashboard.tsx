@@ -6,8 +6,200 @@ import { WOFilterDialog } from "@/components/WOFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "wo_no",
+    label: "WO No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "reference_number",
+    label: "Reference No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_on",
+    label: "Created On",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "supplier",
+    label: "Supplier",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approved_status",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "payment_tenure",
+    label: "Payment Tenure (Days)",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "advance_amount",
+    label: "Advance Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_amount",
+    label: "Total Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_work_completed_percent",
+    label: "Total Work Completed (%)",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "retention_percent",
+    label: "Retention (%)",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tds_percent",
+    label: "TDS (%)",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "qc_percent",
+    label: "QC (%)",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "active",
+    label: "Active/Inactive",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "last_approved_by",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tds_amount",
+    label: "TDS Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "retention_amount",
+    label: "Retention Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "retention_outstanding",
+    label: "Retention Outstanding",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "qc_amount",
+    label: "QC Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "qc_outstanding",
+    label: "QC Outstanding",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "no_of_invoices",
+    label: "No. of Invoices",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_amount_paid",
+    label: "Total Amount Paid",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "outstanding",
+    label: "Outstanding",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "debit_credit_note_raised",
+    label: "Debt/Credit Note Raised",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_by",
+    label: "Created By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "updated_by",
+    label: "Updated By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "updated_on",
+    label: "Updated On",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const WODashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +207,8 @@ export const WODashboard = () => {
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
+
+  const { loading } = useAppSelector(state => state.fetchWorkOrders)
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
@@ -85,198 +279,6 @@ export const WODashboard = () => {
     }
   };
 
-  const columns: ColumnConfig[] = [
-    {
-      key: "id",
-      label: "ID",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "wo_no",
-      label: "WO No.",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "reference_number",
-      label: "Reference No.",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "created_on",
-      label: "Created On",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "supplier",
-      label: "Supplier",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "approved_status",
-      label: "Approved Status",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "payment_tenure",
-      label: "Payment Tenure (Days)",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "advance_amount",
-      label: "Advance Amount",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "total_amount",
-      label: "Total Amount",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "total_work_completed_percent",
-      label: "Total Work Completed (%)",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "retention_percent",
-      label: "Retention (%)",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "tds_percent",
-      label: "TDS (%)",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "qc_percent",
-      label: "QC (%)",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "active",
-      label: "Active/Inactive",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "last_approved_by",
-      label: "Last Approved By",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "tds_amount",
-      label: "TDS Amount",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "retention_amount",
-      label: "Retention Amount",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "retention_outstanding",
-      label: "Retention Outstanding",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "qc_amount",
-      label: "QC Amount",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "qc_outstanding",
-      label: "QC Outstanding",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "no_of_invoices",
-      label: "No. of Invoices",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "total_amount_paid",
-      label: "Total Amount Paid",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "outstanding",
-      label: "Outstanding",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "debit_credit_note_raised",
-      label: "Debt/Credit Note Raised",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "created_by",
-      label: "Created By",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "updated_by",
-      label: "Updated By",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-    {
-      key: "updated_on",
-      label: "Updated On",
-      sortable: true,
-      draggable: true,
-      defaultVisible: true,
-    },
-  ];
-
   const renderActions = (item: any) => (
     <div className="flex items-center gap-3">
       <Button
@@ -316,7 +318,6 @@ export const WODashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Enhanced Table */}
       <EnhancedTable
         data={workOrders || []}
         columns={columns}
@@ -328,16 +329,15 @@ export const WODashboard = () => {
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search WOs..."
-        // enableExport={true}
         exportFileName="work-orders"
         pagination={true}
         pageSize={10}
+        loading={loading}
         enableSearch={true}
         onFilterClick={() => setIsFilterDialogOpen(true)}
         leftActions={leftActions}
       />
 
-      {/* Filter Dialog */}
       <WOFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
