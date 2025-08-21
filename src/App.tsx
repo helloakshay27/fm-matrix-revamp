@@ -159,6 +159,7 @@ import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
 import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
 import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
 import { CrmCustomersPage } from './pages/CrmCustomersPage';
+import { EditCrmCustomerPage } from './pages/EditCrmCustomerPage';
 import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
 
 // Import Design Insights pages
@@ -630,6 +631,7 @@ function App() {
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
                 <Route path="/crm/customers/:id" element={<CrmCustomersPage />} />
+                <Route path="/crm/customers/:id/edit" element={<EditCrmCustomerPage />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />

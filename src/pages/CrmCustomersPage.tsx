@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -9,6 +9,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButto
 
 export const CrmCustomersPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [topUpDialogOpen, setTopUpDialogOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState('');
@@ -120,7 +121,12 @@ export const CrmCustomersPage = () => {
           <h2 className="text-2xl font-semibold text-gray-900">Customer</h2>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" className="p-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="p-2"
+            onClick={() => navigate(`/crm/customers/${id}/edit`)}
+          >
             <Edit2 className="w-4 h-4" />
           </Button>
           <span className="text-sm text-gray-600">Wallet Balance: 0 Points</span>
