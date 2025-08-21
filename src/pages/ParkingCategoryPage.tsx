@@ -5,7 +5,9 @@ import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
-import { Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
+import { Plus, Search, Edit, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
@@ -27,6 +29,9 @@ export const ParkingCategoryPage = () => {
     active: true,
     createdOn: true
   });
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState('');
+  const [categoryImage, setCategoryImage] = useState<File | null>(null);
 
   useEffect(() => {
     setCurrentSection('Settings');
@@ -89,7 +94,36 @@ export const ParkingCategoryPage = () => {
   };
 
   const handleAdd = () => {
-    navigate('/settings/vas/parking-management/parking-category/add');
+    setIsCreateModalOpen(true);
+  };
+
+  const handleCreateCategory = () => {
+    if (!categoryName) {
+      toast.error('Please enter category name');
+      return;
+    }
+    
+    const newCategory = {
+      id: Math.max(...parkingCategoryData.map(item => item.id)) + 1,
+      name: categoryName,
+      active: true,
+      createdOn: new Date().toLocaleDateString('en-GB')
+    };
+    
+    setParkingCategoryData(prevData => [...prevData, newCategory]);
+    toast.success('Category created successfully');
+    
+    // Reset form
+    setCategoryName('');
+    setCategoryImage(null);
+    setIsCreateModalOpen(false);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setCategoryImage(file);
+    }
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
@@ -179,6 +213,77 @@ export const ParkingCategoryPage = () => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Create Category Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <DialogTitle className="text-lg font-semibold">Create Category</DialogTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsCreateModalOpen(false)}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            {/* Category Name */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-900">Category Name</label>
+              <Select value={categoryName} onValueChange={setCategoryName}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
+                  <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
+                  <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
+                  <SelectItem value="Bicycle">Bicycle</SelectItem>
+                  <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Category Image */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-900">Category Image</label>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  onClick={() => document.getElementById('file-input')?.click()}
+                >
+                  Choose File
+                </Button>
+                <span className="text-sm text-gray-500">
+                  {categoryImage ? categoryImage.name : 'No file chosen'}
+                </span>
+                <input
+                  id="file-input"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end pt-4">
+              <Button
+                onClick={handleCreateCategory}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
