@@ -219,8 +219,6 @@ import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
 import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
 import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
-import { CrmCustomersPage } from './pages/CrmCustomersPage';
-import { EditCrmCustomerPage } from './pages/EditCrmCustomerPage';
 import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
 
 // Import Design Insights pages
@@ -636,6 +634,8 @@ import LockFunctionList from './pages/LockFunctionList';
 import LockFunctionCreate from './pages/LockFunctionCreate';
 import LockSubFunctionList from './pages/LockSubFunctionList';
 import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
+import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
+import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 
 
 const queryClient = new QueryClient();
@@ -891,8 +891,8 @@ function App() {
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
-                <Route path="/crm/customers/:id" element={<CrmCustomersPage />} />
-                <Route path="/crm/customers/:id/edit" element={<EditCrmCustomerPage />} />
+                <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
+                <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />

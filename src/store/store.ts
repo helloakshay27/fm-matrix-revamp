@@ -53,6 +53,7 @@ import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer,
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer } from './slices/grnSlice'
+import { getCustomerListReducer } from './slices/cusomerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -208,6 +209,9 @@ export const store = configureStore({
     getPurchaseOrdersList: getPurchaseOrdersReducer,
     fetchSingleGRN: fetchSingleGRNReducer,
     approveGRN: approveGRNReducer,
+
+    // Customer List
+    getCustomerList: getCustomerListReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
