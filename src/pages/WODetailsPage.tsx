@@ -165,6 +165,14 @@ export const WODetailsPage = () => {
   const [notes, setNotes] = useState("");
   const [attachment, setAttachment] = useState(null);
   const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
+  const [openRejectDialog, setOpenRejectDialog] = useState(false);
+  const [rejectComment, setRejectComment] = useState("");
+  const [debitCreditForm, setDebitCreditForm] = useState({
+    type: "",
+    amount: "",
+    description: "",
+  });
+
   const [workOrder, setWorkOrder] = useState({
     letter_of_indent: false,
     plant_detail_id: null,
@@ -206,11 +214,6 @@ export const WODetailsPage = () => {
     inventories: [],
     totals: { net_amount: "", total_taxable: "", taxes: "", total_value: "" },
     pms_po_inventories: [],
-  });
-  const [debitCreditForm, setDebitCreditForm] = useState({
-    type: "",
-    amount: "",
-    description: "",
   });
 
   const handleDebitCreditChange = (e) => {
@@ -297,12 +300,59 @@ export const WODetailsPage = () => {
     };
     try {
       // await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
-      toast.success("PO approved successfully");
+      toast.success("Work Order approved successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error) {
       console.log(error);
       toast.error(error);
     }
+  };
+
+  const handleRejectClick = () => {
+    setOpenRejectDialog(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectComment.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    const payload = {
+      pms_purchase_order: {
+        id: Number(id),
+        pms_pr_inventories_attributes: workOrder.pms_po_inventories.map(
+          (item) => ({
+            id: item.id,
+            rate: item.rate,
+            total_value: item.total_value,
+            approved_qty: item.quantity,
+            transfer_qty: item.transfer_qty,
+          })
+        ),
+      },
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: false,
+      comment: rejectComment,
+    };
+
+    try {
+      // await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      toast.success("Work Order rejected successfully");
+      navigate(`/finance/pending-approvals`);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      setOpenRejectDialog(false);
+      setRejectComment("");
+    }
+  };
+
+  const handleRejectCancel = () => {
+    setOpenRejectDialog(false);
+    setRejectComment("");
   };
 
   return (
@@ -317,18 +367,18 @@ export const WODetailsPage = () => {
             <span className="text-sm font-medium text-gray-700">
               Level 1 Approval:
             </span>
-            {/* <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(woDetails.level1Approval)}`}>
-              {woDetails.level1Approval}
-            </span> */}
+            <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(workOrder.all_level_approved ? "Approved" : workOrder.all_level_approved === false ? "Rejected" : "Pending")}`}>
+              {workOrder.all_level_approved
+                ? "Approved"
+                : workOrder.all_level_approved === false
+                  ? "Rejected"
+                  : "Pending"}
+            </span>
           </div>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          {/* <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(woDetails.status)}`}>
-            Status:- {woDetails.status}
-          </span> */}
           <div className="flex gap-2 flex-wrap">
-            {/* Conditional SAP and WBS buttons */}
             {workOrder.letter_of_indent === true &&
               workOrder.plant_detail_id &&
               !workOrder.external_id &&
@@ -380,9 +430,6 @@ export const WODetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
-            {/* {
-              workOrder.all_level_approved && (
-                <> */}
             <Button
               size="sm"
               variant="outline"
@@ -399,9 +446,6 @@ export const WODetailsPage = () => {
             >
               Debit/Credit Note
             </Button>
-            {/* </>
-              )
-            } */}
           </div>
         </div>
       </div>
@@ -414,7 +458,6 @@ export const WODetailsPage = () => {
           </h2>
         </div>
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left side - Contact details */}
           <div className="flex-1 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -446,7 +489,6 @@ export const WODetailsPage = () => {
             </div>
           </div>
 
-          {/* Center - Vendor name */}
           <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
             <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
               <span className="text-xs text-gray-500">image</span>
@@ -462,7 +504,6 @@ export const WODetailsPage = () => {
         </h3>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-          {/* Left Column */}
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">
@@ -552,7 +593,6 @@ export const WODetailsPage = () => {
             </div>
           </div>
 
-          {/* Right Column */}
           <div className="space-y-4">
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-32">
@@ -653,7 +693,6 @@ export const WODetailsPage = () => {
           />
         </div>
 
-        {/* Summary Section */}
         <div className="mt-6 border-t pt-4">
           <div className="flex justify-between items-center py-2">
             <span className="font-medium text-gray-700">Net Amount (INR):</span>
@@ -688,7 +727,6 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      {/* Terms & Conditions Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Terms & Conditions :
@@ -713,7 +751,6 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      {/* Attachments Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Attachments
@@ -721,7 +758,6 @@ export const WODetailsPage = () => {
         <p className="text-gray-500">No attachments</p>
       </div>
 
-      {/* Invoices/SES Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Invoices/SES Details
@@ -743,7 +779,6 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      {/* Payment Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Payment Details
@@ -765,7 +800,6 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      {/* Debit/Credit Note Details Section with EnhancedTable */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Debit/Credit Note Details
@@ -795,7 +829,10 @@ export const WODetailsPage = () => {
           >
             Approve
           </button>
-          <button className="bg-[#C72030] text-white py-2 px-4 rounded-md">
+          <button
+            className="bg-[#C72030] text-white py-2 px-4 rounded-md"
+            onClick={handleRejectClick}
+          >
             Reject
           </button>
         </div>
@@ -874,6 +911,35 @@ export const WODetailsPage = () => {
             style={{ backgroundColor: "#6B46C1", color: "white" }}
           >
             Submit
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openRejectDialog} onClose={handleRejectCancel} maxWidth="sm" fullWidth>
+        <DialogTitle>Reject Work Order</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Reason for Rejection"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={rejectComment}
+            onChange={(e) => setRejectComment(e.target.value)}
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRejectCancel} variant="outline">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRejectConfirm}
+            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+          >
+            Reject
           </Button>
         </DialogActions>
       </Dialog>
