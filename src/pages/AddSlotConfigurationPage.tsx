@@ -213,25 +213,28 @@ export const AddSlotConfigurationPage = () => {
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
-                        >
-                          P{index + 11}H
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
-                          onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
+                    {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => {
+                      const reservedStartNumber = formData.twoWheeler.nonStack + formData.twoWheeler.stack + 1;
+                      return (
+                        <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200 p-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium"
+                          >
+                            P{reservedStartNumber + index}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute -top-2 -right-2 w-5 h-5 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[10px] flex items-center justify-center border-0 z-10"
+                            onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -362,25 +365,28 @@ export const AddSlotConfigurationPage = () => {
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
-                        >
-                          P{index + 9}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
-                          onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
+                    {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => {
+                      const reservedStartNumber = formData.fourWheeler.nonStack + formData.fourWheeler.stack + 1;
+                      return (
+                        <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200 p-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium"
+                          >
+                            P{reservedStartNumber + index}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute -top-2 -right-2 w-5 h-5 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[10px] flex items-center justify-center border-0 z-10"
+                            onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
