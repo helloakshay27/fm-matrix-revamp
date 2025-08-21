@@ -117,18 +117,18 @@ export const AddSlotConfigurationPage = () => {
                 <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
-                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200">
+                      <div key={index} className="relative bg-gray-50 rounded-lg border border-gray-200 p-1">
                         <Button
                           variant="outline"
                           size="sm"
-                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium relative"
+                          className="w-14 h-8 text-xs bg-white border-gray-200 hover:bg-gray-50 rounded-lg font-medium"
                         >
                           P{index + 1}
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute top-0 right-0 w-4 h-4 p-0 rounded-full bg-orange-500 text-white hover:bg-orange-600 text-[10px] flex items-center justify-center"
+                          className="absolute top-0.5 right-0.5 w-5 h-5 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[10px] flex items-center justify-center border-0"
                           onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
                         >
                           ×
