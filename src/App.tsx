@@ -154,6 +154,7 @@ import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 
 // Import Design Insights pages
 import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
@@ -1007,6 +1008,7 @@ function App() {
                 <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
                 <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
                 <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
+                <Route path="/settings/vas/parking-management/parking-category" element={<ParkingCategoryPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
               </Route>
 
