@@ -158,6 +158,7 @@ import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
 import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
 import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
+import { CrmCustomersPage } from './pages/CrmCustomersPage';
 import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
 
 // Import Design Insights pages
@@ -628,6 +629,7 @@ function App() {
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
+                <Route path="/crm/customers" element={<CrmCustomersPage />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
