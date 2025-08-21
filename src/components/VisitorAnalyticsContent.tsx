@@ -75,6 +75,33 @@ export const VisitorAnalyticsContent = () => {
   const [visitorComparisonData, setVisitorComparisonData] = useState<VisitorComparisonResponse | null>(null);
   const { toast } = useToast();
 
+  // Function to get default dates (same as VisitorAnalyticsFilterDialog)
+  const getDefaultDates = () => {
+    const today = new Date();
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(today.getFullYear() - 1);
+    
+    return {
+      start: oneYearAgo.toISOString().split('T')[0],
+      end: today.toISOString().split('T')[0]
+    };
+  };
+
+  // Auto-apply default dates on component mount
+  useEffect(() => {
+    const defaultDates = getDefaultDates();
+    const formattedStartDate = new Date(defaultDates.start).toLocaleDateString('en-GB');
+    const formattedEndDate = new Date(defaultDates.end).toLocaleDateString('en-GB');
+    
+    setDateRange({
+      startDate: formattedStartDate,
+      endDate: formattedEndDate
+    });
+
+    // Fetch visitor comparison data with default dates
+    fetchVisitorComparison(formattedStartDate, formattedEndDate);
+  }, []);
+
   // Drag and drop sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {

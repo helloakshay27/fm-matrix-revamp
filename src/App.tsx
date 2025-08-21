@@ -87,6 +87,7 @@ import { AddAssetDashboard } from './pages/AddAssetDashboard';
 import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
 import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
 import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
+import { EditWaterAssetDashboard } from './pages/EditWaterAssetDashboard';
 import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
 import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
 import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
@@ -622,6 +623,12 @@ import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
+import RoleConfigList from './pages/RoleConfigList';
+import RoleConfigCreate from './pages/RoleConfigCreate';
+import LockFunctionList from './pages/LockFunctionList';
+import LockFunctionCreate from './pages/LockFunctionCreate';
+import LockSubFunctionList from './pages/LockSubFunctionList';
+import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
 
 
 const queryClient = new QueryClient();
@@ -1486,6 +1493,10 @@ function App() {
                   path="/utility/water/details/:id"
                   element={<WaterAssetDetailsPage />}
                 />
+                <Route
+                  path="/utility/water/edit/:id"
+                  element={<EditWaterAssetDashboard />}
+                />
 
                 {/* Security/Visitors Routes */}
                 <Route
@@ -1946,6 +1957,12 @@ function App() {
                 <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
                 <Route path="/settings/vas/booking/setup/edit/:id" element={<EditBookingSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
+                <Route path="/settings/role-config/list" element={<RoleConfigList />} />
+                <Route path="/settings/role-config/create" element={<RoleConfigCreate />} />
+                <Route path="/settings/lock-function/list" element={<LockFunctionList />} />
+                <Route path="/settings/lock-function/create" element={<LockFunctionCreate />} />
+                <Route path="/settings/lock-sub-function/list" element={<LockSubFunctionList />} />
+                <Route path="/settings/lock-sub-function/create" element={<LockSubFunctionCreate />} />
               </Route>
 
               {/* Setup Routes - Outside of settings parent route */}

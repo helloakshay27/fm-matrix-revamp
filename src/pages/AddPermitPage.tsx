@@ -68,7 +68,7 @@ export const AddPermitPage = () => {
     department: '',
     unit: '',
     site: 'Lockated',
-    
+
     // Basic Details
     permitFor: '',
     building: '',
@@ -78,7 +78,7 @@ export const AddPermitPage = () => {
     room: '',
     clientSpecific: 'Internal',
     copyTo: '',
-    
+
     // Permit Details
     permitType: '',
     permitDescription: '',
@@ -88,7 +88,7 @@ export const AddPermitPage = () => {
     risks: '',
     vendor: '',
     comment: '',
-    
+
     // Attachments
     attachments: null as File | null
   });
@@ -126,7 +126,7 @@ export const AddPermitPage = () => {
   };
 
   const handleActivityChange = (index: number, field: string, value: string) => {
-    setActivities(prev => prev.map((activity, i) => 
+    setActivities(prev => prev.map((activity, i) =>
       i === index ? { ...activity, [field]: value } : activity
     ));
   };
@@ -222,7 +222,7 @@ export const AddPermitPage = () => {
               variant="outlined"
               sx={fieldStyles}
             />
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
               <FormControl fullWidth variant="outlined">
                 <MuiSelect
@@ -239,7 +239,7 @@ export const AddPermitPage = () => {
                   <MenuItem value="building-c">Building C</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined">
                 <MuiSelect
                   label="Wing"
@@ -254,7 +254,7 @@ export const AddPermitPage = () => {
                   <MenuItem value="wing-2">Wing 2</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined">
                 <MuiSelect
                   label="Area"
@@ -286,7 +286,7 @@ export const AddPermitPage = () => {
                   <MenuItem value="floor-2">Floor 2</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined">
                 <MuiSelect
                   label="Room"
@@ -301,7 +301,7 @@ export const AddPermitPage = () => {
                   <MenuItem value="room-2">Room 2</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <FormControl fullWidth variant="outlined">
                 <MuiSelect
                   label="Copy To"
@@ -404,7 +404,7 @@ export const AddPermitPage = () => {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                   <FormControl fullWidth variant="outlined">
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Activity*</InputLabel>
@@ -422,7 +422,7 @@ export const AddPermitPage = () => {
                       <MenuItem value="repair">Repair</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                  
+
                   <FormControl fullWidth variant="outlined">
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Sub Activity*</InputLabel>
                     <MuiSelect
@@ -439,7 +439,7 @@ export const AddPermitPage = () => {
                       <MenuItem value="hvac">HVAC</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                  
+
                   <FormControl fullWidth variant="outlined">
                     <InputLabel sx={{ color: '#6b7280', '&.Mui-focused': { color: '#C72030' } }}>Category of Hazards*</InputLabel>
                     <MuiSelect
@@ -464,7 +464,7 @@ export const AddPermitPage = () => {
                   onChange={(e) => handleInputChange('risks', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  multiline
+                  multiline 
                   minRows={3}
                   maxRows={6}
                   sx={fieldStyles}

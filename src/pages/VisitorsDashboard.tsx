@@ -320,7 +320,8 @@ export const VisitorsDashboard = () => {
       fetchUnexpectedVisitors();
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
       fetchExpectedVisitors();
-    } else if (visitorSubTab === 'visitor-out') {
+    } 
+    else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
@@ -1020,7 +1021,7 @@ default:
                    renderCell={renderUnexpectedVisitorCell}
                       enableSearch={true}
                       enableSelection={false}
-                      enableExport={true}
+                      // enableExport={true}
                       enablePagination={true}
                       pagination={pagination}
                       onPageChange={fetchUnexpectedVisitors}
@@ -1052,7 +1053,7 @@ default:
                       renderRow={renderExpectedVisitorRow}
                       enableSearch={true}
                       enableSelection={false}
-                      enableExport={true}
+                      // enableExport={true}
                       storageKey="expected-visitors-table"
                       emptyMessage="No expected visitors available"
                       exportFileName="expected-visitors"
@@ -1083,7 +1084,7 @@ default:
                   renderCell={renderVisitorOutCell}
                   enableSearch={true}
                   enableSelection={false}
-                  enableExport={true}
+                  // enableExport={true}
                   enablePagination={true}
                   pagination={visitorsOutPagination}
                   onPageChange={fetchVisitorsOut}
@@ -1094,7 +1095,7 @@ default:
                   searchPlaceholder="Search by visitor name, host, or purpose"
                   hideTableExport={false}
                   hideColumnsButton={false}
-                  onFilterClick={handleFilterOpen}
+                  // onFilterClick={handleFilterOpen}
                   leftActions={
                     <div className="flex gap-3">
                       <Button
@@ -1117,7 +1118,7 @@ default:
                   renderCell={renderVisitorHistoryCell}
                   enableSearch={true}
                   enableSelection={false}
-                  enableExport={true}
+                  // enableExport={true}
                   enablePagination={true}
                   pagination={historyPagination}
                   onPageChange={fetchVisitorHistory}
@@ -1128,7 +1129,7 @@ default:
                   searchPlaceholder="Search by visitor name, host, or pass number"
                   hideTableExport={false}
                   hideColumnsButton={false}
-                  onFilterClick={handleFilterOpen}
+                  // onFilterClick={handleFilterOpen}
                   leftActions={
                     <div className="flex gap-3">
                       <Button

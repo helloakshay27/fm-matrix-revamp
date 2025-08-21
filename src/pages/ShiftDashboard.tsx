@@ -188,13 +188,13 @@ export const ShiftDashboard = () => {
   const [perPage, setPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [shiftData, setShiftData] = useState<ShiftItem[]>(mockShiftData);
+  const [shiftData, setShiftData] = useState<ShiftItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current_page: 1,
     per_page: 10,
     total_pages: 1,
-    total_count: mockShiftData.length,
+    total_count: 0,
     has_next_page: false,
     has_prev_page: false
   });
@@ -203,24 +203,38 @@ export const ShiftDashboard = () => {
   const fetchShiftData = async (page = 1, per_page = 10, search = '') => {
     setLoading(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Filter data based on search term
-      let filteredData = mockShiftData;
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch shift data');
+      const data = await response.json();
+      const apiShifts = Array.isArray(data.user_shifts) ? data.user_shifts : [];
+      // Optionally filter by search
+      let filteredData = apiShifts;
       if (search.trim()) {
-        filteredData = mockShiftData.filter(item =>
-          item.timing.toLowerCase().includes(search.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(search.toLowerCase()) ||
-          item.createdOn.includes(search)
+        filteredData = apiShifts.filter(item =>
+          (item.timings || '').toLowerCase().includes(search.toLowerCase()) ||
+          (item.created_by?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+          (item.created_at || '').includes(search)
         );
       }
-
       // Paginate data
       const startIndex = (page - 1) * per_page;
       const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-
-      setShiftData(paginatedData);
+      setShiftData(paginatedData.map((item: any) => ({
+        id: item.id,
+        timing: item.timings,
+        totalHours: item.total_hour,
+        checkInMargin: item.check_in_margin,
+        createdOn: item.created_at,
+        createdBy: item.created_by?.name || '-',
+        active: true
+      })));
       setPagination({
         current_page: page,
         per_page: per_page,
@@ -420,6 +434,8 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
   const [toHour, setToHour] = useState('12');
   const [toMinute, setToMinute] = useState('00');
   const [checkInMargin, setCheckInMargin] = useState(false);
+  const [hourMargin, setHourMargin] = useState('00');
+  const [minMargin, setMinMargin] = useState('00');
 
   if (!isOpen) return null;
 
@@ -443,30 +459,34 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
     );
   });
 
-  const handleCreate = () => {
-    const fromTime = `${fromHour}:${fromMinute}`;
-    const toTime = `${toHour}:${toMinute}`;
-    
-    // Calculate total hours (basic calculation)
-    const fromTotalMinutes = parseInt(fromHour) * 60 + parseInt(fromMinute);
-    const toTotalMinutes = parseInt(toHour) * 60 + parseInt(toMinute);
-    let totalMinutes = toTotalMinutes - fromTotalMinutes;
-    
-    // Handle overnight shifts
-    if (totalMinutes < 0) {
-      totalMinutes += 24 * 60;
+  const handleCreate = async () => {
+    // Build API payload
+    const payload = {
+      user_shift: {
+        start_hour: fromHour,
+        start_min: fromMinute,
+        end_hour: toHour,
+        end_min: toMinute,
+        hour_margin: checkInMargin ? hourMargin : '00',
+        min_margin: checkInMargin ? minMargin : '00'
+      },
+      check_in_margin: checkInMargin
+    };
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!response.ok) throw new Error('Failed to create shift');
+      toast.success('Shift created successfully!');
+      onSuccess();
+    } catch (error: any) {
+      toast.error('Failed to create shift');
     }
-    
-    const totalHours = Math.round(totalMinutes / 60);
-    
-    console.log('Creating shift:', {
-      timing: `${fromTime} to ${toTime}`,
-      totalHours,
-      checkInMargin
-    });
-    
-    toast.success('Shift created successfully!');
-    onSuccess();
   };
 
   return (
@@ -539,6 +559,30 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
               />
               <span className="text-sm text-gray-700">Check In Margin</span>
             </label>
+            {checkInMargin && (
+              <div className="flex gap-2 mt-2">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Hour Margin</label>
+                  <select
+                    value={hourMargin}
+                    onChange={e => setHourMargin(e.target.value)}
+                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                  >
+                    {hourOptions}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Minute Margin</label>
+                  <select
+                    value={minMargin}
+                    onChange={e => setMinMargin(e.target.value)}
+                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                  >
+                    {minuteOptions}
+                  </select>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

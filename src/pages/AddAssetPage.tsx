@@ -541,6 +541,7 @@ const AddAssetPage = () => {
     indiv_group: "",
     similar_product_type: "",
     selected_asset_id: "",
+    selected_asset_ids: [],
     selected_group_id: "",
     selected_sub_group_id: "",
     allocation_type: "department",
@@ -3129,11 +3130,32 @@ const AddAssetPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.indiv_group,
+        indiv_group: formData.depreciation_applicable_for === "similar_product"
+          ? formData.similar_product_type === "individual"
+            ? "individual"
+            : formData.similar_product_type === "group"
+              ? "group"
+              : formData.indiv_group
+          : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
-        // Array fields
-        asset_ids: formData.asset_ids,
+        // Depreciation similar product fields
+        similar_product_type: formData.similar_product_type,
+        selected_asset_id: formData.selected_asset_id,
+        selected_asset_ids: formData.selected_asset_ids,
+        // Include group_id and sub_group_id when asset group is selected for depreciation
+        ...(formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "group" && {
+          group_id: formData.selected_group_id,
+          sub_group_id: formData.selected_sub_group_id,
+        }),
+
+        // Array fields - include selected asset IDs when individual asset is selected for depreciation
+        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "individual" &&
+          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
+          ? formData.selected_asset_ids
+          : formData.asset_ids,
 
         // Single allocation field
         allocation_id: formData.allocation_id,
@@ -3628,11 +3650,32 @@ const AddAssetPage = () => {
 
         // Other fields
         depreciation_applicable_for: formData.depreciation_applicable_for,
-        indiv_group: formData.indiv_group,
+        indiv_group: formData.depreciation_applicable_for === "similar_product"
+          ? formData.similar_product_type === "individual"
+            ? "individual"
+            : formData.similar_product_type === "group"
+              ? "group"
+              : formData.indiv_group
+          : formData.indiv_group,
         allocation_type: formData.allocation_type,
 
-        // Array fields
-        asset_ids: formData.asset_ids,
+        // Depreciation similar product fields
+        similar_product_type: formData.similar_product_type,
+        selected_asset_id: formData.selected_asset_id,
+        selected_asset_ids: formData.selected_asset_ids,
+        // Include group_id and sub_group_id when asset group is selected for depreciation
+        ...(formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "group" && {
+          group_id: formData.selected_group_id,
+          sub_group_id: formData.selected_sub_group_id,
+        }),
+
+        // Array fields - include selected asset IDs when individual asset is selected for depreciation
+        asset_ids: formData.depreciation_applicable_for === "similar_product" &&
+          formData.similar_product_type === "individual" &&
+          formData.selected_asset_ids && formData.selected_asset_ids.length > 0
+          ? formData.selected_asset_ids
+          : formData.asset_ids,
 
         // Single allocation field
         allocation_id: formData.allocation_id,
@@ -10782,14 +10825,19 @@ const AddAssetPage = () => {
                             {formData.similar_product_type === "individual" && (
                               <div className="mt-6">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Select Asset{" "}
+                                  Select Assets{" "}
                                   <span className="text-red-500">*</span>
                                 </label>
                                 <Select
-                                  value={formData.selected_asset_id || ""}
-                                  onValueChange={(value) =>
-                                    handleFieldChange("selected_asset_id", value)
-                                  }
+                                  value=""
+                                  onValueChange={(value) => {
+                                    // Handle multiple selection
+                                    const currentAssets = formData.selected_asset_ids || [];
+                                    if (!currentAssets.includes(value)) {
+                                      const newAssets = [...currentAssets, value];
+                                      handleFieldChange("selected_asset_ids", newAssets);
+                                    }
+                                  }}
                                   disabled={!depreciationToggle || assetsLoading}
                                 >
                                   <SelectTrigger className="w-full h-[45px] bg-white">
@@ -10797,7 +10845,7 @@ const AddAssetPage = () => {
                                       placeholder={
                                         assetsLoading
                                           ? "Loading assets..."
-                                          : "Select an asset"
+                                          : "Select assets"
                                       }
                                     />
                                   </SelectTrigger>
@@ -10812,6 +10860,35 @@ const AddAssetPage = () => {
                                     ))}
                                   </SelectContent>
                                 </Select>
+
+                                {/* Display selected assets */}
+                                {formData.selected_asset_ids && formData.selected_asset_ids.length > 0 && (
+                                  <div className="mt-3">
+                                    <div className="flex flex-wrap gap-2">
+                                      {formData.selected_asset_ids.map((assetId) => {
+                                        const asset = assets.find(a => a.id.toString() === assetId);
+                                        return asset ? (
+                                          <div
+                                            key={assetId}
+                                            className="inline-flex items-center bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full"
+                                          >
+                                            {asset.name}
+                                            <button
+                                              type="button"
+                                              className="ml-2 text-blue-600 hover:text-blue-800"
+                                              onClick={() => {
+                                                const newAssets = formData.selected_asset_ids.filter(id => id !== assetId);
+                                                handleFieldChange("selected_asset_ids", newAssets);
+                                              }}
+                                            >
+                                              ×
+                                            </button>
+                                          </div>
+                                        ) : null;
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             )}
 
