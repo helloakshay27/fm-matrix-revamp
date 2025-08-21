@@ -149,29 +149,34 @@ export const EditCrmCustomerPage = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Color Code</label>
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0"
-                    style={{ backgroundColor: formData.colorCode }}
-                    onClick={() => {
-                      const input = document.createElement('input');
-                      input.type = 'color';
-                      input.value = formData.colorCode;
-                      input.onchange = (e) => handleInputChange('colorCode', (e.target as HTMLInputElement).value);
-                      input.click();
-                    }}
-                  />
-                  <TextField
-                    variant="outlined"
-                    size="small"
-                    value={formData.colorCode}
-                    onChange={(e) => handleInputChange('colorCode', e.target.value)}
-                    sx={{ 
-                      flex: 1,
-                      '& .MuiOutlinedInput-root': { borderRadius: '8px' }
-                    }}
-                  />
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">Color Code</label>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0"
+                      style={{ backgroundColor: formData.colorCode }}
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'color';
+                        input.value = formData.colorCode;
+                        input.onchange = (e) => handleInputChange('colorCode', (e.target as HTMLInputElement).value);
+                        input.click();
+                      }}
+                    />
+                    <TextField
+                      variant="outlined"
+                      size="small"
+                      value={formData.colorCode}
+                      onChange={(e) => handleInputChange('colorCode', e.target.value)}
+                      sx={{ 
+                        flex: 1,
+                        '& .MuiOutlinedInput-root': { 
+                          borderRadius: '8px',
+                          height: '40px' 
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
