@@ -710,16 +710,16 @@ export const Sidebar = () => {
     return isActive;
   };
 
-  // Auto-expand functionality for Settings section
+  // Auto-expand functionality for all sections
   React.useEffect(() => {
     // Determine which items to expand based on current route
-    if (currentSection === 'Settings') {
-      const path = location.pathname;
-      const settingsItems = modulesByPackage['Settings'];
-      const itemsToExpand = [];
+    const path = location.pathname;
+    const currentSectionItems = modulesByPackage[currentSection];
+    const itemsToExpand = [];
 
+    if (currentSectionItems) {
       // Find the active item and its parent
-      settingsItems.forEach(item => {
+      currentSectionItems.forEach(item => {
         if (item.href && path.startsWith(item.href)) {
           itemsToExpand.push(item.name);
         }
@@ -737,6 +737,14 @@ export const Sidebar = () => {
                   }
                 });
               }
+            } else if ((subItem as any).subItems) {
+              // Check nested items for parking management and other nested structures
+              (subItem as any).subItems.forEach((nestedItem: any) => {
+                if (nestedItem.href && path.startsWith(nestedItem.href)) {
+                  itemsToExpand.push(item.name); // Add top parent (Value Added Services)
+                  itemsToExpand.push(subItem.name); // Add middle parent (Parking Management)
+                }
+              });
             }
           });
         }
