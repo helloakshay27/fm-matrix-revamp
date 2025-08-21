@@ -179,17 +179,18 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
               checked={isInUse}
               onCheckedChange={handleToggle}
             />
-            <Button
-              onClick={() => setShowAssetStatusModal(true)}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2"
-            >
-              Update Status
-            </Button>
+            
           </div>
         </div>
 
         {/* Body */}
         <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] " >
+          <Button
+              onClick={() => setShowAssetStatusModal(true)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white text-sm px-4 py-2 m-4"
+            >
+              + Cost
+            </Button>
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">

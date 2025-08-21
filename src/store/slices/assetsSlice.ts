@@ -22,7 +22,13 @@ export interface Asset {
   purchase_cost?: number;
   current_book_value?: number;
   pms_floor?: { id: number; name: string } | null;
-  // Add other asset properties as needed
+  // Custom fields structure from API
+  custom_fields?: Record<string, {
+    field_name: string;
+    field_value: any;
+  }>;
+  // Allow any additional custom fields
+  [key: string]: any;
 }
 
 export interface AssetFilters {
@@ -52,6 +58,7 @@ interface AssetsState {
   // Backward compatibility for existing code
   data: Asset[]
   totalValue?: number
+  available_custom_fields?: Array<{ key: string; title: string }>
 }
 
 const initialState: AssetsState = {
@@ -64,6 +71,7 @@ const initialState: AssetsState = {
   filters: {},
   data: [] ,
   totalValue: 0,
+  available_custom_fields: [],
 }
 
 // Async thunk for fetching assets data with filters
@@ -90,7 +98,9 @@ export const fetchAssetsData = createAsyncThunk(
     if (filters.breakdown_eq !== undefined) queryParams.append('q[breakdown_eq]', filters.breakdown_eq.toString())
     if (filters.it_asset_eq !== undefined) queryParams.append('q[it_asset_eq]', filters.it_asset_eq.toString())
 
-    const response = await apiClient.get(`/pms/assets.json?${queryParams}`)
+    // Use the same endpoint that includes custom fields
+    const response = await apiClient.get(`/pms/assets.json/?${queryParams}`)
+    console.log('Assets API response:', response.data);
     return { ...response.data, appliedFilters: filters }
   }
 )
@@ -126,6 +136,7 @@ const assetsSlice = createSlice({
         state.currentPage = action.payload.pagination?.current_page || 1
         state.totalPages = action.payload.pagination?.total_pages || 0
         state.totalValue = action.payload.total_value || 0
+        state.available_custom_fields = action.payload.available_custom_fields || []
         if (action.payload.appliedFilters) {
           state.filters = action.payload.appliedFilters
         }

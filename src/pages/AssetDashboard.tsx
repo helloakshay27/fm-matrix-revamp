@@ -153,6 +153,7 @@ export const AssetDashboard = () => {
     totalPages,
     filters,
     totalValue,
+    available_custom_fields: reduxCustomFields,
   } = useSelector((state: RootState) => state.assets);
 
   console.log(assets);
@@ -165,6 +166,14 @@ export const AssetDashboard = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [uploadType, setUploadType] = useState<"import" | "update">("import");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [availableCustomFields, setAvailableCustomFields] = useState<Array<{ key: string; title: string }>>([
+    // Temporary test data to verify the table works
+    {key: "asset_category", title: "Asset Category"},
+    {key: "asset_number", title: "Asset Number"},
+    {key: "building_type", title: "Building Type"},
+    {key: "location", title: "Location"},
+    {key: "ownership_type", title: "Ownership Type"}
+  ]);
   const [selectedAnalyticsItems, setSelectedAnalyticsItems] = useState<
     string[]
   >([
@@ -334,27 +343,93 @@ export const AssetDashboard = () => {
   // Analytics data is now handled by AssetAnalyticsComponents
   // Removed duplicate useEffect hooks to prevent multiple API calls
 
-  // Transform Redux assets to match the expected Asset interface
-  const transformedAssets = assets.map((asset, index) => ({
-    id: asset.id?.toString() || "",
-    name: asset.name || "",
-    serialNumber: (pagination.currentPage - 1) * 15 + index + 1,
-    assetNumber: asset.asset_number || "",
-    status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
-    siteName: asset.site_name || "",
-    building: asset.building || null,
-    wing: asset.wing || null,
-    area: asset.area || null,
-    pmsRoom: asset.pms_room || null,
-    assetGroup: asset.pms_asset_group || asset.asset_group || "",
-    assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
-    assetType: asset.asset_type,
-    purchaseCost: asset.purchase_cost,
-    currentBookValue: asset.current_book_value,
-    floor: asset.pms_floor || null,
-    category: asset.asset_type_category || "N/A",
+  // Update available custom fields when Redux data changes
+  useEffect(() => {
+    if (reduxCustomFields && Array.isArray(reduxCustomFields) && reduxCustomFields.length > 0) {
+      console.log('Setting custom fields from Redux:', reduxCustomFields);
+      setAvailableCustomFields(reduxCustomFields);
+    }
+  }, [reduxCustomFields]);
 
-  }));
+  // Transform Redux assets to match the expected Asset interface
+  console.log('Raw assets from Redux:', assets.slice(0, 1)); // Log first asset
+  console.log('Available custom fields:', availableCustomFields);
+  
+  const transformedAssets = assets.map((asset, index) => {
+    // Log the first asset to see its structure
+    if (index === 0) {
+      console.log('First asset structure:', asset);
+      console.log('Asset custom_fields:', asset.custom_fields);
+      console.log('Available custom fields for processing:', availableCustomFields);
+      console.log('Custom field extraction results:', 
+        availableCustomFields.map(field => {
+          let value = "";
+          if (asset.custom_fields && asset.custom_fields[field.key]) {
+            const customFieldObj = asset.custom_fields[field.key];
+            value = customFieldObj.field_value !== null && customFieldObj.field_value !== undefined 
+              ? customFieldObj.field_value 
+              : "";
+          }
+          return { 
+            key: field.key, 
+            title: field.title,
+            value: value,
+            rawCustomField: asset.custom_fields?.[field.key]
+          };
+        })
+      );
+    }
+    
+    return {
+      id: asset.id?.toString() || "",
+      name: asset.name || "",
+      serialNumber: (pagination.currentPage - 1) * 15 + index + 1,
+      assetNumber: asset.asset_number || "",
+      status: asset.status as "in_use" | "in_storage" | "breakdown" | "disposed",
+      siteName: asset.site_name || "",
+      building: asset.building || null,
+      wing: asset.wing || null,
+      area: asset.area || null,
+      pmsRoom: asset.pms_room || null,
+      assetGroup: asset.pms_asset_group || asset.asset_group || "",
+      assetSubGroup: asset.sub_group || asset.asset_sub_group || "",
+      assetType: asset.asset_type,
+      purchaseCost: asset.purchase_cost,
+      currentBookValue: asset.current_book_value,
+      floor: asset.pms_floor || null,
+      category: asset.asset_type_category || "",
+      // Additional required fields
+      purchased_on: asset.purchased_on,
+      supplier_name: asset.supplier_name,
+      purchase_cost: asset.purchase_cost,
+      allocation_type: asset.allocation_type,
+      useful_life: asset.useful_life,
+      depreciation_method: asset.depreciation_method,
+      accumulated_depreciation: asset.accumulated_depreciation,
+      current_book_value: asset.current_book_value,
+      disposal_date: asset.disposal_date,
+      model_number: asset.model_number,
+      manufacturer: asset.manufacturer,
+      critical: asset.critical,
+      commisioning_date: asset.commisioning_date,
+      warranty: asset.warranty,
+      amc: asset.amc,
+      // Include all custom fields dynamically
+      ...availableCustomFields.reduce((acc, field) => {
+        // Handle custom_fields structure: {field_name: "...", field_value: "..."}
+        if (asset.custom_fields && asset.custom_fields[field.key]) {
+          const customFieldObj = asset.custom_fields[field.key];
+          acc[field.key] = customFieldObj.field_value !== null && customFieldObj.field_value !== undefined 
+            ? customFieldObj.field_value 
+            : "";
+        } else {
+          // Fallback to direct property access
+          acc[field.key] = asset[field.key] || "";
+        }
+        return acc;
+      }, {} as Record<string, any>),
+    };
+  });
 
   const transformedSearchedAssets = searchAssets.map((asset, index) => ({
     id: asset.id?.toString() || "",
@@ -371,7 +446,37 @@ export const AssetDashboard = () => {
     assetSubGroup: asset.assetSubGroup || "",
     assetType: asset.assetType,
     floor: null, // Search results don't include floor data
-    category: asset.asset_type_category || "N/A",
+    category: asset.asset_type_category || "",
+    // Additional required fields for search results
+    purchased_on: asset.purchased_on,
+    supplier_name: asset.supplier_name,
+    purchase_cost: asset.purchase_cost,
+    allocation_type: asset.allocation_type,
+    useful_life: asset.useful_life,
+    depreciation_method: asset.depreciation_method,
+    accumulated_depreciation: asset.accumulated_depreciation,
+    current_book_value: asset.current_book_value,
+    disposal_date: asset.disposal_date,
+    model_number: asset.model_number,
+    manufacturer: asset.manufacturer,
+    critical: asset.critical,
+    commisioning_date: asset.commisioning_date,
+    warranty: asset.warranty,
+    amc: asset.amc,
+    // Include all custom fields dynamically for search results too
+    ...availableCustomFields.reduce((acc, field) => {
+      // Handle custom_fields structure: {field_name: "...", field_value: "..."}
+      if (asset.custom_fields && asset.custom_fields[field.key]) {
+        const customFieldObj = asset.custom_fields[field.key];
+        acc[field.key] = customFieldObj.field_value !== null && customFieldObj.field_value !== undefined 
+          ? customFieldObj.field_value 
+          : "";
+      } else {
+        // Fallback to direct property access
+        acc[field.key] = asset[field.key] || "";
+      }
+      return acc;
+    }, {} as Record<string, any>),
   }));
 
   // Use search results if search term exists, otherwise use Redux assets
@@ -814,6 +919,7 @@ export const AssetDashboard = () => {
                   onRefreshData={handleRefresh}
                   handleAddSchedule={handleAddSchedule}
                   loading={loading}
+                  availableCustomFields={availableCustomFields}
                 />
 
                 {/* Empty state when no data and filters are applied */}

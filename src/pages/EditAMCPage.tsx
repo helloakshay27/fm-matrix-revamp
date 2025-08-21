@@ -378,10 +378,6 @@ useEffect(() => {
         newErrors.supplier = 'Please select a supplier.';
         isValid = false;
       }
-      if (formData.details === 'Service' && !formData.service) {
-        newErrors.service = 'Please select a service.';
-        isValid = false;
-      }
     }
 
     if (!formData.startDate) {
@@ -571,31 +567,7 @@ useEffect(() => {
       sm: 36,
       md: 45
     },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: {
-        xs: '8px',
-        sm: '10px',
-        md: '12px'
-      }
-    }
   };
-
-  if (amcLoading) {
-    return (
-      <div className="p-6">
-        <div className="mb-6">
-          <Button variant="ghost" onClick={() => navigate(`/maintenance/amc/details/${id}`)} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            AMC {'>'} AMC List {'>'} Edit AMC
-          </Button>
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT AMC - {id}</h1>
-        </div>
-        <div className="flex justify-center items-center py-12">
-          <div className="text-lg">Loading AMC data...</div>
-        </div>
-      </div>
-    );
-  }
 
   if (amcError) {
     return (
@@ -892,41 +864,7 @@ useEffect(() => {
                     </FormControl>
                   </div>
 
-                  {formData.details === 'Service' && (
-                    <div>
-                      <FormControl fullWidth variant="outlined" error={!!errors.service}>
-                        <InputLabel id="service-select-label" shrink>
-                          Service <span style={{ color: '#C72030' }}>*</span>
-                        </InputLabel>
-                        <MuiSelect
-                          labelId="service-select-label"
-                          label="Service"
-                          displayEmpty
-                          value={formData.service} // Use formData.service instead of assetName
-                          onChange={e => handleInputChange('service', e.target.value)} // Update service key
-                          sx={fieldStyles}
-                          disabled={loading || servicesLoading || updateLoading}
-                          renderValue={(selected) => {
-                            if (!selected) {
-                              return <em>Select a Service...</em>;
-                            }
-                            const service = services.find(s => s.id.toString() === selected);
-                            return service ? service.service_name : selected;
-                          }}
-                        >
-                          <MenuItem value=""><em>Select a Service...</em></MenuItem>
-                          {Array.isArray(services) && services.map((service) => (
-                            <MenuItem key={service.id} value={service.id.toString()}>
-                              {service.service_name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                        {errors.service && <FormHelperText>{errors.service}</FormHelperText>}
-                      </FormControl>
-
-
-                    </div>
-                  )}
+                  {/* Service field removed for Group type as per requirement */}
 
                   <div>
                     <FormControl fullWidth variant="outlined" error={!!errors.supplier}>

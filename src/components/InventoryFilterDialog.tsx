@@ -104,15 +104,21 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
   };
 
   const handleReset = () => {
-    setFilters({
+    const empty = {
       name: '',
       code: '',
       category: '',
       criticality: '',
       groupId: '',
       subGroupId: '',
-    });
+    };
+    // Clear local state
+    setFilters(empty);
     setSubGroups([]);
+    // Propagate empty filters to parent so table resets
+    onApply(empty);
+    // Close dialog after reset
+    onOpenChange(false);
   };
 
   const handleChange = (field: string) => (event: SelectChangeEvent<string>) => {

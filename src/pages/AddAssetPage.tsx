@@ -1726,6 +1726,14 @@ const AddAssetPage = () => {
     let extraFields = [];
     console.log("Building extra fields attributes...", customFields);
 
+    // Helper function to check if a value is empty
+    const isEmpty = (value) => {
+      if (value === null || value === undefined) return true;
+      if (typeof value === 'string' && value.trim() === '') return true;
+      if (Array.isArray(value) && value.length === 0) return true;
+      return false;
+    };
+
     // Helper function to format dates properly
     const formatDateValue = (value, fieldType) => {
       if (fieldType === "date" && value) {
@@ -1742,11 +1750,12 @@ const AddAssetPage = () => {
       return value;
     };
 
-    // Custom fields - only include fields with values
+    // Custom fields - only include fields with non-empty values
     Object.keys(customFields).forEach((sectionKey) => {
       (customFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a value (not empty, null, or undefined)
-        if (field.value && field.value.toString().trim() !== "") {
+        // Only add field if it has a non-empty value
+        if (!isEmpty(field.value)) {
+          console.log(`Including custom field: ${field.name} = ${field.value}`);
           extraFields.push({
             field_name: field.name,
             field_value: field.value,
@@ -1754,15 +1763,18 @@ const AddAssetPage = () => {
             field_description: field.name,
             _destroy: false,
           });
+        } else {
+          console.log(`Skipping empty custom field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
-    // IT Assets custom fields - only include fields with values
+    // IT Assets custom fields - only include fields with non-empty values
     Object.keys(itAssetsCustomFields).forEach((sectionKey) => {
       (itAssetsCustomFields[sectionKey] || []).forEach((field) => {
-        // Only add field if it has a value (not empty, null, or undefined)
-        if (field.value && field.value.toString().trim() !== "") {
+        // Only add field if it has a non-empty value
+        if (!isEmpty(field.value)) {
+          console.log(`Including IT assets field: ${field.name} = ${field.value}`);
           extraFields.push({
             field_name: field.name,
             field_value: field.value,
@@ -1770,17 +1782,16 @@ const AddAssetPage = () => {
             field_description: field.name,
             _destroy: false,
           });
+        } else {
+          console.log(`Skipping empty IT assets field: ${field.name} (value: ${field.value})`);
         }
       });
     });
 
     // Standard extra fields (dynamic) - with proper date formatting
     Object.entries(extraFormFields).forEach(([key, fieldObj]) => {
-      if (
-        fieldObj?.value !== undefined &&
-        fieldObj?.value !== "" &&
-        fieldObj?.value !== null
-      ) {
+      if (!isEmpty(fieldObj?.value)) {
+        console.log(`Including standard field: ${key} = ${fieldObj.value}`);
         // Format date values properly
         let processedValue = formatDateValue(
           fieldObj.value,
@@ -1794,9 +1805,12 @@ const AddAssetPage = () => {
           field_description: fieldObj.fieldDescription,
           _destroy: false,
         });
+      } else {
+        console.log(`Skipping empty standard field: ${key} (value: ${fieldObj?.value})`);
       }
     });
 
+    console.log("Final extra fields to send:", extraFields);
     return extraFields;
   };
 

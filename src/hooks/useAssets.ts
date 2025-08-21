@@ -17,6 +17,8 @@ export interface Asset {
   assetSubGroup: string;
   assetType?: boolean;
   category?: string;
+  // Allow any additional custom fields
+  [key: string]: any;
 }
 
 export interface AssetResponse {
