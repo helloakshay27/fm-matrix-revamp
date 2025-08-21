@@ -181,6 +181,7 @@ export const InventoryDashboard = () => {
   endDate: new Date(2025, 7, 15), // 15 August 2025
   });
   const [inventory, setInventory] = useState([]);
+  const [downloadingQR, setDownloadingQR] = useState(false);
 
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -721,6 +722,15 @@ export const InventoryDashboard = () => {
       >
         <Plus className="w-4 h-4" /> Action
       </Button>
+      {selectedItems.length > 0 && (
+        <Button
+          onClick={() => handlePrintQR()}
+          disabled={downloadingQR}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {downloadingQR ? 'Printing QR…' : 'Print QR'} ({selectedItems.length})
+        </Button>
+      )}
     </div>
   );
 
@@ -768,6 +778,40 @@ export const InventoryDashboard = () => {
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export inventory data');
+    }
+  };
+
+  // Bulk / single QR code PDF download similar to ServiceDashboard pattern
+  const handlePrintQR = async () => {
+    if (selectedItems.length === 0 || downloadingQR) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      toast.error('Missing base URL or token');
+      return;
+    }
+    try {
+      setDownloadingQR(true);
+      // API (single existing pattern) used inventory_ids=[id]; extend for multiple by comma joining
+      const idsParam = selectedItems.join(',');
+      const url = `https://${baseUrl}/pms/inventories/inventory_qr_codes.pdf?inventory_ids=[${idsParam}]`;
+      const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!resp.ok) throw new Error('Failed to generate QR PDF');
+      const blob = await resp.blob();
+      const dlUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = dlUrl;
+      link.download = selectedItems.length === 1 ? `inventory-qr-${selectedItems[0]}.pdf` : `inventory-qr-bulk-${selectedItems.length}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(dlUrl);
+      toast.success('QR code PDF downloaded');
+    } catch (e:any) {
+      console.error('QR download error', e);
+      toast.error(e.message || 'Failed to download QR codes');
+    } finally {
+      setDownloadingQR(false);
     }
   };
 
