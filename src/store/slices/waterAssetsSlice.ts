@@ -104,18 +104,9 @@ export const fetchWaterAssetsData = createAsyncThunk(
     if (filters.floor) queryParams.append('q[pms_floor_id_eq]', filters.floor)
     if (filters.room) queryParams.append('q[pms_room_id_eq]', filters.room)
 
-    // Fetch water assets (filter by water-related meter types or asset types)
-    // You can adjust this filter based on your actual data structure
-    // Common water asset indicators: meter type contains 'water', 'fresh', 'distribution', etc.
-    const waterKeywords = ['water', 'fresh', 'borewell', 'tanker', 'municipal', 'rainwater'];
-    const hasWaterFilter = waterKeywords.some(keyword => 
-      JSON.stringify(filters).toLowerCase().includes(keyword.toLowerCase())
-    );
-    
-    // Add water-specific filter if no other water-related filter is already applied
-    if (!hasWaterFilter) {
-      queryParams.append('q[meter_type_or_asset_type_or_name_cont]', 'water');
-    }
+    // Fetch water assets by type
+    // Use proper type parameter instead of text-based filtering
+    queryParams.append('type', 'Water');
     
     const response = await apiClient.get(`/pms/assets.json?${queryParams}`)
     

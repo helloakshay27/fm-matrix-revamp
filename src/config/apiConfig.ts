@@ -168,6 +168,9 @@ export const API_CONFIG = {
     PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details.json',
     // Update parking slot details endpoint (append /{id}.json)
     UPDATE_PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details',
+    // Permit tags endpoint
+    PERMIT_TAGS: '/pms/permit_tags.json',
+
     
   },
 } as const
