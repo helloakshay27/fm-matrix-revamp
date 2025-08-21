@@ -204,17 +204,7 @@ import { StaffDetailsPage } from "./pages/StaffDetailsPage";
 // Import Edit Staff page
 import { EditStaffPage } from "./pages/EditStaffPage";
 
-// Import Value Added Services pages
-import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
-import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
-import { ProductSetupDetailPage } from "./pages/ProductSetupDetailPage";
-import { ProductEditPage } from "./pages/ProductEditPage";
-import { RestaurantOrderDetailPage } from "./pages/RestaurantOrderDetailPage";
-import { FnBDiscountsPage } from "./pages/FnBDiscountsPage";
-import { AddRestaurantPage } from "./pages/AddRestaurantPage";
-import ParkingDashboard from "./pages/ParkingDashboard";
-import ParkingDetailsPage from "./pages/ParkingDetailsPage";
-import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
+
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
 import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
