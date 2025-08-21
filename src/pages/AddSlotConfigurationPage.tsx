@@ -128,7 +128,7 @@ export const AddSlotConfigurationPage = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="absolute top-0.5 right-0.5 w-5 h-5 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[10px] flex items-center justify-center border-0"
+                          className="absolute -top-2 -right-2 w-5 h-5 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[10px] flex items-center justify-center border-0 z-10"
                           onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
                         >
                           ×
