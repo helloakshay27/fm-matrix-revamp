@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
 import { ChevronLeft, Calendar, Trash2, Settings } from 'lucide-react';
 import { TextField } from '@mui/material';
 
@@ -84,30 +83,37 @@ export const EditCrmCustomerPage = () => {
           {/* First Row */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Customer Name<span className="text-red-500">*</span>
-              </label>
-              <Input
+              <TextField
+                label="Customer Name*"
+                variant="outlined"
+                fullWidth
+                size="small"
                 value={formData.customerName}
                 onChange={(e) => handleInputChange('customerName', e.target.value)}
-                className="w-full"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-              <Input
+              <TextField
+                label="Email"
+                variant="outlined"
+                fullWidth
+                size="small"
                 type="email"
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
-                className="w-full"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mobile</label>
-              <Input
+              <TextField
+                label="Mobile"
+                variant="outlined"
+                fullWidth
+                size="small"
                 value={formData.mobile}
                 onChange={(e) => handleInputChange('mobile', e.target.value)}
-                className="w-full"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
             </div>
             <div>
@@ -124,10 +130,15 @@ export const EditCrmCustomerPage = () => {
                     input.click();
                   }}
                 />
-                <Input
+                <TextField
+                  variant="outlined"
+                  size="small"
                   value={formData.colorCode}
                   onChange={(e) => handleInputChange('colorCode', e.target.value)}
-                  className="flex-1"
+                  sx={{ 
+                    flex: 1,
+                    '& .MuiOutlinedInput-root': { borderRadius: '6px' }
+                  }}
                 />
               </div>
             </div>
@@ -136,12 +147,15 @@ export const EditCrmCustomerPage = () => {
           {/* Second Row */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">SSID</label>
-              <Input
+              <TextField
+                label="SSID"
+                variant="outlined"
+                fullWidth
+                size="small"
                 placeholder="Enter SS"
                 value={formData.ssid}
                 onChange={(e) => handleInputChange('ssid', e.target.value)}
-                className="w-full"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
             </div>
           </div>
@@ -149,38 +163,41 @@ export const EditCrmCustomerPage = () => {
           {/* Third Row - Lease Details */}
           <div className="grid grid-cols-4 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Lease Start Date<span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={formData.leaseStartDate}
-                  onChange={(e) => handleInputChange('leaseStartDate', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+              <TextField
+                label="Lease Start Date*"
+                variant="outlined"
+                fullWidth
+                size="small"
+                type="date"
+                value={formData.leaseStartDate}
+                onChange={(e) => handleInputChange('leaseStartDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Lease End Date</label>
-              <div className="relative">
-                <Input
-                  type="date"
-                  value={formData.leaseEndDate}
-                  onChange={(e) => handleInputChange('leaseEndDate', e.target.value)}
-                  className="w-full"
-                />
-              </div>
+              <TextField
+                label="Lease End Date"
+                variant="outlined"
+                fullWidth
+                size="small"
+                type="date"
+                value={formData.leaseEndDate}
+                onChange={(e) => handleInputChange('leaseEndDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Free Parking<span className="text-red-500">*</span>
-              </label>
-              <Input
+              <TextField
+                label="Free Parking*"
+                variant="outlined"
+                fullWidth
+                size="small"
                 type="number"
                 value={formData.freeParking}
                 onChange={(e) => handleInputChange('freeParking', e.target.value)}
-                className="w-full"
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: '6px' } }}
               />
             </div>
           </div>
@@ -190,11 +207,16 @@ export const EditCrmCustomerPage = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Paid Parking</label>
               <div className="flex items-center gap-2">
-                <Input
+                <TextField
+                  variant="outlined"
+                  size="small"
                   type="number"
                   value={formData.paidParking}
                   onChange={(e) => handleInputChange('paidParking', e.target.value)}
-                  className="flex-1"
+                  sx={{ 
+                    flex: 1,
+                    '& .MuiOutlinedInput-root': { borderRadius: '6px' }
+                  }}
                 />
                 <Button
                   variant="destructive"
