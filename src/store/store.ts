@@ -22,6 +22,7 @@ import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSe
 import entitiesReducer from './slices/entitiesSlice'
 import facilitySetupsReducer, { fetchActiveFacilitiesReducer, fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
+import { waterAssetsReducer } from './slices/waterAssetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
 import { inventoryReducer } from './slices/inventorySlice'
@@ -78,6 +79,7 @@ export const store = configureStore({
     entities: entitiesReducer,
     facilitySetups: facilitySetupsReducer,
     assets: assetsReducer,
+    waterAssets: waterAssetsReducer,
     suppliers: suppliersReducer,
     amcCreate: amcCreateReducer,
     inventory: inventoryReducer,
