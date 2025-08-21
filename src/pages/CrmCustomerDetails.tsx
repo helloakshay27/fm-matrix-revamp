@@ -2,9 +2,114 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { ArrowLeft, Edit2, X } from 'lucide-react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, IconButton } from '@mui/material';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+
+const leaseColumns: ColumnConfig[] = [
+    {
+        key: 'leaseId',
+        label: 'Lease Id',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'leaseStartDate',
+        label: 'Lease Start Date',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'leaseEndDate',
+        label: 'Lease End Date',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'freeParking',
+        label: 'Free Parking',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'paidParking',
+        label: 'Paid Parking',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    }
+];
+
+const transactionColumns: ColumnConfig[] = [
+    {
+        key: 'transactionId',
+        label: 'Transaction ID',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'bookingId',
+        label: 'Booking Id',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'facilityName',
+        label: 'Facility Name',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'personName',
+        label: 'Person Name',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'transactionDate',
+        label: 'Transaction Date',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'transactionTime',
+        label: 'Transaction Time',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'amount',
+        label: 'Amount',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'transactionType',
+        label: 'Transaction Type',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    },
+    {
+        key: 'ccAvenueId',
+        label: 'Transaction ID (CC Avenue)',
+        sortable: true,
+        draggable: true,
+        defaultVisible: true
+    }
+];
 
 export const CrmCustomerDetails = () => {
     const { id } = useParams();
@@ -41,15 +146,16 @@ export const CrmCustomerDetails = () => {
         customerCode: ''
     };
 
-    const leaseData = {
-        leaseId: '85',
-        leaseStartDate: '2024-07-01',
-        leaseEndDate: '2024-09-29',
-        freeParking: '10',
-        paidParking: '20'
-    };
+    const leaseData = [
+        {
+            leaseId: '85',
+            leaseStartDate: '2024-07-01',
+            leaseEndDate: '2024-09-29',
+            freeParking: '10',
+            paidParking: '20'
+        }
+    ];
 
-    // Sample wallet transactions
     const walletTransactions = [
         {
             transactionId: '1220',
@@ -108,9 +214,31 @@ export const CrmCustomerDetails = () => {
         }
     ];
 
+    const renderTransactionCell = (item, columnKey) => {
+        if (columnKey === 'transactionType') {
+            return (
+                <span
+                    className={`px-2 py-1 rounded text-xs ${item.transactionType === 'Credit'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                        }`}
+                >
+                    {item.transactionType}
+                </span>
+            );
+        }
+        return item[columnKey];
+    };
+
+    const renderCell = (item, columnKey) => {
+        switch (columnKey) {
+            default:
+                return item[columnKey];
+        }
+    }
+
     return (
         <div className="p-6 min-h-screen bg-gray-50">
-            {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <button
                     onClick={() => navigate(-1)}
@@ -128,13 +256,17 @@ export const CrmCustomerDetails = () => {
                     >
                         Top-Up Wallet
                     </Button>
-                    <Button variant="outline" size="sm" className="p-2" onClick={() => navigate(`/crm/customers/edit/${id}`)}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="p-2"
+                        onClick={() => navigate(`/crm/customers/edit/${id}`)}
+                    >
                         <Edit2 className="w-4 h-4" />
                     </Button>
                 </div>
             </div>
 
-            {/* Customer Details */}
             <div className="bg-white rounded-lg p-6 mb-6">
                 <div className="grid grid-cols-2 gap-8">
                     <div className="space-y-4">
@@ -183,75 +315,33 @@ export const CrmCustomerDetails = () => {
                 </div>
             </div>
 
-            {/* Lease Information Table */}
+            {/* Lease Information Table with EnhancedTable */}
             <div className="bg-white rounded-lg p-6 mb-6">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="bg-purple-100">
-                            <TableHead className="font-medium text-gray-700">Lease Id</TableHead>
-                            <TableHead className="font-medium text-gray-700">Lease Start Date</TableHead>
-                            <TableHead className="font-medium text-gray-700">Lease End Date</TableHead>
-                            <TableHead className="font-medium text-gray-700">Free Parking</TableHead>
-                            <TableHead className="font-medium text-gray-700">Paid Parking</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        <TableRow>
-                            <TableCell className="text-sm">{leaseData.leaseId}</TableCell>
-                            <TableCell className="text-sm">{leaseData.leaseStartDate}</TableCell>
-                            <TableCell className="text-sm">{leaseData.leaseEndDate}</TableCell>
-                            <TableCell className="text-sm">{leaseData.freeParking}</TableCell>
-                            <TableCell className="text-sm">{leaseData.paidParking}</TableCell>
-                        </TableRow>
-                    </TableBody>
-                </Table>
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Lease Information</h3>
+                <EnhancedTable
+                    data={leaseData}
+                    columns={leaseColumns}
+                    renderCell={renderCell}
+                    pagination={true}
+                    pageSize={5}
+                    hideColumnsButton={true}
+                    hideTableSearch={true}
+                />
             </div>
 
-            {/* Wallet Transactions */}
             <div className="bg-white rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Transactions</h3>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-gray-100">
-                                <TableHead className="font-medium text-gray-700 text-sm">Transaction ID</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Booking Id</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Facility Name</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Person Name</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Transaction Date</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Transaction Time</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Amount</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Transaction Type</TableHead>
-                                <TableHead className="font-medium text-gray-700 text-sm">Transaction ID (CC Avenue ID)</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {walletTransactions.map((transaction, index) => (
-                                <TableRow key={index} className="hover:bg-gray-50">
-                                    <TableCell className="text-sm">{transaction.transactionId}</TableCell>
-                                    <TableCell className="text-sm">{transaction.bookingId}</TableCell>
-                                    <TableCell className="text-sm">{transaction.facilityName}</TableCell>
-                                    <TableCell className="text-sm">{transaction.personName}</TableCell>
-                                    <TableCell className="text-sm">{transaction.transactionDate}</TableCell>
-                                    <TableCell className="text-sm">{transaction.transactionTime}</TableCell>
-                                    <TableCell className="text-sm">{transaction.amount}</TableCell>
-                                    <TableCell className="text-sm">
-                                        <span className={`px-2 py-1 rounded text-xs ${transaction.transactionType === 'Credit'
-                                            ? 'bg-green-100 text-green-800'
-                                            : 'bg-red-100 text-red-800'
-                                            }`}>
-                                            {transaction.transactionType}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell className="text-sm">{transaction.ccAvenueId}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
+                <EnhancedTable
+                    data={walletTransactions}
+                    columns={transactionColumns}
+                    renderCell={renderTransactionCell}
+                    pagination={true}
+                    pageSize={5}
+                    hideColumnsButton={true}
+                    hideTableSearch={true}
+                />
             </div>
 
-            {/* Top-Up Wallet Dialog */}
             <Dialog
                 open={topUpDialogOpen}
                 onClose={handleTopUpClose}
