@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import { ChevronLeft, Calendar, Trash2, Settings } from 'lucide-react';
 import { TextField, Card, CardContent } from '@mui/material';
 export const EditCrmCustomerPage = () => {
@@ -132,17 +133,25 @@ export const EditCrmCustomerPage = () => {
                 <div className="space-y-2">
                   
                   <div className="flex items-center gap-2">
-                    <div 
-                      className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors" 
-                      style={{ backgroundColor: formData.colorCode }}
-                      onClick={() => {
-                        const input = document.createElement('input');
-                        input.type = 'color';
-                        input.value = formData.colorCode;
-                        input.onchange = (e) => handleInputChange('colorCode', (e.target as HTMLInputElement).value);
-                        input.click();
-                      }}
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <div 
+                          className="w-10 h-10 rounded border border-gray-300 cursor-pointer flex-shrink-0 hover:border-gray-400 transition-colors" 
+                          style={{ backgroundColor: formData.colorCode }}
+                        />
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-3" align="start">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Color Code</label>
+                          <input
+                            type="color"
+                            value={formData.colorCode}
+                            onChange={(e) => handleInputChange('colorCode', e.target.value)}
+                            className="w-full h-10 rounded border border-gray-300 cursor-pointer"
+                          />
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                     <TextField 
                       variant="outlined" 
                       size="small" 
