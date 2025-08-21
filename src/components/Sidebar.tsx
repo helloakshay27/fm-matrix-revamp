@@ -617,7 +617,6 @@ const modulesByPackage = {
         },
         {
           name: 'Parking Management',
-          href: '/settings/vas/parking-management',
           subItems: [
             { name: 'Parking Category', href: '/settings/vas/parking-management/parking-category' },
             { name: 'Slot Configuration', href: '/settings/vas/parking-management/slot-configuration' },
@@ -797,7 +796,10 @@ export const Sidebar = () => {
                           {subItem.subItems.map((nestedItem: any) => (
                              <button
                                key={nestedItem.name}
-                               onClick={() => handleNavigation(nestedItem.href, 'Settings')}
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleNavigation(nestedItem.href, 'Settings');
+                               }}
                                className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
                                  }`}
                              >
