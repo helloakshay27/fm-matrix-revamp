@@ -90,7 +90,7 @@ export const fetchOccupantUsers = createAsyncThunk(
         mobile: `${user.country_code} ${user.mobile}`,
         email: user.email,
         gender: user.gender,
-        department: user.department,
+        department: user.department?.department_name,
         status: user.lock_user_permission.status,
         employeeId: user.lock_user_permission?.employee_id,
         accessLevel: user.lock_user_permission?.access_level,
