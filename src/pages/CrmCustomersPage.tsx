@@ -97,16 +97,14 @@ export const CrmCustomersPage = () => {
     <div className="p-6 min-h-screen bg-gray-50">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-xl font-medium text-gray-800 mb-1">Customer</h1>
-            <h2 className="text-2xl font-semibold text-gray-900">Customer</h2>
-          </div>
-          <Button variant="outline" size="sm" className="p-2 mt-2">
-            <Edit2 className="w-4 h-4" />
-          </Button>
+        <div>
+          <h1 className="text-xl font-medium text-gray-800 mb-1">Customer</h1>
+          <h2 className="text-2xl font-semibold text-gray-900">Customer</h2>
         </div>
         <div className="flex items-center gap-4">
+          <Button variant="outline" size="sm" className="p-2">
+            <Edit2 className="w-4 h-4" />
+          </Button>
           <span className="text-sm text-gray-600">Wallet Balance: 0 Points</span>
           <Button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm">
             Top-Up Wallet
