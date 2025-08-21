@@ -114,7 +114,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
                       <div key={index} className="relative">
@@ -160,7 +160,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.stack }, (_, index) => (
                       <div key={index} className="relative">
@@ -206,7 +206,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
                       <div key={index} className="relative">
@@ -258,7 +258,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-3 gap-2">
                     {Array.from({ length: formData.fourWheeler.nonStack }, (_, index) => (
                       <div key={index} className="relative">
@@ -304,7 +304,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.fourWheeler.stack }, (_, index) => (
                       <div key={index} className="relative">
@@ -350,7 +350,7 @@ export const AddSlotConfigurationPage = () => {
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
+                <div className="bg-white rounded-lg p-4 mb-4 h-[200px] border-2 border-dashed border-gray-200 overflow-auto">
                   <div className="grid grid-cols-4 gap-2">
                     {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
                       <div key={index} className="relative">
