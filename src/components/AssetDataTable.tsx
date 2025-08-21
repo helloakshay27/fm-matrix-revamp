@@ -23,6 +23,7 @@ interface AssetDataTableProps {
   onSearch: (searchTerm: string) => void;
   onRefreshData?: () => void;
   loading?: boolean;
+  availableCustomFields?: Array<{ key: string; title: string }>;
 }
 
 export const AssetDataTable: React.FC<AssetDataTableProps> = ({
@@ -39,9 +40,11 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
   onSearch,
   onRefreshData,
   loading,
+  availableCustomFields = [],
 }) => {
 
   console.log("AssetDataTable rendered with assets:", assets);
+  console.log("Available custom fields:", availableCustomFields);
   console.log("Selected assets:", visibleColumns);
   // Status color logic moved to StatusBadge component
 
@@ -203,7 +206,146 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       hideable: true,
       defaultVisible: visibleColumns.category,
     },
+    // Required fields that were missing
+    {
+      key: "purchaseDate",
+      label: "Purchase Date",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "vendorName",
+      label: "Vendor Name",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "purchaseCost",
+      label: "Cost (₹)",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "department",
+      label: "Department",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "usefulLife",
+      label: "Useful Life (Years)",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "depreciationMethod",
+      label: "Depreciation Method",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "accumDepreciation",
+      label: "Accum. Depreciation (₹)",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "currentBookValue",
+      label: "Current Book Value (₹)",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "disposalDate",
+      label: "Disposal Date",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "modelNumber",
+      label: "Model No",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "manufacturer",
+      label: "Manufacturer",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "criticality",
+      label: "Criticality",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "commissioningDate",
+      label: "Commissioning Date",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "warrantyStatus",
+      label: "Warranty Status",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "amcStatus",
+      label: "AMC Status",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "amcStartDate",
+      label: "AMC Start Date",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "amcEndDate",
+      label: "AMC End Date",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    {
+      key: "amcType",
+      label: "AMC Type",
+      sortable: true,
+      hideable: true,
+      defaultVisible: false,
+    },
+    // Dynamic custom field columns
+    ...availableCustomFields.map(field => ({
+      key: `custom_${field.key}`,
+      label: field.title,
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    })),
   ];
+
+  console.log("Total columns:", columns.length);
+  console.log("Column keys:", columns.map(col => col.key));
+  console.log("Custom field columns:", columns.filter(col => col.key.startsWith('custom_')));
 
   const renderCell = (asset: Asset, columnKey: string) => {
     switch (columnKey) {
@@ -250,42 +392,42 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "building":
         return (
           <span className="text-sm text-gray-600">
-            {asset.building?.name || "NA"}
+            {asset.building?.name || "-"}
           </span>
         );
       case "wing":
         return (
           <span className="text-sm text-gray-600">
-            {asset.wing?.name || "NA"}
+            {asset.wing?.name || "-"}
           </span>
         );
       case "floor":
-        return <span className="text-sm text-gray-600">{asset?.floor?.name}</span>;
+        return <span className="text-sm text-gray-600">{asset?.floor?.name || "-"}</span>;
         {
           /* Floor not in API response */
         }
       case "area":
         return (
           <span className="text-sm text-gray-600">
-            {asset.area?.name || "NA"}
+            {asset.area?.name || "-"}
           </span>
         );
       case "pmsRoom":
         return (
           <span className="text-sm text-gray-600">
-            {asset.pmsRoom?.name || "NA"}
+            {asset.pmsRoom?.name || "-"}
           </span>
         );
       case "assetGroup":
         return (
           <span className="text-sm text-gray-600">
-            {asset.assetGroup || "N/A"}
+            {asset.assetGroup || "-"}
           </span>
         );
       case "assetSubGroup":
         return (
           <span className="text-sm text-gray-600">
-            {asset.assetSubGroup || "N/A"}
+            {asset.assetSubGroup || "-"}
           </span>
         );
       case "assetType":
@@ -297,10 +439,128 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "category":
         return (
           <span className="text-sm text-gray-600">
-            {asset.category || "N/A"}
+            {asset.category || "-"}
+          </span>
+        );
+      case "purchaseDate":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.purchased_on || "-"}
+          </span>
+        );
+      case "vendorName":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.supplier_name || "-"}
+          </span>
+        );
+      case "purchaseCost":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.purchase_cost ? `₹${asset.purchase_cost}` : "-"}
+          </span>
+        );
+      case "department":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.allocation_type || "-"}
+          </span>
+        );
+      case "usefulLife":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.useful_life ? `${asset.useful_life} years` : "-"}
+          </span>
+        );
+      case "depreciationMethod":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.depreciation_method || "-"}
+          </span>
+        );
+      case "accumDepreciation":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.accumulated_depreciation ? `₹${asset.accumulated_depreciation}` : "-"}
+          </span>
+        );
+      case "currentBookValue":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.current_book_value ? `₹${asset.current_book_value}` : "-"}
+          </span>
+        );
+      case "disposalDate":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.disposal_date || "-"}
+          </span>
+        );
+      case "modelNumber":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.model_number || "-"}
+          </span>
+        );
+      case "manufacturer":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.manufacturer || "-"}
+          </span>
+        );
+      case "criticality":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.critical ? "Critical" : "Non-Critical"}
+          </span>
+        );
+      case "commissioningDate":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.commisioning_date || "-"}
+          </span>
+        );
+      case "warrantyStatus":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.warranty ? "Active" : "Inactive"}
+          </span>
+        );
+      case "amcStatus":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.amc?.amc_status || "-"}
+          </span>
+        );
+      case "amcStartDate":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.amc?.start_date || "-"}
+          </span>
+        );
+      case "amcEndDate":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.amc?.end_date || "-"}
+          </span>
+        );
+      case "amcType":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.asset_type ? "Comprehensive" : "Non-Comprehensive"}
           </span>
         );
       default:
+        // Handle custom fields
+        if (columnKey.startsWith("custom_")) {
+          const fieldKey = columnKey.replace("custom_", "");
+          const customFieldValue = asset[fieldKey];
+          return (
+            <span className="text-sm text-gray-600">
+              {customFieldValue || "-"}
+            </span>
+          );
+        }
         return null;
     }
   };
@@ -337,6 +597,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
         onSearchChange={onSearch}
         handleExport={handleExcelExport}
         loading={loading}
+        key={`asset-table-${availableCustomFields.length}`} // Force re-render when custom fields change
         leftActions={
           <Button
             size="sm"
