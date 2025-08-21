@@ -151,8 +151,8 @@ export const ParkingCategoryPage = () => {
             {filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 {visibleColumns.actions && (
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2">
                       <button
                         onClick={() => handleEdit(item.id)}
                         className="p-1 hover:bg-gray-100 rounded"
