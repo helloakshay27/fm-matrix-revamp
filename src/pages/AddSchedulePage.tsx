@@ -4719,7 +4719,6 @@ export const AddSchedulePage = () => {
 
                           <Autocomplete
                             disabled={stepIndex < activeStep && editingStep !== stepIndex || task.reading && !formData.selectedTemplate}
-
                             options={[
                               { id: '', label: 'Select Input Type', value: '' },
                               { id: 'text', label: 'Text', value: 'text' },
@@ -4751,13 +4750,26 @@ export const AddSchedulePage = () => {
                               }
                               updateTaskInSection(section.id, task.id, 'inputType', newValue.value);
                               // Reset values when changing input type
-                              if (newValue.value !== 'dropdown') {
+                              if (newValue.value === 'dropdown') {
+                                updateTaskInSection(section.id, task.id, 'dropdownValues', [
+                                  { label: 'Yes', type: 'positive' },
+                                  { label: 'No', type: 'negative' }
+                                ]);
+                              } else if (newValue.value !== 'dropdown') {
                                 updateTaskInSection(section.id, task.id, 'dropdownValues', [{ label: '', type: 'positive' }]);
                               }
-                              if (newValue.value !== 'radio') {
+                              if (newValue.value === 'radio') {
+                                updateTaskInSection(section.id, task.id, 'radioValues', [
+                                  { label: 'Yes', type: 'positive' },
+                                  { label: 'No', type: 'negative' }
+                                ]);
+                              } else if (newValue.value !== 'radio') {
                                 updateTaskInSection(section.id, task.id, 'radioValues', [{ label: '', type: 'positive' }]);
                               }
-                              if (newValue.value !== 'checkbox') {
+                              if (newValue.value === 'checkbox') {
+                                updateTaskInSection(section.id, task.id, 'checkboxValues', ['Yes', 'No']);
+                                updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false, false]);
+                              } else if (newValue.value !== 'checkbox') {
                                 updateTaskInSection(section.id, task.id, 'checkboxValues', ['']);
                                 updateTaskInSection(section.id, task.id, 'checkboxSelectedStates', [false]);
                               }
