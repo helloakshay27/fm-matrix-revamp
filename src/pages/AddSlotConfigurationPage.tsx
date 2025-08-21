@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Input } from '../components/ui/input';
+import { ScrollArea } from '../components/ui/scroll-area';
 import { ArrowLeft } from 'lucide-react';
 import { useLayout } from '../contexts/LayoutContext';
 
@@ -114,28 +115,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 1}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 1}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -160,28 +163,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.twoWheeler.stack }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 11}C
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: formData.twoWheeler.stack }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 11}C
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -206,28 +211,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 11}H
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 11}H
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -258,28 +265,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-3 gap-2">
-                    {Array.from({ length: formData.fourWheeler.nonStack }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 1}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-3 gap-2">
+                      {Array.from({ length: formData.fourWheeler.nonStack }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 1}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -304,28 +313,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.fourWheeler.stack }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 4}A
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: formData.fourWheeler.stack }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 4}A
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
@@ -350,28 +361,30 @@ export const AddSlotConfigurationPage = () => {
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
-                  <div className="grid grid-cols-4 gap-2">
-                    {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
-                      <div key={index} className="relative">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
-                        >
-                          P{index + 9}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
-                          onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
-                        >
-                          ×
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] max-h-[200px] border-2 border-dashed border-gray-200">
+                  <ScrollArea className="h-[168px] w-full">
+                    <div className="grid grid-cols-4 gap-2">
+                      {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
+                        <div key={index} className="relative">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                          >
+                            P{index + 9}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="absolute top-0 right-0 w-3 h-3 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-[8px] transform translate-x-1/2 -translate-y-1/2"
+                            onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 </div>
                 <div className="flex items-center gap-2">
                   <Input
