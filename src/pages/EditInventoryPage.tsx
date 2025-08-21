@@ -265,6 +265,8 @@ export const EditInventoryPage = () => {
 
     // Map criticality: 0 for Non-Critical, 1 for Critical
     const criticalityValue = criticality === 'critical' ? 1 : 0;
+    // Map inventory type: 1 for Spares, 2 for Consumable
+    const inventoryTypeNumeric = inventoryType === 'consumable' ? 2 : 1;
 
     const inventoryData: any = {
       asset_id: formData.assetName ? parseInt(formData.assetName) : null,
@@ -273,6 +275,7 @@ export const EditInventoryPage = () => {
       serial_number: formData.serialNumber || "",
       quantity: parseFloat(formData.quantity) || 0,
       active: true,
+      inventory_type: inventoryTypeNumeric,
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: formData.minStockLevel || "0",
       min_order_level: formData.minOrderLevel || "0",
