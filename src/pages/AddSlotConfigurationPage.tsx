@@ -138,6 +138,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.twoWheeler.nonStack}
@@ -153,6 +154,7 @@ export const AddSlotConfigurationPage = () => {
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.twoWheeler.nonStack}</span>
                 </div>
               </div>
@@ -189,6 +191,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.twoWheeler.stack}
@@ -204,6 +207,7 @@ export const AddSlotConfigurationPage = () => {
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.twoWheeler.stack * 2}</span>
                 </div>
               </div>
@@ -238,6 +242,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.twoWheeler.reserved}
@@ -248,11 +253,12 @@ export const AddSlotConfigurationPage = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    className="bg-orange-600 text-white border-orange-600 hover:bg-orange-700"
                     onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved + 1)}
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.twoWheeler.reserved}</span>
                 </div>
               </div>
@@ -290,6 +296,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.fourWheeler.nonStack}
@@ -305,6 +312,7 @@ export const AddSlotConfigurationPage = () => {
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.fourWheeler.nonStack}</span>
                 </div>
               </div>
@@ -341,6 +349,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.fourWheeler.stack}
@@ -356,6 +365,7 @@ export const AddSlotConfigurationPage = () => {
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.fourWheeler.stack * 2}</span>
                 </div>
               </div>
@@ -390,6 +400,7 @@ export const AddSlotConfigurationPage = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
+                  <span className="text-sm whitespace-nowrap">No. of Parkings</span>
                   <Input
                     type="number"
                     value={formData.fourWheeler.reserved}
@@ -400,11 +411,12 @@ export const AddSlotConfigurationPage = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600"
+                    className="bg-orange-600 text-white border-orange-600 hover:bg-orange-700"
                     onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved + 1)}
                   >
                     Add
                   </Button>
+                  <span className="text-sm whitespace-nowrap">Parking Count</span>
                   <span className="text-sm">{formData.fourWheeler.reserved}</span>
                 </div>
               </div>
