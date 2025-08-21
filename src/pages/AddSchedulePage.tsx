@@ -4724,7 +4724,7 @@ export const AddSchedulePage = () => {
                               { id: 'text', label: 'Text', value: 'text' },
                               { id: 'number', label: 'Numeric', value: 'number' },
                               { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
-                              { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                              // { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                               { id: 'radio', label: 'Radio', value: 'radio' },
                               { id: 'date', label: 'Date', value: 'date' },
                               { id: 'multiline', label: 'Multiline', value: 'multiline' },
