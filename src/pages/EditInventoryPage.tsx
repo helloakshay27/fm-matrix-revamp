@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -9,13 +9,12 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 // Removed custom ResponsiveDatePicker in favor of simple MUI date input
 
 export const EditInventoryPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { toast } = useToast();
   const dispatch = useDispatch<AppDispatch>();
 
   const inventoryAssetsState = useSelector((state: RootState) => state.inventoryAssets);
@@ -34,10 +33,30 @@ export const EditInventoryPage = () => {
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
   const [sacList, setSacList] = useState([]);
+  // Main form data state (moved up so suggestion filtering can reference it)
+  const [formData, setFormData] = useState({
+    assetName: '',
+    inventoryName: '',
+    inventoryCode: '',
+    serialNumber: '',
+    quantity: '',
+    cost: '',
+    unit: '',
+    expiryDate: '',
+    category: '',
+    vendor: '',
+    maxStockLevel: '',
+    minStockLevel: '',
+    minOrderLevel: '',
+    sacHsnCode: '',
+    sgstRate: '',
+    cgstRate: '',
+    igstRate: ''
+  });
   // Inventory name suggestion state
-  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
-  const [showNameSuggestions, setShowNameSuggestions] = useState(false);
+  const [showNameSuggestions, setShowNameSuggestions] = useState(false); // actual dropdown visibility (only when filtered matches exist)
   const nameDebounceRef = useRef<number | null>(null);
   const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
   const fetchSAC = async () => {
@@ -72,24 +91,38 @@ export const EditInventoryPage = () => {
     if (!baseUrl || !token) return;
     setNameSuggestLoading(true);
     try {
-      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?name=${encodeURIComponent(query)}`, {
+      const res = await fetch(`https://${baseUrl}/pms/inventories/suggestions.json?q=${encodeURIComponent(query)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed suggestions');
       const data = await res.json();
       if (Array.isArray(data)) {
         setNameSuggestions(data);
-        setShowNameSuggestions(true);
       } else if (Array.isArray(data?.suggestions)) { // fallback shape
         setNameSuggestions(data.suggestions);
-        setShowNameSuggestions(true);
       } else {
-        setNameSuggestions([]); setShowNameSuggestions(false);
+        setNameSuggestions([]);
       }
     } catch (e) {
-      setNameSuggestions([]); setShowNameSuggestions(false);
+      setNameSuggestions([]);
     } finally { setNameSuggestLoading(false); }
   };
+
+  // Filter suggestions client-side against current input so stale unmatched results don't show.
+  const filteredNameSuggestions = useMemo(() => {
+    const input = formData.inventoryName.trim().toLowerCase();
+    if (input.length < 2) return [];
+    return nameSuggestions.filter(s => (s?.name || '').toLowerCase().includes(input));
+  }, [formData.inventoryName, nameSuggestions]);
+
+  // Control dropdown visibility strictly by presence of filtered matches
+  useEffect(() => {
+    if (filteredNameSuggestions.length > 0) {
+      setShowNameSuggestions(true);
+    } else {
+      setShowNameSuggestions(false);
+    }
+  }, [filteredNameSuggestions]);
 
   // Outside click to close suggestions
   useEffect(() => {
@@ -103,25 +136,6 @@ export const EditInventoryPage = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const [formData, setFormData] = useState({
-    assetName: '',
-    inventoryName: '',
-    inventoryCode: '',
-    serialNumber: '',
-    quantity: '',
-    cost: '',
-    unit: '',
-    expiryDate: '',
-    category: '',
-    vendor: '',
-    maxStockLevel: '',
-    minStockLevel: '',
-    minOrderLevel: '',
-    sacHsnCode: '',
-    sgstRate: '',
-    cgstRate: '',
-    igstRate: ''
-  });
 
   // Helper: convert an incoming ISO / zoned date string to YYYY-MM-DD for <input type="date">
   const formatDateForInput = (isoString: string): string => {
@@ -219,25 +233,18 @@ export const EditInventoryPage = () => {
   // Handle errors
   useEffect(() => {
     if (error) {
-      toast({
-        title: "Error",
-        description: error,
-        variant: "destructive"
-      });
+      toast.error(error);
       dispatch(clearError());
     }
-  }, [error, toast, dispatch]);
+  }, [error, dispatch]);
 
   // Handle successful update
   useEffect(() => {
     if (updatedInventory) {
-      toast({
-        title: "Inventory Updated",
-        description: "Inventory has been updated successfully.",
-      });
+      toast.success('Inventory has been updated successfully.');
       navigate('/maintenance/inventory');
     }
-  }, [updatedInventory, toast, navigate]);
+  }, [updatedInventory, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -482,7 +489,7 @@ export const EditInventoryPage = () => {
                         }, 350);
                       }}
                       onFocus={() => {
-                        if (nameSuggestions.length > 0) setShowNameSuggestions(true);
+                        if (filteredNameSuggestions.length > 0) setShowNameSuggestions(true);
                       }}
                       onBlur={() => {
                         // Delay to allow click on option
@@ -493,15 +500,12 @@ export const EditInventoryPage = () => {
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
                     />
-                    {showNameSuggestions && (
+          {showNameSuggestions && (
                       <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
                         {nameSuggestLoading && (
                           <div className="px-3 py-2 text-gray-500">Loading...</div>
                         )}
-                        {!nameSuggestLoading && nameSuggestions.length === 0 && (
-                          <div className="px-3 py-2 text-gray-500">No matches</div>
-                        )}
-                        {!nameSuggestLoading && nameSuggestions.map(s => (
+            {!nameSuggestLoading && filteredNameSuggestions.map(s => (
                           <button
                             type="button"
                             key={s.id}
