@@ -141,10 +141,10 @@ export const ParkingCategoryPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.actions && <TableHead className="w-24">Actions</TableHead>}
-              {visibleColumns.name && <TableHead className="w-80">Name</TableHead>}
-              {visibleColumns.active && <TableHead className="w-40 text-center">Active/Inactive</TableHead>}
-              {visibleColumns.createdOn && <TableHead className="w-40">Created On</TableHead>}
+              {visibleColumns.actions && <TableHead className="text-center">Actions</TableHead>}
+              {visibleColumns.name && <TableHead>Name</TableHead>}
+              {visibleColumns.active && <TableHead className="text-center">Active/Inactive</TableHead>}
+              {visibleColumns.createdOn && <TableHead>Created On</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
