@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { BulkUploadModal } from '@/components/BulkUploadModal';
-import { ExportModal } from '@/components/ExportModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { TicketPagination } from '@/components/TicketPagination';
@@ -37,13 +35,6 @@ interface ApiResponse {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  {
-    key: 'actions',
-    label: 'Actions',
-    sortable: false,
-    hideable: false,
-    draggable: false
-  },
   {
     key: 'roleName',
     label: 'Role Name',
@@ -139,12 +130,6 @@ const mockRoleConfigData: RoleConfigItem[] = [
 
 export const RoleConfigList = () => {
   const navigate = useNavigate();
-  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
-  const [isExportOpen, setIsExportOpen] = useState(false);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedRoleId, setSelectedRoleId] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(20);
   const [searchTerm, setSearchTerm] = useState('');
@@ -228,31 +213,6 @@ export const RoleConfigList = () => {
 
   // Render row function for enhanced table
   const renderRow = (roleConfig: RoleConfigItem) => ({
-    actions: (
-      <div className="flex items-center gap-2">
-        <button 
-          onClick={() => handleView(roleConfig.id)} 
-          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
-          title="View"
-        >
-          <Eye className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={() => handleEdit(roleConfig.id)} 
-          className="p-1 text-green-600 hover:bg-green-50 rounded" 
-          title="Edit"
-        >
-          <Edit className="w-4 h-4" />
-        </button>
-        <button 
-          onClick={() => handleDelete(roleConfig.id)} 
-          className="p-1 text-red-600 hover:bg-red-50 rounded" 
-          title="Delete"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-    ),
     roleName: (
       <div className="font-medium text-gray-900">{roleConfig.roleName}</div>
     ),
@@ -316,18 +276,6 @@ export const RoleConfigList = () => {
     navigate('/settings/role-config/create');
   };
 
-  const handleExport = () => {
-    setIsExportOpen(true);
-  };
-
-  const handleBulkUpload = () => {
-    setIsBulkUploadOpen(true);
-  };
-
-  const handleFilter = () => {
-    setIsFilterOpen(true);
-  };
-
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
@@ -368,6 +316,37 @@ export const RoleConfigList = () => {
               Add
             </Button>
           }
+          rightActions={
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => handleView(roleConfigData[0]?.id || 1)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-[#C72030]/20 text-[#C72030] hover:bg-[#C72030]/5"
+              >
+                <Eye className="w-4 h-4" />
+                View
+              </Button>
+              <Button
+                onClick={() => handleEdit(roleConfigData[0]?.id || 1)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-[#C72030]/20 text-[#C72030] hover:bg-[#C72030]/5"
+              >
+                <Edit className="w-4 h-4" />
+                Edit
+              </Button>
+              <Button
+                onClick={() => handleDelete(roleConfigData[0]?.id || 1)}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 border-red-200 text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete
+              </Button>
+            </div>
+          }
           pagination={true}
           pageSize={perPage}
           loading={loading}
@@ -391,21 +370,6 @@ export const RoleConfigList = () => {
             isLoading={loading}
           />
         </div>
-      )}
-
-      {/* Modals */}
-      {isBulkUploadOpen && (
-        <BulkUploadModal
-          isOpen={isBulkUploadOpen}
-          onClose={() => setIsBulkUploadOpen(false)}
-        />
-      )}
-
-      {isExportOpen && (
-        <ExportModal
-          isOpen={isExportOpen}
-          onClose={() => setIsExportOpen(false)}
-        />
       )}
     </div>
   );
