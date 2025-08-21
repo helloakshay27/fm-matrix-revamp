@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getAuthHeader, getFullUrl } from '../config/apiConfig';
-import RoleConfigHeader from '../components/RoleConfigHeader';
 
 const fetchLockSubFunctions = async () => {
   const url = getFullUrl('/lock_sub_functions.json');
@@ -30,8 +29,8 @@ const LockSubFunctionList: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-[#8B5CF6]/10 rounded-lg">
-          <svg className="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+        <div className="p-2 bg-[#C72030]/10 rounded-lg">
+          <svg className="w-6 h-6 text-[#C72030]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15l2 5L9 17l5-2z" /></svg>
         </div>
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Lock Sub Functions</h1>
@@ -40,7 +39,7 @@ const LockSubFunctionList: React.FC = () => {
       </header>
       {loading ? (
         <div className="flex items-center justify-center py-8">
-          <span className="text-gray-500">Loading...</span>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030]"></div>
         </div>
       ) : (
         <table className="min-w-full bg-white border rounded-lg shadow">
