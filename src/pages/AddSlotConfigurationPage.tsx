@@ -114,93 +114,138 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.twoWheeler.nonStack}
-                    onChange={(e) => handleSliderChange('twoWheeler', 'nonStack', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: formData.twoWheeler.nonStack }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 1}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.twoWheeler.nonStack}
                     onChange={(e) => handleSliderChange('twoWheeler', 'nonStack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    onClick={() => handleSliderChange('twoWheeler', 'nonStack', formData.twoWheeler.nonStack + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.twoWheeler.nonStack}</span>
                 </div>
               </div>
 
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.twoWheeler.stack}
-                    onChange={(e) => handleSliderChange('twoWheeler', 'stack', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: formData.twoWheeler.stack }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 11}C
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.twoWheeler.stack}
                     onChange={(e) => handleSliderChange('twoWheeler', 'stack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    onClick={() => handleSliderChange('twoWheeler', 'stack', formData.twoWheeler.stack + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.twoWheeler.stack}</span>
                 </div>
               </div>
 
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.twoWheeler.reserved}
-                    onChange={(e) => handleSliderChange('twoWheeler', 'reserved', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: formData.twoWheeler.reserved }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 11}H
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.twoWheeler.reserved}
                     onChange={(e) => handleSliderChange('twoWheeler', 'reserved', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    onClick={() => handleSliderChange('twoWheeler', 'reserved', formData.twoWheeler.reserved + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.twoWheeler.reserved}</span>
                 </div>
               </div>
             </div>
@@ -213,93 +258,138 @@ export const AddSlotConfigurationPage = () => {
               {/* Non Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Non Stack Parking</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.fourWheeler.nonStack}
-                    onChange={(e) => handleSliderChange('fourWheeler', 'nonStack', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: formData.fourWheeler.nonStack }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 1}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.fourWheeler.nonStack}
                     onChange={(e) => handleSliderChange('fourWheeler', 'nonStack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    onClick={() => handleSliderChange('fourWheeler', 'nonStack', formData.fourWheeler.nonStack + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.fourWheeler.nonStack}</span>
                 </div>
               </div>
 
               {/* Stack Parking */}
               <div>
                 <h4 className="font-medium mb-4">Stack Parking</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.fourWheeler.stack}
-                    onChange={(e) => handleSliderChange('fourWheeler', 'stack', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: formData.fourWheeler.stack }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 4}A
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.fourWheeler.stack}
                     onChange={(e) => handleSliderChange('fourWheeler', 'stack', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
+                    onClick={() => handleSliderChange('fourWheeler', 'stack', formData.fourWheeler.stack + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.fourWheeler.stack}</span>
                 </div>
               </div>
 
               {/* Reserved Parkings */}
               <div>
                 <h4 className="font-medium mb-4">Reserved Parkings</h4>
-                <div className="mb-4">
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={formData.fourWheeler.reserved}
-                    onChange={(e) => handleSliderChange('fourWheeler', 'reserved', parseInt(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                  />
+                <div className="bg-white rounded-lg p-4 mb-4 min-h-[200px] border-2 border-dashed border-gray-200">
+                  <div className="grid grid-cols-4 gap-2">
+                    {Array.from({ length: formData.fourWheeler.reserved }, (_, index) => (
+                      <div key={index} className="relative">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-12 h-8 text-xs bg-white border-gray-300 hover:bg-red-50"
+                        >
+                          P{index + 9}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="absolute -top-1 -right-1 w-4 h-4 p-0 rounded-full bg-red-500 text-white hover:bg-red-600 text-xs"
+                          onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved - 1)}
+                        >
+                          ×
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">No. of Parking</span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-purple-600 text-white border-purple-600 hover:bg-purple-700"
-                  >
-                    Add
-                  </Button>
                   <Input
                     type="number"
                     value={formData.fourWheeler.reserved}
                     onChange={(e) => handleSliderChange('fourWheeler', 'reserved', parseInt(e.target.value) || 0)}
                     className="w-16 h-8 text-center"
+                    min="0"
                   />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-cyan-500 text-white border-cyan-500 hover:bg-cyan-600"
+                    onClick={() => handleSliderChange('fourWheeler', 'reserved', formData.fourWheeler.reserved + 1)}
+                  >
+                    Add
+                  </Button>
+                  <span className="text-sm">{formData.fourWheeler.reserved}</span>
                 </div>
               </div>
             </div>
