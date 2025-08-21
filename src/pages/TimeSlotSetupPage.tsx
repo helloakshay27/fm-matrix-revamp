@@ -312,17 +312,6 @@ export const TimeSlotSetupPage = () => {
           </DialogHeader>
           
           <div className="space-y-6">
-            {/* Slot Name */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-900">Slot Name</label>
-              <Input
-                value={editSlotName}
-                onChange={(e) => setEditSlotName(e.target.value)}
-                placeholder="Enter slot name"
-                className="w-full"
-              />
-            </div>
-
             {/* Start Time */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-900">Start Time</label>
