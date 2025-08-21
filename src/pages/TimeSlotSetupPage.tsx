@@ -6,10 +6,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Switch } from '../components/ui/switch';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Edit, X } from 'lucide-react';
+import { Plus, Search, Edit, X, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '../config/apiConfig';
 
 interface TimeSlotData {
   id: number;
@@ -18,6 +19,13 @@ interface TimeSlotData {
   endTime: string;
   active: boolean;
   createdOn: string;
+  company_id?: number;
+  start_hour?: number;
+  start_min?: number;
+  end_hour?: number;
+  end_min?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const TimeSlotSetupPage = () => {
@@ -38,10 +46,92 @@ export const TimeSlotSetupPage = () => {
   const [editSlotName, setEditSlotName] = useState('');
   const [editStartTime, setEditStartTime] = useState('');
   const [editEndTime, setEditEndTime] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Settings');
+    fetchTimeSlots();
   }, [setCurrentSection]);
+
+  // Function to convert hours and minutes to HH:MM format
+  const formatTime = (hours: number, minutes: number) => {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  };
+
+  // Fetch time slots from API
+  const fetchTimeSlots = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🚀 Fetching time slots from API...');
+      
+      const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.PARKING_SLOT_DETAILS), {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to fetch time slots: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Time slots fetched successfully:', data);
+
+      // Transform API data to match our interface
+      const transformedData = data.parking_slot_details.map((slot: any) => {
+        const startTime = formatTime(slot.start_hour, slot.start_min);
+        const endTime = formatTime(slot.end_hour, slot.end_min);
+        
+        return {
+          id: slot.id,
+          slotName: `${formatTo12Hour(startTime)} - ${formatTo12Hour(endTime)}`,
+          startTime,
+          endTime,
+          active: slot.active,
+          createdOn: new Date(slot.created_at).toLocaleDateString('en-GB'),
+          company_id: slot.company_id,
+          start_hour: slot.start_hour,
+          start_min: slot.start_min,
+          end_hour: slot.end_hour,
+          end_min: slot.end_min,
+          created_at: slot.created_at,
+          updated_at: slot.updated_at
+        };
+      });
+
+      setTimeSlotData(transformedData);
+    } catch (error) {
+      console.error('❌ Error fetching time slots:', error);
+      toast.error('Failed to load time slots');
+      // Keep sample data as fallback
+      setTimeSlotData([
+        {
+          id: 1,
+          slotName: 'Morning Shift',
+          startTime: '06:00',
+          endTime: '14:00',
+          active: true,
+          createdOn: '12/12/2023'
+        },
+        {
+          id: 2,
+          slotName: 'Evening Shift',
+          startTime: '14:00',
+          endTime: '22:00',
+          active: true,
+          createdOn: '12/12/2023'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Function to convert 24-hour format to 12-hour AM/PM format
   const formatTo12Hour = (time24: string) => {
@@ -51,42 +141,15 @@ export const TimeSlotSetupPage = () => {
     const ampm = hour24 >= 12 ? 'PM' : 'AM';
     return `${hour12}:${minutes} ${ampm}`;
   };
+
+  // Function to convert time (HH:MM) to hours and minutes
+  const parseTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return { hours, minutes };
+  };
   
-  // Sample data for time slots
-  const [timeSlotData, setTimeSlotData] = useState<TimeSlotData[]>([
-    {
-      id: 1,
-      slotName: 'Morning Shift',
-      startTime: '06:00',
-      endTime: '14:00',
-      active: true,
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 2,
-      slotName: 'Evening Shift',
-      startTime: '14:00',
-      endTime: '22:00',
-      active: true,
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 3,
-      slotName: 'Night Shift',
-      startTime: '22:00',
-      endTime: '06:00',
-      active: false,
-      createdOn: '10/11/2023'
-    },
-    {
-      id: 4,
-      slotName: 'Weekend Slot',
-      startTime: '08:00',
-      endTime: '20:00',
-      active: true,
-      createdOn: '08/10/2023'
-    }
-  ]);
+  // Initialize with empty data - will be populated by API call
+  const [timeSlotData, setTimeSlotData] = useState<TimeSlotData[]>([]);
 
   const filteredData = timeSlotData.filter(item =>
     item.slotName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -124,56 +187,132 @@ export const TimeSlotSetupPage = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handleCreateTimeSlot = () => {
+  const handleCreateTimeSlot = async () => {
     if (!startTime || !endTime) {
-      toast.error('Please fill all fields');
+      toast.error('Please fill all time fields');
       return;
     }
     
-    const newTimeSlot = {
-      id: Math.max(...timeSlotData.map(item => item.id)) + 1,
-      slotName: `${formatTo12Hour(startTime)} - ${formatTo12Hour(endTime)}`,
-      startTime,
-      endTime,
-      active: true,
-      createdOn: new Date().toLocaleDateString('en-GB')
-    };
+    setIsCreating(true);
     
-    setTimeSlotData(prevData => [...prevData, newTimeSlot]);
-    toast.success('Time slot created successfully');
-    
-    // Reset form
-    setStartTime('');
-    setEndTime('');
-    setIsCreateModalOpen(false);
+    try {
+      // Parse start and end times
+      const startTimeObj = parseTime(startTime);
+      const endTimeObj = parseTime(endTime);
+      
+      // Create the API request body
+      const requestBody = {
+        parking_slot_detail: {
+          start_hour: startTimeObj.hours,
+          start_min: startTimeObj.minutes,
+          end_hour: endTimeObj.hours,
+          end_min: endTimeObj.minutes,
+          active: true
+        }
+      };
+      
+      console.log('Creating time slot with data:', requestBody);
+      
+      // Make API call
+      const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.PARKING_SLOT_DETAILS), {
+        method: 'POST',
+        headers: {
+          Authorization: getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to create time slot: ${response.status} ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Time slot created successfully:', responseData);
+      
+      // Refresh the data from server instead of updating local state
+      await fetchTimeSlots();
+      toast.success('Time slot created successfully');
+      
+      // Reset form
+      setStartTime('');
+      setEndTime('');
+      setIsCreateModalOpen(false);
+      
+    } catch (error) {
+      console.error('❌ Error creating time slot:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create time slot');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleUpdateTimeSlot = () => {
+  const handleUpdateTimeSlot = async () => {
     if (!editStartTime || !editEndTime || !editingSlot) {
-      toast.error('Please fill all fields');
+      toast.error('Please fill all time fields');
       return;
     }
     
-    setTimeSlotData(prevData => 
-      prevData.map(item => 
-        item.id === editingSlot.id 
-          ? { 
-              ...item, 
-              slotName: `${formatTo12Hour(editStartTime)} - ${formatTo12Hour(editEndTime)}`,
-              startTime: editStartTime, 
-              endTime: editEndTime 
-            }
-          : item
-      )
-    );
+    setIsUpdating(true);
     
-    toast.success('Time slot updated successfully');
-    
-    // Reset form
-    setEditingSlot(null);
-    setEditStartTime('');
-    setEditEndTime('');
-    setIsEditModalOpen(false);
+    try {
+      // Parse start and end times
+      const startTimeObj = parseTime(editStartTime);
+      const endTimeObj = parseTime(editEndTime);
+      
+      // Create the API request body
+      const requestBody = {
+        parking_slot_detail: {
+          start_hour: startTimeObj.hours,
+          start_min: startTimeObj.minutes,
+          end_hour: endTimeObj.hours,
+          end_min: endTimeObj.minutes,
+          active: editingSlot.active
+        }
+      };
+      
+      console.log('Updating time slot with data:', {
+        id: editingSlot.id,
+        body: requestBody
+      });
+      
+      // Make PUT API call to specific time slot ID
+      const response = await fetch(`${getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_PARKING_SLOT_DETAILS)}/${editingSlot.id}.json`, {
+        method: 'PUT',
+        headers: {
+          Authorization: getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to update time slot: ${response.status} ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Time slot updated successfully:', responseData);
+      
+      // Refresh the data from server instead of updating local state
+      await fetchTimeSlots();
+      toast.success('Time slot updated successfully');
+      
+      // Reset form
+      setEditingSlot(null);
+      setEditStartTime('');
+      setEditEndTime('');
+      setIsEditModalOpen(false);
+      
+    } catch (error) {
+      console.error('❌ Error updating time slot:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update time slot');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
@@ -194,13 +333,24 @@ export const TimeSlotSetupPage = () => {
     <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
-        <Button 
-          onClick={handleAdd}
-          className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleAdd}
+            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          {/* <Button 
+            onClick={fetchTimeSlots}
+            disabled={isLoading}
+            variant="outline"
+            className="px-4 py-2"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button> */}
+        </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -230,7 +380,23 @@ export const TimeSlotSetupPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((item) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B4D8]"></div>
+                    <span className="ml-2">Loading time slots...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                  No time slots found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 {visibleColumns.actions && (
                   <TableCell className="text-center">
@@ -252,7 +418,8 @@ export const TimeSlotSetupPage = () => {
                 )}
                 {visibleColumns.createdOn && <TableCell>{item.createdOn}</TableCell>}
               </TableRow>
-            ))}
+            ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -272,39 +439,41 @@ export const TimeSlotSetupPage = () => {
             </Button>
           </DialogHeader>
           
-          <div className="space-y-6">
-            {/* Start Time */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-900">Start Time</label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="w-full"
-              />
-            </div>
+          <div className="grid grid-cols-2 gap-6">
+  {/* Start Time */}
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-900">Start Time</label>
+    <Input
+      type="time"
+      value={startTime}
+      onChange={(e) => setStartTime(e.target.value)}
+      className="w-full"
+    />
+  </div>
 
-            {/* End Time */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-900">End Time</label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="w-full"
-              />
-            </div>
+  {/* End Time */}
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-900">End Time</label>
+    <Input
+      type="time"
+      value={endTime}
+      onChange={(e) => setEndTime(e.target.value)}
+      className="w-full"
+    />
+  </div>
+</div>
 
-            {/* Submit Button */}
-            <div className="flex justify-end pt-4">
-              <Button
-                onClick={handleCreateTimeSlot}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
-              >
-                Submit
-              </Button>
-            </div>
-          </div>
+{/* Submit Button */}
+<div className="flex justify-end pt-4">
+  <Button
+    onClick={handleCreateTimeSlot}
+    disabled={isCreating}
+    className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
+  >
+    {isCreating ? 'Creating...' : 'Submit'}
+  </Button>
+</div>
+
         </DialogContent>
       </Dialog>
 
@@ -323,7 +492,7 @@ export const TimeSlotSetupPage = () => {
             </Button>
           </DialogHeader>
           
-          <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-6">
             {/* Start Time */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-900">Start Time</label>
@@ -345,17 +514,19 @@ export const TimeSlotSetupPage = () => {
                 className="w-full"
               />
             </div>
+             </div>
 
             {/* Submit Button */}
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleUpdateTimeSlot}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                disabled={isUpdating}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
               >
-                Submit
+                {isUpdating ? 'Updating...' : 'Submit'}
               </Button>
             </div>
-          </div>
+         
         </DialogContent>
       </Dialog>
     </div>

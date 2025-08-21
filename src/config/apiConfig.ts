@@ -160,6 +160,14 @@ export const API_CONFIG = {
     ASSET_MEASUREMENT_IMPORT: '/pms/assets/import',
     // Asset measurement sample download endpoint
     ASSET_MEASUREMENT_SAMPLE: '/assets/measurement.xlsx',
+    // Parking categories endpoint
+    PARKING_CATEGORIES: '/pms/admin/parking_categories.json',
+    // Update parking category endpoint (append /{id}.json)
+    UPDATE_PARKING_CATEGORY: '/pms/admin/parking_categories',
+    // Parking slot details endpoint
+    PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details.json',
+    // Update parking slot details endpoint (append /{id}.json)
+    UPDATE_PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details',
     
   },
 } as const
