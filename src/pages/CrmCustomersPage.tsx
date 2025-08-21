@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Edit2 } from 'lucide-react';
 
 export const CrmCustomersPage = () => {
+  const { id } = useParams();
   const { setCurrentSection } = useLayout();
 
   useEffect(() => {

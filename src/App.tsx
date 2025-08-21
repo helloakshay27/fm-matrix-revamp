@@ -629,7 +629,7 @@ function App() {
                 <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                 <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                 <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
-                <Route path="/crm/customers" element={<CrmCustomersPage />} />
+                <Route path="/crm/customers/:id" element={<CrmCustomersPage />} />
 
                 {/* Snagging Routes */}
                 <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
