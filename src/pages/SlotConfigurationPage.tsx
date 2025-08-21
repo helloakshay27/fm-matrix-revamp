@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Switch } from '../components/ui/switch';
 import { Plus, Search, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
@@ -11,10 +10,20 @@ import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown
 
 interface SlotConfigurationData {
   id: number;
-  slotNumber: string;
   location: string;
-  category: string;
-  active: boolean;
+  floor: string;
+  twoWheeler: {
+    totalParkings: number;
+    nonStackParkings: number;
+    stackParkings: number;
+    reservedParkings: number;
+  };
+  fourWheeler: {
+    totalParkings: number;
+    nonStackParkings: number;
+    stackParkings: number;
+    reservedParkings: number;
+  };
   createdOn: string;
 }
 
@@ -24,11 +33,16 @@ export const SlotConfigurationPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
-    slotNumber: true,
     location: true,
-    category: true,
-    active: true,
-    createdOn: true
+    floor: true,
+    twoWheelerTotal: true,
+    twoWheelerNonStack: true,
+    twoWheelerStack: true,
+    twoWheelerReserved: true,
+    fourWheelerTotal: true,
+    fourWheelerNonStack: true,
+    fourWheelerStack: true,
+    fourWheelerReserved: true
   });
 
   useEffect(() => {
@@ -39,58 +53,65 @@ export const SlotConfigurationPage = () => {
   const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([
     {
       id: 1,
-      slotNumber: 'A-001',
-      location: 'Ground Floor - Zone A',
-      category: '2 Wheeler',
-      active: true,
+      location: 'Sai Radhe',
+      floor: 'Ground Floor',
+      twoWheeler: {
+        totalParkings: 182,
+        nonStackParkings: 182,
+        stackParkings: 0,
+        reservedParkings: 0
+      },
+      fourWheeler: {
+        totalParkings: 76,
+        nonStackParkings: 76,
+        stackParkings: 0,
+        reservedParkings: 0
+      },
       createdOn: '12/12/2023'
     },
     {
       id: 2,
-      slotNumber: 'A-002',
-      location: 'Ground Floor - Zone A',
-      category: '4 Wheeler',
-      active: true,
+      location: 'Building A',
+      floor: 'First Floor',
+      twoWheeler: {
+        totalParkings: 150,
+        nonStackParkings: 100,
+        stackParkings: 50,
+        reservedParkings: 10
+      },
+      fourWheeler: {
+        totalParkings: 60,
+        nonStackParkings: 50,
+        stackParkings: 10,
+        reservedParkings: 5
+      },
       createdOn: '12/12/2023'
     },
     {
       id: 3,
-      slotNumber: 'B-001',
-      location: 'First Floor - Zone B',
-      category: '2 Wheeler',
-      active: false,
+      location: 'Building B',
+      floor: 'Second Floor',
+      twoWheeler: {
+        totalParkings: 120,
+        nonStackParkings: 80,
+        stackParkings: 40,
+        reservedParkings: 8
+      },
+      fourWheeler: {
+        totalParkings: 40,
+        nonStackParkings: 35,
+        stackParkings: 5,
+        reservedParkings: 3
+      },
       createdOn: '10/11/2023'
-    },
-    {
-      id: 4,
-      slotNumber: 'C-001',
-      location: 'Second Floor - Zone C',
-      category: 'Heavy Vehicle',
-      active: true,
-      createdOn: '08/10/2023'
     }
   ]);
 
   const filteredData = slotConfigurationData.filter(item =>
-    item.slotNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.id.toString().includes(searchTerm)
   );
-
-  const handleStatusToggle = (id: number) => {
-    setSlotConfigurationData(prevData => 
-      prevData.map(item => 
-        item.id === id 
-          ? { ...item, active: !item.active }
-          : item
-      )
-    );
-    
-    const updatedItem = slotConfigurationData.find(item => item.id === id);
-    const newValue = updatedItem ? !updatedItem.active : false;
-    toast.success(`Status updated to ${newValue ? 'Active' : 'Inactive'}`);
-  };
 
   const handleEdit = (id: number) => {
     navigate(`/settings/vas/parking-management/slot-configuration/edit/${id}`);
@@ -110,11 +131,16 @@ export const SlotConfigurationPage = () => {
   // Column definitions for visibility control
   const columns = [
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'slotNumber', label: 'Slot Number', visible: visibleColumns.slotNumber },
     { key: 'location', label: 'Location', visible: visibleColumns.location },
-    { key: 'category', label: 'Category', visible: visibleColumns.category },
-    { key: 'active', label: 'Active/Inactive', visible: visibleColumns.active },
-    { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn }
+    { key: 'floor', label: 'Floor', visible: visibleColumns.floor },
+    { key: 'twoWheelerTotal', label: '2W Total Parkings', visible: visibleColumns.twoWheelerTotal },
+    { key: 'twoWheelerNonStack', label: '2W Non Stack', visible: visibleColumns.twoWheelerNonStack },
+    { key: 'twoWheelerStack', label: '2W Stack', visible: visibleColumns.twoWheelerStack },
+    { key: 'twoWheelerReserved', label: '2W Reserved', visible: visibleColumns.twoWheelerReserved },
+    { key: 'fourWheelerTotal', label: '4W Total Parkings', visible: visibleColumns.fourWheelerTotal },
+    { key: 'fourWheelerNonStack', label: '4W Non Stack', visible: visibleColumns.fourWheelerNonStack },
+    { key: 'fourWheelerStack', label: '4W Stack', visible: visibleColumns.fourWheelerStack },
+    { key: 'fourWheelerReserved', label: '4W Reserved', visible: visibleColumns.fourWheelerReserved }
   ];
 
   return (
@@ -151,12 +177,21 @@ export const SlotConfigurationPage = () => {
         <Table>
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.actions && <TableHead className="text-center">Actions</TableHead>}
-              {visibleColumns.slotNumber && <TableHead>Slot Number</TableHead>}
-              {visibleColumns.location && <TableHead>Location</TableHead>}
-              {visibleColumns.category && <TableHead>Category</TableHead>}
-              {visibleColumns.active && <TableHead className="text-center">Active/Inactive</TableHead>}
-              {visibleColumns.createdOn && <TableHead>Created On</TableHead>}
+              {visibleColumns.actions && <TableHead className="text-center" rowSpan={2}>Actions</TableHead>}
+              {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
+              {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
+              <TableHead className="text-center" colSpan={4}>2 Wheeler</TableHead>
+              <TableHead className="text-center" colSpan={4}>4 Wheeler</TableHead>
+            </TableRow>
+            <TableRow className="bg-[#f6f4ee]">
+              {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
+              {visibleColumns.twoWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
+              {visibleColumns.twoWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
+              {visibleColumns.twoWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
+              {visibleColumns.fourWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
+              {visibleColumns.fourWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
+              {visibleColumns.fourWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
+              {visibleColumns.fourWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -175,19 +210,16 @@ export const SlotConfigurationPage = () => {
                     </div>
                   </TableCell>
                 )}
-                {visibleColumns.slotNumber && <TableCell className="font-medium">{item.slotNumber}</TableCell>}
-                {visibleColumns.location && <TableCell>{item.location}</TableCell>}
-                {visibleColumns.category && <TableCell>{item.category}</TableCell>}
-                {visibleColumns.active && (
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={item.active}
-                      onCheckedChange={() => handleStatusToggle(item.id)}
-                      className="data-[state=checked]:bg-green-500"
-                    />
-                  </TableCell>
-                )}
-                {visibleColumns.createdOn && <TableCell>{item.createdOn}</TableCell>}
+                {visibleColumns.location && <TableCell className="font-medium">{item.location}</TableCell>}
+                {visibleColumns.floor && <TableCell>{item.floor}</TableCell>}
+                {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
+                {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
+                {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
+                {visibleColumns.twoWheelerReserved && <TableCell className="text-center text-red-600">{item.twoWheeler.reservedParkings}</TableCell>}
+                {visibleColumns.fourWheelerTotal && <TableCell className="text-center">{item.fourWheeler.totalParkings}</TableCell>}
+                {visibleColumns.fourWheelerNonStack && <TableCell className="text-center">{item.fourWheeler.nonStackParkings}</TableCell>}
+                {visibleColumns.fourWheelerStack && <TableCell className="text-center">{item.fourWheeler.stackParkings}</TableCell>}
+                {visibleColumns.fourWheelerReserved && <TableCell className="text-center text-red-600">{item.fourWheeler.reservedParkings}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
