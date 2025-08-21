@@ -3,11 +3,84 @@ import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ServicePRFilterDialog } from "@/components/ServicePRFilterDialog";
-import { ColumnConfig } from "@/hooks/useEnhancedTable"; // Adjust the import path as needed
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
-import { useAppDispatch } from "@/store/hooks";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getServicePr } from "@/store/slices/servicePRSlice";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "external_id",
+    label: "PR No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "reference_number",
+    label: "Reference No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "supplier",
+    label: "Supplier Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_by",
+    label: "Created By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "created_on",
+    label: "Created On",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "last_approved_by",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approved_status",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_amount",
+    label: "PR Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "active",
+    label: "Active/Inactive",
+    sortable: false,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const ServicePRDashboard = () => {
   const navigate = useNavigate();
@@ -15,61 +88,26 @@ export const ServicePRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const { loading } = useAppSelector(state => state.getServicePr)
+
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [servicePR, setServicePR] = useState([])
+  const [servicePR, setServicePR] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await dispatch(getServicePr({ baseUrl, token })).unwrap();
-        setServicePR(response.work_orders)
+        const response = await dispatch(
+          getServicePr({ baseUrl, token })
+        ).unwrap();
+        setServicePR(response.work_orders);
       } catch (error) {
-        toast.error(error)
+        toast.error(error);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
-
-  const servicePRData = [
-    {
-      id: 12985,
-      prNumber: "10011",
-      referenceNo: "10011",
-      supplierName: "xyz",
-      createdBy: "Anjali Lungare",
-      createdOn: "30/07/2024",
-      lastApprovedBy: "ACN",
-      approvedStatus: "Pending",
-      prAmount: "₹ 150.00",
-      activeInactive: true,
-    },
-    {
-      id: 12936,
-      prNumber: "10010",
-      referenceNo: "10010",
-      supplierName: "xyz",
-      createdBy: "Anjali Lungare",
-      createdOn: "26/07/2024",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 5,000.00",
-      activeInactive: true,
-    },
-    {
-      id: 378,
-      prNumber: "10006",
-      referenceNo: "10006",
-      supplierName: "",
-      createdBy: "Robert Day2",
-      createdOn: "05/07/2023",
-      lastApprovedBy: "",
-      approvedStatus: "Pending",
-      prAmount: "₹ 10,700.00",
-      activeInactive: true,
-    },
-  ];
+    fetchData();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -86,13 +124,6 @@ export const ServicePRDashboard = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
-      case "prNumber":
-      case "reference_number":
-        return (
-          <span className="text-blue-600 hover:underline cursor-pointer">
-            {item[columnKey]}
-          </span>
-        );
       case "approved_status":
         return (
           <span
@@ -115,22 +146,9 @@ export const ServicePRDashboard = () => {
       case "prAmount":
         return <span className="font-medium">{item.prAmount}</span>;
       default:
-        return item[columnKey] || "";
+        return item[columnKey] || "-";
     }
   };
-
-  const columns: ColumnConfig[] = [
-    { key: "id", label: "ID", sortable: true, draggable: true, defaultVisible: true },
-    { key: "prNumber", label: "PR No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "reference_number", label: "Reference No.", sortable: true, draggable: true, defaultVisible: true },
-    { key: "supplier", label: "Supplier Name", sortable: true, draggable: true, defaultVisible: true },
-    { key: "created_by", label: "Created By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "created_on", label: "Created On", sortable: true, draggable: true, defaultVisible: true },
-    { key: "last_approved_by", label: "Last Approved By", sortable: true, draggable: true, defaultVisible: true },
-    { key: "approved_status", label: "Approved Status", sortable: true, draggable: true, defaultVisible: true },
-    { key: "total_amount", label: "PR Amount", sortable: true, draggable: true, defaultVisible: true },
-    { key: "active", label: "Active/Inactive", sortable: false, draggable: true, defaultVisible: true },
-  ];
 
   const renderActions = (item: any) => (
     <div className="flex gap-2">
@@ -173,7 +191,6 @@ export const ServicePRDashboard = () => {
 
   return (
     <div className="p-4 sm:p-6">
-      {/* Table */}
       <EnhancedTable
         data={servicePR || []}
         columns={columns}
@@ -192,10 +209,13 @@ export const ServicePRDashboard = () => {
         enableSelection={true}
         leftActions={leftActions}
         onFilterClick={() => setIsFilterDialogOpen(true)}
+        loading={loading}
       />
 
-      {/* Filter Dialog */}
-      <ServicePRFilterDialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen} />
+      <ServicePRFilterDialog
+        open={isFilterDialogOpen}
+        onOpenChange={setIsFilterDialogOpen}
+      />
     </div>
   );
 };

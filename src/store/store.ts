@@ -20,7 +20,7 @@ import resolutionEscalationReducer from './slices/resolutionEscalationSlice'
 import costApprovalReducer from './slices/costApprovalSlice'
 import { editFacilityBookingSetupReducer, exportReportReducer, facilityBookingSetupDetailsReducer, facilityBookingsReducer, fetchBookingDetailsReducer, filterBookingsReducer, getLogsReducer } from './slices/facilityBookingsSlice'
 import entitiesReducer from './slices/entitiesSlice'
-import facilitySetupsReducer, { fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
+import facilitySetupsReducer, { fetchActiveFacilitiesReducer, fetchFacilitySetupReducer } from './slices/facilitySetupsSlice'
 import { assetsReducer } from './slices/assetsSlice'
 import { suppliersReducer } from './slices/suppliersSlice'
 import { amcCreateReducer } from './slices/amcCreateSlice'
@@ -125,6 +125,7 @@ export const store = configureStore({
     editFacilityBookingSetup: editFacilityBookingSetupReducer,
     filterBookings: filterBookingsReducer,
     getLogs: getLogsReducer,
+    fetchActiveFacilities: fetchActiveFacilitiesReducer,
 
     // Unit Master
     fetchMasterUnits: fetchMasterUnitsReducer,

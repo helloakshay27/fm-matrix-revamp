@@ -1,95 +1,187 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { GRNFilterDialog } from "@/components/GRNFilterDialog";
-import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { useAppDispatch } from '@/store/hooks';
-import { getGRN } from '@/store/slices/grnSlice';
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { getGRN } from "@/store/slices/grnSlice";
+
+const columns: ColumnConfig[] = [
+  {
+    key: "id",
+    label: "ID",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "inventories_name",
+    label: "Inventory",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "supplier_name",
+    label: "Supplier",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "invoice_no",
+    label: "Invoice Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "reference_number",
+    label: "Reference No.",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "po_number",
+    label: "P.O. Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "po_reference_number",
+    label: "P.O Reference Number",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "approved_status",
+    label: "Approved Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "last_approved_by",
+    label: "Last Approved By",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "po_amount",
+    label: "PO Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "total_grn_amount",
+    label: "Total GRN Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "payable_amount",
+    label: "Payable Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "retention_amount",
+    label: "Retention Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "tds_amount",
+    label: "TDS Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "qc_amount",
+    label: "QC Amount",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "invoice_date",
+    label: "Invoice Date",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+];
 
 export const GRNSRNDashboard = () => {
   const dispatch = useAppDispatch();
-  const token = localStorage.getItem('token');
-  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
+  const { loading } = useAppSelector(state => state.getGRN)
 
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
-  const [grn, setGrn] = useState([])
+  const [grn, setGrn] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await dispatch(getGRN({ baseUrl, token })).unwrap();
-        setGrn(response.grns)
+        setGrn(response.grns);
       } catch (error) {
-        console.log(error)
-        toast.error(error)
+        console.log(error);
+        toast.error(error);
       }
-    }
+    };
 
-    fetchData()
-  }, [])
+    fetchData();
+  }, []);
 
-  // Function to get status color based on approvedStatus
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-500 text-white';
-      case 'pending':
-        return 'bg-yellow-500 text-black';
-      case 'rejected':
-        return 'bg-red-500 text-white';
+      case "approved":
+        return "bg-green-500 text-white";
+      case "pending":
+        return "bg-yellow-500 text-black";
+      case "rejected":
+        return "bg-red-500 text-white";
       default:
-        return 'bg-gray-500 text-white';
+        return "bg-gray-500 text-white";
     }
   };
 
-  // Separate renderCell function
   const renderCell = (item, columnKey: string) => {
     switch (columnKey) {
-      case 'approved_status':
+      case "approved_status":
         return (
-          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(item.approved_status)}`}>
+          <span
+            className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
+              item.approved_status
+            )}`}
+          >
             {item.approved_status}
           </span>
         );
-      case 'po_amount':
-      case 'total_grn_amount':
-      case 'payable_amount':
-      case 'retention_amount':
-      case 'tds_amount':
-      case 'qc_amount':
-        return item[columnKey];
       default:
-        return item[columnKey];
+        return item[columnKey] || "-";
     }
   };
 
-  // Define column configuration for EnhancedTable
-  const columns: ColumnConfig[] = [
-    { key: 'id', label: 'ID', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'inventories_name', label: 'Inventory', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'supplier_name', label: 'Supplier', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'invoice_no', label: 'Invoice Number', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'reference_number', label: 'Reference No.', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'po_number', label: 'P.O. Number', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'po_reference_number', label: 'P.O Reference Number', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'approved_status', label: 'Approved Status', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'last_approved_by', label: 'Last Approved By', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'po_amount', label: 'PO Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'total_grn_amount', label: 'Total GRN Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'payable_amount', label: 'Payable Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'retention_amount', label: 'Retention Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'tds_amount', label: 'TDS Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'qc_amount', label: 'QC Amount', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'invoice_date', label: 'Invoice Date', sortable: true, draggable: true, defaultVisible: true },
-  ];
-
   const handleAddNew = () => {
-    navigate('/finance/grn-srn/add');
+    navigate("/finance/grn-srn/add");
   };
 
   const handleFilter = () => {
@@ -104,7 +196,6 @@ export const GRNSRNDashboard = () => {
     navigate(`/finance/grn-srn/edit/${id}`);
   };
 
-  // Render actions for each row
   const renderActions = (item) => (
     <div className="flex gap-1">
       <Button
@@ -126,7 +217,6 @@ export const GRNSRNDashboard = () => {
     </div>
   );
 
-  // Left actions (Add and Filter buttons)
   const leftActions = (
     <div className="flex gap-3">
       <Button
@@ -141,16 +231,14 @@ export const GRNSRNDashboard = () => {
 
   return (
     <div className="p-6">
-      {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">GRN LIST</h1>
 
-      {/* Enhanced Table */}
       <EnhancedTable
         data={grn}
         columns={columns}
-        renderCell={renderCell} // Pass the renderCell function
+        renderCell={renderCell}
         renderActions={renderActions}
-        onRowClick={(item) => handleView(item.id)} // Optional: Click row to view details
+        onRowClick={(item) => handleView(item.id)}
         storageKey="grn-srn-table"
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
@@ -162,6 +250,7 @@ export const GRNSRNDashboard = () => {
         enableSearch={true}
         leftActions={leftActions}
         onFilterClick={handleFilter}
+        loading={loading}
       />
 
       <GRNFilterDialog

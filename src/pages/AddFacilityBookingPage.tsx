@@ -8,7 +8,7 @@ import { CheckCircle, FileText, Shield, ArrowLeft } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { fetchEntities } from '@/store/slices/entitiesSlice';
-import { fetchFacilitySetups } from '@/store/slices/facilitySetupsSlice';
+import { fetchActiveFacilities } from '@/store/slices/facilitySetupsSlice';
 import { fetchOccupantUsers } from '@/store/slices/occupantUsersSlice';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
@@ -29,7 +29,7 @@ export const AddFacilityBookingPage = () => {
   const entities = Array.isArray(entitiesResponse?.entities) ? entitiesResponse.entities :
     Array.isArray(entitiesResponse) ? entitiesResponse : [];
 
-  const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.facilitySetups);
+  const { data: facilitySetupsResponse, loading: facilitySetupsLoading, error: facilitySetupsError } = useAppSelector((state) => state.fetchActiveFacilities);
   const facilities = Array.isArray(facilitySetupsResponse?.facility_setups) ? facilitySetupsResponse.facility_setups :
     Array.isArray(facilitySetupsResponse) ? facilitySetupsResponse : [];
 
@@ -72,7 +72,7 @@ export const AddFacilityBookingPage = () => {
     } else {
       dispatch(fetchFMUsers());
     }
-    dispatch(fetchFacilitySetups());
+    dispatch(fetchActiveFacilities({ baseUrl: localStorage.getItem('baseUrl'), token: localStorage.getItem('token') }));
   }, [dispatch, userType]);
 
   // Fetch facility details when facility is selected
