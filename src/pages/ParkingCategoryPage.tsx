@@ -7,16 +7,27 @@ import { Switch } from '../components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Plus, Search, Edit, Trash2, X } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, X, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '../config/apiConfig';
 
 interface ParkingCategoryData {
   id: number;
   name: string;
   active: boolean;
   createdOn: string;
+  resource_id?: number;
+  resource_type?: string;
+  created_at?: string;
+  updated_at?: string;
+  parking_image?: {
+    id: number;
+    relation: string;
+    relation_id: number;
+    document: string;
+  } | null;
 }
 
 export const ParkingCategoryPage = () => {
@@ -36,38 +47,77 @@ export const ParkingCategoryPage = () => {
   const [editCategoryName, setEditCategoryName] = useState('');
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
   const [editCategoryImage, setEditCategoryImage] = useState<File | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Settings');
+    fetchParkingCategories();
   }, [setCurrentSection]);
-  
-  // Sample data for parking categories
-  const [parkingCategoryData, setParkingCategoryData] = useState<ParkingCategoryData[]>([
-    {
-      id: 1,
-      name: '2 Wheeler',
-      active: true,
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 2,
-      name: '4 Wheeler',
-      active: true,
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 3,
-      name: 'Heavy Vehicle',
-      active: false,
-      createdOn: '10/11/2023'
-    },
-    {
-      id: 4,
-      name: 'Bicycle',
-      active: true,
-      createdOn: '08/10/2023'
+
+  // Fetch parking categories from API
+  const fetchParkingCategories = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🚀 Fetching parking categories from API...');
+      
+      const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.PARKING_CATEGORIES), {
+        method: 'GET',
+        headers: {
+          Authorization: getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`Failed to fetch parking categories: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Parking categories fetched successfully:', data);
+
+      // Transform API data to match our interface
+      const transformedData = data.parking_categories.map((category: any) => ({
+        id: category.id,
+        name: category.name,
+        active: category.active,
+        createdOn: new Date(category.created_at).toLocaleDateString('en-GB'),
+        resource_id: category.resource_id,
+        resource_type: category.resource_type,
+        created_at: category.created_at,
+        updated_at: category.updated_at,
+        parking_image: category.parking_image
+      }));
+
+      setParkingCategoryData(transformedData);
+    } catch (error) {
+      console.error('❌ Error fetching parking categories:', error);
+      toast.error('Failed to load parking categories');
+      // Keep sample data as fallback
+      setParkingCategoryData([
+        {
+          id: 1,
+          name: '2 Wheeler',
+          active: true,
+          createdOn: '12/12/2023'
+        },
+        {
+          id: 2,
+          name: '4 Wheeler',
+          active: true,
+          createdOn: '12/12/2023'
+        }
+      ]);
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+  
+  // Initialize with empty data - will be populated by API call
+  const [parkingCategoryData, setParkingCategoryData] = useState<ParkingCategoryData[]>([]);
 
   const filteredData = parkingCategoryData.filter(item =>
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -107,49 +157,141 @@ export const ParkingCategoryPage = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handleCreateCategory = () => {
+  const handleCreateCategory = async () => {
     if (!categoryName) {
-      toast.error('Please enter category name');
+      toast.error('Please select a category name');
       return;
     }
     
-    const newCategory = {
-      id: Math.max(...parkingCategoryData.map(item => item.id)) + 1,
-      name: categoryName,
-      active: true,
-      createdOn: new Date().toLocaleDateString('en-GB')
-    };
+    if (!categoryImage) {
+      toast.error('Please select a category image');
+      return;
+    }
     
-    setParkingCategoryData(prevData => [...prevData, newCategory]);
-    toast.success('Category created successfully');
+    setIsCreating(true);
     
-    // Reset form
-    setCategoryName('');
-    setCategoryImage(null);
-    setIsCreateModalOpen(false);
+    try {
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append('parking_category[name]', categoryName);
+      formData.append('parking_category[active]', 'true');
+      formData.append('CategoryImage', categoryImage);
+      
+      console.log('Creating parking category with data:', {
+        name: categoryName,
+        active: true,
+        image: categoryImage.name
+      });
+      
+      // Make API call
+      const response = await fetch(getFullUrl(API_CONFIG.ENDPOINTS.PARKING_CATEGORIES), {
+        method: 'POST',
+        headers: {
+          Authorization: getAuthHeader(),
+          // Note: Don't set Content-Type for FormData - browser sets it automatically with boundary
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        
+        // Handle specific 422 error for duplicate name
+        if (response.status === 422) {
+          throw new Error('Name has already been taken');
+        }
+        
+        throw new Error(`Failed to create parking category: ${response.status} ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Parking category created successfully:', responseData);
+      
+      // Refresh the data from server instead of updating local state
+      await fetchParkingCategories();
+      toast.success('Parking category created successfully');
+      
+      // Reset form
+      setCategoryName('');
+      setCategoryImage(null);
+      setIsCreateModalOpen(false);
+      
+    } catch (error) {
+      console.error('❌ Error creating parking category:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create parking category');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
-  const handleUpdateCategory = () => {
+  const handleUpdateCategory = async () => {
     if (!editCategoryName || !editingCategory) {
-      toast.error('Please enter category name');
+      toast.error('Please select a category name');
       return;
     }
     
-    setParkingCategoryData(prevData => 
-      prevData.map(item => 
-        item.id === editingCategory.id 
-          ? { ...item, name: editCategoryName }
-          : item
-      )
-    );
+    setIsUpdating(true);
     
-    toast.success('Category updated successfully');
-    
-    // Reset form
-    setEditingCategory(null);
-    setEditCategoryName('');
-    setEditCategoryImage(null);
-    setIsEditModalOpen(false);
+    try {
+      // Create FormData for the API request
+      const formData = new FormData();
+      formData.append('parking_category[name]', editCategoryName);
+      formData.append('parking_category[active]', editingCategory.active.toString());
+      
+      // Only append image if a new one is selected
+      if (editCategoryImage) {
+        formData.append('CategoryImage', editCategoryImage);
+      }
+      
+      console.log('Updating parking category with data:', {
+        id: editingCategory.id,
+        name: editCategoryName,
+        active: editingCategory.active,
+        hasNewImage: !!editCategoryImage
+      });
+      
+      // Make PUT API call to specific category ID
+      const response = await fetch(`${getFullUrl(API_CONFIG.ENDPOINTS.UPDATE_PARKING_CATEGORY)}/${editingCategory.id}.json`, {
+        method: 'PUT',
+        headers: {
+          Authorization: getAuthHeader(),
+          // Note: Don't set Content-Type for FormData - browser sets it automatically with boundary
+        },
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        
+        // Handle specific 422 error for duplicate name
+        if (response.status === 422) {
+          throw new Error('Name has already been taken');
+        }
+        
+        throw new Error(`Failed to update parking category: ${response.status} ${response.statusText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('✅ Parking category updated successfully:', responseData);
+      
+      // Refresh the data from server instead of updating local state
+      await fetchParkingCategories();
+      toast.success('Parking category updated successfully');
+      
+      // Reset form
+      setEditingCategory(null);
+      setEditCategoryName('');
+      setEditCategoryImage(null);
+      setIsEditModalOpen(false);
+      
+    } catch (error) {
+      console.error('❌ Error updating parking category:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to update parking category');
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -185,13 +327,24 @@ export const ParkingCategoryPage = () => {
     <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
-        <Button 
-          onClick={handleAdd}
-          className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleAdd}
+            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          {/* <Button 
+            onClick={fetchParkingCategories}
+            disabled={isLoading}
+            variant="outline"
+            className="px-4 py-2"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button> */}
+        </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -222,7 +375,23 @@ export const ParkingCategoryPage = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((item) => (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#00B4D8]"></div>
+                    <span className="ml-2">Loading parking categories...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                  No parking categories found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.map((item) => (
               <TableRow key={item.id} className="hover:bg-gray-50">
                 {visibleColumns.actions && (
                   <TableCell className="text-center">
@@ -249,7 +418,8 @@ export const ParkingCategoryPage = () => {
                 )}
                 {visibleColumns.createdOn && <TableCell>{item.createdOn}</TableCell>}
               </TableRow>
-            ))}
+            ))
+            )}
           </TableBody>
         </Table>
       </div>
@@ -280,9 +450,6 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
-                  <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
-                  <SelectItem value="Bicycle">Bicycle</SelectItem>
-                  <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -316,9 +483,10 @@ export const ParkingCategoryPage = () => {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleCreateCategory}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                disabled={isCreating}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
               >
-                Submit
+                {isCreating ? 'Creating...' : 'Submit'}
               </Button>
             </div>
           </div>
@@ -351,9 +519,12 @@ export const ParkingCategoryPage = () => {
                 <SelectContent>
                   <SelectItem value="2 Wheeler">2 Wheeler</SelectItem>
                   <SelectItem value="4 Wheeler">4 Wheeler</SelectItem>
-                  <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
+                  {/* <SelectItem value="Heavy Vehicle">Heavy Vehicle</SelectItem>
                   <SelectItem value="Bicycle">Bicycle</SelectItem>
                   <SelectItem value="Electric Vehicle">Electric Vehicle</SelectItem>
+                  <SelectItem value="2-Wheeler">2-Wheeler</SelectItem>
+                  <SelectItem value="4-wheeler">4-wheeler</SelectItem>
+                  <SelectItem value="2-Wheelers">2-Wheelers</SelectItem> */}
                 </SelectContent>
               </Select>
             </div>
@@ -382,14 +553,34 @@ export const ParkingCategoryPage = () => {
                 />
               </div>
               
-              {/* Show existing image preview for categories with images */}
-              {editingCategory?.name === '2 Wheeler' && !editCategoryImage && (
+              {/* Show existing image preview */}
+              {editingCategory?.parking_image && !editCategoryImage && (
                 <div className="mt-2">
-                  <div className="w-16 h-16 bg-blue-100 rounded border flex items-center justify-center">
-                    <div className="text-xs text-center">
-                      <div className="text-blue-600 font-semibold">🏍️</div>
-                      <div className="text-blue-600 text-[8px]">MOTORCYCLE<br/>PARKING</div>
-                    </div>
+                  <p className="text-sm text-gray-600 mb-2">Current Image:</p>
+                  <div className="w-24 h-24 bg-gray-100 rounded border overflow-hidden">
+                    <img 
+                      src={editingCategory.parking_image.document} 
+                      alt={`${editingCategory.name} parking`}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+              
+              {/* Show new image preview if selected */}
+              {editCategoryImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 mb-2">New Image Preview:</p>
+                  <div className="w-24 h-24 bg-gray-100 rounded border overflow-hidden">
+                    <img 
+                      src={URL.createObjectURL(editCategoryImage)} 
+                      alt="New parking category"
+                      className="w-full h-full object-cover"
+                    />
                   </div>
                 </div>
               )}
@@ -399,9 +590,10 @@ export const ParkingCategoryPage = () => {
             <div className="flex justify-end pt-4">
               <Button
                 onClick={handleUpdateCategory}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6"
+                disabled={isUpdating}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-6 disabled:opacity-50"
               >
-                Submit
+                {isUpdating ? 'Updating...' : 'Submit'}
               </Button>
             </div>
           </div>
