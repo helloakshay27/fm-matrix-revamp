@@ -42,6 +42,15 @@ export const TimeSlotSetupPage = () => {
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
+
+  // Function to convert 24-hour format to 12-hour AM/PM format
+  const formatTo12Hour = (time24: string) => {
+    const [hours, minutes] = time24.split(':');
+    const hour24 = parseInt(hours, 10);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes} ${ampm}`;
+  };
   
   // Sample data for time slots
   const [timeSlotData, setTimeSlotData] = useState<TimeSlotData[]>([
@@ -116,14 +125,14 @@ export const TimeSlotSetupPage = () => {
   };
 
   const handleCreateTimeSlot = () => {
-    if (!slotName || !startTime || !endTime) {
+    if (!startTime || !endTime) {
       toast.error('Please fill all fields');
       return;
     }
     
     const newTimeSlot = {
       id: Math.max(...timeSlotData.map(item => item.id)) + 1,
-      slotName,
+      slotName: `${formatTo12Hour(startTime)} - ${formatTo12Hour(endTime)}`,
       startTime,
       endTime,
       active: true,
@@ -134,14 +143,13 @@ export const TimeSlotSetupPage = () => {
     toast.success('Time slot created successfully');
     
     // Reset form
-    setSlotName('');
     setStartTime('');
     setEndTime('');
     setIsCreateModalOpen(false);
   };
 
   const handleUpdateTimeSlot = () => {
-    if (!editSlotName || !editStartTime || !editEndTime || !editingSlot) {
+    if (!editStartTime || !editEndTime || !editingSlot) {
       toast.error('Please fill all fields');
       return;
     }
@@ -149,7 +157,12 @@ export const TimeSlotSetupPage = () => {
     setTimeSlotData(prevData => 
       prevData.map(item => 
         item.id === editingSlot.id 
-          ? { ...item, slotName: editSlotName, startTime: editStartTime, endTime: editEndTime }
+          ? { 
+              ...item, 
+              slotName: `${formatTo12Hour(editStartTime)} - ${formatTo12Hour(editEndTime)}`,
+              startTime: editStartTime, 
+              endTime: editEndTime 
+            }
           : item
       )
     );
@@ -158,7 +171,6 @@ export const TimeSlotSetupPage = () => {
     
     // Reset form
     setEditingSlot(null);
-    setEditSlotName('');
     setEditStartTime('');
     setEditEndTime('');
     setIsEditModalOpen(false);
@@ -235,7 +247,7 @@ export const TimeSlotSetupPage = () => {
                 )}
                 {visibleColumns.timings && (
                   <TableCell className="text-center font-medium">
-                    {item.startTime} to {item.endTime}
+                    {formatTo12Hour(item.startTime)} to {formatTo12Hour(item.endTime)}
                   </TableCell>
                 )}
                 {visibleColumns.createdOn && <TableCell>{item.createdOn}</TableCell>}
