@@ -29,7 +29,7 @@ export const ParkingCategoryPage = () => {
   });
 
   useEffect(() => {
-    setCurrentSection('VAS Management');
+    setCurrentSection('Settings');
   }, [setCurrentSection]);
   
   // Sample data for parking categories
