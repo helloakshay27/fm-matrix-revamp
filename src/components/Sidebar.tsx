@@ -795,12 +795,12 @@ export const Sidebar = () => {
                       {expandedItems.includes(subItem.name) && (
                         <div className="ml-4 mt-1 space-y-1">
                           {subItem.subItems.map((nestedItem: any) => (
-                            <button
-                              key={nestedItem.name}
-                              onClick={() => handleNavigation(nestedItem.href, currentSection)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
-                                }`}
-                            >
+                             <button
+                               key={nestedItem.name}
+                               onClick={() => handleNavigation(nestedItem.href, 'Settings')}
+                               className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
+                                 }`}
+                             >
                               {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
                             </button>
