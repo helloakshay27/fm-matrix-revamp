@@ -554,7 +554,7 @@ export const EditInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity<span style={{ color: '#C72030' }}>*</span></>}
+                    label="Quantity"
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
