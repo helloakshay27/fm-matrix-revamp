@@ -665,7 +665,9 @@ export const Sidebar = () => {
 
   React.useEffect(() => {
     const path = location.pathname;
-    if (path.startsWith('/utility')) {
+    if (path.startsWith('/settings')) {
+      setCurrentSection('Settings');
+    } else if (path.startsWith('/utility')) {
       setCurrentSection('Utility');
     } else if (path.startsWith('/transitioning')) {
       setCurrentSection('Transitioning');
@@ -685,8 +687,6 @@ export const Sidebar = () => {
       setCurrentSection('Market Place');
     } else if (path.startsWith('/master')) {
       setCurrentSection('Master');
-    } else if (path.startsWith('/settings')) {
-      setCurrentSection('Settings');
     }
   }, [location.pathname, setCurrentSection]);
 
