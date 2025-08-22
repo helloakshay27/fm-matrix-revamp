@@ -185,7 +185,7 @@ export const fetchWings = createAsyncThunk(
 export const fetchAreas = createAsyncThunk(
   'location/fetchAreas',
   async ({ buildingId, wingId }: { buildingId: number; wingId: number }) => {
-    const response = await apiClient.get(`/pms/areas.json?building_id=${buildingId}&wing_id=${wingId}`);
+    const response = await apiClient.get(`/pms/areas.json?wing_id=${wingId}`);
     return response.data.areas || [];
   }
 );
@@ -193,7 +193,7 @@ export const fetchAreas = createAsyncThunk(
 export const fetchFloors = createAsyncThunk(
   'location/fetchFloors',
   async ({ buildingId, wingId, areaId }: { buildingId: number; wingId: number; areaId: number }) => {
-    const response = await apiClient.get(`/pms/floors.json?building_id=${buildingId}&wing_id=${wingId}&area_id=${areaId}`);
+    const response = await apiClient.get(`/pms/floors.json?area_id=${areaId}`);
     return response.data.floors || [];
   }
 );
@@ -230,7 +230,7 @@ export const fetchAllUnits = createAsyncThunk(
 export const fetchUnits = createAsyncThunk(
   'location/fetchUnits',
   async ({ buildingId, wingId, areaId, floorId }: { buildingId: number; wingId: number; areaId: number; floorId: number }) => {
-    const response = await apiClient.get(`/pms/units.json?building_id=${buildingId}&wing_id=${wingId}&area_id=${areaId}&floor_id=${floorId}`);
+    const response = await apiClient.get(`/pms/units.json?floor_id=${floorId}`);
     return Array.isArray(response.data) ? response.data : [response.data];
   }
 );
@@ -238,7 +238,7 @@ export const fetchUnits = createAsyncThunk(
 export const fetchRooms = createAsyncThunk(
   'location/fetchRooms',
   async ({ buildingId, wingId, areaId, floorId }: { buildingId: number; wingId: number; areaId: number; floorId: number }) => {
-    const response = await apiClient.get(`/pms/rooms.json?building_id=${buildingId}&wing_id=${wingId}&area_id=${areaId}&floor_id=${floorId}`);
+    const response = await apiClient.get(`/pms/rooms.json?floor_id=${floorId}`);
     return Array.isArray(response.data) ? response.data : [response.data];
   }
 );
