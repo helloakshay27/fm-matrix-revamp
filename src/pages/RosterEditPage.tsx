@@ -33,9 +33,12 @@ interface FMUser {
 
 interface Shift {
   id: number;
-  name: string;
-  start_time: string;
-  end_time: string;
+  start_hour: number;
+  start_min: number;
+  end_hour: number;
+  end_min: number;
+  timings: string;
+  total_hour: number;
 }
 
 interface RosterFormData {
@@ -95,11 +98,13 @@ export const RosterEditPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingFMUsers, setLoadingFMUsers] = useState(false);
+  const [loadingFilteredFMUsers, setLoadingFilteredFMUsers] = useState(false);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingShifts, setLoadingShifts] = useState(false);
 
   // Data states
   const [fmUsers, setFMUsers] = useState<FMUser[]>([]);
+  const [filteredFMUsers, setFilteredFMUsers] = useState<FMUser[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [currentLocation, setCurrentLocation] = useState<string>('');
@@ -162,27 +167,80 @@ export const RosterEditPage: React.FC = () => {
       });
       if (!response.ok) throw new Error('Failed to fetch roster template');
       const data = await response.json();
-      const r = data.user_roaster || data;
+      const r = data; // Direct response structure
+      
+      // Parse no_of_days based on roster type
+      let selectedDays: string[] = [];
+      let weekSelection: string[] = [];
+      
+      if (r.roaster_type === 'Recurring' && r.no_of_days && Array.isArray(r.no_of_days) && r.no_of_days.length > 0) {
+        // For recurring: no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+        const recurringData = r.no_of_days[0];
+        Object.keys(recurringData).forEach(weekNum => {
+          const dayNumbers = recurringData[weekNum];
+          dayNumbers.forEach((dayNum: string) => {
+            // Map day numbers back to day names (1=Mon, 2=Tue, ..., 7=Sun)
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dayName = dayNames[parseInt(dayNum) - 1];
+            if (dayName) {
+              selectedDays.push(`Week${weekNum}-${dayName}`);
+            }
+          });
+        });
+      } else if (r.roaster_type === 'Weekdays' && r.no_of_days && Array.isArray(r.no_of_days)) {
+        // For weekdays: extract week numbers
+        weekSelection = r.no_of_days.map((weekNum: string) => `${weekNum}${weekNum === '1' ? 'st' : weekNum === '2' ? 'nd' : weekNum === '3' ? 'rd' : 'th'} Week`);
+      } else if (r.roaster_type === 'Weekends' && r.no_of_days && Array.isArray(r.no_of_days)) {
+        // For weekends: extract weekend numbers  
+        weekSelection = r.no_of_days.map((weekendNum: string) => `${weekendNum}${weekendNum === '1' ? 'st' : weekendNum === '2' ? 'nd' : weekendNum === '3' ? 'rd' : 'th'} Weekend`);
+      }
+      
+      // Parse dates
+      let periodDates = {
+        fromDay: 21,
+        fromMonth: 8,
+        fromYear: 2025,
+        toDay: 19,
+        toMonth: 9,
+        toYear: 2025
+      };
+      
+      if (r.start_date) {
+        const startDate = new Date(r.start_date);
+        periodDates.fromDay = startDate.getDate();
+        periodDates.fromMonth = startDate.getMonth() + 1;
+        periodDates.fromYear = startDate.getFullYear();
+      }
+      
+      if (r.end_date) {
+        const endDate = new Date(r.end_date);
+        periodDates.toDay = endDate.getDate();
+        periodDates.toMonth = endDate.getMonth() + 1;
+        periodDates.toYear = endDate.getFullYear();
+      }
+      
+      const departments = r.department_id ? (Array.isArray(r.department_id) ? r.department_id.map(Number) : [Number(r.department_id)]) : [];
+      
       setFormData({
         templateName: r.name || '',
-        selectedDays: r.working_days || [],
+        selectedDays,
         dayType: r.roaster_type || 'Weekdays',
-        weekSelection: r.week_selection || [],
+        weekSelection,
         location: r.location || '',
-        departments: r.department_id ? r.department_id.map(Number) : [],
+        departments,
         shift: r.user_shift_id ? Number(r.user_shift_id) : null,
         selectedEmployees: r.resource_id ? [Number(r.resource_id)] : [],
         rosterType: r.allocation_type || 'Permanent',
         active: r.active !== undefined ? r.active : true
       });
-      setPeriod({
-        fromDay: Number(r['start_date(3i)']) || 19,
-        fromMonth: Number(r['start_date(2i)']) || 8,
-        fromYear: Number(r['start_date(1i)']) || 2025,
-        toDay: Number(r['end_date(3i)']) || 18,
-        toMonth: Number(r['end_date(2i)']) || 9,
-        toYear: Number(r['end_date(1i)']) || 2025
-      });
+      
+      setPeriod(periodDates);
+      
+      // Fetch filtered users for the departments
+      if (departments.length > 0) {
+        fetchFilteredFMUsers(departments);
+      }
+      
     } catch (error) {
       console.error('Error fetching roster template:', error);
       toast.error('Failed to load roster template');
@@ -244,18 +302,38 @@ export const RosterEditPage: React.FC = () => {
     }
   };
 
-  // Fetch Shifts
+  // Fetch Shifts from the API
   const fetchShifts = async () => {
     setLoadingShifts(true);
     try {
-      // Mock shift data - replace with actual API call
-      const mockShifts = [
-        { id: 1, name: 'Morning Shift', start_time: '09:00', end_time: '17:00' },
-        { id: 2, name: 'Evening Shift', start_time: '17:00', end_time: '01:00' },
-        { id: 3, name: 'Night Shift', start_time: '01:00', end_time: '09:00' },
-        { id: 4, name: 'Extended Shift', start_time: '10:00', end_time: '20:00' }
-      ];
-      setShifts(mockShifts);
+      const apiUrl = getFullUrl('/pms/admin/user_shifts.json');
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Shifts API Response:', data);
+
+      // Adapt the response to our expected format
+      const shiftsData = data.user_shifts || data.shifts || data || [];
+      setShifts(shiftsData.map((shift: any) => ({
+        id: shift.id,
+        start_hour: shift.start_hour,
+        start_min: shift.start_min,
+        end_hour: shift.end_hour,
+        end_min: shift.end_min,
+        timings: shift.timings,
+        total_hour: shift.total_hour
+      })));
     } catch (error) {
       console.error('Error fetching shifts:', error);
       toast.error('Failed to load shifts');
@@ -268,11 +346,15 @@ export const RosterEditPage: React.FC = () => {
   // Fetch Current Location
   const fetchCurrentLocation = async () => {
     try {
+      // First try to get from Redux state
       if (selectedSite?.name) {
         setCurrentLocation(selectedSite.name);
+        setFormData(prev => ({ ...prev, location: selectedSite.name }));
         return;
       }
 
+      // Fallback to localStorage
+      const siteId = localStorage.getItem('selectedSiteId');
       const siteName = localStorage.getItem('selectedSiteName');
       const companyName = localStorage.getItem('selectedCompanyName');
 
@@ -284,10 +366,59 @@ export const RosterEditPage: React.FC = () => {
         locationName = companyName;
       }
 
+      // Try to get from DOM if localStorage doesn't have it
+      if (locationName === 'Current Site') {
+        const headerSiteElement = document.querySelector('[data-site-name]');
+        if (headerSiteElement) {
+          locationName = headerSiteElement.textContent?.trim() || 'Current Site';
+        }
+      }
+
       setCurrentLocation(locationName);
+      setFormData(prev => ({ ...prev, location: locationName }));
     } catch (error) {
       console.error('Error fetching current location:', error);
       setCurrentLocation('Current Site');
+      setFormData(prev => ({ ...prev, location: 'Current Site' }));
+    }
+  };
+
+  // Fetch FM Users for selected departments
+  const fetchFilteredFMUsers = async (departmentIds: number[]) => {
+    if (!departmentIds || departmentIds.length === 0) {
+      setFilteredFMUsers([]);
+      return;
+    }
+    setLoadingFilteredFMUsers(true);
+    try {
+      const idsParam = departmentIds.join(',');
+      const apiUrl = `${API_CONFIG.BASE_URL}/pms/admin/user_roasters/department_roasters.json?department_id=${idsParam}`;
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      // Adapt response to FMUser[]
+      const users = data.fm_users || data.users || data || [];
+      setFilteredFMUsers(users.map((user: any) => ({
+        id: user.id,
+        name: user.name || user.full_name || `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+        email: user.email,
+        department: user.department ? user.department.department_name : undefined
+      })));
+    } catch (error) {
+      console.error('Error fetching filtered FM users:', error);
+      toast.error('Failed to load employees for selected departments');
+      setFilteredFMUsers([]);
+    } finally {
+      setLoadingFilteredFMUsers(false);
     }
   };
 
@@ -398,23 +529,49 @@ export const RosterEditPage: React.FC = () => {
   const handleInputChange = (field: keyof RosterFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
+    // If departments are being changed, fetch filtered users and clear selected employees
+    if (field === 'departments') {
+      const departmentIds = value as number[];
+      setFormData(prev => ({ ...prev, [field]: departmentIds, selectedEmployees: [] }));
+      fetchFilteredFMUsers(departmentIds);
+    }
+
     // Clear field error when user starts typing/selecting
     if (errors[field as keyof typeof errors]) {
       setErrors(prev => ({ ...prev, [field]: false }));
     }
   };
 
+  // Effect to fetch filtered users when initial departments are loaded
+  useEffect(() => {
+    if (formData.departments.length > 0) {
+      fetchFilteredFMUsers(formData.departments);
+    }
+  }, []);
+
+  // Effect to update location when selectedSite changes
+  useEffect(() => {
+    if (selectedSite?.name) {
+      setCurrentLocation(selectedSite.name);
+      setFormData(prev => ({ ...prev, location: selectedSite.name }));
+    }
+  }, [selectedSite]);
+
   // Validation
   const validateForm = (): boolean => {
-    const hasSelectedDays = formData.dayType === 'Recurring'
-      ? formData.selectedDays.length > 0
-      : formData.selectedDays.length > 0;
+    let hasSelectedDays = false;
+    
+    if (formData.dayType === 'Recurring') {
+      hasSelectedDays = formData.selectedDays.length > 0;
+    } else if (formData.dayType === 'Weekdays' || formData.dayType === 'Weekends') {
+      hasSelectedDays = formData.weekSelection.length > 0;
+    }
 
     const newErrors = {
       templateName: !formData.templateName.trim(),
       selectedDays: !hasSelectedDays,
       dayType: false,
-      location: !formData.location.trim(),
+      location: false, // Location is auto-populated, not required validation
       departments: formData.departments.length === 0,
       shift: formData.shift === null,
       selectedEmployees: formData.selectedEmployees.length === 0
@@ -428,7 +585,6 @@ export const RosterEditPage: React.FC = () => {
       const errorFields = [];
       if (newErrors.templateName) errorFields.push('Template Name');
       if (newErrors.selectedDays) errorFields.push('Working Days');
-      if (newErrors.location) errorFields.push('Location');
       if (newErrors.departments) errorFields.push('Department');
       if (newErrors.shift) errorFields.push('Shift');
       if (newErrors.selectedEmployees) errorFields.push('Selected Employees');
@@ -459,21 +615,16 @@ export const RosterEditPage: React.FC = () => {
         resource_id: formData.selectedEmployees[0]?.toString() || '',
         user_shift_id: formData.shift?.toString() || '',
         seat_category_id: '1',
-        'start_date(3i)': period.fromDay.toString(),
-        'start_date(2i)': period.fromMonth.toString(),
-        'start_date(1i)': period.fromYear.toString(),
-        'end_date(3i)': period.toDay.toString(),
-        'end_date(2i)': period.toMonth.toString(),
-        'end_date(1i)': period.toYear.toString(),
+        start_date: `${period.fromYear}-${String(period.fromMonth).padStart(2, '0')}-${String(period.fromDay).padStart(2, '0')}`,
+        end_date: `${period.toYear}-${String(period.toMonth).padStart(2, '0')}-${String(period.toDay).padStart(2, '0')}`,
         allocation_type: formData.rosterType,
-        roaster_type: formData.dayType
+        roaster_type: formData.dayType,
+        active: formData.active
       };
 
-      // Example logic for weekdays/weekends/recurring
       if (formData.dayType === 'Recurring') {
-        // Recurring payload
-        // Example: { "1": ["1", "4"], ... } for weekNum: [dayNums]
-        const recurring = [{}];
+        // Recurring payload - no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+        const recurringData = {};
         for (let weekNum = 1; weekNum <= 5; weekNum++) {
           const daysForWeek = formData.selectedDays
             .filter(d => d.startsWith(`Week${weekNum}-`))
@@ -481,42 +632,58 @@ export const RosterEditPage: React.FC = () => {
               const dayShort = d.split('-')[1];
               // Map short day to number (Mon=1, Tue=2, ... Sun=7)
               return (
-                ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].indexOf(dayShort) + 1
+                ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(dayShort) + 1
               ).toString();
             });
           if (daysForWeek.length > 0) {
-            recurring[0][weekNum.toString()] = daysForWeek;
+            recurringData[weekNum.toString()] = daysForWeek;
           }
         }
+        
         payload = {
           user_roaster: {
             ...baseUserRoaster
           },
           department_id: formData.departments.map(String),
-          no_of_days: '',
-          recurring
+          no_of_days: [recurringData]
         };
+
+      } else if (formData.dayType === 'Weekdays') {
+        // Weekdays payload - weekdays: ["1", "3"] (week numbers)
+        const weekdays = formData.weekSelection
+          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
+          .map(w => w.charAt(0)); // Get first character (week number)
+        
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster
+          },
+          department_id: formData.departments.map(String),
+          weekdays: weekdays
+        };
+
       } else if (formData.dayType === 'Weekends') {
-        // Weekends payload
-        // weekends: [weekendNum]
-        // For demo, use weekSelection as weekend numbers (1-5)
+        // Weekends payload - weekends: ["1", "2", "3", "5"] (weekend numbers)
         const weekends = formData.weekSelection
-          .filter(w => w.match(/^[1-5]/))
-          .map(w => w[0]);
+          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
+          .map(w => w.charAt(0)); // Get first character (weekend number)
+        
         payload = {
           user_roaster: {
             ...baseUserRoaster
           },
           department_id: formData.departments.map(String),
-          weekends
+          weekends: weekends
         };
+
       } else {
-        // Weekdays or other types (default)
+        // Default fallback
         payload = {
           user_roaster: {
             ...baseUserRoaster
           },
-          department_id: formData.departments.map(String)
+          department_id: formData.departments.map(String),
+          no_of_days: []
         };
       }
 
@@ -859,7 +1026,12 @@ export const RosterEditPage: React.FC = () => {
             )}
 
             {errors.selectedDays && (
-              <p className="text-red-500 text-sm mt-1">Please select at least one working day</p>
+              <p className="text-red-500 text-sm mt-1">
+                {formData.dayType === 'Recurring' 
+                  ? 'Please select at least one working day'
+                  : 'Please select at least one frequency option'
+                }
+              </p>
             )}
           </div>
         </Section>
@@ -871,22 +1043,19 @@ export const RosterEditPage: React.FC = () => {
               <TextField
                 label="Location *"
                 value={formData.location}
-                onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="Enter location"
+                disabled
+                placeholder="Current site location"
                 fullWidth
                 variant="outlined"
-                error={errors.location}
-                helperText={errors.location ? 'Location is required' : ''}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
                 InputProps={{
-                  sx: fieldStyles,
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
                   startAdornment: <Building2 className="w-4 h-4 text-gray-400 mr-2" />
                 }}
-                disabled={isSubmitting}
               />
             </div>
 
@@ -963,7 +1132,7 @@ export const RosterEditPage: React.FC = () => {
                   <MenuItem value="">Select Shift</MenuItem>
                   {shifts.map((shift) => (
                     <MenuItem key={shift.id} value={shift.id}>
-                      {shift.name} ({shift.start_time} - {shift.end_time})
+                      {shift.timings} ({shift.total_hour}h)
                     </MenuItem>
                   ))}
                 </MuiSelect>
@@ -978,63 +1147,125 @@ export const RosterEditPage: React.FC = () => {
               )}
             </div>
 
-            <div className="relative">
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>List Of Selected Employees *</InputLabel>
-                <MuiSelect
-                  multiple
-                  value={formData.selectedEmployees}
-                  onChange={(e) => handleInputChange('selectedEmployees', e.target.value as number[])}
-                  input={<OutlinedInput notched label="List Of Selected Employees *" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as number[]).map((value) => {
-                        const user = fmUsers.find(u => u.id === value);
-                        return (
-                          <Chip
-                            key={value}
-                            label={user?.email || `User ${value}`}
-                            size="small"
-                            sx={{ backgroundColor: '#C72030', color: 'white' }}
-                          />
-                        );
-                      })}
-                    </Box>
-                  )}
-                  displayEmpty
-                  disabled={loadingFMUsers || isSubmitting}
-                  error={errors.selectedEmployees}
+            {formData.departments.length > 0 && (
+              <div className="relative">
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  {fmUsers.map((user) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      <Checkbox
-                        checked={formData.selectedEmployees.indexOf(user.id) > -1}
-                        sx={{
-                          color: '#D5DbDB',
-                          '&.Mui-checked': {
-                            color: '#C72030',
-                          },
-                        }}
+                  <InputLabel shrink>List Of Selected Employees *</InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedEmployees}
+                    onChange={(e) =>
+                      handleInputChange(
+                        "selectedEmployees",
+                        e.target.value as number[]
+                      )
+                    }
+                    input={
+                      <OutlinedInput
+                        notched
+                        label="List Of Selected Employees *"
                       />
-                      <ListItemText
-                        primary={user.email || 'No email available'}
-                        secondary={user.name}
-                      />
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {loadingFMUsers && (
-                  <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                    <CircularProgress size={16} />
-                  </div>
+                    }
+                    renderValue={(selected) => (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                        {(selected as number[]).map((value) => {
+                          const user = filteredFMUsers.find(
+                            (u) => u.id === value
+                          );
+                          return (
+                            <Chip
+                              key={value}
+                              label={user?.name || `User ${value}`}
+                              size="small"
+                              sx={{
+                                backgroundColor: "#C72030",
+                                color: "white",
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                    displayEmpty
+                    disabled={
+                      loadingFilteredFMUsers ||
+                      isSubmitting ||
+                      formData.departments.length === 0
+                    }
+                    error={errors.selectedEmployees}
+                  >
+                    {filteredFMUsers.length > 0 ? (
+                      filteredFMUsers.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          <Checkbox
+                            checked={
+                              formData.selectedEmployees.indexOf(user.id) > -1
+                            }
+                            sx={{
+                              color: "#D5DbDB",
+                              "&.Mui-checked": {
+                                color: "#C72030",
+                              },
+                            }}
+                          />
+                          <ListItemText
+                            primary={user.name || "No name available"}
+                            secondary={user.email}
+                          />
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>
+                        <ListItemText
+                          primary="No employees found for selected departments"
+                          sx={{ fontStyle: "italic", color: "#9ca3af" }}
+                        />
+                      </MenuItem>
+                    )}
+                  </MuiSelect>
+                  {loadingFilteredFMUsers && (
+                    <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                      <CircularProgress size={16} />
+                    </div>
+                  )}
+                </FormControl>
+                {errors.selectedEmployees && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Please select at least one employee
+                  </p>
                 )}
-              </FormControl>
-              {errors.selectedEmployees && (
-                <p className="text-red-500 text-sm mt-1">Please select at least one employee</p>
-              )}
-            </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  Showing employees from selected departments:{" "}
+                  {departments
+                    .filter((dept) => formData.departments.includes(dept.id!))
+                    .map((dept) => dept.department_name)
+                    .join(", ")}
+                </p>
+              </div>
+            )}
           </div>
         </Section>
+
+        {/* Show message if no departments selected */}
+        {formData.departments.length === 0 && (
+          <Section title="Employees" icon={<Users className="w-4 h-4" />}>
+            <div className="text-center py-8">
+              <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <p className="text-gray-500 text-lg font-medium mb-2">
+                Select Departments First
+              </p>
+              <p className="text-gray-400 text-sm">
+                Please select at least one department to view and select
+                employees
+              </p>
+            </div>
+          </Section>
+        )}
+
         <Section title="Select Period" icon={<Calendar className="w-4 h-4" />}>
           <div className="flex flex-col gap-2 mb-4">
             <div className="font-semibold text-lg">Select Period</div>

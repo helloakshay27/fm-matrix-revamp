@@ -553,7 +553,7 @@ export const RosterCreatePage: React.FC = () => {
       templateName: !formData.templateName.trim(),
       selectedDays: !hasSelectedDays,
       dayType: false, // dayType is always selected by default
-      location: !formData.location.trim(),
+      location: false, // Location is auto-populated, not required validation
       departments: formData.departments.length === 0,
       shift: formData.shift === null,
       selectedEmployees:
@@ -569,7 +569,6 @@ export const RosterCreatePage: React.FC = () => {
       const errorFields = [];
       if (newErrors.templateName) errorFields.push("Template Name");
       if (newErrors.selectedDays) errorFields.push("Working Days");
-      if (newErrors.location) errorFields.push("Location");
       if (newErrors.departments) errorFields.push("Department");
       if (newErrors.shift) errorFields.push("Shift");
       if (newErrors.selectedEmployees) errorFields.push("Selected Employees");
@@ -605,32 +604,63 @@ export const RosterCreatePage: React.FC = () => {
         resource_id:
           selectedSite?.id || localStorage.getItem("selectedSiteId") || "",
         user_shift_id: formData.shift || "",
+        seat_category_id: "1", // Required field
         allocation_type: formData.rosterType,
         roaster_type: formData.dayType,
       };
 
-      // Dates for recurring (Rails style)
-      const startDate = {
+      // Common date format (Rails style for all types)
+      const commonDateFields = {
         "start_date(3i)": period.fromDay.toString(),
         "start_date(2i)": period.fromMonth.toString(),
         "start_date(1i)": period.fromYear.toString(),
-      };
-      const endDate = {
         "end_date(3i)": period.toDay.toString(),
         "end_date(2i)": period.toMonth.toString(),
         "end_date(1i)": period.toYear.toString(),
       };
 
-      if (formData.dayType === "Recurring") {
+      if (formData.dayType === "Weekdays") {
+        // Weekdays payload
+        // Convert week selections to weekday numbers (1-5 for 1st Week to 5th Week)
+        const weekdays = formData.weekSelection
+          .filter((w) => w.match(/^\d/)) // Filter selections that start with digit
+          .map((w) => w.charAt(0)); // Get first character (week number)
+        
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            ...commonDateFields,
+          },
+          department_id: formData.departments.map(String),
+          weekdays: weekdays
+        };
+
+      } else if (formData.dayType === "Weekends") {
+        // Weekends payload
+        // Convert weekend selections to weekend numbers (1-5 for 1st Weekend to 5th Weekend)
+        const weekends = formData.weekSelection
+          .filter((w) => w.match(/^\d/)) // Filter selections that start with digit
+          .map((w) => w.charAt(0)); // Get first character (weekend number)
+        
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            ...commonDateFields,
+          },
+          department_id: formData.departments.map(String),
+          weekends: weekends
+        };
+
+      } else if (formData.dayType === "Recurring") {
         // Recurring payload
-        // Example: { "1": ["1", "4"], ... } for weekNum: [dayNums]
-        const recurring = [{}];
+        // no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+        const recurringData = {};
         for (let weekNum = 1; weekNum <= 5; weekNum++) {
           const daysForWeek = formData.selectedDays
             .filter((d) => d.startsWith(`Week${weekNum}-`))
             .map((d) => {
               const dayShort = d.split("-")[1];
-              // Map short day to number (Mon=1, Tue=2, ... Sun=7)
+              // Map short day to number (Mon=1, Tue=2, ..., Sun=7)
               return (
                 ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].indexOf(
                   dayShort
@@ -638,58 +668,28 @@ export const RosterCreatePage: React.FC = () => {
               ).toString();
             });
           if (daysForWeek.length > 0) {
-            recurring[0][weekNum.toString()] = daysForWeek;
+            recurringData[weekNum.toString()] = daysForWeek;
           }
         }
+        
         payload = {
           user_roaster: {
             ...baseUserRoaster,
-            ...startDate,
-            ...endDate,
+            ...commonDateFields,
           },
           department_id: formData.departments.map(String),
-          no_of_days: "",
-          recurring,
+          no_of_days: [recurringData]
         };
-      } else if (formData.dayType === "Weekends") {
-        // Weekends payload
-        // weekends: [weekendNum]
-        // For demo, use weekSelection as weekend numbers (1-5)
-        const weekends = formData.weekSelection
-          .filter((w) => w.match(/^[1-5]/))
-          .map((w) => w[0]);
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            start_date: `${period.fromYear}-${String(period.fromMonth).padStart(
-              2,
-              "0"
-            )}-${String(period.fromDay).padStart(2, "0")}`,
-            end_date: `${period.toYear}-${String(period.toMonth).padStart(
-              2,
-              "0"
-            )}-${String(period.toDay).padStart(2, "0")}`,
-            // seat_category_id: 1 // demo value
-          },
-          department_id: formData.departments,
-          weekends,
-        };
+
       } else {
-        // Weekdays or other types (default)
+        // Default fallback
         payload = {
           user_roaster: {
             ...baseUserRoaster,
-            start_date: `${period.fromYear}-${String(period.fromMonth).padStart(
-              2,
-              "0"
-            )}-${String(period.fromDay).padStart(2, "0")}`,
-            end_date: `${period.toYear}-${String(period.toMonth).padStart(
-              2,
-              "0"
-            )}-${String(period.toDay).padStart(2, "0")}`,
-            // seat_category_id: 1 // demo value
+            ...commonDateFields,
           },
-          department_id: formData.departments,
+          department_id: formData.departments.map(String),
+          no_of_days: []
         };
       }
 

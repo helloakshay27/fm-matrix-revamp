@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Users, Calendar } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Users, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
@@ -39,13 +39,13 @@ interface ApiResponse {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  // {
-  //   key: 'actions',
-  //   label: 'Actions',
-  //   sortable: false,
-  //   hideable: false,
-  //   draggable: false
-  // },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
   {
     key: 'template',
     label: 'Template',
@@ -87,14 +87,14 @@ const columns: ColumnConfig[] = [
     sortable: true,
     hideable: true,
     draggable: true
-  },
-  {
-    key: 'createdBy',
-    label: 'Created By',
-    sortable: true,
-    hideable: true,
-    draggable: true
   }
+  // {
+  //   key: 'createdBy',
+  //   label: 'Created By',
+  //   sortable: true,
+  //   hideable: true,
+  //   draggable: true
+  // }
 ];
 
 // Mock data for roster management (based on the image provided)
@@ -329,88 +329,175 @@ export const RosterDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedRosterId, setSelectedRosterId] = useState<number | null>(null);
+  // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(20); // Show 20 per page like in the image
+  const itemsPerPage = 15; // Changed to constant like BuildingPage
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [rosterData, setRosterData] = useState<RosterItem[]>(mockRosterData);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 20,
-    total_pages: 1,
-    total_count: mockRosterData.length,
-    has_next_page: false,
-    has_prev_page: false
-  });
+  const [rosterData, setRosterData] = useState<RosterItem[]>([]);
+  const [allRosterData, setAllRosterData] = useState<RosterItem[]>([]); // Store all data
+  const [loading, setLoading] = useState(true);
 
-  // Mock API call - replace with actual API when backend is ready
-  const fetchRosterData = async (page = 1, per_page = 20, search = '') => {
+  // API call to fetch roster data
+  const fetchRosterData = async () => {
     setLoading(true);
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Filter data based on search term
-      let filteredData = mockRosterData;
-      if (search.trim()) {
-        filteredData = mockRosterData.filter(item =>
-          item.template.toLowerCase().includes(search.toLowerCase()) ||
-          item.location.toLowerCase().includes(search.toLowerCase()) ||
-          item.department.toLowerCase().includes(search.toLowerCase()) ||
-          item.shift.toLowerCase().includes(search.toLowerCase()) ||
-          item.createdBy.toLowerCase().includes(search.toLowerCase()) ||
-          item.createdOn.includes(search)
-        );
+      const apiUrl = getFullUrl('/pms/admin/user_roasters.json');
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Paginate data
-      const startIndex = (page - 1) * per_page;
-      const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
+      const data = await response.json();
+      console.log('API Response:', data);
 
-      setRosterData(paginatedData);
-      setPagination({
-        current_page: page,
-        per_page: per_page,
-        total_pages: Math.ceil(filteredData.length / per_page),
-        total_count: filteredData.length,
-        has_next_page: page < Math.ceil(filteredData.length / per_page),
-        has_prev_page: page > 1
+      // Transform API data to match our interface
+      const transformedData: RosterItem[] = data.map((item: any) => {
+        // Handle department mapping - could be string, array, or object
+        let departmentName = 'Not assigned';
+        if (item.departments) {
+          if (typeof item.departments === 'string') {
+            departmentName = item.departments;
+          } else if (Array.isArray(item.departments)) {
+            departmentName = item.departments.join(', ');
+          }
+        } else if (item.department) {
+          departmentName = item.department;
+        }
+
+        // Handle shift information
+        let shiftInfo = 'Not specified';
+        if (item.shift) {
+          shiftInfo = item.shift;
+        } else if (item.user_shift && item.user_shift.timings) {
+          shiftInfo = item.user_shift.timings;
+        }
+
+        // Handle location
+        let locationInfo = 'Not specified';
+        if (item.location) {
+          locationInfo = item.location;
+        }
+
+        // Handle created date
+        let createdDate = 'Not available';
+        if (item.created_at) {
+          try {
+            createdDate = new Date(item.created_at).toLocaleDateString('en-GB');
+          } catch (e) {
+            createdDate = item.created_at;
+          }
+        } else if (item.created_on) {
+          createdDate = item.created_on;
+        }
+
+        // Handle created by
+        let createdByInfo = 'System';
+        if (item.created_by) {
+          createdByInfo = item.created_by;
+        } else if (item.created_by_name) {
+          createdByInfo = item.created_by_name;
+        }
+
+        return {
+          id: item.id,
+          template: item.name || item.template || 'Unnamed Template',
+          location: locationInfo,
+          department: departmentName,
+          shift: shiftInfo,
+          rosterType: item.allocation_type || item.roaster_type || 'Permanent',
+          createdOn: createdDate,
+          createdBy: createdByInfo,
+          active: item.active !== undefined ? item.active : true
+        };
       });
+
+      setAllRosterData(transformedData);
+      console.log('Transformed Data Count:', transformedData.length);
+      console.log('First Item:', transformedData[0]);
     } catch (error: any) {
       console.error('Error fetching roster data:', error);
       toast.error(`Failed to load roster data: ${error.message}`, {
         duration: 5000,
       });
+      
+      // Fallback to mock data on API error
+      setAllRosterData(mockRosterData);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load data on component mount and when page/perPage/filters change
+  // Load data on component mount
   useEffect(() => {
-    fetchRosterData(currentPage, perPage, debouncedSearchQuery);
-  }, [currentPage, perPage, debouncedSearchQuery]);
+    fetchRosterData();
+  }, []);
+
+  // Reset pagination when roster data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [allRosterData.length]);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
+
+  // Filter and paginate data
+  const filteredRosterData = useMemo(() => {
+    if (!allRosterData || !Array.isArray(allRosterData)) return [];
+    
+    return allRosterData.filter(item => {
+      if (!debouncedSearchQuery.trim()) return true;
+      
+      const searchLower = debouncedSearchQuery.toLowerCase();
+      return (
+        item.template.toLowerCase().includes(searchLower) ||
+        item.location.toLowerCase().includes(searchLower) ||
+        item.department.toLowerCase().includes(searchLower) ||
+        item.shift.toLowerCase().includes(searchLower) ||
+        item.createdBy.toLowerCase().includes(searchLower) ||
+        item.createdOn.includes(debouncedSearchQuery)
+      );
+    });
+  }, [allRosterData, debouncedSearchQuery]);
+
+  // Pagination calculations
+  const totalItems = filteredRosterData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentRosterData = filteredRosterData.slice(startIndex, endIndex);
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Handle search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when searching
   };
-
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  // Handle per page change
-  const handlePerPageChange = (newPerPage: number) => {
-    setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing page size
-  };
-
-  const totalRecords = pagination.total_count;
-  const totalPages = pagination.total_pages;
 
   // Render row function for enhanced table
   const renderRow = (roster: RosterItem) => ({
@@ -502,70 +589,130 @@ export const RosterDashboard = () => {
       </header>
 
       {loading && (
-        <div className="flex items-center justify-center py-8">
+        <div className="flex items-center justify-center py-6">
           <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
       )}
 
       {!loading && (
-        <EnhancedTable
-          data={rosterData}
-          columns={columns}
-          renderRow={renderRow}
-          storageKey="roster-management-table"
-          enableSearch={true}
-          searchPlaceholder="Search rosters..."
-          onSearchChange={handleSearch}
-          enableExport={false}
-          exportFileName="roster-data"
-          leftActions={
-            <Button 
-              onClick={handleAdd} 
-              className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-          }
-          pagination={true}
-          pageSize={perPage}
-          loading={loading}
-          emptyMessage="No rosters found. Create your first roster to get started."
-        />
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-700">
-            Showing 1 to {Math.min(perPage, totalRecords)} of {totalRecords} rows
-          </div>
-          <TicketPagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            totalRecords={totalRecords}
-            onPageChange={handlePageChange}
-            perPage={perPage}
-            onPerPageChange={handlePerPageChange}
-            isLoading={loading}
+        <div className=" ">
+          <EnhancedTable
+            data={currentRosterData}
+            columns={columns}
+            renderRow={renderRow}
+            storageKey="roster-management-table"
+            enableSearch={true}
+            searchPlaceholder="Search rosters..."
+            onSearchChange={handleSearch}
+            enableExport={false}
+            exportFileName="roster-data"
+            leftActions={
+              <Button 
+                onClick={handleAdd} 
+                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            }
+            pagination={false} // Disable built-in pagination since we're adding custom
+            loading={loading}
+            emptyMessage="No rosters found. Create your first roster to get started."
           />
-        </div>
-      )}
 
-      {/* Modals */}
-      {isBulkUploadOpen && (
-        <BulkUploadModal
-          isOpen={isBulkUploadOpen}
-          onClose={() => setIsBulkUploadOpen(false)}
-        />
-      )}
+          {/* Pagination Controls - matching BuildingPage style */}
+          {allRosterData.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} rosters
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevious}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
 
-      {isExportOpen && (
-        <ExportModal
-          isOpen={isExportOpen}
-          onClose={() => setIsExportOpen(false)}
-        />
-      )}
-    </div>
-  );
-};
+                <div className="flex items-center space-x-1">
+                  {/* Show first page */}
+                  {currentPage > 3 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(1)}
+                        className="w-8 h-8 p-0"
+                      >
+                        1
+                      </Button>
+                      {currentPage > 4 && <span className="px-2">...</span>}
+                    </>
+                  )}
+
+                  {/* Show pages around current page */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
+                    .map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+
+                  {/* Show last page */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          </div>
+        )}
+
+        {/* Modals */}
+        {isBulkUploadOpen && (
+          <BulkUploadModal
+            isOpen={isBulkUploadOpen}
+            onClose={() => setIsBulkUploadOpen(false)}
+          />
+        )}
+
+        {isExportOpen && (
+          <ExportModal
+            isOpen={isExportOpen}
+            onClose={() => setIsExportOpen(false)}
+          />
+        )}
+      </div>
+    );
+  };
