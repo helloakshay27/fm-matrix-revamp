@@ -15,7 +15,6 @@ export const visitorDownloadAPI = {
     const params = new URLSearchParams({
       from_date: formatDate(fromDate),
       to_date: formatDate(toDate),
-      access_token: API_CONFIG.TOKEN || '',
     });
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}?${params.toString()}`;
@@ -58,7 +57,6 @@ export const visitorDownloadAPI = {
     const params = new URLSearchParams({
       from_date: formatDate(fromDate),
       to_date: formatDate(toDate),
-      access_token: API_CONFIG.TOKEN || '',
     });
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}?${params.toString()}`;
@@ -100,7 +98,6 @@ export const visitorDownloadAPI = {
     const params = new URLSearchParams({
       from_date: formatDate(fromDate),
       to_date: formatDate(toDate),
-      access_token: API_CONFIG.TOKEN || '',
     });
 
     const url = `${API_CONFIG.BASE_URL}${endpoint}?${params.toString()}`;
