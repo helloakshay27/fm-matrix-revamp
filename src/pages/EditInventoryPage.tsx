@@ -373,7 +373,7 @@ export const EditInventoryPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Inventory List
         </button>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">EDIT INVENTORY - ID: {id}</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a] uppercase">EDIT INVENTORY</h1>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
