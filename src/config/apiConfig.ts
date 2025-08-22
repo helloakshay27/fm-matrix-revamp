@@ -77,6 +77,9 @@ export const API_CONFIG = {
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',
     ACCOUNT_DETAILS: '/api/users/account.json',
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
+    PERMITS: '/pms/permits.json',
+    PERMIT_DETAILS: '/pms/permits', // Base path, will append /:id.json
+    PERMIT_COUNTS: '/pms/permits/counts.json',
     // Add template endpoints
     TEMPLATES: '/pms/custom_forms/get_templates.json',
     TEMPLATE_DETAILS: '/exisiting_checklist.json', // Base path, will append ?id=templateId

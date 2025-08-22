@@ -246,7 +246,10 @@ export const UtilityWaterDashboard = () => {
   };
 
   const handleViewAsset = (assetId: string) => {
-    navigate(`/maintenance/asset/details/${assetId}`);
+    // Find the asset in the current list to get its type
+    const asset = waterAssets.find((a) => a.id?.toString() === assetId);
+    const assetType = asset?.asset_type_category || 'water';
+    navigate(`/maintenance/asset/details/${assetId}`, { state: { type: assetType } });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

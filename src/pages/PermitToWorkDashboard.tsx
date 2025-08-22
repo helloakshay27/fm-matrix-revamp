@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,57 +25,89 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { API_CONFIG } from "@/config/apiConfig";
 
-// Mock data for permits
-const mockPermits = [
-  {
-    id: "PTW001",
-    title: "Electrical Maintenance Work",
-    type: "Electrical",
-    status: "Active",
-    requester: "John Smith",
-    approver: "Safety Manager",
-    startDate: "2024-01-15",
-    endDate: "2024-01-16",
-    location: "Building A - Electrical Room",
-    riskLevel: "High",
-  },
-  {
-    id: "PTW002",
-    title: "HVAC System Cleaning",
-    type: "Mechanical",
-    status: "Pending Approval",
-    requester: "Jane Doe",
-    approver: "Facility Manager", 
-    startDate: "2024-01-17",
-    endDate: "2024-01-17",
-    location: "Building B - Roof",
-    riskLevel: "Medium",
-  },
-  {
-    id: "PTW003",
-    title: "Hot Work - Welding",
-    type: "Hot Work",
-    status: "Completed",
-    requester: "Mike Johnson",
-    approver: "Safety Manager",
-    startDate: "2024-01-12",
-    endDate: "2024-01-12",
-    location: "Workshop Area",
-    riskLevel: "High",
-  },
-];
+// Type definitions for permit data
+interface Permit {
+  id: number;
+  created_at: string;
+  updated_at: string;
+  status: string;
+  permit_for: string;
+  reference_number: string;
+  permit_type: string;
+  location: string;
+  requested_by: string;
+  jsa_submitted: boolean;
+  form_submitted: string | null;
+  department_name: string;
+  status_color_code: string;
+  jsa_data: any;
+  permit_jsa_url: string;
+  print_jsa: any;
+  vendor_name?: string;
+  expiry_date?: string;
+}
 
-const calculateStats = (permits: any[]) => {
+interface PermitsResponse {
+  total_permits: number;
+  permits: Permit[];
+}
+
+// Type definition for permit counts response
+interface PermitCounts {
+  total: number;
+  draft: number;
+  hold: number;
+  open: number;
+  approved: number;
+  rejected: number;
+  extended: number;
+  closed: number;
+}
+
+// API function to fetch permits
+const fetchPermits = async (): Promise<PermitsResponse> => {
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMITS}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch permits');
+  }
+
+  return await response.json();
+};
+
+// API function to fetch permit counts
+const fetchPermitCounts = async (): Promise<PermitCounts> => {
+  const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMIT_COUNTS}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch permit counts');
+  }
+
+  return await response.json();
+};
+
+const calculateStats = (permits: Permit[]) => {
   return {
     total: permits.length,
     active: permits.filter(p => p.status === "Active").length,
     pending: permits.filter(p => p.status === "Pending Approval").length,
     completed: permits.filter(p => p.status === "Completed").length,
     expired: permits.filter(p => p.status === "Expired").length,
-    highRisk: permits.filter(p => p.riskLevel === "High").length,
-    mediumRisk: permits.filter(p => p.riskLevel === "Medium").length,
-    lowRisk: permits.filter(p => p.riskLevel === "Low").length,
+    draft: permits.filter(p => p.status === "Draft").length,
   };
 };
 
@@ -101,19 +133,90 @@ const getRiskColor = (risk: string) => {
 export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [permits, setPermits] = useState<Permit[]>([]);
+  const [permitCounts, setPermitCounts] = useState<PermitCounts>({
+    total: 0,
+    draft: 0,
+    hold: 0,
+    open: 0,
+    approved: 0,
+    rejected: 0,
+    extended: 0,
+    closed: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = calculateStats(mockPermits);
-  const filteredPermits = mockPermits.filter(permit =>
-    permit.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    permit.id.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch permits on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch both permits and counts in parallel
+        const [permitsResponse, countsResponse] = await Promise.all([
+          fetchPermits(),
+          fetchPermitCounts()
+        ]);
+
+        setPermits(permitsResponse.permits);
+        setPermitCounts(countsResponse);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load permit data');
+        console.error('Error fetching permit data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const stats = calculateStats(permits);
+  const filteredPermits = permits.filter(permit =>
+    permit.permit_for.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    permit.id.toString().includes(searchTerm.toLowerCase()) ||
+    permit.reference_number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddPermit = () => {
     navigate("/safety/permit/add");
   };
 
-  const handleViewPermit = (permitId: string) => {
+  const handleViewPermit = (permitId: number) => {
     navigate(`/safety/permit/details/${permitId}`);
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Refresh permits data
+  const handleRefresh = async () => {
+    try {
+      setLoading(true);
+
+      // Fetch both permits and counts in parallel
+      const [permitsResponse, countsResponse] = await Promise.all([
+        fetchPermits(),
+        fetchPermitCounts()
+      ]);
+
+      setPermits(permitsResponse.permits);
+      setPermitCounts(countsResponse);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load permit data');
+      console.error('Error fetching permit data:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const StatCard = ({ icon, label, value }: any) => (
@@ -150,13 +253,14 @@ export const PermitToWorkDashboard = () => {
 
         <TabsContent value="list" className="mt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
-            <StatCard icon={<FileText />} label="Total Permits" value={stats.total} />
-            <StatCard icon={<CheckCircle />} label="Active" value={stats.active} />
-            <StatCard icon={<Clock />} label="Pending Approval" value={stats.pending} />
-            <StatCard icon={<CheckCircle />} label="Completed" value={stats.completed} />
-            <StatCard icon={<AlertTriangle />} label="High Risk" value={stats.highRisk} />
-            <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
-            <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} />
+            <StatCard icon={<FileText />} label="Total Permits" value={permitCounts.total} />
+            <StatCard icon={<CheckCircle />} label="Approved" value={permitCounts.approved} />
+            <StatCard icon={<Clock />} label="Open" value={permitCounts.open} />
+            <StatCard icon={<CheckCircle />} label="Closed" value={permitCounts.closed} />
+            <StatCard icon={<AlertTriangle />} label="Draft" value={permitCounts.draft} />
+            <StatCard icon={<AlertTriangle />} label="Hold" value={permitCounts.hold} />
+            <StatCard icon={<AlertTriangle />} label="Rejected" value={permitCounts.rejected} />
+            <StatCard icon={<AlertTriangle />} label="Extended" value={permitCounts.extended} />
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
@@ -183,8 +287,13 @@ export const PermitToWorkDashboard = () => {
               <Button variant="outline" size="icon">
                 <Filter className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon">
-                <RefreshCw className="w-4 h-4" />
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
               <Button variant="outline" size="icon">
                 <Download className="w-4 h-4" />
@@ -192,55 +301,91 @@ export const PermitToWorkDashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Permit ID</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Risk Level</TableHead>
-                  <TableHead>Requester</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>End Date</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPermits.map((permit) => (
-                  <TableRow key={permit.id}>
-                    <TableCell className="font-medium">{permit.id}</TableCell>
-                    <TableCell>{permit.title}</TableCell>
-                    <TableCell>{permit.type}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(permit.status)}>
-                        {permit.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getRiskColor(permit.riskLevel)}>
-                        {permit.riskLevel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{permit.requester}</TableCell>
-                    <TableCell>{permit.startDate}</TableCell>
-                    <TableCell>{permit.endDate}</TableCell>
-                    <TableCell>{permit.location}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewPermit(permit.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
+          <div className="bg-white rounded-lg border">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="w-24">Actions</TableHead>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Ref No.</TableHead>
+                    <TableHead>Permit Type</TableHead>
+                    <TableHead>Permit For</TableHead>
+                    <TableHead>Created By</TableHead>
+                    <TableHead>Designation</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Location</TableHead>
+                    <TableHead>Vendor Name</TableHead>
+                    <TableHead>Created On</TableHead>
+                    <TableHead>Permit Expiry/Extend Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                        Loading permits...
+                      </TableCell>
+                    </TableRow>
+                  ) : error ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-8 text-red-500">
+                        {error}
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredPermits.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-8 text-gray-500">
+                        No permits found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredPermits.map((permit) => (
+                      <TableRow key={permit.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('Button clicked for permit:', permit.id);
+                                handleViewPermit(permit.id);
+                              }}
+                              className="hover:bg-gray-100 p-2 relative z-10 border border-gray-300"
+                              title="View permit details"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View
+                            </Button>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium">{permit.id}</TableCell>
+                        <TableCell>{permit.reference_number}</TableCell>
+                        <TableCell>{permit.permit_type}</TableCell>
+                        <TableCell>{permit.permit_for}</TableCell>
+                        <TableCell>{permit.requested_by}</TableCell>
+                        <TableCell>{permit.department_name}</TableCell>
+                        <TableCell>
+                          <Badge
+                            className="text-white"
+                            style={{ backgroundColor: permit.status_color_code }}
+                          >
+                            {permit.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate" title={permit.location}>
+                          {permit.location}
+                        </TableCell>
+                        <TableCell>{permit.vendor_name || '-'}</TableCell>
+                        <TableCell>{formatDate(permit.created_at)}</TableCell>
+                        <TableCell>{permit.expiry_date ? formatDate(permit.expiry_date) : '-'}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </TabsContent>
 
@@ -250,35 +395,57 @@ export const PermitToWorkDashboard = () => {
               <h3 className="text-lg font-semibold mb-4">Permit Status Distribution</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
-                  <span>Active: {stats.active}</span>
-                  <span>{((stats.active / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Total: {permitCounts.total}</span>
+                  <span>100%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Pending: {stats.pending}</span>
-                  <span>{((stats.pending / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Approved: {permitCounts.approved}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.approved / permitCounts.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Completed: {stats.completed}</span>
-                  <span>{((stats.completed / stats.total) * 100).toFixed(1)}%</span>
+                  <span>Open: {permitCounts.open}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.open / permitCounts.total) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Closed: {permitCounts.closed}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.closed / permitCounts.total) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Draft: {permitCounts.draft}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.draft / permitCounts.total) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Hold: {permitCounts.hold}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.hold / permitCounts.total) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Rejected: {permitCounts.rejected}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.rejected / permitCounts.total) * 100).toFixed(1) : 0}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Extended: {permitCounts.extended}</span>
+                  <span>{permitCounts.total > 0 ? ((permitCounts.extended / permitCounts.total) * 100).toFixed(1) : 0}%</span>
                 </div>
               </div>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h3 className="text-lg font-semibold mb-4">Risk Level Distribution</h3>
+              <h3 className="text-lg font-semibold mb-4">Permit Types</h3>
               <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>High Risk: {stats.highRisk}</span>
-                  <span>{((stats.highRisk / stats.total) * 100).toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Medium Risk: {stats.mediumRisk}</span>
-                  <span>{((stats.mediumRisk / stats.total) * 100).toFixed(1)}%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Low Risk: {stats.lowRisk}</span>
-                  <span>{((stats.lowRisk / stats.total) * 100).toFixed(1)}%</span>
-                </div>
+                {permits.reduce((acc: any[], permit) => {
+                  const existingType = acc.find(item => item.type === permit.permit_type);
+                  if (existingType) {
+                    existingType.count++;
+                  } else {
+                    acc.push({ type: permit.permit_type, count: 1 });
+                  }
+                  return acc;
+                }, []).map((typeData, index) => (
+                  <div key={index} className="flex justify-between">
+                    <span>{typeData.type}: {typeData.count}</span>
+                    <span>{permits.length > 0 ? ((typeData.count / permits.length) * 100).toFixed(1) : 0}%</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

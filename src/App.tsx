@@ -141,6 +141,8 @@ import { VisitingPurposePage } from './pages/VisitingPurposePage';
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
+import { PermitDetails } from "./pages/PermitDetails";
+
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
 

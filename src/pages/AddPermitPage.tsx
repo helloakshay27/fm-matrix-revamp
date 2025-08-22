@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, ListItemText, FormControlLabel } from '@mui/material';
 
 const fieldStyles = {
   height: {
@@ -68,11 +68,11 @@ export const AddPermitPage = () => {
   const navigate = useNavigate();
   const [permitData, setPermitData] = useState({
     // Requestor Details
-    name: 'Ankit Gupta',
-    contactNumber: '91 7388997281',
+    name: '',
+    contactNumber: '',
     department: '',
     unit: '',
-    site: 'Lockated',
+    site: '',
 
     // Basic Details
     permitFor: '',
@@ -99,6 +99,41 @@ export const AddPermitPage = () => {
     attachments: null as File | null
   });
 
+  // State for user account loading
+  const [loadingUserAccount, setLoadingUserAccount] = useState(false);
+
+  // State for Copy To users data
+  const [copyToUsers, setCopyToUsers] = useState<{ id: string; name: string }[]>([]);
+  const [loadingCopyToUsers, setLoadingCopyToUsers] = useState(false);
+
+  // State for Entity data
+  const [entityOptions, setEntityOptions] = useState<{ id: string; name: string }[]>([]);
+  const [loadingEntityOptions, setLoadingEntityOptions] = useState(false);
+
+  // State for Permit Types data
+  const [permitTypes, setPermitTypes] = useState<{ id: number; name: string }[]>([]);
+  const [loadingPermitTypes, setLoadingPermitTypes] = useState(false);
+
+  // State for Permit Activities data
+  const [permitActivities, setPermitActivities] = useState<{ id: number; name: string; parent_id: number }[]>([]);
+  const [loadingPermitActivities, setLoadingPermitActivities] = useState(false);
+
+  // State for Permit Sub Activities data
+  const [permitSubActivities, setPermitSubActivities] = useState<{ id: number; name: string; parent_id: number }[]>([]);
+  const [loadingPermitSubActivities, setLoadingPermitSubActivities] = useState(false);
+
+  // State for Permit Hazard Categories data
+  const [permitHazardCategories, setPermitHazardCategories] = useState<{ id: number; name: string; parent_id: number }[]>([]);
+  const [loadingPermitHazardCategories, setLoadingPermitHazardCategories] = useState(false);
+
+  // State for Permit Risks data
+  const [permitRisks, setPermitRisks] = useState<{ id: number; name: string; parent_id: number }[]>([]);
+  const [loadingPermitRisks, setLoadingPermitRisks] = useState(false);
+
+  // State for Suppliers/Vendors data
+  const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
+  const [loadingSuppliers, setLoadingSuppliers] = useState(false);
+
   // State for buildings data
   const [buildings, setBuildings] = useState<{ id: number; name: string }[]>([]);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
@@ -114,27 +149,11 @@ export const AddPermitPage = () => {
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingFloors, setLoadingFloors] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [activities, setActivities] = useState([
-    { activity: '', subActivity: '', categoryOfHazards: '' }
+    { activity: '', subActivity: '', categoryOfHazards: '', selectedRisks: [] as string[] }
   ]);
-
-  // Sample data for new dropdowns
-  const copyToOptions = [
-    { id: '1', name: 'Security Team' },
-    { id: '2', name: 'Safety Officer' },
-    { id: '3', name: 'Operations Manager' },
-    { id: '4', name: 'Facility Manager' },
-    { id: '5', name: 'Maintenance Team' },
-  ];
-
-  const entityOptions = [
-    { id: '1', name: 'Building A Management' },
-    { id: '2', name: 'Building B Management' },
-    { id: '3', name: 'External Vendor' },
-    { id: '4', name: 'Client Representative' },
-    { id: '5', name: 'Contractor Team' },
-  ];
 
   // Handler for multi-select changes
   const handleMultiSelectChange = (field: string, value: string[]) => {
@@ -143,6 +162,454 @@ export const AddPermitPage = () => {
       [field]: value
     }));
   };
+
+  // API functions for permit data
+  const getFullUrl = (endpoint: string) => {
+    let baseUrl = localStorage.getItem('baseUrl') || '';
+    if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+      baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+    }
+    return `${baseUrl}${endpoint}`;
+  };
+
+  const getAuthenticatedFetchOptions = (method: string, body?: any) => {
+    const token = localStorage.getItem('token') || '';
+    const options: RequestInit = {
+      method,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    };
+    if (body) {
+      options.body = JSON.stringify(body);
+    }
+    return options;
+  };
+
+  // Fetch permit types
+  const fetchPermitTypes = async () => {
+    try {
+      setLoadingPermitTypes(true);
+      const url = getFullUrl('/pms/permit_tags.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let permitTypeItems = [];
+
+      if (data && Array.isArray(data)) {
+        permitTypeItems = data
+          .filter(item => item.tag_type === 'PermitType')
+          .map(item => ({
+            id: item.id,
+            name: item.name
+          }));
+      }
+
+      setPermitTypes(permitTypeItems);
+    } catch (error) {
+      console.error('Error fetching permit types:', error);
+      toast.error('Failed to fetch permit types');
+    } finally {
+      setLoadingPermitTypes(false);
+    }
+  };
+
+  // Fetch permit activities based on permit type
+  const fetchPermitActivities = async (permitTypeId: string) => {
+    try {
+      setLoadingPermitActivities(true);
+      const url = getFullUrl(`/pms/permit_tags.json?q[tag_type_eq]=PermitActivity`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let permitActivityItems = [];
+
+      if (data && Array.isArray(data)) {
+        permitActivityItems = data
+          .filter(item => item.tag_type === 'PermitActivity' && item.parent_id?.toString() === permitTypeId)
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            parent_id: item.parent_id
+          }));
+      }
+
+      setPermitActivities(permitActivityItems);
+    } catch (error) {
+      console.error('Error fetching permit activities:', error);
+      toast.error('Failed to fetch permit activities');
+    } finally {
+      setLoadingPermitActivities(false);
+    }
+  };
+
+  // Fetch permit sub activities based on permit activity
+  const fetchPermitSubActivities = async (permitActivityId: string) => {
+    try {
+      setLoadingPermitSubActivities(true);
+      const url = getFullUrl(`/pms/permit_tags.json?q[tag_type_eq]=PermitSubActivity`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let permitSubActivityItems = [];
+
+      if (data && Array.isArray(data)) {
+        permitSubActivityItems = data
+          .filter(item => item.tag_type === 'PermitSubActivity' && item.parent_id?.toString() === permitActivityId)
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            parent_id: item.parent_id
+          }));
+      }
+
+      setPermitSubActivities(permitSubActivityItems);
+    } catch (error) {
+      console.error('Error fetching permit sub activities:', error);
+      toast.error('Failed to fetch permit sub activities');
+    } finally {
+      setLoadingPermitSubActivities(false);
+    }
+  };
+
+  // Fetch permit hazard categories based on permit sub activity
+  const fetchPermitHazardCategories = async (permitSubActivityId: string) => {
+    try {
+      setLoadingPermitHazardCategories(true);
+      const url = getFullUrl(`/pms/permit_tags.json?q[tag_type_eq]=PermitHazardCategory`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let permitHazardCategoryItems = [];
+
+      if (data && Array.isArray(data)) {
+        permitHazardCategoryItems = data
+          .filter(item => item.tag_type === 'PermitHazardCategory' && item.parent_id?.toString() === permitSubActivityId)
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            parent_id: item.parent_id
+          }));
+      }
+
+      setPermitHazardCategories(permitHazardCategoryItems);
+    } catch (error) {
+      console.error('Error fetching permit hazard categories:', error);
+      toast.error('Failed to fetch permit hazard categories');
+    } finally {
+      setLoadingPermitHazardCategories(false);
+    }
+  };
+
+  // Fetch permit risks based on permit hazard category
+  const fetchPermitRisks = async (permitHazardCategoryId: string) => {
+    try {
+      setLoadingPermitRisks(true);
+      const url = getFullUrl(`/pms/permit_tags.json?q[tag_type_eq]=PermitRisk`);
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      let permitRiskItems = [];
+
+      if (data && Array.isArray(data)) {
+        permitRiskItems = data
+          .filter(item => item.tag_type === 'PermitRisk' && item.parent_id?.toString() === permitHazardCategoryId)
+          .map(item => ({
+            id: item.id,
+            name: item.name,
+            parent_id: item.parent_id
+          }));
+      }
+
+      setPermitRisks(permitRiskItems);
+    } catch (error) {
+      console.error('Error fetching permit risks:', error);
+      toast.error('Failed to fetch permit risks');
+    } finally {
+      setLoadingPermitRisks(false);
+    }
+  };
+
+  // Fetch suppliers/vendors
+  const fetchSuppliers = async () => {
+    try {
+      setLoadingSuppliers(true);
+      const url = getFullUrl('/pms/suppliers/get_suppliers.json');
+      const options = getAuthenticatedFetchOptions('GET');
+      const response = await fetch(url, options);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data && Array.isArray(data)) {
+        const supplierItems = data.map((supplier: any) => ({
+          id: supplier.id.toString(),
+          name: supplier.name
+        }));
+        setSuppliers(supplierItems);
+      } else {
+        setSuppliers([]);
+        toast.error('No suppliers found');
+      }
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      toast.error('Failed to fetch suppliers');
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  };
+
+  // Handle permit type change
+  const handlePermitTypeChange = (permitTypeId: string) => {
+    setPermitData(prev => ({
+      ...prev,
+      permitType: permitTypeId,
+      activity: '',
+      subActivity: '',
+      categoryOfHazards: ''
+    }));
+
+    // Clear dependent data
+    setPermitActivities([]);
+    setPermitSubActivities([]);
+    setPermitHazardCategories([]);
+    setPermitRisks([]);
+
+    // Update activities array to reset fields
+    setActivities(prev => prev.map(activity => ({
+      ...activity,
+      activity: '',
+      subActivity: '',
+      categoryOfHazards: '',
+      selectedRisks: []
+    })));
+
+    // Fetch permit activities for the selected permit type
+    if (permitTypeId) {
+      fetchPermitActivities(permitTypeId);
+    }
+  };
+
+  // Handle activity change in the activities array
+  const handleActivityChangeWithAPI = (index: number, field: string, value: string) => {
+    handleActivityChange(index, field, value);
+
+    if (field === 'activity' && value) {
+      // Reset dependent fields for this activity
+      setActivities(prev => prev.map((activity, i) =>
+        i === index ? { ...activity, subActivity: '', categoryOfHazards: '', selectedRisks: [] } : activity
+      ));
+
+      // Clear risks when activity changes
+      setPermitRisks([]);
+
+      // Fetch permit sub activities
+      fetchPermitSubActivities(value);
+    } else if (field === 'subActivity' && value) {
+      // Reset dependent fields for this activity
+      setActivities(prev => prev.map((activity, i) =>
+        i === index ? { ...activity, categoryOfHazards: '', selectedRisks: [] } : activity
+      ));
+
+      // Clear risks when sub activity changes
+      setPermitRisks([]);
+
+      // Fetch permit hazard categories
+      fetchPermitHazardCategories(value);
+    } else if (field === 'categoryOfHazards' && value) {
+      // Reset selected risks for this activity
+      setActivities(prev => prev.map((activity, i) =>
+        i === index ? { ...activity, selectedRisks: [] } : activity
+      ));
+
+      // Fetch permit risks based on hazard category
+      fetchPermitRisks(value);
+    }
+  };
+
+  // Fetch Entity options on component mount
+  useEffect(() => {
+    const fetchEntityOptions = async () => {
+      setLoadingEntityOptions(true);
+      try {
+        // Get baseUrl and token from localStorage
+        let baseUrl = localStorage.getItem('baseUrl') || '';
+        const token = localStorage.getItem('token') || '';
+
+        // Ensure baseUrl starts with https://
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+        }
+
+        const response = await fetch(`${baseUrl}/entities.json`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.entities && Array.isArray(result.entities)) {
+            setEntityOptions(result.entities.map((entity: any) => ({
+              id: entity.id.toString(),
+              name: entity.name
+            })));
+          } else {
+            setEntityOptions([]);
+            toast.error('No entities found');
+          }
+        } else {
+          setEntityOptions([]);
+          toast.error('Failed to fetch entities');
+        }
+      } catch (error) {
+        console.error('Error fetching entities:', error);
+        setEntityOptions([]);
+        toast.error('Error fetching entities');
+      } finally {
+        setLoadingEntityOptions(false);
+      }
+    };
+
+    fetchEntityOptions();
+  }, []);
+
+  // Fetch Permit Types on component mount
+  useEffect(() => {
+    fetchPermitTypes();
+  }, []);
+
+  // Fetch Suppliers on component mount
+  useEffect(() => {
+    fetchSuppliers();
+  }, []);
+
+  // Fetch Copy To users on component mount
+  useEffect(() => {
+    const fetchCopyToUsers = async () => {
+      setLoadingCopyToUsers(true);
+      try {
+        // Get baseUrl and token from localStorage
+        let baseUrl = localStorage.getItem('baseUrl') || '';
+        const token = localStorage.getItem('token') || '';
+
+        // Ensure baseUrl starts with https://
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+        }
+
+        const response = await fetch(`${baseUrl}/pms/users/get_escalate_to_users.json`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.users && Array.isArray(result.users)) {
+            setCopyToUsers(result.users.map((user: any) => ({
+              id: user.id.toString(),
+              name: user.full_name
+            })));
+          } else {
+            setCopyToUsers([]);
+            toast.error('No users found for Copy To');
+          }
+        } else {
+          setCopyToUsers([]);
+          toast.error('Failed to fetch Copy To users');
+        }
+      } catch (error) {
+        console.error('Error fetching Copy To users:', error);
+        setCopyToUsers([]);
+        toast.error('Error fetching Copy To users');
+      } finally {
+        setLoadingCopyToUsers(false);
+      }
+    };
+
+    fetchCopyToUsers();
+  }, []);
+
+  // Fetch user account details on component mount
+  useEffect(() => {
+    const fetchUserAccount = async () => {
+      setLoadingUserAccount(true);
+      try {
+        // Get baseUrl and token from localStorage
+        let baseUrl = localStorage.getItem('baseUrl') || '';
+        const token = localStorage.getItem('token') || '';
+
+        // Ensure baseUrl starts with https://
+        if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+          baseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+        }
+
+        const response = await fetch(`${baseUrl}/api/users/account.json`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result) {
+            setPermitData(prev => ({
+              ...prev,
+              name: `${result.firstname || ''} ${result.lastname || ''}`.trim(),
+              contactNumber: result.mobile || '',
+              department: result.department_name || '',
+              unit: result.unit_name || '',
+              site: result.site_name || ''
+            }));
+          } else {
+            toast.error('User account data not found');
+          }
+        } else {
+          toast.error('Failed to fetch user account details');
+        }
+      } catch (error) {
+        console.error('Error fetching user account:', error);
+        toast.error('Error fetching user account details');
+      } finally {
+        setLoadingUserAccount(false);
+      }
+    };
+
+    fetchUserAccount();
+  }, []);
 
   // Fetch buildings on component mount
   useEffect(() => {
@@ -493,7 +960,7 @@ export const AddPermitPage = () => {
   };
 
   const handleAddActivity = () => {
-    setActivities(prev => [...prev, { activity: '', subActivity: '', categoryOfHazards: '' }]);
+    setActivities(prev => [...prev, { activity: '', subActivity: '', categoryOfHazards: '', selectedRisks: [] }]);
   };
 
   const handleRemoveActivity = (index: number) => {
@@ -508,11 +975,129 @@ export const AddPermitPage = () => {
     ));
   };
 
-  const handleSubmit = () => {
-    console.log('Permit Data:', permitData);
-    console.log('Activities:', activities);
-    toast.success('Permit request raised successfully!');
-    navigate('/maintenance/permit');
+  // Handle risk checkbox changes
+  const handleRiskChange = (index: number, riskId: string, checked: boolean) => {
+    setActivities(prev => prev.map((activity, i) => {
+      if (i === index) {
+        const updatedRisks = checked
+          ? [...activity.selectedRisks, riskId]
+          : activity.selectedRisks.filter(id => id !== riskId);
+        return { ...activity, selectedRisks: updatedRisks };
+      }
+      return activity;
+    }));
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return; // Prevent double submission
+
+    try {
+      setIsSubmitting(true);
+
+      // Validate required fields
+      if (!permitData.permitFor.trim()) {
+        toast.error('Please enter permit for field');
+        return;
+      }
+      if (!permitData.building) {
+        toast.error('Please select building');
+        return;
+      }
+      if (!permitData.permitType) {
+        toast.error('Please select permit type');
+        return;
+      }
+      if (activities.length === 0 || !activities[0].activity) {
+        toast.error('Please add at least one activity');
+        return;
+      }
+
+      const formData = new FormData();
+
+      // Basic permit data
+      formData.append('pms_permit[permit_for]', permitData.permitFor);
+      formData.append('pms_permit[building_id]', permitData.building);
+      if (permitData.wing) formData.append('pms_permit[wing_id]', permitData.wing);
+      if (permitData.area) formData.append('pms_permit[area_id]', permitData.area);
+      if (permitData.floor) formData.append('pms_permit[floor_id]', permitData.floor);
+      if (permitData.room) formData.append('pms_permit[room_id]', permitData.room);
+      formData.append('pms_permit[client_specific]', permitData.clientSpecific);
+
+      // Entity ID - take first selected entity if multiple
+      if (permitData.listOfEntity.length > 0) {
+        formData.append('pms_permit[entity_id]', permitData.listOfEntity[0]);
+      }
+
+      // Copy To (intimate_to) - multiple values
+      permitData.copyTo.forEach(userId => {
+        formData.append('pms_permit[intimate_to][]', userId);
+      });
+
+      formData.append('pms_permit[permit_type_id]', permitData.permitType);
+
+      // Vendor ID
+      if (permitData.vendor) {
+        formData.append('pms_permit[vendor_id]', permitData.vendor);
+      }
+
+      // Permit details (activities) with nested attributes
+      activities.forEach((activity, index) => {
+        if (activity.activity && activity.subActivity && activity.categoryOfHazards) {
+          formData.append(`pms_permit[permit_details_attributes][${index}][_destroy]`, 'false');
+          formData.append(`pms_permit[permit_details_attributes][${index}][permit_activity_id]`, activity.activity);
+          formData.append(`pms_permit[permit_details_attributes][${index}][permit_sub_activity_id]`, activity.subActivity);
+          formData.append(`pms_permit[permit_details_attributes][${index}][permit_hazard_category_id]`, activity.categoryOfHazards);
+
+          // Add selected risks for this activity
+          activity.selectedRisks.forEach((riskId, riskIndex) => {
+            formData.append(`pms_permit[permit_details_attributes][${index}][permit_risks_attributes][${riskIndex}][permit_risk_id]`, riskId);
+          });
+        }
+      });
+
+      // Attachments
+      if (permitData.attachments) {
+        formData.append('attachments[]', permitData.attachments);
+      }
+
+      // Get API URL and token from localStorage
+      const baseUrl = localStorage.getItem('baseUrl') || '';
+      const token = localStorage.getItem('token') || '';
+
+      let fullBaseUrl = baseUrl;
+      if (baseUrl && !baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+        fullBaseUrl = 'https://' + baseUrl.replace(/^\/\/+/, '');
+      }
+
+      const url = `${fullBaseUrl}/pms/permits.json`;
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+          // Note: Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('API Error:', errorData);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Permit created successfully:', responseData);
+
+      toast.success(`Permit created successfully! Reference Number: ${responseData.permit?.reference_number || 'N/A'}`);
+      navigate('/safety/permit');
+
+    } catch (error) {
+      console.error('Error creating permit:', error);
+      toast.error('Failed to create permit. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -534,53 +1119,52 @@ export const AddPermitPage = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 bg-white">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <TextField
-              label="Name"
-              value={permitData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
-            />
-            <TextField
-              label="Contact Number"
-              value={permitData.contactNumber}
-              onChange={(e) => handleInputChange('contactNumber', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
-            />
-            <TextField
-              label="Site"
-              value={permitData.site}
-              onChange={(e) => handleInputChange('site', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
-            />
-            <TextField
-              label="Department"
-              value={permitData.department}
-              onChange={(e) => handleInputChange('department', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
-            />
-            <TextField
-              label="Unit"
-              value={permitData.unit}
-              onChange={(e) => handleInputChange('unit', e.target.value)}
-              fullWidth
-              variant="outlined"
-              sx={fieldStyles}
-              size="small"
-            />
-          </div>
+          {loadingUserAccount ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-600">Loading user data...</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Name</label>
+                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
+                  {permitData.name || 'N/A'}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Contact Number</label>
+                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
+                  {permitData.contactNumber || 'N/A'}
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-gray-700">Department</label>
+                <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
+                  {permitData.department || 'N/A'}
+                </div>
+              </div>
+
+              {permitData.unit && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Unit</label>
+                  <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
+                    {permitData.unit}
+                  </div>
+                </div>
+              )}
+
+              {permitData.site && (
+                <div className="space-y-1">
+                  <label className="text-sm font-medium text-gray-700">Site</label>
+                  <div className="text-base text-gray-900 py-2 px-3 bg-gray-50 rounded-lg border">
+                    {permitData.site}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -789,22 +1373,29 @@ export const AddPermitPage = () => {
                     label="Copy To"
                     MenuProps={menuProps}
                     size="small"
+                    disabled={loadingCopyToUsers}
                     renderValue={(selected) => {
                       if (selected.length === 0) {
-                        return 'Select Copy To';
+                        return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
                       }
-                      const selectedNames = copyToOptions
+                      const selectedNames = copyToUsers
                         .filter(option => selected.includes(option.id))
                         .map(option => option.name);
                       return selectedNames.join(', ');
                     }}
                   >
-                    {copyToOptions.map((option) => (
-                      <MenuItem key={option.id} value={option.id}>
-                        <Checkbox checked={permitData.copyTo.includes(option.id)} />
-                        <ListItemText primary={option.name} />
+                    {loadingCopyToUsers ? (
+                      <MenuItem disabled>
+                        <em>Loading users...</em>
                       </MenuItem>
-                    ))}
+                    ) : (
+                      copyToUsers.map((option) => (
+                        <MenuItem key={option.id} value={option.id}>
+                          <Checkbox checked={permitData.copyTo.includes(option.id)} />
+                          <ListItemText primary={option.name} />
+                        </MenuItem>
+                      ))
+                    )}
                   </MuiSelect>
                 </FormControl>
               </div>
@@ -823,22 +1414,29 @@ export const AddPermitPage = () => {
                       label="Copy To"
                       MenuProps={menuProps}
                       size="small"
+                      disabled={loadingCopyToUsers}
                       renderValue={(selected) => {
                         if (selected.length === 0) {
-                          return 'Select Copy To';
+                          return loadingCopyToUsers ? 'Loading users...' : 'Select Copy To';
                         }
-                        const selectedNames = copyToOptions
+                        const selectedNames = copyToUsers
                           .filter(option => selected.includes(option.id))
                           .map(option => option.name);
                         return selectedNames.join(', ');
                       }}
                     >
-                      {copyToOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                          <Checkbox checked={permitData.copyTo.includes(option.id)} />
-                          <ListItemText primary={option.name} />
+                      {loadingCopyToUsers ? (
+                        <MenuItem disabled>
+                          <em>Loading users...</em>
                         </MenuItem>
-                      ))}
+                      ) : (
+                        copyToUsers.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>
+                            <Checkbox checked={permitData.copyTo.includes(option.id)} />
+                            <ListItemText primary={option.name} />
+                          </MenuItem>
+                        ))
+                      )}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -853,9 +1451,10 @@ export const AddPermitPage = () => {
                       label="List of Entity"
                       MenuProps={menuProps}
                       size="small"
+                      disabled={loadingEntityOptions}
                       renderValue={(selected) => {
                         if (selected.length === 0) {
-                          return 'Select Entity';
+                          return loadingEntityOptions ? 'Loading entities...' : 'Select Entity';
                         }
                         const selectedNames = entityOptions
                           .filter(option => selected.includes(option.id))
@@ -863,12 +1462,18 @@ export const AddPermitPage = () => {
                         return selectedNames.join(', ');
                       }}
                     >
-                      {entityOptions.map((option) => (
-                        <MenuItem key={option.id} value={option.id}>
-                          <Checkbox checked={permitData.listOfEntity.includes(option.id)} />
-                          <ListItemText primary={option.name} />
+                      {loadingEntityOptions ? (
+                        <MenuItem disabled>
+                          <em>Loading entities...</em>
                         </MenuItem>
-                      ))}
+                      ) : (
+                        entityOptions.map((option) => (
+                          <MenuItem key={option.id} value={option.id}>
+                            <Checkbox checked={permitData.listOfEntity.includes(option.id)} />
+                            <ListItemText primary={option.name} />
+                          </MenuItem>
+                        ))
+                      )}
                     </MuiSelect>
                   </FormControl>
                 </div>
@@ -890,19 +1495,50 @@ export const AddPermitPage = () => {
           <div className="space-y-8">
             <div>
               <label className="block text-sm font-medium mb-3 text-gray-700">Select Permit Type*</label>
-              <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
-                <label className="flex items-center cursor-pointer">
-                  <input
-                    type="radio"
-                    name="permitType"
-                    value="test"
-                    checked={permitData.permitType === 'test'}
-                    onChange={(e) => handleInputChange('permitType', e.target.value)}
-                    className="mr-2 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                  />
-                  <span className="text-sm text-gray-700">test</span>
-                </label>
-              </div>
+              {loadingPermitTypes ? (
+                <div className="flex items-center justify-center py-8 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="text-center text-gray-600">Loading permit types...</div>
+                </div>
+              ) : permitTypes.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {permitTypes.map((permitType) => (
+                    <div
+                      key={permitType.id}
+                      className={`relative cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 hover:shadow-md ${permitData.permitType === permitType.id.toString()
+                        ? 'border-[#C72030] bg-[#C72030]/5 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-gray-300'
+                        }`}
+                      onClick={() => handlePermitTypeChange(permitType.id.toString())}
+                    >
+                      <label className="flex items-center cursor-pointer w-full">
+                        <input
+                          type="radio"
+                          name="permitType"
+                          value={permitType.id.toString()}
+                          checked={permitData.permitType === permitType.id.toString()}
+                          onChange={(e) => handlePermitTypeChange(e.target.value)}
+                          className="mr-3 w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                        />
+                        <span className={`text-sm font-medium ${permitData.permitType === permitType.id.toString()
+                          ? 'text-[#C72030]'
+                          : 'text-gray-700'
+                          }`}>
+                          {permitType.name}
+                        </span>
+                      </label>
+                      {permitData.permitType === permitType.id.toString() && (
+                        <div className="absolute top-2 right-2">
+                          <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center py-8 border border-gray-200 rounded-lg bg-gray-50">
+                  <div className="text-center text-gray-600">No permit types available</div>
+                </div>
+              )}
             </div>
 
 
@@ -930,15 +1566,27 @@ export const AddPermitPage = () => {
                     <MuiSelect
                       label="Activity*"
                       value={activity.activity}
-                      onChange={(e) => handleActivityChange(index, 'activity', e.target.value)}
+                      onChange={(e) => handleActivityChangeWithAPI(index, 'activity', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
                       MenuProps={menuProps}
+                      disabled={loadingPermitActivities || !permitData.permitType}
                     >
-
-                      <MenuItem value="maintenance">Maintenance</MenuItem>
-                      <MenuItem value="installation">Installation</MenuItem>
-                      <MenuItem value="repair">Repair</MenuItem>
+                      <MenuItem value="">
+                        {/* <em>
+                          {!permitData.permitType
+                            ? 'Select Permit Type First'
+                            : loadingPermitActivities
+                              ? 'Loading activities...'
+                              : 'Select Activity'
+                          }
+                        </em> */}
+                      </MenuItem>
+                      {permitActivities.map((permitActivity) => (
+                        <MenuItem key={permitActivity.id} value={permitActivity.id.toString()}>
+                          {permitActivity.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
 
@@ -947,15 +1595,27 @@ export const AddPermitPage = () => {
                     <MuiSelect
                       label="Sub Activity*"
                       value={activity.subActivity}
-                      onChange={(e) => handleActivityChange(index, 'subActivity', e.target.value)}
+                      onChange={(e) => handleActivityChangeWithAPI(index, 'subActivity', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
                       MenuProps={menuProps}
+                      disabled={loadingPermitSubActivities || !activity.activity}
                     >
-
-                      <MenuItem value="electrical">Electrical</MenuItem>
-                      <MenuItem value="plumbing">Plumbing</MenuItem>
-                      <MenuItem value="hvac">HVAC</MenuItem>
+                      <MenuItem value="">
+                        {/* <em>
+                          {!activity.activity
+                            ? 'Select Activity First'
+                            : loadingPermitSubActivities
+                              ? 'Loading sub activities...'
+                              : 'Select Sub Activity'
+                          }
+                        </em> */}
+                      </MenuItem>
+                      {permitSubActivities.map((permitSubActivity) => (
+                        <MenuItem key={permitSubActivity.id} value={permitSubActivity.id.toString()}>
+                          {permitSubActivity.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
 
@@ -964,18 +1624,69 @@ export const AddPermitPage = () => {
                     <MuiSelect
                       label="Category of Hazards*"
                       value={activity.categoryOfHazards}
-                      onChange={(e) => handleActivityChange(index, 'categoryOfHazards', e.target.value)}
+                      onChange={(e) => handleActivityChangeWithAPI(index, 'categoryOfHazards', e.target.value)}
                       displayEmpty
                       sx={fieldStyles}
                       MenuProps={menuProps}
+                      disabled={loadingPermitHazardCategories || !activity.subActivity}
                     >
-
-                      <MenuItem value="low">Low Risk</MenuItem>
-                      <MenuItem value="medium">Medium Risk</MenuItem>
-                      <MenuItem value="high">High Risk</MenuItem>
+                      <MenuItem value="">
+                        {/* <em>
+                          {!activity.subActivity
+                            ? 'Select Sub Activity First'
+                            : loadingPermitHazardCategories
+                              ? 'Loading hazard categories...'
+                              : 'Select Hazard Category'
+                          }
+                        </em> */}
+                      </MenuItem>
+                      {permitHazardCategories.map((permitHazardCategory) => (
+                        <MenuItem key={permitHazardCategory.id} value={permitHazardCategory.id.toString()}>
+                          {permitHazardCategory.name}
+                        </MenuItem>
+                      ))}
                     </MuiSelect>
                   </FormControl>
                 </div>
+
+                {/* Risks Section */}
+                {activity.categoryOfHazards && (
+                  <div className="mt-6">
+                    <h5 className="text-sm font-medium text-gray-700 mb-3">Risks*</h5>
+                    {loadingPermitRisks ? (
+                      <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="text-center text-gray-600">Loading risks...</div>
+                      </div>
+                    ) : permitRisks.length > 0 ? (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-gray-200 rounded-lg bg-white">
+                        {permitRisks.map((risk) => (
+                          <FormControlLabel
+                            key={risk.id}
+                            control={
+                              <Checkbox
+                                checked={activity.selectedRisks.includes(risk.id.toString())}
+                                onChange={(e) => handleRiskChange(index, risk.id.toString(), e.target.checked)}
+                                sx={{
+                                  color: '#6b7280',
+                                  '&.Mui-checked': {
+                                    color: '#C72030',
+                                  },
+                                }}
+                              />
+                            }
+                            label={
+                              <span className="text-sm text-gray-700">{risk.name}</span>
+                            }
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div className="text-center text-gray-600">No risks available for this hazard category</div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* <TextField
                   label="Risks*"
@@ -1006,10 +1717,16 @@ export const AddPermitPage = () => {
                 displayEmpty
                 sx={fieldStyles}
                 MenuProps={menuProps}
+                disabled={loadingSuppliers}
               >
-
-                <MenuItem value="vendor-1">Vendor 1</MenuItem>
-                <MenuItem value="vendor-2">Vendor 2</MenuItem>
+                <MenuItem value="">
+                  {/* <em>{loadingSuppliers ? 'Loading suppliers...' : 'Select Vendor'}</em> */}
+                </MenuItem>
+                {suppliers.map((supplier) => (
+                  <MenuItem key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </MenuItem>
+                ))}
               </MuiSelect>
             </FormControl>
 
@@ -1072,10 +1789,11 @@ export const AddPermitPage = () => {
       <div className="flex gap-4 justify-center">
         <Button
           onClick={handleSubmit}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:bg-[#C72030]/90 flex items-center px-8 py-2"
+          disabled={isSubmitting}
+          style={{ backgroundColor: isSubmitting ? '#9ca3af' : '#C72030' }}
+          className="text-white hover:bg-[#C72030]/90 flex items-center px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Raise a Request
+          {isSubmitting ? 'Creating Permit...' : 'Raise a Request'}
         </Button>
       </div>
     </div>
