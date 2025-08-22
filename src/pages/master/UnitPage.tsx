@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -62,36 +61,52 @@ export const UnitPage = () => {
     dispatch(fetchAllUnits());
   }, [dispatch]);
 
-  // Debug: Log units data when it changes
+  // Debug: Log state changes
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       console.log('Units state:', units);
+      console.log('Buildings state:', buildings);
+      console.log('Wings state:', wings);
+      console.log('Areas state:', areas);
+      console.log('Floors state:', floors);
       if (units.data.length > 0) {
         console.log('First unit sample:', units.data[0]);
       }
     }
-  }, [units]);
+  }, [units, buildings, wings, areas, floors]);
 
   // Reset pagination when units data changes
   useEffect(() => {
     setCurrentPage(1);
   }, [units.data.length]);
 
+  // Debug: Log form state changes
+  useEffect(() => {
+    console.log('newUnit state:', newUnit);
+  }, [newUnit]);
+
+  useEffect(() => {
+    console.log('editUnit state:', editUnit);
+  }, [editUnit]);
+
   // Fetch dependencies for add/edit forms
   useEffect(() => {
     if (newUnit.building) {
+      console.log('Fetching wings for building:', newUnit.building);
       dispatch(fetchWings(parseInt(newUnit.building)));
     }
   }, [dispatch, newUnit.building]);
 
   useEffect(() => {
     if (newUnit.building && newUnit.wing) {
+      console.log('Fetching areas for building:', newUnit.building, 'wing:', newUnit.wing);
       dispatch(fetchAreas({ buildingId: parseInt(newUnit.building), wingId: parseInt(newUnit.wing) }));
     }
   }, [dispatch, newUnit.building, newUnit.wing]);
 
   useEffect(() => {
     if (newUnit.building && newUnit.wing && newUnit.area) {
+      console.log('Fetching floors for building:', newUnit.building, 'wing:', newUnit.wing, 'area:', newUnit.area);
       dispatch(fetchFloors({ 
         buildingId: parseInt(newUnit.building), 
         wingId: parseInt(newUnit.wing), 
@@ -99,6 +114,29 @@ export const UnitPage = () => {
       }));
     }
   }, [dispatch, newUnit.building, newUnit.wing, newUnit.area]);
+
+  // Fetch dependencies for edit forms
+  useEffect(() => {
+    if (editUnit.building && editingUnit) {
+      dispatch(fetchWings(parseInt(editUnit.building)));
+    }
+  }, [dispatch, editUnit.building, editingUnit]);
+
+  useEffect(() => {
+    if (editUnit.building && editUnit.wing && editingUnit) {
+      dispatch(fetchAreas({ buildingId: parseInt(editUnit.building), wingId: parseInt(editUnit.wing) }));
+    }
+  }, [dispatch, editUnit.building, editUnit.wing, editingUnit]);
+
+  useEffect(() => {
+    if (editUnit.building && editUnit.wing && editUnit.area && editingUnit) {
+      dispatch(fetchFloors({ 
+        buildingId: parseInt(editUnit.building), 
+        wingId: parseInt(editUnit.wing), 
+        areaId: parseInt(editUnit.area)
+      }));
+    }
+  }, [dispatch, editUnit.building, editUnit.wing, editUnit.area, editingUnit]);
 
   // Pagination calculations
   const filteredUnits = units.data.filter(unit => {
@@ -186,6 +224,24 @@ export const UnitPage = () => {
       areaSize: unit.area?.toString() || '',
       active: unit.active
     });
+    
+    // Load the dependencies immediately when editing starts
+    if (unit.building_id) {
+      dispatch(fetchWings(unit.building_id));
+      
+      if (unit.wing_id) {
+        dispatch(fetchAreas({ buildingId: unit.building_id, wingId: unit.wing_id }));
+        
+        if (unit.area_id) {
+          dispatch(fetchFloors({ 
+            buildingId: unit.building_id, 
+            wingId: unit.wing_id, 
+            areaId: unit.area_id 
+          }));
+        }
+      }
+    }
+    
     setIsEditDialogOpen(true);
   };
 
@@ -253,7 +309,13 @@ export const UnitPage = () => {
                     <Label>Select Building</Label>
                     <Select 
                       value={newUnit.building} 
-                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, building: value, wing: '', area: '', floor: '' }))}
+                      onValueChange={(value) => {
+                        const updatedNewUnit = { ...newUnit, building: value, wing: '', area: '', floor: '' };
+                        setNewUnit(updatedNewUnit);
+                        if (value) {
+                          dispatch(fetchWings(parseInt(value)));
+                        }
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Building" />
@@ -272,14 +334,20 @@ export const UnitPage = () => {
                     <Label>Select Wing</Label>
                     <Select 
                       value={newUnit.wing} 
-                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, wing: value, area: '', floor: '' }))}
+                      onValueChange={(value) => {
+                        const updatedNewUnit = { ...newUnit, wing: value, area: '', floor: '' };
+                        setNewUnit(updatedNewUnit);
+                        if (value && updatedNewUnit.building) {
+                          dispatch(fetchAreas({ buildingId: parseInt(updatedNewUnit.building), wingId: parseInt(value) }));
+                        }
+                      }}
                       disabled={!newUnit.building}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Wing" />
                       </SelectTrigger>
                       <SelectContent>
-                        {wings.data.filter(wing => wing.building_id?.toString() === newUnit.building).map((wing) => (
+                        {wings.data.map((wing) => (
                           <SelectItem key={wing.id} value={wing.id.toString()}>
                             {wing.name}
                           </SelectItem>
@@ -292,14 +360,24 @@ export const UnitPage = () => {
                     <Label>Select Area</Label>
                     <Select 
                       value={newUnit.area} 
-                      onValueChange={(value) => setNewUnit(prev => ({ ...prev, area: value, floor: '' }))}
+                      onValueChange={(value) => {
+                        const updatedNewUnit = { ...newUnit, area: value, floor: '' };
+                        setNewUnit(updatedNewUnit);
+                        if (value && updatedNewUnit.building && updatedNewUnit.wing) {
+                          dispatch(fetchFloors({ 
+                            buildingId: parseInt(updatedNewUnit.building), 
+                            wingId: parseInt(updatedNewUnit.wing), 
+                            areaId: parseInt(value) 
+                          }));
+                        }
+                      }}
                       disabled={!newUnit.wing}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Area" />
                       </SelectTrigger>
                       <SelectContent>
-                        {areas.data.filter(area => area.wing_id?.toString() === newUnit.wing).map((area) => (
+                        {areas.data.map((area) => (
                           <SelectItem key={area.id} value={area.id.toString()}>
                             {area.name}
                           </SelectItem>
@@ -319,7 +397,7 @@ export const UnitPage = () => {
                         <SelectValue placeholder="Select Floor" />
                       </SelectTrigger>
                       <SelectContent>
-                        {floors.data.filter(floor => floor.area_id?.toString() === newUnit.area).map((floor) => (
+                        {floors.data.map((floor) => (
                           <SelectItem key={floor.id} value={floor.id.toString()}>
                             {floor.name}
                           </SelectItem>
@@ -338,7 +416,7 @@ export const UnitPage = () => {
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  {/* <div className="space-y-2">
                     <Label htmlFor="areaSize">Area (Sq.Mtr)</Label>
                     <Input
                       id="areaSize"
@@ -346,7 +424,7 @@ export const UnitPage = () => {
                       onChange={(e) => setNewUnit(prev => ({ ...prev, areaSize: e.target.value }))}
                       placeholder="Enter Area"
                     />
-                  </div>
+                  </div> */}
                 </div>
                 
                 <div className="flex gap-2 pt-4">
@@ -543,7 +621,13 @@ export const UnitPage = () => {
                 <Label>Select Building</Label>
                 <Select 
                   value={editUnit.building} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, building: value, wing: '', area: '', floor: '' }))}
+                  onValueChange={(value) => {
+                    const updatedEditUnit = { ...editUnit, building: value, wing: '', area: '', floor: '' };
+                    setEditUnit(updatedEditUnit);
+                    if (value) {
+                      dispatch(fetchWings(parseInt(value)));
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Building" />
@@ -562,14 +646,20 @@ export const UnitPage = () => {
                 <Label>Select Wing</Label>
                 <Select 
                   value={editUnit.wing} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, wing: value, area: '', floor: '' }))}
+                  onValueChange={(value) => {
+                    const updatedEditUnit = { ...editUnit, wing: value, area: '', floor: '' };
+                    setEditUnit(updatedEditUnit);
+                    if (value && updatedEditUnit.building) {
+                      dispatch(fetchAreas({ buildingId: parseInt(updatedEditUnit.building), wingId: parseInt(value) }));
+                    }
+                  }}
                   disabled={!editUnit.building}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Wing" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {wings.data.filter(wing => wing.building_id?.toString() === editUnit.building).map((wing) => (
+                    {wings.data.map((wing) => (
                       <SelectItem key={wing.id} value={wing.id.toString()}>
                         {wing.name}
                       </SelectItem>
@@ -582,14 +672,24 @@ export const UnitPage = () => {
                 <Label>Select Area</Label>
                 <Select 
                   value={editUnit.area} 
-                  onValueChange={(value) => setEditUnit(prev => ({ ...prev, area: value, floor: '' }))}
+                  onValueChange={(value) => {
+                    const updatedEditUnit = { ...editUnit, area: value, floor: '' };
+                    setEditUnit(updatedEditUnit);
+                    if (value && updatedEditUnit.building && updatedEditUnit.wing) {
+                      dispatch(fetchFloors({ 
+                        buildingId: parseInt(updatedEditUnit.building), 
+                        wingId: parseInt(updatedEditUnit.wing), 
+                        areaId: parseInt(value) 
+                      }));
+                    }
+                  }}
                   disabled={!editUnit.wing}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Area" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {areas.data.filter(area => area.wing_id?.toString() === editUnit.wing).map((area) => (
+                    {areas.data.map((area) => (
                       <SelectItem key={area.id} value={area.id.toString()}>
                         {area.name}
                       </SelectItem>
@@ -609,7 +709,7 @@ export const UnitPage = () => {
                     <SelectValue placeholder="Select Floor" />
                   </SelectTrigger>
                   <SelectContent className="bg-white z-50">
-                    {floors.data.filter(floor => floor.area_id?.toString() === editUnit.area).map((floor) => (
+                    {floors.data.map((floor) => (
                       <SelectItem key={floor.id} value={floor.id.toString()}>
                         {floor.name}
                       </SelectItem>
@@ -628,7 +728,7 @@ export const UnitPage = () => {
                 />
               </div>
               
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="editAreaSize">Area (Sq.Mtr)</Label>
                 <Input
                   id="editAreaSize"
@@ -636,7 +736,7 @@ export const UnitPage = () => {
                   onChange={(e) => setEditUnit(prev => ({ ...prev, areaSize: e.target.value }))}
                   placeholder="Enter Area"
                 />
-              </div>
+              </div> */}
               
               <div className="space-y-2 col-span-2">
                 <div className="flex items-center space-x-2">

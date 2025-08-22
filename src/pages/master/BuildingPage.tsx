@@ -348,11 +348,20 @@ export function BuildingPage() {
                       />
                     </div>
 
-                    <div className="flex justify-end space-x-2">
-                      <Button type="button" variant="outline" onClick={resetCreateForm}>
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={resetCreateForm}
+                        className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                      >
                         Cancel
                       </Button>
-                      <Button type="submit" disabled={createForm.formState.isSubmitting}>
+                      <Button 
+                        type="submit" 
+                        disabled={createForm.formState.isSubmitting}
+                        className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                      >
                         {createForm.formState.isSubmitting && (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         )}
@@ -366,19 +375,41 @@ export function BuildingPage() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-end mb-4">
-         
+          <Card className="mb-6">
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <div className="flex flex-col sm:flex-row gap-4 items-center w-full">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Search buildings..."
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      className="pl-10 w-64"
+                    />
+                  </div>
+                  
+                  <Select value={selectedSiteFilter} onValueChange={setSelectedSiteFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="All Sites" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Sites</SelectItem>
+                      {sites.data && Array.isArray(sites.data) && sites.data.map((site) => (
+                        <SelectItem key={site.id} value={site.id.toString()}>
+                          {site.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Search:</span>
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-64"
-                placeholder="Search buildings..."
-              />
-            </div>
-          </div>
+                <div className="text-sm text-gray-600">
+                  Total: {filteredBuildings.length} buildings
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Table */}
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -573,7 +604,7 @@ export function BuildingPage() {
           <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>Edit Building</DialogTitle>
+                <DialogTitle>Edit Building Details</DialogTitle>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -734,11 +765,20 @@ export function BuildingPage() {
                     )}
                   />
 
-                  <div className="flex justify-end space-x-2">
-                    <Button type="button" variant="outline" onClick={resetEditForm}>
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={resetEditForm}
+                      className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                    >
                       Cancel
                     </Button>
-                    <Button type="submit" disabled={editForm.formState.isSubmitting}>
+                    <Button 
+                      type="submit" 
+                      disabled={editForm.formState.isSubmitting}
+                      className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
+                    >
                       {editForm.formState.isSubmitting && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
