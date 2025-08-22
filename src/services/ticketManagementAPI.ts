@@ -252,6 +252,10 @@ export interface TicketFilters {
   search_all_fields_cont?: string;
   assigned_to_in?: number[];
   complaint_status_fixed_state_eq?: string;
+  complaint_status_name_eq?: string;
+  complaint_status_fixed_state_not_eq?: string;
+  complaint_status_fixed_state_null?: string;
+  m?: string;
 }
 
 // Helper function to format date for API (DD/MM/YYYY)

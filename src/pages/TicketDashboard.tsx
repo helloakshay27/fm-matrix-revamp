@@ -829,8 +829,11 @@ export const TicketDashboard = () => {
     if (cardType !== 'total') {
       // Use the correct API parameter format for status filtering
       if (cardType === 'open') {
-        newFilters.complaint_status_fixed_state_eq = 'Open';
-        // console.log('Setting Open filter with complaint_status_fixed_state_eq=Open');
+        // Use specific API call format for open tickets: q[complaint_status_fixed_state_not_eq]=closed&q[complaint_status_fixed_state_null]=1&q[m]=or
+        newFilters.complaint_status_fixed_state_not_eq = 'closed';
+        newFilters.complaint_status_fixed_state_null = '1';
+        newFilters.m = 'or';
+        console.log('Setting Open filter with complaint_status_fixed_state_not_eq=closed&complaint_status_fixed_state_null=1&m=or');
       } else if (cardType === 'pending') {
         newFilters.complaint_status_fixed_state_eq = 'Pending';
         //  console.log('Setting Pending filter with complaint_status_fixed_state_eq=Pending');
@@ -854,6 +857,15 @@ export const TicketDashboard = () => {
     if (newFilters.complaint_status_fixed_state_eq) {
       testParams.append('q[complaint_status_fixed_state_eq]', newFilters.complaint_status_fixed_state_eq);
     }
+    if (newFilters.complaint_status_fixed_state_not_eq) {
+      testParams.append('q[complaint_status_fixed_state_not_eq]', newFilters.complaint_status_fixed_state_not_eq);
+    }
+    if (newFilters.complaint_status_fixed_state_null) {
+      testParams.append('q[complaint_status_fixed_state_null]', newFilters.complaint_status_fixed_state_null);
+    }
+    if (newFilters.m) {
+      testParams.append('q[m]', newFilters.m);
+    }
     console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
   };
 
@@ -862,7 +874,9 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_eq === 'Closed';
+      return filters.complaint_status_fixed_state_not_eq === 'closed' && 
+             filters.complaint_status_fixed_state_null === '1' && 
+             filters.m === 'or';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
@@ -1029,24 +1043,23 @@ export const TicketDashboard = () => {
   };
   const TruncatedDescription = ({
     text,
-    maxWords = 5
+    maxCharacters = 15
   }: {
     text: string;
-    maxWords?: number;
+    maxCharacters?: number;
   }) => {
     if (!text) return <span>--</span>;
 
-    const words = text.split(' ');
-    if (words.length <= maxWords) {
+    if (text.length <= maxCharacters) {
       return <span className="ml-2">{text}</span>;
     }
 
-    const truncated = words.slice(0, maxWords).join(' ');
-    return <div className="w-48 max-w-[200px] group relative">
-      <span className="block line-clamp-2">
+    const truncated = text.substring(0, maxCharacters);
+    return <div className="w-32 max-w-[150px] group relative">
+      <span className="block truncate">
         {`${truncated}...`}
       </span>
-      <div className="absolute left-0 top-0 w-max max-w-xs bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none">
+      <div className="absolute left-0 top-0 w-max max-w-sm bg-black text-white text-xs p-2 rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10 pointer-events-none break-words">
         {text}
       </div>
     </div>;
@@ -1361,8 +1374,7 @@ export const TicketDashboard = () => {
               return (
                 <div
                   key={i}
-                  className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all 
-          ${isActive ? "" : "bg-[#f6f4ee]"} 
+                  className={`flex items-center justify-center p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] gap-2 sm:gap-4 transition-all bg-[#f6f4ee] 
           ${item.clickable ? "cursor-pointer hover:bg-[#edeae3] hover:shadow-lg" : ""}`}
                   onClick={() => item.clickable && handleStatusCardClick(item.type)}
                 >

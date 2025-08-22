@@ -636,6 +636,8 @@ import LockSubFunctionList from './pages/LockSubFunctionList';
 import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
+import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
+import ReporteesReassignPage from "./pages/ReporteesReassignPage";
 
 
 const queryClient = new QueryClient();
@@ -1814,6 +1816,8 @@ function App() {
                 <Route path="/maintenance/training-list/:id" element={<TrainingDetailPage />} />
                 <Route path="/maintenance/smt" element={<SMTDashboard />} />
                 <Route path="/maintenance/smt/:id" element={<SMTDetailPage />} />
+                <Route path="/maintenance/m-safe/external-users/multiple-delete" element={<MultipleUserDeletePage />} />
+                <Route path="/maintenance/reportees-reassign" element={<ReporteesReassignPage />} />
 
                 {/* Market Place Routes */}
                 <Route
