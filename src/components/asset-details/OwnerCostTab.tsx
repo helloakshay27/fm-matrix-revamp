@@ -429,7 +429,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              Asset Status Update
+              Ownership Cost
               <Button
                 variant="ghost"
                 size="sm"
