@@ -343,21 +343,17 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
+    sendData.append('pms_asset_amc[checklist_type]', formData.details === 'Asset' ? "Asset" : "Service");
+
     sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
 
     if (action === 'schedule') {
       sendData.append('pms_asset_amc[schedule_immediately]', 'true');
     }
 
-    if (formData.details === 'Asset') {
-      if (formData.type === 'Individual' && formData.asset_ids.length > 0) {
-  sendData.append('pms_asset_amc[asset_id]', String(formData.asset_ids[0]));
-        formData.asset_ids.forEach((id: number) => {
-          sendData.append('asset_ids[]', id.toString());
-        });
-      } else if (formData.type === 'Group' && formData.group) {
+    if (formData.details === 'Asset' || formData.details === 'Service') {
+      if (formData.type === 'Group' && formData.group) {
         sendData.append('group_id', formData.group);
-        sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
         if (formData.subgroup) {
           sendData.append('sub_group_id', formData.subgroup);
         }
