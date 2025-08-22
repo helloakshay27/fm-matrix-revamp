@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { TextField } from '@mui/material';
-import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { EnhancedTaskTable } from '@/components/enhanced-table/EnhancedTaskTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Upload, Plus, Filter, MoreVertical, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { TicketPagination } from '@/components/TicketPagination';
+import { CalendarDays, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -20,23 +12,17 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Checkbox } from '@/components/ui/checkbox';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { TextField } from '@mui/material';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 
 interface Holiday {
   id: string;
@@ -98,60 +84,60 @@ const mockHolidays: Holiday[] = [
 
 const columns: ColumnConfig[] = [
   {
+    key: 'actions',
+    label: 'Action',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
+  {
     key: 'holidayName',
     label: 'Holiday Name',
     sortable: true,
-    hideable: false,
-    draggable: true,
-    defaultVisible: true
+    hideable: true,
+    draggable: true
   },
   {
     key: 'date',
     label: 'Date',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'recurring',
     label: 'Recurring',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'applicableLocation',
     label: 'Applicable Location',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'holidayType',
     label: 'Holiday Type',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
-    key: 'applicableFor',
-    label: 'Applicable for',
+    key: 'status',
+    label: 'Status',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   }
 ];
 
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredHolidays, setFilteredHolidays] = useState<Holiday[]>(mockHolidays);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [holidays, setHolidays] = useState<Holiday[]>(mockHolidays);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [date, setDate] = useState<Date>();
   const [holidayName, setHolidayName] = useState('');
   const [recurring, setRecurring] = useState<string>('');
@@ -162,6 +148,10 @@ export const HolidayCalendarPage = () => {
   const [typeDropdownOpen, setTypeDropdownOpen] = useState(false);
   const [customersDropdownOpen, setCustomersDropdownOpen] = useState(false);
   const [recurringOpen, setRecurringOpen] = useState(false);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
 
   // Site options
   const siteOptions = [
@@ -181,6 +171,30 @@ export const HolidayCalendarPage = () => {
     'Booking',
     'Parking'
   ];
+
+  // Pagination calculations
+  const totalRecords = holidays.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentHolidays = holidays.slice(startIndex, endIndex);
+
+  // Handle search
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  // Handle per page change
+  const handlePerPageChange = (newPerPage: number) => {
+    setPerPage(newPerPage);
+    setCurrentPage(1);
+  };
 
   const handleSiteChange = (site: string, checked: boolean) => {
     if (checked) {
@@ -206,27 +220,6 @@ export const HolidayCalendarPage = () => {
     }
   };
 
-  // Search functionality
-  const handleSearch = () => {
-    if (searchTerm.trim() === '') {
-      setFilteredHolidays(holidays);
-    } else {
-      const filtered = holidays.filter((holiday) =>
-        holiday.holidayName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        holiday.date.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        holiday.applicableLocation.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        holiday.holidayType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        holiday.applicableFor.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredHolidays(filtered);
-    }
-  };
-
-  const handleReset = () => {
-    setSearchTerm('');
-    setFilteredHolidays(holidays);
-  };
-
   const handleSubmit = () => {
     if (!holidayName || !date || !recurring || selectedSites.length === 0 || !selectedType || selectedCustomers.length === 0) {
       alert('Please fill all fields');
@@ -245,7 +238,6 @@ export const HolidayCalendarPage = () => {
 
     const updatedHolidays = [...holidays, newHoliday];
     setHolidays(updatedHolidays);
-    setFilteredHolidays(updatedHolidays);
     
     // Reset form
     setHolidayName('');
@@ -268,82 +260,100 @@ export const HolidayCalendarPage = () => {
     setIsAddDialogOpen(false);
   };
 
-  const renderCell = (holiday: Holiday, columnKey: string) => {
-    switch (columnKey) {
-      case 'holidayName':
-        return <span className="text-gray-900 font-medium">{holiday.holidayName}</span>;
-      
-      case 'date':
-        return <span className="text-gray-900">{holiday.date}</span>;
-      
-      case 'recurring':
-        return (
-          <span className="text-gray-900">
-            {holiday.recurring ? 'Yes' : 'No'}
-          </span>
-        );
-      
-      case 'applicableLocation':
-        return <span className="text-gray-900">{holiday.applicableLocation}</span>;
-      
-      case 'holidayType':
-        return (
-          <Badge 
-            variant={
-              holiday.holidayType === 'Public' 
-                ? 'default' 
-                : holiday.holidayType === 'Festival' 
-                ? 'secondary' 
-                : 'outline'
-            }
-            className="bg-gray-100 text-gray-900 hover:bg-gray-200"
-          >
-            {holiday.holidayType}
-          </Badge>
-        );
-      
-      case 'applicableFor':
-        return <span className="text-gray-900">{holiday.applicableFor}</span>;
-      
-      default:
-        return holiday[columnKey as keyof Holiday];
-    }
+  const handleView = (id: string) => {
+    console.log('View holiday:', id);
   };
 
-  const renderActions = (holiday: Holiday) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem>Edit Holiday</DropdownMenuItem>
-        <DropdownMenuItem>View Details</DropdownMenuItem>
-        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  const handleEdit = (id: string) => {
+    console.log('Edit holiday:', id);
+  };
+
+  const handleDelete = (id: string) => {
+    console.log('Delete holiday:', id);
+  };
+
+  // Render row function for enhanced task table
+  const renderRow = (holiday: Holiday) => ({
+    actions: (
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => handleView(holiday.id)} 
+          className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+          title="View"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={() => handleEdit(holiday.id)} 
+          className="p-1 text-green-600 hover:bg-green-50 rounded" 
+          title="Edit"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button 
+          onClick={() => handleDelete(holiday.id)} 
+          className="p-1 text-red-600 hover:bg-red-50 rounded" 
+          title="Delete"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    ),
+    holidayName: (
+      <div className="font-medium">{holiday.holidayName}</div>
+    ),
+    date: (
+      <span className="text-sm text-gray-600">{holiday.date}</span>
+    ),
+    recurring: (
+      <span className="text-sm text-gray-600">
+        {holiday.recurring ? 'Yes' : 'No'}
+      </span>
+    ),
+    applicableLocation: (
+      <div className="text-sm text-gray-600 max-w-xs truncate" title={holiday.applicableLocation}>
+        {holiday.applicableLocation}
+      </div>
+    ),
+    holidayType: (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        holiday.holidayType === 'Public' 
+          ? 'bg-blue-100 text-blue-800' 
+          : holiday.holidayType === 'Festival' 
+          ? 'bg-purple-100 text-purple-800' 
+          : 'bg-gray-100 text-gray-800'
+      }`}>
+        {holiday.holidayType}
+      </span>
+    ),
+    status: (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        Active
+      </span>
+    )
+  });
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
-      {/* Header Section */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Holiday Calendar</h1>
-        <p className="text-gray-600">Manage Holidays</p>
-      </div>
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Holiday Calendar</h1>
+      </header>
 
-      {/* Action Buttons and Search Bar */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex gap-3">
+      <EnhancedTaskTable
+        data={currentHolidays}
+        columns={columns}
+        renderRow={renderRow}
+        storageKey="holiday-calendar-dashboard"
+        hideTableExport={true}
+        hideTableSearch={false}
+        enableSearch={true}
+        searchTerm={searchTerm}
+        onSearchChange={handleSearch}
+        leftActions={(
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button 
-                className="bg-[#C72030] hover:bg-[#A01020] text-white flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Holiday
+              <Button className='bg-primary text-primary-foreground hover:bg-primary/90'>
+                <Plus className="w-4 h-4 mr-2" /> Add Holiday
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -523,6 +533,7 @@ export const HolidayCalendarPage = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
+
                   {/* Select Customers */}
                   <div className="space-y-2">
                     <Label>Select Customers</Label>
@@ -554,10 +565,9 @@ export const HolidayCalendarPage = () => {
                     </Popover>
                   </div>
                 </div>
+              </div>
 
-                </div>
-
-                {/* Action Buttons */}
+              {/* Action Buttons */}
               <div className="flex justify-end gap-3 pt-4 border-t">
                 <Button variant="outline" onClick={handleCancel}>
                   Cancel
@@ -571,45 +581,18 @@ export const HolidayCalendarPage = () => {
               </div>
             </DialogContent>
           </Dialog>
-          <Button 
-            variant="outline" 
-            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white flex items-center gap-2"
-          >
-            <Upload className="h-4 w-4" />
-            Bulk Upload
-          </Button>
-        </div>
-        
-        {/* Search Bar with Go and Reset buttons */}
-        <div className="flex gap-2 items-center">
-          <Input
-            placeholder="Search holidays..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-          <Button variant="outline" className="bg-[#C72030] text-white hover:bg-[#A01020]" onClick={handleSearch}>
-            Go
-          </Button>
-          <Button variant="outline" onClick={handleReset}>
-            Reset
-          </Button>
-        </div>
-      </div>
+        )}
+      />
 
-      {/* Table Card */}
-      <div className="bg-white rounded-lg border border-[#D5DbDB]">
-        <EnhancedTable
-          data={filteredHolidays}
-          columns={columns}
-          renderCell={renderCell}
-          searchTerm=""
-          onSearchChange={() => {}}
-          storageKey="holiday-calendar-table"
-          emptyMessage="No holidays found"
-          className="min-w-full"
-        />
-      </div>
+      <TicketPagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalRecords={totalRecords}
+        perPage={perPage}
+        isLoading={false}
+        onPageChange={handlePageChange}
+        onPerPageChange={handlePerPageChange}
+      />
     </div>
   );
 };

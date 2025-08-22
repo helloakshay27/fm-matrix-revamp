@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
-import { CalendarDays, Upload, Plus, Filter, MoreVertical } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { CalendarDays, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 
 interface Holiday {
   id: string;
@@ -73,191 +64,175 @@ const mockHolidays: Holiday[] = [
 
 const columns: ColumnConfig[] = [
   {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
+  {
     key: 'holidayName',
     label: 'Holiday Name',
     sortable: true,
-    hideable: false,
-    draggable: true,
-    defaultVisible: true
+    hideable: true,
+    draggable: true
   },
   {
     key: 'date',
     label: 'Date',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'recurring',
     label: 'Recurring',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'applicableLocation',
     label: 'Applicable Location',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'holidayType',
     label: 'Holiday Type',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   },
   {
     key: 'applicableFor',
     label: 'Applicable for',
     sortable: true,
     hideable: true,
-    draggable: true,
-    defaultVisible: true
+    draggable: true
   }
 ];
 
 export const HolidayCalendarPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const renderCell = (holiday: Holiday, columnKey: string) => {
-    switch (columnKey) {
-      case 'holidayName':
-        return <span className="text-gray-900 font-medium">{holiday.holidayName}</span>;
-      
-      case 'date':
-        return <span className="text-gray-900">{holiday.date}</span>;
-      
-      case 'recurring':
-        return (
-          <span className="text-gray-900">
-            {holiday.recurring ? 'Yes' : 'No'}
-          </span>
-        );
-      
-      case 'applicableLocation':
-        return <span className="text-gray-900">{holiday.applicableLocation}</span>;
-      
-      case 'holidayType':
-        return (
-          <Badge 
-            variant={
-              holiday.holidayType === 'Public' 
-                ? 'default' 
-                : holiday.holidayType === 'Festival' 
-                ? 'secondary' 
-                : 'outline'
-            }
-            className="bg-gray-100 text-gray-900 hover:bg-gray-200"
-          >
-            {holiday.holidayType}
-          </Badge>
-        );
-      
-      case 'applicableFor':
-        return <span className="text-gray-900">{holiday.applicableFor}</span>;
-      
-      default:
-        return holiday[columnKey as keyof Holiday];
-    }
+  const handleView = (id: string) => {
+    console.log('View holiday:', id);
+    // Navigate to holiday detail page
   };
 
-  const renderActions = (holiday: Holiday) => (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0">
-          <span className="sr-only">Open menu</span>
-          <MoreVertical className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem>Edit Holiday</DropdownMenuItem>
-        <DropdownMenuItem>View Details</DropdownMenuItem>
-        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  const handleEdit = (id: string) => {
+    console.log('Edit holiday:', id);
+    // Navigate to holiday edit page
+  };
+
+  const handleDelete = (id: string) => {
+    console.log('Delete holiday:', id);
+    // Show delete confirmation modal
+  };
+
+  const handleAdd = () => {
+    console.log('Add new holiday');
+    // Navigate to add holiday page
+  };
 
   return (
-    <div className="flex min-h-screen bg-[#f6f4ee]">
-      {/* Main Content */}
-      <div className="flex-1">
-        <div className="p-6">
-          {/* Header Section */}
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-2">
-              <CalendarDays className="h-5 w-5 text-gray-600" />
-              <h1 className="text-2xl font-semibold text-gray-900">Holiday Calendar</h1>
-            </div>
-            <p className="text-gray-600">Manage Holidays</p>
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <CalendarDays className="w-5 h-5" />
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex justify-between items-center mb-6">
-            <div className="flex gap-3">
-              <Button 
-                className="bg-[#8B5A3C] hover:bg-[#7A4A2A] text-white flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Add Holiday
-              </Button>
-              <Button 
-                variant="outline" 
-                className="border-[#8B5A3C] text-[#8B5A3C] hover:bg-[#8B5A3C] hover:text-white flex items-center gap-2"
-              >
-                <Upload className="h-4 w-4" />
-                Bulk Upload
-              </Button>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-              <Button variant="outline">
-                Reset
-              </Button>
-            </div>
-          </div>
-
-          {/* Search Bar */}
-          <div className="mb-6">
-            <Input
-              placeholder="Search holidays..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-
-          {/* Table */}
-          <div className="bg-white rounded-lg border border-[#D5DbDB] overflow-hidden">
-            <div className="max-h-[600px] overflow-auto">
-              <EnhancedTable
-                data={mockHolidays}
-                columns={columns}
-                renderCell={renderCell}
-                renderActions={renderActions}
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                storageKey="holiday-calendar-table"
-                emptyMessage="No holidays found"
-                className="min-w-full"
-              />
-            </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Holiday Calendar</h1>
+            <p className="text-gray-600">Manage holidays and calendar events</p>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Right Sidebar - Empty as shown in image */}
-      <div className="w-80 bg-gray-300 border-l border-gray-400">
-        {/* Empty sidebar as shown in the reference image */}
+      <div className="">
+        <EnhancedTable
+          data={mockHolidays}
+          columns={columns}
+          renderRow={(holiday) => ({
+            actions: (
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => handleView(holiday.id)} 
+                  className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
+                  title="View"
+                >
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleEdit(holiday.id)} 
+                  className="p-1 text-green-600 hover:bg-green-50 rounded" 
+                  title="Edit"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+                <button 
+                  onClick={() => handleDelete(holiday.id)} 
+                  className="p-1 text-red-600 hover:bg-red-50 rounded" 
+                  title="Delete"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ),
+            holidayName: (
+              <div className="font-medium text-gray-900 max-w-xs truncate" title={holiday.holidayName}>
+                {holiday.holidayName}
+              </div>
+            ),
+            date: (
+              <span className="text-sm text-gray-600">{holiday.date}</span>
+            ),
+            recurring: (
+              <span className="text-sm text-gray-600">
+                {holiday.recurring ? 'Yes' : 'No'}
+              </span>
+            ),
+            applicableLocation: (
+              <div className="text-sm text-gray-600 max-w-xs truncate" title={holiday.applicableLocation}>
+                {holiday.applicableLocation}
+              </div>
+            ),
+            holidayType: (
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                holiday.holidayType === 'Public' 
+                  ? 'bg-blue-100 text-blue-800' 
+                  : holiday.holidayType === 'Festival' 
+                  ? 'bg-purple-100 text-purple-800' 
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {holiday.holidayType}
+              </span>
+            ),
+            applicableFor: (
+              <span className="text-sm text-gray-600">{holiday.applicableFor}</span>
+            )
+          })}
+          storageKey="holiday-calendar-table"
+          enableSearch={false}
+          searchPlaceholder="Search holidays..."
+          onSearchChange={setSearchTerm}
+          enableExport={false}
+          exportFileName="holiday-data"
+          leftActions={
+            <Button 
+              onClick={handleAdd}
+              className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            >
+              <Plus className="w-4 h-4" />
+              Add Holiday
+            </Button>
+          }
+          pagination={false}
+          loading={false}
+          emptyMessage="No holidays found. Create your first holiday to get started."
+        />
       </div>
     </div>
   );
