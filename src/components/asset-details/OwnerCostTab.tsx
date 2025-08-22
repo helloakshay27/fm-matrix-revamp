@@ -270,8 +270,8 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                     <TableCell>{item.status}</TableCell>
                     <TableCell>{localStorage.getItem('currency')}{item.cost}</TableCell>
                     <TableCell>{item.warranty_in_month} months</TableCell>
-                    <TableCell>{item.warranty_type || "N/A"}</TableCell>
-                    <TableCell>{item.payment_status || "N/A"}</TableCell>
+                    <TableCell>{(item.warranty_type || "N/A").toUpperCase()}</TableCell>
+                    <TableCell>{(item.payment_status || "N/A").replace(/_/g, ' ').toUpperCase()}</TableCell>
                     <TableCell>{asset.name || "N/A"}</TableCell>
                   </TableRow>
                 ))
