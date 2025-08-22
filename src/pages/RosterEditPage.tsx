@@ -608,29 +608,70 @@ export const RosterEditPage: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Build PATCH payload for API
-      let payload: any = {};
+      // Build payload for API (matching RosterCreatePage format)
+      let payload;
       const baseUserRoaster = {
         name: formData.templateName,
-        resource_id: formData.selectedEmployees[0]?.toString() || '',
-        user_shift_id: formData.shift?.toString() || '',
-        seat_category_id: '1',
-        start_date: `${period.fromYear}-${String(period.fromMonth).padStart(2, '0')}-${String(period.fromDay).padStart(2, '0')}`,
-        end_date: `${period.toYear}-${String(period.toMonth).padStart(2, '0')}-${String(period.toDay).padStart(2, '0')}`,
+        resource_id: selectedSite?.id || localStorage.getItem('selectedSiteId') || '',
+        user_shift_id: formData.shift || '',
+        seat_category_id: '1', // Required field
         allocation_type: formData.rosterType,
         roaster_type: formData.dayType,
         active: formData.active
       };
 
-      if (formData.dayType === 'Recurring') {
-        // Recurring payload - no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+      // Common date format (Rails style for all types - matching RosterCreatePage)
+      const commonDateFields = {
+        'start_date(3i)': period.fromDay.toString(),
+        'start_date(2i)': period.fromMonth.toString(),
+        'start_date(1i)': period.fromYear.toString(),
+        'end_date(3i)': period.toDay.toString(),
+        'end_date(2i)': period.toMonth.toString(),
+        'end_date(1i)': period.toYear.toString()
+      };
+
+      if (formData.dayType === 'Weekdays') {
+        // Weekdays payload
+        // Convert week selections to weekday numbers (1-5 for 1st Week to 5th Week)
+        const weekdays = formData.weekSelection
+          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
+          .map(w => w.charAt(0)); // Get first character (week number)
+        
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            ...commonDateFields
+          },
+          department_id: formData.departments.map(String),
+          weekdays: weekdays
+        };
+
+      } else if (formData.dayType === 'Weekends') {
+        // Weekends payload
+        // Convert weekend selections to weekend numbers (1-5 for 1st Weekend to 5th Weekend)
+        const weekends = formData.weekSelection
+          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
+          .map(w => w.charAt(0)); // Get first character (weekend number)
+        
+        payload = {
+          user_roaster: {
+            ...baseUserRoaster,
+            ...commonDateFields
+          },
+          department_id: formData.departments.map(String),
+          weekends: weekends
+        };
+
+      } else if (formData.dayType === 'Recurring') {
+        // Recurring payload
+        // no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
         const recurringData = {};
         for (let weekNum = 1; weekNum <= 5; weekNum++) {
           const daysForWeek = formData.selectedDays
             .filter(d => d.startsWith(`Week${weekNum}-`))
             .map(d => {
               const dayShort = d.split('-')[1];
-              // Map short day to number (Mon=1, Tue=2, ... Sun=7)
+              // Map short day to number (Mon=1, Tue=2, ..., Sun=7)
               return (
                 ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].indexOf(dayShort) + 1
               ).toString();
@@ -642,52 +683,27 @@ export const RosterEditPage: React.FC = () => {
         
         payload = {
           user_roaster: {
-            ...baseUserRoaster
+            ...baseUserRoaster,
+            ...commonDateFields
           },
           department_id: formData.departments.map(String),
           no_of_days: [recurringData]
-        };
-
-      } else if (formData.dayType === 'Weekdays') {
-        // Weekdays payload - weekdays: ["1", "3"] (week numbers)
-        const weekdays = formData.weekSelection
-          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
-          .map(w => w.charAt(0)); // Get first character (week number)
-        
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster
-          },
-          department_id: formData.departments.map(String),
-          weekdays: weekdays
-        };
-
-      } else if (formData.dayType === 'Weekends') {
-        // Weekends payload - weekends: ["1", "2", "3", "5"] (weekend numbers)
-        const weekends = formData.weekSelection
-          .filter(w => w.match(/^\d/)) // Filter selections that start with digit
-          .map(w => w.charAt(0)); // Get first character (weekend number)
-        
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster
-          },
-          department_id: formData.departments.map(String),
-          weekends: weekends
         };
 
       } else {
         // Default fallback
         payload = {
           user_roaster: {
-            ...baseUserRoaster
+            ...baseUserRoaster,
+            ...commonDateFields
           },
           department_id: formData.departments.map(String),
           no_of_days: []
         };
       }
 
-      console.log('🎯 PATCH Roster Template Payload:', JSON.stringify(payload, null, 2));
+      // Log payload to console
+      console.log('🎯 PATCH API Payload:', JSON.stringify(payload, null, 2));
 
       // PATCH API call
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters/${id}.json`, {
