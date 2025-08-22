@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 const ReporteesReassignPage = () => {
     const [currentEmail, setCurrentEmail] = useState('');
@@ -19,14 +20,53 @@ const ReporteesReassignPage = () => {
 
     const handleSubmit = async () => {
         if (isSubmitting) return;
+
+        const current = currentEmail.trim().toLowerCase();
+        const updated = updatedEmail.trim().toLowerCase();
+
+        if (!current || !updated) return;
+        if (current === updated) {
+            toast.info('Current and updated emails cannot be the same.');
+            return;
+        }
+
         setIsSubmitting(true);
         try {
-            // TODO: integrate API call for reassigning reportees
-            console.log('Reassign reportees from', currentEmail, 'to', updatedEmail);
-        toast.success('Reportees reassignment submitted');
-            // Reset fields after successful submit
+            const url = getFullUrl('/pms/users/vi_reassign_reportees.json');
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': getAuthHeader(),
+                },
+                body: JSON.stringify({
+                    current_manager_email: current,
+                    new_manager_email: updated,
+                }),
+            });
+
+            if (!res.ok) {
+                let message = 'Failed to reassign reportees';
+                try {
+                    const data = await res.json();
+                    if (typeof data === 'string') message = data;
+                    else if (data?.message) message = data.message;
+                    else if (Array.isArray(data?.errors)) message = data.errors.join(', ');
+                    else if (typeof data?.errors === 'string') message = data.errors;
+                } catch {
+                    try { message = (await res.text()) || message; } catch {}
+                }
+                message = message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+                toast.error(message);
+                return;
+            }
+
+            const result = await res.json();
+            toast.success(result?.message || 'Reportees reassigned successfully');
             setCurrentEmail('');
             setUpdatedEmail('');
+        } catch (e: any) {
+            toast.error(e?.message || 'Failed to reassign reportees');
         } finally {
             setIsSubmitting(false);
         }
@@ -56,16 +96,16 @@ const ReporteesReassignPage = () => {
                             onChange={(e) => setCurrentEmail(e.target.value)}
                             fullWidth
                             variant="outlined"
-                                                        autoComplete="off"
+                            autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
-                                                        InputProps={{ sx: fieldStyles }}
-                                                        inputProps={{
-                                                            autoComplete: 'off',
-                                                            name: 'current-report-to',
-                                                            autoCorrect: 'off',
-                                                            autoCapitalize: 'none',
-                                                            spellCheck: 'false',
-                                                        }}
+                            InputProps={{ sx: fieldStyles }}
+                            inputProps={{
+                                autoComplete: 'off',
+                                name: 'current-report-to',
+                                autoCorrect: 'off',
+                                autoCapitalize: 'none',
+                                spellCheck: 'false',
+                            }}
                             disabled={isSubmitting}
                         />
 
@@ -77,16 +117,16 @@ const ReporteesReassignPage = () => {
                             onChange={(e) => setUpdatedEmail(e.target.value)}
                             fullWidth
                             variant="outlined"
-                                                        autoComplete="off"
+                            autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
-                                                        InputProps={{ sx: fieldStyles }}
-                                                        inputProps={{
-                                                            autoComplete: 'off',
-                                                            name: 'updated-report-to',
-                                                            autoCorrect: 'off',
-                                                            autoCapitalize: 'none',
-                                                            spellCheck: 'false',
-                                                        }}
+                            InputProps={{ sx: fieldStyles }}
+                            inputProps={{
+                                autoComplete: 'off',
+                                name: 'updated-report-to',
+                                autoCorrect: 'off',
+                                autoCapitalize: 'none',
+                                spellCheck: 'false',
+                            }}
                             disabled={isSubmitting}
                         />
                     </div>
@@ -100,14 +140,14 @@ const ReporteesReassignPage = () => {
                     className="text-white hover:bg-[#C72030]/90 flex items-center"
                     disabled={isSubmitting || !currentEmail.trim() || !updatedEmail.trim()}
                 >
-                                        {isSubmitting ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                                Submitting...
-                                            </>
-                                        ) : (
-                                            'Submit'
-                                        )}
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Submitting...
+                        </>
+                    ) : (
+                        'Submit'
+                    )}
                 </Button>
             </div>
         </div>

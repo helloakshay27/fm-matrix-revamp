@@ -180,18 +180,6 @@ const LMCUserDetail = () => {
                             <span className="text-gray-500 text-sm">Email ID</span>
                             <p className="text-gray-900 font-medium">{lmcUser?.email || '—'}</p>
                         </div>
-                        <div>
-                            <span className="text-gray-500 text-sm">Gender</span>
-                            <p className="text-gray-900 font-medium">—</p>
-                        </div>
-                        <div>
-                            <span className="text-gray-500 text-sm">Blood Group</span>
-                            <p className="text-gray-900 font-medium">—</p>
-                        </div>
-                        <div>
-                            <span className="text-gray-500 text-sm">DOB</span>
-                            <p className="text-gray-900 font-medium">—</p>
-                        </div>
                     </div>
                 </div>
             </div>

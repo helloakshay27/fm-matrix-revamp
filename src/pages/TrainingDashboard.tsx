@@ -135,13 +135,21 @@ const TrainingDashboard = () => {
       const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
       const effectivePage = (emailSearch || dialogFilterActive) ? 1 : page; // force first page when searching / filtering
       let url = `https://${baseUrl}/trainings.json?approval=true&page=${effectivePage}`;
-      // If dialog filter is active, use combined OR param; precedence: training name > email if both provided (can adjust)
+      // If dialog filter active, append each provided field separately (no combined OR param)
       if (dialogFilterActive) {
-        const term = (filterTrainingName.trim() || filterEmail.trim());
-        url += `&q[training_subject_category_name_or_created_by_email_cont]=${encodeURIComponent(term)}`;
+        const params: string[] = [];
+        if (filterTrainingName.trim()) {
+          params.push(`q[training_subject_category_name_cont]=${encodeURIComponent(filterTrainingName.trim())}`);
+        }
+        if (filterEmail.trim()) {
+          params.push(`q[created_by_email_cont]=${encodeURIComponent(filterEmail.trim())}`);
+        }
+        if (params.length) {
+          url += `&${params.join('&')}`;
+        }
       } else if (emailSearch) {
         // Inline search (email only)
-        url += `&created_by_email_cont=${encodeURIComponent(emailSearch)}`;
+        url += `&q[created_by_email_cont]=${encodeURIComponent(emailSearch)}`;
       }
       console.debug('[Training] Fetch URL:', url);
       const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
