@@ -10,6 +10,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import InvoiceModal from "@/components/InvoiceModal";
 import { Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import axios from "axios";
 
 const boqColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
@@ -274,10 +275,31 @@ export const WODetailsPage = () => {
     setOpenDebitCreditModal(false);
   };
 
-  const handleSubmitDebitCredit = () => {
-    // Handle form submission logic here
-    console.log("Debit/Credit Note submitted");
-    handleCloseDebitCreditModal();
+  const handleSubmitDebitCredit = async () => {
+    try {
+      const payload = {
+        debit_note: {
+          amount: debitCreditForm.amount,
+          note: debitCreditForm.description,
+          note_type: debitCreditForm.type,
+          resource_id: Number(id),
+          resource_type: "Pms::WorkOrder"
+        }
+      }
+
+      await axios.post(`https://${baseUrl}/debit_notes.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+
+      toast.success("Debit note created successfully")
+    } catch (error) {
+      console.log(error)
+      toast.error(error)
+    } finally {
+      handleCloseDebitCreditModal();
+    }
   };
 
   const handleApprove = async () => {
@@ -859,6 +881,7 @@ export const WODetailsPage = () => {
               value={debitCreditForm.type}
               onChange={handleDebitCreditChange}
               displayEmpty
+              name="type"
               sx={{
                 height: {
                   xs: 28,
