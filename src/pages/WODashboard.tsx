@@ -46,7 +46,7 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "approved_status",
+    key: "all_level_approved",
     label: "Approved Status",
     sortable: true,
     draggable: true,
@@ -265,14 +265,14 @@ export const WODashboard = () => {
     const value = item[columnKey];
 
     switch (columnKey) {
-      case "approved_status":
+      case "all_level_approved":
         return (
           <span
             className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(
-              item?.approved_status
+              item?.all_level_approved ? "Approved" : item?.all_level_approved === false ? "Rejected" : "Pending"
             )}`}
           >
-            {item?.approved_status || "N/A"}
+            {item?.all_level_approved ? "Approved" : item?.all_level_approved === false ? "Rejected" : "Pending"}
           </span>
         );
       case "reference_number":

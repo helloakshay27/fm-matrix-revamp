@@ -4,7 +4,7 @@ import { Edit, Copy, Printer, Rss } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { getWorkOrderById } from "@/store/slices/workOrderSlice";
+import { approveRejectWO, getWorkOrderById } from "@/store/slices/workOrderSlice";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -168,6 +168,7 @@ export const WODetailsPage = () => {
   const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
+  const [debitCreditNote, setDebitCreditNote] = useState([]);
   const [debitCreditForm, setDebitCreditForm] = useState({
     type: "",
     amount: "",
@@ -229,6 +230,7 @@ export const WODetailsPage = () => {
           getWorkOrderById({ baseUrl, token, id })
         ).unwrap();
         setWorkOrder(response.page);
+        setDebitCreditNote(response.page.debit_credit_notes);
       } catch (error) {
         console.log(error);
         toast.error(error);
@@ -304,24 +306,12 @@ export const WODetailsPage = () => {
 
   const handleApprove = async () => {
     const payload = {
-      pms_purchase_order: {
-        id: Number(id),
-        pms_pr_inventories_attributes: workOrder.pms_po_inventories.map(
-          (item) => ({
-            id: item.id,
-            rate: item.rate,
-            total_value: item.total_value,
-            approved_qty: item.quantity,
-            transfer_qty: item.transfer_qty,
-          })
-        ),
-      },
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
     };
     try {
-      // await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("Work Order approved successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error) {
@@ -341,26 +331,14 @@ export const WODetailsPage = () => {
     }
 
     const payload = {
-      pms_purchase_order: {
-        id: Number(id),
-        pms_pr_inventories_attributes: workOrder.pms_po_inventories.map(
-          (item) => ({
-            id: item.id,
-            rate: item.rate,
-            total_value: item.total_value,
-            approved_qty: item.quantity,
-            transfer_qty: item.transfer_qty,
-          })
-        ),
-      },
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: false,
-      comment: rejectComment,
+      rejection_reason: rejectComment
     };
 
     try {
-      // await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("Work Order rejected successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error) {
@@ -385,18 +363,19 @@ export const WODetailsPage = () => {
           <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
             WORK ORDER DETAILS
           </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">
-              Level 1 Approval:
-            </span>
-            <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(workOrder.all_level_approved ? "Approved" : workOrder.all_level_approved === false ? "Rejected" : "Pending")}`}>
-              {workOrder.all_level_approved
-                ? "Approved"
-                : workOrder.all_level_approved === false
-                  ? "Rejected"
-                  : "Pending"}
-            </span>
-          </div>
+          {
+            workOrder.approvals?.map((approval: any) => (
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-medium text-gray-700">
+                  {approval.level} Approval:
+                </span>
+                <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(approval.status)}`}>
+                  {approval.status}
+                </span>
+              </div>
+            ))
+          }
+
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
@@ -452,22 +431,27 @@ export const WODetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => setOpenInvoiceModal(true)}
-            >
-              Add Invoice
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handleOpenDebitCreditModal}
-            >
-              Debit/Credit Note
-            </Button>
+            {/* {
+              workOrder.all_level_approved && */}
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={() => setOpenInvoiceModal(true)}
+              >
+                Add Invoice
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={handleOpenDebitCreditModal}
+              >
+                Debit/Credit Note
+              </Button>
+            </>
+            {/* } */}
           </div>
         </div>
       </div>
@@ -828,8 +812,11 @@ export const WODetailsPage = () => {
         </h3>
         <div className="overflow-x-auto">
           <EnhancedTable
-            data={[]}
+            data={debitCreditNote || []}
             columns={debitCreditColumns}
+            renderCell={(item, columnKey) => {
+              return item[columnKey] || '-';
+            }}
             storageKey="debit-credit-table"
             hideColumnsButton={true}
             hideTableExport={true}

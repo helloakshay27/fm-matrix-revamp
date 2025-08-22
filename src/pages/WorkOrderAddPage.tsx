@@ -28,6 +28,7 @@ export const WorkOrderAddPage: React.FC = () => {
   const [plantDetails, setPlantDetails] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [services, setServices] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     contractor: "",
@@ -140,12 +141,35 @@ export const WorkOrderAddPage: React.FC = () => {
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantityArea) || 0;
     const rate = parseFloat(item.rate) || 0;
+    const cgstRate = parseFloat(item.cgstRate) || 0;
+    const sgstRate = parseFloat(item.sgstRate) || 0;
+    const igstRate = parseFloat(item.igstRate) || 0;
+    const tcsRate = parseFloat(item.tcsRate) || 0;
+
+    // Calculate base amount
     const amount = quantity * rate;
+
+    // Calculate tax amounts
+    const cgstAmt = (amount * cgstRate) / 100;
+    const sgstAmt = (amount * sgstRate) / 100;
+    const igstAmt = (amount * igstRate) / 100;
+    const tcsAmt = (amount * tcsRate) / 100;
+
+    // Calculate total tax amount
+    const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
+
+    // Calculate total amount
+    const totalAmount = amount + taxAmount;
 
     return {
       ...item,
       amount: amount.toFixed(2),
-      totalAmount: amount.toFixed(2),
+      cgstAmt: cgstAmt.toFixed(2),
+      sgstAmt: sgstAmt.toFixed(2),
+      igstAmt: igstAmt.toFixed(2),
+      tcsAmt: tcsAmt.toFixed(2),
+      taxAmount: taxAmount.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
     };
   };
 
@@ -238,18 +262,30 @@ export const WorkOrderAddPage: React.FC = () => {
           expected_date: item.expectedDate,
           rate: item.rate,
           total_value: item.totalAmount,
+          cgst_rate: item.cgstRate,
+          cgst_amount: item.cgstAmt,
+          sgst_rate: item.sgstRate,
+          sgst_amount: item.sgstAmt,
+          igst_rate: item.igstRate,
+          igst_amount: item.igstAmt,
+          tcs_rate: item.tcsRate,
+          tcs_amount: item.tcsAmt,
+          tax_amount: item.taxAmount,
         })),
       },
       attachments: attachedFiles,
     };
 
     try {
+      setSubmitting(true);
       await dispatch(createServicePR({ data: payload, baseUrl, token })).unwrap();
       toast.success("Work Order created successfully");
-      navigate('/finance/wo')
+      navigate('/finance/wo');
     } catch (error) {
       console.log(error);
       toast.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -898,18 +934,13 @@ export const WorkOrderAddPage: React.FC = () => {
                   <TextField
                     label="CGST Amt"
                     value={detailsData.cgstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "cgstAmt",
-                        e.target.value
-                      )
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{
                       shrink: true,
+                    }}
+                    InputProps={{
+                      readOnly: true,
                     }}
                     sx={{
                       mt: 1,
@@ -919,6 +950,7 @@ export const WorkOrderAddPage: React.FC = () => {
                           sm: "10px",
                           md: "12px",
                         },
+                        backgroundColor: "#f5f5f5",
                       },
                       height: {
                         xs: 28,
@@ -965,18 +997,13 @@ export const WorkOrderAddPage: React.FC = () => {
                   <TextField
                     label="SGST Amt"
                     value={detailsData.sgstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "sgstAmt",
-                        e.target.value
-                      )
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{
                       shrink: true,
+                    }}
+                    InputProps={{
+                      readOnly: true,
                     }}
                     sx={{
                       mt: 1,
@@ -986,6 +1013,7 @@ export const WorkOrderAddPage: React.FC = () => {
                           sm: "10px",
                           md: "12px",
                         },
+                        backgroundColor: "#f5f5f5",
                       },
                       height: {
                         xs: 28,
@@ -1031,18 +1059,13 @@ export const WorkOrderAddPage: React.FC = () => {
                   <TextField
                     label="IGST Amt"
                     value={detailsData.igstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "igstAmt",
-                        e.target.value
-                      )
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{
                       shrink: true,
+                    }}
+                    InputProps={{
+                      readOnly: true,
                     }}
                     sx={{
                       mt: 1,
@@ -1052,6 +1075,7 @@ export const WorkOrderAddPage: React.FC = () => {
                           sm: "10px",
                           md: "12px",
                         },
+                        backgroundColor: "#f5f5f5",
                       },
                       height: {
                         xs: 28,
@@ -1098,18 +1122,13 @@ export const WorkOrderAddPage: React.FC = () => {
                   <TextField
                     label="TCS Amt"
                     value={detailsData.tcsAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "tcsAmt",
-                        e.target.value
-                      )
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{
                       shrink: true,
+                    }}
+                    InputProps={{
+                      readOnly: true,
                     }}
                     sx={{
                       mt: 1,
@@ -1119,6 +1138,7 @@ export const WorkOrderAddPage: React.FC = () => {
                           sm: "10px",
                           md: "12px",
                         },
+                        backgroundColor: "#f5f5f5",
                       },
                       height: {
                         xs: 28,
@@ -1131,18 +1151,13 @@ export const WorkOrderAddPage: React.FC = () => {
                   <TextField
                     label="Tax Amount"
                     value={detailsData.taxAmount}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "taxAmount",
-                        e.target.value
-                      )
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{
                       shrink: true,
+                    }}
+                    InputProps={{
+                      readOnly: true,
                     }}
                     sx={{
                       mt: 1,
@@ -1152,6 +1167,7 @@ export const WorkOrderAddPage: React.FC = () => {
                           sm: "10px",
                           md: "12px",
                         },
+                        backgroundColor: "#f5f5f5",
                       },
                       height: {
                         xs: 28,
@@ -1446,10 +1462,11 @@ export const WorkOrderAddPage: React.FC = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-4 mt-8">
+        <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8"
+            disabled={submitting}
           >
             Save Work Order
           </Button>
