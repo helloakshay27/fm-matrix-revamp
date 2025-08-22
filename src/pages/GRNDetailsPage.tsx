@@ -5,7 +5,8 @@ import { Printer, Copy, Rss } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { approvePO } from '@/store/slices/purchaseOrderSlice';
-import { fetchSingleGRN, approveGRN } from '@/store/slices/grnSlice';
+import { fetchSingleGRN, approveGRN, rejectGrn } from '@/store/slices/grnSlice';
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 
 export const GRNDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -24,6 +25,8 @@ export const GRNDetailsPage = () => {
   const { id } = useParams();
 
   const [grnDetails, setGrnDetails] = useState<any>({});
+  const [rejectComment, setRejectComment] = useState("");
+  const [openRejectDialog, setOpenRejectDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -65,6 +68,41 @@ export const GRNDetailsPage = () => {
       console.log(error);
       toast.error(error);
     }
+  };
+
+  const handleRejectClick = () => {
+    setOpenRejectDialog(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectComment.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    const payload = {
+      level_id: levelId,
+      approve: "false",
+      user_id: userId,
+      comment: rejectComment
+    };
+
+    try {
+      await dispatch(rejectGrn({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      toast.success("GRN rejected successfully");
+      navigate(`/finance/pending-approvals`);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      setOpenRejectDialog(false);
+      setRejectComment("");
+    }
+  };
+
+  const handleRejectCancel = () => {
+    setOpenRejectDialog(false);
+    setRejectComment("");
   };
 
   return <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
@@ -489,9 +527,38 @@ export const GRNDetailsPage = () => {
       shouldShowButtons && (
         <div className='flex items-center justify-center gap-4'>
           <button className='bg-green-600 text-white py-2 px-4 rounded-md' onClick={handleApprove}>Approve</button>
-          <button className='bg-[#C72030] text-white py-2 px-4 rounded-md'>Reject</button>
+          <button className='bg-[#C72030] text-white py-2 px-4 rounded-md' onClick={handleRejectClick}>Reject</button>
         </div>
       )
     }
+
+    <Dialog open={openRejectDialog} onClose={handleRejectCancel} maxWidth="sm" fullWidth>
+      <DialogTitle>Reject Work Order</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Reason for Rejection"
+          type="text"
+          fullWidth
+          multiline
+          rows={4}
+          value={rejectComment}
+          onChange={(e) => setRejectComment(e.target.value)}
+          variant="outlined"
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleRejectCancel} variant="outline">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleRejectConfirm}
+          className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+        >
+          Reject
+        </Button>
+      </DialogActions>
+    </Dialog>
   </div>;
 };

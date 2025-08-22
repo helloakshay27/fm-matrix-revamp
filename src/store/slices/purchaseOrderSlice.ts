@@ -87,14 +87,34 @@ export const approvePO = createAsyncThunk(
     }
 )
 
+export const rejectPO = createAsyncThunk(
+    "rejectPO",
+    async ({ id, baseUrl, token, data }: { id: number, baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}/status_confirmation.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+                params: data
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to reject work order'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getPurchaseOrdersSlice = createApiSlice("getPurchaseOrders", getPurchaseOrders);
 const getUnitsSlice = createApiSlice("getUnits", getUnits);
 const materialPRChangeSlice = createApiSlice("materialPRChange", materialPRChange);
 const createPurchaseOrderSlice = createApiSlice("createPurchaseOrder", createPurchaseOrder);
 const approvePOSlice = createApiSlice("approvePO", approvePO);
+const rejectPOSlice = createApiSlice("rejectPO", rejectPO);
 
 export const getPurchaseOrdersReducer = getPurchaseOrdersSlice.reducer
 export const getUnitsReducer = getUnitsSlice.reducer
 export const materialPRChangeReducer = materialPRChangeSlice.reducer
 export const createPurchaseOrderReducer = createPurchaseOrderSlice.reducer
 export const approvePOReducer = approvePOSlice.reducer
+export const rejectPOReducer = rejectPOSlice.reducer

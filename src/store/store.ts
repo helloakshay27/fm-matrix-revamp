@@ -49,10 +49,10 @@ import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGro
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
 import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
-import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer } from './slices/purchaseOrderSlice'
+import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
-import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer } from './slices/grnSlice'
+import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer } from './slices/grnSlice'
 import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 
 export const store = configureStore({
@@ -192,6 +192,7 @@ export const store = configureStore({
     getUnits: getUnitsReducer,
     materialPRChange: materialPRChangeReducer,
     approvePO: approvePOReducer,
+    rejectPO: rejectPOReducer,
 
     // Service PR
     getServicePr: getServicePrReducer,
@@ -209,6 +210,7 @@ export const store = configureStore({
     getPurchaseOrdersList: getPurchaseOrdersReducer,
     fetchSingleGRN: fetchSingleGRNReducer,
     approveGRN: approveGRNReducer,
+    rejectGrn: rejectGrnReducer,
 
     // Customer List
     getCustomerList: getCustomerListReducer,
