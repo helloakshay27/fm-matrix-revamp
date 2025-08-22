@@ -93,43 +93,64 @@ export const MaterialPRDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
+  const [filters, setFilters] = useState({
+    referenceNumber: '',
+    prNumber: '',
+    supplierName: '',
+    approvalStatus: 'Select'
+  });
+
+  const fetchData = async (filterParams = {}) => {
+    try {
+      const response = await dispatch(
+        getMaterialPR({ baseUrl, token, ...filterParams })
+      ).unwrap();
+      const formatedResponse = response.purchase_orders.map((item: any) => ({
+        id: item.id,
+        prNo: item.external_id,
+        referenceNo: item.reference_number,
+        supplierName: item.supplier.company_name,
+        createdBy: item.user.full_name,
+        createdOn: item.created_at,
+        lastApprovedBy:
+          Array.isArray(item.approval_levels) &&
+            item.approval_levels.length > 0
+            ? item.approval_levels[item.approval_levels.length - 1]
+              .approved_by
+            : null,
+        approvedStatus: item.all_level_approved
+          ? "Approved"
+          : item.all_level_approved === false
+            ? "Rejected"
+            : "Pending",
+        prAmount: item.total_amount,
+        activeInactive: item.active,
+      }));
+      setMaterialPR(formatedResponse);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          getMaterialPR({ baseUrl, token })
-        ).unwrap();
-        const formatedResponse = response.purchase_orders.map((item: any) => ({
-          id: item.id,
-          prNo: item.external_id,
-          referenceNo: item.reference_number,
-          supplierName: item.supplier.company_name,
-          createdBy: item.user.full_name,
-          createdOn: item.created_at,
-          lastApprovedBy:
-            Array.isArray(item.approval_levels) &&
-              item.approval_levels.length > 0
-              ? item.approval_levels[item.approval_levels.length - 1]
-                .approved_by
-              : null,
-          approvedStatus: item.all_level_approved
-            ? "Approved"
-            : item.all_level_approved === false
-              ? "Rejected"
-              : "Pending",
-          prAmount: item.total_amount,
-          activeInactive: item.active,
-        }));
-        setMaterialPR(formatedResponse);
-      } catch (error) {
-        console.log(error);
-        toast.error(error);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleApplyFilters = (newFilters: {
+    referenceNumber: string;
+    prNumber: string;
+    supplierName: string;
+    approvalStatus: string;
+  }) => {
+    setFilters(newFilters); // Update filter state
+    fetchData({
+      reference_number: newFilters.referenceNumber,
+      external_id: newFilters.prNumber,
+      supplier_name: newFilters.supplierName,
+      approval_status: newFilters.approvalStatus,
+    }); // Fetch data with filters
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -239,6 +260,9 @@ export const MaterialPRDashboard = () => {
       <MaterialPRFilterDialog
         open={filterDialogOpen}
         onOpenChange={setFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

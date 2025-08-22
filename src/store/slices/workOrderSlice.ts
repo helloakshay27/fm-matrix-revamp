@@ -4,20 +4,45 @@ import createApiSlice from "../api/apiSlice";
 
 export const fetchWorkOrders = createAsyncThunk(
     "fetchWorkOrders",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async (
+        {
+            baseUrl,
+            token,
+            reference_number,
+            external_id,
+            supplier_name,
+        }: {
+            baseUrl: string;
+            token: string;
+            reference_number?: string;
+            external_id?: string;
+            supplier_name?: string;
+        },
+        { rejectWithValue }
+    ) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/work_orders.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const queryParams = new URLSearchParams();
+            if (reference_number) queryParams.append('q[reference_number_eq]', reference_number);
+            if (external_id) queryParams.append('q[external_id_eq]', external_id);
+            if (supplier_name) queryParams.append('q[pms_supplier_company_name_cont]', supplier_name);
+
+            const response = await axios.get(
+                `https://${baseUrl}/pms/work_orders.json${queryParams.toString() ? `?${queryParams}` : ''}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
                 }
-            })
-            return response.data
+            );
+
+            return response.data;
         } catch (error) {
-            const message = error.response?.data?.message || error.message || 'Failed to fetch work orders'
-            return rejectWithValue(message)
+            const message =
+                error.response?.data?.message || error.message || 'Failed to fetch work orders';
+            return rejectWithValue(message);
         }
     }
-)
+);
 
 export const getWorkOrderById = createAsyncThunk(
     "getWorkOrderById",

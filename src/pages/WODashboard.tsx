@@ -213,22 +213,40 @@ export const WODashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [workOrders, setWorkOrders] = useState([]);
+  const [filters, setFilters] = useState({
+    referenceNumber: '',
+    poNumber: '',
+    supplierName: ''
+  });
+
+  const fetchData = async (filterData = {}) => {
+    try {
+      const response = await dispatch(
+        fetchWorkOrders({ baseUrl, token, ...filterData })
+      ).unwrap();
+      setWorkOrders(response.work_orders);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          fetchWorkOrders({ baseUrl, token })
-        ).unwrap();
-        setWorkOrders(response.work_orders);
-      } catch (error) {
-        console.log(error);
-        toast.error(error);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleApplyFilters = (newFilters: {
+    referenceNumber: string;
+    poNumber: string;
+    supplierName: string;
+  }) => {
+    setFilters(newFilters); // Update filter state
+    fetchData({
+      reference_number: newFilters.referenceNumber,
+      external_id: newFilters.poNumber,
+      supplier_name: newFilters.supplierName,
+    }); // Fetch data with filters
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -341,6 +359,9 @@ export const WODashboard = () => {
       <WOFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

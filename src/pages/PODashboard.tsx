@@ -191,55 +191,73 @@ export const PODashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [poList, setPoList] = useState([]);
+  const [filters, setFilters] = useState({
+    referenceNumber: '',
+    poNumber: '',
+    supplierName: ''
+  });
+
+  const fetchData = async (filterData = {}) => {
+    try {
+      const response = await dispatch(
+        getPurchaseOrders({ baseUrl, token, ...filterData })
+      ).unwrap();
+      const formattedData = response.purchase_orders.map((item: any) => ({
+        id: item.id,
+        poNumber: item.po_number,
+        referenceNo: item.reference_number,
+        createdBy: item.created_by,
+        createdOn: item.created_at.split("T")[0],
+        supplier: item.supplier?.company_name,
+        paymentTenure: item.payment_tenure,
+        activeInactive: item.active,
+        lastApprovedBy:
+          item.approval_levels[item.approval_levels.length - 1].approved_by,
+        approvalStatus: item.all_level_approved
+          ? "Approved"
+          : item.all_level_approved === false
+            ? "Rejected"
+            : "Pending",
+        advanceAmount: item.advance_amount,
+        poAmount: item.po_amount,
+        retention: item.retention,
+        tds: item.tds,
+        qc: item.quality_holding,
+        tdsAmount: item.total_tax_amount,
+        retentionAmount: item.retention_amount,
+        retentionOutstanding: item.retention_outstanding,
+        qcAmount: item.qc_amount,
+        qcOutstanding: item.qc_outstanding,
+        noOfGrns: item.no_of_grns,
+        totalAmountPaid: item.total_amount_paid,
+        outstanding: item.outstanding,
+        debitCreditNoteRaised: item.debit_credit_note_raised,
+      }));
+
+      console.log(formattedData);
+      setPoList(formattedData);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          getPurchaseOrders({ baseUrl, token })
-        ).unwrap();
-        const formattedData = response.purchase_orders.map((item: any) => ({
-          id: item.id,
-          poNumber: item.po_number,
-          referenceNo: item.reference_number,
-          createdBy: item.created_by,
-          createdOn: item.created_at.split("T")[0],
-          supplier: item.supplier?.company_name,
-          paymentTenure: item.payment_tenure,
-          activeInactive: item.active,
-          lastApprovedBy:
-            item.approval_levels[item.approval_levels.length - 1].approved_by,
-          approvalStatus: item.all_level_approved
-            ? "Approved"
-            : item.all_level_approved === false
-              ? "Rejected"
-              : "Pending",
-          advanceAmount: item.advance_amount,
-          poAmount: item.po_amount,
-          retention: item.retention,
-          tds: item.tds,
-          qc: item.quality_holding,
-          tdsAmount: item.total_tax_amount,
-          retentionAmount: item.retention_amount,
-          retentionOutstanding: item.retention_outstanding,
-          qcAmount: item.qc_amount,
-          qcOutstanding: item.qc_outstanding,
-          noOfGrns: item.no_of_grns,
-          totalAmountPaid: item.total_amount_paid,
-          outstanding: item.outstanding,
-          debitCreditNoteRaised: item.debit_credit_note_raised,
-        }));
-
-        console.log(formattedData);
-        setPoList(formattedData);
-      } catch (error) {
-        console.log(error);
-        toast.error(error);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleApplyFilters = (newFilters: {
+    referenceNumber: string;
+    poNumber: string;
+    supplierName: string;
+  }) => {
+    setFilters(newFilters); // Update filter state
+    fetchData({
+      reference_number: newFilters.referenceNumber,
+      external_id: newFilters.poNumber,
+      supplier_name: newFilters.supplierName,
+    }); // Fetch data with filters
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -348,6 +366,9 @@ export const PODashboard = () => {
       <POFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

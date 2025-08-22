@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Dialog, DialogContent } from '@mui/material';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -15,26 +14,42 @@ const fieldStyles = {
 interface ServicePRFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  filters: {
+    referenceNumber: string;
+    prNumber: string;
+    supplierName: string;
+    approvalStatus: string;
+  };
+  setFilters: React.Dispatch<
+    React.SetStateAction<{
+      referenceNumber: string;
+      prNumber: string;
+      supplierName: string;
+      approvalStatus: string;
+    }>
+  >;
+  onApplyFilters: (filters: {
+    referenceNumber: string;
+    prNumber: string;
+    supplierName: string;
+    approvalStatus: string;
+  }) => void;
 }
 
 export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
   open,
   onOpenChange,
+  filters,
+  setFilters,
+  onApplyFilters
 }) => {
-  const [filters, setFilters] = useState({
-    referenceNumber: '',
-    prNumber: '',
-    supplierName: '',
-    approvalStatus: ''
-  });
-
   const handleInputChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
   const handleApply = () => {
-    console.log('Applying filters:', filters);
-    onOpenChange(false);
+    onApplyFilters(filters); // Pass filters to parent
+    onOpenChange(false); // Close dialog
   };
 
   const handleReset = () => {
@@ -47,10 +62,10 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+        <div className="flex items-center justify-between mb-3">
+          <h5 className="text-lg font-semibold">FILTER BY</h5>
           <Button
             variant="ghost"
             size="sm"
@@ -59,13 +74,13 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
           >
             <X className="h-4 w-4" />
           </Button>
-        </DialogHeader>
-        
+        </div>
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Reference Number"
-              placeholder="Find By PR Number"
+              placeholder="PR Number"
               value={filters.referenceNumber}
               onChange={(e) => handleInputChange('referenceNumber', e.target.value)}
               fullWidth
@@ -74,10 +89,10 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-            
+
             <TextField
               label="PR Number"
-              placeholder="Enter Reference Number"
+              placeholder="Reference Number"
               value={filters.prNumber}
               onChange={(e) => handleInputChange('prNumber', e.target.value)}
               fullWidth
@@ -109,23 +124,23 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
               displayEmpty
               sx={fieldStyles}
             >
-              <MenuItem value=""><em>Select Status</em></MenuItem>
-              <MenuItem value="pending">Pending</MenuItem>
-              <MenuItem value="approved">Approved</MenuItem>
-              <MenuItem value="rejected">Rejected</MenuItem>
+              <MenuItem value="Select"><em>Select Status</em></MenuItem>
+              <MenuItem value="">Pending</MenuItem>
+              <MenuItem value="1">Approved</MenuItem>
+              <MenuItem value="0">Rejected</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button 
+          <Button
             onClick={handleApply}
             className="flex-1 text-white"
             style={{ backgroundColor: '#C72030' }}
           >
             Apply
           </Button>
-          <Button 
+          <Button
             onClick={handleReset}
             variant="outline"
             className="flex-1"
