@@ -15,16 +15,33 @@ import { toast } from 'sonner';
 
 const TruncatedDescription = ({ text }: { text: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const maxLength = 50;
+  const maxWords = 5;
+  const maxCharacters = 15;
   
-  if (!text || text.length <= maxLength) {
-    return <span>{text || '--'}</span>;
+  if (!text) {
+    return <span>--</span>;
+  }
+
+  const words = text.split(' ');
+  const shouldTruncateByWords = words.length > maxWords;
+  const shouldTruncateByChars = text.length > maxCharacters;
+  
+  if (!shouldTruncateByWords && !shouldTruncateByChars) {
+    return <span>{text}</span>;
   }
   
+  const getTruncatedText = () => {
+    if (shouldTruncateByWords) {
+      return words.slice(0, maxWords).join(' ') + '...';
+    } else {
+      return text.substring(0, maxCharacters) + '...';
+    }
+  };
+  
   return (
-    <div className="w-48">
+    <div className="max-w-xs">
       <span className="block">
-        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+        {isExpanded ? text : getTruncatedText()}
       </span>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -510,8 +527,11 @@ export const TicketListDashboard = () => {
     if (status !== 'all') {
       // Use the correct API parameter format
       if (status === 'open') {
-        newFilters.complaint_status_name_eq = 'Open';
-        console.log('Setting Open filter with complaint_status_name_eq=Open');
+        // Use specific API call format for open tickets: q[complaint_status_fixed_state_not_eq]=closed&q[complaint_status_fixed_state_null]=1&q[m]=or
+        newFilters.complaint_status_fixed_state_not_eq = 'closed';
+        newFilters.complaint_status_fixed_state_null = '1';
+        newFilters.m = 'or';
+        console.log('Setting Open filter with complaint_status_fixed_state_not_eq=closed&complaint_status_fixed_state_null=1&m=or');
       } else if (status === 'pending') {
         newFilters.complaint_status_name_eq = 'Pending';
         console.log('Setting Pending filter with complaint_status_name_eq=Pending');
@@ -537,6 +557,15 @@ export const TicketListDashboard = () => {
     testParams.append('per_page', '20');
     if (newFilters.complaint_status_name_eq) {
       testParams.append('q[complaint_status_name_eq]', newFilters.complaint_status_name_eq);
+    }
+    if (newFilters.complaint_status_fixed_state_not_eq) {
+      testParams.append('q[complaint_status_fixed_state_not_eq]', newFilters.complaint_status_fixed_state_not_eq);
+    }
+    if (newFilters.complaint_status_fixed_state_null) {
+      testParams.append('q[complaint_status_fixed_state_null]', newFilters.complaint_status_fixed_state_null);
+    }
+    if (newFilters.m) {
+      testParams.append('q[m]', newFilters.m);
     }
     console.log('Expected API URL will be:', `/pms/admin/complaints.json?${testParams.toString()}`);
     
@@ -639,7 +668,9 @@ export const TicketListDashboard = () => {
     if (status === 'all') return false;
     
     if (status === 'open') {
-      return activeFilters.complaint_status_name_eq === 'Open';
+      return activeFilters.complaint_status_fixed_state_not_eq === 'closed' && 
+             activeFilters.complaint_status_fixed_state_null === '1' && 
+             activeFilters.m === 'or';
     } else if (status === 'pending') {
       return activeFilters.complaint_status_name_eq === 'Pending';
     } else if (status === 'in progress') {
@@ -833,7 +864,7 @@ export const TicketListDashboard = () => {
                   </TableHead>
                   <TableHead>Action</TableHead>
                   <TableHead>Ticket ID</TableHead>
-                  <TableHead className="w-48">Description</TableHead>
+                  <TableHead className="max-w-xs w-auto">Description</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Sub Category</TableHead>
                   <TableHead>Created By</TableHead>
@@ -899,7 +930,7 @@ export const TicketListDashboard = () => {
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">{ticket.ticket_number}</TableCell>
-                    <TableCell>
+                    <TableCell className="max-w-xs whitespace-pre-line break-words align-top">
                       <TruncatedDescription text={ticket.heading} />
                     </TableCell>
                     <TableCell>{ticket.category_type || '--'}</TableCell>

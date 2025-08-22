@@ -241,7 +241,9 @@ export const TicketDetailsPage = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Title</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{ticketData.heading}</span>
+                <span className="text-gray-900 font-semibold flex-1 break-words truncate max-w-full" style={{wordBreak: 'break-word', overflowWrap: 'anywhere', minWidth: 0, display: 'block'}} title={ticketData.heading}>
+                  {ticketData.heading}
+                </span>
               </div>
             )}
             {hasData(ticketData.issue_status) && (
