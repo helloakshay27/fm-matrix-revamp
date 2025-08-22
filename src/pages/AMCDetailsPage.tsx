@@ -38,6 +38,15 @@ interface AMCDetailsData {
   service_code?: string;
   execution_type?: string;
   service_status?: string;
+  amc_services?: {
+    id: number;
+    service_id: number;
+    group_id?: number | null;
+    sub_group_id?: number | null;
+    service_name?: string | null;
+    sset_code?: string | null; // keeping backend field name as provided
+  asset_code?: string | null; // allow dummy fallback field name
+  }[];
 }
 
 interface Technician {
@@ -86,7 +95,6 @@ export const AMCDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('amc-information'); // Changed default to 'amc-information'
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
-
 
   useEffect(() => {
     if (id) {
@@ -791,39 +799,37 @@ export const AMCDetailsPage = () => {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Action</TableHead>
+                          <TableHead>Service ID</TableHead>
                           <TableHead>Name</TableHead>
                           <TableHead>Code</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Status</TableHead>
+                          <TableHead>Group ID</TableHead>
+                          <TableHead>Sub Group ID</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {amcDetails ? (
-                          <TableRow className="bg-white">
-                            <TableCell>
-                              <a
-                                href={`/maintenance/service/details/${amcDetails.service_id}`}
-                                className="text-gray-600 hover:text-black"
-                                title="View Details"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </a>
-                            </TableCell>
-                            <TableCell>{amcDetails.service_name || 'NA'}</TableCell>
-                            <TableCell>{amcDetails.service_code || 'NA'}</TableCell>
-                            <TableCell>{amcDetails.execution_type || 'NA'}</TableCell>
-                            <TableCell>
-                              {amcDetails.service_status ? (
-                                <span className="px-2 py-1 text-xs rounded bg-green-100 text-green-800">Active</span>
-                              ) : (
-                                <span className="px-2 py-1 text-xs rounded bg-red-100 text-red-800">Inactive</span>
-                              )}
-                            </TableCell>
-                          </TableRow>
+                        {amcDetails.amc_services?.length > 0 ? (
+                          amcDetails.amc_services.map((svc) => (
+                            <TableRow key={svc.id} className="bg-white">
+                              <TableCell>
+                                <a
+                                  href={`/maintenance/service/details/${svc.service_id}`}
+                                  className="text-gray-600 hover:text-black"
+                                  title="View Details"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </a>
+                              </TableCell>
+                              <TableCell>{svc.service_id || '—'}</TableCell>
+                              <TableCell>{svc.service_name || '—'}</TableCell>
+                              <TableCell>{svc.sset_code || svc.asset_code || '—'}</TableCell>
+                              <TableCell>{svc.group_id ?? '—'}</TableCell>
+                              <TableCell>{svc.sub_group_id ?? '—'}</TableCell>
+                            </TableRow>
+                          ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={5} className="text-center text-sm text-gray-500">
-                              No service found
+                            <TableCell colSpan={6} className="text-center text-sm text-gray-500">
+                              No services found
                             </TableCell>
                           </TableRow>
                         )}

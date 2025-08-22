@@ -246,7 +246,7 @@ export const UtilityWaterDashboard = () => {
   };
 
   const handleViewAsset = (assetId: string) => {
-    navigate(`/utility/water/details/${assetId}`);
+    navigate(`/maintenance/asset/details/${assetId}`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

@@ -1,5 +1,5 @@
 {
-  "work_at_underground_form": {
+  "KrccRequirementComingFrom.workUnderground": {
     "working_below_six_feet_work_at_underground": {
       "question": "Are you working more than 1.8 meter below at any time?",
       "answers": ["Yes", "No", "NA"]
@@ -25,7 +25,7 @@
       "answers": ["Yes", "No", "NA"]
     }
   },
-  "work_at_height_form": {
+  "KrccRequirementComingFrom.height": {
     "safety_harness_work_at_height": {
       "question": "Is the Safety Harness as per VIL Standards?",
       "answers": ["Yes", "No"]
@@ -55,7 +55,7 @@
       "answers": ["Yes", "No"]
     }
   },
-  "operate_mhe_form": {
+  "KrccRequirementComingFrom.operateMHE": {
     "all_body_lights_operate_mhe": {
       "question": "All body lights including brake, head, tail, indicators in working condition?",
       "answers": ["Yes", "No"]
@@ -73,7 +73,7 @@
       "answers": ["Date"]
     }
   },
-  "work_with_electrical_form": {
+  "KrccRequirementComingFrom.electrical": {
     "lototo_process_electrical_work": {
       "question": "Is he/she aware of LOTOTO (Lock out Tag out Try out) process?",
       "answers": ["Yes", "No"]
@@ -95,7 +95,7 @@
       "answers": ["Yes", "No"]
     }
   },
-  "lmc_bicycle_form": {
+  "KrccRequirementComingFrom.rideBicycle": {
     "reflective_jacket_bicycle": {
       "question": "Does he/she have reflective jackets?",
       "answers": ["Yes", "No"]
@@ -123,7 +123,7 @@
       "answers": ["Yes", "No"]
     }
   },
-  "riding_4wheeler_form": {
+  "KrccRequirementComingFrom.car": {
     "seat_belts_4wheeler": {
       "question": "Are all seats (front & rear) having Retractable seat belts?",
       "answers": ["Yes", "No", "NA"]
@@ -167,7 +167,7 @@
       ]
     }
   },
-  "riding_2wheeler_form": {
+  "KrccRequirementComingFrom.bike": {
     "helmet_2wheeler": {
       "question": "Usage/condition of Full Faced ISI helmet",
       "answers": ["ok", "Not ok", "NA"]
@@ -215,6 +215,7 @@
       ]
     }
   },
+  "KrccRequirementComingFrom.liftMaterialManually": {},
   "final_page_form": {
     "received_driving_license_final": {
       "question": "Have you received Driving License?",
@@ -280,6 +281,12 @@
     "assessment": {
       "question": "Are you familiar with risk assessment and Permit to Work System?",
       "answers": ["Yes", "No", "NA"]
+    }
+  },
+  "KrccRequirementComingFrom.noneOfTheAbove": {
+    "none_of_the_above": {
+      "question": "None of the above",
+      "answers": ["Yes", "No"]
     }
   }
 }

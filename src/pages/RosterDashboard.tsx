@@ -39,13 +39,13 @@ interface ApiResponse {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  {
-    key: 'actions',
-    label: 'Actions',
-    sortable: false,
-    hideable: false,
-    draggable: false
-  },
+  // {
+  //   key: 'actions',
+  //   label: 'Actions',
+  //   sortable: false,
+  //   hideable: false,
+  //   draggable: false
+  // },
   {
     key: 'template',
     label: 'Template',
@@ -491,11 +491,11 @@ export const RosterDashboard = () => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#8B5CF6]/10 rounded-lg">
-            <Calendar className="w-6 h-6 text-[#8B5CF6]" />
+          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <Calendar className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Roster Management</h1>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Roster Management</h1>
             <p className="text-gray-600">Manage roster templates and schedules</p>
           </div>
         </div>
@@ -503,7 +503,7 @@ export const RosterDashboard = () => {
 
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
       )}
 
@@ -521,7 +521,7 @@ export const RosterDashboard = () => {
           leftActions={
             <Button 
               onClick={handleAdd} 
-              className="flex items-center gap-2 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white"
+              className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             >
               <Plus className="w-4 h-4" />
               Add

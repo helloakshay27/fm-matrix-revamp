@@ -935,7 +935,7 @@ export const AddPermitPage = () => {
                       sx={fieldStyles}
                       MenuProps={menuProps}
                     >
-                      <MenuItem value=""><em>Select Activity</em></MenuItem>
+
                       <MenuItem value="maintenance">Maintenance</MenuItem>
                       <MenuItem value="installation">Installation</MenuItem>
                       <MenuItem value="repair">Repair</MenuItem>
@@ -952,7 +952,7 @@ export const AddPermitPage = () => {
                       sx={fieldStyles}
                       MenuProps={menuProps}
                     >
-                      <MenuItem value=""><em>Select Sub Activity</em></MenuItem>
+
                       <MenuItem value="electrical">Electrical</MenuItem>
                       <MenuItem value="plumbing">Plumbing</MenuItem>
                       <MenuItem value="hvac">HVAC</MenuItem>
@@ -969,7 +969,7 @@ export const AddPermitPage = () => {
                       sx={fieldStyles}
                       MenuProps={menuProps}
                     >
-                      <MenuItem value=""><em>Select Category of Hazards</em></MenuItem>
+
                       <MenuItem value="low">Low Risk</MenuItem>
                       <MenuItem value="medium">Medium Risk</MenuItem>
                       <MenuItem value="high">High Risk</MenuItem>
@@ -1007,7 +1007,7 @@ export const AddPermitPage = () => {
                 sx={fieldStyles}
                 MenuProps={menuProps}
               >
-                <MenuItem value=""><em>Select Vendor</em></MenuItem>
+
                 <MenuItem value="vendor-1">Vendor 1</MenuItem>
                 <MenuItem value="vendor-2">Vendor 2</MenuItem>
               </MuiSelect>

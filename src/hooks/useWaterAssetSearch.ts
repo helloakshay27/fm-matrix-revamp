@@ -65,8 +65,8 @@ export const useWaterAssetSearch = () => {
       // Build search query for water assets
       const queryParams = new URLSearchParams();
       queryParams.append('q[name_or_asset_number_or_asset_code_cont]', searchTerm);
-      // Filter for water-related assets - more flexible approach
-      queryParams.append('q[meter_type_or_asset_type_or_name_cont]', 'water');
+      // Filter for water-related assets using proper type parameter
+      queryParams.append('type', 'Water');
       queryParams.append('page', '1');
       queryParams.append('per_page', '50'); // Limit search results
 

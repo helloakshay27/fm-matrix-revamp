@@ -5,7 +5,7 @@ import { Printer, Copy, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById } from "@/store/slices/materialPRSlice";
-import { approvePO } from "@/store/slices/purchaseOrderSlice";
+import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
@@ -327,27 +327,16 @@ export const PODetailsPage = () => {
     }
 
     const payload = {
-      pms_purchase_order: {
-        id: Number(id),
-        pms_pr_inventories_attributes: poDetails.pms_po_inventories.map(
-          (item) => ({
-            id: item.id,
-            rate: item.rate,
-            total_value: item.total_value,
-            approved_qty: item.quantity,
-            transfer_qty: item.transfer_qty,
-          })
-        ),
-      },
-      level_id: Number(levelId),
-      user_id: Number(userId),
-      approve: false,
-      comment: rejectComment,
+      level_id: levelId,
+      approve: "false",
+      user_id: userId,
+      rejection_reason: rejectComment,
+      redirect: false
     };
 
     try {
       await dispatch(
-        approvePO({ baseUrl, token, id: Number(id), data: payload })
+        rejectPO({ baseUrl, token, id: Number(id), data: payload })
       ).unwrap();
       toast.success("PO rejected successfully");
       navigate(`/finance/pending-approvals`);

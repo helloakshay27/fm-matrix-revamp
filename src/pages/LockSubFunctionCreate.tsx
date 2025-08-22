@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import RoleConfigHeader from '../components/RoleConfigHeader';
 import { getAuthHeader, getFullUrl } from '../config/apiConfig';
 
 const fetchLockFunctions = async () => {
@@ -63,8 +62,8 @@ const LockSubFunctionCreate: React.FC = () => {
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-[#8B5CF6]/10 rounded-lg">
-          <svg className="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6l4 2" /></svg>
+        <div className="p-2 bg-[#C72030]/10 rounded-lg">
+          <svg className="w-6 h-6 text-[#C72030]" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 15l2 5L9 17l5-2z" /></svg>
         </div>
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Create Lock Sub Function</h1>
@@ -79,7 +78,7 @@ const LockSubFunctionCreate: React.FC = () => {
             name="name"
             value={form.name}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
             required
           />
         </div>
@@ -90,7 +89,7 @@ const LockSubFunctionCreate: React.FC = () => {
             name="sub_function_name"
             value={form.sub_function_name}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
             required
           />
         </div>
@@ -100,7 +99,7 @@ const LockSubFunctionCreate: React.FC = () => {
             name="lock_function_id"
             value={form.lock_function_id}
             onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+            className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
             required
           >
             <option value="">Select Function</option>
@@ -120,7 +119,7 @@ const LockSubFunctionCreate: React.FC = () => {
           </button>
           <button
             type="submit"
-            className="bg-[#8B5CF6] text-white px-4 py-2 rounded hover:bg-[#8B5CF6]/90"
+            className="bg-[#C72030] text-white px-4 py-2 rounded hover:bg-[#C72030]/90"
             disabled={loading}
           >
             {loading ? 'Creating...' : 'Create'}

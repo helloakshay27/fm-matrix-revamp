@@ -336,11 +336,11 @@ export const ShiftDashboard = () => {
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-[#8B5CF6]/10 rounded-lg">
-            <Clock className="w-6 h-6 text-[#8B5CF6]" />
+          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <Clock className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Shift Management</h1>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Shift Management</h1>
             <p className="text-gray-600">Manage work shifts and schedules</p>
           </div>
         </div>
@@ -348,7 +348,7 @@ export const ShiftDashboard = () => {
 
       {loading && (
         <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-8 h-8 animate-spin text-[#8B5CF6]" />
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
         </div>
       )}
 
@@ -366,7 +366,7 @@ export const ShiftDashboard = () => {
           leftActions={
             <Button 
               onClick={handleAdd} 
-              className="flex items-center gap-2 bg-[#8B5CF6] hover:bg-[#8B5CF6]/90 text-white"
+              className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             >
               <Plus className="w-4 h-4" />
               Add
@@ -514,14 +514,14 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
                   <select
                     value={fromHour}
                     onChange={(e) => setFromHour(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {hourOptions}
                   </select>
                   <select
                     value={fromMinute}
                     onChange={(e) => setFromMinute(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {minuteOptions}
                   </select>
@@ -533,14 +533,14 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
                   <select
                     value={toHour}
                     onChange={(e) => setToHour(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {hourOptions}
                   </select>
                   <select
                     value={toMinute}
                     onChange={(e) => setToMinute(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {minuteOptions}
                   </select>
@@ -555,7 +555,10 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
                 type="checkbox"
                 checked={checkInMargin}
                 onChange={(e) => setCheckInMargin(e.target.checked)}
-                className="rounded border-gray-300 text-[#8B5CF6] focus:ring-[#8B5CF6]"
+                className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
+                style={{
+                  accentColor: '#C72030'
+                }}
               />
               <span className="text-sm text-gray-700">Check In Margin</span>
             </label>
@@ -566,7 +569,7 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
                   <select
                     value={hourMargin}
                     onChange={e => setHourMargin(e.target.value)}
-                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {hourOptions}
                   </select>
@@ -576,7 +579,7 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
                   <select
                     value={minMargin}
                     onChange={e => setMinMargin(e.target.value)}
-                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#8B5CF6] focus:border-[#8B5CF6]"
+                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
                   >
                     {minuteOptions}
                   </select>
@@ -595,7 +598,7 @@ const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
           </Button>
           <Button
             onClick={handleCreate}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
           >
             Create
           </Button>

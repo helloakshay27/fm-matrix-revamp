@@ -388,7 +388,7 @@ export const ViewPerformancePage = () => {
         <Table className="min-w-full border border-gray-300">
           <TableHeader>
             <TableRow>
-              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Asset Name</TableHead>
+              <TableHead className="bg-[#334155] text-center border-r border-gray-300">Asset/Service Name</TableHead>
               <TableHead className="bg-[#334155] text-center border-r border-gray-300">Activity</TableHead>
               {dateHeaders.map((date: any, idx: number) => (
                 <TableHead key={idx} className="bg-[#F3F4F6] text-gray-900 text-center border-r border-gray-300">{date.date_formatted || date.date}</TableHead>

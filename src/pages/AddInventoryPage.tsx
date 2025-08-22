@@ -150,11 +150,9 @@ export const AddInventoryPage = () => {
         newErrors.inventoryCode = !value ? 'Inventory Code is required' : '';
         break;
       case 'quantity':
-        newErrors.quantity = !value
-          ? 'Quantity is required'
-          : !isValidPositiveNumber(value)
-            ? 'Quantity must be a valid number'
-            : '';
+        newErrors.quantity = value && !isValidPositiveNumber(value)
+          ? 'Quantity must be a valid number'
+          : '';
         break;
       case 'cost':
         newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
@@ -202,11 +200,9 @@ export const AddInventoryPage = () => {
     newErrors.criticality = !criticality ? 'Criticality is required' : '';
     newErrors.inventoryName = !formData.inventoryName ? 'Inventory Name is required' : '';
     newErrors.inventoryCode = !formData.inventoryCode ? 'Inventory Code is required' : '';
-    newErrors.quantity = !formData.quantity
-      ? 'Quantity is required'
-      : !isNaN(parseFloat(formData.quantity)) && parseFloat(formData.quantity) >= 0
-        ? ''
-        : 'Quantity must be a valid number';
+    newErrors.quantity = formData.quantity && (isNaN(parseFloat(formData.quantity)) || parseFloat(formData.quantity) < 0)
+      ? 'Quantity must be a valid number'
+      : '';
     newErrors.minStockLevel = !formData.minStockLevel
       ? 'Min Stock Level is required'
       : !isNaN(parseFloat(formData.minStockLevel)) && parseFloat(formData.minStockLevel) >= 0
@@ -689,7 +685,7 @@ export const AddInventoryPage = () => {
 
                 <div>
                   <TextField
-                    label={<>Quantity<span style={{ color: '#C72030' }}>*</span></>}
+                    label={<>Quantity</>}
                     placeholder="Qty"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}

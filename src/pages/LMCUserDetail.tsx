@@ -17,9 +17,26 @@ interface LMCDetailApiResponse {
     url?: string | null;
     lmc_user?: LMCUserRef | null;
     created_by?: LMCUserRef | null;
+    selected_krcc_categories?: string[]; // categories selected in the LMC
 }
 
 interface Checkpoint { question: string; answer: string }
+
+// Friendly titles for each schema section
+const SECTION_TITLE_MAP: Record<string, string> = {
+    'KrccRequirementComingFrom.car': 'Drive a 4 Wheeler',
+    'KrccRequirementComingFrom.bike': 'Ride a 2 Wheeler',
+    'KrccRequirementComingFrom.electrical': 'Work on Electrical System',
+    'KrccRequirementComingFrom.height': 'Work at Height',
+    'KrccRequirementComingFrom.workUnderground': 'Work underground',
+    'KrccRequirementComingFrom.rideBicycle': 'Ride a Bicycle',
+    'KrccRequirementComingFrom.operateMHE': 'Operate MHE',
+    'KrccRequirementComingFrom.liftMaterialManually': 'Lift Material Manually',
+    // Base sections
+    'form': 'FORM',
+    'final_page_form': 'FINAL',
+    'KrccRequirementComingFrom.noneOfTheAbove': 'None of the above',
+};
 
 const LMCUserDetail = () => {
     const navigate = useNavigate();
@@ -59,6 +76,21 @@ const LMCUserDetail = () => {
                 const res = await fetch(`https://${baseUrl}/lmcs/${lmcId}.json`, { headers: { Authorization: `Bearer ${token}` } });
                 if (!res.ok) throw new Error(`Failed (${res.status})`);
                 const json: LMCDetailApiResponse = await res.json();
+                // Log raw keys once for diagnostics (will remove later)
+                if (typeof window !== 'undefined') {
+                    console.log('[LMC] Raw LMC detail keys:', Object.keys(json));
+                    // Attempt to surface similarly named properties in case API uses a different naming
+                    const possible = Object.entries(json).filter(([k]) => k.toLowerCase().includes('krcc'));
+                    if (possible.length) console.log('[LMC] Possible KRCC related props:', possible.map(([k,v]) => ({ k, type: typeof v, value: v })));
+                }
+                // Normalize unexpected API key naming (backend sent 'selected_krcc_categories=' instead of 'selected_krcc_categories')
+                const weirdKey = (json as any)['selected_krcc_categories='];
+                if (weirdKey && !(json as any).selected_krcc_categories) {
+                    (json as any).selected_krcc_categories = weirdKey;
+                    if (typeof window !== 'undefined') {
+                        console.log('[LMC] Normalized selected_krcc_categories= -> selected_krcc_categories', weirdKey);
+                    }
+                }
                 setDetail(json);
             } catch (e: any) { setError(e.message || 'Failed to load LMC'); }
             finally { setLoading(false); }
@@ -66,13 +98,42 @@ const LMCUserDetail = () => {
         fetchDetail();
     }, [lmcId]);
 
-    // Build checkpoints list from form_details using questionMap
-    const checkpoints: Checkpoint[] = useMemo(() => {
-        if (!detail?.form_details) return [];
-        return Object.entries(detail.form_details)
-            .filter(([key, val]) => key in questionMap && val !== undefined && val !== null && val !== '')
-            .map(([key, val]) => ({ question: questionMap[key], answer: String(val) }));
-    }, [detail, questionMap]);
+    // Build grouped checkpoints list based on selected categories (always include 'form' & 'final_page_form')
+    const groupedCheckpoints = useMemo(() => {
+        const schema: any = formSchema as any;
+        const alwaysInclude = ['form', 'final_page_form'];
+        const selectedRaw = detail?.selected_krcc_categories || [];
+        const normalizedSelected = selectedRaw
+            .map(c => (typeof c === 'string' ? c.trim() : c))
+            .filter(Boolean) as string[];
+        const seen = new Set<string>();
+        const ordered: string[] = [];
+        // Always include base categories first
+        alwaysInclude.forEach(c => { if (!seen.has(c)) { seen.add(c); ordered.push(c); } });
+        // Then include selected in the order received
+        normalizedSelected.forEach(c => { if (!seen.has(c)) { seen.add(c); ordered.push(c); } });
+
+        const formDetails = detail?.form_details || {};
+        const groups = ordered.map(catKey => {
+            const section = schema[catKey];
+            if (!section) {
+                console.warn('[LMC] Missing schema for category (exact key not found):', catKey);
+                return { category: catKey, items: [] as Checkpoint[], missing: true };
+            }
+            const items: Checkpoint[] = Object.entries(section).map(([fieldKey, meta]: any) => {
+                const answerRaw = formDetails[fieldKey];
+                const answer = (answerRaw === undefined || answerRaw === null || answerRaw === '') ? '—' : String(answerRaw);
+                return { question: meta.question, answer };
+            });
+            return { category: catKey, items, missing: false };
+        });
+        // Debug summary
+        // Using console.log instead of console.debug because some production builds strip or hide debug level
+        if (typeof window !== 'undefined') {
+            console.log('[LMC] Categories to render:', ordered, 'Detail categories:', normalizedSelected, 'Groups:', groups.map(g => ({ c: g.category, count: g.items.length })));
+        }
+        return groups;
+    }, [detail]);
 
     const lmcUser = detail?.lmc_user;
     const createdBy = detail?.created_by;
@@ -221,20 +282,31 @@ const LMCUserDetail = () => {
                 </div>
                 <div className="p-6">
                     <div className="mb-4 font-semibold">Checkpoints:</div>
-                    <div className="border rounded-lg p-4">
-                        {checkpoints && checkpoints.length > 0 ? (
-                            <ul className="space-y-4">
-                                {checkpoints.map((cp, idx) => (
-                                    <li key={idx}>
-                                        <div className="font-medium">- {cp.question}</div>
-                                        <div className="text-gray-700">Ans: {cp.answer || <span className="italic text-gray-400">Not answered</span>}</div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <div className="text-gray-500">{loading ? 'Loading checkpoints...' : 'No checkpoints available.'}</div>
-                        )}
-                    </div>
+                    {groupedCheckpoints.map(group => (
+                        <div key={group.category} className="mb-6 border rounded-lg">
+                            <div className="px-4 py-2 border-b bg-gray-100 text-sm font-semibold flex items-center gap-2">
+                                <span className="text-[#C72030]">{SECTION_TITLE_MAP[group.category] || group.category.replace(/KrccRequirementComingFrom\./,'').replace(/_/g,' ').toUpperCase()}</span>
+                               
+                            </div>
+                            <div className="p-4">
+                                {group.items.length > 0 ? (
+                                    <ul className="space-y-4">
+                                        {group.items.map((cp, idx) => (
+                                            <li key={idx}>
+                                                <div className="font-medium">- {cp.question}</div>
+                                                <div className="text-gray-700">Ans: {cp.answer}</div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <div className="text-gray-500 text-sm">No questions defined.</div>
+                                )}
+                            </div>
+                        </div>
+                    ))}
+                    {groupedCheckpoints.length === 0 && (
+                        <div className="text-gray-500">{loading ? 'Loading checkpoints...' : 'No checkpoints available.'}</div>
+                    )}
                     {error && <div className="text-sm text-red-600 mt-4">{error}</div>}
                 </div>
             </div>

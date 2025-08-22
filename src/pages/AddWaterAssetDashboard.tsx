@@ -759,6 +759,7 @@ function AddWaterAssetDashboard() {
         manufacturer: formData.manufacturer,
         status: formData.status === 'inUse' ? 'in_use' : formData.status,
         critical: formData.critical === 'yes' || formData.critical === true,
+        is_meter: true,
         pms_site_id: formData.site,
         pms_building_id: formData.building,
         pms_wing_id: formData.wing,
