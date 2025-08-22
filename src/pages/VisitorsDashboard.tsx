@@ -776,9 +776,63 @@ default:
     }
   };
 
-  const handleCheckOut = (visitorId: number) => {
-    console.log('Checking out visitor:', visitorId);
-    // Handle check out logic here
+  const handleCheckOut = async (visitorId: number) => {
+    try {
+      console.log('Checking out visitor:', visitorId);
+      
+      // Show loading toast
+      toast.info('Processing checkout...');
+      
+      // Construct the API URL using the visitor ID
+      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      const options = getAuthenticatedFetchOptions();
+      
+      // Create request body for checkout with current timestamp
+      const requestBody = {
+        gatekeeper: {
+          guest_exit_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-22T19:07:37+05:30
+          exit_gate_id: "",
+          status: "checked_out"
+        }
+      };
+      
+      // Set the request method to PUT and add the request body
+      const requestOptions = {
+        ...options,
+        method: 'PUT',
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      };
+      
+      console.log('🚀 Calling checkout API:', url);
+      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
+      
+      const response = await fetch(url, requestOptions);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`Failed to checkout visitor: ${response.status} ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Visitor checked out successfully:', data);
+      
+      // Show success toast
+      toast.success('Visitor checked out successfully!');
+      
+      // Refresh the visitors out data to reflect the checkout
+      if (visitorSubTab === 'visitor-out') {
+        fetchVisitorsOut(visitorsOutPagination.currentPage);
+      }
+      
+    } catch (error) {
+      console.error('❌ Error checking out visitor:', error);
+      toast.error('Failed to checkout visitor. Please try again.');
+    }
   };
 
   const handleViewVisitor = (visitorId: number) => {
@@ -803,9 +857,19 @@ default:
       // Show loading toast
       toast.info('Resending OTP...');
       
-      // Construct the API URL
+      // Construct the API URL using the provided endpoint pattern
       const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
       const options = getAuthenticatedFetchOptions();
+      
+      // Create request body with the exact structure provided
+      const requestBody = {
+        gatekeeper: {
+          otp_verified: "1",
+          otp: "",
+          guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-07T19:07:37+05:30
+          entry_gate_id: ""
+        }
+      };
       
       // Set the request method to PUT and add the request body
       const requestOptions = {
@@ -815,22 +879,17 @@ default:
           ...options.headers,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          gatekeeper: {
-            otp_verified: "1",
-            otp: "",
-            guest_entry_time: new Date().toISOString(),
-            entry_gate_id: ""
-          }
-        })
+        body: JSON.stringify(requestBody)
       };
       
       console.log('🚀 Calling resend OTP API:', url);
-      console.log('📋 Request body:', requestOptions.body);
+      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
       
       const response = await fetch(url, requestOptions);
       
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
         throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
       }
       
@@ -840,7 +899,7 @@ default:
       // Show success toast
       toast.success('OTP resent successfully!');
       
-      // Optionally refresh the data
+      // Refresh the unexpected visitors data to reflect any status changes
       if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(pagination.currentPage);
       }
