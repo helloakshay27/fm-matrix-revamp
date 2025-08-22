@@ -343,7 +343,6 @@ export const AddAMCPage = () => {
     sendData.append('pms_asset_amc[payment_term]', formData.paymentTerms);
     sendData.append('pms_asset_amc[no_of_visits]', formData.noOfVisits);
     sendData.append('pms_asset_amc[remarks]', formData.remarks);
-    sendData.append('pms_asset_amc[resource_type]', formData.details === 'Asset' ? "Pms::Asset" : "Pms::Service");
     sendData.append('pms_asset_amc[amc_details_type]', formData.type.toLowerCase()); // Add amc_details_type parameter
 
     if (action === 'schedule') {
