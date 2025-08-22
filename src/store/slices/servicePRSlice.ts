@@ -4,21 +4,58 @@ import createApiSlice from "../api/apiSlice";
 
 export const getServicePr = createAsyncThunk(
     "getServicePr",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async (
+        {
+            baseUrl,
+            token,
+            reference_number,
+            external_id,
+            supplier_name,
+            approval_status,
+        }: {
+            baseUrl: string;
+            token: string;
+            reference_number?: string;
+            external_id?: string;
+            supplier_name?: string;
+            approval_status?: string;
+        },
+        { rejectWithValue }
+    ) => {
         try {
-            const respones = await axios.get(`https://${baseUrl}/pms/work_orders/letter_of_indents_wo.json`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+            const queryParams = new URLSearchParams();
 
-            return respones.data
+            if (reference_number) {
+                queryParams.append("q[reference_number_eq]", reference_number);
+            }
+            if (external_id) {
+                queryParams.append("q[external_id_eq]", external_id);
+            }
+            if (supplier_name) {
+                queryParams.append("q[pms_supplier_company_name_cont]", supplier_name);
+            }
+
+            if (approval_status !== undefined && approval_status !== null) {
+                queryParams.append("q[all_level_approved_eq]", approval_status);
+            }
+
+            const response = await axios.get(
+                `https://${baseUrl}/pms/work_orders/letter_of_indents_wo.json${queryParams.toString() ? `?${queryParams}` : ''}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return response.data;
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
-            return rejectWithValue(message)
+            const message =
+                error.response?.data?.error || error.message || 'Failed to fetch service PR';
+            return rejectWithValue(message);
         }
     }
-)
+);
 
 export const createServicePR = createAsyncThunk(
     'createServicePR',

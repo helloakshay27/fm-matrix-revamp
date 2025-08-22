@@ -79,9 +79,12 @@ export const VisitorAnalyticsCard: React.FC<VisitorAnalyticsCardProps> = ({
         case 'purposeWise':
           await visitorDownloadAPI.downloadComparisonData(dateRange.startDate, dateRange.endDate);
           break;
-        case 'statusWise':
-          await visitorDownloadAPI.downloadTotalVisitorsData(dateRange.startDate, dateRange.endDate);
+        case 'statusWise': {
+          // Format as YYYY-MM-DD for /comparison_downloads.json
+          const formatYMD = (date: Date) => date.toISOString().split('T')[0];
+          await visitorDownloadAPI.downloadTypeDistributionData(formatYMD(dateRange.startDate), formatYMD(dateRange.endDate));
           break;
+        }
         case 'locationWise':
           await visitorDownloadAPI.downloadUnexpectedVisitorsData(dateRange.startDate, dateRange.endDate);
           break;

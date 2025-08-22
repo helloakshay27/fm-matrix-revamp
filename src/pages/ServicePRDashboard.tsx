@@ -93,21 +93,42 @@ export const ServicePRDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [servicePR, setServicePR] = useState([]);
+  const [filters, setFilters] = useState({
+    referenceNumber: '',
+    prNumber: '',
+    supplierName: '',
+    approvalStatus: 'Select'
+  });
+
+  const fetchData = async (filterParams = {}) => {
+    try {
+      const response = await dispatch(
+        getServicePr({ baseUrl, token, ...filterParams })
+      ).unwrap();
+      setServicePR(response.work_orders);
+    } catch (error) {
+      toast.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          getServicePr({ baseUrl, token })
-        ).unwrap();
-        setServicePR(response.work_orders);
-      } catch (error) {
-        toast.error(error);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const handleApplyFilters = (newFilters: {
+    referenceNumber: string;
+    prNumber: string;
+    supplierName: string;
+    approvalStatus: string;
+  }) => {
+    setFilters(newFilters);
+    fetchData({
+      reference_number: newFilters.referenceNumber,
+      external_id: newFilters.prNumber,
+      supplier_name: newFilters.supplierName,
+      approval_status: newFilters.approvalStatus,
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -215,6 +236,9 @@ export const ServicePRDashboard = () => {
       <ServicePRFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

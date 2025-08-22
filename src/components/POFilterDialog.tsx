@@ -14,21 +14,33 @@ const fieldStyles = {
 interface POFilterDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  filters: {
+    referenceNumber: string;
+    poNumber: string;
+    supplierName: string;
+  };
+  setFilters: React.Dispatch<React.SetStateAction<{
+    referenceNumber: string;
+    poNumber: string;
+    supplierName: string;
+  }>>;
+  onApplyFilters: (filters: {
+    referenceNumber: string;
+    poNumber: string;
+    supplierName: string;
+  }) => void;
 }
 
 export const POFilterDialog: React.FC<POFilterDialogProps> = ({
   open,
   onOpenChange,
+  filters,
+  setFilters,
+  onApplyFilters
 }) => {
-  const [filters, setFilters] = useState({
-    referenceNumber: '',
-    poNumber: '',
-    supplierName: ''
-  });
-
   const handleApply = () => {
-    console.log('Applying filters:', filters);
-    onOpenChange(false);
+    onApplyFilters(filters); // Pass filters to parent
+    onOpenChange(false); // Close dialog
   };
 
   const handleReset = () => {
@@ -45,12 +57,12 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Reference Number"
-              placeholder="Find By PR Number"
+              placeholder="PR Number"
               value={filters.referenceNumber}
               onChange={(e) => setFilters({ ...filters, referenceNumber: e.target.value })}
               fullWidth
@@ -59,10 +71,10 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-            
+
             <TextField
               label="PO Number"
-              placeholder="Find By PO Number"
+              placeholder="PO Number"
               value={filters.poNumber}
               onChange={(e) => setFilters({ ...filters, poNumber: e.target.value })}
               fullWidth
@@ -87,14 +99,14 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button 
+          <Button
             variant="secondary"
             onClick={handleApply}
             className="flex-1"
           >
             Apply
           </Button>
-          <Button 
+          <Button
             variant="outline"
             onClick={handleReset}
             className="flex-1"

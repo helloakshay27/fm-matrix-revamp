@@ -78,21 +78,31 @@ export const VisitorStatusOverviewCard: React.FC<VisitorStatusOverviewCardProps>
       return;
     }
 
+    // Format date as YYYY-MM-DD for API
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const day = date.getDate().toString().padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    const fromDate = formatDate(dateRange.startDate);
+    const toDate = formatDate(dateRange.endDate);
+
     try {
       switch (type) {
         case 'total':
-          await visitorDownloadAPI.downloadTotalVisitorsData(dateRange.startDate, dateRange.endDate);
+          await visitorDownloadAPI.downloadTotalVisitorsData(fromDate, toDate);
           break;
         case 'expected':
-          await visitorDownloadAPI.downloadExpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          await visitorDownloadAPI.downloadExpectedVisitorsData(fromDate, toDate);
           break;
         case 'unexpected':
-          await visitorDownloadAPI.downloadUnexpectedVisitorsData(dateRange.startDate, dateRange.endDate);
+          await visitorDownloadAPI.downloadUnexpectedVisitorsData(fromDate, toDate);
           break;
         default:
           throw new Error('Unknown download type');
       }
-      
+
       toast({
         title: "Success",
         description: `${type.charAt(0).toUpperCase() + type.slice(1)} visitors data downloaded successfully`
