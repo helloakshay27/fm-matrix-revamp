@@ -98,6 +98,7 @@ export const MultipleUserDeletePage = () => {
                 onChange={(e) => handleChange(entry.id, e.target.value)}
                 fullWidth
                 variant="outlined"
+                autoComplete="off"
                 slotProps={{ inputLabel: { shrink: true } as any }}
                 InputProps={{
                   sx: fieldStyles,
@@ -112,6 +113,13 @@ export const MultipleUserDeletePage = () => {
                       </IconButton>
                     </InputAdornment>
                   ),
+                }}
+                inputProps={{
+                  autoComplete: 'off',
+                  name: `identifier-${entry.id}`,
+                  autoCorrect: 'off',
+                  autoCapitalize: 'none',
+                  spellCheck: 'false',
                 }}
               />
             ))}

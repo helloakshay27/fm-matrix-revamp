@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { Loader2 } from 'lucide-react';
 
 const ReporteesReassignPage = () => {
     const [currentEmail, setCurrentEmail] = useState('');
@@ -21,6 +23,10 @@ const ReporteesReassignPage = () => {
         try {
             // TODO: integrate API call for reassigning reportees
             console.log('Reassign reportees from', currentEmail, 'to', updatedEmail);
+        toast.success('Reportees reassignment submitted');
+            // Reset fields after successful submit
+            setCurrentEmail('');
+            setUpdatedEmail('');
         } finally {
             setIsSubmitting(false);
         }
@@ -52,6 +58,7 @@ const ReporteesReassignPage = () => {
                             variant="outlined"
                             slotProps={{ inputLabel: { shrink: true } as any }}
                             InputProps={{ sx: fieldStyles }}
+                            disabled={isSubmitting}
                         />
 
                         <TextField
@@ -64,6 +71,7 @@ const ReporteesReassignPage = () => {
                             variant="outlined"
                             slotProps={{ inputLabel: { shrink: true } as any }}
                             InputProps={{ sx: fieldStyles }}
+                            disabled={isSubmitting}
                         />
                     </div>
                 </CardContent>
@@ -76,7 +84,14 @@ const ReporteesReassignPage = () => {
                     className="text-white hover:bg-[#C72030]/90 flex items-center"
                     disabled={isSubmitting || !currentEmail.trim() || !updatedEmail.trim()}
                 >
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                                        {isSubmitting ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Submitting...
+                                            </>
+                                        ) : (
+                                            'Submit'
+                                        )}
                 </Button>
             </div>
         </div>
