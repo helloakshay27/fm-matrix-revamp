@@ -153,6 +153,7 @@ export const VisitorsDashboard = () => {
   const [expectedLoading, setExpectedLoading] = useState(false);
   const [visitorsOutLoading, setVisitorsOutLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -469,10 +470,15 @@ export const VisitorsDashboard = () => {
   return (
     <div className="flex gap-2">
       <Button 
-        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+        className={`px-3 py-1 text-xs rounded ${
+          disabledOTPButtons[visitor.id] 
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : 'bg-orange-500 hover:bg-orange-600'
+        } text-white`}
         onClick={() => handleResendOTP(visitor.id)}
+        disabled={disabledOTPButtons[visitor.id]}
       >
-        Resend OTP
+        {disabledOTPButtons[visitor.id] ? 'Disabled for 1 min' : 'Resend OTP'}
       </Button>
       <Button 
         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
@@ -855,37 +861,22 @@ default:
       console.log('Resending OTP for visitor:', visitorId);
       
       // Show loading toast
-      toast.info('Resending OTP...');
+      toast.info('Sending OTP...');
       
-      // Construct the API URL using the provided endpoint pattern
-      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      // Disable the button
+      setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: true }));
+      
+      // Construct the API URL using the new endpoint
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.RESEND_OTP);
       const options = getAuthenticatedFetchOptions();
       
-      // Create request body with the exact structure provided
-      const requestBody = {
-        gatekeeper: {
-          otp_verified: "1",
-          otp: "",
-          guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-07T19:07:37+05:30
-          entry_gate_id: ""
-        }
-      };
+      // Add query parameter for visitor ID
+      const urlWithParams = new URL(url);
+      urlWithParams.searchParams.append('id', visitorId.toString());
       
-      // Set the request method to PUT and add the request body
-      const requestOptions = {
-        ...options,
-        method: 'PUT',
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      };
+      console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
       
-      console.log('🚀 Calling resend OTP API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-      
-      const response = await fetch(url, requestOptions);
+      const response = await fetch(urlWithParams.toString(), options);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -894,19 +885,27 @@ default:
       }
       
       const data = await response.json();
-      console.log('✅ OTP resent successfully:', data);
+      console.log('✅ OTP sent successfully:', data);
       
       // Show success toast
-      toast.success('OTP resent successfully!');
+      toast.success('OTP sent successfully!');
       
-      // Refresh the unexpected visitors data to reflect any status changes
+      // Re-enable the button after 1 minute (60000ms)
+      setTimeout(() => {
+        setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: false }));
+      }, 60000);
+      
+      // Optionally refresh the unexpected visitors data
       if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(pagination.currentPage);
       }
       
     } catch (error) {
-      console.error('❌ Error resending OTP:', error);
-      toast.error('Failed to resend OTP. Please try again.');
+      console.error('❌ Error sending OTP:', error);
+      toast.error('Failed to send OTP. Please try again.');
+      
+      // Re-enable the button on error
+      setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: false }));
     }
   };
 

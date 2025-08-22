@@ -217,18 +217,25 @@ export const VisitorFormPage = () => {
 
   const initializeCamera = async () => {
     try {
+      // Request camera permissions and get device list
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      
       const devices = await navigator.mediaDevices.enumerateDevices();
       const videoDevices = devices.filter(
         (device) => device.kind === "videoinput"
       );
       setCameras(videoDevices);
+      
       if (videoDevices.length > 0) {
         const defaultCamera = videoDevices[0].deviceId;
         setSelectedCamera(defaultCamera);
         await startCamera(defaultCamera);
+      } else {
+        alert("No camera devices found. Please connect a camera and try again.");
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
+      alert("Camera permission denied or no camera available. Please allow camera access and try again.");
     }
   };
 
@@ -237,15 +244,28 @@ export const VisitorFormPage = () => {
       if (stream) {
         stream.getTracks().forEach((track) => track.stop());
       }
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: { exact: deviceId } },
-      });
+      
+      const constraints = {
+        video: deviceId ? { deviceId: { exact: deviceId } } : true,
+        audio: false
+      };
+      
+      const newStream = await navigator.mediaDevices.getUserMedia(constraints);
       setStream(newStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = newStream;
+        
+        // Wait for video to load metadata
+        videoRef.current.onloadedmetadata = () => {
+          if (videoRef.current) {
+            videoRef.current.play().catch(console.error);
+          }
+        };
       }
     } catch (error) {
       console.error("Error starting camera:", error);
+      alert("Failed to access camera. Please check permissions and try again.");
     }
   };
 
@@ -399,12 +419,38 @@ export const VisitorFormPage = () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
-      if (ctx) {
+      
+      if (ctx && video.videoWidth > 0 && video.videoHeight > 0) {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = canvas.toDataURL("image/jpeg");
+        const imageData = canvas.toDataURL("image/jpeg", 0.8);
         setCapturedPhoto(imageData);
+        
+        // Stop the camera stream
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+        setShowCameraModal(false);
+      }
+    }
+  };
+
+  const handleAllowThisTime = () => {
+    if (videoRef.current && canvasRef.current && stream) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      
+      if (ctx && video.videoWidth > 0 && video.videoHeight > 0) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL("image/jpeg", 0.8);
+        setCapturedPhoto(imageData);
+        
+        // Stop the camera stream
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
         setShowCameraModal(false);
       }
     }
@@ -415,55 +461,113 @@ export const VisitorFormPage = () => {
       <h1 className="text-2xl font-bold text-gray-900 mb-6">NEW VISITOR</h1>
 
       {showCameraModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl p-4 w-full max-w-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-lg font-medium">Camera</h3>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowCameraModal(false)}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="relative mb-4 bg-gray-200 rounded-lg overflow-hidden h-48">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
+        <div className="fixed top-20 left-8 z-50 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-4">
+          {/* Close Button */}
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-medium">Camera</h3>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowCameraModal(false);
+                if (stream) {
+                  stream.getTracks().forEach(track => track.stop());
+                }
+              }}
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          {/* Camera permissions checkbox */}
+          <div className="mb-4">
+            <div className="flex items-center space-x-2">
+              <input 
+                type="checkbox" 
+                id="useCamera" 
+                checked={false}
+                readOnly
+                className="w-4 h-4"
               />
+              <label htmlFor="useCamera" className="text-sm text-gray-700">
+                Use available cameras ({cameras.length})
+              </label>
             </div>
+          </div>
+
+          {/* Camera Preview */}
+          <div className="relative mb-4 bg-gray-900 rounded-lg overflow-hidden">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-48 object-cover"
+            />
+            <div className="absolute top-2 right-2">
+              <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs font-medium">
+                📹 Preview
+              </span>
+            </div>
+          </div>
+
+          {/* Camera Selection Dropdown */}
+          <div className="mb-4">
             <FormControl
               fullWidth
               variant="outlined"
-              sx={{ "& .MuiInputBase-root": fieldStyles, marginBottom: "1rem" }}
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
             >
               <InputLabel shrink>Select Camera</InputLabel>
               <MuiSelect
-                value={selectedCamera || ""}
+                value={selectedCamera || ''}
                 onChange={(e) => handleCameraChange(e.target.value)}
                 label="Select Camera"
                 notched
+                displayEmpty
               >
-                {cameras.map((camera) => (
+                <MenuItem value="">Select Camera</MenuItem>
+                {cameras.filter(camera => camera.deviceId && camera.deviceId.trim() !== '').map((camera) => (
                   <MenuItem key={camera.deviceId} value={camera.deviceId}>
-                    {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
+                    {camera.label || `USB2.0 HD UVC WebCam (${camera.deviceId.slice(0, 4)}:...)`}
                   </MenuItem>
                 ))}
               </MuiSelect>
             </FormControl>
+          </div>
+
+          {/* Camera Control Buttons */}
+          <div className="space-y-2">
             <Button
               onClick={handleCaptureAndClose}
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
+              className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
+              disabled={!stream}
             >
               Capture Photo
             </Button>
-            <canvas ref={canvasRef} className="hidden" />
+            <Button
+              onClick={handleAllowThisTime}
+              className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full"
+              disabled={!stream}
+            >
+              Allow this time
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowCameraModal(false);
+                if (stream) {
+                  stream.getTracks().forEach(track => track.stop());
+                }
+              }}
+              className="w-full bg-pink-200 hover:bg-pink-300 text-gray-800 rounded-full border-none"
+            >
+              Never allow
+            </Button>
           </div>
+
+          <canvas ref={canvasRef} className="hidden" />
         </div>
       )}
 

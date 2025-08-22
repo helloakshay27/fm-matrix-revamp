@@ -170,7 +170,8 @@ export const API_CONFIG = {
     UPDATE_PARKING_SLOT_DETAILS: '/pms/admin/parking_slot_details',
     // Permit tags endpoint
     PERMIT_TAGS: '/pms/permit_tags.json',
-
+    // Resend OTP endpoint
+    RESEND_OTP: '/pms/visitors/request_otp.json',
     
   },
 } as const
