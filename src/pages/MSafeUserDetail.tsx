@@ -28,7 +28,7 @@ export const MSafeUserDetail = () => {
   const [error, setError] = useState<string | null>(null);
 
   const formatDateTime = (value?: string) => {
-    if (!value) return '-';
+    if (!value) return '';
     const d = new Date(value);
     if (isNaN(d.getTime())) return value;
     const dd = String(d.getDate()).padStart(2, '0');
@@ -155,17 +155,17 @@ export const MSafeUserDetail = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6 items-start">
                   {/* Helper for row to ensure consistent alignment */}
                   <div className="space-y-3">
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">First Name</span><span className="mx-1">:</span><span className="font-semibold">{user.firstname || '-'}</span></div>
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Last Name</span><span className="mx-1">:</span><span className="font-semibold">{user.lastname || '-'}</span></div>
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Employee ID</span><span className="mx-1">:</span><span className="font-semibold">{user.org_user_id || '-'}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">First Name</span><span className="mx-1">:</span><span className="font-semibold">{user.firstname || ''}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Last Name</span><span className="mx-1">:</span><span className="font-semibold">{user.lastname || ''}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Employee ID</span><span className="mx-1">:</span><span className="font-semibold">{user.org_user_id || ''}</span></div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.email || '-'}</span></div>
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.mobile || '-'}</span></div>
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Gender</span><span className="mx-1">:</span><span className="font-semibold">{user.gender || '-'}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.email || ''}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.mobile || ''}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Gender</span><span className="mx-1">:</span><span className="font-semibold">{user.gender || ''}</span></div>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Designation</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.designation || '-'}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Designation</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.designation || ''}</span></div>
                   </div>
                 </div>
               </div>
@@ -181,25 +181,25 @@ export const MSafeUserDetail = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6">
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Active</span><span className="mx-1">:</span><span className="font-semibold">{getYesNoBadge(activeVal)}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Birth Date</span><span className="mx-1">:</span><span className="font-semibold">{user.birth_date || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Joining Date</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.joining_date || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Status</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.status ? getStatusBadge(user.lock_user_permission?.status) : '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Cluster</span><span className="mx-1">:</span><span className="font-semibold">{user.cluster_name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Department</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.department_name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Circle</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.circle_name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Work Location</span><span className="mx-1">:</span><span className="font-semibold">{user.work_location || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Company Name</span><span className="mx-1">:</span><span className="font-semibold">{user.company_name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Role</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.role_name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Employee Type</span><span className="mx-1">:</span><span className="font-semibold">{user.employee_type || '-'}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Birth Date</span><span className="mx-1">:</span><span className="font-semibold">{user.birth_date || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Joining Date</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.joining_date || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Status</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.status ? getStatusBadge(user.lock_user_permission?.status) : ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Cluster</span><span className="mx-1">:</span><span className="font-semibold">{user.cluster_name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Department</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.department_name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Circle</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.circle_name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Work Location</span><span className="mx-1">:</span><span className="font-semibold">{user.work_location || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Company Name</span><span className="mx-1">:</span><span className="font-semibold">{user.company_name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Role</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.role_name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Employee Type</span><span className="mx-1">:</span><span className="font-semibold">{user.employee_type || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created At</span><span className="mx-1">:</span><span className="font-semibold">{formatDateTime(user.created_at)}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Name</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.report_to?.email || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.mobile || '-'}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Name</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.report_to?.email || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.mobile || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">OTP</span><span className="mx-1">:</span><span className="font-semibold">NA</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Registration Source</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.registration_source || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Name</span><span className="mx-1">:</span><span className="font-semibold">{user.created_by?.name || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.created_by?.email || '-'}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.created_by?.mobile || '-'}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Registration Source</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.registration_source || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Name</span><span className="mx-1">:</span><span className="font-semibold">{user.created_by?.name || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.created_by?.email || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.created_by?.mobile || ''}</span></div>
                 </div>
               </div>
             </TabsContent>

@@ -14,7 +14,8 @@ import {
   Archive, TreePine, FlaskConical, Mail, ClipboardList,
   Currency,
   User,
-  BarChart
+  BarChart,
+  UserRoundPen
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -333,6 +334,7 @@ const modulesByPackage = {
     { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
     { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
     { name: 'Training List', icon: BookOpen, href: '/maintenance/training-list' },
+    { name: 'Reportees Reassign', icon: UserRoundPen, href: '/maintenance/reportees-reassign' }
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [

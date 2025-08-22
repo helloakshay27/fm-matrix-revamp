@@ -467,6 +467,7 @@ export const ExternalUsersDashboard = () => {
     setPage(newPage);
   };
 
+
   // New pagination items (ServiceDashboard style)
   const paginationItems = useMemo(() => {
     const items: React.ReactNode[] = [];
@@ -540,13 +541,22 @@ export const ExternalUsersDashboard = () => {
           <EnhancedTable
             data={externalUsers || []}
             leftActions={
-              <Button
-                onClick={handleActionClick}
-                className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-              >
-                <Plus className="w-4 h-4" />
-                Action
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  onClick={handleActionClick}
+                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                >
+                  <Plus className="w-4 h-4" />
+                  Action
+                </Button>
+                <Button
+                  onClick={() => navigate('/maintenance/m-safe/external-users/multiple-delete')}
+                  className="text-white bg-red-500 hover:bg-red-600"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Multiple User Delete
+                </Button>
+              </div>
             }
             columns={columns}
             onFilterClick={handleFiltersClick}
