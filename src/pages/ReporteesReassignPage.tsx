@@ -56,8 +56,16 @@ const ReporteesReassignPage = () => {
                             onChange={(e) => setCurrentEmail(e.target.value)}
                             fullWidth
                             variant="outlined"
+                                                        autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
-                            InputProps={{ sx: fieldStyles }}
+                                                        InputProps={{ sx: fieldStyles }}
+                                                        inputProps={{
+                                                            autoComplete: 'off',
+                                                            name: 'current-report-to',
+                                                            autoCorrect: 'off',
+                                                            autoCapitalize: 'none',
+                                                            spellCheck: 'false',
+                                                        }}
                             disabled={isSubmitting}
                         />
 
@@ -69,8 +77,16 @@ const ReporteesReassignPage = () => {
                             onChange={(e) => setUpdatedEmail(e.target.value)}
                             fullWidth
                             variant="outlined"
+                                                        autoComplete="off"
                             slotProps={{ inputLabel: { shrink: true } as any }}
-                            InputProps={{ sx: fieldStyles }}
+                                                        InputProps={{ sx: fieldStyles }}
+                                                        inputProps={{
+                                                            autoComplete: 'off',
+                                                            name: 'updated-report-to',
+                                                            autoCorrect: 'off',
+                                                            autoCapitalize: 'none',
+                                                            spellCheck: 'false',
+                                                        }}
                             disabled={isSubmitting}
                         />
                     </div>

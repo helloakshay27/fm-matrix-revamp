@@ -91,7 +91,7 @@ export const AddInventoryPage = () => {
   const [sacList, setSacList] = useState([])
   const [submitting, setSubmitting] = useState(false);
   // Suggestions state for inventory name
-  const [nameSuggestions, setNameSuggestions] = useState<{id:number; name:string}[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<{ id: number; name: string }[]>([]);
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const nameDebounceRef = useRef<number | null>(null);
@@ -255,8 +255,8 @@ export const AddInventoryPage = () => {
       return;
     }
 
-  if (submitting) return; // guard against double click
-  setSubmitting(true);
+    if (submitting) return; // guard against double click
+    setSubmitting(true);
 
     const user = getUser();
     const payload = {
@@ -301,7 +301,7 @@ export const AddInventoryPage = () => {
         body: JSON.stringify(payload),
       });
 
-  if (response.ok) {
+      if (response.ok) {
         const result = await response.json();
         console.log('Inventory created successfully:', result);
         toast("Inventory has been successfully created.");
@@ -628,6 +628,14 @@ export const AddInventoryPage = () => {
                       // Delay hiding to allow click
                       setTimeout(() => setShowNameSuggestions(false), 180);
                     }}
+                    autoComplete="off"
+                    inputProps={{
+                      autoComplete: 'off',
+                      autoCorrect: 'off',
+                      autoCapitalize: 'none',
+                      spellCheck: false,
+                      name: 'inventory-name-no-autofill',
+                    }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -635,9 +643,9 @@ export const AddInventoryPage = () => {
                     error={!!errors.inventoryName}
                     helperText={errors.inventoryName}
                   />
-          {showNameSuggestions && filteredNameSuggestions.length > 0 && (
+                  {showNameSuggestions && filteredNameSuggestions.length > 0 && (
                     <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
-            {filteredNameSuggestions.map(s => (
+                      {filteredNameSuggestions.map(s => (
                         <button
                           type="button"
                           key={s.id}
