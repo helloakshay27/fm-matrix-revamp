@@ -16,7 +16,7 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/a
 import { toast } from 'sonner';
 
 // API Service using apiConfig
-const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -27,7 +27,16 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
     
-    console.log('🚀 Fetching unexpected visitors from:', urlWithParams.toString());
+    // Add person to meet filter if provided
+    if (personToMeetId && personToMeetId !== 'all') {
+      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
+      console.log('✅ Added person to meet filter:', personToMeetId);
+    } else {
+      console.log('❌ No person to meet filter applied. PersonToMeetId:', personToMeetId);
+    }
+    
+    console.log('🚀 Final URL for unexpected visitors:', urlWithParams.toString());
+    console.log('🚀 Full API call being made to:', urlWithParams.href);
     
     const response = await fetch(urlWithParams.toString(), options);
     
@@ -72,7 +81,7 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
   }
 };
 
-const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -83,7 +92,13 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
     
-    console.log('🚀 Fetching expected visitors from:', urlWithParams.toString());
+    // Add person to meet filter if provided
+    if (personToMeetId && personToMeetId !== 'all') {
+      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
+    }
+    
+    console.log('🚀 Final URL for expected visitors:', urlWithParams.toString());
+    console.log('🚀 Full API call being made to:', urlWithParams.href);
     
     const response = await fetch(urlWithParams.toString(), options);
     
@@ -154,6 +169,9 @@ export const VisitorsDashboard = () => {
   const [visitorsOutLoading, setVisitorsOutLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
+  const [currentFilters, setCurrentFilters] = useState<VisitorFilters>({});
+  const [unexpectedFilters, setUnexpectedFilters] = useState<VisitorFilters>({});
+  const [expectedFilters, setExpectedFilters] = useState<VisitorFilters>({});
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -219,7 +237,32 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitors = async (page: number = 1) => {
     setLoading(true);
     try {
-      const data = await getUnexpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      const personToMeetId = unexpectedFilters.personToMeet;
+      console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      setUnexpectedVisitors(data.unexpected_visitors);
+      setPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching unexpected visitors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch unexpected visitors with explicit filters
+  const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+    setLoading(true);
+    try {
+      const personToMeetId = filters?.personToMeet;
+      console.log('🔍 Applying filters directly:', filters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -238,7 +281,32 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitors = async (page: number = 1) => {
     setExpectedLoading(true);
     try {
-      const data = await getExpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      const personToMeetId = expectedFilters.personToMeet;
+      console.log('🔍 Expected visitor filters:', expectedFilters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      setExpectedVisitors(data.expected_visitors);
+      setExpectedPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching expected visitors:', error);
+    } finally {
+      setExpectedLoading(false);
+    }
+  };
+
+  // Fetch expected visitors with explicit filters
+  const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+    setExpectedLoading(true);
+    try {
+      const personToMeetId = filters?.personToMeet;
+      console.log('🔍 Applying filters to expected visitors:', filters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -314,13 +382,20 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterApply = (filters: VisitorFilters) => {
+    console.log('🔧 Filter apply called with:', filters);
+    console.log('🔧 Active visitor type:', activeVisitorType);
     setVisitorFilters(filters);
     setIsFilterOpen(false);
-    // TODO: Apply filters to the visitor data based on current tab
+    
+    // Set filters based on the active visitor type
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      fetchUnexpectedVisitors();
+      console.log('🔧 Setting unexpected visitor filters:', filters);
+      setUnexpectedFilters(filters);
+      fetchUnexpectedVisitorsWithFilters(1, filters);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      fetchExpectedVisitors();
+      console.log('🔧 Setting expected visitor filters:', filters);
+      setExpectedFilters(filters);
+      fetchExpectedVisitorsWithFilters(1, filters);
     } 
     else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
@@ -330,13 +405,20 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterReset = () => {
+    console.log('🔧 Filter reset called');
+    console.log('🔧 Active visitor type:', activeVisitorType);
     setVisitorFilters({});
     setIsFilterOpen(false);
-    // Refresh data without filters
+    
+    // Reset filters based on the active visitor type
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      fetchUnexpectedVisitors();
+      console.log('🔧 Resetting unexpected visitor filters');
+      setUnexpectedFilters({});
+      fetchUnexpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      fetchExpectedVisitors();
+      console.log('🔧 Resetting expected visitor filters');
+      setExpectedFilters({});
+      fetchExpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
@@ -394,7 +476,7 @@ export const VisitorsDashboard = () => {
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
-    { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
+    // { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
 
   // Filter visitors based on search term
@@ -1226,6 +1308,7 @@ default:
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleFilterApply}
         onResetFilters={handleFilterReset}
+        currentFilters={activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters}
       />
     </div>
   );

@@ -73,6 +73,7 @@ export const VisitorAnalyticsContent = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [visitorComparisonData, setVisitorComparisonData] = useState<VisitorComparisonResponse | null>(null);
+  const [visibleSections, setVisibleSections] = useState<string[]>(['overview', 'purposeWise', 'statusWise', 'recentVisitors']);
   const { toast } = useToast();
 
   // Function to get default dates (same as VisitorAnalyticsFilterDialog)
@@ -159,6 +160,10 @@ export const VisitorAnalyticsContent = () => {
     }
   };
 
+  const handleVisitorSelectionChange = (newVisibleSections: string[]) => {
+    setVisibleSections(newVisibleSections);
+  };
+
   // Mock data - in real app this would come from API
   const visitorStats = {
     totalVisitors: 245,
@@ -213,6 +218,11 @@ export const VisitorAnalyticsContent = () => {
 
   // Render card function
   const renderCard = (item: { id: string; type: string }) => {
+    // Only render if the card type is visible
+    if (!visibleSections.includes(item.type)) {
+      return null;
+    }
+
     const commonDateRange = dateRange.startDate ? {
       startDate: new Date(dateRange.startDate.split('/').reverse().join('-')),
       endDate: new Date(dateRange.endDate.split('/').reverse().join('-'))
@@ -289,42 +299,49 @@ export const VisitorAnalyticsContent = () => {
             <span className="text-sm text-gray-500 animate-pulse">Loading...</span>
           )}
         </Button>
-        <VisitorSelector />
+        <VisitorSelector onSelectionChange={handleVisitorSelectionChange} />
       </div>
 
 
       {/* Main Analytics Layout with Drag and Drop */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 min-h-[calc(100vh-200px)]">
         {/* Left Section - Sortable Charts */}
-        <div className="xl:col-span-8">
+        <div className={`${visibleSections.includes('recentVisitors') ? 'xl:col-span-8' : 'xl:col-span-12'}`}>
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={cardItems.map(item => item.id)}
+              items={cardItems.filter(item => visibleSections.includes(item.type)).map(item => item.id)}
               strategy={verticalListSortingStrategy}
             >
               <div className="space-y-4 sm:space-y-6">
-                {cardItems.map((item) => (
-                  <SortableCard
-                    key={item.id}
-                    id={item.id}
-                    className="w-full"
-                  >
-                    {renderCard(item)}
-                  </SortableCard>
-                ))}
+                {cardItems
+                  .filter(item => visibleSections.includes(item.type))
+                  .map((item) => {
+                    const renderedCard = renderCard(item);
+                    return renderedCard ? (
+                      <SortableCard
+                        key={item.id}
+                        id={item.id}
+                        className="w-full"
+                      >
+                        {renderedCard}
+                      </SortableCard>
+                    ) : null;
+                  })}
               </div>
             </SortableContext>
           </DndContext>
         </div>
 
-        {/* Right Sidebar - Recent Visitors */}
-        <div className="xl:col-span-4 order-first xl:order-last">
-          <RecentVisitorsSidebar />
-        </div>
+        {/* Right Sidebar - Recent Visitors - Only show if selected */}
+        {visibleSections.includes('recentVisitors') && (
+          <div className="xl:col-span-4 order-first xl:order-last">
+            <RecentVisitorsSidebar />
+          </div>
+        )}
       </div>
 
       {/* Filter Dialog */}

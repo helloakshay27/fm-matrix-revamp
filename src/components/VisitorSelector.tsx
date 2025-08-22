@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/popover';
 
 const visitorOptions = [
-  { id: 'purpose-wise', label: 'Purpose Wise Visitors', checked: true, chartSection: 'purposeWise' },
-  { id: 'status-wise', label: 'Status Wise Distribution', checked: true, chartSection: 'statusWise' },
-  { id: 'location-wise', label: 'Location Wise Visitors', checked: true, chartSection: 'locationWise' },
-  { id: 'visitor-summary', label: 'Visitor Summary Stats', checked: true, chartSection: 'visitorSummary' },
+  { id: 'visitor-status-overview', label: 'Visitor Status Overview', checked: true, chartSection: 'overview' },
+  { id: 'host-wise', label: 'Host Wise Visitors', checked: true, chartSection: 'purposeWise' },
+  { id: 'visitor-type', label: 'Visitor Type Distribution', checked: true, chartSection: 'statusWise' },
+  { id: 'recent-visitors', label: 'Recent Visitors', checked: true, chartSection: 'recentVisitors' },
 ];
 
 interface VisitorSelectorProps {

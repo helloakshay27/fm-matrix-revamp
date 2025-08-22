@@ -23,6 +23,7 @@ interface VisitorFilterDialogProps {
     onClose: () => void;
     onApplyFilters: (filters: VisitorFilters) => void;
     onResetFilters: () => void;
+    currentFilters?: VisitorFilters;
 }
 
 export interface VisitorFilters {
@@ -40,11 +41,17 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
     onClose,
     onApplyFilters,
     onResetFilters,
+    currentFilters = {},
 }) => {
     const { toast } = useToast();
-    const [filters, setFilters] = useState<VisitorFilters>({});
+    const [filters, setFilters] = useState<VisitorFilters>(currentFilters);
     const [fmUsers, setFmUsers] = useState<{ id: number; name: string }[]>([]);
     const [loadingUsers, setLoadingUsers] = useState(false);
+
+    // Update filters when currentFilters changes
+    useEffect(() => {
+        setFilters(currentFilters);
+    }, [currentFilters]);
 
     // Fetch FM Users when dialog opens
     useEffect(() => {
@@ -263,9 +270,9 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
                 </div>
 
                 <DialogFooter className="flex gap-2">
-                    <Button variant="outline" onClick={handleClear}>
+                    {/* <Button variant="outline" onClick={handleClear}>
                         Clear
-                    </Button>
+                    </Button> */}
                     <Button variant="outline" onClick={handleReset}>
                         Reset
                     </Button>
