@@ -82,6 +82,19 @@ export const AddSurveyPage = () => {
     { id: '1', text: '', answerType: '', mandatory: false },
     { id: '2', text: '', answerType: '', mandatory: false }
   ]);
+  // File upload state
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // File upload handlers
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setSelectedFiles(Array.from(e.target.files));
+    }
+  };
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles(files => files.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -252,7 +265,9 @@ export const AddSurveyPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Add Survey</h1>
       </div>
 
-      <div className="space-y-6">
+  <div className="space-y-6">
+        {/* Section: Files Upload */}
+        
         {/* Section 1: Survey Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
@@ -448,6 +463,90 @@ export const AddSurveyPage = () => {
                 <Plus className="w-4 h-4 mr-2" /> Add More Questions
               </Button>
             </div>
+          </div>
+        </div>
+
+         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white mb-4 rounded-t-lg px-6 py-3 px-6 py-4 border-b border-gray-200">
+            <div className="text-lg text-black flex items-center">
+              {/* This span has been updated to show a file icon */}
+              <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                {/* You can use an appropriate file icon from a library like react-icons or an SVG */}
+                <ClipboardList size={16} color="#C72030" />
+              </span>
+              UPLOAD ICON
+            </div>
+          </div>
+          <div className="px-6 pb-6">
+            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                id="file-upload"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                disabled={isSubmitting}
+              />
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <span className="text-[#C72030] font-medium text-[14px]">Choose File</span>
+                <span className="text-gray-500 text-[14px]">
+                  {selectedFiles.length > 0 ? `${selectedFiles.length} file(s) selected` : 'No file chosen'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => document.getElementById('file-upload')?.click()}
+                className={`bg-[#f6f4ee] text-[#C72030] px-4 py-2 rounded text-sm flex items-center justify-center ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                disabled={isSubmitting}
+              >
+                <span className="text-lg mr-2">+</span> Upload Files
+              </button>
+            </div>
+            {selectedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-3 mt-4">
+                {selectedFiles.map((file, index) => {
+                  const isImage = file.type.startsWith('image/');
+                  const isPdf = file.type === 'application/pdf';
+                  const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                  const fileURL = URL.createObjectURL(file);
+                  return (
+                    <div
+                      key={`${file.name}-${file.lastModified}`}
+                      className="flex relative flex-col items-center border rounded-md pt-6 px-2 pb-3 w-[130px] bg-[#F6F4EE] shadow-sm"
+                    >
+                      {isImage ? (
+                        <img
+                          src={fileURL}
+                          alt={file.name}
+                          className="w-[40px] h-[40px] object-cover rounded border mb-1"
+                        />
+                      ) : isPdf ? (
+                        <div className="w-10 h-10 flex items-center justify-center border rounded text-red-600 bg-white mb-1">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/><path d="M14 2v6h6"/></svg>
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-10 h-10 flex items-center justify-center border rounded text-green-600 bg-white mb-1">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/><path d="M8 11h8M8 15h8"/></svg>
+                        </div>
+                      ) : (
+                        <div className="w-10 h-10 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="2"/></svg>
+                        </div>
+                      )}
+                      <span className="text-[10px] text-center truncate max-w-[100px] mb-1">{file.name}</span>
+                      <button
+                        type="button"
+                        className="absolute top-1 right-1 text-gray-600 hover:text-red-600 p-0"
+                        onClick={() => removeSelectedFile(index)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
