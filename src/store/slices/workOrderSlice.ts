@@ -79,10 +79,49 @@ export const approveRejectWO = createAsyncThunk(
     }
 )
 
+export const fetchBOQ = createAsyncThunk(
+    "fetchBOQ",
+    async ({ id, baseUrl, token }: { id: number, baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/work_orders/${id}/inventories`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to fetch BOQ'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const addWOInvoice = createAsyncThunk(
+    "addWOInvoice",
+    async ({ baseUrl, token, data }: { baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/pms/work_order_invoices.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to add work order invoice'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchWorkOrdersSlice = createApiSlice("fetchWorkOrders", fetchWorkOrders);
 const getWorkOrderByIdSlice = createApiSlice("getWorkOrderById", getWorkOrderById);
 const approveRejectWOSlice = createApiSlice("approveWO", approveRejectWO);
+const fetchBOQSlice = createApiSlice("fetchBOQ", fetchBOQ);
+const addWOInvoiceSlice = createApiSlice("addWOInvoice", addWOInvoice);
 
 export const fetchWorkOrdersReducer = fetchWorkOrdersSlice.reducer
 export const getWorkOrderByIdReducer = getWorkOrderByIdSlice.reducer
 export const approveRejectWOReducer = approveRejectWOSlice.reducer
+export const fetchBOQReducer = fetchBOQSlice.reducer
+export const addWOInvoiceReducer = addWOInvoiceSlice.reducer

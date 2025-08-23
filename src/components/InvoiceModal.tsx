@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     Dialog,
     DialogTitle,
@@ -17,9 +17,16 @@ import {
 } from "@mui/material";
 import {
     Close as CloseIcon,
-    Delete as DeleteIcon
+    Delete as DeleteIcon,
+    PictureAsPdf as PdfIcon,
+    TableChart as ExcelIcon
 } from "@mui/icons-material";
 import { Button } from "./ui/button";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
+import { useParams } from "react-router-dom";
+import { addWOInvoice, fetchBOQ } from "@/store/slices/workOrderSlice";
+import axios from "axios";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     '& .MuiDialog-paper': {
@@ -74,8 +81,7 @@ interface InvoiceModalProps {
     setNotes: (value: string) => void;
     relatedTo: string;
     setRelatedTo: (value: string) => void;
-    attachment: File | null;
-    setAttachment: (file: File | null) => void;
+    fetchWorkOrder: () => void;
 }
 
 const InvoiceModal: React.FC<InvoiceModalProps> = ({
@@ -93,9 +99,14 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     setNotes,
     relatedTo,
     setRelatedTo,
-    attachment,
-    setAttachment,
+    fetchWorkOrder
 }) => {
+    const dispatch = useAppDispatch();
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    const { id } = useParams();
+
+    const [boqs, setBoqs] = useState([]);
     const [boqDetails, setBOQDetails] = useState<BOQDetail[]>([
         {
             id: '1',
@@ -103,29 +114,148 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             quantity: "",
             workCompleted: "",
             rate: "",
-            taxableAmount: "0.00",
-            invoiceAmount: "0",
-            totalInvoiceAmount: "0"
+            taxableAmount: "",
+            invoiceAmount: "",
+            totalInvoiceAmount: ""
         }
     ]);
+    const [attachmentPreviews, setAttachmentPreviews] = useState<{ file: File, preview: string }[]>([]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
-            setAttachment(event.target.files[0]);
+            const files = Array.from(event.target.files);
+            const newPreviews = files.map(file => ({
+                file,
+                preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+            }));
+            setAttachmentPreviews(prev => [...prev, ...newPreviews]);
         }
     };
 
-    const handleSaveInvoice = () => {
-        console.log({
-            invoiceNumber,
-            invoiceDate,
-            adjustmentAmount,
-            postingDate,
-            notes,
-            attachment,
-            boqDetails,
+    const handleRemoveAttachment = (fileToRemove: File) => {
+        setAttachmentPreviews(prev => prev.filter(({ file }) => file !== fileToRemove));
+    };
+
+    useEffect(() => {
+        const getBoq = async () => {
+            try {
+                const response = await dispatch(fetchBOQ({ baseUrl, token, id: Number(id) })).unwrap();
+                setBoqs(response.inventories);
+            } catch (error) {
+                console.log(error);
+                toast.error(error);
+            }
+        };
+
+        getBoq();
+    }, [dispatch, baseUrl, token, id]);
+
+    useEffect(() => {
+        return () => {
+            attachmentPreviews.forEach(({ preview }) => {
+                if (preview) URL.revokeObjectURL(preview);
+            });
+        };
+    }, [attachmentPreviews]);
+
+    const fetchBOQDetails = async (boqId: string, boqDetailId: string) => {
+        if (!boqId) return;
+
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/work_orders/pms_wo_inventories?pms_wo_inventory_id=${boqId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            });
+
+            const data = response.data.pms_wo_inventory;
+            setBOQDetails((prevDetails) =>
+                prevDetails.map((boq) =>
+                    boq.id === boqDetailId
+                        ? {
+                            ...boq,
+                            quantity: data.quantity,
+                            rate: data.rate,
+                            taxableAmount: data.total_tax_per,
+                            invoiceAmount: calculateInvoiceAmount(data.quantity, data.rate, data.total_tax_per),
+                        }
+                        : boq
+                )
+            );
+        } catch (error) {
+            console.error('Error fetching BOQ details:', error);
+            toast.error('Failed to fetch BOQ details');
+        }
+    };
+
+    const calculateInvoiceAmount = (quantity: string, rate: string, taxableAmount: string): string => {
+        const qty = parseFloat(quantity) || 0;
+        const rt = parseFloat(rate) || 0;
+        const tax = parseFloat(taxableAmount) || 0;
+        const invoiceAmount = (qty * rt) + tax;
+        return invoiceAmount.toFixed(2);
+    };
+
+    useEffect(() => {
+        boqDetails.forEach((boq) => {
+            if (boq.selectedBOQ) {
+                fetchBOQDetails(boq.selectedBOQ, boq.id);
+            }
         });
-        handleCloseInvoiceModal();
+    }, [boqDetails.map((boq) => boq.selectedBOQ).join(',')]);
+
+    const resetForm = () => {
+        setInvoiceNumber("");
+        setInvoiceDate("");
+        setAdjustmentAmount("");
+        setPostingDate("");
+        setNotes("");
+        setRelatedTo("");
+        setBOQDetails([
+            {
+                id: Date.now().toString(),
+                selectedBOQ: "",
+                quantity: "",
+                workCompleted: "",
+                rate: "",
+                taxableAmount: "",
+                invoiceAmount: "",
+                totalInvoiceAmount: ""
+            }
+        ]);
+        setAttachmentPreviews([]);
+    };
+
+    const handleSaveInvoice = async () => {
+        try {
+            const payload = {
+                work_order_invoice: {
+                    pms_work_order_id: id,
+                    invoice_number: invoiceNumber,
+                    invoice_date: invoiceDate,
+                    related_to: relatedTo,
+                    adjustment_amount: adjustmentAmount,
+                    posting_date: postingDate,
+                    notes: notes,
+                    wo_invoice_inventories_attributes: boqDetails.map(boq => ({
+                        pms_po_inventory_id: boq.selectedBOQ,
+                        quantity: boq.quantity,
+                        completed_percentage: boq.workCompleted,
+                        amount: boq.totalInvoiceAmount
+                    }))
+                },
+                attachments: attachmentPreviews.map(({ file }) => file)
+            };
+
+            await dispatch(addWOInvoice({ baseUrl, token, data: payload })).unwrap();
+            fetchWorkOrder();
+            resetForm();
+            handleCloseInvoiceModal();
+            toast.success('Invoice saved successfully');
+        } catch (error) {
+            console.error('Error saving invoice:', error);
+            toast.error('Failed to save invoice');
+        }
     };
 
     const addBOQDetail = () => {
@@ -136,7 +266,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             workCompleted: "",
             rate: "",
             taxableAmount: "0.00",
-            invoiceAmount: "0",
+            invoiceAmount: "0.00",
             totalInvoiceAmount: "0"
         };
         setBOQDetails([...boqDetails, newBOQ]);
@@ -149,9 +279,20 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
     };
 
     const updateBOQDetail = (id: string, field: keyof BOQDetail, value: string) => {
-        setBOQDetails(boqDetails.map(boq =>
-            boq.id === id ? { ...boq, [field]: value } : boq
-        ));
+        setBOQDetails(boqDetails.map(boq => {
+            if (boq.id === id) {
+                const updatedBOQ = { ...boq, [field]: value };
+                if (field === 'quantity' || field === 'rate' || field === 'taxableAmount') {
+                    updatedBOQ.invoiceAmount = calculateInvoiceAmount(
+                        updatedBOQ.quantity,
+                        updatedBOQ.rate,
+                        updatedBOQ.taxableAmount
+                    );
+                }
+                return updatedBOQ;
+            }
+            return boq;
+        }));
     };
 
     return (
@@ -274,7 +415,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                             <input
                                 type="file"
                                 multiple
-                                accept="image/*"
+                                accept="image/*,application/pdf,.xlsx,.xls"
                                 className="hidden"
                                 id="file-upload"
                                 onChange={handleFileChange}
@@ -287,6 +428,66 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                     </span>
                                 </div>
                             </label>
+
+                            {/* Attachment Previews */}
+                            {attachmentPreviews.length > 0 && (
+                                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                                    {attachmentPreviews.map(({ file, preview }, index) => (
+                                        <Box
+                                            key={index}
+                                            sx={{
+                                                position: 'relative',
+                                                width: 100,
+                                                height: 100,
+                                                border: '1px solid hsl(var(--form-border))',
+                                                borderRadius: '8px',
+                                                overflow: 'hidden',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                backgroundColor: 'hsl(var(--background))'
+                                            }}
+                                        >
+                                            {file.type.startsWith('image/') && preview ? (
+                                                <img
+                                                    src={preview}
+                                                    alt={file.name}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                            ) : file.type === 'application/pdf' ? (
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <PdfIcon sx={{ fontSize: 40, color: 'hsl(var(--invoice-primary))' }} />
+                                                    <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                                                        {file.name.slice(0, 10) + (file.name.length > 10 ? '...' : '')}
+                                                    </Typography>
+                                                </Box>
+                                            ) : file.type.includes('spreadsheetml') || file.type.includes('ms-excel') ? (
+                                                <Box sx={{ textAlign: 'center' }}>
+                                                    <ExcelIcon sx={{ fontSize: 40, color: 'hsl(var(--invoice-primary))' }} />
+                                                    <Typography variant="caption" sx={{ mt: 1, display: 'block' }}>
+                                                        {file.name.slice(0, 10) + (file.name.length > 10 ? '...' : '')}
+                                                    </Typography>
+                                                </Box>
+                                            ) : (
+                                                <Typography variant="caption">{file.name}</Typography>
+                                            )}
+                                            <IconButton
+                                                onClick={() => handleRemoveAttachment(file)}
+                                                size="small"
+                                                sx={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    right: 0,
+                                                    backgroundColor: 'hsl(var(--background))',
+                                                    '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' }
+                                                }}
+                                            >
+                                                <CloseIcon fontSize="small" />
+                                            </IconButton>
+                                        </Box>
+                                    ))}
+                                </Box>
+                            )}
                         </div>
                     </Box>
 
@@ -341,9 +542,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                                     },
                                                 }}
                                             >
-                                                <MenuItem value="boq1">BOQ Item 1</MenuItem>
-                                                <MenuItem value="boq2">BOQ Item 2</MenuItem>
-                                                <MenuItem value="boq3">BOQ Item 3</MenuItem>
+                                                {
+                                                    boqs.map((boq: any) => (
+                                                        <MenuItem key={boq.id} value={boq.id}>
+                                                            {boq.label}
+                                                        </MenuItem>
+                                                    ))
+                                                }
                                             </Select>
                                         </FormControl>
                                     </Box>
@@ -400,7 +605,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                             fullWidth
                                             label="Invoice Amount"
                                             value={boq.invoiceAmount}
-                                            onChange={(e) => updateBOQDetail(boq.id, 'invoiceAmount', e.target.value)}
+                                            InputProps={{ readOnly: true }}
                                             variant="outlined"
                                         />
                                     </Box>

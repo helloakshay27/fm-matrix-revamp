@@ -49,7 +49,6 @@ const boqColumns: ColumnConfig[] = [
 ];
 
 const invoiceColumns: ColumnConfig[] = [
-  { key: "actions", label: "Actions", draggable: false },
   { key: "id", label: "ID", sortable: true, draggable: true },
   {
     key: "invoice_number",
@@ -64,7 +63,7 @@ const invoiceColumns: ColumnConfig[] = [
     draggable: true,
   },
   {
-    key: "total_invoice_amount",
+    key: "total_amount",
     label: "Total Invoice Amount",
     sortable: true,
     draggable: true,
@@ -85,13 +84,13 @@ const invoiceColumns: ColumnConfig[] = [
   { key: "qc_amount", label: "QC Amount", sortable: true, draggable: true },
   { key: "wo_number", label: "W.O. Number", sortable: true, draggable: true },
   {
-    key: "physical_invoice_sent",
+    key: "physical_sent",
     label: "Physical Invoice Sent to Accounts",
     sortable: true,
     draggable: true,
   },
   {
-    key: "physical_invoice_received",
+    key: "physical_received",
     label: "Physical Invoice Received",
     sortable: true,
     draggable: true,
@@ -164,11 +163,11 @@ export const WODetailsPage = () => {
   const [postingDate, setPostingDate] = useState("");
   const [relatedTo, setRelatedTo] = useState("");
   const [notes, setNotes] = useState("");
-  const [attachment, setAttachment] = useState(null);
   const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [debitCreditNote, setDebitCreditNote] = useState([]);
+  const [invoices, setInvoices] = useState([])
   const [debitCreditForm, setDebitCreditForm] = useState({
     type: "",
     amount: "",
@@ -223,25 +222,23 @@ export const WODetailsPage = () => {
     setDebitCreditForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  useEffect(() => {
-    const fetchWorkOrder = async () => {
-      try {
-        const response = await dispatch(
-          getWorkOrderById({ baseUrl, token, id })
-        ).unwrap();
-        setWorkOrder(response.page);
-        setDebitCreditNote(response.page.debit_credit_notes);
-      } catch (error) {
-        console.log(error);
-        toast.error(error);
-      }
-    };
+  const fetchWorkOrder = async () => {
+    try {
+      const response = await dispatch(
+        getWorkOrderById({ baseUrl, token, id })
+      ).unwrap();
+      setWorkOrder(response.page);
+      setDebitCreditNote(response.page.debit_credit_notes);
+      setInvoices(response.page.invoices)
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
 
+  useEffect(() => {
     fetchWorkOrder();
   }, []);
-
-  // Mock invoice data
-  const invoiceData = [];
 
   // Mock payment data
   const paymentData = [];
@@ -253,7 +250,6 @@ export const WODetailsPage = () => {
     setAdjustmentAmount("");
     setPostingDate("");
     setNotes("");
-    setAttachment(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -294,7 +290,7 @@ export const WODetailsPage = () => {
           Authorization: `Bearer ${token}`,
         }
       })
-
+      fetchWorkOrder();
       toast.success("Debit note created successfully")
     } catch (error) {
       console.log(error)
@@ -431,27 +427,27 @@ export const WODetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
-            {/* {
-              workOrder.all_level_approved && */}
-            <>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                onClick={() => setOpenInvoiceModal(true)}
-              >
-                Add Invoice
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                onClick={handleOpenDebitCreditModal}
-              >
-                Debit/Credit Note
-              </Button>
-            </>
-            {/* } */}
+            {
+              workOrder.all_level_approved &&
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={() => setOpenInvoiceModal(true)}
+                >
+                  Add Invoice
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handleOpenDebitCreditModal}
+                >
+                  Debit/Credit Note
+                </Button>
+              </>
+            }
           </div>
         </div>
       </div>
@@ -761,7 +757,13 @@ export const WODetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Attachments
         </h3>
-        <p className="text-gray-500">No attachments</p>
+        <div className="flex items-center gap-4 flex-wrap">
+          {
+            workOrder?.attachments?.length > 0 && workOrder.attachments.map((attachment, index) => (
+              <img src={attachment.url} alt="" key={index} className="w-24 h-24" />
+            ))
+          }
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -770,8 +772,11 @@ export const WODetailsPage = () => {
         </h3>
         <div className="overflow-x-auto">
           <EnhancedTable
-            data={invoiceData}
+            data={invoices}
             columns={invoiceColumns}
+            renderCell={(item, columnKey) => {
+              return item[columnKey] || "-";
+            }}
             storageKey="invoice-table"
             hideColumnsButton={true}
             hideTableExport={true}
@@ -969,8 +974,7 @@ export const WODetailsPage = () => {
         relatedTo={relatedTo}
         setRelatedTo={setRelatedTo}
         setNotes={setNotes}
-        attachment={attachment}
-        setAttachment={setAttachment}
+        fetchWorkOrder={fetchWorkOrder}
       />
     </div>
   );
