@@ -6,10 +6,19 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
+type ReassignResult = {
+    message?: string;
+    total_reassigned?: number;
+    from?: string;
+    to?: string;
+    reassigned_reportees?: Array<{ id: number; name: string; email: string; mobile: string }>;
+};
+
 const ReporteesReassignPage = () => {
     const [currentEmail, setCurrentEmail] = useState('');
     const [updatedEmail, setUpdatedEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [results, setResults] = useState<ReassignResult[]>([]);
 
     const fieldStyles = {
         height: { xs: 28, sm: 36, md: 45 },
@@ -30,7 +39,7 @@ const ReporteesReassignPage = () => {
             return;
         }
 
-        setIsSubmitting(true);
+    setIsSubmitting(true);
         try {
             const url = getFullUrl('/pms/users/vi_reassign_reportees.json');
             const res = await fetch(url, {
@@ -61,8 +70,9 @@ const ReporteesReassignPage = () => {
                 return;
             }
 
-            const result = await res.json();
-            toast.success(result?.message || 'Reportees reassigned successfully');
+            const data = (await res.json()) as ReassignResult;
+            toast.success(data?.message || 'Reportees reassigned successfully');
+            setResults(prev => [...prev, data || {}]);
             setCurrentEmail('');
             setUpdatedEmail('');
         } catch (e: any) {
@@ -150,6 +160,65 @@ const ReporteesReassignPage = () => {
                     )}
                 </Button>
             </div>
+
+            {results.length > 0 && (
+                <div className="mt-6 space-y-4">
+                    {results.map((res, idx) => (
+                        <Card key={`${res.from || ''}-${res.to || ''}-${idx}`} className="border-[#E5E7EB]">
+                            <CardHeader className="bg-[#F6F4EE]">
+                                <CardTitle className="text-base font-semibold text-gray-900">
+                                    Reassign Summary {results.length > 1 ? `#${idx + 1}` : ''}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="pt-4">
+                                <div className="flex flex-col gap-2">
+                                    {res.message && (
+                                        <div className="text-sm font-medium text-green-700">{res.message}</div>
+                                    )}
+                                    <div className="text-sm text-gray-700">
+                                        Total reassigned: <span className="font-semibold">{res.total_reassigned ?? res.reassigned_reportees?.length ?? 0}</span>
+                                    </div>
+                                    {(res.from || res.to) && (
+                                        <div className="text-xs text-gray-500">
+                                            {res.from && (<span>From <span className="font-medium text-gray-700">{res.from}</span></span>)}
+                                            {res.from && res.to && <span className="mx-2">→</span>}
+                                            {res.to && (<span>To <span className="font-medium text-gray-700">{res.to}</span></span>)}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="mt-4">
+                                    <div className="text-sm font-semibold text-gray-900 mb-2">Reassigned reportees</div>
+                                    {Array.isArray(res.reassigned_reportees) && res.reassigned_reportees.length > 0 ? (
+                                        <div className="overflow-x-auto rounded-md border border-gray-200">
+                                            <table className="min-w-full text-sm">
+                                                <thead className="bg-gray-100">
+                                                    <tr>
+                                                        <th className="text-left px-3 py-2 font-medium text-gray-700">Name</th>
+                                                        <th className="text-left px-3 py-2 font-medium text-gray-700">Email</th>
+                                                        <th className="text-left px-3 py-2 font-medium text-gray-700">Mobile</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {res.reassigned_reportees.map((u) => (
+                                                        <tr key={u.id} className="border-t border-gray-100">
+                                                            <td className="px-3 py-2 text-gray-900">{u.name || '—'}</td>
+                                                            <td className="px-3 py-2 text-gray-700">{u.email || '—'}</td>
+                                                            <td className="px-3 py-2 text-gray-700">{u.mobile || '—'}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No reportees were reassigned.</div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };

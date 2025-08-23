@@ -5,7 +5,6 @@ import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Do
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { fetchFMUsers, FMUser } from '@/store/slices/fmUserSlice';
@@ -206,8 +205,8 @@ export const MSafeDashboard = () => {
       case 'active': {
         const isActive = user.lock_role && typeof user.lock_role.active !== 'undefined' ? user.lock_role.active === 1 : !!user.active;
         return (
-          <div className="flex justify-center">
-            <Switch checked={isActive} />
+          <div className="flex justify-center text-sm font-medium">
+            {String(isActive)}
           </div>
         );
       }

@@ -280,11 +280,11 @@ export const MultipleUserDeletePage = () => {
             {/* Results Section */}
             {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length) ? (
                 <div className="mt-6 space-y-4 max-w-6xl mx-auto">
-                    {resultMessage && (
+                    {/* {resultMessage && (
                         <div className="p-3 bg-blue-50 text-blue-700 rounded border border-blue-200">
                             {resultMessage}
                         </div>
-                    )}
+                    )} */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Deleted Users */}
                         <Card className="border-[#D9D9D9] bg-white">
@@ -326,7 +326,7 @@ export const MultipleUserDeletePage = () => {
                         <Card className="border-[#D9D9D9] bg-white">
                             <CardHeader className="bg-[#F6F4EE]">
                                 <CardTitle className="text-base flex items-center justify-between">
-                                    <span>Skipped Users</span>
+                                    <span>Not deleted user (Due to Internal)</span>
                                     <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">{skippedUsers.length}</span>
                                 </CardTitle>
                             </CardHeader>

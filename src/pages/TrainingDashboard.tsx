@@ -7,7 +7,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { toast } from 'sonner';
 
 const columns = [
-  { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
+  // { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
   { key: 'user_name', label: 'User Name', sortable: true, defaultVisible: true },
   { key: 'email', label: 'Email ID', sortable: true, defaultVisible: true },
   { key: 'user_type', label: 'Type of User', sortable: true, defaultVisible: true },
@@ -164,19 +164,19 @@ const TrainingDashboard = () => {
         training_type: (r.training_type || '').toString().toLowerCase() === 'internal' ? 'Internal' : (r.training_type || '') ? (r.training_type || '').charAt(0).toUpperCase() + (r.training_type || '').slice(1) : '—',
         training_name: r.training_subject_name || '—',
         training_date: formatDateTime(r.training_date),
-  raw_date: r.training_date,
-  attachment_url: r.training_attachments?.[0]?.url,
-  attachment_doctype: r.training_attachments?.[0]?.doctype || null,
+        raw_date: r.training_date,
+        attachment_url: r.training_attachments?.[0]?.url,
+        attachment_doctype: r.training_attachments?.[0]?.doctype || null,
       }));
       setTrainings(mapped);
-  if (json.pagination) {
-    setCurrentPage((emailSearch || dialogFilterActive) ? 1 : json.pagination.current_page);
+      if (json.pagination) {
+        setCurrentPage((emailSearch || dialogFilterActive) ? 1 : json.pagination.current_page);
         setTotalPages(json.pagination.total_pages);
         setTotalCount(json.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
-    if (emailSearch || dialogFilterActive) setCurrentPage(1);
+        if (emailSearch || dialogFilterActive) setCurrentPage(1);
       }
     } catch (e: any) {
       console.error('Training fetch error', e);
@@ -232,7 +232,7 @@ const TrainingDashboard = () => {
         );
       case 'training_date':
         return item.training_date;
-  case 'attachment': {
+      case 'attachment': {
         if (!item.attachment_url) return '—';
         const url = item.attachment_url;
         const doctype = item.attachment_doctype || '';
@@ -313,7 +313,7 @@ const TrainingDashboard = () => {
   // Pagination rendering (same style as MSafeDashboard)
   const renderPaginationItems = () => {
     const items = [];
-  const showEllipsis = totalPages > 7;
+    const showEllipsis = totalPages > 7;
     if (showEllipsis) {
       // Show first page
       items.push(
@@ -401,7 +401,7 @@ const TrainingDashboard = () => {
   return (
     <div className="p-6">
       {/* Training Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {cardData.map((card, index) => (
           <div
             key={index}
@@ -420,7 +420,7 @@ const TrainingDashboard = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
       {error && (
         <div className="mb-4 p-3 border border-red-300 text-red-600 rounded bg-red-50 text-sm">{error}</div>
       )}
