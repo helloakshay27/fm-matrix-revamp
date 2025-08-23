@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, CircularProgress } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, CircularProgress, FormHelperText } from '@mui/material';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import axios from 'axios';
@@ -69,8 +69,58 @@ export const EditExternalUserPage = () => {
     }
   };
 
+  const validate = () => {
+    const errors: Record<string, string> = {};
+    const requiredFields: Array<[keyof typeof formData, string]> = [
+      ['firstname', 'First Name'],
+      ['lastname', 'Last Name'],
+      ['email', 'Email'],
+      ['mobile', 'Mobile'],
+      ['ext_company_name', 'Company Name'],
+      ['org_user_id', 'Employer Code'],
+      ['gender', 'Gender'],
+      ['report_to_id', 'Line Manager'],
+      ['department_id', 'Department'],
+      ['circle_id', 'Circle'],
+      ['company_cluster_id', 'Cluster'],
+      ['work_location', 'Work Location'],
+      ['role_id', 'Role'],
+      ['birth_date', 'Birth Date'],
+      ['joining_date', 'Joining Date'],
+    ];
+
+    requiredFields.forEach(([key, label]) => {
+      const val = (formData as any)[key];
+      if (val === undefined || val === null || String(val).trim() === '') {
+        errors[key as string] = `${label} is required`;
+      }
+    });
+
+    // simple email/mobile format hints (non-blocking if present)
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = 'Enter a valid email address';
+    }
+    if (formData.mobile && String(formData.mobile).trim().length < 8) {
+      errors.mobile = errors.mobile || 'Enter a valid mobile number';
+    }
+    return errors;
+  };
+
   const handleSubmit = async () => {
     if (!userId) return;
+    const errors = validate();
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      const missing = Object.values(errors)
+        .filter(msg => /required$/i.test(msg))
+        .map(msg => msg.replace(' is required', ''));
+      if (missing.length) {
+        toast.info(`Please fill in the following required fields: ${missing.join(', ')}`);
+      } else {
+        toast.info('Please fix the highlighted fields');
+      }
+      return;
+    }
     setSaving(true);
     try {
       const baseUrl = localStorage.getItem('baseUrl');
@@ -345,18 +395,19 @@ export const EditExternalUserPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <TextField label="First Name" value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth />
-            <TextField label="Last Name" value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth />
-            <TextField label="Email" type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} size="small" fullWidth error={!!fieldErrors.email} helperText={fieldErrors.email || ''} />
-            <TextField label="Mobile" type="number" value={formData.mobile} onChange={e => handleChange('mobile', e.target.value)} size="small" fullWidth />
-            <TextField label="Company Name" value={formData.ext_company_name} onChange={e => handleChange('ext_company_name', e.target.value)} size="small" fullWidth />
-            <TextField label="Employer Code" value={formData.org_user_id} onChange={e => handleChange('org_user_id', e.target.value)} size="small" fullWidth />
-            <FormControl fullWidth size="small">
-              <InputLabel>Gender</InputLabel>
+            <TextField label={<>First Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth error={!!fieldErrors.firstname} helperText={fieldErrors.firstname || ''} />
+            <TextField label={<>Last Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
+            <TextField label={<>Email<span style={{ color: '#C72030' }}>*</span></>} type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} size="small" fullWidth error={!!fieldErrors.email} helperText={fieldErrors.email || ''} />
+            <TextField label={<>Mobile<span style={{ color: '#C72030' }}>*</span></>} type="number" value={formData.mobile} onChange={e => handleChange('mobile', e.target.value)} size="small" fullWidth error={!!fieldErrors.mobile} helperText={fieldErrors.mobile || ''} />
+            <TextField label={<>Company Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.ext_company_name} onChange={e => handleChange('ext_company_name', e.target.value)} size="small" fullWidth error={!!fieldErrors.ext_company_name} helperText={fieldErrors.ext_company_name || ''} />
+            <TextField label={<>Employer Code<span style={{ color: '#C72030' }}>*</span></>} value={formData.org_user_id} onChange={e => handleChange('org_user_id', e.target.value)} size="small" fullWidth error={!!fieldErrors.org_user_id} helperText={fieldErrors.org_user_id || ''} />
+            <FormControl fullWidth size="small" error={!!fieldErrors.gender}>
+              <InputLabel>Gender<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.gender} label="Gender" onChange={e => handleChange('gender', e.target.value)}>
                 <MenuItem value="male">Male</MenuItem>
                 <MenuItem value="female">Female</MenuItem>
               </Select>
+              {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
             </FormControl>
             {/* Line Manager Async Search */}
             <Autocomplete
@@ -382,8 +433,10 @@ export const EditExternalUserPage = () => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Line Manager (search by email)"
+                  label={<>Line Manager (search by email)<span style={{ color: '#C72030' }}>*</span></>}
                   placeholder="Type at least 4 characters"
+                  error={!!fieldErrors.report_to_id}
+                  helperText={fieldErrors.report_to_id || ''}
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -405,14 +458,15 @@ export const EditExternalUserPage = () => {
               )}
               noOptionsText={lmQuery.length < 4 ? 'Type 4+ chars to search' : 'No results'}
             />
-            <FormControl fullWidth size="small">
-              <InputLabel>Department</InputLabel>
+            <FormControl fullWidth size="small" error={!!fieldErrors.department_id}>
+              <InputLabel>Department<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.department_id} label="Department" onChange={e => handleChange('department_id', e.target.value)}>
                 <MenuItem value="">Select</MenuItem>
                 {departments.map((d: any) => (
                   <MenuItem key={d.id} value={d.id}>{d.department_name}</MenuItem>
                 ))}
               </Select>
+              {fieldErrors.department_id && <FormHelperText>{fieldErrors.department_id}</FormHelperText>}
             </FormControl>
           </div>
         </CardContent>
@@ -428,17 +482,18 @@ export const EditExternalUserPage = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <FormControl fullWidth size="small">
-              <InputLabel>Circle</InputLabel>
+            <FormControl fullWidth size="small" error={!!fieldErrors.circle_id}>
+              <InputLabel>Circle<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.circle_id} label="Circle" onChange={e => handleChange('circle_id', e.target.value)}>
                 <MenuItem value="">Select</MenuItem>
                 {circles.map((c: any) => (
                   <MenuItem key={c.id} value={c.id}>{c.circle_name || c.name || `Circle ${c.id}`}</MenuItem>
                 ))}
               </Select>
+              {fieldErrors.circle_id && <FormHelperText>{fieldErrors.circle_id}</FormHelperText>}
             </FormControl>
-            <FormControl fullWidth size="small">
-              <InputLabel>Cluster</InputLabel>
+            <FormControl fullWidth size="small" error={!!fieldErrors.company_cluster_id}>
+              <InputLabel>Cluster<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select
                 value={formData.company_cluster_id}
                 label="Cluster"
@@ -454,27 +509,30 @@ export const EditExternalUserPage = () => {
                   <MenuItem key={cl.id} value={cl.id}>{cl.cluster_name || `Cluster ${cl.id}`}</MenuItem>
                 ))}
               </Select>
+              {fieldErrors.company_cluster_id && <FormHelperText>{fieldErrors.company_cluster_id}</FormHelperText>}
             </FormControl>
-            <FormControl fullWidth size="small">
-              <InputLabel>Work Location</InputLabel>
+            <FormControl fullWidth size="small" error={!!fieldErrors.work_location}>
+              <InputLabel>Work Location<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.work_location} label="Work Location" onChange={e => handleChange('work_location', e.target.value)}>
                 <MenuItem value="">Select</MenuItem>
                 {workLocations.map((w: any) => (
                   <MenuItem key={w.id} value={w.name}>{w.name || w.work_location_name || `Location ${w.id}`}</MenuItem>
                 ))}
               </Select>
+              {fieldErrors.work_location && <FormHelperText>{fieldErrors.work_location}</FormHelperText>}
             </FormControl>
-            <FormControl fullWidth size="small">
-              <InputLabel>Role</InputLabel>
+            <FormControl fullWidth size="small" error={!!fieldErrors.role_id}>
+              <InputLabel>Role<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.role_id} label="Role" onChange={e => handleChange('role_id', e.target.value)}>
                 <MenuItem value="">Select</MenuItem>
                 {roles.map((r: any) => (
                   <MenuItem key={r.id} value={r.id}>{r.name || r.display_name || `Role ${r.id}`}</MenuItem>
                 ))}
               </Select>
+              {fieldErrors.role_id && <FormHelperText>{fieldErrors.role_id}</FormHelperText>}
             </FormControl>
-            <TextField label="Birth Date" type="date" value={formData.birth_date} onChange={e => handleChange('birth_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} />
-            <TextField label="Joining Date" type="date" value={formData.joining_date} onChange={e => handleChange('joining_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField label={<>Birth Date<span style={{ color: '#C72030' }}>*</span></>} type="date" value={formData.birth_date} onChange={e => handleChange('birth_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} error={!!fieldErrors.birth_date} helperText={fieldErrors.birth_date || ''} />
+            <TextField label={<>Joining Date<span style={{ color: '#C72030' }}>*</span></>} type="date" value={formData.joining_date} onChange={e => handleChange('joining_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} error={!!fieldErrors.joining_date} helperText={fieldErrors.joining_date || ''} />
           </div>
         </CardContent>
       </Card>

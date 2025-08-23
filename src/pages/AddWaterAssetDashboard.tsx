@@ -8,6 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { useLocation } from "react-router-dom";
+
 import {
   TextField,
   MenuItem,
@@ -99,6 +101,13 @@ function AddWaterAssetDashboard() {
   ];
 
   const { toast } = useToast();
+  const location = useLocation();
+
+  // Parse query params
+  const searchParams = new URLSearchParams(location.search);
+  const type = searchParams.get("type");
+  const [assetType, setAssetType] = useState(type || "water");
+  console.log("Asset Type:", assetType);
 
   // --- Meter Details Section State (match AddAssetPage) ---
   const [meterCategoryType, setMeterCategoryType] = useState("");
@@ -772,6 +781,7 @@ function AddWaterAssetDashboard() {
         purchased_on: formData.purchasedOnDate,
         warranty_expiry: formData.warrantyExpiresOn,
         purchase_cost: formData.purchaseCost,
+        type: assetType,
         meter_tag_type: meterCategoryType,
         asset_meter_type_id: (() => {
           const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);

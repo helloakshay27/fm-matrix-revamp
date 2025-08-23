@@ -332,7 +332,7 @@ const modulesByPackage = {
     },
     { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
     { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
-    { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
+    // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
     { name: 'Training List', icon: BookOpen, href: '/maintenance/training-list' },
     { name: 'Reportees Reassign', icon: UserRoundPen, href: '/maintenance/reportees-reassign' }
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }

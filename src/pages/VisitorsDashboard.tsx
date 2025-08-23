@@ -16,7 +16,7 @@ import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/a
 import { toast } from 'sonner';
 
 // API Service using apiConfig
-const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.UNEXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -27,7 +27,16 @@ const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: 
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
     
-    console.log('🚀 Fetching unexpected visitors from:', urlWithParams.toString());
+    // Add person to meet filter if provided
+    if (personToMeetId && personToMeetId !== 'all') {
+      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
+      console.log('✅ Added person to meet filter:', personToMeetId);
+    } else {
+      console.log('❌ No person to meet filter applied. PersonToMeetId:', personToMeetId);
+    }
+    
+    console.log('🚀 Final URL for unexpected visitors:', urlWithParams.toString());
+    console.log('🚀 Full API call being made to:', urlWithParams.href);
     
     const response = await fetch(urlWithParams.toString(), options);
     
@@ -72,7 +81,7 @@ const getVisitorHistory = async (siteId: number, page: number = 1, perPage: numb
   }
 };
 
-const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20) => {
+const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.EXPECTED_VISITORS);
     const options = getAuthenticatedFetchOptions();
@@ -83,7 +92,13 @@ const getExpectedVisitors = async (siteId: number, page: number = 1, perPage: nu
     urlWithParams.searchParams.append('page', page.toString());
     urlWithParams.searchParams.append('per_page', perPage.toString());
     
-    console.log('🚀 Fetching expected visitors from:', urlWithParams.toString());
+    // Add person to meet filter if provided
+    if (personToMeetId && personToMeetId !== 'all') {
+      urlWithParams.searchParams.append('q[person_to_meet_id_or_visitor_hosts_user_id_eq]', personToMeetId);
+    }
+    
+    console.log('🚀 Final URL for expected visitors:', urlWithParams.toString());
+    console.log('🚀 Full API call being made to:', urlWithParams.href);
     
     const response = await fetch(urlWithParams.toString(), options);
     
@@ -153,6 +168,10 @@ export const VisitorsDashboard = () => {
   const [expectedLoading, setExpectedLoading] = useState(false);
   const [visitorsOutLoading, setVisitorsOutLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [disabledOTPButtons, setDisabledOTPButtons] = useState<Record<number, boolean>>({});
+  const [currentFilters, setCurrentFilters] = useState<VisitorFilters>({});
+  const [unexpectedFilters, setUnexpectedFilters] = useState<VisitorFilters>({});
+  const [expectedFilters, setExpectedFilters] = useState<VisitorFilters>({});
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -218,7 +237,32 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitors = async (page: number = 1) => {
     setLoading(true);
     try {
-      const data = await getUnexpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      const personToMeetId = unexpectedFilters.personToMeet;
+      console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      setUnexpectedVisitors(data.unexpected_visitors);
+      setPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching unexpected visitors:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch unexpected visitors with explicit filters
+  const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+    setLoading(true);
+    try {
+      const personToMeetId = filters?.personToMeet;
+      console.log('🔍 Applying filters directly:', filters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -237,7 +281,32 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitors = async (page: number = 1) => {
     setExpectedLoading(true);
     try {
-      const data = await getExpectedVisitors(2189, page); // Replace 2189 with your actual site ID
+      const personToMeetId = expectedFilters.personToMeet;
+      console.log('🔍 Expected visitor filters:', expectedFilters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      setExpectedVisitors(data.expected_visitors);
+      setExpectedPagination({
+        currentPage: data.pagination.current_page,
+        totalPages: data.pagination.total_pages,
+        totalEntries: data.pagination.total_entries,
+        perPage: data.pagination.per_page
+      });
+    } catch (error) {
+      console.error('Error fetching expected visitors:', error);
+    } finally {
+      setExpectedLoading(false);
+    }
+  };
+
+  // Fetch expected visitors with explicit filters
+  const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
+    setExpectedLoading(true);
+    try {
+      const personToMeetId = filters?.personToMeet;
+      console.log('🔍 Applying filters to expected visitors:', filters);
+      console.log('🔍 PersonToMeetId being passed:', personToMeetId);
+      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -313,13 +382,20 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterApply = (filters: VisitorFilters) => {
+    console.log('🔧 Filter apply called with:', filters);
+    console.log('🔧 Active visitor type:', activeVisitorType);
     setVisitorFilters(filters);
     setIsFilterOpen(false);
-    // TODO: Apply filters to the visitor data based on current tab
+    
+    // Set filters based on the active visitor type
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      fetchUnexpectedVisitors();
+      console.log('🔧 Setting unexpected visitor filters:', filters);
+      setUnexpectedFilters(filters);
+      fetchUnexpectedVisitorsWithFilters(1, filters);
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      fetchExpectedVisitors();
+      console.log('🔧 Setting expected visitor filters:', filters);
+      setExpectedFilters(filters);
+      fetchExpectedVisitorsWithFilters(1, filters);
     } 
     else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
@@ -329,13 +405,20 @@ export const VisitorsDashboard = () => {
   };
 
   const handleFilterReset = () => {
+    console.log('🔧 Filter reset called');
+    console.log('🔧 Active visitor type:', activeVisitorType);
     setVisitorFilters({});
     setIsFilterOpen(false);
-    // Refresh data without filters
+    
+    // Reset filters based on the active visitor type
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
-      fetchUnexpectedVisitors();
+      console.log('🔧 Resetting unexpected visitor filters');
+      setUnexpectedFilters({});
+      fetchUnexpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
-      fetchExpectedVisitors();
+      console.log('🔧 Resetting expected visitor filters');
+      setExpectedFilters({});
+      fetchExpectedVisitorsWithFilters(1, {});
     } else if (visitorSubTab === 'visitor-out') {
       fetchVisitorsOut();
     } else if (visitorSubTab === 'history') {
@@ -393,7 +476,7 @@ export const VisitorsDashboard = () => {
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
-    { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
+    // { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }
   ];
 
   // Filter visitors based on search term
@@ -469,10 +552,15 @@ export const VisitorsDashboard = () => {
   return (
     <div className="flex gap-2">
       <Button 
-        className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 text-xs rounded"
+        className={`px-3 py-1 text-xs rounded ${
+          disabledOTPButtons[visitor.id] 
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : 'bg-orange-500 hover:bg-orange-600'
+        } text-white`}
         onClick={() => handleResendOTP(visitor.id)}
+        disabled={disabledOTPButtons[visitor.id]}
       >
-        Resend OTP
+        {disabledOTPButtons[visitor.id] ? 'Disabled for 1 min' : 'Resend OTP'}
       </Button>
       <Button 
         className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 text-xs rounded"
@@ -855,37 +943,22 @@ default:
       console.log('Resending OTP for visitor:', visitorId);
       
       // Show loading toast
-      toast.info('Resending OTP...');
+      toast.info('Sending OTP...');
       
-      // Construct the API URL using the provided endpoint pattern
-      const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+      // Disable the button
+      setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: true }));
+      
+      // Construct the API URL using the new endpoint
+      const url = getFullUrl(API_CONFIG.ENDPOINTS.RESEND_OTP);
       const options = getAuthenticatedFetchOptions();
       
-      // Create request body with the exact structure provided
-      const requestBody = {
-        gatekeeper: {
-          otp_verified: "1",
-          otp: "",
-          guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30", // Format: 2025-08-07T19:07:37+05:30
-          entry_gate_id: ""
-        }
-      };
+      // Add query parameter for visitor ID
+      const urlWithParams = new URL(url);
+      urlWithParams.searchParams.append('id', visitorId.toString());
       
-      // Set the request method to PUT and add the request body
-      const requestOptions = {
-        ...options,
-        method: 'PUT',
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody)
-      };
+      console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
       
-      console.log('🚀 Calling resend OTP API:', url);
-      console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-      
-      const response = await fetch(url, requestOptions);
+      const response = await fetch(urlWithParams.toString(), options);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -894,19 +967,27 @@ default:
       }
       
       const data = await response.json();
-      console.log('✅ OTP resent successfully:', data);
+      console.log('✅ OTP sent successfully:', data);
       
       // Show success toast
-      toast.success('OTP resent successfully!');
+      toast.success('OTP sent successfully!');
       
-      // Refresh the unexpected visitors data to reflect any status changes
+      // Re-enable the button after 1 minute (60000ms)
+      setTimeout(() => {
+        setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: false }));
+      }, 60000);
+      
+      // Optionally refresh the unexpected visitors data
       if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
         fetchUnexpectedVisitors(pagination.currentPage);
       }
       
     } catch (error) {
-      console.error('❌ Error resending OTP:', error);
-      toast.error('Failed to resend OTP. Please try again.');
+      console.error('❌ Error sending OTP:', error);
+      toast.error('Failed to send OTP. Please try again.');
+      
+      // Re-enable the button on error
+      setDisabledOTPButtons(prev => ({ ...prev, [visitorId]: false }));
     }
   };
 
@@ -1227,6 +1308,7 @@ default:
         onClose={() => setIsFilterOpen(false)}
         onApplyFilters={handleFilterApply}
         onResetFilters={handleFilterReset}
+        currentFilters={activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters}
       />
     </div>
   );

@@ -113,17 +113,17 @@ export const fetchAllBuildings = createAsyncThunk<Building[], number>(
 export const fetchWings = createAsyncThunk<Wing[], number>(
   'serviceLocation/fetchWings',
   async (buildingId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
+    const response = await axios.get(`${BASE_URL}/pms/wings.json?building_id=${buildingId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
-    return response.data.map((item: any) => item.wings);
+    return response.data.wings || [];
   }
 );
 
 export const fetchAreas = createAsyncThunk<Area[], number>(
   'serviceLocation/fetchAreas',
   async (wingId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/wings/${wingId}/areas.json`, {
+    const response = await axios.get(`${BASE_URL}/pms/areas.json?wing_id=${wingId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     return response.data.areas;
@@ -133,7 +133,7 @@ export const fetchAreas = createAsyncThunk<Area[], number>(
 export const fetchFloors = createAsyncThunk<Floor[], number>(
   'serviceLocation/fetchFloors',
   async (areaId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/areas/${areaId}/floors.json`, {
+    const response = await axios.get(`${BASE_URL}/pms/floors.json?area_id=${areaId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
     return response.data.floors;
@@ -167,10 +167,10 @@ export const fetchSubGroups = createAsyncThunk<SubGroup[], number>(
 export const fetchRooms = createAsyncThunk<Room[], number>(
   'serviceLocation/fetchRooms',
   async (floorId: number) => {
-    const response = await axios.get(`${BASE_URL}/pms/floors/${floorId}/rooms.json`, {
+    const response = await axios.get(`${BASE_URL}/pms/rooms.json?floor_id=${floorId}`, {
       headers: { Authorization: `Bearer ${TOKEN}` }
     });
-    return response.data.map((item: any) => item.rooms);
+    return response.data || [] ;
   }
 );
 

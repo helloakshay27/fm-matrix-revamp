@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Clock } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
-import { TicketPagination } from '@/components/TicketPagination';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -37,13 +36,13 @@ interface ApiResponse {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  {
-    key: 'actions',
-    label: 'Actions',
-    sortable: false,
-    hideable: false,
-    draggable: false
-  },
+  // {
+  //   key: 'actions',
+  //   label: 'Actions',
+  //   sortable: false,
+  //   hideable: false,
+  //   draggable: false
+  // },
   {
     key: 'timing',
     label: 'Timings',
@@ -72,13 +71,7 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true
   },
-  {
-    key: 'createdBy',
-    label: 'Created By',
-    sortable: true,
-    hideable: true,
-    draggable: true
-  }
+  
 ];
 
 // Mock data for shift management (similar to the image provided)
@@ -184,26 +177,21 @@ export const ShiftDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedShiftId, setSelectedShiftId] = useState<number | null>(null);
+  
+  // Pagination states - matching RosterDashboard pattern
   const [currentPage, setCurrentPage] = useState(1);
-  const [perPage, setPerPage] = useState(10);
+  const itemsPerPage = 15; // Changed to constant like RosterDashboard
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [shiftData, setShiftData] = useState<ShiftItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [pagination, setPagination] = useState({
-    current_page: 1,
-    per_page: 10,
-    total_pages: 1,
-    total_count: 0,
-    has_next_page: false,
-    has_prev_page: false
-  });
+  const [allShiftData, setAllShiftData] = useState<ShiftItem[]>([]); // Store all data
+  const [loading, setLoading] = useState(true);
 
-  // Mock API call - replace with actual API when backend is ready
-  const fetchShiftData = async (page = 1, per_page = 10, search = '') => {
+  // API call to fetch shift data
+  const fetchShiftData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
+      const apiUrl = getFullUrl('/pms/admin/user_shifts.json');
+      const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -211,72 +199,100 @@ export const ShiftDashboard = () => {
           'Authorization': getAuthHeader()
         }
       });
-      if (!response.ok) throw new Error('Failed to fetch shift data');
-      const data = await response.json();
-      const apiShifts = Array.isArray(data.user_shifts) ? data.user_shifts : [];
-      // Optionally filter by search
-      let filteredData = apiShifts;
-      if (search.trim()) {
-        filteredData = apiShifts.filter(item =>
-          (item.timings || '').toLowerCase().includes(search.toLowerCase()) ||
-          (item.created_by?.name || '').toLowerCase().includes(search.toLowerCase()) ||
-          (item.created_at || '').includes(search)
-        );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-      // Paginate data
-      const startIndex = (page - 1) * per_page;
-      const paginatedData = filteredData.slice(startIndex, startIndex + per_page);
-      setShiftData(paginatedData.map((item: any) => ({
+
+      const data = await response.json();
+      console.log('API Response:', data);
+
+      // Transform API data to match our interface
+      const transformedData: ShiftItem[] = (data.user_shifts || []).map((item: any) => ({
         id: item.id,
-        timing: item.timings,
-        totalHours: item.total_hour,
-        checkInMargin: item.check_in_margin,
-        createdOn: item.created_at,
-        createdBy: item.created_by?.name || '-',
-        active: true
-      })));
-      setPagination({
-        current_page: page,
-        per_page: per_page,
-        total_pages: Math.ceil(filteredData.length / per_page),
-        total_count: filteredData.length,
-        has_next_page: page < Math.ceil(filteredData.length / per_page),
-        has_prev_page: page > 1
-      });
+        timing: item.timings || 'Not specified',
+        totalHours: item.total_hour || 0,
+        checkInMargin: item.check_in_margin || '0h:0m',
+        createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : 'Not available',
+        createdBy: item.created_by?.name || 'System',
+        active: item.active !== undefined ? item.active : true
+      }));
+
+      setAllShiftData(transformedData);
+      console.log('Transformed Data Count:', transformedData.length);
     } catch (error: any) {
       console.error('Error fetching shift data:', error);
       toast.error(`Failed to load shift data: ${error.message}`, {
         duration: 5000,
       });
+      
+      // Fallback to mock data on API error
+      setAllShiftData(mockShiftData);
     } finally {
       setLoading(false);
     }
   };
 
-  // Load data on component mount and when page/perPage/filters change
+  // Load data on component mount
   useEffect(() => {
-    fetchShiftData(currentPage, perPage, debouncedSearchQuery);
-  }, [currentPage, perPage, debouncedSearchQuery]);
+    fetchShiftData();
+  }, []);
+
+  // Reset pagination when shift data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [allShiftData.length]);
+
+  // Reset pagination when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearchQuery]);
+
+  // Filter and paginate data
+  const filteredShiftData = useMemo(() => {
+    if (!allShiftData || !Array.isArray(allShiftData)) return [];
+    
+    return allShiftData.filter(item => {
+      if (!debouncedSearchQuery.trim()) return true;
+      
+      const searchLower = debouncedSearchQuery.toLowerCase();
+      return (
+        item.timing.toLowerCase().includes(searchLower) ||
+        item.createdBy.toLowerCase().includes(searchLower) ||
+        item.createdOn.includes(debouncedSearchQuery) ||
+        item.checkInMargin.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [allShiftData, debouncedSearchQuery]);
+
+  // Pagination calculations
+  const totalItems = filteredShiftData.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentShiftData = filteredShiftData.slice(startIndex, endIndex);
+
+  // Pagination functions
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   // Handle search
   const handleSearch = (term: string) => {
     setSearchTerm(term);
-    setCurrentPage(1); // Reset to first page when searching
   };
-
-  // Handle page change
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  // Handle per page change
-  const handlePerPageChange = (newPerPage: number) => {
-    setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing page size
-  };
-
-  const totalRecords = pagination.total_count;
-  const totalPages = pagination.total_pages;
 
   // Render row function for enhanced table
   const renderRow = (shift: ShiftItem) => ({
@@ -353,45 +369,108 @@ export const ShiftDashboard = () => {
       )}
 
       {!loading && (
-        <EnhancedTable
-          data={shiftData}
-          columns={columns}
-          renderRow={renderRow}
-          storageKey="shift-management-table"
-          enableSearch={true}
-          searchPlaceholder="Search shifts..."
-          onSearchChange={handleSearch}
-          enableExport={false}
-          exportFileName="shift-data"
-          leftActions={
-            <Button 
-              onClick={handleAdd} 
-              className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-            >
-              <Plus className="w-4 h-4" />
-              Add
-            </Button>
-          }
-          
-        
-          pagination={true}
-          pageSize={perPage}
-          loading={loading}
-          emptyMessage="No shifts found. Create your first shift to get started."
-        />
-      )}
+        <div className="">
+          <EnhancedTable
+            data={currentShiftData}
+            columns={columns}
+            renderRow={renderRow}
+            storageKey="shift-management-table"
+            enableSearch={true}
+            searchPlaceholder="Search shifts..."
+            onSearchChange={handleSearch}
+            enableExport={false}
+            exportFileName="shift-data"
+            leftActions={
+              <Button 
+                onClick={handleAdd} 
+                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </Button>
+            }
+            pagination={false} // Disable built-in pagination since we're adding custom
+            loading={loading}
+            emptyMessage="No shifts found. Create your first shift to get started."
+          />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <TicketPagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalRecords={totalRecords}
-          onPageChange={handlePageChange}
-          perPage={perPage}
-          onPerPageChange={handlePerPageChange}
-          isLoading={loading}
-        />
+          {/* Pagination Controls - matching RosterDashboard style */}
+          {allShiftData.length > 0 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-muted-foreground">
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} shifts
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevious}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+
+                <div className="flex items-center space-x-1">
+                  {/* Show first page */}
+                  {currentPage > 3 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(1)}
+                        className="w-8 h-8 p-0"
+                      >
+                        1
+                      </Button>
+                      {currentPage > 4 && <span className="px-2">...</span>}
+                    </>
+                  )}
+
+                  {/* Show pages around current page */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => page >= currentPage - 2 && page <= currentPage + 2)
+                    .map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => goToPage(page)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {page}
+                      </Button>
+                    ))}
+
+                  {/* Show last page */}
+                  {currentPage < totalPages - 2 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="px-2">...</span>}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => goToPage(totalPages)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {totalPages}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNext}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Modals */}
@@ -401,7 +480,7 @@ export const ShiftDashboard = () => {
           onClose={() => setIsAddModalOpen(false)}
           onSuccess={() => {
             setIsAddModalOpen(false);
-            fetchShiftData(currentPage, perPage, debouncedSearchQuery);
+            fetchShiftData();
           }}
         />
       )}

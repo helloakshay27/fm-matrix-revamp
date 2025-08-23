@@ -257,11 +257,6 @@ export const KRCCFormListDashboard = () => {
     label: 'Status',
     sortable: true,
     hideable: true
-  }, {
-    key: 'delete',
-    label: 'Delete',
-    sortable: false,
-    hideable: true
   }];
 
   const renderCell = (form: KRCCForm, columnKey: string): React.ReactNode => {
@@ -354,7 +349,7 @@ export const KRCCFormListDashboard = () => {
   return (
     <>
       <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {cardData.map((card, index) => (
             <div
               key={index}
@@ -373,7 +368,7 @@ export const KRCCFormListDashboard = () => {
               </div>
             </div>
           ))}
-        </div>
+        </div> */}
 
         {showActionPanel && (
           <SelectionPanel

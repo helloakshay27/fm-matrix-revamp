@@ -108,7 +108,7 @@ export const EnergyDashboard = () => {
 
   const handleAddReading = () => {
     // navigate("/utility/energy/add-asset");
-    navigate('/utility/water/add-asset');
+    navigate('/utility/energy/new-asset?type=energy');
   };
 
   const handleViewDetails = (energyId: string) => {

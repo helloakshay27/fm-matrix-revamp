@@ -32,25 +32,32 @@ interface FMUser {
 
 interface Shift {
   id: number;
-  name: string;
-  start_time: string;
-  end_time: string;
+  start_hour: number;
+  start_min: number;
+  end_hour: number;
+  end_min: number;
+  timings: string;
+  total_hour: number;
 }
 
 interface RosterTemplate {
   id: number;
   name: string;
-  working_days: string[];
-  day_type: 'Weekdays' | 'Weekends' | 'Recurring';
-  week_selection: string[];
-  location: string;
-  department_ids: number[];
-  shift_id: number;
-  employee_ids: number[];
-  roster_type: string;
+  no_of_days: any[];
+  allocation_type: string;
+  roaster_type: 'Weekdays' | 'Weekends' | 'Recurring';
+  start_date: string;
+  end_date: string;
+  created_by_id: number;
+  resource_id: number;
+  resource_type: string;
+  department_id: number[] | number | null;
+  user_shift_id: number;
+  seat_type: string | null;
   active: boolean;
+  seat_category_id: number;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 export const RosterDetailPage: React.FC = () => {
@@ -70,6 +77,7 @@ export const RosterDetailPage: React.FC = () => {
   const [fmUsers, setFMUsers] = useState<FMUser[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [shifts, setShifts] = useState<Shift[]>([]);
+  const [currentLocation, setCurrentLocation] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
   // Fetch data on component mount
@@ -79,6 +87,7 @@ export const RosterDetailPage: React.FC = () => {
       fetchFMUsers();
       fetchDepartments();
       fetchShifts();
+      fetchCurrentLocation();
     }
   }, [id]);
 
@@ -86,24 +95,22 @@ export const RosterDetailPage: React.FC = () => {
   const fetchRosterTemplate = async () => {
     setLoading(true);
     try {
-      // Mock data for demonstration - replace with actual API call
-      const mockTemplate: RosterTemplate = {
-        id: parseInt(id!),
-        name: 'Security Team Morning Shift',
-        working_days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-        day_type: 'Weekdays',
-        week_selection: ['1st Week', '2nd Week', '3rd Week', '4th Week', 'All'],
-        location: 'Corporate Office - Tower A',
-        department_ids: [1, 2],
-        shift_id: 1,
-        employee_ids: [101, 102, 103],
-        roster_type: 'Permanent',
-        active: true,
-        created_at: '2025-08-01T10:00:00Z',
-        updated_at: '2025-08-15T14:30:00Z'
-      };
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters/${id}.json`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
 
-      setRosterTemplate(mockTemplate);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Roster Template API Response:', data);
+      setRosterTemplate(data);
     } catch (error) {
       console.error('Error fetching roster template:', error);
       toast.error('Failed to load roster template details');
@@ -156,20 +163,78 @@ export const RosterDetailPage: React.FC = () => {
     }
   };
 
-  // Fetch Shifts
+  // Fetch Shifts from the API
   const fetchShifts = async () => {
     try {
-      // Mock shift data - replace with actual API call
-      const mockShifts = [
-        { id: 1, name: 'Morning Shift', start_time: '09:00', end_time: '17:00' },
-        { id: 2, name: 'Evening Shift', start_time: '17:00', end_time: '01:00' },
-        { id: 3, name: 'Night Shift', start_time: '01:00', end_time: '09:00' },
-        { id: 4, name: 'Extended Shift', start_time: '10:00', end_time: '20:00' }
-      ];
-      setShifts(mockShifts);
+      const apiUrl = getFullUrl('/pms/admin/user_shifts.json');
+      const response = await fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Shifts API Response:', data);
+
+      // Adapt the response to our expected format
+      const shiftsData = data.user_shifts || data.shifts || data || [];
+      setShifts(shiftsData.map((shift: any) => ({
+        id: shift.id,
+        start_hour: shift.start_hour,
+        start_min: shift.start_min,
+        end_hour: shift.end_hour,
+        end_min: shift.end_min,
+        timings: shift.timings,
+        total_hour: shift.total_hour
+      })));
     } catch (error) {
       console.error('Error fetching shifts:', error);
+      toast.error('Failed to load shifts');
       setShifts([]);
+    }
+  };
+
+  // Fetch Current Location (from site context)
+  const fetchCurrentLocation = async () => {
+    try {
+      // First try to get from Redux state
+      if (selectedSite?.name) {
+        setCurrentLocation(selectedSite.name);
+        return;
+      }
+
+      // Fallback to localStorage
+      const siteId = localStorage.getItem('selectedSiteId');
+      const siteName = localStorage.getItem('selectedSiteName');
+      const companyName = localStorage.getItem('selectedCompanyName');
+
+      let locationName = 'Current Site';
+
+      if (siteName && siteName !== 'null' && siteName !== '') {
+        locationName = siteName;
+      } else if (companyName && companyName !== 'null' && companyName !== '') {
+        locationName = companyName;
+      }
+
+      // Try to get from DOM if localStorage doesn't have it
+      if (locationName === 'Current Site') {
+        const headerSiteElement = document.querySelector('[data-site-name]');
+        if (headerSiteElement) {
+          locationName = headerSiteElement.textContent?.trim() || 'Current Site';
+        }
+      }
+
+      setCurrentLocation(locationName);
+    } catch (error) {
+      console.error('Error fetching current location:', error);
+      setCurrentLocation('Current Site');
     }
   };
 
@@ -180,7 +245,18 @@ export const RosterDetailPage: React.FC = () => {
     }
 
     try {
-      // API call to delete roster template would go here
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_roasters/${id}.json`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete roster template');
+      }
+
       toast.success('Roster template deleted successfully!');
       navigate('/roster');
     } catch (error) {
@@ -201,30 +277,89 @@ export const RosterDetailPage: React.FC = () => {
 
   // Helper functions
   const getSelectedDepartments = () => {
-    if (!rosterTemplate) return [];
-    return departments.filter(dept => rosterTemplate.department_ids.includes(dept.id!));
+    if (!rosterTemplate || !rosterTemplate.department_id) return [];
+    const deptIds = Array.isArray(rosterTemplate.department_id) 
+      ? rosterTemplate.department_id 
+      : [rosterTemplate.department_id];
+    return departments.filter(dept => deptIds.includes(dept.id!));
   };
 
-  const getSelectedEmployees = () => {
-    if (!rosterTemplate) return [];
-    return fmUsers.filter(user => rosterTemplate.employee_ids.includes(user.id));
+  const getSelectedEmployee = () => {
+    if (!rosterTemplate || !rosterTemplate.resource_id) return null;
+    return fmUsers.find(user => user.id === rosterTemplate.resource_id);
   };
 
   const getSelectedShift = () => {
-    if (!rosterTemplate) return null;
-    return shifts.find(shift => shift.id === rosterTemplate.shift_id);
+    if (!rosterTemplate || !rosterTemplate.user_shift_id) return null;
+    return shifts.find(shift => shift.id === rosterTemplate.user_shift_id);
   };
 
   const formatWorkingDays = () => {
     if (!rosterTemplate) return '';
     
-    if (rosterTemplate.day_type === 'Weekdays') {
+    if (rosterTemplate.roaster_type === 'Weekdays') {
       return 'Monday - Friday';
-    } else if (rosterTemplate.day_type === 'Weekends') {
+    } else if (rosterTemplate.roaster_type === 'Weekends') {
       return 'Saturday - Sunday';
-    } else {
-      return `${rosterTemplate.working_days.length} custom days selected`;
+    } else if (rosterTemplate.roaster_type === 'Recurring') {
+      // Parse recurring data from no_of_days
+      if (rosterTemplate.no_of_days && Array.isArray(rosterTemplate.no_of_days) && rosterTemplate.no_of_days.length > 0) {
+        const recurringData = rosterTemplate.no_of_days[0];
+        const totalDays = Object.keys(recurringData).reduce((acc, weekNum) => {
+          return acc + recurringData[weekNum].length;
+        }, 0);
+        return `${totalDays} custom days across ${Object.keys(recurringData).length} weeks`;
+      }
+      return 'Custom recurring pattern';
     }
+    return 'Not specified';
+  };
+
+  const getWeekSelectionDisplay = () => {
+    if (!rosterTemplate || !rosterTemplate.no_of_days) return [];
+    
+    if (rosterTemplate.roaster_type === 'Recurring') {
+      if (Array.isArray(rosterTemplate.no_of_days) && rosterTemplate.no_of_days.length > 0) {
+        const recurringData = rosterTemplate.no_of_days[0];
+        return Object.keys(recurringData).map(weekNum => `Week ${weekNum}`);
+      }
+    } else if (rosterTemplate.roaster_type === 'Weekdays') {
+      if (Array.isArray(rosterTemplate.no_of_days)) {
+        return rosterTemplate.no_of_days.map((weekNum: string) => 
+          `${weekNum}${weekNum === '1' ? 'st' : weekNum === '2' ? 'nd' : weekNum === '3' ? 'rd' : 'th'} Week`
+        );
+      }
+    } else if (rosterTemplate.roaster_type === 'Weekends') {
+      if (Array.isArray(rosterTemplate.no_of_days)) {
+        return rosterTemplate.no_of_days.map((weekendNum: string) => 
+          `${weekendNum}${weekendNum === '1' ? 'st' : weekendNum === '2' ? 'nd' : weekendNum === '3' ? 'rd' : 'th'} Weekend`
+        );
+      }
+    }
+    return [];
+  };
+
+  const getCustomWorkingDays = () => {
+    if (!rosterTemplate || rosterTemplate.roaster_type !== 'Recurring' || !rosterTemplate.no_of_days) return [];
+    
+    if (Array.isArray(rosterTemplate.no_of_days) && rosterTemplate.no_of_days.length > 0) {
+      const recurringData = rosterTemplate.no_of_days[0];
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const customDays: string[] = [];
+      
+      Object.keys(recurringData).forEach(weekNum => {
+        const dayNumbers = recurringData[weekNum];
+        dayNumbers.forEach((dayNum: string) => {
+          const dayName = dayNames[parseInt(dayNum) - 1];
+          if (dayName) {
+            customDays.push(`Week ${weekNum} - ${dayName}`);
+          }
+        });
+      });
+      
+      return customDays;
+    }
+    return [];
   };
 
   if (loading) {
@@ -271,7 +406,7 @@ export const RosterDetailPage: React.FC = () => {
               <h1 className="text-xl font-bold tracking-wide uppercase">Roster Template Details</h1>
               <div className="flex items-center gap-2 mt-1">
                 <Building2 className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-600">{rosterTemplate.location}</span>
+                <span className="text-sm text-gray-600">{currentLocation}</span>
                 <span className="text-sm text-gray-400">•</span>
                 <span className={`text-sm px-2 py-1 rounded-full ${rosterTemplate.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {rosterTemplate.active ? 'Active' : 'Inactive'}
@@ -282,18 +417,15 @@ export const RosterDetailPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={handleExport} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+         
           <Button onClick={handleEdit} variant="outline" size="sm">
             <Edit className="w-4 h-4 mr-2" />
             Edit
           </Button>
-          <Button onClick={handleDelete} variant="destructive" size="sm">
+          {/* <Button onClick={handleDelete} variant="destructive" size="sm">
             <Trash2 className="w-4 h-4 mr-2" />
             Delete
-          </Button>
+          </Button> */}
         </div>
       </header>
 
@@ -308,7 +440,7 @@ export const RosterDetailPage: React.FC = () => {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Roster Type</label>
-              <p className="text-gray-900">{rosterTemplate.roster_type}</p>
+              <p className="text-gray-900">{rosterTemplate.allocation_type}</p>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Status</label>
@@ -327,16 +459,16 @@ export const RosterDetailPage: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700 block mb-2">Day Type</label>
                 <div className="flex items-center gap-2">
                   <span className="inline-block w-3 h-3 rounded-full bg-[#C72030]"></span>
-                  <span className="font-medium text-gray-900">{rosterTemplate.day_type}</span>
+                  <span className="font-medium text-gray-900">{rosterTemplate.roaster_type}</span>
                   <span className="text-sm text-gray-500">({formatWorkingDays()})</span>
                 </div>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">Frequency</label>
                 <div className="flex flex-wrap gap-2">
-                  {rosterTemplate.week_selection.map((week) => (
+                  {getWeekSelectionDisplay().map((week, index) => (
                     <span
-                      key={week}
+                      key={index}
                       className="inline-block px-2 py-1 bg-[#C72030] text-white text-xs rounded-md"
                     >
                       {week}
@@ -346,13 +478,13 @@ export const RosterDetailPage: React.FC = () => {
               </div>
             </div>
 
-            {rosterTemplate.day_type === 'Recurring' && rosterTemplate.working_days.length > 0 && (
+            {rosterTemplate.roaster_type === 'Recurring' && getCustomWorkingDays().length > 0 && (
               <div>
                 <label className="text-sm font-medium text-gray-700 block mb-2">Custom Days Selected</label>
                 <div className="flex flex-wrap gap-2">
-                  {rosterTemplate.working_days.map((day) => (
+                  {getCustomWorkingDays().map((day, index) => (
                     <span
-                      key={day}
+                      key={index}
                       className="inline-block px-2 py-1 bg-gray-100 text-gray-800 text-xs rounded-md border"
                     >
                       {day}
@@ -371,7 +503,7 @@ export const RosterDetailPage: React.FC = () => {
               <label className="text-sm font-medium text-gray-700 block mb-2">Location</label>
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">{rosterTemplate.location}</span>
+                <span className="text-gray-900">{currentLocation}</span>
               </div>
             </div>
             <div>
@@ -398,9 +530,9 @@ export const RosterDetailPage: React.FC = () => {
               {getSelectedShift() && (
                 <div className="flex items-center gap-2 p-3 bg-[#f6f4ee] border border-[#D5DbDB] rounded-lg">
                   <Clock className="w-4 h-4 text-[#C72030]" />
-                  <span className="font-medium text-gray-900">{getSelectedShift()?.name}</span>
+                  <span className="font-medium text-gray-900">{getSelectedShift()?.timings}</span>
                   <span className="text-sm text-gray-600">
-                    ({getSelectedShift()?.start_time} - {getSelectedShift()?.end_time})
+                    ({getSelectedShift()?.total_hour}h)
                   </span>
                 </div>
               )}
@@ -408,44 +540,44 @@ export const RosterDetailPage: React.FC = () => {
 
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">
-                Assigned Employees ({getSelectedEmployees().length})
+                Assigned Employee ({getSelectedEmployee() ? 1 : 0})
               </label>
-              <div className="space-y-2">
-                {getSelectedEmployees().map((user) => (
-                  <div 
-                    key={user.id}
-                    className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
+              {getSelectedEmployee() && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                     <Users className="w-4 h-4 text-gray-400" />
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{user.email || 'No email available'}</div>
-                      <div className="text-sm text-gray-600">{user.name}</div>
+                      <div className="font-medium text-gray-900">{getSelectedEmployee()?.name || 'No name available'}</div>
+                      <div className="text-sm text-gray-600">{getSelectedEmployee()?.email}</div>
                     </div>
                     <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                      {user.department || 'No dept'}
+                      {getSelectedEmployee()?.department || 'No dept'}
                     </span>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+              {!getSelectedEmployee() && (
+                <p className="text-gray-500 italic">No employee assigned</p>
+              )}
             </div>
           </div>
         </Section>
 
-        {/* Metadata */}
-        <Section title="Metadata" icon={<Calendar className="w-4 h-4" />}>
+        {/* Date Range */}
+        <Section title="Date Range" icon={<Calendar className="w-4 h-4" />}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-sm font-medium text-gray-700 block mb-2">Created Date</label>
-              <p className="text-gray-900">{new Date(rosterTemplate.created_at).toLocaleString()}</p>
+              <label className="text-sm font-medium text-gray-700 block mb-2">Start Date</label>
+              <p className="text-gray-900">{new Date(rosterTemplate.start_date).toLocaleDateString()}</p>
             </div>
-            {rosterTemplate.updated_at && (
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">Last Updated</label>
-                <p className="text-gray-900">{new Date(rosterTemplate.updated_at).toLocaleString()}</p>
-              </div>
-            )}
+            <div>
+              <label className="text-sm font-medium text-gray-700 block mb-2">End Date</label>
+              <p className="text-gray-900">{new Date(rosterTemplate.end_date).toLocaleDateString()}</p>
+            </div>
           </div>
         </Section>
+
+    
       </div>
 
       {/* Footer Actions */}

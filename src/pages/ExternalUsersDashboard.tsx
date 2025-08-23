@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
@@ -239,7 +238,18 @@ export const ExternalUsersDashboard = () => {
       case 'active': {
         const isActive = (user as any).lock_user_permission?.active ?? ((user as any).lock_role ? (user as any).lock_role.active === 1 : !!(user as any).active);
         const disabled = updatingIds.has(user.id);
-        return <div className="flex justify-center"><Switch checked={!!isActive} disabled={disabled} onCheckedChange={() => !disabled && handleToggleActive(user)} /></div>;
+        return (
+          <div className="w-full flex justify-center">
+            <div
+              onClick={() => !disabled && handleToggleActive(user)}
+              className={`mx-auto relative inline-flex items-center h-6 rounded-full w-11 transition-colors ${isActive ? 'bg-green-500' : 'bg-gray-400'} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            >
+              <span
+                className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform ${isActive ? 'translate-x-6' : 'translate-x-1'}`}
+              />
+            </div>
+          </div>
+        );
       }
       case 'birth_date':
         return (user as any).birth_date || '-';

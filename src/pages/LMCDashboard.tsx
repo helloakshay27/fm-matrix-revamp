@@ -95,9 +95,9 @@ const LMCDashboard = () => {
             // Build query params
             const params: string[] = [`page=${page}`];
             // If a modal-applied user email filter exists, it overrides the search bar for that param
-            if (appliedUserEmail) params.push(`user_email_cont=${appliedUserEmail.trim()}`);
-            else if (searchTerm) params.push(`user_email_cont=${searchTerm.trim()}`);
-            if (appliedCreatedByEmail) params.push(`created_by_email_cont=${appliedCreatedByEmail.trim()}`);
+            if (appliedUserEmail) params.push(`q[user_email_cont]=${appliedUserEmail.trim()}`);
+            else if (searchTerm) params.push(`q[user_email_cont]=${searchTerm.trim()}`);
+            if (appliedCreatedByEmail) params.push(`q[created_by_email_cont]=${appliedCreatedByEmail.trim()}`);
             const url = `https://${baseUrl}/lmcs.json?${params.join('&')}`;
             const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
             if (!res.ok) throw new Error(`Failed (${res.status})`);
@@ -203,7 +203,7 @@ const LMCDashboard = () => {
 
     return (
         <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {cardData.map((card, idx) => (
                     <div
                         key={idx}
@@ -222,7 +222,7 @@ const LMCDashboard = () => {
                         </div>
                     </div>
                 ))}
-            </div>
+            </div> */}
             <div className="rounded-lg">
                 <EnhancedTable
                     data={filteredData}

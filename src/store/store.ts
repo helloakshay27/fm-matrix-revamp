@@ -47,7 +47,7 @@ import { addCurrencyReducer, getCurrencyReducer } from './slices/currencySlice'
 import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from './slices/eventSlice'
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
-import { approveRejectWOReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
+import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
 import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
@@ -175,6 +175,8 @@ export const store = configureStore({
     fetchWorkOrders: fetchWorkOrdersReducer,
     getWorkOrderById: getWorkOrderByIdReducer,
     approveRejectWO: approveRejectWOReducer,
+    fetchBOQ: fetchBOQReducer,
+    addWOInvoice: addWOInvoiceReducer,
 
     // Material PR
     getSuppliers: getSuppliersReducer,

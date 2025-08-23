@@ -114,6 +114,40 @@ export const RoomPage = () => {
     }
   }, [dispatch, newRoom.building, newRoom.wing, newRoom.area, newRoom.floor]);
 
+  // Fetch dependencies for edit forms
+  useEffect(() => {
+    if (editRoom.building && editingRoom) {
+      dispatch(fetchWings(parseInt(editRoom.building)));
+    }
+  }, [dispatch, editRoom.building, editingRoom]);
+
+  useEffect(() => {
+    if (editRoom.building && editRoom.wing && editingRoom) {
+      dispatch(fetchAreas({ buildingId: parseInt(editRoom.building), wingId: parseInt(editRoom.wing) }));
+    }
+  }, [dispatch, editRoom.building, editRoom.wing, editingRoom]);
+
+  useEffect(() => {
+    if (editRoom.building && editRoom.wing && editRoom.area && editingRoom) {
+      dispatch(fetchFloors({ 
+        buildingId: parseInt(editRoom.building), 
+        wingId: parseInt(editRoom.wing), 
+        areaId: parseInt(editRoom.area) 
+      }));
+    }
+  }, [dispatch, editRoom.building, editRoom.wing, editRoom.area, editingRoom]);
+
+  useEffect(() => {
+    if (editRoom.building && editRoom.wing && editRoom.area && editRoom.floor && editingRoom) {
+      dispatch(fetchUnits({ 
+        buildingId: parseInt(editRoom.building), 
+        wingId: parseInt(editRoom.wing), 
+        areaId: parseInt(editRoom.area),
+        floorId: parseInt(editRoom.floor)
+      }));
+    }
+  }, [dispatch, editRoom.building, editRoom.wing, editRoom.area, editRoom.floor, editingRoom]);
+
   // Pagination calculations
   const filteredRooms = rooms.data.filter(room => {
     const searchLower = searchTerm.toLowerCase();
@@ -186,14 +220,41 @@ export const RoomPage = () => {
   const handleEditRoom = (room: any) => {
     setEditingRoom(room);
     setEditRoom({
-      building: room.building_id.toString(),
-      wing: room.wing_id.toString(),
+      building: room.building_id?.toString() || '',
+      wing: room.wing_id?.toString() || '',
       area: room.area_id?.toString() || '',
-      floor: room.floor_id.toString(),
+      floor: room.floor_id?.toString() || '',
       unit: room.unit_id?.toString() || '',
-      roomName: room.name,
+      roomName: room.name || '',
       active: room.active
     });
+    
+    // Load the dependencies immediately when editing starts
+    if (room.building_id) {
+      dispatch(fetchWings(room.building_id));
+      
+      if (room.wing_id) {
+        dispatch(fetchAreas({ buildingId: room.building_id, wingId: room.wing_id }));
+        
+        if (room.area_id) {
+          dispatch(fetchFloors({ 
+            buildingId: room.building_id, 
+            wingId: room.wing_id, 
+            areaId: room.area_id 
+          }));
+          
+          if (room.floor_id) {
+            dispatch(fetchUnits({ 
+              buildingId: room.building_id, 
+              wingId: room.wing_id, 
+              areaId: room.area_id,
+              floorId: room.floor_id
+            }));
+          }
+        }
+      }
+    }
+    
     setIsEditDialogOpen(true);
   };
 
@@ -271,7 +332,16 @@ export const RoomPage = () => {
                   <div className="grid grid-cols-2 gap-4 py-4">
                     <div className="space-y-2">
                       <Label htmlFor="building">Select Building</Label>
-                      <Select value={newRoom.building} onValueChange={(value) => setNewRoom(prev => ({ ...prev, building: value, wing: '', area: '', floor: '', unit: '' }))}>
+                      <Select 
+                        value={newRoom.building} 
+                        onValueChange={(value) => {
+                          const updatedNewRoom = { ...newRoom, building: value, wing: '', area: '', floor: '', unit: '' };
+                          setNewRoom(updatedNewRoom);
+                          if (value) {
+                            dispatch(fetchWings(parseInt(value)));
+                          }
+                        }}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Building" />
                         </SelectTrigger>
@@ -289,7 +359,13 @@ export const RoomPage = () => {
                       <Label htmlFor="wing">Select Wing</Label>
                       <Select 
                         value={newRoom.wing} 
-                        onValueChange={(value) => setNewRoom(prev => ({ ...prev, wing: value, area: '', floor: '', unit: '' }))}
+                        onValueChange={(value) => {
+                          const updatedNewRoom = { ...newRoom, wing: value, area: '', floor: '', unit: '' };
+                          setNewRoom(updatedNewRoom);
+                          if (value && updatedNewRoom.building) {
+                            dispatch(fetchAreas({ buildingId: parseInt(updatedNewRoom.building), wingId: parseInt(value) }));
+                          }
+                        }}
                         disabled={!newRoom.building}
                       >
                         <SelectTrigger>
@@ -309,7 +385,17 @@ export const RoomPage = () => {
                       <Label htmlFor="area">Select Area</Label>
                       <Select 
                         value={newRoom.area} 
-                        onValueChange={(value) => setNewRoom(prev => ({ ...prev, area: value, floor: '', unit: '' }))}
+                        onValueChange={(value) => {
+                          const updatedNewRoom = { ...newRoom, area: value, floor: '', unit: '' };
+                          setNewRoom(updatedNewRoom);
+                          if (value && updatedNewRoom.building && updatedNewRoom.wing) {
+                            dispatch(fetchFloors({ 
+                              buildingId: parseInt(updatedNewRoom.building), 
+                              wingId: parseInt(updatedNewRoom.wing), 
+                              areaId: parseInt(value) 
+                            }));
+                          }
+                        }}
                         disabled={!newRoom.wing}
                       >
                         <SelectTrigger>
@@ -329,7 +415,18 @@ export const RoomPage = () => {
                       <Label htmlFor="floor">Select Floor</Label>
                       <Select 
                         value={newRoom.floor} 
-                        onValueChange={(value) => setNewRoom(prev => ({ ...prev, floor: value, unit: '' }))}
+                        onValueChange={(value) => {
+                          const updatedNewRoom = { ...newRoom, floor: value, unit: '' };
+                          setNewRoom(updatedNewRoom);
+                          if (value && updatedNewRoom.building && updatedNewRoom.wing && updatedNewRoom.area) {
+                            dispatch(fetchUnits({ 
+                              buildingId: parseInt(updatedNewRoom.building), 
+                              wingId: parseInt(updatedNewRoom.wing), 
+                              areaId: parseInt(updatedNewRoom.area),
+                              floorId: parseInt(value)
+                            }));
+                          }
+                        }}
                         disabled={!newRoom.wing}
                       >
                         <SelectTrigger>
@@ -437,7 +534,6 @@ export const RoomPage = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Actions</TableHead>
-                  <TableHead>Site</TableHead>
                   <TableHead>Building</TableHead>
                   <TableHead>Wing</TableHead>
                   <TableHead>Area</TableHead>
@@ -474,7 +570,6 @@ export const RoomPage = () => {
                            <Edit className="w-4 h-4 text-[#C72030]" />
                          </Button>
                        </TableCell>
-                      <TableCell>-</TableCell>
                       <TableCell>{room.building?.name || 'N/A'}</TableCell>
                       <TableCell>{room.wing?.name || 'N/A'}</TableCell>
                       <TableCell>{room.area?.name || 'N/A'}</TableCell>
@@ -582,9 +677,9 @@ export const RoomPage = () => {
 
           {/* Edit Room Dialog */}
           <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-            <DialogContent className="max-w-lg">
+            <DialogContent className="max-w-2xl">
               <DialogHeader className="flex flex-row items-center justify-between pb-0">
-                <DialogTitle>Edit Room</DialogTitle>
+                <DialogTitle>Edit Room Details</DialogTitle>
                 <button
                   onClick={() => setIsEditDialogOpen(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -592,86 +687,168 @@ export const RoomPage = () => {
                   <X className="h-4 w-4" />
                 </button>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="grid grid-cols-2 gap-4 py-4">
                 <div className="space-y-2">
-                  <Label>Building</Label>
-                  <Input
-                    value={editRoom.building}
-                    onChange={(e) => setEditRoom(prev => ({ ...prev, building: e.target.value }))}
-                    placeholder="Building"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Wing</Label>
-                  <Input
-                    value={editRoom.wing}
-                    onChange={(e) => setEditRoom(prev => ({ ...prev, wing: e.target.value }))}
-                    placeholder="Wing"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label>Area</Label>
+                  <Label>Select Building</Label>
                   <Select 
-                    value={editRoom.area} 
-                    onValueChange={(value) => setEditRoom(prev => ({ ...prev, area: value }))}
+                    value={editRoom.building} 
+                    onValueChange={(value) => {
+                      const updatedEditRoom = { ...editRoom, building: value, wing: '', area: '', floor: '', unit: '' };
+                      setEditRoom(updatedEditRoom);
+                      if (value) {
+                        dispatch(fetchWings(parseInt(value)));
+                      }
+                    }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Area" />
+                      <SelectValue placeholder="Select Building" />
                     </SelectTrigger>
                     <SelectContent className="bg-white z-50">
-                      <SelectItem value="Common Area">Common Area</SelectItem>
-                      <SelectItem value="Service Area">Service Area</SelectItem>
-                      <SelectItem value="Lobby">Lobby</SelectItem>
-                      <SelectItem value="Workstation Area">Workstation Area</SelectItem>
-                      <SelectItem value="Staircase">Staircase</SelectItem>
+                      {buildings.data.map((building) => (
+                        <SelectItem key={building.id} value={building.id.toString()}>
+                          {building.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Floor</Label>
-                  <Input
-                    value={editRoom.floor}
-                    onChange={(e) => setEditRoom(prev => ({ ...prev, floor: e.target.value }))}
-                    placeholder="Floor"
-                  />
+                  <Label>Select Wing</Label>
+                  <Select 
+                    value={editRoom.wing} 
+                    onValueChange={(value) => {
+                      const updatedEditRoom = { ...editRoom, wing: value, area: '', floor: '', unit: '' };
+                      setEditRoom(updatedEditRoom);
+                      if (value && updatedEditRoom.building) {
+                        dispatch(fetchAreas({ buildingId: parseInt(updatedEditRoom.building), wingId: parseInt(value) }));
+                      }
+                    }}
+                    disabled={!editRoom.building}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Wing" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {wings.data.map((wing) => (
+                        <SelectItem key={wing.id} value={wing.id.toString()}>
+                          {wing.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 
                 <div className="space-y-2">
-                  <Label>Room Name</Label>
+                  <Label>Select Area</Label>
+                  <Select 
+                    value={editRoom.area} 
+                    onValueChange={(value) => {
+                      const updatedEditRoom = { ...editRoom, area: value, floor: '', unit: '' };
+                      setEditRoom(updatedEditRoom);
+                      if (value && updatedEditRoom.building && updatedEditRoom.wing) {
+                        dispatch(fetchFloors({ 
+                          buildingId: parseInt(updatedEditRoom.building), 
+                          wingId: parseInt(updatedEditRoom.wing), 
+                          areaId: parseInt(value) 
+                        }));
+                      }
+                    }}
+                    disabled={!editRoom.wing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Area (Optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {areas.data.map((area) => (
+                        <SelectItem key={area.id} value={area.id.toString()}>
+                          {area.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Select Floor</Label>
+                  <Select 
+                    value={editRoom.floor} 
+                    onValueChange={(value) => {
+                      const updatedEditRoom = { ...editRoom, floor: value, unit: '' };
+                      setEditRoom(updatedEditRoom);
+                      if (value && updatedEditRoom.building && updatedEditRoom.wing && updatedEditRoom.area) {
+                        dispatch(fetchUnits({ 
+                          buildingId: parseInt(updatedEditRoom.building), 
+                          wingId: parseInt(updatedEditRoom.wing), 
+                          areaId: parseInt(updatedEditRoom.area),
+                          floorId: parseInt(value)
+                        }));
+                      }
+                    }}
+                    disabled={!editRoom.wing}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Floor" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {floors.data.map((floor) => (
+                        <SelectItem key={floor.id} value={floor.id.toString()}>
+                          {floor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Select Unit</Label>
+                  <Select 
+                    value={editRoom.unit} 
+                    onValueChange={(value) => setEditRoom(prev => ({ ...prev, unit: value }))}
+                    disabled={!editRoom.floor}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Unit (Optional)" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white z-50">
+                      {units.data.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id.toString()}>
+                          {unit.unit_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="editRoomName">Room Name</Label>
                   <Input
+                    id="editRoomName"
                     value={editRoom.roomName}
                     onChange={(e) => setEditRoom(prev => ({ ...prev, roomName: e.target.value }))}
-                    placeholder="Room Name"
+                    placeholder="Enter Room Name"
                   />
                 </div>
                 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="editActive"
-                    checked={editRoom.active}
-                    onCheckedChange={(checked) => setEditRoom(prev => ({ ...prev, active: !!checked }))}
-                  />
-                  <Label htmlFor="editActive">Active</Label>
+                <div className="space-y-2 col-span-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="editActive"
+                      checked={editRoom.active}
+                      onCheckedChange={(checked) => setEditRoom(prev => ({ ...prev, active: !!checked }))}
+                    />
+                    <Label htmlFor="editActive">Active</Label>
+                  </div>
                 </div>
               </div>
               
-              <div className="flex justify-end gap-2 pt-4">
+              <div className="flex justify-end pt-4">
                 <Button 
                   onClick={handleUpdateRoom} 
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                  disabled={!editRoom.roomName.trim()}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                  disabled={!editRoom.roomName.trim() || !editRoom.building || !editRoom.wing || !editRoom.floor}
                 >
-                  Save Changes
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditDialogOpen(false)}
-                  className="bg-gray-500 hover:bg-gray-600 text-white"
-                >
-                  Cancel
+                  Submit
                 </Button>
               </div>
             </DialogContent>
