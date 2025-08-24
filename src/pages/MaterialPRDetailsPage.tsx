@@ -6,6 +6,8 @@ import { Copy, Printer, Rss, Download } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -75,6 +77,20 @@ export const MaterialPRDetailsPage = () => {
       message: 'An internal server error occurred. The MPL ID for the failed message is : AGmImAmKt@pKgrTmKOa_VgGr_'
     }
   };
+
+  const handleSendToSap = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      toast.success(response.data.message);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send to SAP");
+    }
+  }
 
   const handleClone = () => {
     navigate(`/finance/material-pr/clone/${id}`);
@@ -268,6 +284,14 @@ export const MaterialPRDetailsPage = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-gray-300 bg-purple-600 text-white sap_button"
+          onClick={handleSendToSap}
+        >
+          Send To SAP Team
+        </Button>
         <Button variant="outline" size="sm" onClick={handleClone}>
           <Copy className="w-4 h-4 mr-2" />
           Clone

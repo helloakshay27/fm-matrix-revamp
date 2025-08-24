@@ -10,6 +10,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
+import axios from "axios";
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
@@ -349,6 +350,20 @@ export const PODetailsPage = () => {
     }
   };
 
+  const handleSendToSap = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      toast.success(response.data.message);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send to SAP");
+    }
+  }
+
   const handleRejectCancel = () => {
     setOpenRejectDialog(false);
     setRejectComment("");
@@ -378,6 +393,14 @@ export const PODetailsPage = () => {
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white sap_button"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
             <Button
               size="sm"
               variant="outline"

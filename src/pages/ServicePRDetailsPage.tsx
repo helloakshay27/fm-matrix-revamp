@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { getWorkOrderById } from '@/store/slices/workOrderSlice';
 import { numberToIndianCurrencyWords } from '@/utils/amountToText';
+import axios from 'axios';
 
 export const ServicePRDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -294,6 +295,20 @@ export const ServicePRDetailsPage = () => {
     }
   };
 
+  const handleSendToSap = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      })
+      toast.success(response.data.message);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send to SAP");
+    }
+  }
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
 
@@ -325,10 +340,15 @@ export const ServicePRDetailsPage = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <span className={`px-4 py-2 rounded text-sm font-medium ${getStatusColor(servicePRData.adminApproval)}`}>
-            Status:- {servicePRData.adminApproval}
-          </span>
           <div className="flex gap-2 flex-wrap">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white sap_button"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
             <Button size="sm" variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-1" />
               Edit
