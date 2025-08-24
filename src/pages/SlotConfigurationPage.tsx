@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,9 +7,10 @@ import { Plus, Search, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
 
 interface SlotConfigurationData {
-  id: number;
+  id: string;
   location: string;
   floor: string;
   twoWheeler: {
@@ -31,6 +32,9 @@ export const SlotConfigurationPage = () => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
+  const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     location: true,
@@ -45,67 +49,76 @@ export const SlotConfigurationPage = () => {
     fourWheelerReserved: true
   });
 
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetchParkingConfigurations();
+      const transformedData = transformApiDataToTableData(response.grouped_parking_configurations);
+      setSlotConfigurationData(transformedData);
+    } catch (err) {
+      console.error('Error fetching parking configurations:', err);
+      setError('Failed to fetch parking configurations');
+      toast.error('Failed to fetch parking configurations');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     setCurrentSection('Settings');
-  }, [setCurrentSection]);
-  
-  // Sample data for slot configuration
-  const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([
-    {
-      id: 1,
-      location: 'Sai Radhe',
-      floor: 'Ground Floor',
-      twoWheeler: {
-        totalParkings: 182,
-        nonStackParkings: 182,
+    fetchData();
+  }, [setCurrentSection, fetchData]);
+
+  const transformApiDataToTableData = (apiData: GroupedParkingConfiguration[]): SlotConfigurationData[] => {
+    const tableData: SlotConfigurationData[] = [];
+
+    apiData.forEach((group) => {
+      // Initialize counters for 2W and 4W
+      let twoWheelerData = {
+        totalParkings: 0,
+        nonStackParkings: 0,
         stackParkings: 0,
         reservedParkings: 0
-      },
-      fourWheeler: {
-        totalParkings: 76,
-        nonStackParkings: 76,
+      };
+      let fourWheelerData = {
+        totalParkings: 0,
+        nonStackParkings: 0,
         stackParkings: 0,
         reservedParkings: 0
-      },
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 2,
-      location: 'Building A',
-      floor: 'First Floor',
-      twoWheeler: {
-        totalParkings: 150,
-        nonStackParkings: 100,
-        stackParkings: 50,
-        reservedParkings: 10
-      },
-      fourWheeler: {
-        totalParkings: 60,
-        nonStackParkings: 50,
-        stackParkings: 10,
-        reservedParkings: 5
-      },
-      createdOn: '12/12/2023'
-    },
-    {
-      id: 3,
-      location: 'Building B',
-      floor: 'Second Floor',
-      twoWheeler: {
-        totalParkings: 120,
-        nonStackParkings: 80,
-        stackParkings: 40,
-        reservedParkings: 8
-      },
-      fourWheeler: {
-        totalParkings: 40,
-        nonStackParkings: 35,
-        stackParkings: 5,
-        reservedParkings: 3
-      },
-      createdOn: '10/11/2023'
-    }
-  ]);
+      };
+
+      // Process each parking configuration
+      group.parking_configurations.forEach((config) => {
+        if (config.category_name === '2 Wheeler') {
+          twoWheelerData = {
+            totalParkings: config.no_of_parkings,
+            nonStackParkings: config.unstacked_count,
+            stackParkings: config.stacked_count,
+            reservedParkings: config.reserved_parkings
+          };
+        } else if (config.category_name === '4 Wheeler') {
+          fourWheelerData = {
+            totalParkings: config.no_of_parkings,
+            nonStackParkings: config.unstacked_count,
+            stackParkings: config.stacked_count,
+            reservedParkings: config.reserved_parkings
+          };
+        }
+      });
+
+      tableData.push({
+        id: `${group.floor_id}`, // Use floor_id as unique identifier
+        location: group.building_name,
+        floor: group.floor_name,
+        twoWheeler: twoWheelerData,
+        fourWheeler: fourWheelerData,
+        createdOn: new Date().toLocaleDateString() // API doesn't provide this, using current date
+      });
+    });
+
+    return tableData;
+  };
 
   const filteredData = slotConfigurationData.filter(item =>
     item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -113,7 +126,7 @@ export const SlotConfigurationPage = () => {
     item.id.toString().includes(searchTerm)
   );
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     navigate(`/settings/vas/parking-management/slot-configuration/edit/${id}`);
   };
 
@@ -174,56 +187,80 @@ export const SlotConfigurationPage = () => {
 
       {/* Table */}
       <div className="bg-white rounded-lg border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.actions && <TableHead className="text-center" rowSpan={2}>Actions</TableHead>}
-              {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
-              {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
-              <TableHead className="text-center" colSpan={4}>2 Wheeler</TableHead>
-              <TableHead className="text-center" colSpan={4}>4 Wheeler</TableHead>
-            </TableRow>
-            <TableRow className="bg-[#f6f4ee]">
-              {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-              {visibleColumns.twoWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-              {visibleColumns.twoWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-              {visibleColumns.twoWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
-              {visibleColumns.fourWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
-              {visibleColumns.fourWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
-              {visibleColumns.fourWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
-              {visibleColumns.fourWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
-                {visibleColumns.actions && (
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        onClick={() => handleEdit(item.id)}
-                        className="p-1 hover:bg-gray-100 rounded"
-                        title="Edit"
-                      >
-                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                      </button>
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.location && <TableCell className="font-medium">{item.location}</TableCell>}
-                {visibleColumns.floor && <TableCell>{item.floor}</TableCell>}
-                {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
-                {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
-                {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
-                {visibleColumns.twoWheelerReserved && <TableCell className="text-center text-red-600">{item.twoWheeler.reservedParkings}</TableCell>}
-                {visibleColumns.fourWheelerTotal && <TableCell className="text-center">{item.fourWheeler.totalParkings}</TableCell>}
-                {visibleColumns.fourWheelerNonStack && <TableCell className="text-center">{item.fourWheeler.nonStackParkings}</TableCell>}
-                {visibleColumns.fourWheelerStack && <TableCell className="text-center">{item.fourWheeler.stackParkings}</TableCell>}
-                {visibleColumns.fourWheelerReserved && <TableCell className="text-center text-red-600">{item.fourWheeler.reservedParkings}</TableCell>}
+        {loading ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-gray-500">Loading parking configurations...</div>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center py-8">
+            <div className="text-red-500">{error}</div>
+            <Button 
+              onClick={fetchData}
+              className="ml-4 bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+            >
+              Retry
+            </Button>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[#f6f4ee]">
+                {visibleColumns.actions && <TableHead className="text-center" rowSpan={2}>Actions</TableHead>}
+                {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
+                {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
+                <TableHead className="text-center" colSpan={4}>2 Wheeler</TableHead>
+                <TableHead className="text-center" colSpan={4}>4 Wheeler</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+              <TableRow className="bg-[#f6f4ee]">
+                {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
+                {visibleColumns.twoWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
+                {visibleColumns.twoWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
+                {visibleColumns.twoWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
+                {visibleColumns.fourWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
+                {visibleColumns.fourWheelerNonStack && <TableHead className="text-center">Non Stack<br/>Parkings</TableHead>}
+                {visibleColumns.fourWheelerStack && <TableHead className="text-center">Stack<br/>Parkings</TableHead>}
+                {visibleColumns.fourWheelerReserved && <TableHead className="text-center text-red-600">Reserved<br/>Parkings</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                    No parking configurations found
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredData.map((item) => (
+                  <TableRow key={item.id} className="hover:bg-gray-50">
+                    {visibleColumns.actions && (
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          <button
+                            onClick={() => handleEdit(item.id)}
+                            className="p-1 hover:bg-gray-100 rounded"
+                            title="Edit"
+                          >
+                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
+                    {visibleColumns.location && <TableCell className="font-medium">{item.location}</TableCell>}
+                    {visibleColumns.floor && <TableCell>{item.floor}</TableCell>}
+                    {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
+                    {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
+                    {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
+                    {visibleColumns.twoWheelerReserved && <TableCell className="text-center text-red-600">{item.twoWheeler.reservedParkings}</TableCell>}
+                    {visibleColumns.fourWheelerTotal && <TableCell className="text-center">{item.fourWheeler.totalParkings}</TableCell>}
+                    {visibleColumns.fourWheelerNonStack && <TableCell className="text-center">{item.fourWheeler.nonStackParkings}</TableCell>}
+                    {visibleColumns.fourWheelerStack && <TableCell className="text-center">{item.fourWheeler.stackParkings}</TableCell>}
+                    {visibleColumns.fourWheelerReserved && <TableCell className="text-center text-red-600">{item.fourWheeler.reservedParkings}</TableCell>}
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
     </div>
   );
