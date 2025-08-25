@@ -330,6 +330,15 @@ const modulesByPackage = {
         { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
       ]
     },
+    {
+      name: 'Vi Miles',
+      icon: User,
+      href: '/maintenance/vi-miles',
+      subItems: [
+        { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
+        { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
     { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
