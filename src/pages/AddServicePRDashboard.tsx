@@ -39,7 +39,7 @@ export const AddServicePRDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
 
-  const { data } = useAppSelector((state) => state.changePlantDetails);
+  const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
@@ -258,7 +258,60 @@ export const AddServicePRDashboard = () => {
     .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
     .toFixed(2);
 
+  const validateForm = () => {
+    // Work Order Details Validation
+    if (!formData.contractor) {
+      toast.error("Contractor is required");
+      return false;
+    }
+    if (!formData.plantDetail) {
+      toast.error("Plant Detail is required");
+      return false;
+    }
+    if (!formData.woDate) {
+      toast.error("WO Date is required");
+      return false;
+    }
+    if (!formData.billingAddress) {
+      toast.error("Billing Address is required");
+      return false;
+    }
+    if (!formData.relatedTo) {
+      toast.error("Related To is required");
+      return false;
+    }
+
+    // Details Forms Validation
+    for (const item of detailsForms) {
+      if (!item.service) {
+        toast.error("Service is required for all items");
+        return false;
+      }
+      if (!item.productDescription) {
+        toast.error("Product Description is required for all items");
+        return false;
+      }
+      if (!item.quantityArea) {
+        toast.error("Quantity/Area is required for all items");
+        return false;
+      }
+      if (!item.expectedDate) {
+        toast.error("Expected Date is required for all items");
+        return false;
+      }
+      if (!item.rate) {
+        toast.error("Rate is required for all items");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
     const payload = {
       pms_work_order: {
         letter_of_indent: true,
@@ -306,7 +359,7 @@ export const AddServicePRDashboard = () => {
       navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(error.message);
     }
   };
 
@@ -1018,7 +1071,7 @@ export const AddServicePRDashboard = () => {
           </div>
         </div>
 
-        <div className="flex gap-4 mt-8">
+        <div className="flex items-center justify-center gap-4 mt-8">
           <Button
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8"
