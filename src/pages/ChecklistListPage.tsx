@@ -7,10 +7,17 @@ import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useQuery } from '@tanstack/react-query';
 import { fetchChecklistMaster, transformChecklistData, TransformedChecklistData } from '@/services/customFormsAPI';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { toast, Toaster } from "sonner";
+import { apiClient } from '@/utils/apiClient';
+import { ENDPOINTS } from '@/config/apiConfig';
 
 export const ChecklistListPage = () => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Master');
@@ -33,6 +40,65 @@ export const ChecklistListPage = () => {
     navigate('/master/checklist/create');
   };
 
+  const handleDownloadSampleFormat = async () => {
+    console.log('Downloading checklist sample format...');
+
+    try {
+      // Call the API to download the sample file
+      const response = await apiClient.get(ENDPOINTS.CHECKLIST_SAMPLE_FORMAT, {
+        responseType: 'blob'
+      });
+
+      // Create blob URL and trigger download
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'checklist_sample_format.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Sample format downloaded successfully', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    }
+  };
+
+  const handleActionClick = () => {
+    setShowActionPanel((prev) => !prev);
+  };
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button 
+        onClick={handleActionClick}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+      >
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        Action
+      </Button>
+    </div>
+  );
+
   const handleViewChecklist = (checklist: TransformedChecklistData) => {
     // Navigate to view checklist page with checklist data
     navigate(`/master/checklist/view/${checklist.id}`, {
@@ -48,73 +114,31 @@ export const ChecklistListPage = () => {
     console.log('Delete checklist:', id);
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      console.log('File selected:', file.name);
-    }
-  };
-
-  const handleDownloadSampleFormat = () => {
-    console.log('Download sample format');
-  };
-
-  const handleImportQuestions = () => {
-    console.log('Import questions');
-  };
+  // Define selectionActions for SelectionPanel
+  const selectionActions = [
+  ];
 
   return (
     <div className="w-full min-h-screen bg-[#fafafa] p-6">
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="top-right" richColors closeButton />
+
       <div className="w-full max-w-none space-y-6">
         <h1 className="text-2xl font-bold text-[#1a1a1a]">CHECKLIST MASTER</h1>
 
+        {/* Action Panel */}
+        {showActionPanel && (
+          <SelectionPanel
+            actions={selectionActions}
+            onAdd={handleAddChecklist}
+            onClearSelection={() => setShowActionPanel(false)}
+            onImport={() => setShowImportModal(true)}
+          />
+        )}
+
         {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 items-center">
-          <Button 
-            onClick={handleAddChecklist}
-            className="bg-[#6B46C1] hover:bg-[#6B46C1]/90 text-white"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add
-          </Button>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                accept=".csv,.xlsx,.xls"
-                onChange={handleFileUpload}
-              />
-              <label
-                htmlFor="file-upload"
-                className="px-4 py-2 text-sm border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 flex items-center gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Choose file
-              </label>
-              <span className="text-sm text-gray-500">No file chosen</span>
-            </div>
-
-            <Button
-              variant="secondary"
-              onClick={handleDownloadSampleFormat}
-              className="bg-[#6B46C1] hover:bg-[#6B46C1]/90 text-white"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download Sample Format
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={handleImportQuestions}
-              className="bg-[#6B46C1] hover:bg-[#6B46C1]/90 text-white"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Import Questions
-            </Button>
-          </div>
+          {renderCustomActions()}
         </div>
 
         {/* Checklist Table */}
@@ -201,6 +225,14 @@ export const ChecklistListPage = () => {
             </div>
           </CardContent>
         </Card>
+
+        <BulkUploadDialog 
+          open={showImportModal} 
+          onOpenChange={setShowImportModal} 
+          title="Bulk Upload Checklist" 
+          context="checklist_master"
+          onDownloadSample={handleDownloadSampleFormat}
+        />
       </div>
     </div>
   );

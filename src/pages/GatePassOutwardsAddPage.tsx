@@ -78,7 +78,7 @@ export const GatePassOutwardsAddPage = () => {
                   : 'bg-white text-[#C72030] border border-[#C72030]'
               }`}
             >
-              NON RETURNABLE
+              NON RETURNABLEbnjjj
             </button>
           </div>
         </div>

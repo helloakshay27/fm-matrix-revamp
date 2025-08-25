@@ -133,7 +133,7 @@ export const TimeSetupStep: React.FC<TimeSetupStepProps> = ({
             <div className="w-10 h-10 bg-[#C72030] rounded-full flex items-center justify-center">
               <Settings className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-semibold text-[#C72030]">Time Setup</h2>
+            <h2 className="text-xl font-semibold text-[#C72030]" style={{ textTransform: 'uppercase' }}>Time Setup</h2>
           </div>
         )}
         {disabled && (
