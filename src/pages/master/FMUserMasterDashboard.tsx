@@ -303,7 +303,7 @@ export const FMUserMasterDashboard = () => {
 
   const handleStatusClick = (user: any) => {
     setSelectedUser(user);
-    setSelectedStatus(user.status);
+    setSelectedStatus(user.status === null ? "pending" : user.status);
     setStatusDialogOpen(true);
   };
 
@@ -897,10 +897,10 @@ export const FMUserMasterDashboard = () => {
 
       <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
         <DialogContent className="sm:max-w-[400px] p-0 bg-white">
-          <DialogHeader className="p-6 pb-4 border-b">
+          <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-xl font-semibold">
-                Update
+                Update Status
               </DialogTitle>
               <Button
                 variant="ghost"
@@ -913,7 +913,7 @@ export const FMUserMasterDashboard = () => {
             </div>
           </DialogHeader>
 
-          <div className="p-6 space-y-6">
+          <div className="px-6 py-3 space-y-6">
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
               <SelectTrigger className="w-full bg-white" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
                 <SelectValue placeholder="Select Status" />
@@ -938,7 +938,7 @@ export const FMUserMasterDashboard = () => {
               </SelectContent>
             </Select>
 
-            <div className="flex justify-center pt-4">
+            <div className="flex justify-center">
               <Button
                 onClick={handleStatusUpdate}
                 className="bg-purple-700 hover:bg-purple-800 text-white px-8 py-2 rounded-md"
