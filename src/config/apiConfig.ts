@@ -175,6 +175,13 @@ export const API_CONFIG = {
     PERMIT_TAGS: '/pms/permit_tags.json',
     // Resend OTP endpoint
     RESEND_OTP: '/pms/visitors/request_otp.json',
+    // Parking configurations endpoint
+    PARKING_CONFIGURATIONS: '/pms/admin/parking_configurations.json',
+    // Buildings and floors endpoints (correct paths based on locationSlice)
+    BUILDINGS: '/buildings.json',
+    FLOORS: '/pms/floors.json',
+    // Recent visitors endpoint
+    RECENT_VISITORS: '/pms/admin/visitors/recent_visitors.json',
     
   },
 } as const

@@ -4,12 +4,25 @@ import { Edit, Copy, Printer, Rss } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { approveRejectWO, getWorkOrderById } from "@/store/slices/workOrderSlice";
+import {
+  approveRejectWO,
+  getWorkOrderById,
+} from "@/store/slices/workOrderSlice";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import InvoiceModal from "@/components/InvoiceModal";
-import { Dialog, DialogActions, DialogContent, DialogTitle, FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
 import axios from "axios";
 
 const boqColumns: ColumnConfig[] = [
@@ -167,12 +180,16 @@ export const WODetailsPage = () => {
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [debitCreditNote, setDebitCreditNote] = useState([]);
-  const [invoices, setInvoices] = useState([])
+  const [invoices, setInvoices] = useState([]);
   const [debitCreditForm, setDebitCreditForm] = useState({
     type: "",
     amount: "",
     description: "",
   });
+  const [buttonCondition, setButtonCondition] = useState({
+    showSap: false,
+    editWbsCode: false
+  })
 
   const [workOrder, setWorkOrder] = useState({
     letter_of_indent: false,
@@ -215,6 +232,8 @@ export const WODetailsPage = () => {
     inventories: [],
     totals: { net_amount: "", total_taxable: "", taxes: "", total_value: "" },
     pms_po_inventories: [],
+    attachments: [],
+    approvals: [],
   });
 
   const handleDebitCreditChange = (e) => {
@@ -229,7 +248,11 @@ export const WODetailsPage = () => {
       ).unwrap();
       setWorkOrder(response.page);
       setDebitCreditNote(response.page.debit_credit_notes);
-      setInvoices(response.page.invoices)
+      setInvoices(response.page.invoices);
+      setButtonCondition({
+        showSap: response.show_send_sap_yes,
+        editWbsCode: response.can_edit_wbs_codes
+      })
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -281,20 +304,20 @@ export const WODetailsPage = () => {
           note: debitCreditForm.description,
           note_type: debitCreditForm.type,
           resource_id: Number(id),
-          resource_type: "Pms::WorkOrder"
-        }
-      }
+          resource_type: "Pms::WorkOrder",
+        },
+      };
 
       await axios.post(`https://${baseUrl}/debit_notes.json`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
-        }
-      })
+        },
+      });
       fetchWorkOrder();
-      toast.success("Debit note created successfully")
+      toast.success("Debit note created successfully");
     } catch (error) {
-      console.log(error)
-      toast.error(error)
+      console.log(error);
+      toast.error(error);
     } finally {
       handleCloseDebitCreditModal();
     }
@@ -307,7 +330,9 @@ export const WODetailsPage = () => {
       approve: true,
     };
     try {
-      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("Work Order approved successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error) {
@@ -330,11 +355,13 @@ export const WODetailsPage = () => {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: false,
-      rejection_reason: rejectComment
+      rejection_reason: rejectComment,
     };
 
     try {
-      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("Work Order rejected successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error) {
@@ -351,6 +378,23 @@ export const WODetailsPage = () => {
     setRejectComment("");
   };
 
+  const handleSendToSap = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      toast.success(response.data.message);
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to send to SAP");
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       {/* Header */}
@@ -359,50 +403,49 @@ export const WODetailsPage = () => {
           <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
             WORK ORDER DETAILS
           </h1>
-          {
-            workOrder.approvals?.map((approval: any) => (
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-700">
-                  {approval.level} Approval:
-                </span>
-                <span className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(approval.status)}`}>
-                  {approval.status}
-                </span>
-              </div>
-            ))
-          }
-
+          {workOrder.approvals?.map((approval: any) => (
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-gray-700">
+                {approval.level} Approval:
+              </span>
+              <span
+                className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(
+                  approval.status
+                )}`}
+              >
+                {approval.status}
+              </span>
+            </div>
+          ))}
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
-            {workOrder.letter_of_indent === true &&
-              workOrder.plant_detail_id &&
-              !workOrder.external_id &&
-              workOrder.all_level_approved &&
-              workOrder.lup?.has?.send_to_sap?.create && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-300 bg-purple-600 text-white sap_button mr-2"
-                    onClick={() =>
-                      navigate(`/pms/work_orders/${workOrder.id}?send_sap=yes`)
-                    }
-                  >
-                    Send To SAP Team
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-gray-300 btn-primary mr-2"
-                    data-bs-toggle="modal"
-                    data-bs-target="#wbsBulkModal"
-                  >
-                    Edit WBS Codes
-                  </Button>
-                </>
-              )}
+            {
+              buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white sap_button"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )
+            }
+            {
+              buttonCondition.editWbsCode && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 btn-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#wbsBulkModal"
+                >
+                  Edit WBS Codes
+                </Button>
+              )
+            }
             <Button size="sm" variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-1" />
               Edit
@@ -427,8 +470,7 @@ export const WODetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
-            {
-              workOrder.all_level_approved &&
+            {workOrder.all_level_approved && (
               <>
                 <Button
                   size="sm"
@@ -447,7 +489,7 @@ export const WODetailsPage = () => {
                   Debit/Credit Note
                 </Button>
               </>
-            }
+            )}
           </div>
         </div>
       </div>
@@ -758,11 +800,15 @@ export const WODetailsPage = () => {
           Attachments
         </h3>
         <div className="flex items-center gap-4 flex-wrap">
-          {
-            workOrder?.attachments?.length > 0 && workOrder.attachments.map((attachment, index) => (
-              <img src={attachment.url} alt="" key={index} className="w-24 h-24" />
-            ))
-          }
+          {workOrder?.attachments?.length > 0 &&
+            workOrder.attachments.map((attachment, index) => (
+              <img
+                src={attachment.url}
+                alt=""
+                key={index}
+                className="w-24 h-24"
+              />
+            ))}
         </div>
       </div>
 
@@ -820,7 +866,7 @@ export const WODetailsPage = () => {
             data={debitCreditNote || []}
             columns={debitCreditColumns}
             renderCell={(item, columnKey) => {
-              return item[columnKey] || '-';
+              return item[columnKey] || "-";
             }}
             storageKey="debit-credit-table"
             hideColumnsButton={true}
@@ -918,9 +964,7 @@ export const WODetailsPage = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDebitCreditModal}>
-            Close
-          </Button>
+          <Button onClick={handleCloseDebitCreditModal}>Close</Button>
           <Button
             onClick={handleSubmitDebitCredit}
             style={{ backgroundColor: "#6B46C1", color: "white" }}
@@ -930,7 +974,12 @@ export const WODetailsPage = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openRejectDialog} onClose={handleRejectCancel} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openRejectDialog}
+        onClose={handleRejectCancel}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Reject Work Order</DialogTitle>
         <DialogContent>
           <TextField

@@ -88,7 +88,7 @@ export const AddBookingSetupPage = () => {
   const [selectedBookingFiles, setSelectedBookingFiles] = useState<File[]>([]);
 
   const [additionalOpen, setAdditionalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     facilityName: "",
@@ -240,8 +240,102 @@ export const AddBookingSetupPage = () => {
       toast.error("Please enter Cancellation Policies");
       return false;
     }
-    return true
-  }
+
+    // Validate slot times
+    for (let index = 0; index < formData.slots.length; index++) {
+      const slot = formData.slots[index];
+
+      // Convert hours to numbers for comparison
+      const startHour = parseInt(slot.startTime.hour);
+      const breakStartHour = parseInt(slot.breakTimeStart.hour);
+      const breakEndHour = parseInt(slot.breakTimeEnd.hour);
+      const endHour = parseInt(slot.endTime.hour);
+
+      // If start time hour is selected (not "00")
+      if (slot.startTime.hour !== "00") {
+        // Ensure all subsequent time fields are selected
+        if (
+          slot.breakTimeStart.hour === "00" ||
+          slot.breakTimeEnd.hour === "00" ||
+          slot.endTime.hour === "00"
+        ) {
+          toast.error(
+            `Slot ${index + 1}: All subsequent time fields must be selected when Start Time is set`
+          );
+          return false;
+        }
+
+        // Validate that subsequent times are greater than or equal to start time
+        if (breakStartHour < startHour) {
+          toast.error(
+            `Slot ${index + 1}: Break Time Start hour must be greater than or equal to Start Time hour`
+          );
+          return false;
+        }
+        if (breakEndHour < startHour) {
+          toast.error(
+            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Start Time hour`
+          );
+          return false;
+        }
+        if (endHour < startHour) {
+          toast.error(
+            `Slot ${index + 1}: End Time hour must be greater than or equal to Start Time hour`
+          );
+          return false;
+        }
+      }
+
+      // If break time start hour is selected (not "00")
+      if (slot.breakTimeStart.hour !== "00") {
+        // Ensure subsequent time fields are selected
+        if (
+          slot.breakTimeEnd.hour === "00" ||
+          slot.endTime.hour === "00"
+        ) {
+          toast.error(
+            `Slot ${index + 1}: Break Time End and End Time must be selected when Break Time Start is set`
+          );
+          return false;
+        }
+
+        // Validate that subsequent times are greater than or equal to break start time
+        if (breakEndHour < breakStartHour) {
+          toast.error(
+            `Slot ${index + 1}: Break Time End hour must be greater than or equal to Break Time Start hour`
+          );
+          return false;
+        }
+        if (endHour < breakStartHour) {
+          toast.error(
+            `Slot ${index + 1}: End Time hour must be greater than or equal to Break Time Start hour`
+          );
+          return false;
+        }
+      }
+
+      // If break time end hour is selected (not "00")
+      if (slot.breakTimeEnd.hour !== "00") {
+        // Ensure end time is selected
+        if (slot.endTime.hour === "00") {
+          toast.error(
+            `Slot ${index + 1}: End Time must be selected when Break Time End is set`
+          );
+          return false;
+        }
+
+        // Validate that end time is greater than or equal to break end time
+        if (endHour < breakEndHour) {
+          toast.error(
+            `Slot ${index + 1}: End Time hour must be greater than or equal to Break Time End hour`
+          );
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
 
   const handleSave = async () => {
     if (!validateForm()) return;
@@ -575,21 +669,6 @@ export const AddBookingSetupPage = () => {
                       shrink: true,
                     }}
                   />
-                  {/* <FormControl>
-                    <InputLabel className="bg-[#F6F7F7]">Active*</InputLabel>
-                    <Select
-                      value={formData.active}
-                      onChange={(e) =>
-                        setFormData({ ...formData, active: e.target.value })
-                      }
-                      label="Active*"
-                      defaultValue="Select"
-                    >
-                      <MenuItem value="Select">Select</MenuItem>
-                      <MenuItem value="1">Yes</MenuItem>
-                      <MenuItem value="0">No</MenuItem>
-                    </Select>
-                  </FormControl> */}
                   <FormControl>
                     <InputLabel className="bg-[#F6F7F7]">Department</InputLabel>
                     <Select
@@ -685,7 +764,7 @@ export const AddBookingSetupPage = () => {
                 </div>
 
                 {/* Slot Rows */}
-                {/* {formData.slots.map((slot, index) => (
+                {formData.slots.map((slot, index) => (
                   <div key={index} className="grid grid-cols-7 gap-2 mb-2">
                     <div className="flex gap-1">
                       <FormControl size="small">
@@ -891,249 +970,7 @@ export const AddBookingSetupPage = () => {
                       variant="outlined"
                     />
                   </div>
-                ))} */}
-
-                {formData.slots.map((slot, index) => {
-                  // Convert hour strings to numbers for comparison
-                  const startHour = parseInt(slot.startTime.hour, 10);
-                  const breakStartHour = parseInt(slot.breakTimeStart.hour, 10);
-                  const breakEndHour = parseInt(slot.breakTimeEnd.hour, 10);
-
-                  // Generate hour options for Start Time (0-23)
-                  const startTimeHourOptions = Array.from({ length: 24 }, (_, i) => ({
-                    value: i.toString().padStart(2, "0"),
-                    label: i.toString().padStart(2, "0"),
-                  }));
-
-                  // Generate hour options for Break Time Start (must be >= Start Time hour)
-                  const breakTimeStartHourOptions = Array.from({ length: 24 }, (_, i) => ({
-                    value: i.toString().padStart(2, "0"),
-                    label: i.toString().padStart(2, "0"),
-                  })).filter((option) => parseInt(option.value, 10) >= startHour);
-
-                  // Generate hour options for Break Time End (must be >= Break Time Start hour)
-                  const breakTimeEndHourOptions = Array.from({ length: 24 }, (_, i) => ({
-                    value: i.toString().padStart(2, "0"),
-                    label: i.toString().padStart(2, "0"),
-                  })).filter((option) => parseInt(option.value, 10) >= breakStartHour);
-
-                  // Generate hour options for End Time (must be >= Break Time End hour)
-                  const endTimeHourOptions = Array.from({ length: 24 }, (_, i) => ({
-                    value: i.toString().padStart(2, "0"),
-                    label: i.toString().padStart(2, "0"),
-                  })).filter((option) => parseInt(option.value, 10) >= breakEndHour);
-
-                  return (
-                    <div key={index} className="grid grid-cols-7 gap-2 mb-2">
-                      {/* Start Time */}
-                      <div className="flex gap-1">
-                        <FormControl size="small">
-                          <Select
-                            value={slot.startTime.hour}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].startTime.hour = e.target.value;
-                              // Reset subsequent times if they are now invalid
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].breakTimeStart.hour, 10)) {
-                                newSlots[index].breakTimeStart.hour = e.target.value;
-                              }
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].breakTimeEnd.hour, 10)) {
-                                newSlots[index].breakTimeEnd.hour = e.target.value;
-                              }
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].endTime.hour, 10)) {
-                                newSlots[index].endTime.hour = e.target.value;
-                              }
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {startTimeHourOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                        <FormControl size="small">
-                          <Select
-                            value={slot.startTime.minute}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].startTime.minute = e.target.value;
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <MenuItem key={i} value={i.toString().padStart(2, "0")}>
-                                {i.toString().padStart(2, "0")}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </div>
-
-                      {/* Break Time Start */}
-                      <div className="flex gap-1">
-                        <FormControl size="small">
-                          <Select
-                            value={slot.breakTimeStart.hour}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].breakTimeStart.hour = e.target.value;
-                              // Reset subsequent times if they are now invalid
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].breakTimeEnd.hour, 10)) {
-                                newSlots[index].breakTimeEnd.hour = e.target.value;
-                              }
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].endTime.hour, 10)) {
-                                newSlots[index].endTime.hour = e.target.value;
-                              }
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {breakTimeStartHourOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                        <FormControl size="small">
-                          <Select
-                            value={slot.breakTimeStart.minute}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].breakTimeStart.minute = e.target.value;
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <MenuItem key={i} value={i.toString().padStart(2, "0")}>
-                                {i.toString().padStart(2, "0")}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </div>
-
-                      {/* Break Time End */}
-                      <div className="flex gap-1">
-                        <FormControl size="small">
-                          <Select
-                            value={slot.breakTimeEnd.hour}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].breakTimeEnd.hour = e.target.value;
-                              // Reset end time if it is now invalid
-                              if (parseInt(e.target.value, 10) > parseInt(newSlots[index].endTime.hour, 10)) {
-                                newSlots[index].endTime.hour = e.target.value;
-                              }
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {breakTimeEndHourOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                        <FormControl size="small">
-                          <Select
-                            value={slot.breakTimeEnd.minute}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].breakTimeEnd.minute = e.target.value;
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <MenuItem key={i} value={i.toString().padStart(2, "0")}>
-                                {i.toString().padStart(2, "0")}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </div>
-
-                      {/* End Time */}
-                      <div className="flex gap-1">
-                        <FormControl size="small">
-                          <Select
-                            value={slot.endTime.hour}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].endTime.hour = e.target.value;
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {endTimeHourOptions.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                        <FormControl size="small">
-                          <Select
-                            value={slot.endTime.minute}
-                            onChange={(e) => {
-                              const newSlots = [...formData.slots];
-                              newSlots[index].endTime.minute = e.target.value;
-                              setFormData({ ...formData, slots: newSlots });
-                            }}
-                          >
-                            {Array.from({ length: 60 }, (_, i) => (
-                              <MenuItem key={i} value={i.toString().padStart(2, "0")}>
-                                {i.toString().padStart(2, "0")}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      </div>
-
-                      {/* Concurrent Slots */}
-                      <TextField
-                        size="small"
-                        value={slot.concurrentSlots}
-                        onChange={(e) => {
-                          const newSlots = [...formData.slots];
-                          newSlots[index].concurrentSlots = e.target.value;
-                          setFormData({ ...formData, slots: newSlots });
-                        }}
-                        variant="outlined"
-                      />
-
-                      {/* Slot By */}
-                      <FormControl size="small">
-                        <Select
-                          value={slot.slotBy}
-                          onChange={(e) => {
-                            const newSlots = [...formData.slots];
-                            newSlots[index].slotBy = e.target.value;
-                            setFormData({ ...formData, slots: newSlots });
-                          }}
-                        >
-                          <MenuItem value={15}>15 Minutes</MenuItem>
-                          <MenuItem value={30}>Half hour</MenuItem>
-                          <MenuItem value={45}>45 Minutes</MenuItem>
-                          <MenuItem value={60}>1 hour</MenuItem>
-                          <MenuItem value={90}>1 and a half hours</MenuItem>
-                        </Select>
-                      </FormControl>
-
-                      {/* Wrap Time */}
-                      <TextField
-                        size="small"
-                        value={slot.wrapTime}
-                        onChange={(e) => {
-                          const newSlots = [...formData.slots];
-                          newSlots[index].wrapTime = e.target.value;
-                          setFormData({ ...formData, slots: newSlots });
-                        }}
-                        variant="outlined"
-                      />
-                    </div>
-                  );
-                })}
+                ))}
 
                 <div className="space-y-4 mt-4">
                   <div>

@@ -1393,7 +1393,6 @@ export const WorkOrderAddPage: React.FC = () => {
             <input
               type="file"
               multiple
-              accept="image/*"
               className="hidden"
               id="file-upload"
               onChange={handleFileUpload}

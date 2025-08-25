@@ -640,6 +640,7 @@ import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
 import ReporteesReassignPage from "./pages/ReporteesReassignPage";
+import { InvoiceDetails } from "./pages/InvoiceDetails";
 
 
 const queryClient = new QueryClient();
@@ -1274,6 +1275,10 @@ function App() {
                 <Route
                   path="/finance/invoices"
                   element={<InvoicesDashboard />}
+                />
+                <Route
+                  path="/finance/invoices/:id"
+                  element={<InvoiceDetails />}
                 />
                 <Route
                   path="/finance/bill-booking"
