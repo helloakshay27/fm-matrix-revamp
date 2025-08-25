@@ -109,7 +109,7 @@ export const MaterialPRDashboard = () => {
         id: item.id,
         prNo: item.external_id,
         referenceNo: item.reference_number,
-        supplierName: item.supplier.company_name,
+        supplierName: item.supplier?.company_name,
         createdBy: item.user.full_name,
         createdOn: item.created_at,
         lastApprovedBy:
@@ -129,7 +129,9 @@ export const MaterialPRDashboard = () => {
       setMaterialPR(formatedResponse);
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(
+        error.message || "Failed to fetch material PR data. Please try again."
+      );
     }
   };
 
