@@ -8,6 +8,7 @@ import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { numberToIndianCurrencyWords } from '@/utils/amountToText';
 
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -31,53 +32,6 @@ export const MaterialPRDetailsPage = () => {
     fetchData();
   }, []);
 
-  // Mock data - in real app this would come from API based on id
-  const prData = {
-    id: id || '11045',
-    prNumber: '121250',
-    referenceNo: '110318',
-    adminApproval: 'Approved',
-    date: '27/03/25',
-    supplier: 'ABC',
-    phone: 'rgfrgrthyjtgj',
-    email: 'Neptune@gmail.com',
-    gst: 'grjghlkngltn',
-    deliveryAddress: 'Neptune\nNA',
-    paymentTenure: '',
-    tds: '',
-    advanceAmount: '',
-    plantDetail: '1212323234-Default Site Org-Plant for Lockated Site 1',
-    address: 'Thane',
-    pan: 'jknjknjfjkenkfk',
-    relatedTo: 'Test',
-    retention: '',
-    qc: '',
-    netAmount: '1000.00',
-    amountInWords: 'One Thousand Rupees Only',
-    items: [{
-      sNo: 1,
-      item: 'A4 Size Papers 3',
-      availability: 'NA',
-      sacHsnCode: '',
-      expectedDate: '27/03/25',
-      productDescription: 'Test',
-      quantity: '10.0',
-      unit: 'Piece',
-      movingAvgRate: '',
-      rate: '100.00',
-      amount: '1000.00',
-      approvedQty: '10',
-      transferQty: '',
-      wbsCode: ''
-    }],
-    attachments: 'No attachments',
-    termsConditions: ['Test'],
-    sapResponse: {
-      code: '',
-      message: 'An internal server error occurred. The MPL ID for the failed message is : AGmImAmKt@pKgrTmKOa_VgGr_'
-    }
-  };
-
   const handleSendToSap = async () => {
     try {
       const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`, {
@@ -99,181 +53,7 @@ export const MaterialPRDetailsPage = () => {
     navigate(`/finance/material-pr/feeds/${id}`);
   };
   const handlePrint = () => {
-    // Create a print-friendly version of the page
-    const printContent = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Material PR Details - ${prData.prNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            .header { text-align: center; margin-bottom: 30px; }
-            .company-name { font-size: 24px; font-weight: bold; }
-            .title { font-size: 18px; margin: 10px 0; }
-            .approval-status { background: green; color: white; padding: 5px 10px; border-radius: 3px; }
-            .section { margin: 20px 0; }
-            .section-title { font-weight: bold; margin-bottom: 10px; }
-            .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-            .detail-row { display: flex; margin: 5px 0; }
-            .detail-label { width: 200px; font-weight: bold; }
-            .detail-value { flex: 1; }
-            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-            th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 12px; }
-            th { background-color: #f5f5f5; }
-            .totals { text-align: right; margin: 20px 0; }
-            @media print { body { margin: 0; } }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="company-name">NEPTUNE</div>
-            <div class="title">MATERIAL PR</div>
-            <div>Page 1 - ${prData.date}</div>
-            <div class="approval-status">admin Approval: ${prData.adminApproval}</div>
-          </div>
-          
-          <div class="details-grid">
-            <div>
-              <div class="detail-row">
-                <span class="detail-label">Phone:</span>
-                <span class="detail-value">NA</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Email:</span>
-                <span class="detail-value">${prData.email}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">PAN:</span>
-                <span class="detail-value">NA</span>
-              </div>
-            </div>
-            <div>
-              <div class="detail-row">
-                <span class="detail-label">Fax:</span>
-                <span class="detail-value">NA</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">GST:</span>
-                <span class="detail-value">NA</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">Address:</span>
-                <span class="detail-value">NA</span>
-              </div>
-            </div>
-          </div>
 
-          <div class="section">
-            <div class="section-title">Material PR</div>
-            <div class="details-grid">
-              <div>
-                <div class="detail-row">
-                  <span class="detail-label">MPR No.:</span>
-                  <span class="detail-value">${prData.prNumber}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">MPR Date:</span>
-                  <span class="detail-value">${prData.date}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Plant Detail:</span>
-                  <span class="detail-value">${prData.plantDetail}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Address:</span>
-                  <span class="detail-value">${prData.address}</span>
-                </div>
-              </div>
-              <div>
-                <div class="detail-row">
-                  <span class="detail-label">Reference No.:</span>
-                  <span class="detail-value">${prData.referenceNo}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">ID:</span>
-                  <span class="detail-value">10435</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Supplier:</span>
-                  <span class="detail-value">${prData.supplier}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Email:</span>
-                  <span class="detail-value">${prData.email}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <table>
-            <thead>
-              <tr>
-                <th>S No.</th>
-                <th>Item</th>
-                <th>Availability</th>
-                <th>SAC/HSN Code</th>
-                <th>Expected Date</th>
-                <th>Product Description</th>
-                <th>Quantity</th>
-                <th>Unit</th>
-                <th>Moving Avg Rate</th>
-                <th>Rate</th>
-                <th>Amount</th>
-                <th>Approved Qty</th>
-                <th>Transfer Qty</th>
-                <th>Wbs Code</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${prData.items.map(item => `
-                <tr>
-                  <td>${item.sNo}</td>
-                  <td>${item.item}</td>
-                  <td>${item.availability}</td>
-                  <td>${item.sacHsnCode}</td>
-                  <td>${item.expectedDate}</td>
-                  <td>${item.productDescription}</td>
-                  <td>${item.quantity}</td>
-                  <td>${item.unit}</td>
-                  <td>${item.movingAvgRate}</td>
-                  <td>${item.rate}</td>
-                  <td>${item.amount}</td>
-                  <td>${item.approvedQty}</td>
-                  <td>${item.transferQty}</td>
-                  <td>${item.wbsCode}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-
-          <div class="totals">
-            <div><strong>Net Amount(INR):</strong> ${prData.netAmount}</div>
-            <div><strong>Amount In Words:</strong> ${prData.amountInWords}</div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Attachments</div>
-            <div>${prData.attachments}</div>
-          </div>
-
-          <div class="section">
-            <div class="section-title">Terms & Conditions:</div>
-            <ol>
-              ${prData.termsConditions.map(term => `<li>${term}</li>`).join('')}
-            </ol>
-          </div>
-        </body>
-      </html>
-    `;
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(printContent);
-      printWindow.document.close();
-      printWindow.focus();
-      setTimeout(() => {
-        printWindow.print();
-      }, 250);
-    }
   };
   return <div className="p-6 mx-auto max-w-7xl">
     {/* Header */}
@@ -389,7 +169,7 @@ export const MaterialPRDetailsPage = () => {
               </div>
               <div className="flex">
                 <span className="text-muted-foreground w-40">Plant Detail</span>
-                <span className="font-medium">: {prData.plantDetail}</span>
+                <span className="font-medium">: {pr.plantDetail}</span>
               </div>
               <div className="flex">
                 <span className="text-muted-foreground w-40">Address</span>
@@ -477,8 +257,8 @@ export const MaterialPRDetailsPage = () => {
           <div className="mt-6 pt-4 border-t border-border">
             <div className="flex justify-end">
               <div className="text-right">
-                <div className="text-lg font-semibold">Net Amount(INR): ₹{prData.netAmount}</div>
-                <div className="text-sm text-muted-foreground">Amount In Words: {prData.amountInWords}</div>
+                <div className="text-lg font-semibold">Net Amount(INR): ₹{pr.total_amount}</div>
+                <div className="text-sm text-muted-foreground">Amount In Words: {numberToIndianCurrencyWords(pr.total_amount)}</div>
               </div>
             </div>
           </div>
@@ -492,7 +272,7 @@ export const MaterialPRDetailsPage = () => {
         </CardHeader>
         <CardContent>
           {pr.attachments === 'No attachments' ? (
-            <p className="text-muted-foreground">{prData.attachments}</p>
+            <p className="text-muted-foreground">{pr.attachments}</p>
           ) : (
             <div className="flex flex-col gap-3">
               {pr?.attachments?.map((file, idx) => {

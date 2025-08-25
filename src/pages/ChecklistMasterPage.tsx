@@ -83,6 +83,10 @@ export const ChecklistMasterPage = () => {
     ticketCategory: ''
   });
 
+  const handleFormChange = (field: keyof typeof formData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const [sections, setSections] = useState<TaskSection[]>([
     {
       id: '1',
@@ -312,7 +316,7 @@ export const ChecklistMasterPage = () => {
       }))
     );
 
-    const payload: ChecklistCreateRequest = {
+    const payload = {
       source: "form",
       schedule_type: formData.type.toLowerCase(),
       sch_type: formData.type.toLowerCase(),
@@ -320,18 +324,15 @@ export const ChecklistMasterPage = () => {
       group_id: formData.groupId,
       sub_group_id: formData.subGroupId,
       tmp_custom_form: {
-        ticket_level: "question",
-        helpdesk_category_id: "",
+        ticket_level: formData.ticketLevel,
+        helpdesk_category_id: formData.ticketCategory || "",
         schedule_type: formData.type,
         organization_id: "1",
         form_name: formData.activityName,
         description: formData.description,
         asset_meter_type_id: 1,
-        // Add auto ticket fields to payload
         create_ticket: autoTicket ? "1" : "0",
-        ticket_level: formData.ticketLevel,
         task_assigner_id: formData.ticketAssignedTo || "",
-        helpdesk_category_id: formData.ticketCategory || "",
         weightage_enabled: weightage ? "1" : "0"
       },
       content
@@ -594,7 +595,7 @@ export const ChecklistMasterPage = () => {
             placeholder="Enter Activity Name"
             fullWidth
             value={formData.activityName}
-            onChange={(e) => setFormData({ ...formData, activityName: e.target.value })}
+            onChange={(e) => handleFormChange('activityName', e.target.value)}
             sx={{ mb: 3 }}
           />
 
@@ -605,7 +606,7 @@ export const ChecklistMasterPage = () => {
             multiline
             rows={4}
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => handleFormChange('description', e.target.value)}
             sx={{ mb: 3 }}
           />
 

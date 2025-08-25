@@ -267,8 +267,69 @@ export const AddMaterialPRDashboard = () => {
       .toFixed(2);
   };
 
+  const validateForm = () => {
+    // Supplier Details Validation
+    if (!supplierDetails.supplier) {
+      toast.error("Supplier is required");
+      return false;
+    }
+    if (!supplierDetails.plantDetail) {
+      toast.error("Plant Detail is required");
+      return false;
+    }
+    if (!supplierDetails.prDate) {
+      toast.error("PR Date is required");
+      return false;
+    }
+    if (!supplierDetails.billingAddress) {
+      toast.error("Billing Address is required");
+      return false;
+    }
+    if (!supplierDetails.deliveryAddress) {
+      toast.error("Delivery Address is required");
+      return false;
+    }
+    if (!supplierDetails.relatedTo) {
+      toast.error("Related To is required");
+      return false;
+    }
+    if (!supplierDetails.termsConditions) {
+      toast.error("Terms & Conditions are required");
+      return false;
+    }
+
+    // Item Details Validation
+    for (const item of items) {
+      if (!item.itemDetails) {
+        toast.error("Item Details is required for all items");
+        return false;
+      }
+      if (!item.productDescription) {
+        toast.error("Product Description is required for all items");
+        return false;
+      }
+      if (!item.quantity) {
+        toast.error("Quantity is required for all items");
+        return false;
+      }
+      if (!item.expectedDate) {
+        toast.error("Expected Date is required for all items");
+        return false;
+      }
+      if (!item.each) {
+        toast.error("Rate is required for all items");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return
+    }
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
