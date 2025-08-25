@@ -135,7 +135,7 @@ export const ViewFMUserPage = () => {
         base_unit: userData.unit_id,
         system_user_type: userData.user_type,
         department: userData.department_id,
-        role: userData.role_id,
+        role: userData.lock_user_permission?.lock_role_id,
         vendor_company: userData.supplier_id,
         company_cluster: '',
         last_working_day: userData.lock_user_permission?.last_working_date,

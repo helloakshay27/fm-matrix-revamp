@@ -286,7 +286,7 @@ export const EditFMUserPage = () => {
         selectDepartment: userData.department_id || "",
         designation: userData.lock_user_permission?.designation || "",
         selectUserType: userData.user_type || "",
-        selectRole: userData.role_id || "",
+        selectRole: userData.lock_user_permission?.lock_role_id || "",
         selectAccessLevel: userData.lock_user_permission?.access_level || "",
         selectEmailPreference: userData.urgency_email_enabled?.toString() || "",
         selectedSites:

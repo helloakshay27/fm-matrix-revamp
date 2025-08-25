@@ -50,7 +50,7 @@ const transformFMUserData = (apiUser: FMUser) => ({
   vendorCompany: apiUser.vendor_name,
   entityName: apiUser.entity_name,
   unit: apiUser.unit_name,
-  role: apiUser.lock_user_permission?.role_for,
+  role: apiUser.role_name,
   employeeId: apiUser.lock_user_permission?.employee_id,
   createdBy: apiUser.created_by_name,
   accessLevel: apiUser.lock_user_permission?.access_level,
