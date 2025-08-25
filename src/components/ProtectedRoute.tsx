@@ -12,23 +12,34 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const location = useLocation();
   const { toast } = useToast();
 
+  // useEffect(() => {
+  //   // Check if token exists and is valid
+  //   const authenticated = isAuthenticated();
+  //   const token = getToken();
+
+  //   if (!authenticated || !token) {
+  //     toast({
+  //       variant: "destructive",
+  //       title: "Access Denied",
+  //       description: "Please login to access this page",
+  //       duration: 3000,
+  //     });
+  //     setIsAuthorized(false);
+  //   } else {
+  //     setIsAuthorized(true);
+  //   }
+  // }, [location.pathname, toast]);
+
   useEffect(() => {
-    // Check if token exists and is valid
     const authenticated = isAuthenticated();
     const token = getToken();
-    
+
     if (!authenticated || !token) {
-      toast({
-        variant: "destructive",
-        title: "Access Denied",
-        description: "Please login to access this page",
-        duration: 3000,
-      });
       setIsAuthorized(false);
     } else {
       setIsAuthorized(true);
     }
-  }, [location.pathname, toast]);
+  }, [location.pathname]);
 
   // Show loading or spinner while checking auth
   if (isAuthorized === null) {

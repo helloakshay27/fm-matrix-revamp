@@ -405,8 +405,9 @@ export const ViewSchedulePage = () => {
               />
             </div>
             <div className="space-y-3">
+              {customForm?.attachments && customForm.attachments.length > 0 && (
+                <>
               <Label className="text-base font-medium">Attachments</Label>
-              {customForm?.attachments && customForm.attachments.length > 0 ? (
                 <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
                   {customForm.attachments.map((attachment: any, index: number) => {
                     const isImage = attachment.file_name && attachment.file_name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
@@ -463,8 +464,7 @@ export const ViewSchedulePage = () => {
                     );
                   })}
                 </Box>
-              ) : (
-                <p className="text-sm text-gray-500 pt-2">No attachments.</p>
+                </>
               )}
             </div>
           </CardContent>
@@ -640,17 +640,62 @@ export const ViewSchedulePage = () => {
                           sx={muiFieldStyles}
                         />
                         {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {task.question_hint_image_url.map((image: any, imgIndex: number) => (
-                              <a key={image.id || imgIndex} href={image.url} target="_blank" rel="noopener noreferrer" title={image.filename}>
-                                <img 
-                                  src={image.url} 
-                                  alt={image.filename} 
-                                  className="h-16 w-16 rounded-md object-cover border"
-                                />
-                              </a>
-                            ))}
-                          </div>
+                          <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                            {task.question_hint_image_url.map((image: any, imgIndex: number) => {
+                              const isImage = image.filename && image.filename.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+                              return (
+                                <a key={image.id || imgIndex} href={image.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                                  <Box
+                                    sx={{
+                                      width: '120px',
+                                      height: '120px',
+                                      border: '2px dashed #ccc',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      position: 'relative',
+                                      backgroundColor: '#fafafa',
+                                      '&:hover': {
+                                        borderColor: '#999'
+                                      }
+                                    }}
+                                  >
+                                    {isImage && image.url ? (
+                                      <img
+                                        src={image.url}
+                                        alt={image.filename}
+                                        style={{
+                                          maxWidth: '100px',
+                                          maxHeight: '100px',
+                                          objectFit: 'contain',
+                                          borderRadius: 4,
+                                        }}
+                                      />
+                                    ) : (
+                                      <>
+                                        <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                                        <Typography
+                                          variant="caption"
+                                          sx={{
+                                            textAlign: 'center',
+                                            px: 1,
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            whiteSpace: 'nowrap',
+                                            width: '100%',
+                                            color: '#333'
+                                          }}
+                                        >
+                                          {image.filename}
+                                        </Typography>
+                                      </>
+                                    )}
+                                  </Box>
+                                </a>
+                              );
+                            })}
+                          </Box>
                         )}
                       </div>
                     )}

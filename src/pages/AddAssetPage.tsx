@@ -289,13 +289,13 @@ const AddAssetPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
-  // Toggle-controlled sections must be closed by default
-  warranty: false,
-  meterCategory: false,
+    // Toggle-controlled sections must be closed by default
+    warranty: false,
+    meterCategory: false,
     consumption: true,
-  nonConsumption: false,
+    nonConsumption: false,
     assetAllocation: true,
-  assetLoaned: false,
+    assetLoaned: false,
     amcDetails: true,
     attachments: true,
   });
@@ -554,7 +554,7 @@ const AddAssetPage = () => {
     sub_group_id: "",
     consumption_pms_asset_measures_attributes: [],
     non_consumption_pms_asset_measures_attributes: [],
-    allocation_id: "",
+    allocation_ids: [],
     asset_move_to: {
       site_id: "",
       building_id: "",
@@ -1820,7 +1820,7 @@ const AddAssetPage = () => {
     handleFieldChange("it_asset", checked);
     setExpandedSections((prev) => ({
       ...prev,
-  warranty: checked ? true : false,
+      warranty: checked ? true : false,
     }));
   };
   const handleMeterDetailsToggleChange = (checked) => {
@@ -1828,7 +1828,7 @@ const AddAssetPage = () => {
     handleFieldChange("is_meter", checked);
     setExpandedSections((prev) => ({
       ...prev,
-  meterCategory: checked ? true : false,
+      meterCategory: checked ? true : false,
     }));
   };
   const handleAssetLoanedToggleChange = (checked) => {
@@ -1836,7 +1836,7 @@ const AddAssetPage = () => {
     handleFieldChange("asset_loaned", checked);
     setExpandedSections((prev) => ({
       ...prev,
-  assetLoaned: checked ? true : false,
+      assetLoaned: checked ? true : false,
     }));
   };
   const handleDepreciationToggleChange = (checked) => {
@@ -1844,7 +1844,7 @@ const AddAssetPage = () => {
     handleFieldChange("depreciation_applicable", checked);
     setExpandedSections((prev) => ({
       ...prev,
-  nonConsumption: checked ? true : false,
+      nonConsumption: checked ? true : false,
     }));
   };
 
@@ -2961,6 +2961,39 @@ const AddAssetPage = () => {
     }
 
     // Meter Details validation (if applicable toggle is on)
+    // IT Assets Details validation (if applicable toggle is on)
+    if (itAssetsToggle) {
+      // System Details required fields
+      const systemFields = [
+        { key: "os", label: "OS" },
+        { key: "memory", label: "Total Memory" },
+        { key: "processor", label: "Processor" },
+      ];
+      for (const field of systemFields) {
+        if (!itAssetDetails.system_details[field.key]) {
+          toast.error(`${field.label} Required`, {
+            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+            duration: 4000,
+          });
+          return [`${field.label} is required in IT ASSETS DETAILS`];
+        }
+      }
+      // Hardware Details required fields
+      const hardwareFields = [
+        { key: "model", label: "Model" },
+        { key: "serial_no", label: "Serial No." },
+        { key: "capacity", label: "Capacity" },
+      ];
+      for (const field of hardwareFields) {
+        if (!itAssetDetails.hardware[field.key]) {
+          toast.error(`${field.label} Required`, {
+            description: `Please enter ${field.label} in IT ASSETS DETAILS to continue.`,
+            duration: 4000,
+          });
+          return [`${field.label} is required in IT ASSETS DETAILS`];
+        }
+      }
+    }
     if (
       meterDetailsToggle &&
       meterType === "SubMeter" &&
@@ -3086,6 +3119,7 @@ const AddAssetPage = () => {
 
     // Clear validation errors if all fields are valid
     setValidationErrors([]);
+    setValidationErrors([]);
 
     // Show success message before proceeding
     toast.success("Validation Complete", {
@@ -3185,7 +3219,7 @@ const AddAssetPage = () => {
           : formData.asset_ids,
 
         // Single allocation field
-        allocation_id: formData.allocation_id,
+        allocation_ids: formData.allocation_ids,
 
         // Nested objects
         asset_move_to: formData.asset_move_to,
@@ -3705,7 +3739,7 @@ const AddAssetPage = () => {
           : formData.asset_ids,
 
         // Single allocation field
-        allocation_id: formData.allocation_id,
+        allocation_ids: formData.allocation_ids,
 
         // Nested objects
         asset_move_to: formData.asset_move_to,
@@ -4309,11 +4343,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Land Type</MenuItem>
-                        <MenuItem value="raw">Raw Land</MenuItem>
-                        <MenuItem value="developed">Developed Land</MenuItem>
-                        <MenuItem value="leased">Leased</MenuItem>
-                        <MenuItem value="agricultural">Agricultural</MenuItem>
-                        <MenuItem value="special">Special Use</MenuItem>
+                        <MenuItem value="Raw Land">Raw Land</MenuItem>
+                        <MenuItem value="Developed Land">Developed Land</MenuItem>
+                        <MenuItem value="Leased">Leased</MenuItem>
+                        <MenuItem value="Agricultural">Agricultural</MenuItem>
+                        <MenuItem value="Special Use">Special Use</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     {/* Custom Fields */}
@@ -4414,9 +4448,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Ownership Type</MenuItem>
-                        <MenuItem value="owned">Owned</MenuItem>
-                        <MenuItem value="leased">Leased</MenuItem>
-                        <MenuItem value="allotted">Allotted</MenuItem>
+                        <MenuItem value="Owned">Owned</MenuItem>
+                        <MenuItem value="Leased">Leased</MenuItem>
+                        <MenuItem value="Allotted">Allotted</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -4462,10 +4496,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Zoning</MenuItem>
-                        <MenuItem value="residential">Residential</MenuItem>
-                        <MenuItem value="commercial">Commercial</MenuItem>
-                        <MenuItem value="agricultural">Agricultural</MenuItem>
-                        <MenuItem value="industrial">Industrial</MenuItem>
+                        <MenuItem value="Residential">Residential</MenuItem>
+                        <MenuItem value="Commercial">Commercial</MenuItem>
+                        <MenuItem value="Agricultural">Agricultural</MenuItem>
+                        <MenuItem value="Industrial">Industrial</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -4491,9 +4525,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="clear">Clear</MenuItem>
-                        <MenuItem value="mortgage">Under Mortgage</MenuItem>
-                        <MenuItem value="disputed">Disputed</MenuItem>
+                        <MenuItem value="Clear">Clear</MenuItem>
+                        <MenuItem value="Under Mortgage">Under Mortgage</MenuItem>
+                        <MenuItem value="Disputed">Disputed</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -4783,11 +4817,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Purpose</MenuItem>
-                        <MenuItem value="commercial">Commercial</MenuItem>
-                        <MenuItem value="residential">Residential</MenuItem>
-                        <MenuItem value="reserved">Reserved</MenuItem>
-                        <MenuItem value="institutional">Institutional</MenuItem>
-                        <MenuItem value="industrial">Industrial</MenuItem>
+                        <MenuItem value="Commercial">Commercial</MenuItem>
+                        <MenuItem value="Residential">Residential</MenuItem>
+                        <MenuItem value="Reserved">Reserved</MenuItem>
+                        <MenuItem value="Institutional">Institutional</MenuItem>
+                        <MenuItem value="Industrial">Industrial</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -4813,12 +4847,12 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Improvements</MenuItem>
-                        <MenuItem value="fencing">Fencing</MenuItem>
-                        <MenuItem value="landscaping">Landscaping</MenuItem>
-                        <MenuItem value="roads"> Internal Roads</MenuItem>
-                        <MenuItem value="electricity">Electricity</MenuItem>
-                        <MenuItem value="wateracess">Water Access</MenuItem>
-                        <MenuItem value="other">Other </MenuItem>
+                        <MenuItem value="Fencing">Fencing</MenuItem>
+                        <MenuItem value="Landscaping">Landscaping</MenuItem>
+                        <MenuItem value="Internal Roads"> Internal Roads</MenuItem>
+                        <MenuItem value="Electricity">Electricity</MenuItem>
+                        <MenuItem value="Water Access">Water Access</MenuItem>
+                        <MenuItem value="Other">Other </MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -5060,7 +5094,7 @@ const AddAssetPage = () => {
                       }}
                     />
                     <TextField
-                      label="Improvement Description"
+                      label="Asset Name"
                       placeholder="e.g., Flooring, IT Cabling"
                       variant="outlined"
                       fullWidth
@@ -5177,9 +5211,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Property</MenuItem>
-                        <MenuItem value="prop001">Property 001</MenuItem>
-                        <MenuItem value="prop002">Property 002</MenuItem>
-                        <MenuItem value="prop003">Property 003</MenuItem>
+                        <MenuItem value="Property 001">Property 001</MenuItem>
+                        <MenuItem value="Property 002">Property 002</MenuItem>
+                        <MenuItem value="Property 003">Property 003</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     {/* <TextField
@@ -5305,12 +5339,12 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Type</MenuItem>
-                        <MenuItem value="civil">Civil</MenuItem>
-                        <MenuItem value="electrical">Electrical</MenuItem>
-                        <MenuItem value="hvac">HVAC</MenuItem>
-                        <MenuItem value="plumbing">Plumbing</MenuItem>
+                        <MenuItem value="Civil">Civil</MenuItem>
+                        <MenuItem value="Electrical">Electrical</MenuItem>
+                        <MenuItem value="HVAC">HVAC</MenuItem>
+                        <MenuItem value="Plumbing">Plumbing</MenuItem>
                         <MenuItem value="Security">Security</MenuItem>
-                        <MenuItem value="it">IT Infrastructure</MenuItem>
+                        <MenuItem value="IT Infrastructure">IT Infrastructure</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -5538,8 +5572,8 @@ const AddAssetPage = () => {
                         }}
                       >
                         <MenuItem value="">Select Method</MenuItem>
-                        <MenuItem value="straight_line">Straight Line</MenuItem>
-                        <MenuItem value="wdv">Written Down Value</MenuItem>
+                        <MenuItem value="Straight Line">Straight Line</MenuItem>
+                        <MenuItem value="WDV">Written Down Value</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -5885,8 +5919,8 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="yes">Yes</MenuItem>
-                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -5967,12 +6001,12 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Department</MenuItem>
-                        <MenuItem value="facilities">
+                        <MenuItem value="Facilities Management">
                           Facilities Management
                         </MenuItem>
-                        <MenuItem value="admin">Administration</MenuItem>
-                        <MenuItem value="maintenance">Maintenance</MenuItem>
-                        <MenuItem value="it">IT Department</MenuItem>
+                        <MenuItem value="Administration">Administration</MenuItem>
+                        <MenuItem value="Maintenance">Maintenance</MenuItem>
+                        <MenuItem value="IT Department">IT Department</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <div className="md:col-span-2">
@@ -6114,11 +6148,7 @@ const AddAssetPage = () => {
                       placeholder="System-generated or manually entered"
                       variant="outlined"
                       fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
+                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
                       onChange={(e) => {
                         handleFieldChange("serial_number", e.target.value);
                         handleExtraFieldChange(
@@ -6135,23 +6165,11 @@ const AddAssetPage = () => {
                       placeholder="Name "
                       variant="outlined"
                       fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                      onChange={(e) =>
-                        handleFieldChange("name", e.target.value)
-                      }
+                      value={formData.name || ""}
+                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
+                      onChange={(e) => handleFieldChange("name", e.target.value)}
                     />
-                    <FormControl
-                      fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
-                    >
+                    <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}>
                       <InputLabel>Vehicle Type</InputLabel>
                       <MuiSelect
                         label="Vehicle Type"
@@ -6167,12 +6185,12 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Vehicle Type</MenuItem>
-                        <MenuItem value="car">Car</MenuItem>
-                        <MenuItem value="truck">Truck</MenuItem>
-                        <MenuItem value="van">Van</MenuItem>
-                        <MenuItem value="forklift">Forklift</MenuItem>
-                        <MenuItem value="electric-cart">Electric Cart</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
+                        <MenuItem value="Car">Car</MenuItem>
+                        <MenuItem value="Truck">Truck</MenuItem>
+                        <MenuItem value="Van">Van</MenuItem>
+                        <MenuItem value="Forklift">Forklift</MenuItem>
+                        <MenuItem value="Electric Cart">Electric Cart</MenuItem>
+                        <MenuItem value="Other">Other</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -6180,11 +6198,7 @@ const AddAssetPage = () => {
                       placeholder="e.g., Tata Ace, Honda Activa"
                       variant="outlined"
                       fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
+                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
                       onChange={(e) =>
                         handleExtraFieldChange(
                           "make_model",
@@ -6200,11 +6214,7 @@ const AddAssetPage = () => {
                       placeholder="e.g., MH01AB1234"
                       variant="outlined"
                       fullWidth
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: { xs: "36px", md: "45px" },
-                        },
-                      }}
+                      sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
                       onChange={(e) =>
                         handleExtraFieldChange(
                           "registration_number",
@@ -6216,6 +6226,45 @@ const AddAssetPage = () => {
                       }
                     />
 
+                    {/* ✅ Asset Type radio buttons */}
+                    <div className="mb-2 md:col-span-2">
+                      <label className="text-sm font-medium text-[#C72030] mb-2 block">
+                        Asset Type
+                      </label>
+                      <div className="flex gap-6">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="asset-type-comprehensive"
+                            name="assetType"
+                            value="true"
+                            checked={formData.asset_type === "true"}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: "#C72030" }}
+                            onChange={(e) => handleFieldChange("asset_type", e.target.value)}
+                          />
+                          <label htmlFor="asset-type-comprehensive" className="text-sm">
+                            Comprehensive
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="radio"
+                            id="asset-type-non-comprehensive"
+                            name="assetType"
+                            value="false"
+                            checked={formData.asset_type === "false"}
+                            className="w-4 h-4 text-[#C72030] border-gray-300"
+                            style={{ accentColor: "#C72030" }}
+                            onChange={(e) => handleFieldChange("asset_type", e.target.value)}
+                          />
+                          <label htmlFor="asset-type-non-comprehensive" className="text-sm">
+                            Non-Comprehensive
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Custom Fields */}
                     {(customFields.vehicleBasicId || []).map((field) => (
                       <div key={field.id} className="relative">
@@ -6225,24 +6274,13 @@ const AddAssetPage = () => {
                           variant="outlined"
                           fullWidth
                           value={field.value}
-                          // onChange={(e) => handleCustomFieldChange('vehicleBasicId', field.id, e.target.value)}
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              height: { xs: "36px", md: "45px" },
-                            },
-                          }}
+                          sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}
                           onChange={(e) => {
-                            handleCustomFieldChange(
-                              "vehicleBasicId",
-                              field.id,
-                              e.target.value
-                            );
+                            handleCustomFieldChange("vehicleBasicId", field.id, e.target.value);
                           }}
                         />
                         <button
-                          onClick={() =>
-                            removeCustomField("vehicleBasicId", field.id)
-                          }
+                          onClick={() => removeCustomField("vehicleBasicId", field.id)}
                           className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-xs transition-colors"
                         >
                           <X className="w-3 h-3" />
@@ -6252,6 +6290,8 @@ const AddAssetPage = () => {
                   </div>
                 </CardContent>
               </Card>
+
+
 
               {/* Technical Specifications */}
               <Card>
@@ -6337,11 +6377,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Fuel Type</MenuItem>
-                        <MenuItem value="petrol">Petrol</MenuItem>
-                        <MenuItem value="diesel">Diesel</MenuItem>
-                        <MenuItem value="cng">CNG</MenuItem>
-                        <MenuItem value="electric">Electric</MenuItem>
-                        <MenuItem value="hybrid">Hybrid</MenuItem>
+                        <MenuItem value="Petrol">Petrol</MenuItem>
+                        <MenuItem value="Diesel">Diesel</MenuItem>
+                        <MenuItem value="CNG">CNG</MenuItem>
+                        <MenuItem value="Electric">Electric</MenuItem>
+                        <MenuItem value="Hybrid">Hybrid</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -6425,10 +6465,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Ownership Type</MenuItem>
-                        <MenuItem value="owned">Owned</MenuItem>
-                        <MenuItem value="leased">Leased</MenuItem>
-                        <MenuItem value="company-owned">Company-Owned</MenuItem>
-                        <MenuItem value="departmental">Departmental</MenuItem>
+                        <MenuItem value="Owned">Owned</MenuItem>
+                        <MenuItem value="Leased">Leased</MenuItem>
+                        <MenuItem value="Company-Owned">Company-Owned</MenuItem>
+                        <MenuItem value="Departmental">Departmental</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -6454,11 +6494,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Department/User</MenuItem>
-                        <MenuItem value="admin">Administration</MenuItem>
-                        <MenuItem value="hr">Human Resources</MenuItem>
-                        <MenuItem value="logistics">Logistics</MenuItem>
-                        <MenuItem value="maintenance">Maintenance</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
+                        <MenuItem value="Administration">Administration</MenuItem>
+                        <MenuItem value="Human Resources">Human Resources</MenuItem>
+                        <MenuItem value="Logistics">Logistics</MenuItem>
+                        <MenuItem value="Maintenance">Maintenance</MenuItem>
+                        <MenuItem value="Other">Other</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -6484,10 +6524,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Usage Type</MenuItem>
-                        <MenuItem value="official">Official</MenuItem>
-                        <MenuItem value="delivery">Delivery</MenuItem>
-                        <MenuItem value="emergency">Emergency</MenuItem>
-                        <MenuItem value="transport">Transport</MenuItem>
+                        <MenuItem value="Official">Official</MenuItem>
+                        <MenuItem value="Delivery">Delivery</MenuItem>
+                        <MenuItem value="Emergency">Emergency</MenuItem>
+                        <MenuItem value="Transport">Transport</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -6513,9 +6553,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Permit Type</MenuItem>
-                        <MenuItem value="private">Private</MenuItem>
-                        <MenuItem value="commercial">Commercial</MenuItem>
-                        <MenuItem value="transport">Transport Permit</MenuItem>
+                        <MenuItem value="Private">Private</MenuItem>
+                        <MenuItem value="Commercial">Commercial</MenuItem>
+                        <MenuItem value="Transport Permit">Transport Permit</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -7069,8 +7109,8 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="yes">Yes</MenuItem>
-                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
                       </MuiSelect>
                     </FormControl>
                   </div>
@@ -7581,11 +7621,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Building Type</MenuItem>
-                        <MenuItem value="office">Office</MenuItem>
-                        <MenuItem value="residential">Residential</MenuItem>
-                        <MenuItem value="industrial">Industrial</MenuItem>
-                        <MenuItem value="mixed">Mixed Use</MenuItem>
-                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Office">Office</MenuItem>
+                        <MenuItem value="Residential">Residential</MenuItem>
+                        <MenuItem value="Industrial">Industrial</MenuItem>
+                        <MenuItem value="Mixed Use">Mixed Use</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -7688,10 +7728,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Ownership Type</MenuItem>
-                        <MenuItem value="owned">Owned</MenuItem>
-                        <MenuItem value="rented">Rented</MenuItem>
-                        <MenuItem value="leased">Leased</MenuItem>
-                        <MenuItem value="government">
+                        <MenuItem value="Owned">Owned</MenuItem>
+                        <MenuItem value="Rented">Rented</MenuItem>
+                        <MenuItem value="Leased">Leased</MenuItem>
+                        <MenuItem value="Government">
                           Government Allotted
                         </MenuItem>
                       </MuiSelect>
@@ -7799,11 +7839,11 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Construction Type</MenuItem>
-                        <MenuItem value="rcc">RCC</MenuItem>
-                        <MenuItem value="steel">Steel</MenuItem>
-                        <MenuItem value="prefab">Pre-Fab</MenuItem>
-                        <MenuItem value="loadbearing">Load Bearing</MenuItem>
-                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="RCC">RCC</MenuItem>
+                        <MenuItem value="Steel">Steel</MenuItem>
+                        <MenuItem value="Pre-Fab">Pre-Fab</MenuItem>
+                        <MenuItem value="Load Bearing">Load Bearing</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -8281,10 +8321,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Building Use</MenuItem>
-                        <MenuItem value="office">Office</MenuItem>
-                        <MenuItem value="warehouse">Warehouse</MenuItem>
-                        <MenuItem value="school">School</MenuItem>
-                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Office">Office</MenuItem>
+                        <MenuItem value="Warehouse">Warehouse</MenuItem>
+                        <MenuItem value="School">School</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -8310,9 +8350,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="yes">Yes</MenuItem>
-                        <MenuItem value="no">No</MenuItem>
-                        <MenuItem value="pending">Pending</MenuItem>
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
+                        <MenuItem value="Pending">Pending</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <TextField
@@ -8358,9 +8398,9 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="yes">Yes</MenuItem>
-                        <MenuItem value="no">No</MenuItem>
-                        <MenuItem value="lastUpdated">
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
+                        <MenuItem value="Last Updated">
                           Last Updated Date Option
                         </MenuItem>
                       </MuiSelect>
@@ -8388,10 +8428,10 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Utilities</MenuItem>
-                        <MenuItem value="water">Water</MenuItem>
-                        <MenuItem value="electricity">Electricity</MenuItem>
-                        <MenuItem value="both">Water & Electricity</MenuItem>
-                        <MenuItem value="other">Other (Manual Entry)</MenuItem>
+                        <MenuItem value="Water">Water</MenuItem>
+                        <MenuItem value="Electricity">Electricity</MenuItem>
+                        <MenuItem value="Both">Water & Electricity</MenuItem>
+                        <MenuItem value="Other (Manual Entry)">Other (Manual Entry)</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -8478,9 +8518,9 @@ const AddAssetPage = () => {
                         <MenuItem value="Facilities Management">
                           Facilities Management
                         </MenuItem>
-                        <MenuItem value="admin">Administration</MenuItem>
-                        <MenuItem value="outsourced">Outsourced</MenuItem>
-                        <MenuItem value="other">Other</MenuItem>
+                        <MenuItem value="Administration">Administration</MenuItem>
+                        <MenuItem value="Outsourced">Outsourced</MenuItem>
+                        <MenuItem value="Other">Other</MenuItem>
                       </MuiSelect>
                     </FormControl>
                     <FormControl
@@ -8506,8 +8546,8 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Status</MenuItem>
-                        <MenuItem value="yes">Yes</MenuItem>
-                        <MenuItem value="no">No</MenuItem>
+                        <MenuItem value="Yes">Yes</MenuItem>
+                        <MenuItem value="No">No</MenuItem>
                       </MuiSelect>
                     </FormControl>
 
@@ -8718,7 +8758,7 @@ const AddAssetPage = () => {
                 </div>
                 {expandedSections.asset && (
                   <div className="p-4 sm:p-6">
-                    {/* First row: Asset Name, Model No., Manufacturer */}
+                    {/* First row: Asset Name, Asset No, Serial No, Model No., Manufacturer */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       <TextField
                         required
@@ -8742,6 +8782,54 @@ const AddAssetPage = () => {
                         }}
                         onChange={(e) =>
                           handleFieldChange("name", e.target.value)
+                        }
+                      />
+                      <TextField
+                        required
+                        label="Asset No."
+                        placeholder="Enter Asset No."
+                        name="assetNo"
+                        fullWidth
+                        variant="outlined"
+                        value={formData.asset_number || ""}
+                        error={hasValidationError("Asset No")}
+                        helperText={
+                          hasValidationError("Asset No")
+                            ? "Asset No. is required"
+                            : ""
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                        onChange={(e) =>
+                          handleFieldChange("asset_number", e.target.value)
+                        }
+                      />
+                      <TextField
+                        required
+                        label="Serial No."
+                        placeholder="Enter Serial No."
+                        name="serialNo"
+                        fullWidth
+                        variant="outlined"
+                        value={formData.serial_number || ""}
+                        error={hasValidationError("Serial No")}
+                        helperText={
+                          hasValidationError("Serial No")
+                            ? "Serial No. is required"
+                            : ""
+                        }
+                        InputLabelProps={{
+                          shrink: true,
+                        }}
+                        InputProps={{
+                          sx: fieldStyles,
+                        }}
+                        onChange={(e) =>
+                          handleFieldChange("serial_number", e.target.value)
                         }
                       />
                       <TextField
@@ -8792,10 +8880,6 @@ const AddAssetPage = () => {
                           handleFieldChange("manufacturer", e.target.value)
                         }
                       />
-                      {/* }}
-                    onChange={e => handleFieldChange('manufacturer', e.target.value)}
-
-                  /> */}
                     </div>
 
                     {/* Second row: Group, Subgroup */}
@@ -8940,10 +9024,10 @@ const AddAssetPage = () => {
                                 style={{
                                   accentColor: "#C72030",
                                 }}
-                                onChange={(e) =>
-                                  {handleFieldChange("breakdown", e.target.value)
+                                onChange={(e) => {
+                                  handleFieldChange("breakdown", e.target.value)
                                   handleFieldChange("status", "in_use")
-                                  }
+                                }
                                 }
                               />
                               <label htmlFor="status-inuse" className="text-sm">
@@ -8960,10 +9044,10 @@ const AddAssetPage = () => {
                                 style={{
                                   accentColor: "#C72030",
                                 }}
-                                onChange={(e) =>
-                                 {handleFieldChange("breakdown", e.target.value)
+                                onChange={(e) => {
+                                  handleFieldChange("breakdown", e.target.value)
                                   handleFieldChange("status", "breakdown")
-                                  }
+                                }
                                 }
                               />
                               <label htmlFor="status-breakdown" className="text-sm">
@@ -9754,7 +9838,8 @@ const AddAssetPage = () => {
               {/* Meter Details */}
               {selectedAssetCategory !== "Tools & Instruments" &&
                 selectedAssetCategory !== "Furniture & Fixtures" &&
-                selectedAssetCategory !== "IT Equipment" && (
+                selectedAssetCategory !== "IT Equipment" &&
+                selectedAssetCategory !== "Machinery & Equipment" && (
                   <div className="bg-white shadow-sm rounded-lg overflow-hidden">
                     <div
                       onClick={() => toggleSection("meterCategory")}
@@ -11104,7 +11189,7 @@ const AddAssetPage = () => {
                                 // Clear selection when switching
                                 setSelectedDepartmentId("");
                                 setSelectedUserId("");
-                                handleSingleFieldChange("allocation_id", "");
+                                handleSingleFieldChange("allocation_ids", "");
                               }}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
@@ -11130,7 +11215,7 @@ const AddAssetPage = () => {
                                 // Clear selection when switching
                                 setSelectedDepartmentId("");
                                 setSelectedUserId("");
-                                handleSingleFieldChange("allocation_id", "");
+                                handleSingleFieldChange("allocation_ids", "");
                               }}
                               className="w-4 h-4 text-[#C72030] border-gray-300"
                               style={{
@@ -11176,14 +11261,14 @@ const AddAssetPage = () => {
                               const value = e.target.value;
                               if (allocationBasedOn === "department") {
                                 setSelectedDepartmentId(value);
-                                handleSingleFieldChange("allocation_id", value);
+                                handleSingleFieldChange("allocation_ids", value);
                                 handleFieldChange(
                                   "allocation_type",
                                   "department"
                                 );
                               } else {
                                 setSelectedUserId(value);
-                                handleSingleFieldChange("allocation_id", value);
+                                handleSingleFieldChange("allocation_ids", value);
                                 handleFieldChange("allocation_type", "users");
                               }
                             }}
