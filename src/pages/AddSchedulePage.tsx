@@ -134,6 +134,8 @@ interface AttachmentFile {
   id: string;
   name: string;
   url: string;
+  content: string; // base64 content
+  content_type: string; // MIME type
 }
 
 interface TaskQuestion {
@@ -145,6 +147,7 @@ interface TaskQuestion {
   mandatory: boolean;
   helpText: boolean;
   helpTextValue: string;
+  helpTextAttachments?: AttachmentFile[]; // Add help text attachments
   autoTicket: boolean;
   weightage: string;
   rating: boolean;
@@ -257,6 +260,7 @@ export const AddSchedulePage = () => {
           mandatory: false,
           helpText: false,
           helpTextValue: '',
+          helpTextAttachments: [],
           autoTicket: false,
           weightage: '',
           rating: false,
@@ -451,6 +455,7 @@ export const AddSchedulePage = () => {
                 mandatory: false,
                 helpText: false,
                 helpTextValue: '',
+                helpTextAttachments: [],
                 autoTicket: false,
                 weightage: '',
                 rating: false,
@@ -565,6 +570,7 @@ export const AddSchedulePage = () => {
               mandatory: false,
               helpText: false,
               helpTextValue: '',
+              helpTextAttachments: [],
               autoTicket: false,
               weightage: '',
               rating: false,
@@ -1172,6 +1178,104 @@ export const AddSchedulePage = () => {
     );
   };
 
+  // Add attachment function for help text
+  const addHelpTextAttachment = (sectionId: string, taskId: string): void => {
+    // Create a hidden file input and trigger click
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '*/*';
+    input.style.display = 'none';
+
+    input.onchange = async (e: Event) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files && files.length > 0) {
+        const newAttachments: AttachmentFile[] = [];
+        
+        // Convert each file to base64
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          
+          try {
+            // Convert file to base64
+            const base64Content = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                resolve(result); // Keep full data URL for content
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+
+            newAttachments.push({
+              id: `${Date.now()}-${i}`,
+              name: file.name,
+              url: URL.createObjectURL(file), // Keep for UI preview
+              content: base64Content, // Full data URL with base64
+              content_type: file.type || 'application/octet-stream'
+            });
+          } catch (error) {
+            console.error('Error converting file to base64:', error);
+            toast.error(`Failed to process file: ${file.name}`);
+          }
+        }
+        
+        if (newAttachments.length > 0) {
+          // Update the specific task's help text attachments
+          setQuestionSections(prevSections =>
+            prevSections.map(section =>
+              section.id === sectionId
+                ? {
+                  ...section,
+                  tasks: section.tasks.map(task =>
+                    task.id === taskId
+                      ? { 
+                        ...task, 
+                        helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments] 
+                      }
+                      : task
+                  )
+                }
+                : section
+            )
+          );
+          
+          toast.success(`${newAttachments.length} file(s) attached to help text successfully!`);
+        }
+      }
+    };
+
+    input.onerror = () => {
+      toast.error("Failed to attach files. Please try again.");
+    };
+
+    document.body.appendChild(input);
+    input.click();
+    input.remove();
+  };
+
+  // Remove help text attachment function
+  const removeHelpTextAttachment = (sectionId: string, taskId: string, attachmentId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? { 
+                  ...task, 
+                  helpTextAttachments: (task.helpTextAttachments || []).filter(att => att.id !== attachmentId)
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
   // Add attachment function
   const addAttachment = (): void => {
     // Create a hidden file input and trigger click
@@ -1181,30 +1285,53 @@ export const AddSchedulePage = () => {
     input.accept = '*/*';
     input.style.display = 'none';
 
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {
         const newAttachments: AttachmentFile[] = [];
+        
+        // Convert each file to base64
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          // For now, just create a local URL for preview; in real app, upload to server
-          newAttachments.push({
-            id: `${Date.now()}-${i}`,
-            name: file.name,
-            url: URL.createObjectURL(file)
-          });
-        }
-        setAttachments(prev => [...prev, ...newAttachments]);
+          
+          try {
+            // Convert file to base64
+            const base64Content = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => {
+                const result = reader.result as string;
+                // Extract base64 content (remove data:type;base64, prefix)
+                const base64 = result.split(',')[1];
+                resolve(result); // Keep full data URL for content
+              };
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
 
-        // Show success toast
-        toast(`${files.length} file(s) attached successfully!`);
+            newAttachments.push({
+              id: `${Date.now()}-${i}`,
+              name: file.name,
+              url: URL.createObjectURL(file), // Keep for UI preview
+              content: base64Content, // Full data URL with base64
+              content_type: file.type || 'application/octet-stream'
+            });
+          } catch (error) {
+            console.error('Error converting file to base64:', error);
+            toast.error(`Failed to process file: ${file.name}`);
+          }
+        }
+        
+        if (newAttachments.length > 0) {
+          setAttachments(prev => [...prev, ...newAttachments]);
+          // Show success toast
+          toast.success(`${newAttachments.length} file(s) attached successfully!`);
+        }
       }
     };
 
     input.onerror = () => {
       // Show error toast
-      toast("Failed to attach files. Please try again.", {
-      });
+      toast.error("Failed to attach files. Please try again.");
     };
 
     document.body.appendChild(input);
@@ -1233,6 +1360,7 @@ export const AddSchedulePage = () => {
             mandatory: false,
             helpText: false,
             helpTextValue: '',
+            helpTextAttachments: [],
             autoTicket: false,
             weightage: '',
             rating: false,
@@ -1612,6 +1740,7 @@ export const AddSchedulePage = () => {
                 mandatory: false,
                 helpText: false,
                 helpTextValue: '',
+                helpTextAttachments: [],
                 autoTicket: false,
                 weightage: '',
                 rating: false,
@@ -1831,6 +1960,11 @@ export const AddSchedulePage = () => {
         return [
           {
             id: (sections[0]?.id || Date.now().toString()),
+            title: 'Questions',
+            autoTicket: false,
+            ticketLevel: 'checklist',
+            ticketAssignedTo: '',
+            ticketCategory: '',
             tasks: [{
               id: (Date.now() + 1).toString(),
               group: '',
@@ -1840,6 +1974,7 @@ export const AddSchedulePage = () => {
               mandatory: false,
               helpText: false,
               helpTextValue: '',
+              helpTextAttachments: [],
               autoTicket: false,
               weightage: '',
               rating: false,
@@ -1915,6 +2050,7 @@ export const AddSchedulePage = () => {
             mandatory: question.required === 'true',
             helpText: !!question.hint,
             helpTextValue: question.hint || '',
+            helpTextAttachments: [],
             autoTicket: false,
             weightage: question.weightage || '',
             rating: question.rating_enabled === 'true',
@@ -2512,6 +2648,26 @@ export const AddSchedulePage = () => {
       const sectionTasks = section.tasks.filter(task => task.task.trim());
       if (sectionTasks.length > 0) {
         customForm[`question_for_${index + 1}`] = sectionTasks.map(task => task.task);
+        
+        // Add help text attachments for tasks that have them
+        const tasksWithAttachments = sectionTasks.filter(task => 
+          task.helpText && 
+          task.helpTextAttachments && 
+          task.helpTextAttachments.length > 0
+        );
+        
+        if (tasksWithAttachments.length > 0) {
+          // Add attachments for each task that has help text attachments
+          tasksWithAttachments.forEach(task => {
+            if (task.helpTextAttachments && task.helpTextAttachments.length > 0) {
+              customForm[`question_for_${index + 1}`] = task.helpTextAttachments.map(attachment => ({
+                filename: attachment.name,
+                content: attachment.content,
+                content_type: attachment.content_type
+              }));
+            }
+          });
+        }
       }
     });
 
@@ -2574,7 +2730,15 @@ export const AddSchedulePage = () => {
         supervisors: formData.supervisors ? [formData.supervisors] : [],
         submission_time_type: formData.submissionTime || "",
         submission_time_value: formData.submissionTimeValue || "",
-        supplier_id: formData.supplier || ""
+        supplier_id: formData.supplier || "",
+        // Add attachments from basic configuration step
+        attachments: attachments.map(attachment => ({
+          filename: attachment.name,
+          content: attachment.content,
+          content_type: attachment.content_type
+        })),
+        // Add custom form with question attachments
+        custom_form: customForm
       },
       sch_type: 'ppm',
       checklist_type: formData.scheduleFor,
@@ -2645,7 +2809,7 @@ export const AddSchedulePage = () => {
                 }}>
                   <Cog size={16} color="white" />
                 </Box>
-                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
                   Basic Configuration
                 </Typography>
               </Box>
@@ -2934,7 +3098,7 @@ export const AddSchedulePage = () => {
               }}>
                 <Cog size={16} color="white" />
               </Box>
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#C72030', textTransform: 'uppercase' }}>
                 Schedule Setup
               </Typography>
             </Box>
@@ -4148,7 +4312,7 @@ export const AddSchedulePage = () => {
           <div>
             {/* Header Outside the Box */}
             <div className="flex justify-between items-center p-6">
-              <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold">
+              <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold" style={{ textTransform: 'uppercase'}}>
                 <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
                   <Cog className="w-6 h-6" />
                 </span>
@@ -4810,13 +4974,81 @@ export const AddSchedulePage = () => {
                           <Box sx={{ mt: 2 }}>
                             <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
                               label="Help Text (Hint)"
                               placeholder="Enter help text or hint"
                               fullWidth
                               value={task.helpTextValue}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
                             />
+                            
+                            {/* File attachment for help text */}
+                            <Box sx={{ mt: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                  Help Text Attachments:
+                                </Typography>
+                                <MuiButton
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<AttachFile />}
+                                  onClick={() => addHelpTextAttachment(section.id, task.id)}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                  sx={{
+                                    color: '#C72030',
+                                    borderColor: '#C72030',
+                                    fontSize: '12px',
+                                    padding: '4px 8px',
+                                    minWidth: 'auto',
+                                    '&:hover': {
+                                      borderColor: '#C72030',
+                                      backgroundColor: 'rgba(199, 32, 48, 0.04)'
+                                    }
+                                  }}
+                                >
+                                  Add File
+                                </MuiButton>
+                              </Box>
+                              
+                              {/* Display attached files */}
+                              {task.helpTextAttachments && task.helpTextAttachments.length > 0 && (
+                                <Box sx={{ mt: 1 }}>
+                                  {task.helpTextAttachments.map((attachment) => (
+                                    <Box 
+                                      key={attachment.id} 
+                                      sx={{ 
+                                        display: 'flex', 
+                                        alignItems: 'center', 
+                                        gap: 1, 
+                                        mb: 1,
+                                        p: 1,
+                                        border: '1px solid #E0E0E0',
+                                        borderRadius: 1,
+                                        backgroundColor: '#F9F9F9'
+                                      }}
+                                    >
+                                      <AttachFile sx={{ fontSize: 16, color: '#666' }} />
+                                      <Typography variant="body2" sx={{ flex: 1, fontSize: '12px' }}>
+                                        {attachment.name}
+                                      </Typography>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() => removeHelpTextAttachment(section.id, task.id, attachment.id)}
+                                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                        sx={{ 
+                                          color: '#ff4444',
+                                          padding: '2px',
+                                          '&:hover': {
+                                            backgroundColor: 'rgba(255, 68, 68, 0.1)'
+                                          }
+                                        }}
+                                      >
+                                        <Close sx={{ fontSize: 14 }} />
+                                      </IconButton>
+                                    </Box>
+                                  ))}
+                                </Box>
+                              )}
+                            </Box>
                           </Box>
                         )}
 
@@ -5226,7 +5458,7 @@ export const AddSchedulePage = () => {
         return (
           <div className="bg-white shadow-sm rounded-lg overflow-hidden">
             <div className="border-l-4 border-l-[#C72030] p-4 sm:p-6 bg-white">
-              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6">
+              <div className="flex items-center gap-2 text-[#C72030] text-sm sm:text-base font-semibold mb-6" style={{ textTransform: 'uppercase' }}>
                 <span className="bg-[#C72030] text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs sm:text-sm">
                   <Cog className="w-3 h-3 sm:w-4 sm:h-4" />
                 </span>

@@ -3,11 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Eye, Upload, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { BulkUploadDialog } from '@/components/BulkUploadDialog';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import { toast, Toaster } from "sonner";
+import { apiClient } from '@/utils/apiClient';
+import { ENDPOINTS } from '@/config/apiConfig';
 
 const checklistData = [
   {
     id: 440,
-    activityName: 'qawertyhuhjkjkjjkjjkju',
+    activityName: 'qawertyhuhjkjkjjkjjkjubjbjbj',
     meterCategory: '',
     numberOfQuestions: 1,
     scheduledFor: 'Asset'
@@ -30,38 +35,71 @@ const checklistData = [
 
 export const ChecklistMasterDashboard = () => {
   const navigate = useNavigate();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files[0];
-    if (file) {
-      setSelectedFile(file);
-    }
-  };
-
-  const handleDownloadSampleFormat = () => {
-    console.log('Downloading sample format...');
-  };
-
-  const handleImportQuestions = () => {
-    console.log('Importing questions...');
-  };
-
-  const handleAddClick = () => {
+  const handleAddChecklist = () => {
     navigate('/settings/masters/checklist-master/add');
   };
+
+  const handleDownloadSampleFormat = async () => {
+    console.log('Downloading checklist sample format...');
+
+    try {
+      // Call the API to download the sample file
+      const response = await apiClient.get(ENDPOINTS.CHECKLIST_SAMPLE_FORMAT, {
+        responseType: 'blob'
+      });
+
+      // Create blob URL and trigger download
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'checklist_sample_format.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast.success('Sample format downloaded successfully', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#10b981',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file. Please try again.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
+    }
+  };
+
+  const handleActionClick = () => {
+    setShowActionPanel((prev) => !prev);
+  };
+
+  const renderCustomActions = () => (
+    <div className="flex flex-wrap gap-2 sm:gap-3">
+      <Button 
+        onClick={handleActionClick}
+        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+      >
+        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" /> 
+        Action
+      </Button>
+    </div>
+  );
 
   const handleEditClick = (id: number) => {
     navigate(`/settings/masters/checklist-master/edit/${id}`);
@@ -71,60 +109,28 @@ export const ChecklistMasterDashboard = () => {
     navigate(`/settings/masters/checklist-master/view/${id}`);
   };
 
+  // Define selectionActions for SelectionPanel
+  const selectionActions = [
+  ];
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3 mb-6">
-        <Button 
-          onClick={handleAddClick}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
-      </div>
+      {/* Sonner Toaster for notifications */}
+      <Toaster position="top-right" richColors closeButton />
 
-      {/* File Upload Section - All in one row */}
-      <div className="flex items-center gap-4 mb-6">
-        <div 
-          className="flex-1 border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50"
-          onDragOver={handleDragOver}
-          onDrop={handleDrop}
-        >
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-gray-600">Choose File</span>
-            <span className="text-gray-400">{selectedFile ? selectedFile.name : 'No file chosen'}</span>
-            <input
-              type="file"
-              id="fileInput"
-              className="hidden"
-              onChange={handleFileSelect}
-              accept=".xlsx,.xls,.csv"
-            />
-            <label
-              htmlFor="fileInput"
-              className="text-blue-600 underline cursor-pointer hover:text-blue-700 ml-2"
-            >
-              Browse files
-            </label>
-          </div>
-        </div>
-        
-        <Button 
-          onClick={handleDownloadSampleFormat}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 whitespace-nowrap"
-        >
-          Download Sample Format
-        </Button>
-        
-        <Button 
-          onClick={handleImportQuestions}
-          style={{ backgroundColor: '#C72030' }}
-          className="text-white hover:opacity-90 whitespace-nowrap"
-        >
-          Import Questions
-        </Button>
+      {/* Action Panel */}
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectionActions}
+          onAdd={handleAddChecklist}
+          onClearSelection={() => setShowActionPanel(false)}
+          onImport={() => setShowImportModal(true)}
+        />
+      )}
+
+      {/* Custom Actions */}
+      <div className="flex items-center gap-3 mb-6">
+        {renderCustomActions()}
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200">
@@ -171,6 +177,14 @@ export const ChecklistMasterDashboard = () => {
           </TableBody>
         </Table>
       </div>
+
+      <BulkUploadDialog 
+        open={showImportModal} 
+        onOpenChange={setShowImportModal} 
+        title="Bulk Upload Checklist" 
+        context="checklist_master"
+        onDownloadSample={handleDownloadSampleFormat}
+      />
     </div>
   );
 };
