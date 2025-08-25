@@ -1650,7 +1650,7 @@ export const EditBookingSetupPage = () => {
                                         style={{ border: "1px solid #D9D9D9" }}
                                     >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                            11
+                                            10
                                         </div>
                                         <h3 className="text-lg font-semibold text-[#C72030]">
                                             CONFIGURE AMENITY INFO
@@ -1693,7 +1693,7 @@ export const EditBookingSetupPage = () => {
                                         id="seater"
                                     >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                            12
+                                            11
                                         </div>
                                         <h3 className="text-lg font-semibold text-[#C72030]">
                                             SEATER INFO
@@ -1744,7 +1744,7 @@ export const EditBookingSetupPage = () => {
                                         id="floor"
                                     >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                            13
+                                            12
                                         </div>
                                         <h3 className="text-lg font-semibold text-[#C72030]">
                                             FLOOR INFO
@@ -1795,7 +1795,7 @@ export const EditBookingSetupPage = () => {
                                         id="shared"
                                     >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                            14
+                                            13
                                         </div>
                                         <h3 className="text-lg font-semibold text-[#C72030]">
                                             Shared Content Info
@@ -1825,7 +1825,7 @@ export const EditBookingSetupPage = () => {
                                         id="appKey"
                                     >
                                         <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                                            15
+                                            14
                                         </div>
                                         <h3 className="text-lg font-semibold text-[#C72030]">
                                             CONFIGURE APP KEY
