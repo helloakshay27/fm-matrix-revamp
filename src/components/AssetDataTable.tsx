@@ -200,6 +200,13 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       defaultVisible: visibleColumns.assetType,
     },
     {
+      key: "critical",
+      label: "Critical",
+      sortable: true,
+      hideable: true,
+      defaultVisible: true,
+    },
+    {
       key: "category",
       label: "Category Type",
       sortable: true,
@@ -349,6 +356,12 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
 
   const renderCell = (asset: Asset, columnKey: string) => {
     switch (columnKey) {
+      case "critical":
+        return (
+          <span className="text-sm text-gray-600">
+            {asset.critical ? "YES" : "NO"}
+          </span>
+        );
       case "actions":
         return (
           <Button
@@ -569,7 +582,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
     setShowActionPanel(true);
   };
 
-  return (  
+  return (
     <>
       {showActionPanel && (
         <SelectionPanel
