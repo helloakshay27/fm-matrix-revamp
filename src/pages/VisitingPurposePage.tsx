@@ -1026,7 +1026,7 @@ export const VisitingPurposePage = () => {
                 </Button>
               )}
               
-              {activeTab === 'Visitor Comment' && (
+              {activeTab === 'Visitor Comment' && commentsData.length === 0 && (
                 <Button 
                   onClick={handleVisitorCategory}
                   className="bg-[#1e40af] hover:bg-[#1e40af]/90 text-white px-4 py-2"
