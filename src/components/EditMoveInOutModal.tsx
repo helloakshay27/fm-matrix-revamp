@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { TextField } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { editMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
 
 interface MoveInOutData {
   id: string;
@@ -26,6 +27,7 @@ interface EditMoveInOutModalProps {
 export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }: EditMoveInOutModalProps) => {
   const [purposes, setPurposes] = useState<string[]>(['']);
   const [status, setStatus] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
     }
   }, [moveInOutData, isOpen]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const validPurposes = purposes.filter(p => p.trim());
     
     if (validPurposes.length === 0) {
@@ -54,18 +56,59 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
       return;
     }
 
-    if (moveInOutData) {
-      const updatedData = {
-        ...moveInOutData,
-        purpose: validPurposes.join('|'),
+    if (!moveInOutData) return;
+
+    setIsSubmitting(true);
+    
+    try {
+      // For edit, we'll update with the first purpose (main purpose)
+      // Multiple purposes can be handled differently if needed
+      const mainPurpose = validPurposes[0];
+      
+      const result = await editMoveInOutPurpose(
+        parseInt(moveInOutData.id),
+        mainPurpose,
         status
-      };
-      onUpdate(updatedData);
+      );
+      
+      if (result.success) {
+        const updatedData = {
+          ...moveInOutData,
+          purpose: validPurposes.join('|'),
+          status,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })
+        };
+        
+        onUpdate(updatedData);
+        toast({
+          title: "Success",
+          description: "Move In/Out purpose updated successfully",
+        });
+        onClose();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update move in/out purpose. Please try again.",
+          variant: "destructive"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error updating move in/out purpose:', error);
       toast({
-        title: "Success",
-        description: "Move In/Out purpose updated successfully",
+        title: "Error",
+        description: "Failed to update move in/out purpose. Please try again.",
+        variant: "destructive"
       });
-      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -183,10 +226,17 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
         <div className="flex justify-center px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8"
-            disabled={purposes.every(p => !p.trim())}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmitting || purposes.every(p => !p.trim())}
           >
-            Update
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Updating...
+              </>
+            ) : (
+              'Update'
+            )}
           </Button>
         </div>
       </DialogContent>

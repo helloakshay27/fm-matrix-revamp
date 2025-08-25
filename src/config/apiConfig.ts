@@ -182,6 +182,16 @@ export const API_CONFIG = {
     FLOORS: '/pms/floors.json',
     // Recent visitors endpoint
     RECENT_VISITORS: '/pms/admin/visitors/recent_visitors.json',
+    // Visitor setup endpoint (visiting purposes, move in/out, staff types, comments)
+    VISITOR_SETUP: '/pms/admin/visitors/visitor_setup.json',
+    CREATE_VISIT_PURPOSE: '/pms/soc_visit_purposes.json',
+    EDIT_VISIT_PURPOSE: '/pms/soc_visit_purposes',
+    CREATE_MOVE_IN_OUT_PURPOSE: '/pms/society_mimo_purposes.json',
+    EDIT_MOVE_IN_OUT_PURPOSE: '/pms/society_mimo_purposes',
+    CREATE_WORK_TYPE: '/pms/society_staff_types.json',
+    EDIT_WORK_TYPE: '/pms/society_staff_types', // Base path, will append /{id}.json
+    CREATE_VISITOR_COMMENT: '/visitor_comments.json',
+    EDIT_VISITOR_COMMENT: '/visitor_comments',
     
   },
 } as const

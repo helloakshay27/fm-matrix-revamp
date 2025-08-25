@@ -16,38 +16,49 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { EditMoveInOutModal } from '@/components/EditMoveInOutModal';
 import { EditWorkTypeModal } from '@/components/EditWorkTypeModal';
 import { EditVisitorCommentModal } from '@/components/EditVisitorCommentModal';
+import { fetchSites, fetchAllowedSites, Site } from '@/services/sitesAPI';
+import { fetchVisitorSetup, VisitPurpose, MoveInOutPurpose, StaffType, VisitorComment } from '@/services/visitorSetupAPI';
+import { createVisitPurpose, editVisitPurpose } from '@/services/visitPurposeAPI';
+import { createMoveInOutPurpose } from '@/services/moveInOutPurposeAPI';
+import { createWorkType } from '@/services/workTypeAPI';
+import { createVisitorComment } from '@/services/visitorCommentAPI';
 
 interface VisitingPurposeData {
-  id: string;
+  id: number;
   purpose: string;
   status: boolean;
   createdOn: string;
   createdBy: string;
+  active?: number; // For API compatibility
 }
 
 interface MoveInOutData {
-  id: string;
+  id: number;
   purpose: string;
   status: boolean;
   createdOn: string;
   createdBy: string;
+  active?: number; // For API compatibility
 }
 
 interface WorkTypeData {
-  id: string;
+  id: number;
   staffType: string;
   workType: string;
   status: boolean;
   createdOn: string;
   createdBy: string;
+  active?: number; // For API compatibility
 }
 
 interface VisitorCommentData {
-  id: string;
+  id: number;
   comment: string;
   status: boolean;
   createdOn: string;
   createdBy: string;
+  description?: string; // For API compatibility
+  active?: boolean; // For API compatibility
 }
 
 export const VisitingPurposePage = () => {
@@ -92,124 +103,212 @@ export const VisitingPurposePage = () => {
     active: true
   });
 
-  // Sample data for Visit Purpose
-  const samplePurposes: VisitingPurposeData[] = [
-    {
-      id: '1',
-      purpose: 'Vendor',
-      status: true,
-      createdOn: '15/01/2025 11:04 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '2',
-      purpose: 'Meeting',
-      status: true,
-      createdOn: '15/01/2025 11:03 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '3',
-      purpose: 'Personal',
-      status: true,
-      createdOn: '15/01/2025 11:02 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '4',
-      purpose: 'Courier',
-      status: true,
-      createdOn: '15/01/2025 11:01 AM',
-      createdBy: 'Abdul A'
-    }
-  ];
-
-  // Sample data for Move In/Out
-  const sampleMoveInOut: MoveInOutData[] = [
-    {
-      id: '1',
-      purpose: 'Equipment Installation',
-      status: true,
-      createdOn: '15/01/2025 10:30 AM',
-      createdBy: 'John D'
-    },
-    {
-      id: '2',
-      purpose: 'Furniture Movement',
-      status: true,
-      createdOn: '15/01/2025 10:25 AM',
-      createdBy: 'Sarah M'
-    },
-    {
-      id: '3',
-      purpose: 'Office Relocation',
-      status: false,
-      createdOn: '15/01/2025 10:20 AM',
-      createdBy: 'Mike R'
-    }
-  ];
-
-  // Sample data for Work Type
-  const sampleWorkTypes: WorkTypeData[] = [
-    {
-      id: '1',
-      staffType: 'Permanent Staff',
-      workType: 'Development',
-      status: true,
-      createdOn: '15/01/2025 09:45 AM',
-      createdBy: 'Admin'
-    },
-    {
-      id: '2',
-      staffType: 'Contract Staff',
-      workType: 'Testing',
-      status: true,
-      createdOn: '15/01/2025 09:40 AM',
-      createdBy: 'Admin'
-    },
-    {
-      id: '3',
-      staffType: 'Vendor Staff',
-      workType: 'Maintenance',
-      status: true,
-      createdOn: '15/01/2025 09:35 AM',
-      createdBy: 'Admin'
-    }
-  ];
-
-  // Sample data for Visitor Comments
-  const sampleComments: VisitorCommentData[] = [
-    {
-      id: '1',
-      comment: 'Please ensure proper ID verification',
-      status: true,
-      createdOn: '15/01/2025 08:30 AM',
-      createdBy: 'Security Team'
-    },
-    {
-      id: '2',
-      comment: 'VIP guest - special attention required',
-      status: true,
-      createdOn: '15/01/2025 08:25 AM',
-      createdBy: 'Reception'
-    },
-    {
-      id: '3',
-      comment: 'Regular visitor - standard process',
-      status: false,
-      createdOn: '15/01/2025 08:20 AM',
-      createdBy: 'Front Desk'
-    }
-  ];
-
-  const [purposes, setPurposes] = useState<VisitingPurposeData[]>(samplePurposes);
-  const [moveInOutData, setMoveInOutData] = useState<MoveInOutData[]>(sampleMoveInOut);
-  const [workTypeData, setWorkTypeData] = useState<WorkTypeData[]>(sampleWorkTypes);
-  const [commentsData, setCommentsData] = useState<VisitorCommentData[]>(sampleComments);
+  // Initialize all data arrays as empty - will be populated from API
+  const [purposes, setPurposes] = useState<VisitingPurposeData[]>([]);
+  const [moveInOutData, setMoveInOutData] = useState<MoveInOutData[]>([]);
+  const [workTypeData, setWorkTypeData] = useState<WorkTypeData[]>([]);
+  const [commentsData, setCommentsData] = useState<VisitorCommentData[]>([]);
+  
+  // Sites state
+  const [sites, setSites] = useState<Site[]>([]);
+  const [loadingSites, setLoadingSites] = useState(false);
+  
+  // Visitor setup data loading state
+  const [loadingVisitorSetup, setLoadingVisitorSetup] = useState(false);
+  const [staffTypes, setStaffTypes] = useState<StaffType[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmittingMoveInOut, setIsSubmittingMoveInOut] = useState(false);
+  const [isSubmittingWorkType, setIsSubmittingWorkType] = useState(false);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   useEffect(() => {
     setCurrentSection('Settings');
-  }, [setCurrentSection]);
+    
+    // Function to load sites from API
+    const loadSites = async () => {
+      setLoadingSites(true);
+      try {
+        // First try to get user ID from localStorage for allowed sites
+        const userId = localStorage.getItem('userId');
+        
+        // Check if we have base URL and token
+        const token = localStorage.getItem('token');
+        const baseUrl = localStorage.getItem('baseUrl');
+        
+        console.log('Site API Debug:', {
+          hasUserId: !!userId,
+          hasToken: !!token,
+          hasBaseUrl: !!baseUrl,
+          userId,
+          tokenLength: token?.length || 0,
+          baseUrl
+        });
+        
+        if (!token || !baseUrl) {
+          console.warn('Missing authentication or base URL');
+          return;
+        }
+        
+        if (userId) {
+          console.log('Fetching allowed sites for user:', userId);
+          const allowedSitesResponse = await fetchAllowedSites(userId);
+          if (allowedSitesResponse.sites && allowedSitesResponse.sites.length > 0) {
+            setSites(allowedSitesResponse.sites);
+            // toast({
+            //   title: "Sites Loaded",
+            //   description: `Loaded ${allowedSitesResponse.sites.length} allowed sites`,
+            // });
+            return;
+          }
+        }
+        
+        // Fallback to all sites if no user-specific sites found
+        console.log('Fetching all available sites...');
+        const sitesResponse = await fetchSites();
+        if (sitesResponse.sites && sitesResponse.sites.length > 0) {
+          setSites(sitesResponse.sites);
+          toast({
+            title: "Sites Loaded",
+            description: `Loaded ${sitesResponse.sites.length} sites`,
+          });
+        } else {
+          console.log('No sites found from API');
+        }
+      } catch (error) {
+        console.error('Error loading sites:', error);
+        toast({
+          title: "Sites Loading Failed",
+          description: "Failed to load sites. Please check your internet connection.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingSites(false);
+      }
+    };
+
+    // Function to load visitor setup data from API
+    const loadVisitorSetupData = async () => {
+      setLoadingVisitorSetup(true);
+      // Clear all data at start to ensure clean state
+      setPurposes([]);
+      setMoveInOutData([]);
+      setWorkTypeData([]);
+      setCommentsData([]);
+      
+      try {
+        console.log('Fetching visitor setup data...');
+        const visitorSetupResponse = await fetchVisitorSetup();
+        
+        // Transform API data to component format
+        if (visitorSetupResponse.visit_purposes && visitorSetupResponse.visit_purposes.length > 0) {
+          const transformedPurposes: VisitingPurposeData[] = visitorSetupResponse.visit_purposes.map((purpose) => ({
+            id: purpose.id,
+            purpose: purpose.purpose,
+            status: Boolean(purpose.active),
+            createdOn: new Date().toLocaleString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }),
+            createdBy: 'System',
+            active: purpose.active
+          }));
+          setPurposes(transformedPurposes);
+        }
+
+        if (visitorSetupResponse.move_in_out_purposes && visitorSetupResponse.move_in_out_purposes.length > 0) {
+          const transformedMoveInOut: MoveInOutData[] = visitorSetupResponse.move_in_out_purposes.map((purpose) => ({
+            id: purpose.id,
+            purpose: purpose.purpose,
+            status: Boolean(purpose.active),
+            createdOn: new Date().toLocaleString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }),
+            createdBy: 'System',
+            active: purpose.active
+          }));
+          setMoveInOutData(transformedMoveInOut);
+        }
+
+        if (visitorSetupResponse.staff_types && visitorSetupResponse.staff_types.length > 0) {
+          const transformedWorkTypes: WorkTypeData[] = visitorSetupResponse.staff_types.map((staffType) => ({
+            id: staffType.id,
+            staffType: staffType.related_to || 'Unknown', // related_to becomes Staff Type column
+            workType: staffType.staff_type, // staff_type becomes Work Type column
+            status: Boolean(staffType.active),
+            createdOn: new Date().toLocaleString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }),
+            createdBy: 'System',
+            active: staffType.active
+          }));
+          setWorkTypeData(transformedWorkTypes);
+          setStaffTypes(visitorSetupResponse.staff_types);
+        }
+
+        if (visitorSetupResponse.visitor_comment) {
+          const transformedComment: VisitorCommentData[] = [{
+            id: visitorSetupResponse.visitor_comment.id,
+            comment: visitorSetupResponse.visitor_comment.description,
+            status: Boolean(visitorSetupResponse.visitor_comment.active),
+            createdOn: new Date().toLocaleString('en-GB', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: true
+            }),
+            createdBy: 'System',
+            description: visitorSetupResponse.visitor_comment.description,
+            active: visitorSetupResponse.visitor_comment.active
+          }];
+          setCommentsData(transformedComment);
+        } else {
+          // Explicitly set empty array if no visitor comment in API response
+          setCommentsData([]);
+        }
+
+        // toast({
+        //   title: "Visitor Setup Data Loaded",
+        //   description: "All visitor setup data loaded successfully from API",
+        // });
+
+      } catch (error) {
+        console.error('Error loading visitor setup data:', error);
+        // Ensure all data is cleared on API error
+        setPurposes([]);
+        setMoveInOutData([]);
+        setWorkTypeData([]);
+        setCommentsData([]);
+        toast({
+          title: "API Loading Failed",
+          description: "Failed to load visitor setup data from API.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingVisitorSetup(false);
+      }
+    };
+
+    // Load both sites and visitor setup data
+    loadSites();
+    loadVisitorSetupData();
+  }, [setCurrentSection, toast]);
 
   // Filter functions for each tab data
   const getFilteredData = () => {
@@ -257,7 +356,7 @@ export const VisitingPurposePage = () => {
     });
   };
 
-  const handleMoveInOutSubmit = () => {
+  const handleMoveInOutSubmit = async () => {
     if (!moveInOutFormData.purpose) {
       toast({
         title: "Error",
@@ -267,10 +366,81 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Move In/Out purpose created successfully",
-    });
+    if (!moveInOutFormData.site) {
+      toast({
+        title: "Error",
+        description: "Please select a site",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmittingMoveInOut(true);
+    
+    try {
+      // Get resource_id from selected site
+      const resourceId = parseInt(moveInOutFormData.site);
+      
+      // Split purposes by pipe separator for multiple purposes
+      const purposeList = moveInOutFormData.purpose.split('|').filter(p => p.trim());
+      
+      // Create each purpose via API
+      const createPromises = purposeList.map(async (purpose) => {
+        const result = await createMoveInOutPurpose(purpose.trim(), resourceId, moveInOutFormData.active);
+        return result;
+      });
+      
+      const results = await Promise.all(createPromises);
+      
+      // Check if all API calls were successful
+      const successfulCreations = results.filter(result => result.success);
+      const failedCreations = results.filter(result => !result.success);
+      
+      if (successfulCreations.length > 0) {
+        // Add the new purposes to local state for immediate UI update
+        const newMoveInOutPurposes: MoveInOutData[] = purposeList.map((purpose, index) => ({
+          id: Math.max(...moveInOutData.map(p => p.id), 0) + index + 1,
+          purpose: purpose.trim(),
+          status: moveInOutFormData.active,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          createdBy: 'Current User'
+        }));
+
+        setMoveInOutData(prev => [...prev, ...newMoveInOutPurposes]);
+        
+        toast({
+          title: "Success",
+          description: `${successfulCreations.length} move in/out purpose(s) created successfully`,
+        });
+      }
+      
+      if (failedCreations.length > 0) {
+        toast({
+          title: "Partial Success",
+          description: `${failedCreations.length} purpose(s) failed to create. Check console for details.`,
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error creating move in/out purpose:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create move in/out purpose. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    } finally {
+      setIsSubmittingMoveInOut(false);
+    }
+
     handleMoveInOutModalClose();
   };
 
@@ -288,7 +458,7 @@ export const VisitingPurposePage = () => {
     });
   };
 
-  const handleWorkTypeSubmit = () => {
+  const handleWorkTypeSubmit = async () => {
     if (!workTypeFormData.workType) {
       toast({
         title: "Error",
@@ -298,10 +468,96 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Work type created successfully",
-    });
+    if (!workTypeFormData.staffType) {
+      toast({
+        title: "Error",
+        description: "Please select staff type",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!workTypeFormData.site) {
+      toast({
+        title: "Error",
+        description: "Please select a site",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsSubmittingWorkType(true);
+    
+    try {
+      // Get resource_id from selected site
+      const resourceId = parseInt(workTypeFormData.site);
+      
+      // Split work types by pipe separator for multiple work types
+      const workTypeList = workTypeFormData.workType.split('|').filter(wt => wt.trim());
+      
+      // Create each work type via API
+      const createPromises = workTypeList.map(async (workType) => {
+        const result = await createWorkType(
+          workType.trim(), // This becomes staff_type in API
+          workTypeFormData.staffType, // This becomes related_to in API
+          resourceId, 
+          workTypeFormData.active
+        );
+        return result;
+      });
+      
+      const results = await Promise.all(createPromises);
+      
+      // Check if all API calls were successful
+      const successfulCreations = results.filter(result => result.success);
+      const failedCreations = results.filter(result => !result.success);
+      
+      if (successfulCreations.length > 0) {
+        // Add the new work types to local state for immediate UI update
+        const newWorkTypes: WorkTypeData[] = workTypeList.map((workType, index) => ({
+          id: Math.max(...workTypeData.map(wt => wt.id), 0) + index + 1,
+          staffType: workTypeFormData.staffType,
+          workType: workType.trim(),
+          status: workTypeFormData.active,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          createdBy: 'Current User'
+        }));
+
+        setWorkTypeData(prev => [...prev, ...newWorkTypes]);
+        
+        toast({
+          title: "Success",
+          description: `${successfulCreations.length} work type(s) created successfully`,
+        });
+      }
+      
+      if (failedCreations.length > 0) {
+        toast({
+          title: "Partial Success",
+          description: `${failedCreations.length} work type(s) failed to create. Check console for details.`,
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error creating work type:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create work type. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    } finally {
+      setIsSubmittingWorkType(false);
+    }
+
     handleWorkTypeModalClose();
   };
 
@@ -317,7 +573,7 @@ export const VisitingPurposePage = () => {
     });
   };
 
-  const handleCommentSubmit = () => {
+  const handleCommentSubmit = async () => {
     if (!commentFormData.comment.trim()) {
       toast({
         title: "Error",
@@ -327,10 +583,60 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Comment created successfully",
-    });
+    setIsSubmittingComment(true);
+    
+    try {
+      console.log('Creating visitor comment with data:', commentFormData);
+      
+      const result = await createVisitorComment(
+        commentFormData.comment.trim(),
+        commentFormData.active
+      );
+      
+      if (result.success) {
+        // Add the new comment to local state for immediate UI update
+        const newComment: VisitorCommentData = {
+          id: Math.max(...commentsData.map(c => c.id), 0) + 1,
+          comment: commentFormData.comment.trim(),
+          status: commentFormData.active,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          createdBy: 'Current User'
+        };
+
+        setCommentsData(prev => [...prev, newComment]);
+        
+        toast({
+          title: "Success",
+          description: "Visitor comment created successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to create visitor comment. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+    } catch (error) {
+      console.error('Error creating visitor comment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create visitor comment. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    } finally {
+      setIsSubmittingComment(false);
+    }
+
     handleCommentModalClose();
   };
 
@@ -343,7 +649,7 @@ export const VisitingPurposePage = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.purpose) {
       toast({
         title: "Error",
@@ -353,30 +659,85 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    const newPurpose: VisitingPurposeData = {
-      id: (purposes.length + 1).toString(),
-      purpose: formData.purpose,
-      status: formData.active,
-      createdOn: new Date().toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }),
-      createdBy: 'Current User'
-    };
+    if (!formData.site) {
+      toast({
+        title: "Error",
+        description: "Please select a site",
+        variant: "destructive"
+      });
+      return;
+    }
 
-    setPurposes(prev => [...prev, newPurpose]);
-    toast({
-      title: "Success",
-      description: "Visiting purpose created successfully",
-    });
+    setIsSubmitting(true);
+    
+    try {
+      // Get resource_id from selected site
+      const resourceId = parseInt(formData.site);
+      
+      // Split purposes by pipe separator for multiple purposes
+      const purposeList = formData.purpose.split('|').filter(p => p.trim());
+      
+      // Create each purpose via API
+      const createPromises = purposeList.map(async (purpose) => {
+        const result = await createVisitPurpose(purpose.trim(), resourceId, formData.active);
+        return result;
+      });
+      
+      const results = await Promise.all(createPromises);
+      
+      // Check if all API calls were successful
+      const successfulCreations = results.filter(result => result.success);
+      const failedCreations = results.filter(result => !result.success);
+      
+      if (successfulCreations.length > 0) {
+        // Add the new purposes to local state for immediate UI update
+        const newPurposes: VisitingPurposeData[] = purposeList.map((purpose, index) => ({
+          id: Math.max(...purposes.map(p => p.id), 0) + index + 1,
+          purpose: purpose.trim(),
+          status: formData.active,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          createdBy: 'Current User'
+        }));
+
+        setPurposes(prev => [...prev, ...newPurposes]);
+        
+        toast({
+          title: "Success",
+          description: `${successfulCreations.length} visiting purpose(s) created successfully`,
+        });
+      }
+      
+      if (failedCreations.length > 0) {
+        toast({
+          title: "Partial Success",
+          description: `${failedCreations.length} purpose(s) failed to create. Check console for details.`,
+          variant: "destructive",
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error creating visit purpose:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create visiting purpose. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    } finally {
+      setIsSubmitting(false);
+    }
+
     handleModalClose();
   };
 
-  const handleStatusToggle = (id: string) => {
+  const handleStatusToggle = (id: number) => {
     setPurposes(prevData => 
       prevData.map(item => 
         item.id === id 
@@ -393,7 +754,7 @@ export const VisitingPurposePage = () => {
     });
   };
 
-  const handleEdit = (purposeId: string) => {
+  const handleEdit = (purposeId: number) => {
     const purpose = purposes.find(p => p.id === purposeId);
     if (purpose) {
       setEditingPurpose(purpose);
@@ -412,7 +773,7 @@ export const VisitingPurposePage = () => {
     setEditingPurposes(['']);
   };
 
-  const handleEditSubmit = () => {
+  const handleEditSubmit = async () => {
     if (!editingPurpose) return;
 
     const validPurposes = editingPurposes.filter(p => p.trim());
@@ -426,22 +787,70 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    setPurposes(prev => 
-      prev.map(p => 
-        p.id === editingPurpose.id 
-          ? { ...p, purpose: validPurposes.join('|'), status: editingPurpose.status }
-          : p
-      )
-    );
+    setIsSubmittingEdit(true);
+    
+    try {
+      // For edit, we'll update with the first purpose (main purpose)
+      // Multiple purposes can be handled differently if needed
+      const mainPurpose = validPurposes[0];
+      
+      const result = await editVisitPurpose(
+        editingPurpose.id,
+        mainPurpose,
+        editingPurpose.status
+      );
+      
+      if (result.success) {
+        // Update local state for immediate UI update
+        setPurposes(prev => 
+          prev.map(p => 
+            p.id === editingPurpose.id 
+              ? { 
+                  ...p, 
+                  purpose: validPurposes.join('|'), 
+                  status: editingPurpose.status,
+                  createdOn: new Date().toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })
+                }
+              : p
+          )
+        );
 
-    toast({
-      title: "Success",
-      description: "Purpose updated successfully",
-    });
+        toast({
+          title: "Success",
+          description: "Purpose updated successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update purpose. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+    } catch (error) {
+      console.error('Error updating purpose:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update purpose. Please try again.",
+        variant: "destructive"
+      });
+      return;
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+
     handleEditModalClose();
   };
 
-  const handleDelete = (purposeId: string) => {
+  const handleDelete = (purposeId: number) => {
     setPurposes(prev => prev.filter(item => item.id !== purposeId));
     toast({
       title: "Delete Purpose",
@@ -454,7 +863,7 @@ export const VisitingPurposePage = () => {
   };
 
   // Edit handlers for different types
-  const handleEditMoveInOut = (itemId: string) => {
+  const handleEditMoveInOut = (itemId: number) => {
     const item = moveInOutData.find(m => m.id === itemId);
     if (item) {
       setEditingMoveInOut(item);
@@ -462,7 +871,7 @@ export const VisitingPurposePage = () => {
     }
   };
 
-  const handleEditWorkType = (itemId: string) => {
+  const handleEditWorkType = (itemId: number) => {
     const item = workTypeData.find(w => w.id === itemId);
     if (item) {
       setEditingWorkType(item);
@@ -470,7 +879,7 @@ export const VisitingPurposePage = () => {
     }
   };
 
-  const handleEditVisitorComment = (itemId: string) => {
+  const handleEditVisitorComment = (itemId: number) => {
     const item = commentsData.find(c => c.id === itemId);
     if (item) {
       setEditingVisitorComment(item);
@@ -525,6 +934,48 @@ export const VisitingPurposePage = () => {
     <>
       <div className="p-6 bg-gray-50 min-h-screen">
         <div className="mb-6">
+          {/* Debug Panel - Remove this in production */}
+          {/* <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-yellow-800">API Debug Panel</h3>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  const token = localStorage.getItem('token');
+                  const baseUrl = localStorage.getItem('baseUrl');
+                  const userId = localStorage.getItem('userId');
+                  console.log('=== Manual API Debug Check ===');
+                  console.log('Token:', token ? `Present (${token.length} chars)` : 'Missing');
+                  console.log('Base URL:', baseUrl || 'Missing');
+                  console.log('User ID:', userId || 'Missing');
+                  console.log('Sites count:', sites.length);
+                  console.log('Loading sites:', loadingSites);
+                  toast({
+                    title: "API Debug",
+                    description: `Token: ${token ? 'Present' : 'Missing'}, BaseURL: ${baseUrl ? 'Present' : 'Missing'}, Sites: ${sites.length}`,
+                  });
+                }}
+              >
+                Debug API Status
+              </Button>
+            </div>
+            <div className="mt-2 text-sm text-yellow-700">
+              Sites loaded: {sites.length} | Loading: {loadingSites ? 'Yes' : 'No'}
+            </div>
+          </div> */}
+          {/* Loading indicator */}
+          {/* {(loadingSites || loadingVisitorSetup) && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 animate-spin text-blue-600" />
+                <span className="text-sm text-blue-700">
+                  Loading visitor setup data...
+                </span>
+              </div>
+            </div>
+          )} */}
+          
           <div className="bg-white rounded-lg border border-gray-200">
             {/* Tab Navigation */}
             <div className="flex border-b border-gray-200">
@@ -603,29 +1054,37 @@ export const VisitingPurposePage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getFilteredData().map((item) => (
-                      <TableRow key={item.id} className="hover:bg-gray-50">
-                        <TableCell className="px-4 py-3">
-                          <button
-                            onClick={() => handleEdit(item.id)}
-                            className="p-1 hover:bg-gray-100 rounded"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                          </button>
+                    {getFilteredData().length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                          No data available
                         </TableCell>
-                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                        <TableCell className="px-4 py-3 text-center">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.status ? 'Active' : 'Inactive'}
-                          </span>
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      getFilteredData().map((item) => (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                          <TableCell className="px-4 py-3">
+                            <button
+                              onClick={() => handleEdit(item.id)}
+                              className="p-1 hover:bg-gray-100 rounded"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                            </button>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                          <TableCell className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.status ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               )}
@@ -642,29 +1101,37 @@ export const VisitingPurposePage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getFilteredData().map((item) => (
-                      <TableRow key={item.id} className="hover:bg-gray-50">
-                         <TableCell className="px-4 py-3">
-                           <button
-                             onClick={() => handleEditMoveInOut(item.id)}
-                             className="p-1 hover:bg-gray-100 rounded"
-                             title="Edit"
-                           >
-                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                           </button>
-                         </TableCell>
-                        <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
-                        <TableCell className="px-4 py-3 text-center">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.status ? 'Active' : 'Inactive'}
-                          </span>
+                    {getFilteredData().length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                          No data available
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      getFilteredData().map((item) => (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                           <TableCell className="px-4 py-3">
+                             <button
+                               onClick={() => handleEditMoveInOut(item.id)}
+                               className="p-1 hover:bg-gray-100 rounded"
+                               title="Edit"
+                             >
+                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                             </button>
+                           </TableCell>
+                          <TableCell className="px-4 py-3 font-medium">{item.purpose}</TableCell>
+                          <TableCell className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.status ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               )}
@@ -682,30 +1149,38 @@ export const VisitingPurposePage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getFilteredData().map((item) => (
-                      <TableRow key={item.id} className="hover:bg-gray-50">
-                         <TableCell className="px-4 py-3">
-                           <button
-                             onClick={() => handleEditWorkType(item.id)}
-                             className="p-1 hover:bg-gray-100 rounded"
-                             title="Edit"
-                           >
-                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                           </button>
-                         </TableCell>
-                        <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
-                        <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
-                        <TableCell className="px-4 py-3 text-center">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.status ? 'Active' : 'Inactive'}
-                          </span>
+                    {getFilteredData().length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={6} className="px-4 py-8 text-center text-gray-500">
+                          No data available
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      getFilteredData().map((item) => (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                           <TableCell className="px-4 py-3">
+                             <button
+                               onClick={() => handleEditWorkType(item.id)}
+                               className="p-1 hover:bg-gray-100 rounded"
+                               title="Edit"
+                             >
+                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                             </button>
+                           </TableCell>
+                          <TableCell className="px-4 py-3 font-medium">{item.staffType}</TableCell>
+                          <TableCell className="px-4 py-3 font-medium">{item.workType}</TableCell>
+                          <TableCell className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.status ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               )}
@@ -722,29 +1197,37 @@ export const VisitingPurposePage = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getFilteredData().map((item) => (
-                      <TableRow key={item.id} className="hover:bg-gray-50">
-                         <TableCell className="px-4 py-3">
-                           <button
-                             onClick={() => handleEditVisitorComment(item.id)}
-                             className="p-1 hover:bg-gray-100 rounded"
-                             title="Edit"
-                           >
-                             <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                           </button>
-                         </TableCell>
-                        <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
-                        <TableCell className="px-4 py-3 text-center">
-                          <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-                            item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                          }`}>
-                            {item.status ? 'Active' : 'Inactive'}
-                          </span>
+                    {getFilteredData().length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="px-4 py-8 text-center text-gray-500">
+                          No data available
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      getFilteredData().map((item) => (
+                        <TableRow key={item.id} className="hover:bg-gray-50">
+                           <TableCell className="px-4 py-3">
+                             <button
+                               onClick={() => handleEditVisitorComment(item.id)}
+                               className="p-1 hover:bg-gray-100 rounded"
+                               title="Edit"
+                             >
+                               <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                             </button>
+                           </TableCell>
+                          <TableCell className="px-4 py-3 font-medium">{item.comment}</TableCell>
+                          <TableCell className="px-4 py-3 text-center">
+                            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                              item.status ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            }`}>
+                              {item.status ? 'Active' : 'Inactive'}
+                            </span>
+                          </TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               )}
@@ -773,14 +1256,26 @@ export const VisitingPurposePage = () => {
             {/* Site Selection */}
             <div className="space-y-2">
               <Label className="text-sm text-gray-600">Select site</Label>
-              <Select value={formData.site} onValueChange={(value) => setFormData({...formData, site: value})}>
+              <Select 
+                value={formData.site} 
+                onValueChange={(value) => setFormData({...formData, site: value})}
+                disabled={loadingSites}
+              >
                 <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder="Select Site" />
+                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
-                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
-                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                  {loadingSites ? (
+                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
+                  ) : sites.length > 0 ? (
+                    sites.map((site) => (
+                      <SelectItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No sites available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -868,9 +1363,17 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
             </div>
           </div>
@@ -896,14 +1399,26 @@ export const VisitingPurposePage = () => {
             {/* Site Selection */}
             <div className="space-y-2">
               <Label className="text-sm text-gray-600">Select site</Label>
-              <Select value={moveInOutFormData.site} onValueChange={(value) => setMoveInOutFormData({...moveInOutFormData, site: value})}>
+              <Select 
+                value={moveInOutFormData.site} 
+                onValueChange={(value) => setMoveInOutFormData({...moveInOutFormData, site: value})}
+                disabled={loadingSites}
+              >
                 <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder="Select Site" />
+                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
-                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
-                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                  {loadingSites ? (
+                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
+                  ) : sites.length > 0 ? (
+                    sites.map((site) => (
+                      <SelectItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No sites available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -991,9 +1506,17 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleMoveInOutSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={isSubmittingMoveInOut}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmittingMoveInOut ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
             </div>
           </div>
@@ -1019,14 +1542,26 @@ export const VisitingPurposePage = () => {
             {/* Site Selection */}
             <div className="space-y-2">
               <Label className="text-sm text-gray-600">Select Site</Label>
-              <Select value={workTypeFormData.site} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, site: value})}>
+              <Select 
+                value={workTypeFormData.site} 
+                onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, site: value})}
+                disabled={loadingSites}
+              >
                 <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder="Select Site" />
+                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="site1">Lockated - Main Office</SelectItem>
-                  <SelectItem value="site2">Zycus Infotech - Pune</SelectItem>
-                  <SelectItem value="site3">Arvog Finance - Mumbai</SelectItem>
+                  {loadingSites ? (
+                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
+                  ) : sites.length > 0 ? (
+                    sites.map((site) => (
+                      <SelectItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="" disabled>No sites available</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -1034,15 +1569,16 @@ export const VisitingPurposePage = () => {
             {/* Staff Type Selection */}
             <div className="space-y-2">
               <Label className="text-sm text-gray-600">Select Staff Type</Label>
-              <Select value={workTypeFormData.staffType} onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}>
+              <Select 
+                value={workTypeFormData.staffType} 
+                onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}
+              >
                 <SelectTrigger className="w-full bg-white border border-gray-300">
                   <SelectValue placeholder="Select Staff Type" />
                 </SelectTrigger>
                 <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  <SelectItem value="permanent">Permanent Staff</SelectItem>
-                  <SelectItem value="contract">Contract Staff</SelectItem>
-                  <SelectItem value="temporary">Temporary Staff</SelectItem>
-                  <SelectItem value="vendor">Vendor Staff</SelectItem>
+                  <SelectItem value="Personal">Personal</SelectItem>
+                  <SelectItem value="Society">Society</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1087,9 +1623,17 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleWorkTypeSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={isSubmittingWorkType}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmittingWorkType ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
             </div>
           </div>
@@ -1153,9 +1697,17 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-end pt-4">
               <Button 
                 onClick={handleCommentSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
+                disabled={isSubmittingComment}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Submit
+                {isSubmittingComment ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Creating...
+                  </>
+                ) : (
+                  'Submit'
+                )}
               </Button>
             </div>
           </div>
@@ -1250,10 +1802,17 @@ export const VisitingPurposePage = () => {
             <div className="flex justify-start pt-4">
               <Button 
                 onClick={handleEditSubmit}
-                className="bg-green-500 hover:bg-green-600 text-white px-6"
-                disabled={editingPurposes.every(p => !p.trim())}
+                className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmittingEdit || editingPurposes.every(p => !p.trim())}
               >
-                UPDATE
+                {isSubmittingEdit ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Updating...
+                  </>
+                ) : (
+                  'UPDATE'
+                )}
               </Button>
             </div>
           </div>

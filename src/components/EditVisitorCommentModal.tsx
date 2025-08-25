@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { TextField } from '@mui/material';
 import { X, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { editVisitorComment } from '@/services/visitorCommentAPI';
 
 interface VisitorCommentData {
   id: string;
@@ -26,6 +27,7 @@ interface EditVisitorCommentModalProps {
 export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate }: EditVisitorCommentModalProps) => {
   const [comments, setComments] = useState<string[]>(['']);
   const [status, setStatus] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,7 +44,7 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
     }
   }, [commentData, isOpen]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const validComments = comments.filter(c => c.trim());
     
     if (validComments.length === 0) {
@@ -54,18 +56,59 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
       return;
     }
 
-    if (commentData) {
-      const updatedData = {
-        ...commentData,
-        comment: validComments.join('|'),
+    if (!commentData) return;
+
+    setIsSubmitting(true);
+    
+    try {
+      // For edit, we'll update with the first comment (main comment)
+      // Multiple comments can be handled differently if needed
+      const mainComment = validComments[0];
+      
+      const result = await editVisitorComment(
+        parseInt(commentData.id),
+        mainComment,
         status
-      };
-      onUpdate(updatedData);
+      );
+      
+      if (result.success) {
+        const updatedData = {
+          ...commentData,
+          comment: validComments.join('|'),
+          status,
+          createdOn: new Date().toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })
+        };
+        
+        onUpdate(updatedData);
+        toast({
+          title: "Success",
+          description: "Visitor comment updated successfully",
+        });
+        onClose();
+      } else {
+        toast({
+          title: "Error",
+          description: result.message || "Failed to update visitor comment. Please try again.",
+          variant: "destructive"
+        });
+      }
+      
+    } catch (error) {
+      console.error('Error updating visitor comment:', error);
       toast({
-        title: "Success",
-        description: "Visitor comment updated successfully",
+        title: "Error",
+        description: "Failed to update visitor comment. Please try again.",
+        variant: "destructive"
       });
-      onClose();
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -185,10 +228,17 @@ export const EditVisitorCommentModal = ({ isOpen, onClose, commentData, onUpdate
         <div className="flex justify-center px-6 py-4 border-t border-gray-200">
           <Button
             onClick={handleSubmit}
-            className="bg-green-600 hover:bg-green-700 text-white px-8"
-            disabled={comments.every(c => !c.trim())}
+            className="bg-green-600 hover:bg-green-700 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isSubmitting || comments.every(c => !c.trim())}
           >
-            Update
+            {isSubmitting ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Updating...
+              </>
+            ) : (
+              'Update'
+            )}
           </Button>
         </div>
       </DialogContent>
