@@ -115,7 +115,7 @@ export const AddMasterChecklistDashboard = () => {
 
                 {/* Schedule For Section */}
                 <div>
-                  <Label className="text-sm font-medium mb-3 block">Schedule For</Label>
+                  <Label className="text-sm font-medium mb-3 block">Schedule Fonjnjr</Label>
                   <RadioGroup value={scheduleFor} onValueChange={setScheduleFor} className="flex gap-6">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="Asset" id="asset" />
