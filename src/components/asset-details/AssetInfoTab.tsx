@@ -352,30 +352,42 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                     {/* Left Section - Asset Info */}
                     <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
                       {/* Asset No - Hidden for Furniture & Fixtures */}
-                      {asset.asset_type_category !== "Furniture & Fixtures" && (
-                        <div className="flex items-start">
-                          <span className="w-28 text-gray-500 text-sm">
-                            Asset No
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-semibold text-black">
-                            {asset.asset_number || "-"}
-                          </span>
-                        </div>
-                      )}
+                      {![
+                        "Furniture & Fixtures",
+                        "Meter",
+                        "IT Equipment",
+                        "Machinery & Equipment",
+                        "Tools & Instruments"
+                      ].includes(asset.asset_type_category) && (
+                          <div className="flex items-start">
+                            <span className="w-28 text-gray-500 text-sm">
+                              Asset No
+                            </span>
+                            <span className="mx-2 text-gray-500">:</span>
+                            <span className="font-semibold text-black">
+                              {asset.asset_number || "-"}
+                            </span>
+                          </div>
+                        )}
 
                       {/* Series No - Hidden for Furniture & Fixtures */}
-                      {asset.asset_type_category !== "Furniture & Fixtures" && (
-                        <div className="flex items-start">
-                          <span className="w-28 text-gray-500 text-sm">
-                            Series No
-                          </span>
-                          <span className="mx-2 text-gray-500">:</span>
-                          <span className="font-semibold text-black">
-                            {asset.serial_number || "-"}
-                          </span>
-                        </div>
-                      )}
+                      {![
+                        "Furniture & Fixtures",
+                        "Meter",
+                        "IT Equipment",
+                        "Machinery & Equipment",
+                        "Tools & Instruments"
+                      ].includes(asset.asset_type_category) && (
+                          <div className="flex items-start">
+                            <span className="w-28 text-gray-500 text-sm">
+                              Series No
+                            </span>
+                            <span className="mx-2 text-gray-500">:</span>
+                            <span className="font-semibold text-black">
+                              {asset.serial_number || "-"}
+                            </span>
+                          </div>
+                        )}
 
                       {/* Group */}
                       <div className="flex items-start">
@@ -957,7 +969,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                       <span className="mx-2 text-gray-500">:</span>
                       <span className="font-medium">
                         {asset.warranty_period
-                          ? `${asset.warranty_period} year(s)`
+                          ? `${asset.warranty_period} Month(s)`
                           : "-"}
                       </span>
                     </div>
