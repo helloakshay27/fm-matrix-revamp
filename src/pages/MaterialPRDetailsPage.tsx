@@ -284,14 +284,18 @@ export const MaterialPRDetailsPage = () => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-3">
-        <Button
-          size="sm"
-          variant="outline"
-          className="border-gray-300 bg-purple-600 text-white sap_button"
-          onClick={handleSendToSap}
-        >
-          Send To SAP Team
-        </Button>
+        {
+          pr.show_send_sap_yes && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white sap_button"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
+          )
+        }
         <Button variant="outline" size="sm" onClick={handleClone}>
           <Copy className="w-4 h-4 mr-2" />
           Clone

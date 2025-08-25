@@ -186,6 +186,10 @@ export const WODetailsPage = () => {
     amount: "",
     description: "",
   });
+  const [buttonCondition, setButtonCondition] = useState({
+    showSap: false,
+    editWbsCode: false
+  })
 
   const [workOrder, setWorkOrder] = useState({
     letter_of_indent: false,
@@ -245,6 +249,10 @@ export const WODetailsPage = () => {
       setWorkOrder(response.page);
       setDebitCreditNote(response.page.debit_credit_notes);
       setInvoices(response.page.invoices);
+      setButtonCondition({
+        showSap: response.show_send_sap_yes,
+        editWbsCode: response.can_edit_wbs_codes
+      })
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -413,23 +421,31 @@ export const WODetailsPage = () => {
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 btn-primary"
-              data-bs-toggle="modal"
-              data-bs-target="#wbsBulkModal"
-            >
-              Edit WBS Codes
-            </Button>
+            {
+              buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white sap_button"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )
+            }
+            {
+              buttonCondition.editWbsCode && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 btn-primary"
+                  data-bs-toggle="modal"
+                  data-bs-target="#wbsBulkModal"
+                >
+                  Edit WBS Codes
+                </Button>
+              )
+            }
             <Button size="sm" variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-1" />
               Edit

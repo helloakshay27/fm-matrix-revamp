@@ -239,6 +239,7 @@ export const PODetailsPage = () => {
     total_tax_amount: "",
     taxes: "",
     total_amount: "",
+    show_send_sap_yes: false
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -393,14 +394,18 @@ export const PODetailsPage = () => {
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
+            {
+              poDetails.show_send_sap_yes && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white sap_button"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )
+            }
             <Button
               size="sm"
               variant="outline"

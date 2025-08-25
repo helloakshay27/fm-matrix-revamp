@@ -54,7 +54,7 @@ import { createServicePRReducer, getServicePrReducer, getServicesReducer } from 
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer } from './slices/grnSlice'
 import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
-import { getInvoiceByIdReducer, getInvoincesReducer } from './slices/invoicesSlice'
+import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoincesReducer } from './slices/invoicesSlice'
 
 export const store = configureStore({
   reducer: {
@@ -219,6 +219,7 @@ export const store = configureStore({
     // Invoices
     getInvoinces: getInvoincesReducer,
     getInvoiceById: getInvoiceByIdReducer,
+    approveInvoice: approveInvoiceReducer,
 
     // Customer List
     getCustomerList: getCustomerListReducer,

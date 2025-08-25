@@ -14,7 +14,7 @@ import {
     TextField,
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
-import { getInvoiceById } from "@/store/slices/invoicesSlice";
+import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
 
 // Define interfaces for data structures
 interface BillingAddress {
@@ -46,6 +46,13 @@ interface Attachment {
     document_file_name?: string;
 }
 
+interface ApprovalLevel {
+    name?: string;
+    status?: string;
+    updated_by?: string;
+    status_updated_at?: string;
+}
+
 interface Invoice {
     id?: string;
     invoice_number?: string;
@@ -70,6 +77,7 @@ interface Invoice {
     wo_invoice_inventories?: WOInvoiceInventory[];
     total_value?: number;
     attachments?: Attachment[];
+    approval_levels?: ApprovalLevel[];
 }
 
 // Column configurations for tables
@@ -278,8 +286,14 @@ export const InvoiceDetails = () => {
     };
 
     const handleApprove = async () => {
+        const payload = {
+            level_id: Number(levelId),
+            user_id: Number(userId),
+            approve: true,
+        }
         try {
-            toast.success("PO approved successfully");
+            await dispatch(approveInvoice({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+            toast.success("Invoice approved successfully");
             navigate(`/finance/pending-approvals`);
         } catch (error) {
             console.error("Error approving PO:", error);
@@ -322,17 +336,24 @@ export const InvoiceDetails = () => {
                     <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
                         WORK ORDER INVOICE
                     </h1>
-                    <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-gray-700">
-                            L1 Approval:
-                        </span>
-                        <span className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium">
-                            {invoice.all_level_approved === true
-                                ? "Approved"
-                                : invoice.all_level_approved === false
-                                    ? "Rejected"
-                                    : "Pending"}
-                        </span>
+                    <div className='flex items-start gap-4 mt-2'>
+                        {
+                            invoice?.approval_levels?.map(level => (
+                                <div className='space-y-3'>
+                                    <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+                                        {`${level?.name?.toUpperCase()} approved : ${level.status}`}
+                                    </div>
+                                    {
+                                        level.updated_by && level.status_updated_at &&
+                                        <div className='ms-2 w-[177px]'>
+                                            {
+                                                `${level.updated_by} (${level.status_updated_at})`
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            ))
+                        }
                     </div>
                 </div>
 

@@ -19,12 +19,22 @@ export const ServicePRDetailsPage = () => {
   const { id } = useParams();
 
   const [servicePR, setServicePR] = useState({});
+  const [buttonCondition, setButtonCondition] = useState({
+    showSap: false,
+    showAddInvoice: false,
+    showAddDebitCredit: false
+  })
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
         setServicePR(response.page)
+        setButtonCondition({
+          showSap: response.show_send_sap_yes,
+          showAddInvoice: response.show_add_invoice_ses,
+          showAddDebitCredit: response.can_add_debit_credit_note
+        })
       } catch (error) {
         toast.error(error)
       }
@@ -341,14 +351,18 @@ export const ServicePRDetailsPage = () => {
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
-              onClick={handleSendToSap}
-            >
-              Send To SAP Team
-            </Button>
+            {
+              buttonCondition.showSap && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white sap_button"
+                  onClick={handleSendToSap}
+                >
+                  Send To SAP Team
+                </Button>
+              )
+            }
             <Button size="sm" variant="outline" className="border-gray-300">
               <Edit className="w-4 h-4 mr-1" />
               Edit
