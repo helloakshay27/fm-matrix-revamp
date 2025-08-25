@@ -12,7 +12,6 @@ import {
   InputLabel,
   Box,
 } from "@mui/material";
-import { getAuthHeader } from "@/config/apiConfig";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { toast } from "sonner";
 
@@ -1619,7 +1618,7 @@ export const AddBookingSetupPage = () => {
                 <div className="border rounded-lg">
                   <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }}>
                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      11
+                      10
                     </div>
                     <h3 className="text-lg font-semibold text-[#C72030]">
                       CONFIGURE AMENITY INFO
@@ -1728,7 +1727,7 @@ export const AddBookingSetupPage = () => {
                 <div className="border rounded-lg">
                   <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="seater">
                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      12
+                      11
                     </div>
                     <h3 className="text-lg font-semibold text-[#C72030]">
                       SEATER INFO
@@ -1769,7 +1768,7 @@ export const AddBookingSetupPage = () => {
                 <div className="border rounded-lg">
                   <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="floor">
                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      13
+                      12
                     </div>
                     <h3 className="text-lg font-semibold text-[#C72030]">
                       FLOOR INFO
@@ -1810,7 +1809,7 @@ export const AddBookingSetupPage = () => {
                 <div className="border rounded-lg">
                   <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="shared">
                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      14
+                      13
                     </div>
                     <h3 className="text-lg font-semibold text-[#C72030]">
                       Shared Content Info
@@ -1835,7 +1834,7 @@ export const AddBookingSetupPage = () => {
                 <div className="border rounded-lg">
                   <div className="flex items-center gap-2 p-6 bg-[#F6F4EE]" style={{ border: "1px solid #D9D9D9" }} id="appKey">
                     <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-bold">
-                      2
+                      14
                     </div>
                     <h3 className="text-lg font-semibold text-[#C72030]">
                       CONFIGURE APP KEY
