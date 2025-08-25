@@ -1704,7 +1704,7 @@ export const EditBookingSetupPage = () => {
                                         style={{ border: "1px solid #D9D9D9" }}
                                     >
                                         <FormControl>
-                                            <InputLabel>Seater Info</InputLabel>
+                                            <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Seater Info</InputLabel>
                                             <Select
                                                 value={formData.seaterInfo}
                                                 onChange={(e) =>
@@ -1755,7 +1755,7 @@ export const EditBookingSetupPage = () => {
                                         style={{ border: "1px solid #D9D9D9" }}
                                     >
                                         <FormControl>
-                                            <InputLabel>Floor Info</InputLabel>
+                                            <InputLabel sx={{ backgroundColor: '#F6F7F7', paddingRight: "5px" }}>Floor Info</InputLabel>
                                             <Select
                                                 value={formData.floorInfo}
                                                 onChange={(e) =>
