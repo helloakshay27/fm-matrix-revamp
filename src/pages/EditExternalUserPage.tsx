@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -69,9 +69,13 @@ export const EditExternalUserPage = () => {
     }
   };
 
-  const validate = () => {
+  // Helper to treat various empties consistently
+  const isEmpty = (v: any) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+
+  // Build validation errors without side effects
+  const getErrors = () => {
     const errors: Record<string, string> = {};
-    const requiredFields: Array<[keyof typeof formData, string]> = [
+    const requiredFields: Array<[string, string]> = [
       ['firstname', 'First Name'],
       ['lastname', 'Last Name'],
       ['email', 'Email'],
@@ -91,24 +95,35 @@ export const EditExternalUserPage = () => {
 
     requiredFields.forEach(([key, label]) => {
       const val = (formData as any)[key];
-      if (val === undefined || val === null || String(val).trim() === '') {
-        errors[key as string] = `${label} is required`;
+      if (isEmpty(val)) {
+        errors[key] = `${label} is required`;
       }
     });
 
-    // simple email/mobile format hints (non-blocking if present)
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    // Email format
+    if (!isEmpty(formData.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(formData.email))) {
       errors.email = 'Enter a valid email address';
     }
-    if (formData.mobile && String(formData.mobile).trim().length < 8) {
+    // Mobile minimal length
+    if (!isEmpty(formData.mobile) && String(formData.mobile).trim().length < 8) {
       errors.mobile = errors.mobile || 'Enter a valid mobile number';
+    }
+    // Date format YYYY-MM-DD (HTML date inputs generally ensure this, but validate anyway)
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+    if (!isEmpty(formData.birth_date) && !dateRe.test(String(formData.birth_date))) {
+      errors.birth_date = 'Birth Date must be YYYY-MM-DD';
+    }
+    if (!isEmpty(formData.joining_date) && !dateRe.test(String(formData.joining_date))) {
+      errors.joining_date = 'Joining Date must be YYYY-MM-DD';
     }
     return errors;
   };
 
+  // Disable Save when there are validation errors
+  const saveBlocked = useMemo(() => Object.keys(getErrors()).length > 0, [formData]);
+
   const handleSubmit = async () => {
-    if (!userId) return;
-    const errors = validate();
+    const errors = getErrors();
     if (Object.keys(errors).length) {
       setFieldErrors(errors);
       const missing = Object.values(errors)
@@ -119,6 +134,14 @@ export const EditExternalUserPage = () => {
       } else {
         toast.info('Please fix the highlighted fields');
       }
+      // Optional: scroll to top so the user sees errors immediately on long forms
+      try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+      return;
+    }
+    // Determine a valid user id after validation so errors are still shown even if id is missing
+    const idForUpdate = userId || formData?.id || originalUser?.id;
+    if (!idForUpdate) {
+      toast.error('Missing user id');
       return;
     }
     setSaving(true);
@@ -159,10 +182,10 @@ export const EditExternalUserPage = () => {
           ] : []
         }
       };
-      const url = `https://${baseUrl}/pms/users/${userId}/update_vi_user`;
+  const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
-      navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: { ...originalUser, ...formData } } });
+  navigate(`/maintenance/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {
       console.error('Update external user error', e);
       const respData = e?.response?.data;
@@ -214,11 +237,15 @@ export const EditExternalUserPage = () => {
           report_to_id: data.report_to?.id || data.report_to_id || '',
           department_id: data.lock_user_permission?.department_id || '',
           circle_id: data.lock_user_permission?.circle_id || data.circle_id || '',
+          // keep names to show as fallback labels in selects
+          department_name: data.lock_user_permission?.department_name || data.department_name || data.department?.department_name || '',
+          circle_name: data.circle_name || data.lock_user_permission?.circle_name || data.circle?.circle_name || '',
           cluster_name: data.cluster_name || '',
           company_cluster_id: data.company_cluster_id || data.lock_user_permission?.company_cluster_id || '',
           // if API returns an object, pick its name; else keep string
           work_location: (typeof data.work_location === 'object' && data.work_location !== null) ? (data.work_location.name || data.work_location.work_location_name || '') : (data.work_location || ''),
           role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || '',
+          role_name: data.lock_user_permission?.lock_role_name || data.role_name || data.role?.name || '',
           // new fields populate from either user or lock_user_permission where applicable
           ext_company_name: data.ext_company_name || '',
           org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
@@ -260,6 +287,17 @@ export const EditExternalUserPage = () => {
     fetchDepartments();
   }, []);
 
+  // Ensure current department appears in dropdown even if API list lacks it
+  useEffect(() => {
+    const id = formData.department_id;
+    if (!id || !departments || departments.length === 0) return;
+    const exists = departments.some((d: any) => String(d.id) === String(id));
+    if (!exists) {
+      const label = formData.department_name || `Department ${id}`;
+      setDepartments(prev => [{ id, department_name: label, __synthetic: true }, ...prev]);
+    }
+  }, [departments.length, formData.department_id, formData.department_name]);
+
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -278,6 +316,17 @@ export const EditExternalUserPage = () => {
     fetchRoles();
   }, []);
 
+  // Ensure current role appears in dropdown even if missing in options
+  useEffect(() => {
+    const id = formData.role_id;
+    if (!id || !roles || roles.length === 0) return;
+    const exists = roles.some((r: any) => String(r.id) === String(id));
+    if (!exists) {
+      const label = formData.role_name || `Role ${id}`;
+      setRoles(prev => [{ id, name: label, __synthetic: true }, ...prev]);
+    }
+  }, [roles.length, formData.role_id, formData.role_name]);
+
   useEffect(() => {
     const fetchCircles = async () => {
       try {
@@ -292,6 +341,17 @@ export const EditExternalUserPage = () => {
     };
     fetchCircles();
   }, []);
+
+  // Ensure current circle appears in dropdown even if missing in options
+  useEffect(() => {
+    const id = formData.circle_id;
+    if (!id || !circles || circles.length === 0) return;
+    const exists = circles.some((c: any) => String(c.id) === String(id));
+    if (!exists) {
+      const label = formData.circle_name || `Circle ${id}`;
+      setCircles(prev => [{ id, circle_name: label, __synthetic: true }, ...prev]);
+    }
+  }, [circles.length, formData.circle_id, formData.circle_name]);
 
   useEffect(() => {
     const fetchClusters = async () => {
@@ -308,6 +368,17 @@ export const EditExternalUserPage = () => {
     fetchClusters();
   }, []);
 
+  // Ensure current cluster appears in dropdown even if missing in options
+  useEffect(() => {
+    const id = formData.company_cluster_id;
+    if (!id || !clusters || clusters.length === 0) return;
+    const exists = clusters.some((cl: any) => String(cl.id) === String(id));
+    if (!exists) {
+      const label = formData.cluster_name || `Cluster ${id}`;
+      setClusters(prev => [{ id, cluster_name: label, __synthetic: true }, ...prev]);
+    }
+  }, [clusters.length, formData.company_cluster_id, formData.cluster_name]);
+
   useEffect(() => {
     const fetchWorkLocations = async () => {
       try {
@@ -322,6 +393,17 @@ export const EditExternalUserPage = () => {
     };
     fetchWorkLocations();
   }, []);
+
+  // Ensure current work location name appears even if not in list
+  useEffect(() => {
+    const name = formData.work_location;
+    if (!name || !workLocations) return;
+    const exists = workLocations.some((w: any) => (w.name || w.work_location_name) === name);
+    if (!exists) {
+      const id = `synthetic-${name}`;
+      setWorkLocations(prev => [{ id, name, __synthetic: true }, ...prev]);
+    }
+  }, [workLocations.length, formData.work_location]);
 
   // Debounced Line Manager search
   useEffect(() => {
@@ -539,8 +621,8 @@ export const EditExternalUserPage = () => {
 
       {/* Actions */}
       <div className="flex gap-4 flex-wrap justify-center pt-4">
-        <Button onClick={handleCancel} variant="outline" className="px-8 py-2" disabled={saving}>Cancel</Button>
-        <Button onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 px-8 py-2" disabled={saving}>
+  <Button onClick={handleCancel} variant="outline" className="px-8 py-2" disabled={saving}>Cancel</Button>
+  <Button onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 px-8 py-2" disabled={saving || saveBlocked}>
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>

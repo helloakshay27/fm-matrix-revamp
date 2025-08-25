@@ -577,14 +577,14 @@ export const ChecklistMasterPage = () => {
                 label="Asset"
               />
               <FormControlLabel
-                value="Location"
+                value="Service"
                 control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                label="Location"
+                label="Service"
               />
               <FormControlLabel
-                value="Area"
+                value="Vendor"
                 control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />}
-                label="Area"
+                label="Vendor"
               />
             </MuiRadioGroup>
           </Box>

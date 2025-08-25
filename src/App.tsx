@@ -641,6 +641,12 @@ import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
 import ReporteesReassignPage from "./pages/ReporteesReassignPage";
 import { InvoiceDetails } from "./pages/InvoiceDetails";
+import VehicleDetails from "./components/VehicleDetails";
+import VehicleCheckIn from "./components/VehicleCheckIn";
+import UpdateVehicleHistoryPage from "./pages/UpdateVehicleHistoryPage";
+import SacHsn from "./pages/SacHsn";
+import DetailPageSacHsn from "./pages/DetailPageSacHsn";
+import AddSacHsn from "./pages/AddSacHsn";
 
 
 const queryClient = new QueryClient();
@@ -1356,6 +1362,10 @@ function App() {
                   element={<EditServicePage />}
                 />
 
+                {/* SAC/HSN Routes (list + detail) */}
+                {/* <Route path="/maintenance/sac-hsn" element={<SacHsn />} />
+                <Route path="/maintenance/sac-hsn/details/:id" element={<DetailPageSacHsn />} /> */}
+
                 {/* Attendance Routes */}
                 <Route
                   path="/maintenance/attendance"
@@ -1825,6 +1835,10 @@ function App() {
                 <Route path="/maintenance/smt/:id" element={<SMTDetailPage />} />
                 <Route path="/maintenance/m-safe/external-users/multiple-delete" element={<MultipleUserDeletePage />} />
                 <Route path="/maintenance/reportees-reassign" element={<ReporteesReassignPage />} />
+                <Route path="/maintenance/vi-miles/vehicle-details" element={<VehicleDetails />} />
+                <Route path="/maintenance/vi-miles/vehicle-check-in" element={<VehicleCheckIn />} />
+                <Route path="/vehicle-history/update" element={<UpdateVehicleHistoryPage />} />
+
 
                 {/* Market Place Routes */}
                 <Route
@@ -1964,7 +1978,9 @@ function App() {
                 <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
                 <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
                 <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
-                <Route path="/settings/inventory-management/sac-hsn-code" element={<div>SAC/HSN Code</div>} />
+                <Route path="/settings/inventory-management/sac-hsn-code" element={<SacHsn />} />
+                <Route path="/settings/inventory-management/sac-hsn-code/add" element={<AddSacHsn />} />
+                <Route path="/settings/inventory-management/sac-hsn-code/:id" element={<DetailPageSacHsn />} />
                 <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
                 <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
                 <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
