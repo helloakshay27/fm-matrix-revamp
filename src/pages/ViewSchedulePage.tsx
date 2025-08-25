@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { SetApprovalModal } from '@/components/SetApprovalModal';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, Box, Typography } from '@mui/material';
+import AttachFile from '@mui/icons-material/AttachFile';
 import { assetService } from '@/services/assetService';
 import { useQuery } from '@tanstack/react-query';
 import { fetchCustomFormDetails } from '@/services/customFormsAPI';
@@ -24,7 +25,7 @@ const muiFieldStyles = {
     },
     '&:hover fieldset': {
       borderColor: '#1A1A1A',
-    },
+    },  
     '&.Mui-focused fieldset': {
       borderColor: '#C72030',
       borderWidth: 2,
@@ -403,6 +404,69 @@ export const ViewSchedulePage = () => {
                 sx={{ ...multilineFieldStyles, fontSize: '1rem', borderRadius: '8px' }}
               />
             </div>
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Attachments</Label>
+              {customForm?.attachments && customForm.attachments.length > 0 ? (
+                <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                  {customForm.attachments.map((attachment: any, index: number) => {
+                    const isImage = attachment.file_name && attachment.file_name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+                    return (
+                      <a key={attachment.id || index} href={attachment.file_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                        <Box
+                          sx={{
+                            width: '120px',
+                            height: '120px',
+                            border: '2px dashed #ccc',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                            backgroundColor: '#fafafa',
+                            '&:hover': {
+                              borderColor: '#999'
+                            }
+                          }}
+                        >
+                          {isImage && attachment.file_url ? (
+                            <img
+                              src={attachment.file_url}
+                              alt={attachment.file_name}
+                              style={{
+                                maxWidth: '100px',
+                                maxHeight: '100px',
+                                objectFit: 'contain',
+                                borderRadius: 4,
+                              }}
+                            />
+                          ) : (
+                            <>
+                              <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  textAlign: 'center',
+                                  px: 1,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  width: '100%',
+                                  color: '#333'
+                                }}
+                              >
+                                {attachment.file_name}
+                              </Typography>
+                            </>
+                          )}
+                        </Box>
+                      </a>
+                    );
+                  })}
+                </Box>
+              ) : (
+                <p className="text-sm text-gray-500 pt-2">No attachments.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -575,6 +639,19 @@ export const ViewSchedulePage = () => {
                           InputLabelProps={{ shrink: true }}
                           sx={muiFieldStyles}
                         />
+                        {task.question_hint_image_url && task.question_hint_image_url.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {task.question_hint_image_url.map((image: any, imgIndex: number) => (
+                              <a key={image.id || imgIndex} href={image.url} target="_blank" rel="noopener noreferrer" title={image.filename}>
+                                <img 
+                                  src={image.url} 
+                                  alt={image.filename} 
+                                  className="h-16 w-16 rounded-md object-cover border"
+                                />
+                              </a>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 
