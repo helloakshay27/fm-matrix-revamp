@@ -289,12 +289,13 @@ const AddAssetPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     location: true,
     asset: true,
-    warranty: true,
-    meterCategory: true,
+  // Toggle-controlled sections must be closed by default
+  warranty: false,
+  meterCategory: false,
     consumption: true,
-    nonConsumption: true,
+  nonConsumption: false,
     assetAllocation: true,
-    assetLoaned: true,
+  assetLoaned: false,
     amcDetails: true,
     attachments: true,
   });
@@ -1819,7 +1820,7 @@ const AddAssetPage = () => {
     handleFieldChange("it_asset", checked);
     setExpandedSections((prev) => ({
       ...prev,
-      warranty: checked,
+  warranty: checked ? true : false,
     }));
   };
   const handleMeterDetailsToggleChange = (checked) => {
@@ -1827,7 +1828,7 @@ const AddAssetPage = () => {
     handleFieldChange("is_meter", checked);
     setExpandedSections((prev) => ({
       ...prev,
-      meterCategory: checked,
+  meterCategory: checked ? true : false,
     }));
   };
   const handleAssetLoanedToggleChange = (checked) => {
@@ -1835,7 +1836,7 @@ const AddAssetPage = () => {
     handleFieldChange("asset_loaned", checked);
     setExpandedSections((prev) => ({
       ...prev,
-      assetLoaned: checked,
+  assetLoaned: checked ? true : false,
     }));
   };
   const handleDepreciationToggleChange = (checked) => {
@@ -1843,7 +1844,7 @@ const AddAssetPage = () => {
     handleFieldChange("depreciation_applicable", checked);
     setExpandedSections((prev) => ({
       ...prev,
-      nonConsumption: checked,
+  nonConsumption: checked ? true : false,
     }));
   };
 
@@ -2325,6 +2326,18 @@ const AddAssetPage = () => {
     }
   };
   const toggleSection = (section) => {
+    // Map section to its toggle (if any)
+    const toggleMap = {
+      warranty: itAssetsToggle,
+      meterCategory: meterDetailsToggle,
+      assetLoaned: assetLoanedToggle,
+      nonConsumption: depreciationToggle,
+    };
+
+    // If section has a toggle and it's disabled, do not open/collapse
+    if (toggleMap.hasOwnProperty(section) && !toggleMap[section]) {
+      return;
+    }
     setExpandedSections((prev) => ({
       ...prev,
       [section]: !prev[section],
@@ -4820,7 +4833,7 @@ const AddAssetPage = () => {
                       }}
                       onChange={(e) =>
                         handleExtraFieldChange(
-                          "reaponsible_department",
+                          "responsible_department",
                           (e.target as HTMLInputElement).value,
                           "select",
                           "landUsageDevelopment",
@@ -8259,7 +8272,7 @@ const AddAssetPage = () => {
                         defaultValue=""
                         onChange={(e) =>
                           handleExtraFieldChange(
-                            "usage_and_compliance",
+                            "building_use",
                             (e.target as HTMLInputElement).value,
                             "select",
                             "usage_and_compliance",
@@ -8462,7 +8475,7 @@ const AddAssetPage = () => {
                         }
                       >
                         <MenuItem value="">Select Department/Team</MenuItem>
-                        <MenuItem value="facilities">
+                        <MenuItem value="Facilities Management">
                           Facilities Management
                         </MenuItem>
                         <MenuItem value="admin">Administration</MenuItem>
@@ -9384,7 +9397,10 @@ const AddAssetPage = () => {
                         <span className="text-sm text-gray-600">
                           If Applicable
                         </span>
-                        <div className="relative inline-block w-12 h-6">
+                        <div
+                          className="relative inline-block w-12 h-6"
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <input
                             type="checkbox"
                             className="sr-only peer"
@@ -9755,7 +9771,10 @@ const AddAssetPage = () => {
                           <span className="text-sm text-gray-600">
                             If Applicable
                           </span>
-                          <div className="relative inline-block w-12 h-6">
+                          <div
+                            className="relative inline-block w-12 h-6"
+                            onClick={(e) => e.stopPropagation()}
+                          >
                             <input
                               type="checkbox"
                               className="sr-only peer"
@@ -10501,7 +10520,10 @@ const AddAssetPage = () => {
                   </button> */}
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">If Applicable</span>
-                      <div className="relative inline-block w-12 h-6">
+                      <div
+                        className="relative inline-block w-12 h-6"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type="checkbox"
                           className="sr-only peer"
@@ -11224,7 +11246,10 @@ const AddAssetPage = () => {
                   <div className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-600">If Applicable</span>
-                      <div className="relative inline-block w-12 h-6">
+                      <div
+                        className="relative inline-block w-12 h-6"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type="checkbox"
                           className="sr-only peer"
