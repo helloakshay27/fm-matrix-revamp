@@ -269,6 +269,19 @@ export const MaterialPRDetailsPage = () => {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const handleRejectCancel = () => {
     setOpenRejectDialog(false);
     setRejectComment("");
@@ -358,7 +371,7 @@ export const MaterialPRDetailsPage = () => {
       <div className="flex items-start gap-4 my-6">
         {pr.approval_levels?.map((level, index) => (
           <div key={index} className="space-y-3">
-            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+            <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
               {`${level.name} approved : ${level.status_label}`}
             </div>
             {level.approved_by && level.approval_date && (

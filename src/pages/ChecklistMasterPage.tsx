@@ -10,29 +10,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Trash2, ChevronDown, ChevronUp, X } from 'lucide-react';
 import AttachFile from '@mui/icons-material/AttachFile';
 import { useLayout } from '@/contexts/LayoutContext';
-import { useMutation } from '@tanstack/react-query';
-import { createChecklistMaster, ChecklistCreateRequest } from '@/services/customFormsAPI';
-import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
-import { Cog } from 'lucide-react';
 import {
-  TextField,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  RadioGroup as MuiRadioGroup,
-  FormControlLabel,
-  Radio,
-  Checkbox as MuiCheckbox,
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  Button as MuiButton,
-  Autocomplete
+  Paper, Box, Typography, RadioGroup as MuiRadioGroup, FormControlLabel, Radio, TextField, Autocomplete,
+  IconButton, Button as MuiButton, Checkbox as MuiCheckbox, Select as MuiSelect, MenuItem, FormControl, InputLabel, Collapse
 } from '@mui/material';
 import { fromPairs } from 'lodash';
 import { API_CONFIG, ENDPOINTS, getAuthHeader } from '@/config/apiConfig';
+import { toast } from 'sonner';
+import { useMutation } from '@tanstack/react-query';
+import { createChecklistMaster, ChecklistCreateRequest } from '@/services/customFormsAPI';
+import { useNavigate } from 'react-router-dom';
+import { Cog } from 'lucide-react';
+
+// Define interfaces for better type safety
+interface AttachmentFile {
+  id: string;
+  name: string;
+  url: string;
+  content?: string; // base64 content
+  content_type?: string; // MIME type
+}
+
+interface TaskValue {
+  label: string;
+  type: string;
+  value: string;
+}
 
 interface Task {
   id: string;
@@ -43,11 +46,8 @@ interface Task {
   helpText: string;
   helpTextEnabled: boolean;
   helpTextValue: string;
-  values: Array<{
-    label: string;
-    type: string;
-    value: string;
-  }>;
+  helpTextAttachments?: AttachmentFile[];
+  values: TaskValue[];
   consumption_type: string;
   consumption_unit_type: string;
   weightage: string;
@@ -57,9 +57,24 @@ interface Task {
 interface TaskSection {
   id: string;
   name: string;
-  tasks: Task[];
   isExpanded: boolean;
+  tasks: Task[];
 }
+
+const SectionCard = ({ children, style = {} }: { children: React.ReactNode, style?: React.CSSProperties }) => (
+  <Paper 
+    sx={{
+      backgroundColor: 'white',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+      borderRadius: 0,
+      overflow: 'hidden',
+      marginBottom: '24px',
+      ...style
+    }}
+  >
+    {children}
+  </Paper>
+);
 
 export const ChecklistMasterPage = () => {
   const { setCurrentSection } = useLayout();
@@ -83,9 +98,9 @@ export const ChecklistMasterPage = () => {
     ticketCategory: ''
   });
 
-  const handleFormChange = (field: keyof typeof formData, value: string) => {
+  const handleFormChange = useCallback((field: keyof typeof formData, value: string | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  }, []);
 
   const [sections, setSections] = useState<TaskSection[]>([
     {
@@ -102,6 +117,7 @@ export const ChecklistMasterPage = () => {
           helpText: 'Inspect for any visible damage or wear',
           helpTextEnabled: false,
           helpTextValue: '',
+          helpTextAttachments: [],
           values: [],
           consumption_type: '',
           consumption_unit_type: '',
@@ -112,10 +128,84 @@ export const ChecklistMasterPage = () => {
     }
   ]);
 
-  const [attachments, setAttachments] = useState([]);
+  const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const [createNew, setCreateNew] = useState(false);
   const [weightage, setWeightage] = useState(false);
   const [autoTicket, setAutoTicket] = useState(false);
+
+  const addHelpTextAttachment = (sectionId: string, taskId: string): void => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = '*/*';
+    input.style.display = 'none';
+
+    input.onchange = async (e: Event) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (!files) return;
+
+      const newAttachments: AttachmentFile[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          newAttachments.push({
+            id: `${Date.now()}-${i}`,
+            name: file.name,
+            url: URL.createObjectURL(file),
+            content: base64.split(',')[1],
+            content_type: file.type,
+          });
+
+          if (newAttachments.length === files.length) {
+            setSections(prevSections =>
+              prevSections.map(section =>
+                section.id === sectionId
+                  ? {
+                      ...section,
+                      tasks: section.tasks.map(task =>
+                        task.id === taskId
+                          ? {
+                              ...task,
+                              helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments],
+                            }
+                          : task
+                      ),
+                    }
+                  : section
+              )
+            );
+            toast.success(`${files.length} file(s) attached to help text.`);
+          }
+        };
+      }
+    };
+    document.body.appendChild(input);
+    input.click();
+    input.remove();
+  };
+
+  const removeHelpTextAttachment = (sectionId: string, taskId: string, attachmentId: string): void => {
+    setSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+              ...section,
+              tasks: section.tasks.map(task =>
+                task.id === taskId
+                  ? {
+                      ...task,
+                      helpTextAttachments: (task.helpTextAttachments || []).filter(att => att.id !== attachmentId),
+                    }
+                  : task
+              ),
+            }
+          : section
+      )
+    );
+  };
 
   const createChecklistMutation = useMutation({
     mutationFn: createChecklistMaster,
@@ -222,17 +312,23 @@ export const ChecklistMasterPage = () => {
     input.onchange = (e) => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {
-        const newAttachments = [];
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          newAttachments.push({
-            id: `${Date.now()}-${i}`,
-            name: file.name,
-            url: URL.createObjectURL(file)
-          });
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64 = reader.result as string;
+            const newAttachment: AttachmentFile = {
+              id: `${Date.now()}-${i}`,
+              name: file.name,
+              url: URL.createObjectURL(file),
+              content: base64.split(',')[1],
+              content_type: file.type,
+            };
+            setAttachments(prev => [...prev, newAttachment]);
+          };
         }
-        setAttachments(prev => [...prev, ...newAttachments]);
-        toast(`${files.length} file(s) attached successfully!`);
+        toast(`${files.length} file(s) selected.`);
       }
     };
 
@@ -323,6 +419,11 @@ export const ChecklistMasterPage = () => {
       checklist_type: formData.scheduleFor,
       group_id: formData.groupId,
       sub_group_id: formData.subGroupId,
+      attachments: attachments.map(att => ({
+        content: att.content,
+        content_type: att.content_type,
+        file_name: att.name,
+      })),
       tmp_custom_form: {
         ticket_level: formData.ticketLevel,
         helpdesk_category_id: formData.ticketCategory || "",
@@ -338,23 +439,21 @@ export const ChecklistMasterPage = () => {
       content
     };
 
+    // Add help text attachments to payload
+    sections.forEach(section => {
+      section.tasks.forEach((task, taskIndex) => {
+        if (task.helpTextAttachments && task.helpTextAttachments.length > 0) {
+          payload[`question_for_${taskIndex + 1}`] = task.helpTextAttachments.map(att => ({
+            content: att.content,
+            content_type: att.content_type,
+            file_name: att.name,
+          }));
+        }
+      });
+    });
+
     createChecklistMutation.mutate(payload);
   };
-
-  const SectionCard = ({ children, style = {} }) => (
-    <Paper 
-      sx={{
-        backgroundColor: 'white',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        borderRadius: 0,
-        overflow: 'hidden',
-        marginBottom: '24px',
-        ...style
-      }}
-    >
-      {children}
-    </Paper>
-  );
 
   function removeQuestionSection(id: string): void {
     setSections(prevSections => prevSections.filter(section => section.id !== id));
@@ -530,7 +629,7 @@ export const ChecklistMasterPage = () => {
             <MuiRadioGroup
               row
               value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              onChange={(e) => handleFormChange('type', e.target.value)}
               sx={{ mb: 2 }}
             >
               <FormControlLabel
@@ -569,7 +668,7 @@ export const ChecklistMasterPage = () => {
             <MuiRadioGroup
               row
               value={formData.scheduleFor}
-              onChange={(e) => setFormData({ ...formData, scheduleFor: e.target.value })}
+              onChange={(e) => handleFormChange('scheduleFor', e.target.value)}
               sx={{ mb: 2 }}
             >
               <FormControlLabel
@@ -591,7 +690,8 @@ export const ChecklistMasterPage = () => {
           </Box>
 
           <TextField
-            label={<span>Activity Name <span style={{ color: 'currentColor' }}>*</span></span>}
+            label="Activity Name"
+            required
             placeholder="Enter Activity Name"
             fullWidth
             value={formData.activityName}
@@ -600,7 +700,8 @@ export const ChecklistMasterPage = () => {
           />
 
           <TextField
-            label={<span>Description <span style={{ color: 'currentColor' }}>*</span></span>}
+            label="Description"
+            required
             placeholder="Enter Description/SOP"
             fullWidth
             multiline
@@ -609,8 +710,9 @@ export const ChecklistMasterPage = () => {
             onChange={(e) => handleFormChange('description', e.target.value)}
             sx={{ mb: 3 }}
           />
+          {
+            formData.scheduleFor === 'Asset' && (
 
-          {/* Asset Type section */}
           <Box >
             <Autocomplete
               options={[
@@ -627,12 +729,13 @@ export const ChecklistMasterPage = () => {
                 { id: 'Plumbing', label: 'Plumbing', value: 'Plumbing' }
               ].find(option => option.value === formData.assetType) || null}
               onChange={(event, newValue) => {
-                setFormData({ ...formData, assetType: newValue?.value || '' });
+                handleFormChange('assetType', newValue?.value || '');
               }}
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label={<span>Asset Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                  label="Asset Type"
+                  required
                   placeholder="Select Asset Type"
                   fullWidth
                 />
@@ -640,14 +743,37 @@ export const ChecklistMasterPage = () => {
               isOptionEqualToValue={(option, value) => option.id === value.id}
             />
           </Box>
+            )
+          }
 
           {/* Attachments Section - Match AddSchedulePage */}
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ my: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <MuiButton
+                variant="outlined"
+                onClick={addAttachment}
+                sx={{
+                  borderColor: '#C72030',
+                  color: '#C72030',
+                  textTransform: 'none',
+                  fontFamily: 'Work Sans, sans-serif',
+                  fontWeight: 500,
+                  borderRadius: '0',
+                  padding: '8px 16px',
+                  '&:hover': {
+                    borderColor: '#B8252F',
+                    backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                  },
+                }}
+              >
+                Add Attachment
+              </MuiButton>
+            </Box>
             {attachments.length > 0 && (
               <Box sx={{
                 display: 'flex',
                 gap: 2,
-                mb: 2,
+                mt: 2,
                 flexWrap: 'wrap'
               }}>
                 {attachments.map((attachment) => {
@@ -724,28 +850,6 @@ export const ChecklistMasterPage = () => {
                 })}
               </Box>
             )}
-
-            {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <MuiButton
-                variant="outlined"
-                onClick={addAttachment}
-                sx={{
-                  borderColor: '#C72030',
-                  color: '#C72030',
-                  textTransform: 'none',
-                  fontFamily: 'Work Sans, sans-serif',
-                  fontWeight: 500,
-                  borderRadius: '0',
-                  padding: '8px 16px',
-                  '&:hover': {
-                    borderColor: '#B8252F',
-                    backgroundColor: 'rgba(199, 32, 48, 0.04)',
-                  },
-                }}
-              >
-                Add Attachment
-              </MuiButton>
-            </Box> */}
           </Box>
         </SectionCard>
 
@@ -824,7 +928,7 @@ export const ChecklistMasterPage = () => {
                   <MuiRadioGroup
                     row
                     value={formData.ticketLevel}
-                    onChange={(e) => setFormData({ ...formData, ticketLevel: e.target.value })}
+                    onChange={(e) => handleFormChange('ticketLevel', e.target.value)}
                   >
                     <FormControlLabel
                       value="checklist"
@@ -867,12 +971,13 @@ export const ChecklistMasterPage = () => {
                     }))
                   ].find(option => option.value === formData.ticketAssignedTo) || null}
                   onChange={(event, newValue) => {
-                    if (newValue) setFormData({ ...formData, ticketAssignedTo: newValue.value });
+                    if (newValue) handleFormChange('ticketAssignedTo', newValue.value);
                   }}
                   renderInput={(params) => (
                     <TextField
                       {...params} 
-                      label={<span>Assigned To <span style={{ color: 'currentColor' }}>*</span></span>} 
+                      label="Assigned To"
+                      required
                       fullWidth 
                     />
                   )}
@@ -898,12 +1003,13 @@ export const ChecklistMasterPage = () => {
                     }))
                   ].find(option => option.value === formData.ticketCategory) || null}
                   onChange={(event, newValue) => {
-                    if (newValue) setFormData({ ...formData, ticketCategory: newValue.value });
+                    if (newValue) handleFormChange('ticketCategory', newValue.value);
                   }}
                   renderInput={(params) => (
                     <TextField
                       {...params} 
-                      label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>} 
+                      label="Category"
+                      required
                       fullWidth 
                     />
                   )}
@@ -1016,7 +1122,8 @@ export const ChecklistMasterPage = () => {
 
                       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: weightage ? '2fr 1fr 1fr' : '2fr 1fr' }, gap: 2 }}>
                         <TextField
-                          label={<span>Task{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                          label="Task"
+                          required={task.mandatory}
                           placeholder="Enter Task"
                           fullWidth
                           value={task.question}
@@ -1063,7 +1170,8 @@ export const ChecklistMasterPage = () => {
                           renderInput={(params) => (
                             <TextField
                               {...params} 
-                              label={<span>Input Type{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>} 
+                              label="Input Type"
+                              required={task.mandatory}
                               fullWidth 
                             />
                           )}
@@ -1071,7 +1179,8 @@ export const ChecklistMasterPage = () => {
 
                         {weightage && (
                           <TextField
-                            label={<span>Weightage{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                            label="Weightage"
+                            required={task.mandatory}
                             type="number"
                             fullWidth
                             value={task.weightage}
@@ -1081,7 +1190,7 @@ export const ChecklistMasterPage = () => {
                         )}
                       </Box>
 
-                      {task.helpTextEnabled && (
+                          {task.helpTextEnabled && (
                         <Box sx={{ mt: 2 }}>
                           <TextField
                             label="Help Text (Hint)"
@@ -1090,6 +1199,66 @@ export const ChecklistMasterPage = () => {
                             value={task.helpTextValue}
                             onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
                           />
+                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => addHelpTextAttachment(section.id, task.id)}
+                            >
+                              <AttachFile sx={{ mr: 1, fontSize: 16 }} />
+                              Attach File
+                            </Button>
+                          </Box>
+                          {task.helpTextAttachments && task.helpTextAttachments.length > 0 && (
+                            <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+                              {task.helpTextAttachments.map(attachment => {
+                                const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+                                return (
+                                  <Box
+                                    key={attachment.id}
+                                    sx={{
+                                      width: '100px',
+                                      height: '100px',
+                                      border: '1px solid #ddd',
+                                      borderRadius: '4px',
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      position: 'relative',
+                                      backgroundColor: '#f9f9f9',
+                                    }}
+                                  >
+                                    <IconButton
+                                      size="small"
+                                      onClick={() => removeHelpTextAttachment(section.id, task.id, attachment.id)}
+                                      sx={{
+                                        position: 'absolute',
+                                        top: 2,
+                                        right: 2,
+                                        backgroundColor: 'white',
+                                        boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                                        width: 18,
+                                        height: 18,
+                                        '&:hover': { backgroundColor: '#f5f5f5' }
+                                      }}
+                                    >
+                                      <X style={{ fontSize: 12 }} />
+                                    </IconButton>
+                                    {isImage && attachment.url ? (
+                                      <img src={attachment.url} alt={attachment.name} style={{ maxWidth: '80px', maxHeight: '60px', objectFit: 'contain' }} />
+                                    ) : (
+                                      <AttachFile sx={{ fontSize: 24, color: '#666' }} />
+                                    )}
+                                    <Typography variant="caption" sx={{ textAlign: 'center', px: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%', mt: 1 }}>
+                                      {attachment.name}
+                                    </Typography>
+                                  </Box>
+                                );
+                              })}
+                            </Box>
+                          )}
                         </Box>
                       )}
 
@@ -1302,25 +1471,19 @@ export const ChecklistMasterPage = () => {
                                       updateValue(section.id, task.id, valueIndex, 'label', e.target.value);
                                     }
                                   }}
-                                  placeholder=""
+                                  placeholder="Enter option value"
                                   className="flex-1 bg-white"
                                 />
                                 
-                                {(task.values.length > 1 || (task.values.length === 1 && valueIndex === 0 && task.values[0].label)) && (
+                                {task.values.length > 1 && (
                                   <Button
                                     type="button"
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => {
-                                      if (task.values.length <= 1) {
-                                        updateTaskValues(section.id, task.id, []);
-                                      } else {
-                                        removeValue(section.id, task.id, valueIndex);
-                                      }
-                                    }}
-                                    className="text-red-600 hover:text-red-700 text-xs"
+                                    onClick={() => removeValue(section.id, task.id, valueIndex)}
+                                    className="text-red-600 hover:text-red-700"
                                   >
-                                    close
+                                    <X className="w-4 h-4" />
                                   </Button>
                                 )}
                               </div>
@@ -1344,60 +1507,50 @@ export const ChecklistMasterPage = () => {
                                 className="text-red-600 border-red-600 hover:bg-red-50"
                               >
                                 <Plus className="w-4 h-4 mr-1" />
-                                + Add Option
+                                Add Option
                               </Button>
                             </div>
                           </div>
                         </div>
                       )}
+
                     </Box>
                   </Box>
                 ))}
-
-                <div className="flex justify-end mt-4 gap-4">
-                  <button
+                <div className="flex justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     onClick={() => addTaskToSection(section.id)}
-                    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                    style={{ fontFamily: 'Work Sans, sans-serif' }}
+                    className="text-red-600 border-red-600 hover:bg-red-50"
                   >
-                    <Plus className="w-4 h-4" />
-                    Add Question
-                  </button>
-                  {(sections.length === 1 || sectionIndex === sections.length - 1) && (
-                    <button
-                      onClick={addSection}
-                      className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-                      style={{ fontFamily: 'Work Sans, sans-serif' }}
-                    >
-                      <Plus className="w-4 h-4" />
-                      Add Section
-                    </button>
-                  )}
+                    <Plus className="w-4 h-4 mr-1" />
+                    Add Task
+                  </Button>
                 </div>
-                {sectionIndex < sections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
               </div>
+              <hr className="my-6" />
             </div>
           ))}
         </div>
 
-        {/* Form Actions */}
-        <div className="flex justify-end gap-4 pt-6">
-          <Button 
-            type="button" 
+        <div className="flex justify-end space-x-4 p-6 bg-white">
+          <Button
+            type="button"
             variant="outline"
-            onClick={() => navigate('/settings/masters/checklist-master')}
-            style={{ borderRadius: 0, fontFamily: 'Work Sans, sans-serif' }}
+            onClick={() => navigate('/settings/masters/checklist')}
+            className="text-gray-700 border-gray-300"
           >
             Cancel
           </Button>
-          <Button 
-            type="button" 
-            className="bg-[#C72030] hover:bg-[#C72030]/90"
+          <Button
+            type="submit"
             onClick={handleSubmit}
+            className="bg-red-600 text-white hover:bg-red-700"
             disabled={createChecklistMutation.isPending}
-            style={{ borderRadius: 0, fontFamily: 'Work Sans, sans-serif' }}
           >
-            {createChecklistMutation.isPending ? 'Saving...' : 'Save Checklist'}
+            {createChecklistMutation.isPending ? 'Creating...' : 'Create Checklist'}
           </Button>
         </div>
       </div>
