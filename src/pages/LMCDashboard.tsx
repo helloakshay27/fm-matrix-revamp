@@ -234,7 +234,7 @@ const LMCDashboard = () => {
                     searchTerm={searchTerm}
                     onSearchChange={(val: string) => { setCurrentPage(1); setSearchTerm(val); }}
                     searchPlaceholder="Search by User Email..."
-                    leftActions={<Button className="text-white bg-[#C72030] hover:bg-[#C72030]/90"><Plus className="w-4 h-4" />Action</Button>}
+                    // leftActions={<Button className="text-white bg-[#C72030] hover:bg-[#C72030]/90"><Plus className="w-4 h-4" />Action</Button>}
                     getItemId={(row: LMCTableRow) => row.id.toString()}
                     onFilterClick={handleFilterClick}
                     handleExport={handleExport}

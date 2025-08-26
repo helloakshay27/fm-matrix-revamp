@@ -433,15 +433,7 @@ export const MSafeDashboard = () => {
         )}
 
         <div className="rounded-lg">
-          <EnhancedTable data={fmUsers || []} leftActions={
-            <Button
-              onClick={handleActionClick}
-              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4" />
-              Action
-            </Button>
-          } columns={columns} onFilterClick={handleFiltersClick}
+          <EnhancedTable data={fmUsers || []} columns={columns} onFilterClick={handleFiltersClick}
             renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">

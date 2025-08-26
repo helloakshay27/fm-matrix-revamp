@@ -170,7 +170,8 @@ export const ExternalUsersDashboard = () => {
       case 'pending':
         return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+        // Present 'rejected' as 'Deactivated' per product requirement
+        return <Badge className="bg-red-500 text-white hover:bg-red-600">Deactivated</Badge>;
       default:
         return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
     }
