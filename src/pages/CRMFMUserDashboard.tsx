@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { TextField, Box } from "@mui/material";
-import { ImportFmUsers } from "@/components/ImportFmUsers";
 import axios from "axios";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -103,7 +102,6 @@ const columns: ColumnConfig[] = [
 const CRMFMUserDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl");
   const token = localStorage.getItem("token");
-  const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -197,9 +195,8 @@ const CRMFMUserDashboard = () => {
   }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
-    setCurrentSection("Master");
     dispatch(fetchUserCounts());
-  }, [setCurrentSection, dispatch]);
+  }, [dispatch]);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);

@@ -356,9 +356,9 @@ export const AddMaterialPRDashboard = () => {
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
-        })),
-        attachments: files,
+        }))
       },
+      attachments: files,
     };
 
     try {

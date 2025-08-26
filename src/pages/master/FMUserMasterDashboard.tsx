@@ -39,9 +39,57 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { toast } from "sonner";
 import debounce from "lodash/debounce";
+import { SelectionPanel } from "@/components/water-asset-details/PannelTab";
+
+// Define interfaces for data structures
+interface TransformedFMUser {
+  id: string;
+  userName: string;
+  gender: string;
+  mobile: string;
+  email: string;
+  vendorCompany: string;
+  entityName: string;
+  unit: string;
+  role: string;
+  employeeId: string | null;
+  createdBy: string;
+  accessLevel: string | null;
+  type: string;
+  status: string | null;
+  faceRecognition: boolean;
+  appDownloaded: boolean;
+  active: boolean;
+  lockUserId: string | null;
+}
+
+interface PaginationState {
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
+interface UserCounts {
+  total_users?: number;
+  approved?: number;
+  pending?: number;
+  rejected?: number;
+  app_downloaded_count?: number;
+}
+
+interface FMUserAPIResponse {
+  fm_users: FMUser[];
+  current_page: number;
+  total_count: number;
+  total_pages: number;
+}
+
+interface LayoutContext {
+  setCurrentSection: (section: string) => void;
+}
 
 // Transform API data to table format
-const transformFMUserData = (apiUser: FMUser) => ({
+const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   id: apiUser.id.toString(),
   userName: `${apiUser.firstname} ${apiUser.lastname}`,
   gender: apiUser.gender,
@@ -51,26 +99,26 @@ const transformFMUserData = (apiUser: FMUser) => ({
   entityName: apiUser.entity_name,
   unit: apiUser.unit_name,
   role: apiUser.role_name,
-  employeeId: apiUser.lock_user_permission?.employee_id,
+  employeeId: apiUser.lock_user_permission?.employee_id ?? null,
   createdBy: apiUser.created_by_name,
-  accessLevel: apiUser.lock_user_permission?.access_level,
+  accessLevel: apiUser.lock_user_permission?.access_level ?? null,
   type: apiUser.user_type
     ? apiUser.user_type
       .split("_")
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(" ")
     : "",
-  status: apiUser?.lock_user_permission?.status,
+  status: apiUser.lock_user_permission?.status ?? null,
   faceRecognition: apiUser.face_added,
   appDownloaded: apiUser.app_downloaded === "Yes",
-  active: apiUser.lock_user_permission?.active,
-  lockUserId: apiUser.lock_user_permission?.id
+  active: apiUser.lock_user_permission?.active ?? false,
+  lockUserId: apiUser.lock_user_permission?.id ?? null,
 });
 
 export const FMUserMasterDashboard = () => {
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
-  const { setCurrentSection } = useLayout();
+  const baseUrl = localStorage.getItem("baseUrl") ?? "";
+  const token = localStorage.getItem("token") ?? "";
+  const { setCurrentSection } = useLayout() as LayoutContext;
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const {
@@ -79,28 +127,31 @@ export const FMUserMasterDashboard = () => {
   } = useSelector((state: RootState) => state.getFMUsers);
   const { data: userCounts, loading: countsLoading } = useSelector(
     (state: RootState) => state.userCounts
-  );
+  ) as { data: UserCounts; loading: boolean };
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [cloneRoleDialogOpen, setCloneRoleDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
-  const [selectedStatus, setSelectedStatus] = useState("");
-  const [activeTab, setActiveTab] = useState("handover");
-  const [fromUser, setFromUser] = useState("");
-  const [toUser, setToUser] = useState("");
-  const [showImportModal, setShowImportModal] = useState(false);
-  const [filters, setFilters] = useState({
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [filterDialogOpen, setFilterDialogOpen] = useState<boolean>(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState<boolean>(false);
+  const [cloneRoleDialogOpen, setCloneRoleDialogOpen] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<TransformedFMUser | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [activeTab, setActiveTab] = useState<"handover" | "clone">("handover");
+  const [fromUser, setFromUser] = useState<string>("");
+  const [toUser, setToUser] = useState<string>("");
+  const [showImportModal, setShowImportModal] = useState<boolean>(false);
+  const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
+  const [filters, setFilters] = useState<{
+    name: string;
+    email: string;
+  }>({
     name: "",
     email: "",
   });
 
-  // Transform API data to table format
-  const [fmUsersData, setFmUsersData] = useState<any[]>([]);
-  const [filteredFMUsersData, setFilteredFMUsersData] = useState<any[]>([]);
-  const [cloneLoading, setCloneLoading] = useState(false)
-  const [pagination, setPagination] = useState({
+  const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
+  const [filteredFMUsersData, setFilteredFMUsersData] = useState<TransformedFMUser[]>([]);
+  const [cloneLoading, setCloneLoading] = useState<boolean>(false);
+  const [pagination, setPagination] = useState<PaginationState>({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
@@ -111,26 +162,26 @@ export const FMUserMasterDashboard = () => {
     debounce(async (searchQuery: string) => {
       try {
         if (searchQuery.trim() === "") {
-          // If search is empty, fetch all users
-          const response = await dispatch(getFMUsers({
-            baseUrl,
-            token,
-            perPage: 10,
-            currentPage: 1
-          })).unwrap();
+          const response = await dispatch(
+            getFMUsers({
+              baseUrl,
+              token,
+              perPage: 10,
+              currentPage: 1,
+            })
+          ).unwrap() as FMUserAPIResponse;
           const transformedData = response.fm_users.map(transformFMUserData);
           setFmUsersData(transformedData);
           setFilteredFMUsersData(transformedData);
           setPagination({
             current_page: response.current_page,
             total_count: response.total_count,
-            total_pages: response.total_pages
+            total_pages: response.total_pages,
           });
           return;
         }
 
-        // Make API call with search query
-        const response = await axios.get(
+        const response = await axios.get<FMUserAPIResponse>(
           `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${searchQuery}&per_page=10&page=${pagination.current_page}`,
           {
             headers: {
@@ -144,48 +195,51 @@ export const FMUserMasterDashboard = () => {
         setPagination({
           current_page: response.data.current_page,
           total_count: response.data.total_count,
-          total_pages: response.data.total_pages
+          total_pages: response.data.total_pages,
         });
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Search error:", error);
         toast.error("Failed to perform search.");
       }
     }, 500),
-    [dispatch, baseUrl, token]
+    [dispatch, baseUrl, token, pagination.current_page]
   );
 
   const fetchUsers = async () => {
     try {
-      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })).unwrap();
+      const response = await dispatch(
+        getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })
+      ).unwrap() as FMUserAPIResponse;
       const transformedData = response.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
       setFilteredFMUsersData(transformedData);
       setPagination({
         current_page: response.current_page,
         total_count: response.total_count,
-        total_pages: response.total_pages
+        total_pages: response.total_pages,
       });
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error("Failed to fetch users.");
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, [dispatch, baseUrl, token]);
+    if (baseUrl && token) {
+      fetchUsers();
+    }
+  }, [dispatch, baseUrl, token, pagination.current_page]);
 
   useEffect(() => {
     setCurrentSection("Master");
     dispatch(fetchUserCounts());
   }, [setCurrentSection, dispatch]);
 
-  // Handle search input change
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     debouncedSearch(value);
   };
 
-  // Define columns for EnhancedTable
   const columns: ColumnConfig[] = [
     { key: "active", label: "Active", sortable: true, draggable: true },
     { key: "id", label: "ID", sortable: true, draggable: true },
@@ -210,7 +264,8 @@ export const FMUserMasterDashboard = () => {
     {
       key: "employeeId",
       label: "Employee ID",
-      sortable: true, draggable: true,
+      sortable: true,
+      draggable: true,
     },
     { key: "createdBy", label: "Created By", sortable: true, draggable: true },
     {
@@ -235,7 +290,6 @@ export const FMUserMasterDashboard = () => {
     },
   ];
 
-  // Use API data for stats if available, otherwise fallback to calculated values
   const totalUsers = userCounts?.total_users ?? fmUsersData.length;
   const approvedUsers =
     userCounts?.approved ?? fmUsersData.filter((user) => user.active).length;
@@ -295,22 +349,23 @@ export const FMUserMasterDashboard = () => {
       );
 
       toast.success("User status updated successfully!");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Status toggle failed:", error);
       toast.error("Failed to update user status.");
     }
   };
 
-  const handleStatusClick = (user: any) => {
+  const handleStatusClick = (user: TransformedFMUser) => {
     setSelectedUser(user);
-    setSelectedStatus(user.status === null ? "pending" : user.status);
+    setSelectedStatus(user.status ?? "pending");
     setStatusDialogOpen(true);
   };
 
   const handleStatusUpdate = async () => {
+    if (!selectedUser?.lockUserId) return;
     try {
       const response = await fetch(
-        `https://${baseUrl}/pms/users/status_update?id=${selectedUser?.lockUserId}&status=${selectedStatus}`,
+        `https://${baseUrl}/pms/users/status_update?id=${selectedUser.lockUserId}&status=${selectedStatus}`,
         {
           method: "PUT",
           headers: {
@@ -326,11 +381,11 @@ export const FMUserMasterDashboard = () => {
 
       setFmUsersData((prevUsers) =>
         prevUsers.map((user) =>
-          user.lockUserId === selectedUser?.lockUserId
+          user.lockUserId === selectedUser.lockUserId
             ? {
               ...user,
               status: selectedStatus,
-              active: selectedStatus === "approved", // Assuming "approved" means active
+              active: selectedStatus === "approved",
             }
             : user
         )
@@ -338,11 +393,11 @@ export const FMUserMasterDashboard = () => {
 
       setFilteredFMUsersData((prevUsers) =>
         prevUsers.map((user) =>
-          user.lockUserId === selectedUser?.lockUserId
+          user.lockUserId === selectedUser.lockUserId
             ? {
               ...user,
               status: selectedStatus,
-              active: selectedStatus === "approved", // Assuming "approved" means active
+              active: selectedStatus === "approved",
             }
             : user
         )
@@ -352,8 +407,7 @@ export const FMUserMasterDashboard = () => {
       setStatusDialogOpen(false);
       setSelectedUser(null);
       setSelectedStatus("");
-
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error updating user status:", error);
       toast.error("Failed to update user status.");
     }
@@ -362,12 +416,10 @@ export const FMUserMasterDashboard = () => {
   const handleExportUser = async () => {
     try {
       const response = await axios.get(
-        `https://${localStorage.getItem(
-          "baseUrl"
-        )}/pms/account_setups/export_users.xlsx`,
+        `https://${baseUrl}/pms/account_setups/export_users.xlsx`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
           responseType: "blob",
         }
@@ -381,8 +433,9 @@ export const FMUserMasterDashboard = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.log(error);
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error("Failed to export users.");
     }
   };
 
@@ -396,19 +449,16 @@ export const FMUserMasterDashboard = () => {
       };
 
       const queryString = new URLSearchParams(newFilterParams).toString();
-      const response = await axios.get(
-        `https://${localStorage.getItem(
-          "baseUrl"
-        )}/pms/account_setups/fm_users.json?${queryString}&per_page=10&page=${pagination.current_page}`,
+      const response = await axios.get<FMUserAPIResponse>(
+        `https://${baseUrl}/pms/account_setups/fm_users.json?${queryString}&per_page=10&page=${pagination.current_page}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      const transformedFilteredData =
-        response.data.fm_users.map(transformFMUserData);
+      const transformedFilteredData = response.data.fm_users.map(transformFMUserData);
       setFilteredFMUsersData(transformedFilteredData);
       setPagination({
         current_page: 1,
@@ -418,13 +468,13 @@ export const FMUserMasterDashboard = () => {
       setFilterDialogOpen(false);
 
       toast.success("Filters applied successfully!");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error(error);
       toast.error("Failed to apply filters.");
     }
   };
 
-  const getStatusBadgeProps = (status: string) => {
+  const getStatusBadgeProps = (status: string | null) => {
     if (status === "active" || status === "approved") {
       return {
         className: "bg-green-600 text-white hover:bg-green-700 cursor-pointer",
@@ -432,20 +482,17 @@ export const FMUserMasterDashboard = () => {
       };
     } else if (status === "pending") {
       return {
-        className:
-          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
     } else if (status === "rejected") {
       return {
-        className:
-          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Rejected",
       };
     } else {
       return {
-        className:
-          "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
+        className: "bg-yellow-500 text-white hover:bg-yellow-600 cursor-pointer",
         children: "Pending",
       };
     }
@@ -460,7 +507,8 @@ export const FMUserMasterDashboard = () => {
     try {
       const operationType = activeTab === "handover" ? "transfer" : "clone";
       const response = await axios.post(
-        `https://${baseUrl}/pms/users/clone_user.json?clone_from_id=${fromUser}&clone_to_id=${toUser}&type=${operationType}`, {},
+        `https://${baseUrl}/pms/users/clone_user.json?clone_from_id=${fromUser}&clone_to_id=${toUser}&type=${operationType}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -477,7 +525,7 @@ export const FMUserMasterDashboard = () => {
       setFromUser("");
       setToUser("");
       setActiveTab("handover");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Role operation failed:", error);
       toast.error(`Failed to ${activeTab === "handover" ? "transfer" : "clone"} role.`);
     } finally {
@@ -493,14 +541,14 @@ export const FMUserMasterDashboard = () => {
     setFilteredFMUsersData(fmUsersData);
     setPagination({
       ...pagination,
-      current_page: 1
+      current_page: 1,
     });
     setFilterDialogOpen(false);
 
     toast.success("Filters reset successfully!");
   };
 
-  const handleFilterChange = (field: string, value: string) => {
+  const handleFilterChange = (field: "name" | "email", value: string) => {
     setFilters((prev) => ({
       ...prev,
       [field]: value,
@@ -509,20 +557,22 @@ export const FMUserMasterDashboard = () => {
 
   const cardFilter = async (status: string) => {
     try {
-      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status })).unwrap();
+      const response = await dispatch(
+        getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status })
+      ).unwrap() as FMUserAPIResponse;
       const transformedData = response.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
       setFilteredFMUsersData(transformedData);
       setPagination({
         current_page: response.current_page,
         total_count: response.total_count,
-        total_pages: response.total_pages
+        total_pages: response.total_pages,
       });
-    } catch (error) {
-      console.log(error)
-      toast.error('Failed to filter users')
+    } catch (error: unknown) {
+      console.error(error);
+      toast.error("Failed to filter users");
     }
-  }
+  };
 
   const handlePageChange = async (page: number) => {
     setPagination((prev) => ({
@@ -530,12 +580,14 @@ export const FMUserMasterDashboard = () => {
       current_page: page,
     }));
     try {
-      const response = await dispatch(getFMUsers({ baseUrl, token, perPage: 10, currentPage: page })).unwrap();
+      const response = await dispatch(
+        getFMUsers({ baseUrl, token, perPage: 10, currentPage: page })
+      ).unwrap() as FMUserAPIResponse;
       const transformedData = response.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
       setFilteredFMUsersData(transformedData);
-    } catch (error) {
-      toast.error('Failed to fetch bookings');
+    } catch (error: unknown) {
+      toast.error("Failed to fetch users");
     }
   };
 
@@ -543,18 +595,19 @@ export const FMUserMasterDashboard = () => {
     if (!pagination.total_pages || pagination.total_pages <= 0) {
       return null;
     }
-    const items = [];
+    const items: JSX.Element[] = [];
     const totalPages = pagination.total_pages;
     const currentPage = pagination.current_page;
     const showEllipsis = totalPages > 7;
 
     if (showEllipsis) {
       items.push(
-        <PaginationItem key={1} className='cursor-pointer'>
+        <PaginationItem key={1} className="cursor-pointer">
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={loading}
+            aria-disabled={loading} // accessibility-friendly way
+            className={loading ? "pointer-events-none opacity-50" : ""}
           >
             1
           </PaginationLink>
@@ -563,18 +616,19 @@ export const FMUserMasterDashboard = () => {
 
       if (currentPage > 4) {
         items.push(
-          <PaginationItem key="ellipsis1" >
+          <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                aria-disabled={loading} // accessibility-friendly way
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -586,11 +640,12 @@ export const FMUserMasterDashboard = () => {
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                aria-disabled={loading} // accessibility-friendly way
+                className={loading ? "pointer-events-none opacity-50" : ""}
               >
                 {i}
               </PaginationLink>
@@ -609,11 +664,12 @@ export const FMUserMasterDashboard = () => {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
           if (!items.find((item) => item.key === i.toString())) {
             items.push(
-              <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationItem key={i} className="cursor-pointer">
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={loading}
+                  aria-disabled={loading} // accessibility-friendly way
+                  className={loading ? "pointer-events-none opacity-50" : ""}
                 >
                   {i}
                 </PaginationLink>
@@ -625,11 +681,12 @@ export const FMUserMasterDashboard = () => {
 
       if (totalPages > 1) {
         items.push(
-          <PaginationItem key={totalPages} className='cursor-pointer'>
+          <PaginationItem key={totalPages} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={loading}
+              aria-disabled={loading} // accessibility-friendly way
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {totalPages}
             </PaginationLink>
@@ -639,11 +696,12 @@ export const FMUserMasterDashboard = () => {
     } else {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i} className='cursor-pointer'>
+          <PaginationItem key={i} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={loading}
+              aria-disabled={loading} // accessibility-friendly way
+              className={loading ? "pointer-events-none opacity-50" : ""}
             >
               {i}
             </PaginationLink>
@@ -655,7 +713,7 @@ export const FMUserMasterDashboard = () => {
     return items;
   };
 
-  const renderActions = (user: any) => (
+  const renderActions = (user: TransformedFMUser) => (
     <Button
       variant="ghost"
       size="sm"
@@ -666,16 +724,17 @@ export const FMUserMasterDashboard = () => {
     </Button>
   );
 
-  const renderCell = (user: any, columnKey: string) => {
+  const renderCell = (user: TransformedFMUser, columnKey: string) => {
     switch (columnKey) {
       case "active":
         return (
           <Switch
             checked={user.active}
             onCheckedChange={(checked) =>
-              handleToggleUserStatus(user.lockUserId, checked)
+              handleToggleUserStatus(user.lockUserId ?? "", checked)
             }
             className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            disabled={!user.lockUserId}
           />
         );
       case "type":
@@ -704,36 +763,33 @@ export const FMUserMasterDashboard = () => {
           </Badge>
         );
       default:
-        return user[columnKey];
+        return user[columnKey as keyof TransformedFMUser];
     }
   };
 
   const leftActions = (
     <>
       <Button
-        onClick={handleAddUser}
-        className="bg-[#C72030] hover:bg-[#a91b29] text-white"
+        onClick={() => setShowActionPanel(true)}
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
       >
-        <Plus className="w-4 h-4 mr-2" />
-        Add FM User
-      </Button>
-      <Button
-        variant="outline"
-        className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
-        onClick={() => setShowImportModal(true)}
-      >
-        <Upload className="w-4 h-4 mr-2" />
-        Import
-      </Button>
-      <Button
-        variant="outline"
-        className="border-gray-300 text-gray-700 hover:bg-gray-50"
-        onClick={() => setCloneRoleDialogOpen(true)}
-      >
-        Clone Role
+        <Plus className="w-4 h-4" />
+        Action
       </Button>
     </>
   );
+
+  const handleOpenRoleDialog = () => {
+    setCloneRoleDialogOpen(true);
+  };
+
+  const selectedActions = [
+    {
+      label: "Clone Role",
+      icon: Users,
+      onClick: handleOpenRoleDialog,
+    },
+  ];
 
   if (error) {
     return (
@@ -765,21 +821,21 @@ export const FMUserMasterDashboard = () => {
           title="Approved Users"
           value={approvedUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter('approved')}
+          onClick={() => cardFilter("approved")}
           className="cursor-pointer"
         />
         <StatsCard
           title="Pending Users"
           value={pendingUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter('pending')}
+          onClick={() => cardFilter("pending")}
           className="cursor-pointer"
         />
         <StatsCard
           title="Rejected Users"
           value={rejectedUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter('rejected')}
+          onClick={() => cardFilter("rejected")}
           className="cursor-pointer"
         />
         <StatsCard
@@ -788,6 +844,15 @@ export const FMUserMasterDashboard = () => {
           icon={<Download className="w-6 h-6" />}
         />
       </div>
+
+      {showActionPanel && (
+        <SelectionPanel
+          actions={selectedActions}
+          onAdd={handleAddUser}
+          onImport={() => setShowImportModal(true)}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
 
       <EnhancedTable
         data={filteredFMUsersData}
@@ -813,14 +878,14 @@ export const FMUserMasterDashboard = () => {
             <PaginationItem>
               <PaginationPrevious
                 onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
             {renderPaginationItems()}
             <PaginationItem>
               <PaginationNext
                 onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>
@@ -838,9 +903,7 @@ export const FMUserMasterDashboard = () => {
         <DialogContent className="sm:max-w-[600px] p-0">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">
-                Filter
-              </DialogTitle>
+              <DialogTitle className="text-xl font-semibold">Filter</DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -915,15 +978,11 @@ export const FMUserMasterDashboard = () => {
 
           <div className="px-6 py-3 space-y-6">
             <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full bg-white" value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)}>
+              <SelectTrigger className="w-full bg-white">
                 <SelectValue placeholder="Select Status" />
               </SelectTrigger>
               <SelectContent className="bg-white border shadow-lg z-50">
-                <SelectItem
-                  value="Select Status"
-                  disabled
-                  className="text-gray-400"
-                >
+                <SelectItem value="Select Status" disabled className="text-gray-400">
                   Select Status
                 </SelectItem>
                 <SelectItem value="approved" className="hover:bg-blue-50">
@@ -955,9 +1014,7 @@ export const FMUserMasterDashboard = () => {
         <DialogContent className="sm:max-w-[500px] p-0 bg-white">
           <DialogHeader className="p-6 pb-4 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">
-                Clone Role
-              </DialogTitle>
+              <DialogTitle className="text-xl font-semibold">Clone Role</DialogTitle>
               <Button
                 variant="ghost"
                 size="sm"
@@ -972,11 +1029,7 @@ export const FMUserMasterDashboard = () => {
           <div className="p-6">
             <Tabs
               value={activeTab}
-              onValueChange={(value) => {
-                setActiveTab(value);
-                setFromUser("");
-                setToUser("");
-              }}
+              onValueChange={(value) => setActiveTab(value as "handover" | "clone")}
               className="w-full"
             >
               <TabsList className="grid w-full grid-cols-2 mb-6">
