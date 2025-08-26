@@ -614,7 +614,7 @@ export const ExternalUsersDashboard = () => {
               </div>
               <div className="p-4 space-y-2 text-sm">
                 <p>Are you sure you want to delete this user?</p>
-                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (ID: {confirmDeleteUser.id})</p>
+                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (Email: {confirmDeleteUser.email})</p>
               </div>
               <div className="p-4 flex justify-end gap-2 border-t">
                 <Button variant="outline" onClick={handleCancelDelete} disabled={deleting}>No</Button>
