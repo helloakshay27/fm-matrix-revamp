@@ -188,7 +188,7 @@ const UtilitySTPDashboard = () => {
   };
 
   const handleAdd = () => {
-    navigate('/utility/stp/new-asset?type=STP');
+    navigate('/utility/stp/add-asset?type=STP');
   };
 
   const handleAddSchedule = () => {

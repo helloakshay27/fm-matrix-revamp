@@ -25,6 +25,27 @@ import {
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { AssetDataTable } from "@/components/AssetDataTable";
+// Transform mockEnergyData to AssetDataTable format
+const transformEnergyAsset = (energy, index) => ({
+  id: energy.id,
+  name: energy.location,
+  serialNumber: index + 1,
+  assetNumber: energy.id,
+  status: energy.status === "Normal" ? "in_use" : energy.status === "High" ? "breakdown" : "in_storage",
+  siteName: energy.location.split(" - ")[0] || "",
+  building: null,
+  wing: null,
+  floor: null,
+  area: null,
+  pmsRoom: null,
+  assetGroup: energy.meterType,
+  assetSubGroup: "",
+  assetType: false,
+  purchaseCost: energy.cost,
+  currentBookValue: null,
+  category: energy.meterType,
+});
 
 // Mock data for energy consumption
 const mockEnergyData = [
@@ -99,20 +120,56 @@ const getEfficiencyColor = (efficiency: number) => {
 export const EnergyDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
 
   const stats = calculateStats(mockEnergyData);
   const filteredEnergyData = mockEnergyData.filter(energy =>
     energy.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     energy.id.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  const displayAssets = filteredEnergyData.map(transformEnergyAsset);
 
-  const handleAddReading = () => {
-    // navigate("/utility/energy/add-asset");
-    navigate('/utility/energy/new-asset?type=energy');
+  // AssetDataTable handlers
+  const visibleColumns = {
+    actions: true,
+    serialNumber: true,
+    assetName: true,
+    assetId: true,
+    assetNo: true,
+    assetStatus: true,
+    site: true,
+    building: false,
+    wing: false,
+    floor: false,
+    area: false,
+    room: false,
+    meterType: true,
+    assetType: true,
+    category: true,
   };
 
-  const handleViewDetails = (energyId: string) => {
-    navigate(`/utility/energy/details/${energyId}`);
+  const handleAddReading = () => {
+    navigate('/utility/energy/add-asset?type=energy');
+  };
+  const handleViewAsset = (assetId: string) => {
+    navigate(`/utility/energy/details/${assetId}`);
+  };
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedAssets(displayAssets.map((asset) => asset.id));
+    } else {
+      setSelectedAssets([]);
+    }
+  };
+  const handleSelectAsset = (assetId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedAssets((prev) => [...prev, assetId]);
+    } else {
+      setSelectedAssets((prev) => prev.filter((id) => id !== assetId));
+    }
+  };
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
   };
 
   const StatCard = ({ icon, label, value }: any) => (
@@ -157,7 +214,7 @@ export const EnergyDashboard = () => {
             <StatCard icon={<TrendingUp />} label="Peak Consumption" value={`${stats.peakConsumption.toFixed(1)} kWh`} />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
+          {/* <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleAddReading}
@@ -188,57 +245,24 @@ export const EnergyDashboard = () => {
                 <Download className="w-4 h-4" />
               </Button>
             </div>
-          </div>
+          </div> */}
 
-          <div className="bg-white rounded-lg shadow-sm border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Meter ID</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Current Reading</TableHead>
-                  <TableHead>Consumption</TableHead>
-                  <TableHead>Cost</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Efficiency</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredEnergyData.map((energy) => (
-                  <TableRow key={energy.id}>
-                    <TableCell className="font-medium">{energy.id}</TableCell>
-                    <TableCell>{energy.location}</TableCell>
-                    <TableCell>{energy.meterType}</TableCell>
-                    <TableCell>{energy.currentReading.toFixed(1)} kWh</TableCell>
-                    <TableCell>{energy.consumption.toFixed(1)} kWh</TableCell>
-                    <TableCell>${energy.cost.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(energy.status)}>
-                        {energy.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={getEfficiencyColor(energy.efficiency)}>
-                        {energy.efficiency}%
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{energy.date}</TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewDetails(energy.id)}
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          {/* Asset Data Table (like Water/STP) */}
+          <div>
+            <AssetDataTable
+              assets={displayAssets}
+              selectedAssets={selectedAssets}
+              visibleColumns={visibleColumns}
+              onSelectAll={handleSelectAll}
+              onSelectAsset={handleSelectAsset}
+              onViewAsset={handleViewAsset}
+              handleAddAsset={handleAddReading}
+              handleAddSchedule={() => { }}
+              handleImport={() => { }}
+              onFilterOpen={() => { }}
+              onSearch={handleSearch}
+              loading={false}
+            />
           </div>
         </TabsContent>
 

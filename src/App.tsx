@@ -1024,6 +1024,10 @@ function App() {
                   element={<PermitToWorkDashboard />}
                 />
                 <Route path="/safety/permit/add" element={<AddPermitPage />} />
+                <Route
+                  path="/safety/permit/details/:id"
+                  element={<PermitDetails />}
+                />
                 <Route path="/safety/m-safe" element={<MSafeDashboard />} />
                 <Route
                   path="/safety/m-safe/non-fte-users"
@@ -1475,7 +1479,7 @@ function App() {
                 <Route path="/utility/energy" element={<UtilityDashboard />} />
                 <Route
                   path="/utility/energy/add-asset"
-                  element={<AddEnergyAssetDashboard />}
+                  element={<AddWaterAssetDashboard />}
                 />
                 <Route
                   path="/utility/inactive-assets"
@@ -1490,7 +1494,7 @@ function App() {
                   element={<AddWaterAssetDashboard />}
                 />
                 <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
+                <Route path="/utility/stp/add-asset" element={<AddWaterAssetDashboard />} />
                 <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
                 <Route path="/utility/daily-readings/edit/:id" element={<EditMeasurementPage />} />

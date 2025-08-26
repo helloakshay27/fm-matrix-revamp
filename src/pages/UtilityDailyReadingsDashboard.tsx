@@ -101,8 +101,17 @@ export default function UtilityDailyReadingsDashboard() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: Measurement[] = await response.json();
-      const transformedData = data.map(transformMeasurement);
+      const data = await response.json();
+      console.log('Fetched measurements data:', data);
+
+      // Support both array and object API responses
+      const measurementsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data.measurements)
+          ? data.measurements
+          : [];
+
+      const transformedData = measurementsArray.map(transformMeasurement);
       setDailyReadingsData(transformedData);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'An error occurred while fetching measurements';

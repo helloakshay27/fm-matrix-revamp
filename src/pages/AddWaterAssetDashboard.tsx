@@ -757,7 +757,10 @@ function AddWaterAssetDashboard() {
   };
 
   // Main Save & Create New Asset handler (API flow matches AddAssetPage)
+  const [saving, setSaving] = useState(false);
   const handleSaveAndCreateNew = async () => {
+    if (saving) return; // Prevent duplicate submissions
+    setSaving(true);
     // Build payload (map your formData fields to API keys)
     const payload = {
       pms_asset: {
@@ -888,6 +891,8 @@ function AddWaterAssetDashboard() {
         status: "error",
       });
       console.error("Error creating asset:", err);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -2045,8 +2050,9 @@ function AddWaterAssetDashboard() {
           <Button
             onClick={handleSaveAndCreateNew}
             className="bg-purple-700 text-white hover:bg-purple-800"
+            disabled={saving}
           >
-            Save & Create New Asset
+            {saving ? 'Saving...' : 'Save & Create New Asset'}
           </Button>
         </div>
 

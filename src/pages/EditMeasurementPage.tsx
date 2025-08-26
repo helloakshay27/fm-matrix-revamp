@@ -91,8 +91,17 @@ export default function EditMeasurementPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data: ApiMeasurement[] = await response.json();
-      const measurement = data.find(m => m.id.toString() === id);
+
+      const data = await response.json();
+      console.log('Fetched measurement data:', data);
+
+      const measurementsArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data.measurements)
+          ? data.measurements
+          : [];
+
+      const measurement = measurementsArray.find(m => m.id.toString() === id);
 
       if (measurement) {
         setFormData(transformApiMeasurement(measurement));
