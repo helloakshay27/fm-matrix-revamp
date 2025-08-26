@@ -13,13 +13,22 @@ export interface FMUser {
   mobile: string;
   email: string;
   company_name: string | null;
+  vendor_name: string | null;
+  entity_name: string | null;
+  unit_name: string | null;
+  role_name: string | null;
   entity_id: number;
   unit_id: number;
   designation: string;
   employee_id: string;
   created_by_id: number;
+  created_by_name: string;
   lock_user_permission: {
     access_level: string;
+    employee_id: string;
+    status: string;
+    active: boolean;
+    id: string;
   };
   user_type: string;
   lock_user_permission_status: string;

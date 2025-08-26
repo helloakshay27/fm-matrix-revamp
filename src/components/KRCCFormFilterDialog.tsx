@@ -177,7 +177,7 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
             {/* ...existing code... */}
             <div>
               <TextField
-                label="Email"
+                label={<span>Email <span style={{ color: '#C72030' }}>*</span></span>}
                 type="email"
                 placeholder="Enter Email"
                 value={email}
@@ -187,7 +187,7 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
                 margin="dense"
               />
             </div>
-            <div>
+            {/* <div>
               <FormControl fullWidth size="small" margin="dense">
                 <InputLabel id="circle-label">Circle</InputLabel>
                 <Select
@@ -210,7 +210,7 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
               {circlesError && (
                 <div className="text-xs text-red-600 mt-1">{circlesError}</div>
               )}
-            </div>
+            </div> */}
           </div>
         {/* </LocalizationProvider> */}
       </DialogContent>

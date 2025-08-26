@@ -100,7 +100,7 @@ export const ExternalUsersDashboard = () => {
           if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) filterParams.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id) filterParams.push(`q[report_to_id_eq]=${encodeURIComponent(filters.report_to_id)}`);
+          if (filters.report_to_id) filterParams.push(`q[report_to_email_cont]=${filters.report_to_id}`);
           url += `&${filterParams.join('&')}`;
         } else {
           // Only search by email if no filters
@@ -170,7 +170,8 @@ export const ExternalUsersDashboard = () => {
       case 'pending':
         return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
       case 'rejected':
-        return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+        // Present 'rejected' as 'Deactivated' per product requirement
+        return <Badge className="bg-red-500 text-white hover:bg-red-600">Deactivated</Badge>;
       default:
         return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
     }
@@ -614,7 +615,7 @@ export const ExternalUsersDashboard = () => {
               </div>
               <div className="p-4 space-y-2 text-sm">
                 <p>Are you sure you want to delete this user?</p>
-                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (ID: {confirmDeleteUser.id})</p>
+                <p className="font-medium">{`${confirmDeleteUser.firstname || ''} ${confirmDeleteUser.lastname || ''}`.trim() || 'User'} (Email: {confirmDeleteUser.email})</p>
               </div>
               <div className="p-4 flex justify-end gap-2 border-t">
                 <Button variant="outline" onClick={handleCancelDelete} disabled={deleting}>No</Button>

@@ -428,7 +428,7 @@ const TrainingDashboard = () => {
         data={trainings}
         columns={columns}
         renderCell={renderCell}
-        selectable={true}
+        // selectable={true}
         selectedItems={selectedItems}
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectItem}

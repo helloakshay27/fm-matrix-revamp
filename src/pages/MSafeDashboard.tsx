@@ -87,7 +87,7 @@ export const MSafeDashboard = () => {
           if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) params.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) params.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id) params.push(`q[report_to_id_eq]=${encodeURIComponent(filters.report_to_id)}`);
+          if (filters.report_to_id) params.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
           if (params.length) url += `&${params.join('&')}`;
         } else {
           const emailQuery = debouncedSearch.trim();
@@ -433,15 +433,7 @@ export const MSafeDashboard = () => {
         )}
 
         <div className="rounded-lg">
-          <EnhancedTable data={fmUsers || []} leftActions={
-            <Button
-              onClick={handleActionClick}
-              className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-            >
-              <Plus className="w-4 h-4" />
-              Action
-            </Button>
-          } columns={columns} onFilterClick={handleFiltersClick}
+          <EnhancedTable data={fmUsers || []} columns={columns} onFilterClick={handleFiltersClick}
             renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} enableExport={true} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
