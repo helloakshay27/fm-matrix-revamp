@@ -1,6 +1,9 @@
 
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, Activity } from 'lucide-react';
+import { FeedItem } from '../components/FeedItem';
+import { Heading } from '../components/ui/heading';
 
 export const MaterialPRFeedsPage = () => {
   const navigate = useNavigate();
@@ -50,57 +53,109 @@ export const MaterialPRFeedsPage = () => {
     }
   ];
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
-    <div className="min-h-screen bg-white p-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
-        {/* Simple Header */}
-        <h1 className="text-2xl font-bold text-black mb-6">Feeds</h1>
+        {/* Enhanced Header */}
+        <div className="mb-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+            <button 
+              onClick={handleBack}
+              className="flex items-center space-x-1 hover:text-[#C72030] transition-colors duration-200"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back</span>
+            </button>
+            <span>•</span>
+            <span>Material PR #{id}</span>
+            <span>•</span>
+            <span>Activity Feeds</span>
+          </div>
+
+          {/* Page Title */}
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-[#C72030] rounded-lg flex items-center justify-center">
+              <Activity className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <Heading level="h1" className="text-2xl font-bold text-gray-900 mb-1">
+                Activity Feeds
+              </Heading>
+              <p className="text-gray-600 text-sm">
+                Track all changes and approvals for this Material PR
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Activities</p>
+                <p className="text-2xl font-bold text-gray-900">{feeds.length}</p>
+              </div>
+              <Activity className="w-8 h-8 text-gray-400" />
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Approved</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {feeds.filter(f => f.status === 'Approved').length}
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-sm font-bold">✓</span>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Rejected</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {feeds.filter(f => f.status === 'Rejected').length}
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <span className="text-red-600 text-sm font-bold">✕</span>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Feed Items */}
         <div className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
+            <span className="text-sm text-gray-500">
+              {feeds.length} {feeds.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+          
           {feeds.map((feed, index) => (
-            <div key={index} className="border-b border-gray-200 pb-4 last:border-b-0">
-              {/* Date and Time */}
-              <div className="text-sm text-black font-medium mb-1">
-                {feed.date}
-              </div>
-              <div className="text-sm text-black mb-2">
-                {feed.time}
-              </div>
-
-              {/* User and Description */}
-              {feed.user && (
-                <div className="text-sm text-black mb-1">
-                  <span className="font-medium">{feed.user}</span> - {feed.description}
-                </div>
-              )}
-
-              {/* Type and Status */}
-              {feed.type && (
-                <div className="text-sm text-black mb-1">
-                  <span className="font-medium">{feed.type}</span>
-                  {feed.status && (
-                    <span> - {feed.status}</span>
-                  )}
-                </div>
-              )}
-
-              {/* Rejection Reason */}
-              {feed.reason && (
-                <div className="text-sm text-black font-medium">
-                  {feed.reason}
-                </div>
-              )}
-
-              {/* PO Created case */}
-              {!feed.user && feed.description && (
-                <div className="text-sm text-black">
-                  {feed.description}
-                </div>
-              )}
-            </div>
+            <FeedItem key={index} feed={feed} index={index} />
           ))}
         </div>
+
+        {/* Empty State */}
+        {feeds.length === 0 && (
+          <div className="text-center py-12">
+            <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No activity yet</h3>
+            <p className="text-gray-600">
+              Activity feeds will appear here as actions are taken on this Material PR.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
