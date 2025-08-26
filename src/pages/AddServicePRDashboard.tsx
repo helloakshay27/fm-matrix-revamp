@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Settings, Trash2, X } from "lucide-react";
+import { ArrowLeft, Settings, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -366,6 +366,14 @@ export const AddServicePRDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <div className="p-6 max-w-7xl mx-auto">
+        <Button
+          variant="ghost"
+          onClick={() => navigate(-1)}
+          className='p-0 mb-4'
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
         {/* Work Order Details Section Card */}
         <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="p-4 border-b border-gray-200">

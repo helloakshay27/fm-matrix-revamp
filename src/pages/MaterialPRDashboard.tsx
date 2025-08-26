@@ -87,17 +87,17 @@ export const MaterialPRDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
-  const { loading } = useAppSelector(state => state.getMaterialPR)
+  const { loading } = useAppSelector((state) => state.getMaterialPR);
 
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [materialPR, setMaterialPR] = useState([]);
   const [filters, setFilters] = useState({
-    referenceNumber: '',
-    prNumber: '',
-    supplierName: '',
-    approvalStatus: 'Select'
+    referenceNumber: "",
+    prNumber: "",
+    supplierName: "",
+    approvalStatus: "Select",
   });
 
   const fetchData = async (filterParams = {}) => {
@@ -113,10 +113,8 @@ export const MaterialPRDashboard = () => {
         createdBy: item.user.full_name,
         createdOn: item.created_at,
         lastApprovedBy:
-          Array.isArray(item.approval_levels) &&
-            item.approval_levels.length > 0
-            ? item.approval_levels[item.approval_levels.length - 1]
-              .approved_by
+          Array.isArray(item.approval_levels) && item.approval_levels.length > 0
+            ? item.approval_levels[item.approval_levels.length - 1].approved_by
             : null,
         approvedStatus: item.all_level_approved
           ? "Approved"
