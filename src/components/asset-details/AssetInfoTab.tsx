@@ -88,6 +88,8 @@ interface Asset {
   non_consumption_pms_asset_measures?: any[];
   asset_type_category?: string; // <-- Added property to fix type error
   it_asset?: boolean;
+  is_meter?: boolean;
+  meter_category_name?: string;
 }
 type ExtraFieldsGrouped = {
   [group: string]: { field_name: string; field_value: string }[];
@@ -135,6 +137,7 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
 }) => {
   return (
     <div className="min-h-full ">
+
       <Tabs defaultValue="analytics" style={{ width: "100%" }}>
         <TabsList className="w-full mb-6">
           <TabsTrigger
@@ -672,6 +675,25 @@ export const AssetInfoTab: React.FC<AssetInfoTabProps> = ({
                   }
                 </div>
               </div>
+              {/* Meter Category Type Block */}
+              {(asset.asset_type_category === "Meter" || asset.is_meter) && (
+                <div className="w-full bg-white rounded-lg shadow-sm border mb-6">
+                  <div className="flex items-center gap-3 bg-[#F6F4EE] p-6 border border-[#D9D9D9]">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center bg-[#E5E0D3]">
+                      <CreditCard className="w-8 h-8" style={{ color: "#C72030" }} />
+                    </div>
+                    <h3 className="text-lg font-semibold uppercase text-black">
+                      Meter Category Type
+                    </h3>
+                  </div>
+                  <div className="bg-[#F6F7F7] border border-t-0 border-[#D9D9D9] p-6">
+                    <div className="text-sm text-gray-800">
+                      <span className="text-gray-500">Category Name:</span>{" "}
+                      <span className="font-medium">{asset.meter_category_name || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Movement Details */}

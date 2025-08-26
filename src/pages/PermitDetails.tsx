@@ -49,18 +49,24 @@ interface PermitClosure {
 
 interface MainAttachment {
     id: number;
-    document_file_name: string;
-    document_content_type: string;
-    document_file_size: number;
-    document_updated_at: string;
-    relation: string;
-    relation_id: number;
-    active: number;
-    created_at: string;
-    updated_at: string;
-    changed_by: string | null;
-    added_from: string | null;
-    comments: string | null;
+    // Old fields for backward compatibility
+    document_file_name?: string;
+    document_content_type?: string;
+    document_file_size?: number;
+    document_updated_at?: string;
+    relation?: string;
+    relation_id?: number;
+    active?: number;
+    created_at?: string;
+    updated_at?: string;
+    changed_by?: string | null;
+    added_from?: string | null;
+    comments?: string | null;
+    // API response fields
+    filename?: string;
+    content_type?: string;
+    file_size?: number;
+    url?: string;
 }
 
 interface VendorAttachments {
@@ -494,21 +500,72 @@ export const PermitDetails = () => {
                 {/* Attachments Section */}
                 {permitData.main_attachments && permitData.main_attachments.length > 0 && (
                     <Section title="MAIN ATTACHMENTS" icon={<Upload />} sectionKey="attachments">
+                        {/* Image Previews Row */}
+                        <div className="flex gap-4 overflow-x-auto mb-4">
+                            {permitData.main_attachments.filter(att => {
+                                const type = att.content_type || att.document_content_type;
+                                return att && type && att.url && type.startsWith('image/');
+                            }).map((att, idx) => (
+                                <div key={att.id} className="flex flex-col items-center min-w-[120px]">
+                                    <img
+                                        src={att.url}
+                                        alt={att.filename || att.document_file_name || 'Attachment'}
+                                        className="rounded border max-h-32 object-contain bg-white"
+                                    />
+                                    <span className="text-xs mt-1 text-gray-700 truncate max-w-[100px]" title={att.filename || att.document_file_name}>{att.filename || att.document_file_name}</span>
+                                </div>
+                            ))}
+                        </div>
                         <div className="space-y-2">
                             {permitData.main_attachments.map((attachment: MainAttachment, index: number) => (
-                                <div key={attachment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                    <FileText className="w-5 h-5 text-gray-500" />
-                                    <div className="flex-1">
-                                        <span className="text-sm text-gray-700 font-medium">{attachment.document_file_name}</span>
-                                        <div className="text-xs text-gray-500">
-                                            {attachment.document_content_type} • {Math.round(attachment.document_file_size / 1024)} KB
+                                attachment ? (
+                                    <div key={attachment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <FileText className="w-5 h-5 text-gray-500" />
+                                        <div className="flex-1">
+                                            {(() => {
+                                                const name = attachment.filename || attachment.document_file_name || 'No Name';
+                                                const fileUrl = attachment.url;
+                                                if (fileUrl) {
+                                                    return (
+                                                        <a
+                                                            href={fileUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-blue-700 font-medium hover:underline"
+                                                        >
+                                                            {name}
+                                                        </a>
+                                                    );
+                                                } else {
+                                                    return (
+                                                        <span className="text-sm text-gray-700 font-medium">{name}</span>
+                                                    );
+                                                }
+                                            })()}
+                                            <div className="text-xs text-gray-500">
+                                                {(attachment.content_type || attachment.document_content_type) || '-'} • {Number.isFinite(attachment.file_size || attachment.document_file_size) && (attachment.file_size || attachment.document_file_size) > 0
+                                                    ? `${Math.round((attachment.file_size || attachment.document_file_size) / 1024)} KB`
+                                                    : '-'}
+                                            </div>
                                         </div>
+                                        <span className="text-xs text-gray-500">{formatDate(attachment.updated_at || attachment.created_at)}</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            asChild
+                                        >
+                                            {attachment.url ? (
+                                                <a href={attachment.url} target="_blank" rel="noopener noreferrer">
+                                                    <Download className="w-4 h-4" />
+                                                </a>
+                                            ) : (
+                                                <span>
+                                                    <Download className="w-4 h-4" />
+                                                </span>
+                                            )}
+                                        </Button>
                                     </div>
-                                    <span className="text-xs text-gray-500">{formatDate(attachment.created_at)}</span>
-                                    <Button variant="ghost" size="sm">
-                                        <Download className="w-4 h-4" />
-                                    </Button>
-                                </div>
+                                ) : null
                             ))}
                         </div>
                     </Section>

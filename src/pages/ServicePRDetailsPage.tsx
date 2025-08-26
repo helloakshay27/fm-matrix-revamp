@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
-import { getWorkOrderById } from '@/store/slices/workOrderSlice';
+import { approveRejectWO, getWorkOrderById } from '@/store/slices/workOrderSlice';
 import { numberToIndianCurrencyWords } from '@/utils/amountToText';
 import axios from 'axios';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { format } from 'date-fns';
 
 // Define the interface for service items
 interface ServiceItem {
@@ -58,7 +60,16 @@ export const ServicePRDetailsPage = () => {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
 
+  const levelId = searchParams.get("level_id");
+  const userId = searchParams.get("user_id");
+
+  const shouldShowButtons = Boolean(levelId && userId);
+
+  const [openRejectDialog, setOpenRejectDialog] = useState(false);
+  const [rejectComment, setRejectComment] = useState("");
   const [servicePR, setServicePR] = useState<any>({});
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
@@ -148,13 +159,13 @@ export const ServicePRDetailsPage = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved':
-        return 'bg-green-500 text-white';
+        return 'bg-green-100 text-green-800';
       case 'rejected':
-        return 'bg-red-500 text-white';
+        return 'bg-red-100 text-red-800';
       case 'pending':
-        return 'bg-yellow-500 text-black';
+        return 'bg-yellow-100 text-yellow-800';
       default:
-        return 'bg-gray-500 text-white';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -195,6 +206,61 @@ export const ServicePRDetailsPage = () => {
     total_amount: item.total_amount
   })) || [];
 
+  const handleApprove = async () => {
+    const payload = {
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: true,
+    };
+    try {
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
+      toast.success("Work Order approved successfully");
+      navigate(`/finance/pending-approvals`);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
+
+  const handleRejectClick = () => {
+    setOpenRejectDialog(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectComment.trim()) {
+      toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    const payload = {
+      level_id: Number(levelId),
+      user_id: Number(userId),
+      approve: false,
+      rejection_reason: rejectComment,
+    };
+
+    try {
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
+      toast.success("Work Order rejected successfully");
+      navigate(`/finance/pending-approvals`);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      setOpenRejectDialog(false);
+      setRejectComment("");
+    }
+  };
+
+  const handleRejectCancel = () => {
+    setOpenRejectDialog(false);
+    setRejectComment("");
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button
@@ -215,13 +281,13 @@ export const ServicePRDetailsPage = () => {
             {
               servicePR?.approvals?.map((level: any) => (
                 <div className='space-y-3' key={level.level}>
-                  <div className={`px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max`}>
+                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
                     {`${level.level} approval : ${level.status}`}
                   </div>
                   {
                     level.updated_by && level.updated_at &&
                     <div className='ms-2'>
-                      {`${level.updated_by} (${level.updated_at})`}
+                      {`${level.updated_by} (${format(new Date(level.updated_at), 'dd/MM/yyyy')})`}
                     </div>
                   }
                 </div>
@@ -256,7 +322,7 @@ export const ServicePRDetailsPage = () => {
               <Printer className="w-4 h-4 mr-1" />
               Print
             </Button>
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}>
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
@@ -492,6 +558,58 @@ export const ServicePRDetailsPage = () => {
           }
         </div>
       </div>
+
+      {shouldShowButtons && (
+        <div className="flex items-center justify-center gap-4">
+          <button
+            className="bg-green-600 text-white py-2 px-4 rounded-md"
+            onClick={handleApprove}
+          >
+            Approve
+          </button>
+          <button
+            className="bg-[#C72030] text-white py-2 px-4 rounded-md"
+            onClick={handleRejectClick}
+          >
+            Reject
+          </button>
+        </div>
+      )}
+
+
+      <Dialog
+        open={openRejectDialog}
+        onClose={handleRejectCancel}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Reject Work Order</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Reason for Rejection"
+            type="text"
+            fullWidth
+            multiline
+            rows={4}
+            value={rejectComment}
+            onChange={(e) => setRejectComment(e.target.value)}
+            variant="outlined"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleRejectCancel} variant="outline">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRejectConfirm}
+            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+          >
+            Reject
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 };

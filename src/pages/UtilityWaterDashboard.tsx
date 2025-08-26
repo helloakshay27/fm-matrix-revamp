@@ -139,7 +139,7 @@ export const UtilityWaterDashboard = () => {
   };
 
   const handleAdd = () => {
-    navigate('/utility/water/add-asset');
+    navigate('/utility/water/add-asset?type=WaterAsset');
   };
 
   const handleAddSchedule = () => {

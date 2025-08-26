@@ -48,9 +48,9 @@ import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from '.
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
-import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
+import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer } from './slices/materialPRSlice'
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer } from './slices/purchaseOrderSlice'
-import { createServicePRReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
+import { createServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer } from './slices/grnSlice'
 import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
@@ -189,6 +189,7 @@ export const store = configureStore({
     getMaterialPRById: getMaterialPRByIdReducer,
     changePlantDetails: changePlantDetailsReducer,
     fetchWBS: fetchWBSReducer,
+    getFeeds: getFeedsReducer,
 
     // Purchase Order
     getPurchaseOrders: getPurchaseOrdersReducer,
@@ -202,6 +203,7 @@ export const store = configureStore({
     getServicePr: getServicePrReducer,
     createServicePR: createServicePRReducer,
     getServices: getServicesReducer,
+    getServiceFeeds: getServiceFeedsReducer,
 
     // Pending Approval
     fetchPendingApprovals: fetchPendingApprovalsReducer,

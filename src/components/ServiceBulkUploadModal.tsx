@@ -89,16 +89,19 @@ export const ServiceBulkUploadModal = ({ isOpen, onClose }: ServiceBulkUploadMod
   };
 
   const handleDownloadSample = () => {
-    const csvContent =
-      'Service Name,Site,Building,Wing,Area,Floor,Room,Group,Sub-Group\nSample Service,Tower 4,Wing2,South,Lobby,Ground Floor,Room 101,Maintenance,Electrical';
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'service_sample_format.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Mirror the Rails ERB anchor: <a href="/assets/services.xlsx" download="services.xlsx" target="_blank" class="btn purple-btn2 btn-sm">...
+  const baseUrl = localStorage.getItem('baseUrl');
+  const href = baseUrl ? `https://${baseUrl}/assets/services.xlsx` : '/assets/services.xlsx';
+
+  const link = document.createElement('a');
+  link.href = href;
+  link.setAttribute('download', 'services.xlsx');
+  link.setAttribute('target', '_blank');
+  link.setAttribute('rel', 'noopener noreferrer');
+  link.className = 'btn purple-btn2 btn-sm';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
   };
 
   return (

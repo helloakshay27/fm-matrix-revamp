@@ -412,7 +412,7 @@ export const ViewSchedulePage = () => {
                   {customForm.attachments.map((attachment: any, index: number) => {
                     const isImage = attachment.file_name && attachment.file_name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
                     return (
-                      <a key={attachment.id || index} href={attachment.file_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                      <a key={attachment.id || index} href={attachment.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
                         <Box
                           sx={{
                             width: '120px',
@@ -429,9 +429,9 @@ export const ViewSchedulePage = () => {
                             }
                           }}
                         >
-                          {isImage && attachment.file_url ? (
+                          {isImage && attachment.url ? (
                             <img
-                              src={attachment.file_url}
+                              src={attachment.url}
                               alt={attachment.file_name}
                               style={{
                                 maxWidth: '100px',

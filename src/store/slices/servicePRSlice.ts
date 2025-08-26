@@ -89,10 +89,26 @@ export const getServices = createAsyncThunk("getServices", async ({ baseUrl, tok
     }
 })
 
+export const getServiceFeeds = createAsyncThunk("getServiceFeeds", async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+    try {
+        const response = await axios.get(`https://${baseUrl}/pms/work_orders/${id}/feeds.json`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        })
+        return response.data
+    } catch (error) {
+        const message = error.response?.data?.message || error.message || 'Failed to fetch feeds'
+        return rejectWithValue(message)
+    }
+})
+
 const getServicePrSlice = createApiSlice("getServicePr", getServicePr);
 const createServicePRSlice = createApiSlice("createServicePR", createServicePR);
 const getServicesSlice = createApiSlice("getServices", getServices);
+const getServiceFeedsSlice = createApiSlice("getServiceFeeds", getServiceFeeds);
 
 export const getServicePrReducer = getServicePrSlice.reducer
 export const createServicePRReducer = createServicePRSlice.reducer
 export const getServicesReducer = getServicesSlice.reducer
+export const getServiceFeedsReducer = getServiceFeedsSlice.reducer

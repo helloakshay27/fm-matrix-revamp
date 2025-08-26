@@ -647,6 +647,7 @@ import UpdateVehicleHistoryPage from "./pages/UpdateVehicleHistoryPage";
 import SacHsn from "./pages/SacHsn";
 import DetailPageSacHsn from "./pages/DetailPageSacHsn";
 import AddSacHsn from "./pages/AddSacHsn";
+import { WOFeedsPage } from "./pages/WOFeedsPage";
 
 
 const queryClient = new QueryClient();
@@ -1024,6 +1025,10 @@ function App() {
                   element={<PermitToWorkDashboard />}
                 />
                 <Route path="/safety/permit/add" element={<AddPermitPage />} />
+                <Route
+                  path="/safety/permit/details/:id"
+                  element={<PermitDetails />}
+                />
                 <Route path="/safety/m-safe" element={<MSafeDashboard />} />
                 <Route
                   path="/safety/m-safe/non-fte-users"
@@ -1260,6 +1265,7 @@ function App() {
                 <Route path="/finance/wo" element={<WODashboard />} />
                 <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
+                <Route path="/finance/wo/feeds/:id" element={<WOFeedsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
                 <Route
@@ -1475,7 +1481,7 @@ function App() {
                 <Route path="/utility/energy" element={<UtilityDashboard />} />
                 <Route
                   path="/utility/energy/add-asset"
-                  element={<AddEnergyAssetDashboard />}
+                  element={<AddWaterAssetDashboard />}
                 />
                 <Route
                   path="/utility/inactive-assets"
@@ -1490,7 +1496,7 @@ function App() {
                   element={<AddWaterAssetDashboard />}
                 />
                 <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                <Route path="/utility/stp/add-asset" element={<AddSTPAssetDashboard />} />
+                <Route path="/utility/stp/add-asset" element={<AddWaterAssetDashboard />} />
                 <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
                 <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
                 <Route path="/utility/daily-readings/edit/:id" element={<EditMeasurementPage />} />
