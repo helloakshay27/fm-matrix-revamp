@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   TextField,
@@ -88,7 +88,7 @@ export const AddMaterialPRDashboard = () => {
   const [files, setFiles] = useState([]);
 
   useEffect(() => {
-    if (data.length > 0) {
+    if (Array.isArray(data) && data.length > 0) {
       setShowRadio(true);
     }
   }, [data]);
@@ -248,7 +248,7 @@ export const AddMaterialPRDashboard = () => {
           item.id === itemId
             ? {
               ...item,
-              sacHsnCode: response.data.hsn?.code || "",
+              sacHsnCode: response.data.hsn?.id || "",
               each: response.data.rate || "",
               amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
             }
@@ -346,7 +346,7 @@ export const AddMaterialPRDashboard = () => {
         payment_tenure: supplierDetails.paymentTenure,
         related_to: supplierDetails.relatedTo,
         advance_amount: supplierDetails.advanceAmount,
-        ...(wbsSelection === "all" && { wbs_code: supplierDetails.wbsCode }),
+        ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
@@ -355,7 +355,7 @@ export const AddMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
-          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
         })),
         attachments: files,
       },
@@ -374,8 +374,15 @@ export const AddMaterialPRDashboard = () => {
 
   return (
     <div className="p-6 mx-auto">
+      <Button
+        variant="ghost"
+        onClick={() => navigate("/finance/material-pr")}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       <h1 className="text-2xl font-bold mb-6">NEW MATERIAL PR</h1>
-
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
           {/* Supplier Details */}

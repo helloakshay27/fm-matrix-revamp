@@ -69,13 +69,17 @@ export const PendingApprovalsDashboard = () => {
         const formattedResponse = response.pending_data.map((item: any) => ({
           id: item.resource_id,
           type:
-            item.resource_type === "Pms::PurchaseOrder"
-              ? "PO"
-              : item.resource_type === "Pms::WorkOrder"
-                ? "WO"
-                : item.resource_type === "Pms::Grn"
-                  ? "GRN"
-                  : "Invoice",
+            item.resource_type === "Pms::PurchaseOrder" && item.letter_of_indent === true
+              ? "Material PR"
+              : item.resource_type === "Pms::PurchaseOrder" && item.letter_of_indent === false
+                ? "PO"
+                : item.resource_type === "Pms::WorkOrder" && item.letter_of_indent === true
+                  ? "Service PR"
+                  : item.resource_type === "Pms::WorkOrder" && item.letter_of_indent === false
+                    ? "WO"
+                    : item.resource_type === "Pms::Grn"
+                      ? "GRN"
+                      : "Invoice",
           prNo: item.reference_number,
           siteName: item.site_name,
           level: item.approval_level_name,
@@ -95,13 +99,17 @@ export const PendingApprovalsDashboard = () => {
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "view") {
       const url =
-        item.type === "PO"
-          ? `finance/po/details`
-          : item.type === "WO"
-            ? `finance/wo/details`
-            : item.type === "GRN"
-              ? `finance/grn-srn/details`
-              : `finance/invoices`;
+        item.type === "Material PR"
+          ? `finance/material-pr/details`
+          : item.type === "PO"
+            ? `finance/po/details`
+            : item.type === "Service PR"
+              ? `finance/service-pr/details`
+              : item.type === "WO"
+                ? `finance/wo/details`
+                : item.type === "GRN"
+                  ? `finance/grn-srn/details`
+                  : `finance/invoices`;
       return (
         <Button
           size="sm"
