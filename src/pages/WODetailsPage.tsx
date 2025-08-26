@@ -466,7 +466,7 @@ export const WODetailsPage = () => {
               <Printer className="w-4 h-4 mr-1" />
               Print
             </Button>
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/feeds/${id}`)}>
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>

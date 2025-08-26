@@ -10,6 +10,7 @@ import axios from 'axios';
 import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
+import { format } from 'date-fns';
 
 // Define the interface for service items
 interface ServiceItem {
@@ -286,7 +287,7 @@ export const ServicePRDetailsPage = () => {
                   {
                     level.updated_by && level.updated_at &&
                     <div className='ms-2'>
-                      {`${level.updated_by} (${level.updated_at})`}
+                      {`${level.updated_by} (${format(new Date(level.updated_at), 'dd/MM/yyyy')})`}
                     </div>
                   }
                 </div>
@@ -321,7 +322,7 @@ export const ServicePRDetailsPage = () => {
               <Printer className="w-4 h-4 mr-1" />
               Print
             </Button>
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}>
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>

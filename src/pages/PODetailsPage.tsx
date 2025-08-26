@@ -11,6 +11,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
+import { format } from "date-fns";
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
@@ -239,7 +240,8 @@ export const PODetailsPage = () => {
     total_tax_amount: "",
     taxes: "",
     total_amount: "",
-    show_send_sap_yes: false
+    show_send_sap_yes: false,
+    approval_levels: [],
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -365,6 +367,19 @@ export const PODetailsPage = () => {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-100 text-green-800';
+      case 'rejected':
+        return 'bg-red-100 text-red-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const handleRejectCancel = () => {
     setOpenRejectDialog(false);
     setRejectComment("");
@@ -379,16 +394,21 @@ export const PODetailsPage = () => {
             PURCHASE ORDER DETAILS
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-700">
-              L1 Approval:
-            </span>
-            <span className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium">
-              {poDetails.all_level_approved
-                ? "Approved"
-                : poDetails.all_level_approved === false
-                  ? "Rejected"
-                  : "Pending"}
-            </span>
+            {
+              poDetails?.approval_levels?.map((level: any) => (
+                <div className='space-y-3' key={level.id}>
+                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
+                    {`${level.name} Approval : ${level.status_label}`}
+                  </div>
+                  {
+                    level.approved_by && level.approval_date &&
+                    <div className='ms-2'>
+                      {`${level.approved_by} (${format(new Date(level.approval_date), 'dd/MM/yyyy')})`}
+                    </div>
+                  }
+                </div>
+              ))
+            }
           </div>
         </div>
 

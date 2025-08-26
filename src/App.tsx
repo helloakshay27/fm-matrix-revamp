@@ -647,6 +647,7 @@ import UpdateVehicleHistoryPage from "./pages/UpdateVehicleHistoryPage";
 import SacHsn from "./pages/SacHsn";
 import DetailPageSacHsn from "./pages/DetailPageSacHsn";
 import AddSacHsn from "./pages/AddSacHsn";
+import { WOFeedsPage } from "./pages/WOFeedsPage";
 
 
 const queryClient = new QueryClient();
@@ -1264,6 +1265,7 @@ function App() {
                 <Route path="/finance/wo" element={<WODashboard />} />
                 <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
+                <Route path="/finance/wo/feeds/:id" element={<WOFeedsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
                 <Route

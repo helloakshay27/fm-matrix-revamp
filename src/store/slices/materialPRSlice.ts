@@ -199,6 +199,23 @@ export const fetchWBS = createAsyncThunk(
     }
 )
 
+export const getFeeds = createAsyncThunk(
+    'getFeeds',
+    async ({ baseUrl, token, id }: { baseUrl: string, token: string, id: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/${id}/feeds.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to fetch feeds'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getSuppliersSlice = createApiSlice("getSuppliers", getSuppliers);
 const getPlantDetailsSlice = createApiSlice("getPlantDetails", getPlantDetails);
 const getAddressesSlice = createApiSlice("getAddresses", getAddresses);
@@ -208,6 +225,7 @@ const getMaterialPRSlice = createApiSlice("getMaterialPR", getMaterialPR);
 const getMaterialPRByIdSlice = createApiSlice("getMaterialPRById", getMaterialPRById);
 const changePlantDetailsSlice = createApiSlice("changePlantDetails", changePlantDetails);
 const fetchWBSSlice = createApiSlice("fetchWBS", fetchWBS);
+const getFeedsSlice = createApiSlice("getFeeds", getFeeds);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -218,3 +236,4 @@ export const getMaterialPRReducer = getMaterialPRSlice.reducer
 export const getMaterialPRByIdReducer = getMaterialPRByIdSlice.reducer
 export const changePlantDetailsReducer = changePlantDetailsSlice.reducer
 export const fetchWBSReducer = fetchWBSSlice.reducer
+export const getFeedsReducer = getFeedsSlice.reducer
