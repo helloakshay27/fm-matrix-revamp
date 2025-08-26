@@ -370,7 +370,7 @@ export const MaterialPRDetailsPage = () => {
 
       <div className="flex items-start gap-4 my-6">
         {pr.approval_levels?.map((level, index) => (
-          <div key={index} className="space-y-3">
+          <div key={index} className="space-y-2">
             <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
               {`${level.name} approved : ${level.status_label}`}
             </div>

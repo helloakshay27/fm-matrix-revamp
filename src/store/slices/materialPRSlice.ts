@@ -1,7 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit"
 import axios from "axios"
 import createApiSlice from "../api/apiSlice"
-import { string } from "zod"
 
 export const getSuppliers = createAsyncThunk(
     'getSuppliers',
@@ -95,6 +94,8 @@ export const getMaterialPR = createAsyncThunk(
         {
             baseUrl,
             token,
+            page,
+            per_page,
             reference_number,
             external_id,
             supplier_name,
@@ -102,6 +103,8 @@ export const getMaterialPR = createAsyncThunk(
         }: {
             baseUrl: string;
             token: string;
+            page?: number;
+            per_page?: number;
             reference_number?: string;
             external_id?: string;
             supplier_name?: string;
@@ -127,7 +130,7 @@ export const getMaterialPR = createAsyncThunk(
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/pms/purchase_orders/letter_of_indents.json${queryParams.toString() ? `?${queryParams}` : ""
+                `https://${baseUrl}/pms/purchase_orders/letter_of_indents.json?page=${page}&per_page=${per_page}${queryParams.toString() ? `&${queryParams}` : ""
                 }`,
                 {
                     headers: {

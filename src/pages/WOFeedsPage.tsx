@@ -136,7 +136,7 @@ export const WOFeedsPage = () => {
                             <span>Back</span>
                         </button>
                         <span>•</span>
-                        <span>Material PR #{id}</span>
+                        <span>Work Order #{id}</span>
                         <span>•</span>
                         <span>Activity Feeds</span>
                     </div>

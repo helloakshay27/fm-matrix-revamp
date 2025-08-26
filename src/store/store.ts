@@ -52,7 +52,7 @@ import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, ge
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer } from './slices/purchaseOrderSlice'
 import { createServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
-import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer } from './slices/grnSlice'
+import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer, getGRNFeedsReducer } from './slices/grnSlice'
 import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoincesReducer } from './slices/invoicesSlice'
 
@@ -217,6 +217,7 @@ export const store = configureStore({
     fetchSingleGRN: fetchSingleGRNReducer,
     approveGRN: approveGRNReducer,
     rejectGrn: rejectGrnReducer,
+    getGRNFeeds: getGRNFeedsReducer,
 
     // Invoices
     getInvoinces: getInvoincesReducer,

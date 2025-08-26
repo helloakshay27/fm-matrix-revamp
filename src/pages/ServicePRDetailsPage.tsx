@@ -280,13 +280,13 @@ export const ServicePRDetailsPage = () => {
           <div className="flex items-center gap-3">
             {
               servicePR?.approvals?.map((level: any) => (
-                <div className='space-y-3' key={level.level}>
+                <div className='space-y-2' key={level.level}>
                   <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
                     {`${level.level} approval : ${level.status}`}
                   </div>
                   {
                     level.updated_by && level.updated_at &&
-                    <div className='ms-2'>
+                    <div className='ms-2 w-[190px]'>
                       {`${level.updated_by} (${format(new Date(level.updated_at), 'dd/MM/yyyy')})`}
                     </div>
                   }
