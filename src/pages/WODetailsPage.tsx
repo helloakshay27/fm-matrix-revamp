@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit, Copy, Printer, Rss } from "lucide-react";
+import { Edit, Copy, Printer, Rss, ArrowLeft } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ import {
   TextField,
 } from "@mui/material";
 import axios from "axios";
+import { format } from "date-fns";
 
 const boqColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
@@ -278,13 +279,13 @@ export const WODetailsPage = () => {
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
-        return "bg-green-500 text-white";
+        return "bg-green-100 text-green-800";
       case "rejected":
-        return "bg-red-500 text-white";
+        return "bg-red-100 text-red-800";
       case "pending":
-        return "bg-yellow-500 text-black";
+        return "bg-yellow-100 text-yellow-800";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -397,26 +398,38 @@ export const WODetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
         <div className="flex flex-col">
-          <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
+          <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             WORK ORDER DETAILS
           </h1>
-          {workOrder.approvals?.map((approval: any) => (
-            <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">
-                {approval.level} Approval:
-              </span>
-              <span
-                className={`px-3 py-1 rounded text-xs font-medium ${getStatusColor(
-                  approval.status
-                )}`}
-              >
-                {approval.status}
-              </span>
-            </div>
-          ))}
+
+          <div className="flex items-center gap-3">
+            {
+              workOrder?.approvals?.map((approval: any) => (
+                <div className='space-y-2' key={approval.id}>
+                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
+                    {`${approval.level} Approval : ${approval.status}`}
+                  </div>
+                  {
+                    approval.updated_by && approval.updated_at &&
+                    <div className='ms-2 w-[190px]'>
+                      {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
+                    </div>
+                  }
+                </div>
+              ))
+            }
+          </div>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">

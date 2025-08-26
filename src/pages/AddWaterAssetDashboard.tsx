@@ -1515,319 +1515,437 @@ function AddWaterAssetDashboard() {
 
         {/* Meter Category Type */}
         {/* Meter Details (copied and adapted from AddAssetPage) */}
-        <Card>
-          <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
-            <CollapsibleTrigger asChild>
-              <CardHeader className="cursor-pointer hover:bg-gray-50">
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center gap-2 text-black">
-                    <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"><Activity className="w-4 h-4" /></span>
-                    METER DETAILS
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-gray-600">If Applicable</span>
-                    <div className="relative inline-block w-12 h-6">
-                      <input
-                        type="checkbox"
-                        className="sr-only peer"
-                        id="meter-details-toggle"
-                        checked={meterDetailsToggle}
-                        onChange={e => handleMeterDetailsToggleChange(e.target.checked)}
-                      />
-                      <label
-                        htmlFor="meter-details-toggle"
-                        className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}
-                      >
-                        <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
-                      </label>
-                    </div>
-                    {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
-                  </div>
-                </CardTitle>
-              </CardHeader>
-            </CollapsibleTrigger>
-            <CollapsibleContent>
-              <CardContent>
-                <div className={`${!meterDetailsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
-                  {/* Meter Type */}
-                  <div className="mb-6">
-                    <div className="flex items-center gap-4 mb-4">
-                      <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
-                      <div className="flex gap-6">
-                        <div className="flex items-center space-x-2">
+        {/* METER DETAILS with conditional rendering by type param */}
+        {(() => {
+          // Get type from URL param
+          const searchParams = new URLSearchParams(window.location.search);
+          const type = searchParams.get('type');
+
+          // For energy, show only Board, DG, Renewable from getMeterCategoryOptions
+          let filteredMeterCategoryOptions = getMeterCategoryOptions();
+          if (type === 'energy') {
+            filteredMeterCategoryOptions = getMeterCategoryOptions().filter(opt => ['Board', 'DG', 'Renewable'].includes(opt.label));
+          }
+
+          return (
+            <Card>
+              <Collapsible open={meterCategoryOpen} onOpenChange={setMeterCategoryOpen}>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-gray-50">
+                    <CardTitle className="flex items-center justify-between">
+                      <span className="flex items-center gap-2 text-black">
+                        <span className="bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm"><Activity className="w-4 h-4" /></span>
+                        METER DETAILS
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-600">If Applicable</span>
+                        <div className="relative inline-block w-12 h-6">
                           <input
-                            type="radio"
-                            id="meter-type-parent"
-                            name="meter_tag_type"
-                            value="ParentMeter"
-                            checked={meterType === 'ParentMeter'}
-                            onChange={e => setMeterType(e.target.value)}
-                            disabled={!meterDetailsToggle}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: '#C72030' }}
+                            type="checkbox"
+                            className="sr-only peer"
+                            id="meter-details-toggle"
+                            checked={meterDetailsToggle}
+                            onChange={e => handleMeterDetailsToggleChange(e.target.checked)}
                           />
-                          <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
+                          <label
+                            htmlFor="meter-details-toggle"
+                            className={`block w-12 h-6 rounded-full cursor-pointer transition-colors ${meterDetailsToggle ? 'bg-green-400' : 'bg-gray-300'}`}
+                          >
+                            <span className={`block w-5 h-5 bg-white rounded-full shadow-md transform transition-transform ${meterDetailsToggle ? 'translate-x-6' : 'translate-x-1'}`}></span>
+                          </label>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <input
-                            type="radio"
-                            id="meter-type-sub"
-                            name="meter_tag_type"
-                            value="SubMeter"
-                            checked={meterType === 'SubMeter'}
-                            onChange={e => setMeterType(e.target.value)}
-                            disabled={!meterDetailsToggle}
-                            className="w-4 h-4 text-[#C72030] border-gray-300"
-                            style={{ accentColor: '#C72030' }}
-                          />
-                          <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
-                        </div>
+                        {meterCategoryOpen ? <ChevronUp /> : <ChevronDown />}
                       </div>
-                    </div>
-                  </div>
-                  {/* Parent Meter Dropdown - Show only when Sub Meter is selected */}
-                  {meterType === "SubMeter" && (
-                    <div className="mb-6">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Parent Meter <span className="text-red-500">*</span>
-                      </label>
-                      <Select
-                        value={selectedParentMeterId}
-                        onValueChange={(value) => {
-                          setSelectedParentMeterId(value);
-                          setFormData((prev) => ({ ...prev, parent_meter_id: value }));
-                        }}
-                        disabled={parentMeterLoading || !meterDetailsToggle}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue
-                            placeholder={
-                              parentMeterLoading ? "Loading..." : "Select Parent Meter"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {parentMeters.map((meter) => (
-                            <SelectItem key={meter.id} value={meter.id.toString()}>
-                              {meter.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                  {/* Meter Category Type */}
-                  <div className="mb-6">
-                    <div className="rounded-lg p-4 bg-[#f6f4ee]">
-                      <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
-                        {getMeterCategoryOptions().map((option) => {
-                          const IconComponent = option.icon;
-                          return (
-                            <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                              <div className="flex items-center justify-center space-x-2">
-                                <input
-                                  type="radio"
-                                  id={option.value}
-                                  name="meterCategory"
-                                  value={option.value}
-                                  checked={meterCategoryType === option.value}
-                                  onChange={e => handleMeterCategoryChange(e.target.value)}
-                                  className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                  style={{ accentColor: '#C72030' }}
-                                />
-                                <IconComponent className="w-4 h-4 text-gray-600" />
-                                <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                              </div>
+                    </CardTitle>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent>
+                    <div className={`${!meterDetailsToggle ? 'opacity-50 pointer-events-none' : ''}`}>
+                      {/* Meter Type selection (Parent/Sub) - show for all types */}
+                      <div className="mb-6">
+                        <div className="flex items-center gap-4 mb-4">
+                          <span className="text-[#C72030] font-medium text-sm sm:text-base">Meter Type</span>
+                          <div className="flex gap-6">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="meter-type-parent"
+                                name="meter_tag_type"
+                                value="ParentMeter"
+                                checked={meterType === 'ParentMeter'}
+                                onChange={e => setMeterType(e.target.value)}
+                                disabled={!meterDetailsToggle}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{ accentColor: '#C72030' }}
+                              />
+                              <label htmlFor="meter-type-parent" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Parent</label>
                             </div>
-                          );
-                        })}
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="meter-type-sub"
+                                name="meter_tag_type"
+                                value="SubMeter"
+                                checked={meterType === 'SubMeter'}
+                                onChange={e => setMeterType(e.target.value)}
+                                disabled={!meterDetailsToggle}
+                                className="w-4 h-4 text-[#C72030] border-gray-300"
+                                style={{ accentColor: '#C72030' }}
+                              />
+                              <label htmlFor="meter-type-sub" className={`text-sm ${!meterDetailsToggle ? 'text-gray-400' : ''}`}>Sub</label>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      {/* Board Ratio Options */}
-                      {showBoardRatioOptions && (
-                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                          {getBoardRatioOptions().map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                                <div className="flex items-center justify-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`board-${option.value}`}
-                                    name="boardRatioCategory"
-                                    value={option.value}
-                                    checked={subCategoryType === option.value}
-                                    onChange={e => setSubCategoryType(e.target.value)}
-                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                    style={{ accentColor: '#C72030' }}
-                                  />
-                                  <IconComponent className="w-4 h-4 text-gray-600" />
-                                  <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Renewable Options */}
-                      {showRenewableOptions && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                          {getRenewableOptions().map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                                <div className="flex items-center justify-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`renewable-${option.value}`}
-                                    name="renewableCategory"
-                                    value={option.value}
-                                    checked={subCategoryType === option.value}
-                                    onChange={e => setSubCategoryType(e.target.value)}
-                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                    style={{ accentColor: '#C72030' }}
-                                  />
-                                  <IconComponent className="w-4 h-4 text-gray-600" />
-                                  <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Fresh Water Options */}
-                      {showFreshWaterOptions && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
-                          {getFreshWaterOptions().map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                                <div className="flex items-center justify-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`fresh-water-${option.value}`}
-                                    name="freshWaterCategory"
-                                    value={option.value}
-                                    checked={subCategoryType === option.value}
-                                    onChange={e => handleSubCategoryChange(e.target.value)}
-                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                    style={{ accentColor: '#C72030' }}
-                                  />
-                                  <IconComponent className="w-4 h-4 text-gray-600" />
-                                  <label htmlFor={`fresh-water-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                      {/* Water Source Options (shown when Source is selected) */}
-                      {showWaterSourceOptions && (
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
-                          {getWaterSourceOptions().map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
-                                <div className="flex items-center justify-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`water-source-${option.value}`}
-                                    name="waterSourceCategory"
-                                    value={option.value}
-                                    checked={tertiaryCategory === option.value}
-                                    onChange={e => handleTertiaryCategoryChange(e.target.value)}
-                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                    style={{ accentColor: '#C72030' }}
-                                  />
-                                  <IconComponent className="w-4 h-4 text-gray-600" />
-                                  <label htmlFor={`water-source-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
-                                </div>
-                              </div>
-                            );
-                          })}
+
+                      {meterType === "SubMeter" && (
+                        <div className="mb-6">
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Parent Meter <span className="text-red-500">*</span>
+                          </label>
+                          <Select
+                            value={selectedParentMeterId}
+                            onValueChange={(value) => {
+                              setSelectedParentMeterId(value);
+                              setFormData((prev) => ({ ...prev, parent_meter_id: value }));
+                            }}
+                            disabled={parentMeterLoading || !meterDetailsToggle}
+                          >
+                            <SelectTrigger className="w-full">
+                              <SelectValue
+                                placeholder={
+                                  parentMeterLoading ? "Loading..." : "Select Parent Meter"
+                                }
+                              />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {parentMeters.map((meter) => (
+                                <SelectItem key={meter.id} value={meter.id.toString()}>
+                                  {meter.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       )}
 
-                      {/* Water Distribution Options (shown when Water Distribution is selected) */}
-                      {showWaterDistributionOptions && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-                          {getWaterDistributionOptions().map((option) => {
-                            const IconComponent = option.icon;
-                            return (
-                              <div
-                                key={option.value}
-                                className="p-3 sm:p-4 rounded-lg text-center bg-white border"
-                              >
-                                <div className="flex items-center justify-center space-x-2">
-                                  <input
-                                    type="radio"
-                                    id={`water-distribution-${option.value}`}
-                                    name="waterDistributionCategory"
-                                    value={option.value}
-                                    checked={subCategoryType === option.value}
-                                    onChange={(e) => {
-                                      handleSubCategoryChange(e.target.value);
-                                    }}
-                                    className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
-                                    style={{ accentColor: "#C72030" }}
-                                  />
-                                  <IconComponent className="w-4 h-4 text-gray-600" />
-                                  <label
-                                    htmlFor={`water-distribution-${option.value}`}
-                                    className="text-xs sm:text-sm cursor-pointer"
-                                  >
-                                    {option.label}
-                                  </label>
+                      <div className="mb-6">
+                        <div className="rounded-lg p-4 bg-[#f6f4ee]">
+                          <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
+                          {/* WaterAsset: Nested Fresh Water options */}
+                          {type === 'WaterAsset' ? (
+                            <>
+                              {/* Top-level: Fresh Water only */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                                <div className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                  <div className="flex items-center justify-center space-x-2">
+                                    <input
+                                      type="radio"
+                                      id="fresh-water"
+                                      name="meterCategory"
+                                      value="fresh-water"
+                                      checked={meterCategoryType === 'fresh-water'}
+                                      onChange={e => { setMeterCategoryType('fresh-water'); setSubCategoryType(''); setTertiaryCategory(''); }}
+                                      className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                      style={{ accentColor: '#C72030' }}
+                                    />
+                                    <Droplet className="w-4 h-4 text-gray-600" />
+                                    <label htmlFor="fresh-water" className="text-xs sm:text-sm cursor-pointer">Fresh Water</label>
+                                  </div>
                                 </div>
                               </div>
-                            );
-                          })}
+                              {/* If Fresh Water selected, show Source/Destination */}
+                              {meterCategoryType === 'fresh-water' && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                                  {getFreshWaterOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`fresh-water-${option.value}`}
+                                            name="freshWaterCategory"
+                                            value={option.value}
+                                            checked={subCategoryType === option.value}
+                                            onChange={e => { setSubCategoryType(option.value); setTertiaryCategory(''); }}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`fresh-water-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {/* If Source or Destination selected, show Water Source options */}
+                              {meterCategoryType === 'fresh-water' && (subCategoryType === 'source' || subCategoryType === 'destination') && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-4">
+                                  {getWaterSourceOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`water-source-${option.value}`}
+                                            name="waterSourceCategory"
+                                            value={option.value}
+                                            checked={tertiaryCategory === option.value}
+                                            onChange={e => setTertiaryCategory(option.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`water-source-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {/* Energy: Only Board, DG, Renewable */}
+                              {type === 'energy' && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                                  {filteredMeterCategoryOptions.map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={option.value}
+                                            name="meterCategory"
+                                            value={option.value}
+                                            checked={meterCategoryType === option.value}
+                                            onChange={e => handleMeterCategoryChange(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {/* Default: show all options as before */}
+                              {type !== 'energy' && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-4">
+                                  {getMeterCategoryOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={option.value}
+                                            name="meterCategory"
+                                            value={option.value}
+                                            checked={meterCategoryType === option.value}
+                                            onChange={e => handleMeterCategoryChange(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={option.value} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {/* All sub-options for WaterAsset are hidden above */}
+                              {showBoardRatioOptions && (
+                                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                                  {getBoardRatioOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`board-${option.value}`}
+                                            name="boardRatioCategory"
+                                            value={option.value}
+                                            checked={subCategoryType === option.value}
+                                            onChange={e => setSubCategoryType(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`board-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {showRenewableOptions && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                  {getRenewableOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`renewable-${option.value}`}
+                                            name="renewableCategory"
+                                            value={option.value}
+                                            checked={subCategoryType === option.value}
+                                            onChange={e => setSubCategoryType(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`renewable-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {showFreshWaterOptions && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+                                  {getFreshWaterOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`fresh-water-${option.value}`}
+                                            name="freshWaterCategory"
+                                            value={option.value}
+                                            checked={subCategoryType === option.value}
+                                            onChange={e => handleSubCategoryChange(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`fresh-water-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {showWaterSourceOptions && (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 sm:gap-4 mt-4">
+                                  {getWaterSourceOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div key={option.value} className="p-3 sm:p-4 rounded-lg text-center bg-white border">
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`water-source-${option.value}`}
+                                            name="waterSourceCategory"
+                                            value={option.value}
+                                            checked={tertiaryCategory === option.value}
+                                            onChange={e => handleTertiaryCategoryChange(e.target.value)}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: '#C72030' }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label htmlFor={`water-source-${option.value}`} className="text-xs sm:text-sm cursor-pointer">{option.label}</label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                              {showWaterDistributionOptions && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                  {getWaterDistributionOptions().map((option) => {
+                                    const IconComponent = option.icon;
+                                    return (
+                                      <div
+                                        key={option.value}
+                                        className="p-3 sm:p-4 rounded-lg text-center bg-white border"
+                                      >
+                                        <div className="flex items-center justify-center space-x-2">
+                                          <input
+                                            type="radio"
+                                            id={`water-distribution-${option.value}`}
+                                            name="waterDistributionCategory"
+                                            value={option.value}
+                                            checked={subCategoryType === option.value}
+                                            onChange={(e) => {
+                                              handleSubCategoryChange(e.target.value);
+                                            }}
+                                            className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                                            style={{ accentColor: "#C72030" }}
+                                          />
+                                          <IconComponent className="w-4 h-4 text-gray-600" />
+                                          <label
+                                            htmlFor={`water-distribution-${option.value}`}
+                                            className="text-xs sm:text-sm cursor-pointer"
+                                          >
+                                            {option.label}
+                                          </label>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              )}
+                            </>
+                          )}
                         </div>
+                      </div>
+
+                      {meterType === 'ParentMeter' && (
+                        <>
+                          <MeterMeasureFields
+                            title="CONSUMPTION METER MEASURE"
+                            fields={consumptionMeasureFields}
+                            showCheckPreviousReading={true}
+                            onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('consumption', id, field, value)}
+                            onAddField={() => addMeterMeasureField('consumption')}
+                            onRemoveField={id => removeMeterMeasureField('consumption', id)}
+                            unitTypes={meterUnitTypes}
+                            loadingUnitTypes={loadingUnitTypes}
+                          />
+                          <MeterMeasureFields
+                            title="NON CONSUMPTION METER MEASURE"
+                            fields={nonConsumptionMeasureFields}
+                            showCheckPreviousReading={false}
+                            onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                            onAddField={() => addMeterMeasureField('nonConsumption')}
+                            onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                            unitTypes={meterUnitTypes}
+                            loadingUnitTypes={loadingUnitTypes}
+                          />
+                        </>
+                      )}
+                      {meterType === 'SubMeter' && (
+                        <MeterMeasureFields
+                          title="NON CONSUMPTION METER MEASURE"
+                          fields={nonConsumptionMeasureFields}
+                          showCheckPreviousReading={false}
+                          onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
+                          onAddField={() => addMeterMeasureField('nonConsumption')}
+                          onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
+                          unitTypes={meterUnitTypes}
+                          loadingUnitTypes={loadingUnitTypes}
+                        />
                       )}
                     </div>
-                  </div>
-                  {/* Meter Measure Fields - Show based on meter type selection */}
-                  {meterType === 'ParentMeter' && (
-                    <>
-                      <MeterMeasureFields
-                        title="CONSUMPTION METER MEASURE"
-                        fields={consumptionMeasureFields}
-                        showCheckPreviousReading={true}
-                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('consumption', id, field, value)}
-                        onAddField={() => addMeterMeasureField('consumption')}
-                        onRemoveField={id => removeMeterMeasureField('consumption', id)}
-                        unitTypes={meterUnitTypes}
-                        loadingUnitTypes={loadingUnitTypes}
-                      />
-                      <MeterMeasureFields
-                        title="NON CONSUMPTION METER MEASURE"
-                        fields={nonConsumptionMeasureFields}
-                        showCheckPreviousReading={false}
-                        onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
-                        onAddField={() => addMeterMeasureField('nonConsumption')}
-                        onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
-                        unitTypes={meterUnitTypes}
-                        loadingUnitTypes={loadingUnitTypes}
-                      />
-                    </>
-                  )}
-                  {meterType === 'SubMeter' && (
-                    <MeterMeasureFields
-                      title="NON CONSUMPTION METER MEASURE"
-                      fields={nonConsumptionMeasureFields}
-                      showCheckPreviousReading={false}
-                      onFieldChange={(id, field, value) => handleMeterMeasureFieldChange('nonConsumption', id, field, value)}
-                      onAddField={() => addMeterMeasureField('nonConsumption')}
-                      onRemoveField={id => removeMeterMeasureField('nonConsumption', id)}
-                      unitTypes={meterUnitTypes}
-                      loadingUnitTypes={loadingUnitTypes}
-                    />
-                  )}
-                </div>
-              </CardContent>
-            </CollapsibleContent>
-          </Collapsible>
-        </Card>
+                  </CardContent>
+                </CollapsibleContent>
+              </Collapsible>
+            </Card>
+          );
+        })()}
 
 
         {/* Attachments */}

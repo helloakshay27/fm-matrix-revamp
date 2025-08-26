@@ -136,7 +136,7 @@ export const ServicePRFeedsPage = () => {
               <span>Back</span>
             </button>
             <span>•</span>
-            <span>Material PR #{id}</span>
+            <span>Service PR #{id}</span>
             <span>•</span>
             <span>Activity Feeds</span>
           </div>

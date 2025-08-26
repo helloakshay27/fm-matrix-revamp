@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Printer, Copy, Rss } from "lucide-react";
+import { Printer, Copy, Rss, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById } from "@/store/slices/materialPRSlice";
@@ -387,16 +387,24 @@ export const PODetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
         <div className="flex flex-col">
-          <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
+          <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             PURCHASE ORDER DETAILS
           </h1>
           <div className="flex items-center gap-3">
             {
               poDetails?.approval_levels?.map((level: any) => (
-                <div className='space-y-3' key={level.id}>
+                <div className='space-y-2' key={level.id}>
                   <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
                     {`${level.name} Approval : ${level.status_label}`}
                   </div>

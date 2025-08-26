@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,14 @@ import {
   Search,
 } from "lucide-react";
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/pagination";
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,79 +34,43 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { AssetDataTable } from "@/components/AssetDataTable";
-// Transform mockEnergyData to AssetDataTable format
-const transformEnergyAsset = (energy, index) => ({
-  id: energy.id,
-  name: energy.location,
-  serialNumber: index + 1,
-  assetNumber: energy.id,
-  status: energy.status === "Normal" ? "in_use" : energy.status === "High" ? "breakdown" : "in_storage",
-  siteName: energy.location.split(" - ")[0] || "",
-  building: null,
-  wing: null,
-  floor: null,
-  area: null,
-  pmsRoom: null,
-  assetGroup: energy.meterType,
-  assetSubGroup: "",
+
+const transformEnergyAsset = (asset, index, currentPage) => ({
+  id: asset.id?.toString() || "",
+  name: asset.name || asset.location || "",
+  serialNumber: (currentPage - 1) * 15 + index + 1,
+  assetNumber: asset.asset_number || asset.id || "",
+  status:
+    asset.status === "in_use" || asset.status === "in use"
+      ? "in_use"
+      : asset.status === "breakdown"
+        ? "breakdown"
+        : asset.status === "disposed"
+          ? "disposed"
+          : "in_storage",
+  siteName: asset.site_name || asset.location?.split(" - ")[0] || "",
+  building: typeof asset.building === 'string' ? { name: asset.building } : asset.building || null,
+  wing: typeof asset.wing === 'string' ? { name: asset.wing } : asset.wing || null,
+  area: typeof asset.area === 'string' ? { name: asset.area } : asset.area || null,
+  pmsRoom: typeof asset.room === 'string' ? { name: asset.room } : asset.room || null,
+  assetGroup: asset.meter_type || asset.meterType || "",
+  assetSubGroup: asset.asset_type || "",
   assetType: false,
-  purchaseCost: energy.cost,
-  currentBookValue: null,
-  category: energy.meterType,
+  purchaseCost: asset.purchase_cost || asset.cost,
+  currentBookValue: asset.current_book_value || null,
+  floor: typeof asset.floor === 'string' ? { name: asset.floor } : asset.floor || null,
+  category: asset.meter_type || asset.meterType || "Energy Asset",
 });
 
-// Mock data for energy consumption
-const mockEnergyData = [
-  {
-    id: "EN001",
-    location: "Building A - Floor 1",
-    meterType: "Electric",
-    currentReading: 1250.5,
-    previousReading: 1200.0,
-    consumption: 50.5,
-    cost: 505.0,
-    date: "2024-01-15",
-    status: "Normal",
-    peakUsage: 75.2,
-    efficiency: 85,
-  },
-  {
-    id: "EN002",
-    location: "Building B - HVAC",
-    meterType: "Electric",
-    currentReading: 2150.8,
-    previousReading: 2100.0,
-    consumption: 50.8,
-    cost: 508.0,
-    date: "2024-01-15",
-    status: "High",
-    peakUsage: 95.5,
-    efficiency: 72,
-  },
-  {
-    id: "EN003",
-    location: "Parking Garage",
-    meterType: "Electric",
-    currentReading: 850.2,
-    previousReading: 820.0,
-    consumption: 30.2,
-    cost: 302.0,
-    date: "2024-01-15",
-    status: "Normal",
-    peakUsage: 45.8,
-    efficiency: 90,
-  },
-];
-
-const calculateStats = (energyData: any[]) => {
+const calculateStats = (energyData = []) => {
   return {
-    totalConsumption: energyData.reduce((sum, e) => sum + e.consumption, 0),
-    totalCost: energyData.reduce((sum, e) => sum + e.cost, 0),
-    avgEfficiency: energyData.reduce((sum, e) => sum + e.efficiency, 0) / energyData.length,
-    highUsageAlerts: energyData.filter(e => e.status === "High").length,
-    normalUsage: energyData.filter(e => e.status === "Normal").length,
+    totalConsumption: energyData.reduce((sum, e) => sum + (e.consumption || 0), 0),
+    totalCost: energyData.reduce((sum, e) => sum + (e.cost || 0), 0),
+    avgEfficiency: energyData.length ? energyData.reduce((sum, e) => sum + (e.efficiency || 0), 0) / energyData.length : 0,
+    highUsageAlerts: energyData.filter(e => e.status === "High" || e.status === "breakdown").length,
+    normalUsage: energyData.filter(e => e.status === "Normal" || e.status === "in_use" || e.status === "in use").length,
     totalMeters: energyData.length,
-    peakConsumption: Math.max(...energyData.map(e => e.consumption)),
+    peakConsumption: Math.max(...energyData.map(e => e.consumption || 0)),
   };
 };
 
@@ -121,13 +93,56 @@ export const EnergyDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssets, setSelectedAssets] = useState<string[]>([]);
+  const [energyAssets, setEnergyAssets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
-  const stats = calculateStats(mockEnergyData);
-  const filteredEnergyData = mockEnergyData.filter(energy =>
-    energy.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    energy.id.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    const fetchAssets = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        let baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) {
+          throw new Error("Base URL or token not set in localStorage");
+        }
+        // Ensure protocol is present
+        if (!/^https?:\/\//i.test(baseUrl)) {
+          baseUrl = `https://${baseUrl}`;
+        }
+        let url = `${baseUrl}/pms/assets.json?page=${currentPage}&type=Energy`;
+        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        const response = await fetch(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        if (!response.ok) throw new Error("Failed to fetch energy assets");
+        const data = await response.json();
+        setEnergyAssets(data.assets || []);
+        setTotalCount(data.total_count || 0);
+        setTotalPages(data.total_pages || 1);
+      } catch (err) {
+        setError(err.message || "Error fetching energy assets");
+        setEnergyAssets([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAssets();
+  }, [currentPage, searchTerm]);
+
+  const filteredEnergyAssets = energyAssets.filter(asset =>
+    (asset.location || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (asset.id?.toString() || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
-  const displayAssets = filteredEnergyData.map(transformEnergyAsset);
+  const displayAssets = filteredEnergyAssets.map((asset, idx) => transformEnergyAsset(asset, idx, currentPage));
+  const stats = calculateStats(filteredEnergyAssets);
 
   // AssetDataTable handlers
   const visibleColumns = {
@@ -152,7 +167,10 @@ export const EnergyDashboard = () => {
     navigate('/utility/energy/add-asset?type=energy');
   };
   const handleViewAsset = (assetId: string) => {
-    navigate(`/utility/energy/details/${assetId}`);
+    // Find the asset in the current list to get its type
+    const asset = energyAssets.find((a) => a.id?.toString() === assetId);
+    const assetType = asset?.asset_type_category || 'energy';
+    navigate(`/maintenance/asset/details/${assetId}`, { state: { type: assetType } });
   };
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -170,6 +188,7 @@ export const EnergyDashboard = () => {
   };
   const handleSearch = (term: string) => {
     setSearchTerm(term);
+    setCurrentPage(1);
   };
 
   const StatCard = ({ icon, label, value }: any) => (
@@ -261,10 +280,81 @@ export const EnergyDashboard = () => {
               handleImport={() => { }}
               onFilterOpen={() => { }}
               onSearch={handleSearch}
-              loading={false}
+              loading={loading}
             />
           </div>
         </TabsContent>
+
+        {/* Pagination - same as Water/STP dashboard */}
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink
+                  onClick={() => setCurrentPage(1)}
+                  isActive={currentPage === 1}
+                >
+                  1
+                </PaginationLink>
+              </PaginationItem>
+              {currentPage > 4 && (
+                <PaginationItem>
+                  <span className="px-4 py-2">...</span>
+                </PaginationItem>
+              )}
+              {Array.from({ length: 3 }, (_, i) => currentPage - 1 + i)
+                .filter((page) => page > 1 && page < totalPages)
+                .map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+              {currentPage < totalPages - 3 && (
+                <PaginationItem>
+                  <span className="px-4 py-2">...</span>
+                </PaginationItem>
+              )}
+              {totalPages > 1 && (
+                <PaginationItem>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(totalPages)}
+                    isActive={currentPage === totalPages}
+                  >
+                    {totalPages}
+                  </PaginationLink>
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({totalCount} total energy assets)
+          </div>
+        </div>
 
         <TabsContent value="analytics" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
