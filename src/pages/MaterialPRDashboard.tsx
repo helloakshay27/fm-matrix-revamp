@@ -109,7 +109,7 @@ export const MaterialPRDashboard = () => {
   const fetchData = async (filterParams = {}) => {
     try {
       const response = await dispatch(
-        getMaterialPR({ baseUrl, token, page: pagination.current_page, per_page: 10, ...filterParams })
+        getMaterialPR({ baseUrl, token, page: pagination.current_page, ...filterParams })
       ).unwrap();
       const formatedResponse = response.purchase_orders.map((item: any) => ({
         id: item.id,

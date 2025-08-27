@@ -109,7 +109,7 @@ export const ServicePRDashboard = () => {
   const fetchData = async (filterParams = {}) => {
     try {
       const response = await dispatch(
-        getServicePr({ baseUrl, token, page: pagination.current_page, per_page: 10, ...filterParams })
+        getServicePr({ baseUrl, token, page: pagination.current_page, ...filterParams })
       ).unwrap();
       setServicePR(response.work_orders);
       setPagination({
