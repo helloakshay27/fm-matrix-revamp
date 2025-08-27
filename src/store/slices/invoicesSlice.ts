@@ -4,9 +4,9 @@ import createApiSlice from "../api/apiSlice";
 
 export const getInvoinces = createAsyncThunk(
     "getInvoinces",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page?: number }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices.json`, {
+            const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices.json?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

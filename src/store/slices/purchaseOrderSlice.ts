@@ -8,12 +8,14 @@ export const getPurchaseOrders = createAsyncThunk(
         {
             baseUrl,
             token,
+            page,
             reference_number,
             external_id,
             supplier_name,
         }: {
             baseUrl: string;
             token: string;
+            page?: number;
             reference_number?: string;
             external_id?: string;
             supplier_name?: string;
@@ -27,7 +29,7 @@ export const getPurchaseOrders = createAsyncThunk(
             if (supplier_name) queryParams.append('q[pms_supplier_company_name_cont]', supplier_name);
 
             const response = await axios.get(
-                `https://${baseUrl}/pms/purchase_orders.json${queryParams.toString() ? `?${queryParams}` : ''}`,
+                `https://${baseUrl}/pms/purchase_orders.json?page=${page}${queryParams.toString() ? `&${queryParams}` : ''}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
