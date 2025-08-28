@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Printer, Copy, Rss, ArrowLeft } from "lucide-react";
+import { Printer, Copy, Rss, ArrowLeft, Podcast, Image, FileText, File } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById } from "@/store/slices/materialPRSlice";
@@ -12,6 +12,8 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@m
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
 import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
@@ -244,11 +246,14 @@ export const PODetailsPage = () => {
     approval_levels: [],
     deliveryAddress: "",
     email: "",
-    gst: ""
+    gst: "",
+    attachments: []
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -738,29 +743,52 @@ export const PODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Attachments
-        </h3>
-        <div className="flex items-center gap-2 text-blue-600">
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <span className="cursor-pointer hover:underline">
-            PSIPL_Feedback_QR_code.pptx.pdf
-          </span>
-        </div>
-      </div>
+      {/* Attachments Card */}
+      <Card className="shadow-sm border border-border mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Array.isArray(poDetails.attachments) && poDetails.attachments.length > 0 ? (
+            <div className="space-y-3">
+              {poDetails.attachments.map((attachment: any) => {
+                const getFileIcon = (fileName: string) => {
+                  const ext = fileName.split(".").pop()?.toLowerCase();
+                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
+                    return <Image className="w-5 h-5 text-blue-600" />;
+                  }
+                  if (ext === "pdf") {
+                    return <FileText className="w-5 h-5 text-red-600" />;
+                  }
+                  return <File className="w-5 h-5 text-gray-600" />;
+                };
+
+                return (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedAttachment(attachment);
+                      setIsPreviewModalOpen(true);
+                    }}
+                  >
+                    {getFileIcon(attachment.document_file_name)}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {attachment.document_file_name}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No attachments
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -870,6 +898,15 @@ export const PODetailsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
+      />
     </div>
   );
 };

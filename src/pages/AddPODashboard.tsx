@@ -224,6 +224,7 @@ export const AddPODashboard = () => {
           total_value: item.totalAmount,
         })),
       },
+      attachments: formData.attachments,
     };
 
     try {
@@ -290,63 +291,6 @@ export const AddPODashboard = () => {
       onInventoryChange(value, itemId);
     }
   };
-
-  // const handleMaterialPRChange = async (e: SelectChangeEvent<string>) => {
-  //   const materialPRId = e.target.value;
-
-  //   try {
-  //     const response = await dispatch(
-  //       materialPRChange({ baseUrl, token, id: parseInt(materialPRId) })
-  //     ).unwrap();
-
-  //     setFormData({
-  //       ...formData,
-  //       materialPR: materialPRId,
-  //       supplier: response.supplier?.id,
-  //     });
-
-  //     setItems((prevItems) =>
-  //       prevItems.length > 0
-  //         ? [
-  //           {
-  //             ...prevItems[0],
-  //             itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
-  //             quantity: response.pms_po_inventories[0]?.quantity || "",
-  //           },
-  //           ...prevItems.slice(1),
-  //         ]
-  //         : [
-  //           {
-  //             id: 1,
-  //             itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
-  //             sacHsnCode: "",
-  //             quantity: "",
-  //             unit: "",
-  //             expectedDate: "",
-  //             rate: "",
-  //             cgstRate: "",
-  //             cgstAmount: "",
-  //             sgstRate: "",
-  //             sgstAmount: "",
-  //             igstRate: "",
-  //             igstAmount: "",
-  //             tcsRate: "",
-  //             tcsAmount: "",
-  //             taxAmount: "",
-  //             amount: "",
-  //             totalAmount: "",
-  //           },
-  //         ]
-  //     );
-
-  //     if (response.pms_po_inventories[0]?.inventory?.id) {
-  //       onInventoryChange(response.pms_po_inventories[0]?.inventory?.id, 1);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error in handleMaterialPRChange:", error);
-  //     toast.error("Failed to fetch material PR details");
-  //   }
-  // };
 
   const handleMaterialPRChange = async (e: SelectChangeEvent<string>) => {
     const materialPRId = e.target.value;

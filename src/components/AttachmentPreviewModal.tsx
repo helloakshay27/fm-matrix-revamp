@@ -1,7 +1,8 @@
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, X, FileText, Image, File } from 'lucide-react';
+import { Download, X, FileText, File } from 'lucide-react';
+import axios from 'axios';
 
 interface AttachmentPreviewModalProps {
   isOpen: boolean;
@@ -32,13 +33,39 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
 
   const type = getFileType();
 
-  const handleDownload = () => {
-    const link = document.createElement("a");
-    link.href = attachment.url;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleDownload = async () => {
+    try {
+      const baseUrl = localStorage.getItem("baseUrl");
+      const token = localStorage.getItem("token");
+
+      if (!baseUrl || !token) {
+        throw new Error("Missing baseUrl or token in localStorage");
+      }
+
+      const response = await axios.get(
+        `https://${baseUrl}/attachfiles/${attachment.id}.json?show_file=true`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = attachment.document_file_name || "download";
+      document.body.appendChild(link);
+      link.click();
+
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("File download failed:", error);
+    }
   };
 
   const renderPreview = () => {
