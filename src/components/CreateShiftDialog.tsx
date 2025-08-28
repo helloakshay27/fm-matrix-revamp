@@ -3,21 +3,27 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { X } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
+import { toast as sonnerToast } from 'sonner';
 
 interface CreateShiftDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onShiftCreated?: () => void;
 }
 
-export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps) => {
+export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
   const { toast } = useToast();
-  const [fromHour, setFromHour] = useState<string>("");
-  const [fromMinute, setFromMinute] = useState<string>("");
-  const [toHour, setToHour] = useState<string>("");
-  const [toMinute, setToMinute] = useState<string>("");
+  const [fromHour, setFromHour] = useState<string>("04");
+  const [fromMinute, setFromMinute] = useState<string>("00");
+  const [toHour, setToHour] = useState<string>("12");
+  const [toMinute, setToMinute] = useState<string>("00");
   const [checkInMargin, setCheckInMargin] = useState<boolean>(false);
+  const [hourMargin, setHourMargin] = useState<string>("00");
+  const [minMargin, setMinMargin] = useState<string>("00");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
@@ -47,60 +53,80 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
     return true;
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!validateForm()) return;
+    
+    setIsSubmitting(true);
 
-    const formatTime = (hour: string, minute: string) => {
-      const h = parseInt(hour);
-      const m = parseInt(minute);
-      const period = h >= 12 ? 'PM' : 'AM';
-      const displayHour = h === 0 ? 12 : h > 12 ? h - 12 : h;
-      return `${String(displayHour).padStart(2, '0')}:${minute} ${period}`;
+    // Build API payload similar to AddShiftModal
+    const payload = {
+      user_shift: {
+        start_hour: fromHour,
+        start_min: fromMinute,
+        end_hour: toHour,
+        end_min: toMinute,
+        hour_margin: checkInMargin ? hourMargin : '00',
+        min_margin: checkInMargin ? minMargin : '00'
+      },
+      check_in_margin: checkInMargin
     };
 
-    const fromTime = formatTime(fromHour, fromMinute);
-    const toTime = formatTime(toHour, toMinute);
-    
-    const totalHours = Math.abs(
-      (parseInt(toHour) * 60 + parseInt(toMinute)) - 
-      (parseInt(fromHour) * 60 + parseInt(fromMinute))
-    ) / 60;
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': getAuthHeader()
+        },
+        body: JSON.stringify(payload)
+      });
 
-    console.log("Creating shift:", {
-      timings: `${fromTime} to ${toTime}`,
-      totalHours: Math.round(totalHours),
-      checkInMargin: checkInMargin ? "1h0m" : "0h0m",
-      createdOn: new Date().toLocaleDateString('en-GB'),
-      createdBy: "Current User"
-    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-    toast({
-      title: "Success",
-      description: "Shift created successfully",
-    });
+      const result = await response.json();
+      console.log('Shift created successfully:', result);
 
-    // Reset form
-    setFromHour("");
-    setFromMinute("");
-    setToHour("");
-    setToMinute("");
+      sonnerToast.success('Shift created successfully!');
+      
+      // Reset form
+      resetForm();
+      
+      // Close dialog
+      onOpenChange(false);
+      
+      // Trigger callback to refresh parent data
+      if (onShiftCreated) {
+        onShiftCreated();
+      }
+
+    } catch (error: any) {
+      console.error('Error creating shift:', error);
+      sonnerToast.error(`Failed to create shift: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFromHour("04");
+    setFromMinute("00");
+    setToHour("12");
+    setToMinute("00");
     setCheckInMargin(false);
-    
-    onOpenChange(false);
+    setHourMargin("00");
+    setMinMargin("00");
   };
 
   const handleClose = () => {
-    setFromHour("");
-    setFromMinute("");
-    setToHour("");
-    setToMinute("");
-    setCheckInMargin(false);
+    resetForm();
     onOpenChange(false);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             Create Shift
@@ -108,7 +134,7 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
               variant="ghost"
               size="icon"
               onClick={handleClose}
-              className="h-8 w-8 p-1 bg-[#C72030] text-white hover:bg-[#C72030]/90 rounded-none shadow-none"
+              className="h-8 w-8 p-1  text-white  rounded-none shadow-none"
             >
               <X className="h-4 w-4" />
             </Button>
@@ -147,12 +173,7 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                className="bg-[#C72030] text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px] shadow-none hover:bg-[#C72030]/90"
-                disabled
-              >
-                AM
-              </Button>
+       
             </div>
           </div>
 
@@ -187,37 +208,77 @@ export const CreateShiftDialog = ({ open, onOpenChange }: CreateShiftDialogProps
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                className="bg-[#C72030] text-white px-3 py-1 rounded-none text-xs h-10 min-w-[40px] shadow-none hover:bg-[#C72030]/90"
-                disabled
-              >
-                PM
-              </Button>
+            
             </div>
           </div>
 
           {/* Check In Margin */}
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="check-in-margin" 
-              checked={checkInMargin}
-              onCheckedChange={(checked) => setCheckInMargin(checked as boolean)}
-            />
-            <label 
-              htmlFor="check-in-margin" 
-              className="text-sm font-medium text-gray-700"
-            >
-              Check In Margin
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="check-in-margin" 
+                checked={checkInMargin}
+                onCheckedChange={(checked) => setCheckInMargin(checked as boolean)}
+              />
+              <label 
+                htmlFor="check-in-margin" 
+                className="text-sm font-medium text-gray-700"
+              >
+                Check In Margin
+              </label>
+            </div>
+            
+            {checkInMargin && (
+              <div className="flex gap-4 ml-6">
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Hour Margin</label>
+                  <Select value={hourMargin} onValueChange={setHourMargin}>
+                    <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white max-h-60 rounded-none">
+                      {hours.map((hour) => (
+                        <SelectItem key={hour} value={hour}>
+                          {hour}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 mb-1">Minute Margin</label>
+                  <Select value={minMargin} onValueChange={setMinMargin}>
+                    <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white max-h-60 rounded-none">
+                      {minutes.map((minute) => (
+                        <SelectItem key={minute} value={minute}>
+                          {minute}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Create Button */}
           <div className="flex justify-center pt-4">
             <Button 
               onClick={handleCreate}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none shadow-none"
+              disabled={isSubmitting}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Create
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                'Create'
+              )}
             </Button>
           </div>
         </div>

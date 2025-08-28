@@ -49,6 +49,7 @@ export const AddPODashboard = () => {
   const [addresses, setAddresses] = useState([]);
   const [inventories, setInventories] = useState([]);
   const [units, setUnits] = useState([]);
+  const [submitting, setSubmitting] = useState(false)
 
   const [formData, setFormData] = useState({
     materialPR: "",
@@ -187,6 +188,7 @@ export const AddPODashboard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true)
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: formData.supplier,
@@ -224,10 +226,17 @@ export const AddPODashboard = () => {
       },
     };
 
-    await dispatch(createPurchaseOrder({ baseUrl, token, data: payload })).unwrap();
+    try {
+      await dispatch(createPurchaseOrder({ baseUrl, token, data: payload })).unwrap();
+      toast.success("Purchase Order created successfully");
+      navigate("/finance/po");
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      setSubmitting(false)
+    }
 
-    toast.success("Purchase Order created successfully");
-    navigate("/finance/po");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,6 +291,63 @@ export const AddPODashboard = () => {
     }
   };
 
+  // const handleMaterialPRChange = async (e: SelectChangeEvent<string>) => {
+  //   const materialPRId = e.target.value;
+
+  //   try {
+  //     const response = await dispatch(
+  //       materialPRChange({ baseUrl, token, id: parseInt(materialPRId) })
+  //     ).unwrap();
+
+  //     setFormData({
+  //       ...formData,
+  //       materialPR: materialPRId,
+  //       supplier: response.supplier?.id,
+  //     });
+
+  //     setItems((prevItems) =>
+  //       prevItems.length > 0
+  //         ? [
+  //           {
+  //             ...prevItems[0],
+  //             itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
+  //             quantity: response.pms_po_inventories[0]?.quantity || "",
+  //           },
+  //           ...prevItems.slice(1),
+  //         ]
+  //         : [
+  //           {
+  //             id: 1,
+  //             itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
+  //             sacHsnCode: "",
+  //             quantity: "",
+  //             unit: "",
+  //             expectedDate: "",
+  //             rate: "",
+  //             cgstRate: "",
+  //             cgstAmount: "",
+  //             sgstRate: "",
+  //             sgstAmount: "",
+  //             igstRate: "",
+  //             igstAmount: "",
+  //             tcsRate: "",
+  //             tcsAmount: "",
+  //             taxAmount: "",
+  //             amount: "",
+  //             totalAmount: "",
+  //           },
+  //         ]
+  //     );
+
+  //     if (response.pms_po_inventories[0]?.inventory?.id) {
+  //       onInventoryChange(response.pms_po_inventories[0]?.inventory?.id, 1);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error in handleMaterialPRChange:", error);
+  //     toast.error("Failed to fetch material PR details");
+  //   }
+  // };
+
   const handleMaterialPRChange = async (e: SelectChangeEvent<string>) => {
     const materialPRId = e.target.value;
 
@@ -290,53 +356,53 @@ export const AddPODashboard = () => {
         materialPRChange({ baseUrl, token, id: parseInt(materialPRId) })
       ).unwrap();
 
+      // update formData with supplier
       setFormData({
         ...formData,
         materialPR: materialPRId,
         supplier: response.supplier?.id,
       });
 
-      setItems((prevItems) =>
-        prevItems.length > 0
-          ? [
-            {
-              ...prevItems[0],
-              itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
-            },
-            ...prevItems.slice(1),
-          ]
-          : [
-            {
-              id: 1,
-              itemDetails: response.pms_po_inventories[0]?.inventory?.id || "",
-              sacHsnCode: "",
-              quantity: "",
-              unit: "",
-              expectedDate: "",
-              rate: "",
-              cgstRate: "",
-              cgstAmount: "",
-              sgstRate: "",
-              sgstAmount: "",
-              igstRate: "",
-              igstAmount: "",
-              tcsRate: "",
-              tcsAmount: "",
-              taxAmount: "",
-              amount: "",
-              totalAmount: "",
-            },
-          ]
-      );
+      // map all items from pms_po_inventories
+      const newItems = response.pms_po_inventories?.map(
+        (inv: any, index: number) => ({
+          id: index + 1,
+          itemDetails: inv?.inventory?.id || "",
+          sacHsnCode: "",
+          quantity: inv?.quantity || "",
+          unit: "",
+          expectedDate: "",
+          rate: "",
+          cgstRate: "",
+          cgstAmount: "",
+          sgstRate: "",
+          sgstAmount: "",
+          igstRate: "",
+          igstAmount: "",
+          tcsRate: "",
+          tcsAmount: "",
+          taxAmount: "",
+          amount: "",
+          totalAmount: "",
+        })
+      ) || [];
 
-      if (response.pms_po_inventories[0]?.inventory?.id) {
-        onInventoryChange(response.pms_po_inventories[0]?.inventory?.id, 1);
+      setItems(newItems);
+
+      // optionally call onInventoryChange for each
+      if (newItems.length > 0) {
+        newItems.forEach((item) => {
+          if (item.itemDetails) {
+            onInventoryChange(item.itemDetails, item.id);
+          }
+        });
       }
     } catch (error) {
       console.error("Error in handleMaterialPRChange:", error);
       toast.error("Failed to fetch material PR details");
     }
   };
+
 
   const onInventoryChange = async (inventoryId, itemId) => {
     try {
@@ -980,6 +1046,7 @@ export const AddPODashboard = () => {
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
             size="lg"
+            disabled={submitting}
           >
             Submit
           </Button>

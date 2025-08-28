@@ -16,6 +16,14 @@ export interface CreateRolePayload {
   parent_function?: boolean;
 }
 
+export interface UpdateRolePayload {
+  lock_role: {
+    name: string;
+  };
+  permissions_hash: Record<string, any>;
+  lock_modules?: number;
+}
+
 export interface LockFunction {
   id: number;
   action_name: string;
@@ -42,6 +50,17 @@ export const roleService = {
     }
   },
 
+  // Fetch single role
+  async fetchRole(id: number): Promise<ApiRole> {
+    try {
+      const response = await apiClient.get<ApiRole>(`${ENDPOINTS.ROLES.replace('.json', '')}/${id}.json`)
+      return response.data
+    } catch (error) {
+      console.error('Error fetching role:', error)
+      throw error
+    }
+  },
+
   // Fetch lock functions
   async getLockFunctions(): Promise<LockFunction[]> {
     try {
@@ -60,6 +79,27 @@ export const roleService = {
       return response.data
     } catch (error) {
       console.error('Error creating role:', error)
+      throw error
+    }
+  },
+
+  // Update existing role
+  async updateRole(id: number, payload: UpdateRolePayload): Promise<CreateRoleResponse> {
+    try {
+      const response = await apiClient.patch<CreateRoleResponse>(`${ENDPOINTS.ROLES.replace('.json', '')}/${id}.json`, payload)
+      return response.data
+    } catch (error) {
+      console.error('Error updating role:', error)
+      throw error
+    }
+  },
+
+  // Delete role
+  async deleteRole(id: number): Promise<void> {
+    try {
+      await apiClient.delete(`${ENDPOINTS.ROLES.replace('.json', '')}/${id}.json`)
+    } catch (error) {
+      console.error('Error deleting role:', error)
       throw error
     }
   }

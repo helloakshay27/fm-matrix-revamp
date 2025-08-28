@@ -446,7 +446,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "assetType":
         return (
           <span className="text-sm text-gray-600">
-            {asset.assetType ? "Comprehensive" : "Non-Comprehensive"}
+            {asset.assetType === null ? "-" : asset.assetType ? "Comprehensive" : "Non-Comprehensive"}
           </span>
         );
       case "category":
@@ -524,7 +524,7 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "criticality":
         return (
           <span className="text-sm text-gray-600">
-            {asset.critical ? "Critical" : "Non-Critical"}
+            {asset.critical === null ? "-" : asset.critical ? "Critical" : "Non-Critical"}
           </span>
         );
       case "commissioningDate":

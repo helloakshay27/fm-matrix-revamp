@@ -44,6 +44,13 @@ export const API_CONFIG = {
     UNITS: '/pms/units.json',
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',
+    SUB_FUNCTIONS: '/lock_sub_functions.json',
+    // Role Config endpoints
+    ROLE_CONFIGS: '/admin/role_configs.json',
+    ROLE_CONFIG_DETAILS: '/admin/role_configs', // Base path, will append /:id.json
+    CREATE_ROLE_CONFIG: '/admin/role_configs.json',
+    UPDATE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
+    DELETE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
     EMAIL_RULES: '/pms/email_rule_setups.json',
     FM_USERS: '/pms/account_setups/fm_users.json',
     ALLOWED_COMPANIES: '/allowed_companies.json',

@@ -33,9 +33,7 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     area: ''
   });
 
-  const [errors, setErrors] = useState({
-    serviceName: false
-  });
+  // All fields are optional; no validation errors tracked
 
   useEffect(() => {
     if (isOpen && buildings.length === 0) {
@@ -64,14 +62,9 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   };
 
   const handleApply = () => {
-    if (filters.serviceName.trim() === '') {
-      setErrors({ serviceName: true });
-      toast.error("Service Name is required.");
-      return;
-    }
-
-    setErrors({ serviceName: false });
+    // No mandatory validations; apply filters as-is
     onApply(filters);
+  toast.success('Filter applied');
     handleClose();
   };
 
@@ -81,7 +74,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
       building: '',
       area: ''
     });
-    setErrors({ serviceName: false });
     onApply({});
   };
 
@@ -91,7 +83,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
       building: '',
       area: ''
     });
-    setErrors({ serviceName: false });
     onClose();
   };
 
@@ -149,7 +140,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                 name="serviceName"
                 value={filters.serviceName}
                 onChange={(e) => {
-                  setErrors({ serviceName: false });
                   handleInputChange('serviceName', e.target.value);
                 }}
                 fullWidth
@@ -160,8 +150,6 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                 InputProps={{
                   sx: fieldStyles
                 }}
-                error={errors.serviceName}
-                helperText={errors.serviceName ? "Service Name is required" : ""}
               />
             </div>
           </div>
@@ -226,8 +214,8 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     </MenuItem>
                   ) : (
                     areas.map((area) => (
-                      <MenuItem key={area.areas.id} value={area.areas.id.toString()}>
-                        {area.areas.name}
+                      <MenuItem key={area.id} value={area.id.toString()}>
+                        {area.name}
                       </MenuItem>
                     ))
                   )}

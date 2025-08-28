@@ -107,7 +107,7 @@ export const InventoryDetailsPage = () => {
   };
 
   const getInventoryType = (type) => {
-    return type === 1 ? 'Consumable' : 'Non-Consumable';
+    return type === 1 ? 'Spares' : 'Consumable';
   };
 
   const getCriticality = (criticality) => {
@@ -370,7 +370,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">CGST Rate</span>
-                    <span>: NA</span>
+                    <span>: {inventoryData?.cgst_rate || '—'}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Eco-friendly</span>

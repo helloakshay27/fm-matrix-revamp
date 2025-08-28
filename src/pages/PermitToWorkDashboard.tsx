@@ -344,21 +344,17 @@ export const PermitToWorkDashboard = () => {
                       <TableRow key={permit.id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <Eye
+                              className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                console.log('Button clicked for permit:', permit.id);
+                                console.log("Eye clicked for permit:", permit.id);
                                 handleViewPermit(permit.id);
                               }}
-                              className="hover:bg-gray-100 p-2 relative z-10 border border-gray-300"
                               title="View permit details"
-                            >
-                              <Eye className="w-4 h-4 mr-1" />
-                              View
-                            </Button>
+                            />
                           </div>
+
                         </TableCell>
                         <TableCell className="font-medium">{permit.id}</TableCell>
                         <TableCell>{permit.reference_number}</TableCell>

@@ -455,7 +455,7 @@ export const MSafeDashboard = () => {
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
   <FMUserFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
-      </div>;
+      </div>
     </>
   )
 };

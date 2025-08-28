@@ -630,6 +630,19 @@ export const RosterEditPage: React.FC = () => {
         'end_date(1i)': period.toYear.toString()
       };
 
+      // Base payload structure (common for all day types)
+      const basePayload = {
+        user_roaster: {
+          ...baseUserRoaster,
+          ...commonDateFields
+        },
+        department_id: formData.departments.map(String),
+        no_of_days: "",
+        weekdays: [],
+        weekends: [],
+        user_ids: formData.selectedEmployees,
+      };
+
       if (formData.dayType === 'Weekdays') {
         // Weekdays payload
         // Convert week selections to weekday numbers (1-5 for 1st Week to 5th Week)
@@ -638,11 +651,7 @@ export const RosterEditPage: React.FC = () => {
           .map(w => w.charAt(0)); // Get first character (week number)
         
         payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields
-          },
-          department_id: formData.departments.map(String),
+          ...basePayload,
           weekdays: weekdays
         };
 
@@ -654,17 +663,12 @@ export const RosterEditPage: React.FC = () => {
           .map(w => w.charAt(0)); // Get first character (weekend number)
         
         payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields
-          },
-          department_id: formData.departments.map(String),
+          ...basePayload,
           weekends: weekends
         };
 
       } else if (formData.dayType === 'Recurring') {
-        // Recurring payload
-        // no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+        // Recurring payload - matching your example structure
         const recurringData = {};
         for (let weekNum = 1; weekNum <= 5; weekNum++) {
           const daysForWeek = formData.selectedDays
@@ -682,24 +686,13 @@ export const RosterEditPage: React.FC = () => {
         }
         
         payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields
-          },
-          department_id: formData.departments.map(String),
-          no_of_days: [recurringData]
+          ...basePayload,
+          recurring: [recurringData]
         };
 
       } else {
         // Default fallback
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields
-          },
-          department_id: formData.departments.map(String),
-          no_of_days: []
-        };
+        payload = basePayload;
       }
 
       // Log payload to console
@@ -1353,21 +1346,7 @@ export const RosterEditPage: React.FC = () => {
         </Section>
 
         {/* Status Section */}
-        <Section title="Status" icon={<Calendar className="w-4 h-4" />}>
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={formData.active}
-                onChange={(e) => handleInputChange('active', e.target.checked)}
-                className="text-[#C72030] focus:ring-[#C72030] w-4 h-4"
-                disabled={isSubmitting}
-              />
-              <span className="font-medium text-gray-800">Active Template</span>
-              <span className="text-sm text-gray-500">(Template will be available for use)</span>
-            </label>
-          </div>
-        </Section>
+     
       </div>
 
       {/* Footer Actions */}
