@@ -7,11 +7,9 @@ interface AttachmentPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   attachment: {
-    id: string;
-    name: string;
-    type: string;
+    id: number;
+    document_file_name: string;
     url: string;
-    size: string;
   } | null;
 }
 
@@ -22,41 +20,52 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
 }) => {
   if (!attachment) return null;
 
+  const fileName = attachment.document_file_name;
+  const ext = fileName.split(".").pop()?.toLowerCase();
+
+  // derive pseudo type
+  const getFileType = () => {
+    if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) return "image";
+    if (ext === "pdf") return "pdf";
+    return "other";
+  };
+
+  const type = getFileType();
+
   const handleDownload = () => {
-    // Create a temporary link element and trigger download
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = attachment.url;
-    link.download = attachment.name;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
   const renderPreview = () => {
-    if (attachment.type.startsWith('image/')) {
+    if (type === "image") {
       return (
         <div className="flex justify-center">
           <img
             src={attachment.url}
-            alt={attachment.name}
+            alt={fileName}
             className="max-w-full max-h-96 object-contain rounded-lg"
           />
         </div>
       );
-    } else if (attachment.type === 'application/pdf') {
+    } else if (type === "pdf") {
       return (
         <div className="flex flex-col items-center justify-center h-64 bg-muted rounded-lg">
           <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">PDF Preview</p>
-          <p className="text-sm text-muted-foreground">{attachment.name}</p>
+          <p className="text-muted-foreground">PDF File</p>
+          <p className="text-sm text-muted-foreground">{fileName}</p>
         </div>
       );
     } else {
       return (
         <div className="flex flex-col items-center justify-center h-64 bg-muted rounded-lg">
           <File className="w-16 h-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Document Preview</p>
-          <p className="text-sm text-muted-foreground">{attachment.name}</p>
+          <p className="text-muted-foreground">Unsupported Preview</p>
+          <p className="text-sm text-muted-foreground">{fileName}</p>
         </div>
       );
     }
@@ -66,7 +75,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-xl font-semibold">{attachment.name}</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">{fileName}</DialogTitle>
           <DialogClose asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <X className="h-4 w-4" />
@@ -77,8 +86,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
         <div className="space-y-4">
           {/* File Info */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Size: {attachment.size}</span>
-            <span>Type: {attachment.type}</span>
+            <span>Type: {ext?.toUpperCase()}</span>
           </div>
 
           {/* Preview Area */}
