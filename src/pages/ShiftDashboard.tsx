@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { BulkUploadModal } from '@/components/BulkUploadModal';
 import { ExportModal } from '@/components/ExportModal';
+import { EditShiftDialog } from '@/components/EditShiftDialog';
+import { CreateShiftDialog } from '@/components/CreateShiftDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
@@ -13,7 +15,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 // Type definitions for the shift data
 interface ShiftItem {
   id: number;
-  timing: string;
+  timings: string; // Changed from 'timing' to 'timings' to match EditShiftDialog
   totalHours: number;
   checkInMargin: string;
   createdOn: string;
@@ -36,15 +38,15 @@ interface ApiResponse {
 
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
-  // {
-  //   key: 'actions',
-  //   label: 'Actions',
-  //   sortable: false,
-  //   hideable: false,
-  //   draggable: false
-  // },
   {
-    key: 'timing',
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    hideable: false,
+    draggable: false
+  },
+  {
+    key: 'timings', // Changed from 'timing' to 'timings'
     label: 'Timings',
     sortable: true,
     hideable: true,
@@ -78,7 +80,7 @@ const columns: ColumnConfig[] = [
 const mockShiftData: ShiftItem[] = [
   {
     id: 1,
-    timing: '08:00 AM to 05:00 PM',
+    timings: '08:00 AM to 05:00 PM', // Changed from 'timing' to 'timings'
     totalHours: 9,
     checkInMargin: '0h:0m',
     createdOn: '19/03/2024',
@@ -87,7 +89,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 2,
-    timing: '02:00 AM to 06:00 AM',
+    timings: '02:00 AM to 06:00 AM',
     totalHours: 4,
     checkInMargin: '1h:0m',
     createdOn: '05/05/2023',
@@ -96,7 +98,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 3,
-    timing: '10:15 AM to 07:30 PM',
+    timings: '10:15 AM to 07:30 PM',
     totalHours: 9,
     checkInMargin: '0h:0m',
     createdOn: '05/05/2023',
@@ -105,7 +107,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 4,
-    timing: '10:00 AM to 07:00 PM',
+    timings: '10:00 AM to 07:00 PM',
     totalHours: 9,
     checkInMargin: '0h:0m',
     createdOn: '29/11/2022',
@@ -114,7 +116,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 5,
-    timing: '09:00 AM to 06:00 PM',
+    timings: '09:00 AM to 06:00 PM',
     totalHours: 9,
     checkInMargin: '0h:0m',
     createdOn: '28/11/2022',
@@ -123,7 +125,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 6,
-    timing: '10:30 AM to 06:30 PM',
+    timings: '10:30 AM to 06:30 PM',
     totalHours: 8,
     checkInMargin: '0h:0m',
     createdOn: '28/11/2022',
@@ -132,7 +134,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 7,
-    timing: '10:00 AM to 11:00 AM',
+    timings: '10:00 AM to 11:00 AM',
     totalHours: 1,
     checkInMargin: '0h:0m',
     createdOn: '21/11/2022',
@@ -141,7 +143,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 8,
-    timing: '01:00 AM to 11:00 PM',
+    timings: '01:00 AM to 11:00 PM',
     totalHours: 22,
     checkInMargin: '0h:0m',
     createdOn: '21/11/2022',
@@ -150,7 +152,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 9,
-    timing: '03:15 AM to 11:15 PM',
+    timings: '03:15 AM to 11:15 PM',
     totalHours: 20,
     checkInMargin: '0h:0m',
     createdOn: '22/06/2022',
@@ -159,7 +161,7 @@ const mockShiftData: ShiftItem[] = [
   },
   {
     id: 10,
-    timing: '10:00 AM to 08:00 PM',
+    timings: '10:00 AM to 08:00 PM',
     totalHours: 10,
     checkInMargin: '3h:0m',
     createdOn: '09/08/2021',
@@ -177,6 +179,8 @@ export const ShiftDashboard = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [selectedShiftId, setSelectedShiftId] = useState<number | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedShift, setSelectedShift] = useState<ShiftItem | null>(null);
   
   // Pagination states - matching RosterDashboard pattern
   const [currentPage, setCurrentPage] = useState(1);
@@ -210,7 +214,7 @@ export const ShiftDashboard = () => {
       // Transform API data to match our interface
       const transformedData: ShiftItem[] = (data.user_shifts || []).map((item: any) => ({
         id: item.id,
-        timing: item.timings || 'Not specified',
+        timings: item.timings || 'Not specified', // Changed from 'timing' to 'timings'
         totalHours: item.total_hour || 0,
         checkInMargin: item.check_in_margin || '0h:0m',
         createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : 'Not available',
@@ -257,7 +261,7 @@ export const ShiftDashboard = () => {
       
       const searchLower = debouncedSearchQuery.toLowerCase();
       return (
-        item.timing.toLowerCase().includes(searchLower) ||
+        item.timings.toLowerCase().includes(searchLower) ||
         item.createdBy.toLowerCase().includes(searchLower) ||
         item.createdOn.includes(debouncedSearchQuery) ||
         item.checkInMargin.toLowerCase().includes(searchLower)
@@ -307,8 +311,8 @@ export const ShiftDashboard = () => {
         </button>
       </div>
     ),
-    timing: (
-      <div className="font-medium text-gray-900">{shift.timing}</div>
+    timings: (
+      <div className="font-medium text-gray-900">{shift.timings}</div>
     ),
     totalHours: (
       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -327,9 +331,13 @@ export const ShiftDashboard = () => {
   });
 
   const handleEdit = (id: number) => {
-    console.log('Edit shift:', id);
-    // TODO: Implement edit functionality
-    toast.info('Edit functionality will be implemented');
+    const shiftToEdit = allShiftData.find(shift => shift.id === id);
+    if (shiftToEdit) {
+      setSelectedShift(shiftToEdit);
+      setIsEditDialogOpen(true);
+    } else {
+      toast.error('Shift not found');
+    }
   };
 
   const handleAdd = () => {
@@ -474,16 +482,14 @@ export const ShiftDashboard = () => {
       )}
 
       {/* Modals */}
-      {isAddModalOpen && (
-        <AddShiftModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {
-            setIsAddModalOpen(false);
-            fetchShiftData();
-          }}
-        />
-      )}
+      <CreateShiftDialog
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onShiftCreated={() => {
+          setIsAddModalOpen(false);
+          fetchShiftData();
+        }}
+      />
 
       {isBulkUploadOpen && (
         <BulkUploadModal
@@ -498,191 +504,18 @@ export const ShiftDashboard = () => {
           onClose={() => setIsExportOpen(false)}
         />
       )}
-    </div>
-  );
-};
 
-// Add Shift Modal Component
-const AddShiftModal = ({ isOpen, onClose, onSuccess }: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-}) => {
-  const [fromHour, setFromHour] = useState('04');
-  const [fromMinute, setFromMinute] = useState('00');
-  const [toHour, setToHour] = useState('12');
-  const [toMinute, setToMinute] = useState('00');
-  const [checkInMargin, setCheckInMargin] = useState(false);
-  const [hourMargin, setHourMargin] = useState('00');
-  const [minMargin, setMinMargin] = useState('00');
-
-  if (!isOpen) return null;
-
-  // Generate hour options (00-23)
-  const hourOptions = Array.from({ length: 24 }, (_, i) => {
-    const hour = i.toString().padStart(2, '0');
-    return (
-      <option key={hour} value={hour}>
-        {hour}
-      </option>
-    );
-  });
-
-  // Generate minute options (00-59)
-  const minuteOptions = Array.from({ length: 60 }, (_, i) => {
-    const minute = i.toString().padStart(2, '0');
-    return (
-      <option key={minute} value={minute}>
-        {minute}
-      </option>
-    );
-  });
-
-  const handleCreate = async () => {
-    // Build API payload
-    const payload = {
-      user_shift: {
-        start_hour: fromHour,
-        start_min: fromMinute,
-        end_hour: toHour,
-        end_min: toMinute,
-        hour_margin: checkInMargin ? hourMargin : '00',
-        min_margin: checkInMargin ? minMargin : '00'
-      },
-      check_in_margin: checkInMargin
-    };
-    try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader()
-        },
-        body: JSON.stringify(payload)
-      });
-      if (!response.ok) throw new Error('Failed to create shift');
-      toast.success('Shift created successfully!');
-      onSuccess();
-    } catch (error: any) {
-      toast.error('Failed to create shift');
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Create Shift</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl"
-          >
-            ×
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Shift Timings
-            </label>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">From</label>
-                <div className="flex gap-2">
-                  <select
-                    value={fromHour}
-                    onChange={(e) => setFromHour(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {hourOptions}
-                  </select>
-                  <select
-                    value={fromMinute}
-                    onChange={(e) => setFromMinute(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {minuteOptions}
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500 mb-2">To</label>
-                <div className="flex gap-2">
-                  <select
-                    value={toHour}
-                    onChange={(e) => setToHour(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {hourOptions}
-                  </select>
-                  <select
-                    value={toMinute}
-                    onChange={(e) => setToMinute(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {minuteOptions}
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={checkInMargin}
-                onChange={(e) => setCheckInMargin(e.target.checked)}
-                className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
-                style={{
-                  accentColor: '#C72030'
-                }}
-              />
-              <span className="text-sm text-gray-700">Check In Margin</span>
-            </label>
-            {checkInMargin && (
-              <div className="flex gap-2 mt-2">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Hour Margin</label>
-                  <select
-                    value={hourMargin}
-                    onChange={e => setHourMargin(e.target.value)}
-                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {hourOptions}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Minute Margin</label>
-                  <select
-                    value={minMargin}
-                    onChange={e => setMinMargin(e.target.value)}
-                    className="w-20 px-2 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
-                  >
-                    {minuteOptions}
-                  </select>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-3 mt-6">
-          <Button
-            variant="outline"
-            onClick={onClose}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCreate}
-            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-          >
-            Create
-          </Button>
-        </div>
-      </div>
+      <EditShiftDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        shift={selectedShift}
+        onShiftUpdated={() => {
+          // Refresh the shifts data when a shift is updated
+          fetchShiftData();
+          setIsEditDialogOpen(false);
+          toast.success('Shift data refreshed');
+        }}
+      />
     </div>
   );
 };

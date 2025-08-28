@@ -619,41 +619,43 @@ export const RosterCreatePage: React.FC = () => {
         "end_date(1i)": period.toYear.toString(),
       };
 
+      // Base payload structure (common for all day types)
+      const basePayload = {
+        user_roaster: {
+          ...baseUserRoaster,
+          ...commonDateFields,
+        },
+        department_id: formData.departments.map(String),
+        no_of_days: "",
+        weekdays: [],
+        weekends: [],
+        user_ids: formData.selectedEmployees,
+      };
+
       if (formData.dayType === "Weekdays") {
         // Weekdays payload
         // Convert week selections to weekday numbers (1-5 for 1st Week to 5th Week)
         const weekdays = formData.weekSelection
           .filter((w) => w.match(/^\d/)) // Filter selections that start with digit
           .map((w) => w.charAt(0)); // Get first character (week number)
-        
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields,
-          },
-          department_id: formData.departments.map(String),
-          weekdays: weekdays
-        };
 
+        payload = {
+          ...basePayload,
+          weekdays: weekdays,
+        };
       } else if (formData.dayType === "Weekends") {
         // Weekends payload
         // Convert weekend selections to weekend numbers (1-5 for 1st Weekend to 5th Weekend)
         const weekends = formData.weekSelection
           .filter((w) => w.match(/^\d/)) // Filter selections that start with digit
           .map((w) => w.charAt(0)); // Get first character (weekend number)
-        
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields,
-          },
-          department_id: formData.departments.map(String),
-          weekends: weekends
-        };
 
+        payload = {
+          ...basePayload,
+          weekends: weekends,
+        };
       } else if (formData.dayType === "Recurring") {
-        // Recurring payload
-        // no_of_days: [{ "1": ["2", "1"], "2": ["2"], "3": ["3"] }]
+        // Recurring payload - matching your example structure
         const recurringData = {};
         for (let weekNum = 1; weekNum <= 5; weekNum++) {
           const daysForWeek = formData.selectedDays
@@ -671,26 +673,14 @@ export const RosterCreatePage: React.FC = () => {
             recurringData[weekNum.toString()] = daysForWeek;
           }
         }
-        
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields,
-          },
-          department_id: formData.departments.map(String),
-          no_of_days: [recurringData]
-        };
 
+        payload = {
+          ...basePayload,
+          recurring: [recurringData],
+        };
       } else {
         // Default fallback
-        payload = {
-          user_roaster: {
-            ...baseUserRoaster,
-            ...commonDateFields,
-          },
-          department_id: formData.departments.map(String),
-          no_of_days: []
-        };
+        payload = basePayload;
       }
 
       // Log payload to console
@@ -843,7 +833,7 @@ export const RosterCreatePage: React.FC = () => {
                     onChange={() => handleDayTypeChange("Weekdays")}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030] focus:ring-2"
                     style={{
-                      accentColor: '#C72030'
+                      accentColor: "#C72030",
                     }}
                     disabled={isSubmitting}
                   />
@@ -860,7 +850,7 @@ export const RosterCreatePage: React.FC = () => {
                     onChange={() => handleDayTypeChange("Weekends")}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030] focus:ring-2"
                     style={{
-                      accentColor: '#C72030'
+                      accentColor: "#C72030",
                     }}
                     disabled={isSubmitting}
                   />
@@ -877,7 +867,7 @@ export const RosterCreatePage: React.FC = () => {
                     onChange={() => handleDayTypeChange("Recurring")}
                     className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030] focus:ring-2"
                     style={{
-                      accentColor: '#C72030'
+                      accentColor: "#C72030",
                     }}
                     disabled={isSubmitting}
                   />

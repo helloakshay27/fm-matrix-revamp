@@ -125,7 +125,7 @@ export const ShiftDashboard = () => {
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Add
+              Adds
             </Button>
           </div>
         </div>
@@ -176,6 +176,11 @@ export const ShiftDashboard = () => {
           open={isEditDialogOpen} 
           onOpenChange={setIsEditDialogOpen} 
           shift={selectedShift}
+          onShiftUpdated={() => {
+            // You can add logic here to refresh the shifts data
+            // For now, we'll just close the dialog
+            console.log('Shift updated successfully');
+          }}
         />
       </div>
     </div>

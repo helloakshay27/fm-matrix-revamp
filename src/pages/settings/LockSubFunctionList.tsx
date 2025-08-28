@@ -1,20 +1,22 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, UserCheck, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Key, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
-import { CreateRoleConfigDialog } from './CreateRoleConfigDialog';
-import { roleConfigService, RoleConfigItem as ApiRoleConfigItem } from '@/services/roleConfigService';
+import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
+import { lockSubFunctionService, LockSubFunctionItem as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
 
-// Type definitions for the role config data
-interface RoleConfigItem {
+// Type definitions for the lock sub function data
+interface LockSubFunctionItem {
   id: number;
-  roleName: string;
+  subFunctionName: string;
+  parentFunction: string;
   description: string;
-  permissions: string[];
+  priority: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL';
+  conditions: string[];
   createdOn: string;
   createdBy: string;
   active: boolean;
@@ -30,8 +32,15 @@ const columns: ColumnConfig[] = [
     draggable: false
   },
   {
-    key: 'roleName',
-    label: 'Role Name',
+    key: 'subFunctionName',
+    label: 'Sub Function Name',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'parentFunction',
+    label: 'Parent Function',
     sortable: true,
     hideable: true,
     draggable: true
@@ -44,8 +53,15 @@ const columns: ColumnConfig[] = [
     draggable: true
   },
   {
-    key: 'permissions',
-    label: 'Permissions',
+    key: 'priority',
+    label: 'Priority',
+    sortable: true,
+    hideable: true,
+    draggable: true
+  },
+  {
+    key: 'conditions',
+    label: 'Conditions',
     sortable: false,
     hideable: true,
     draggable: true
@@ -73,80 +89,90 @@ const columns: ColumnConfig[] = [
   }
 ];
 
-// Mock data for role configuration management
-const mockRoleConfigData: RoleConfigItem[] = [
+// Mock data for lock sub function management
+const mockLockSubFunctionData: LockSubFunctionItem[] = [
   {
     id: 1,
-    roleName: 'Super Admin',
-    description: 'Full system access and administration rights',
-    permissions: ['CREATE', 'READ', 'UPDATE', 'DELETE', 'MANAGE_USERS'],
+    subFunctionName: 'Failed Login Attempts',
+    parentFunction: 'User Account Lock',
+    description: 'Lock user after 3 failed login attempts',
+    priority: 'HIGH',
+    conditions: ['Failed attempts >= 3', 'Within 15 minutes'],
     createdOn: '15/08/2024',
     createdBy: 'System Admin',
     active: true
   },
   {
     id: 2,
-    roleName: 'Facility Manager',
-    description: 'Manage facility operations and maintenance',
-    permissions: ['READ', 'UPDATE', 'MANAGE_TICKETS', 'MANAGE_ASSETS'],
+    subFunctionName: 'Database Backup Lock',
+    parentFunction: 'Maintenance Mode Lock',
+    description: 'Prevent data modifications during backup',
+    priority: 'CRITICAL',
+    conditions: ['Backup process running', 'Admin authorization required'],
     createdOn: '12/08/2024',
     createdBy: 'Robert Day2',
     active: true
   },
   {
     id: 3,
-    roleName: 'Maintenance Staff',
-    description: 'Handle maintenance tasks and updates',
-    permissions: ['READ', 'UPDATE', 'MANAGE_TASKS'],
+    subFunctionName: 'Asset Transfer Lock',
+    parentFunction: 'Asset Modification Lock',
+    description: 'Lock asset during transfer process',
+    priority: 'MEDIUM',
+    conditions: ['Transfer in progress', 'Approval pending'],
     createdOn: '10/08/2024',
-    createdBy: 'Robert Day2',
+    createdBy: 'Asset Manager',
     active: true
   },
   {
     id: 4,
-    roleName: 'Security Officer',
-    description: 'Monitor security and access control',
-    permissions: ['READ', 'MANAGE_VISITORS', 'MANAGE_SECURITY'],
+    subFunctionName: 'Invoice Approval Lock',
+    parentFunction: 'Financial Report Lock',
+    description: 'Lock invoice after final approval',
+    priority: 'HIGH',
+    conditions: ['Approved by finance head', 'Payment processed'],
     createdOn: '08/08/2024',
-    createdBy: 'Robert Day2',
+    createdBy: 'Finance Head',
     active: false
   },
   {
     id: 5,
-    roleName: 'Accountant',
-    description: 'Handle financial operations and approvals',
-    permissions: ['READ', 'MANAGE_FINANCE', 'APPROVE_INVOICES'],
+    subFunctionName: 'Idle Session Detection',
+    parentFunction: 'Session Timeout Lock',
+    description: 'Detect inactive sessions for automatic logout',
+    priority: 'LOW',
+    conditions: ['No activity for 30 minutes', 'Warning sent'],
     createdOn: '05/08/2024',
-    createdBy: 'Finance Head',
+    createdBy: 'Security Team',
     active: true
   }
 ];
 
-export const RoleConfigList = () => {
+export const LockSubFunctionList = () => {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15; // Same as ShiftDashboard
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
-  const [allRoleConfigData, setAllRoleConfigData] = useState<RoleConfigItem[]>([]);
+  const [allLockSubFunctionData, setAllLockSubFunctionData] = useState<LockSubFunctionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // API call to fetch role config data
-  const fetchRoleConfigData = async () => {
+  // API call to fetch lock sub function data
+  const fetchLockSubFunctionData = async () => {
     setLoading(true);
     try {
-      const data = await roleConfigService.fetchRoleConfigs();
-      setAllRoleConfigData(data);
-      console.log('Role Config Data Count:', data.length);
+      const data = await lockSubFunctionService.fetchLockSubFunctions();
+      setAllLockSubFunctionData(data);
+      console.log('Lock Sub Function Data Count:', data.length);
     } catch (error: any) {
-      console.error('Error fetching role config data:', error);
-      toast.error(`Failed to load role configuration data: ${error.message}`, {
+      console.error('Error fetching lock sub function data:', error);
+      toast.error(`Failed to load lock sub function data: ${error.message}`, {
         duration: 5000,
       });
       
       // Fallback to mock data on API error for development
-      setAllRoleConfigData(mockRoleConfigData);
+      setAllLockSubFunctionData(mockLockSubFunctionData);
     } finally {
       setLoading(false);
     }
@@ -154,13 +180,13 @@ export const RoleConfigList = () => {
 
   // Load data on component mount
   useEffect(() => {
-    fetchRoleConfigData();
+    fetchLockSubFunctionData();
   }, []);
 
   // Reset pagination when data changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [allRoleConfigData.length]);
+  }, [allLockSubFunctionData.length]);
 
   // Reset pagination when search changes
   useEffect(() => {
@@ -168,28 +194,30 @@ export const RoleConfigList = () => {
   }, [debouncedSearchQuery]);
 
   // Filter and paginate data
-  const filteredRoleConfigData = useMemo(() => {
-    if (!allRoleConfigData || !Array.isArray(allRoleConfigData)) return [];
+  const filteredLockSubFunctionData = useMemo(() => {
+    if (!allLockSubFunctionData || !Array.isArray(allLockSubFunctionData)) return [];
     
-    return allRoleConfigData.filter(item => {
+    return allLockSubFunctionData.filter(item => {
       if (!debouncedSearchQuery.trim()) return true;
       
       const searchLower = debouncedSearchQuery.toLowerCase();
       return (
-        item.roleName.toLowerCase().includes(searchLower) ||
+        item.subFunctionName.toLowerCase().includes(searchLower) ||
+        item.parentFunction.toLowerCase().includes(searchLower) ||
         item.description.toLowerCase().includes(searchLower) ||
+        item.priority.toLowerCase().includes(searchLower) ||
         item.createdBy.toLowerCase().includes(searchLower) ||
         item.createdOn.includes(debouncedSearchQuery)
       );
     });
-  }, [allRoleConfigData, debouncedSearchQuery]);
+  }, [allLockSubFunctionData, debouncedSearchQuery]);
 
   // Pagination calculations
-  const totalItems = filteredRoleConfigData.length;
+  const totalItems = filteredLockSubFunctionData.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentRoleConfigData = filteredRoleConfigData.slice(startIndex, endIndex);
+  const currentLockSubFunctionData = filteredLockSubFunctionData.slice(startIndex, endIndex);
 
   // Pagination functions
   const goToPage = (page: number) => {
@@ -214,25 +242,25 @@ export const RoleConfigList = () => {
   };
 
   // Render row function for enhanced table
-  const renderRow = (roleConfig: RoleConfigItem) => ({
+  const renderRow = (lockSubFunction: LockSubFunctionItem) => ({
     actions: (
       <div className="flex items-center gap-2">
         <button 
-          onClick={() => handleEdit(roleConfig.id)} 
+          onClick={() => handleEdit(lockSubFunction.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="Edit"
         >
           <Edit className="w-4 h-4" />
         </button>
         <button 
-          onClick={() => handleView(roleConfig.id)} 
+          onClick={() => handleView(lockSubFunction.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
         </button>
         <button 
-          onClick={() => handleDelete(roleConfig.id)} 
+          onClick={() => handleDelete(lockSubFunction.id)} 
           className="p-1 text-red-600 hover:bg-red-50 rounded" 
           title="Delete"
         >
@@ -240,67 +268,82 @@ export const RoleConfigList = () => {
         </button>
       </div>
     ),
-    roleName: (
-      <div className="font-medium text-gray-900">{roleConfig.roleName}</div>
+    subFunctionName: (
+      <div className="font-medium text-gray-900">{lockSubFunction.subFunctionName}</div>
+    ),
+    parentFunction: (
+      <div className="text-sm text-gray-600 font-medium">{lockSubFunction.parentFunction}</div>
     ),
     description: (
-      <div className="text-sm text-gray-600 max-w-xs truncate">
-        {roleConfig.description || 'No description available'}
+      <div className="text-sm text-gray-600 max-w-xs truncate" title={lockSubFunction.description}>
+        {lockSubFunction.description}
       </div>
     ),
-    permissions: (
-      <div className="flex flex-wrap gap-1">
-        {roleConfig.permissions.slice(0, 3).map((permission, index) => (
-          <span 
-            key={index}
-            className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-100 text-blue-700"
-          >
-            {permission}
-          </span>
-        ))}
-        {roleConfig.permissions.length > 3 && (
-          <span className="text-xs text-gray-500">
-            +{roleConfig.permissions.length - 3} more
-          </span>
-        )}
+    priority: (
+      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+        lockSubFunction.priority === 'CRITICAL' ? 'bg-red-100 text-red-800' :
+        lockSubFunction.priority === 'HIGH' ? 'bg-orange-100 text-orange-800' :
+        lockSubFunction.priority === 'MEDIUM' ? 'bg-yellow-100 text-yellow-800' :
+        'bg-green-100 text-green-800'
+      }`}>
+        {lockSubFunction.priority}
+      </span>
+    ),
+    conditions: (
+      <div className="text-sm text-gray-600">
+        <div className="flex flex-wrap gap-1">
+          {lockSubFunction.conditions.slice(0, 2).map((condition, index) => (
+            <span
+              key={index}
+              className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700"
+            >
+              {condition}
+            </span>
+          ))}
+          {lockSubFunction.conditions.length > 2 && (
+            <span className="text-xs text-gray-500">
+              +{lockSubFunction.conditions.length - 2} more
+            </span>
+          )}
+        </div>
       </div>
     ),
     createdOn: (
-      <span className="text-sm text-gray-600">{roleConfig.createdOn}</span>
+      <span className="text-sm text-gray-600">{lockSubFunction.createdOn}</span>
     ),
     createdBy: (
-      <span className="text-sm text-gray-600">{roleConfig.createdBy || '-'}</span>
+      <span className="text-sm text-gray-600">{lockSubFunction.createdBy || '-'}</span>
     ),
     active: (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        roleConfig.active 
+        lockSubFunction.active 
           ? 'bg-green-100 text-green-800' 
           : 'bg-red-100 text-red-800'
       }`}>
-        {roleConfig.active ? 'Active' : 'Inactive'}
+        {lockSubFunction.active ? 'Active' : 'Inactive'}
       </span>
     )
   });
 
   const handleView = (id: number) => {
-    console.log('View role config:', id);
-    navigate(`/settings/account/role-config/view/${id}`);
+    console.log('View lock sub function:', id);
+    navigate(`/settings/account/lock-sub-function/view/${id}`);
   };
 
   const handleEdit = (id: number) => {
-    console.log('Edit role config:', id);
-    navigate(`/settings/account/role-config/edit/${id}`);
+    console.log('Edit lock sub function:', id);
+    navigate(`/settings/account/lock-sub-function/edit/${id}`);
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to delete this role configuration?')) {
+    if (window.confirm('Are you sure you want to delete this lock sub function?')) {
       try {
-        await roleConfigService.deleteRoleConfig(id);
-        setAllRoleConfigData(prev => prev.filter(item => item.id !== id));
-        toast.success('Role configuration deleted successfully!');
+        await lockSubFunctionService.deleteLockSubFunction(id);
+        setAllLockSubFunctionData(prev => prev.filter(item => item.id !== id));
+        toast.success('Lock sub function deleted successfully!');
       } catch (error: any) {
-        console.error('Error deleting role config:', error);
-        toast.error(`Failed to delete role configuration: ${error.message}`);
+        console.error('Error deleting lock sub function:', error);
+        toast.error(`Failed to delete lock sub function: ${error.message}`);
       }
     }
   };
@@ -314,11 +357,11 @@ export const RoleConfigList = () => {
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
-            <UserCheck className="w-5 h-5" />
+            <Key className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-wide uppercase">Role Configuration</h1>
-            <p className="text-gray-600">Manage role permissions and configurations</p>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Lock Sub Function Management</h1>
+            <p className="text-gray-600">Manage system lock sub functions and conditions</p>
           </div>
         </div>
       </header>
@@ -332,15 +375,15 @@ export const RoleConfigList = () => {
       {!loading && (
         <div className="">
           <EnhancedTable
-            data={currentRoleConfigData}
+            data={currentLockSubFunctionData}
             columns={columns}
             renderRow={renderRow}
-            storageKey="role-config-table"
+            storageKey="lock-sub-function-table"
             enableSearch={true}
-            searchPlaceholder="Search role configurations..."
+            searchPlaceholder="Search lock sub functions..."
             onSearchChange={handleSearch}
             enableExport={false}
-            exportFileName="role-config-data"
+            exportFileName="lock-sub-function-data"
             leftActions={
               <Button 
                 onClick={handleAdd} 
@@ -352,14 +395,14 @@ export const RoleConfigList = () => {
             }
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}
-            emptyMessage="No role configurations found. Create your first role configuration to get started."
+            emptyMessage="No lock sub functions found. Create your first lock sub function to get started."
           />
 
           {/* Pagination Controls - matching ShiftDashboard style */}
-          {allRoleConfigData.length > 0 && (
+          {allLockSubFunctionData.length > 0 && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
-                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} role configurations
+                Showing {startIndex + 1} to {Math.min(endIndex, totalItems)} of {totalItems} lock sub functions
               </div>
               <div className="flex items-center space-x-2">
                 <Button
@@ -434,17 +477,15 @@ export const RoleConfigList = () => {
         </div>
       )}
 
-      {/* Create Role Config Dialog */}
-      <CreateRoleConfigDialog
+      {/* Create Lock Sub Function Dialog */}
+      <CreateLockSubFunctionDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
-        onRoleConfigCreated={() => {
+        onLockSubFunctionCreated={() => {
           setIsCreateDialogOpen(false);
-          fetchRoleConfigData();
+          fetchLockSubFunctionData();
         }}
       />
     </div>
   );
 };
-
-export default RoleConfigList;

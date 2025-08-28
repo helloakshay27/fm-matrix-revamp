@@ -630,12 +630,9 @@ import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
-import RoleConfigList from './pages/RoleConfigList';
-import RoleConfigCreate from './pages/RoleConfigCreate';
-import LockFunctionList from './pages/LockFunctionList';
-import LockFunctionCreate from './pages/LockFunctionCreate';
-import LockSubFunctionList from './pages/LockSubFunctionList';
-import LockSubFunctionCreate from './pages/LockSubFunctionCreate';
+import { RoleConfigList } from './pages/settings/RoleConfigList';
+import { LockFunctionList } from './pages/settings/LockFunctionList';
+import { LockSubFunctionList } from './pages/settings/LockSubFunctionList';
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
@@ -2004,12 +2001,9 @@ function App() {
                 <Route path="/settings/vas/parking-management/slot-configuration/edit/:id" element={<EditSlotConfigurationPage />} />
                 <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
-                <Route path="/settings/role-config/list" element={<RoleConfigList />} />
-                <Route path="/settings/role-config/create" element={<RoleConfigCreate />} />
-                <Route path="/settings/lock-function/list" element={<LockFunctionList />} />
-                <Route path="/settings/lock-function/create" element={<LockFunctionCreate />} />
-                <Route path="/settings/lock-sub-function/list" element={<LockSubFunctionList />} />
-                <Route path="/settings/lock-sub-function/create" element={<LockSubFunctionCreate />} />
+                <Route path="/settings/account/role-config" element={<RoleConfigList />} />
+                <Route path="/settings/account/lock-function" element={<LockFunctionList />} />
+                <Route path="/settings/account/lock-sub-function" element={<LockSubFunctionList />} />
               </Route>
 
               {/* Setup Routes - Outside of settings parent route */}

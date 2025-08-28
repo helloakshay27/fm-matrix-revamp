@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   ArrowLeft,
   UserCheck,
@@ -15,20 +17,8 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import {
-  FormControl,
-  InputLabel,
-  Select as MuiSelect,
-  MenuItem,
-  TextField,
-  Checkbox,
-  Box,
-  FormControlLabel,
-  FormGroup,
-} from '@mui/material';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
-import { RootState } from '@/store/store';
 
 // Section component for consistent layout
 const Section: React.FC<{
@@ -36,8 +26,8 @@ const Section: React.FC<{
   icon: React.ReactNode;
   children: React.ReactNode;
 }> = ({ title, icon, children }) => (
-  <section className="bg-card rounded-lg border border-border shadow-sm">
-    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+  <section className="bg-white rounded-lg border border-gray-200 shadow-sm">
+    <div className="px-6 py-4 border-b border-gray-200 flex items-center gap-3">
       <div className="w-6 h-6 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
         {icon}
       </div>
@@ -47,7 +37,15 @@ const Section: React.FC<{
   </section>
 );
 
-// Types
+// Permission groups similar to shift timings
+const permissionGroups = {
+  'User Management': ['CREATE_USERS', 'READ_USERS', 'UPDATE_USERS', 'DELETE_USERS'],
+  'Asset Management': ['CREATE_ASSETS', 'READ_ASSETS', 'UPDATE_ASSETS', 'DELETE_ASSETS'],
+  'Maintenance': ['CREATE_TICKETS', 'READ_TICKETS', 'UPDATE_TICKETS', 'ASSIGN_TICKETS'],
+  'Finance': ['CREATE_INVOICES', 'READ_INVOICES', 'APPROVE_INVOICES', 'MANAGE_BUDGET'],
+  'Security': ['MANAGE_VISITORS', 'MANAGE_ACCESS', 'VIEW_SECURITY_LOGS'],
+  'Admin': ['SYSTEM_CONFIG', 'MANAGE_ROLES', 'BACKUP_DATA', 'AUDIT_LOGS']
+};
 interface RoleFormData {
   roleName: string;
   description: string;
@@ -112,42 +110,85 @@ export const RoleConfigCreate: React.FC = () => {
     document.title = 'Create Role Configuration';
   }, []);
 
-  // Form state
-  const [formData, setFormData] = useState<RoleFormData>({
-    roleName: '',
-    description: '',
-    permissions: [],
-    active: true,
-  });
-
-  // Loading states
+  // Form state similar to CreateShiftDialog
+  const [roleName, setRoleName] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Error states
-  const [errors, setErrors] = useState({
-    roleName: false,
-    description: false,
-    permissions: false,
-  });
+  // Validation
+  const validateForm = () => {
+    if (!roleName.trim()) {
+      toast.error('Role name is required');
+      return false;
+    }
 
-  // MUI field styles to match other pages
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-    backgroundColor: '#fafbfc',
-    '& .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#e1e5e9',
-      borderWidth: '1px',
-    },
-    '&:hover .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#9ca3af',
-    },
-    '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-      borderColor: '#C72030',
-      borderWidth: '2px',
-    },
+    if (!description.trim()) {
+      toast.error('Description is required');
+      return false;
+    }
+
+    if (selectedPermissions.length === 0) {
+      toast.error('At least one permission must be selected');
+      return false;
+    }
+
+    return true;
+  };
+
+  // Handle create - similar to CreateShiftDialog
+  const handleCreate = async () => {
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+
+    // Build API payload
+    const payload = {
+      role_config: {
+        name: roleName,
+        description: description,
+        permissions: selectedPermissions,
+        active: isActive
+      }
+    };
+
+    try {
+      // Mock API call - replace with actual API when backend is ready
+      console.log('Creating role config:', payload);
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
+
+      toast.success('Role configuration created successfully!');
+      
+      // Navigate back to list
+      navigate('/settings/account/role-config');
+
+    } catch (error: any) {
+      console.error('Error creating role config:', error);
+      toast.error(`Failed to create role configuration: ${error.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle permission toggle
+  const handlePermissionToggle = (permissionId: string) => {
+    setSelectedPermissions(prev => 
+      prev.includes(permissionId)
+        ? prev.filter(p => p !== permissionId)
+        : [...prev, permissionId]
+    );
+  };
+
+  // Handle select all permissions for a group
+  const handleSelectGroupPermissions = (groupName: string, checked: boolean) => {
+    const groupPermissions = permissionGroups[groupName] || [];
+    
+    if (checked) {
+      setSelectedPermissions(prev => [...new Set([...prev, ...groupPermissions])]);
+    } else {
+      setSelectedPermissions(prev => prev.filter(p => !groupPermissions.includes(p)));
+    }
   };
 
   // Handle input changes
@@ -532,34 +573,152 @@ export const RoleConfigCreate: React.FC = () => {
         </Section>
       </div>
 
-      {/* Footer Actions */}
-      <div className="flex items-center gap-3 justify-center pt-2">
-        <Button
-          variant="destructive"
-          className="px-8 bg-[#C72030] hover:bg-[#A01020]"
-          onClick={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4 mr-2" />
-              Create Role Configuration
-            </>
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          className="px-8"
-          onClick={() => navigate('/settings/role-config/list')}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
+  return (
+    <div className="p-6 space-y-6">
+      <header className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => navigate('/settings/account/role-config')}
+            variant="outline"
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <div className="w-10 h-10 rounded-full bg-[#C72030]/10 text-[#C72030] flex items-center justify-center">
+            <UserCheck className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-wide uppercase">Create Role Configuration</h1>
+            <p className="text-gray-600">Set up new role with permissions</p>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-2xl">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-6 space-y-6">
+            {/* Role Name */}
+            <div>
+              <Label className="block text-sm font-medium text-gray-700 mb-2">
+                Role Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                value={roleName}
+                onChange={(e) => setRoleName(e.target.value)}
+                placeholder="Enter role name"
+                className="rounded-none border border-gray-300 h-10"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Description */}
+            <div>
+              <Label className="block text-sm font-medium text-gray-700 mb-2">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Enter role description"
+                className="rounded-none border border-gray-300 min-h-[80px]"
+                disabled={isSubmitting}
+              />
+            </div>
+
+            {/* Permissions */}
+            <div>
+              <Label className="block text-sm font-medium text-gray-700 mb-2">
+                Permissions <span className="text-red-500">*</span>
+              </Label>
+              
+              <div className="space-y-4">
+                {Object.entries(permissionGroups).map(([groupName, permissions]) => {
+                  const groupSelected = permissions.some(p => selectedPermissions.includes(p));
+                  const allGroupSelected = permissions.every(p => selectedPermissions.includes(p));
+                  
+                  return (
+                    <div key={groupName} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`group-${groupName}`} 
+                            checked={allGroupSelected}
+                            onCheckedChange={(checked) => handleSelectGroupPermissions(groupName, checked as boolean)}
+                            disabled={isSubmitting}
+                          />
+                          <Label 
+                            htmlFor={`group-${groupName}`} 
+                            className="text-sm font-medium text-gray-900"
+                          >
+                            {groupName}
+                          </Label>
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {permissions.filter(p => selectedPermissions.includes(p)).length}/{permissions.length} selected
+                        </span>
+                      </div>
+                      
+                      <div className="ml-6 grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {permissions.map((permission) => (
+                          <div key={permission} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={permission} 
+                              checked={selectedPermissions.includes(permission)}
+                              onCheckedChange={() => handlePermissionToggle(permission)}
+                              disabled={isSubmitting}
+                            />
+                            <Label 
+                              htmlFor={permission} 
+                              className="text-sm text-gray-700"
+                            >
+                              {permission.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Active Status */}
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="active-status" 
+                checked={isActive}
+                onCheckedChange={(checked) => setIsActive(checked as boolean)}
+                disabled={isSubmitting}
+              />
+              <Label 
+                htmlFor="active-status" 
+                className="text-sm font-medium text-gray-700"
+              >
+                Active Role
+              </Label>
+            </div>
+
+            {/* Create Button */}
+            <div className="flex justify-center pt-4">
+              <Button 
+                onClick={handleCreate}
+                disabled={isSubmitting}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 rounded-none shadow-none disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Role'
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
