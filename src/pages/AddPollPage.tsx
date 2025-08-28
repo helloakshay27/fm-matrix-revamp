@@ -1,16 +1,29 @@
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Calendar, Clock, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Container,
+  InputAdornment,
+  FormControl,
+  InputLabel,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  MenuItem,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+  Card,
+  CardContent,
+  Divider,
+  IconButton,
+  Stack,
+  Alert
+} from '@mui/material';
 
 const AddPollPage = () => {
   const navigate = useNavigate();
@@ -66,224 +79,260 @@ const AddPollPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header with cyan border */}
-      <div className="bg-white border-t-4 border-cyan-400 p-6">
-        <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      {/* Header */}
+      <Paper 
+        elevation={1}
+        sx={{ 
+          borderTop: 4, 
+          borderColor: 'cyan.400', 
+          p: 3,
+          borderRadius: 0
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <IconButton 
             onClick={() => navigate('/crm/polls')}
-            className="p-2"
+            sx={{ p: 1 }}
           >
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-2xl font-semibold text-gray-900">Create New Poll</h1>
-        </div>
-      </div>
+            <ArrowLeft size={20} />
+          </IconButton>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+            Create New Poll
+          </Typography>
+        </Stack>
+      </Paper>
 
       {/* Form */}
-      <div className="max-w-4xl mx-auto p-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Subject */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Subject
-            </label>
-            <Input
-              type="text"
-              value={formData.subject}
-              onChange={(e) => handleInputChange('subject', e.target.value)}
-              className="w-full"
-              placeholder="Enter poll subject"
-              required
-            />
-          </div>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Stack spacing={4}>
+              {/* Subject */}
+              <TextField
+                label="Subject"
+                type="text"
+                value={formData.subject}
+                onChange={(e) => handleInputChange('subject', e.target.value)}
+                placeholder="Enter poll subject"
+                required
+                fullWidth
+                variant="outlined"
+              />
 
-          {/* Date and Time Row */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Start Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
+              {/* Date and Time Row */}
+              <Box 
+                sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, 
+                  gap: 3 
+                }}
+              >
+                <TextField
+                  label="Start Date"
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  className="pl-10"
                   required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Calendar size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              </div>
-            </div>
 
-            {/* End Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
-              </label>
-              <div className="relative">
-                <Calendar className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
+                <TextField
+                  label="End Date"
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  className="pl-10"
                   required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Calendar size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              </div>
-            </div>
 
-            {/* Start Time */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Start Time
-              </label>
-              <div className="relative">
-                <Clock className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
+                <TextField
+                  label="Start Time"
                   type="time"
                   value={formData.startTime}
                   onChange={(e) => handleInputChange('startTime', e.target.value)}
-                  className="pl-10"
                   required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Clock size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              </div>
-            </div>
 
-            {/* End Time */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                End Time
-              </label>
-              <div className="relative">
-                <Clock className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <Input
+                <TextField
+                  label="End Time"
                   type="time"
                   value={formData.endTime}
                   onChange={(e) => handleInputChange('endTime', e.target.value)}
-                  className="pl-10"
                   required
+                  fullWidth
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Clock size={20} />
+                      </InputAdornment>
+                    ),
+                  }}
                 />
-              </div>
-            </div>
-          </div>
+              </Box>
 
-          {/* Participation Info */}
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center gap-4">
-              <Select value={selectedShareWith} onValueChange={setSelectedShareWith}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="individual">Individual</SelectItem>
-                  <SelectItem value="group">Group</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-gray-600">
-                User can participate in the poll from a Flat.
-              </span>
-            </div>
-          </div>
-
-          {/* Poll Options */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              Poll Options
-            </label>
-            <div className="space-y-3">
-              {formData.options.map((option, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <Input
-                    type="text"
-                    value={option}
-                    onChange={(e) => handleOptionChange(index, e.target.value)}
-                    placeholder={`Option ${index + 1}`}
-                    className="flex-1"
-                    required
-                  />
-                  {formData.options.length > 2 && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => removeOption(index)}
-                      className="text-red-600 hover:text-red-700"
+              {/* Participation Info */}
+              <Alert severity="info" sx={{ bgcolor: 'blue.50', color: 'text.primary' }}>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Share</InputLabel>
+                    <Select
+                      value={selectedShareWith}
+                      onChange={(e) => setSelectedShareWith(e.target.value)}
+                      label="Share"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            <Button
-              type="button"
-              onClick={addOption}
-              className="mt-3 bg-cyan-500 hover:bg-cyan-600 text-white"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add option
-            </Button>
-          </div>
+                      <MenuItem value="all">All</MenuItem>
+                      <MenuItem value="individual">Individual</MenuItem>
+                      <MenuItem value="group">Group</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography variant="body2" color="text.secondary">
+                    User can participate in the poll from a Flat.
+                  </Typography>
+                </Stack>
+              </Alert>
 
-          {/* Share With Section */}
-          <div className="bg-teal-50 p-4 rounded-lg">
-            <h3 className="text-sm font-medium text-gray-700 mb-4 uppercase tracking-wide">
-              SHARE WITH
-            </h3>
-            <div className="flex items-center gap-6">
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="shareWith"
-                  value="all"
-                  checked={selectedShareWith === 'all'}
-                  onChange={(e) => setSelectedShareWith(e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-sm">All</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="shareWith"
-                  value="individual"
-                  checked={selectedShareWith === 'individual'}
-                  onChange={(e) => setSelectedShareWith(e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-sm">Individual</span>
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="radio"
-                  name="shareWith"
-                  value="group"
-                  checked={selectedShareWith === 'group'}
-                  onChange={(e) => setSelectedShareWith(e.target.value)}
-                  className="mr-2"
-                />
-                <span className="text-sm">Group</span>
-              </label>
-            </div>
-          </div>
+              {/* Poll Options */}
+              <Card variant="outlined" sx={{ p: 3 }}>
+                <Typography variant="h6" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
+                  Poll Options
+                </Typography>
+                
+                <Stack spacing={2}>
+                  {formData.options.map((option, index) => (
+                    <Stack key={index} direction="row" alignItems="center" spacing={2}>
+                      <TextField
+                        type="text"
+                        value={option}
+                        onChange={(e) => handleOptionChange(index, e.target.value)}
+                        placeholder={`Option ${index + 1}`}
+                        required
+                        fullWidth
+                        size="small"
+                      />
+                      {formData.options.length > 2 && (
+                        <IconButton
+                          onClick={() => removeOption(index)}
+                          sx={{ color: 'error.main' }}
+                          size="small"
+                        >
+                          <Trash2 size={18} />
+                        </IconButton>
+                      )}
+                    </Stack>
+                  ))}
+                </Stack>
+                
+                <Button
+                  type="button"
+                  onClick={addOption}
+                  startIcon={<Plus size={18} />}
+                  sx={{ 
+                    mt: 2,
+                    bgcolor: 'cyan.500',
+                    '&:hover': { bgcolor: 'cyan.600' },
+                    color: 'white'
+                  }}
+                  variant="contained"
+                >
+                  Add Option
+                </Button>
+              </Card>
 
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              className="bg-green-600 hover:bg-green-700 text-white px-8 py-2"
-            >
-              Submit
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+              {/* Share With Section */}
+              <Card 
+                variant="outlined" 
+                sx={{ 
+                  p: 3, 
+                  bgcolor: 'teal.50',
+                  borderColor: 'teal.200'
+                }}
+              >
+                <Typography 
+                  variant="subtitle2" 
+                  sx={{ 
+                    mb: 2, 
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    color: 'text.secondary'
+                  }}
+                >
+                  Share With
+                </Typography>
+                
+                <RadioGroup
+                  row
+                  value={selectedShareWith}
+                  onChange={(e) => setSelectedShareWith(e.target.value)}
+                >
+                  <FormControlLabel 
+                    value="all" 
+                    control={<Radio size="small" />} 
+                    label="All" 
+                  />
+                  <FormControlLabel 
+                    value="individual" 
+                    control={<Radio size="small" />} 
+                    label="Individual" 
+                  />
+                  <FormControlLabel 
+                    value="group" 
+                    control={<Radio size="small" />} 
+                    label="Group" 
+                  />
+                </RadioGroup>
+              </Card>
+
+              {/* Submit Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    bgcolor: 'success.main',
+                    '&:hover': { bgcolor: 'success.dark' },
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: 2,
+                    fontWeight: 600
+                  }}
+                >
+                  Submit Poll
+                </Button>
+              </Box>
+            </Stack>
+          </Box>
+        </Paper>
+      </Container>
+    </Box>
   );
 };
 
