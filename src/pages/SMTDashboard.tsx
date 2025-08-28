@@ -1,173 +1,42 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Eye, Users, UserCheck, ClipboardList, Building2 } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const SMTDashboard = () => {
 
-  // ...existing code...
-  // SMT summary card data (must be after dummyData)
-    const dummyData = [
-    {
-      id: 1,
-      smt_done_by_name: 'John Doe',
-      smt_done_by_function: 'Operations',
-      smt_done_by_circle: 'Circle A',
-      area_of_visit: 'Warehouse',
-      type_of_facility: 'Storage',
-      smt_done_date: '2025-08-01',
-    },
-    {
-      id: 2,
-      smt_done_by_name: 'Jane Smith',
-      smt_done_by_function: 'Maintenance',
-      smt_done_by_circle: 'Circle B',
-      area_of_visit: 'Plant',
-      type_of_facility: 'Manufacturing',
-      smt_done_date: '2025-08-02',
-    },
-    {
-      id: 3,
-      smt_done_by_name: 'Alice Brown',
-      smt_done_by_function: 'Safety',
-      smt_done_by_circle: 'Circle C',
-      area_of_visit: 'Office',
-      type_of_facility: 'Admin',
-      smt_done_date: '2025-08-03',
-    },
-    {
-      id: 4,
-      smt_done_by_name: 'Bob White',
-      smt_done_by_function: 'Logistics',
-      smt_done_by_circle: 'Circle D',
-      area_of_visit: 'Dock',
-      type_of_facility: 'Transport',
-      smt_done_date: '2025-08-04',
-    },
-    {
-      id: 5,
-      smt_done_by_name: 'Charlie Green',
-      smt_done_by_function: 'Security',
-      smt_done_by_circle: 'Circle E',
-      area_of_visit: 'Gate',
-      type_of_facility: 'Entry',
-      smt_done_date: '2025-08-05',
-    },
-    {
-      id: 6,
-      smt_done_by_name: 'Diana King',
-      smt_done_by_function: 'Admin',
-      smt_done_by_circle: 'Circle F',
-      area_of_visit: 'Reception',
-      type_of_facility: 'Admin',
-      smt_done_date: '2025-08-06',
-    },
-    {
-      id: 7,
-      smt_done_by_name: 'Eve Black',
-      smt_done_by_function: 'Operations',
-      smt_done_by_circle: 'Circle G',
-      area_of_visit: 'Yard',
-      type_of_facility: 'Outdoor',
-      smt_done_date: '2025-08-07',
-    },
-    {
-      id: 8,
-      smt_done_by_name: 'Frank Gray',
-      smt_done_by_function: 'Maintenance',
-      smt_done_by_circle: 'Circle H',
-      area_of_visit: 'Workshop',
-      type_of_facility: 'Repair',
-      smt_done_date: '2025-08-08',
-    },
-    {
-      id: 9,
-      smt_done_by_name: 'Grace Hill',
-      smt_done_by_function: 'Safety',
-      smt_done_by_circle: 'Circle I',
-      area_of_visit: 'Lab',
-      type_of_facility: 'Testing',
-      smt_done_date: '2025-08-09',
-    },
-    {
-      id: 10,
-      smt_done_by_name: 'Henry Stone',
-      smt_done_by_function: 'Logistics',
-      smt_done_by_circle: 'Circle J',
-      area_of_visit: 'Parking',
-      type_of_facility: 'Outdoor',
-      smt_done_date: '2025-08-10',
-    },
-    {
-      id: 11,
-      smt_done_by_name: 'Iris Wilson',
-      smt_done_by_function: 'Security',
-      smt_done_by_circle: 'Circle K',
-      area_of_visit: 'Server Room',
-      type_of_facility: 'IT',
-      smt_done_date: '2025-08-11',
-    },
-    {
-      id: 12,
-      smt_done_by_name: 'Jack Davis',
-      smt_done_by_function: 'Admin',
-      smt_done_by_circle: 'Circle L',
-      area_of_visit: 'Cafeteria',
-      type_of_facility: 'Food',
-      smt_done_date: '2025-08-12',
-    },
-    {
-      id: 13,
-      smt_done_by_name: 'Kate Miller',
-      smt_done_by_function: 'Operations',
-      smt_done_by_circle: 'Circle M',
-      area_of_visit: 'Control Room',
-      type_of_facility: 'Monitoring',
-      smt_done_date: '2025-08-13',
-    },
-    {
-      id: 14,
-      smt_done_by_name: 'Leo Garcia',
-      smt_done_by_function: 'Maintenance',
-      smt_done_by_circle: 'Circle N',
-      area_of_visit: 'Generator Room',
-      type_of_facility: 'Power',
-      smt_done_date: '2025-08-14',
-    },
-    {
-      id: 15,
-      smt_done_by_name: 'Mia Rodriguez',
-      smt_done_by_function: 'Safety',
-      smt_done_by_circle: 'Circle O',
-      area_of_visit: 'Fire Exit',
-      type_of_facility: 'Safety',
-      smt_done_date: '2025-08-15',
-    },
-  ];
-  const cardData = [
-    {
-      title: 'Total SMTs',
-      count: dummyData.length,
-      icon: Users,
-    },
-    {
-      title: 'Unique Circles',
-      count: Array.from(new Set(dummyData.map(d => d.smt_done_by_circle))).length,
-      icon: Building2,
-    },
-    {
-      title: 'Distinct Functions',
-      count: Array.from(new Set(dummyData.map(d => d.smt_done_by_function))).length,
-      icon: ClipboardList,
-    },
-    {
-      title: 'People Interacted',
-      count: 4, // Placeholder, update if you have real data
-      icon: UserCheck,
-    },
-  ];
+  // Server-driven data and pagination
+  type SMTRecord = {
+    id: number;
+    area_of_visit?: string | null;
+    facility_name?: string | null;
+    other_facility_name?: string | null;
+    created_at?: string | null;
+    circle_name?: string | null;
+    smt_user?: { id: number; name?: string | null } | null;
+    people_interacted_with?: (string | null)[];
+  };
+
+  type PaginationData = { current_page: number; total_count: number; total_pages: number };
+
+  const [serverData, setServerData] = useState<SMTRecord[]>([]);
+  const [paginationData, setPaginationData] = useState<PaginationData>({ current_page: 1, total_count: 0, total_pages: 1 });
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const cardData = useMemo(() => {
+    const uniqueCircles = new Set(serverData.map((d) => d.circle_name || '-')).size;
+    const peopleInteracted = serverData.reduce((acc, r) => acc + (r.people_interacted_with?.filter((n) => (n || '').toString().trim().length > 0).length || 0), 0);
+    return [
+      { title: 'Total SMTs', count: paginationData.total_count, icon: Users },
+      { title: 'Unique Circles', count: uniqueCircles, icon: Building2 },
+      { title: 'Distinct Functions', count: 0, icon: ClipboardList },
+      { title: 'People Interacted', count: peopleInteracted, icon: UserCheck },
+    ];
+  }, [serverData, paginationData.total_count]);
 
   const columns = [
     { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
@@ -181,14 +50,53 @@ const SMTDashboard = () => {
 
 
 
-  const pageSize = 5;
+  const pageSize = 5; // per_page on server
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  const paginatedData = dummyData.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  const totalPages = Math.ceil(dummyData.length / pageSize);
+  // Fetch data from API
+  const fetchSMTs = useCallback(async (page: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      const url = `https://${baseUrl}/smts.json?page=${page}&per_page=${pageSize}`;
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const resp = await axios.get(url, { headers });
+      const payload = resp.data || {};
+      const rows: SMTRecord[] = Array.isArray(payload.data) ? payload.data : Array.isArray(payload) ? payload : [];
+      const pagination: PaginationData = payload.pagination || { current_page: page, total_count: rows.length, total_pages: Math.max(1, Math.ceil((payload.total_count || rows.length) / pageSize)) };
+      setServerData(rows);
+      setPaginationData(pagination);
+    } catch (e: any) {
+      console.error('Failed to fetch SMTs:', e);
+      setError(e?.message || 'Failed to fetch SMTs');
+      toast.error('Failed to fetch SMTs');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSMTs(currentPage);
+  }, [fetchSMTs, currentPage]);
+
+  // Map server data to table rows expected by EnhancedTable
+  const tableData = useMemo(() => {
+    return serverData.map((r) => ({
+      id: r.id,
+      smt_done_by_name: r.smt_user?.name || '-',
+      smt_done_by_function: '-',
+      smt_done_by_circle: r.circle_name || '-',
+      area_of_visit: r.area_of_visit || '-',
+      type_of_facility: r.facility_name || r.other_facility_name || '-',
+      smt_done_date: r.created_at || '-',
+      _raw: r,
+    }));
+  }, [serverData]);
 
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
@@ -201,12 +109,12 @@ const SMTDashboard = () => {
               className="h-8 w-8 p-0"
               onClick={() => navigate(`/maintenance/smt/${item.id}`, { state: { row: item } })}
             >
-              <Eye className="h-4 w-4" />
+              <Eye className="h-4 w-4" onClick={() => navigate(`/maintenance/smt/${item.id}`, { state: { row: item } })} />
             </Button>
           </div>
         );
       case 'smt_done_date':
-        return new Date(item.smt_done_date).toLocaleDateString();
+        return item.smt_done_date ? new Date(item.smt_done_date).toLocaleDateString() : '-';
       default:
         return item[columnKey] || '';
     }
@@ -214,7 +122,7 @@ const SMTDashboard = () => {
 
   const handleSelectAll = (checked) => {
     if (checked) {
-      setSelectedItems(dummyData.map(item => item.id.toString()));
+      setSelectedItems(tableData.map(item => item.id.toString()));
     } else {
       setSelectedItems([]);
     }
@@ -229,6 +137,7 @@ const SMTDashboard = () => {
   };
 
   // Pagination rendering (same style as MSafeDashboard)
+  const totalPages = paginationData.total_pages || 1;
   const renderPaginationItems = () => {
     const items = [];
     const showEllipsis = totalPages > 7;
@@ -340,21 +249,21 @@ const SMTDashboard = () => {
         ))}
       </div>
       <EnhancedTable
-        data={paginatedData}
+        data={tableData}
         columns={columns}
         renderCell={renderCell}
-        selectable={true}
+        // selectable={true}
         selectedItems={selectedItems}
         onSelectAll={handleSelectAll}
         onSelectItem={handleSelectItem}
         getItemId={item => item.id.toString()}
         storageKey="smt-dashboard-table"
         emptyMessage="No SMT records found"
-        searchPlaceholder="Search SMT records..."
+        searchPlaceholder="Search..."
         enableExport={false}
         showBulkActions={false}
         pagination={false}
-        loading={false}
+        loading={loading}
       />
       {/* Pagination (same as MSafeDashboard) */}
       {totalPages > 1 && (

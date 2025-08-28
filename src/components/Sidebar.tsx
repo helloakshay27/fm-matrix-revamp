@@ -321,17 +321,19 @@ const modulesByPackage = {
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
-   {
+    {
       name: 'Users',
       icon: User,
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
         { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
-        { name: 'Krcc List', href: '/maintenance/krcc-list' },
         { name: 'LMC', href: '/maintenance/lmc' },
+        { name: 'SMT', href: '/maintenance/smt' },
+        { name: 'Krcc List', href: '/maintenance/krcc-list' },
         { name: 'Training List', href: '/maintenance/training-list' },
-        { name: 'Reportees Reassign', href: '/maintenance/reportees-reassign' }
+        { name: 'Reportees Reassign', href: '/maintenance/reportees-reassign' },
+
       ]
     },
     {
@@ -343,9 +345,8 @@ const modulesByPackage = {
         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
       ]
     },
-  
-    // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
-   
+
+
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
@@ -511,7 +512,7 @@ const modulesByPackage = {
         { name: 'Report Setup', href: '/settings/account/report-setup' },
         { name: 'Notification Setup', href: '/settings/account/notification-setup' },
         { name: 'Shift', href: '/settings/account/shift' },
-                  { name: 'Roster', href: '/settings/account/roster' }
+        { name: 'Roster', href: '/settings/account/roster' }
 
 
       ]
@@ -847,12 +848,12 @@ export const Sidebar = () => {
                       {expandedItems.includes(subItem.name) && (
                         <div className="ml-4 mt-1 space-y-1">
                           {subItem.subItems.map((nestedItem: any) => (
-                             <button
-                               key={nestedItem.name}
-                               onClick={() => handleNavigation(nestedItem.href)}
-                               className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
-                                 }`}
-                             >
+                            <button
+                              key={nestedItem.name}
+                              onClick={() => handleNavigation(nestedItem.href)}
+                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
+                                }`}
+                            >
                               {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
                               {nestedItem.name}
                             </button>

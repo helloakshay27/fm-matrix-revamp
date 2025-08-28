@@ -7,7 +7,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getMaterialPR } from "@/store/slices/materialPRSlice";
+import { getMaterialPR, updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const columns: ColumnConfig[] = [
@@ -105,6 +105,7 @@ export const MaterialPRDashboard = () => {
     total_count: 0,
     total_pages: 0,
   });
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({}); // Track loading state for each checkbox
 
   const fetchData = async (filterParams = {}) => {
     try {
@@ -134,8 +135,8 @@ export const MaterialPRDashboard = () => {
       setPagination({
         current_page: response.current_page,
         total_count: response.total_count,
-        total_pages: response.total_pages
-      })
+        total_pages: response.total_pages,
+      });
     } catch (error) {
       console.log(error);
       toast.error(
@@ -154,13 +155,13 @@ export const MaterialPRDashboard = () => {
     supplierName: string;
     approvalStatus: string;
   }) => {
-    setFilters(newFilters); // Update filter state
+    setFilters(newFilters);
     fetchData({
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.prNumber,
       supplier_name: newFilters.supplierName,
       approval_status: newFilters.approvalStatus,
-    }); // Fetch data with filters
+    });
   };
 
   const getStatusColor = (status: string) => {
@@ -175,6 +176,44 @@ export const MaterialPRDashboard = () => {
         return "bg-gray-500 text-white";
     }
   };
+
+  const handleCheckboxChange = async (item: any) => {
+    const newStatus = !item.activeInactive;
+    const itemId = item.id;
+
+    if (updatingStatus[itemId]) return;
+
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
+
+      await dispatch(
+        updateActiveStaus({
+          baseUrl,
+          token,
+          id: itemId,
+          data: {
+            pms_purchase_order: {
+              active: newStatus,
+            },
+          },
+        })
+      ).unwrap();
+
+      setMaterialPR((prevData: any[]) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, activeInactive: newStatus } : row
+        )
+      );
+
+      toast.success(`Material PR ${newStatus ? "activated" : "deactivated"} successfully`);
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast.error(error || "Failed to update active status. Please try again.");
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
 
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
@@ -193,8 +232,9 @@ export const MaterialPRDashboard = () => {
           <input
             type="checkbox"
             checked={item.activeInactive}
-            readOnly
-            className="w-4 h-4"
+            onChange={() => handleCheckboxChange(item)}
+            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            disabled={updatingStatus[item.id]}
           />
         );
       case "prAmount":
@@ -268,7 +308,7 @@ export const MaterialPRDashboard = () => {
 
     if (showEllipsis) {
       items.push(
-        <PaginationItem key={1} className='cursor-pointer'>
+        <PaginationItem key={1} className="cursor-pointer">
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
@@ -282,14 +322,14 @@ export const MaterialPRDashboard = () => {
 
       if (currentPage > 4) {
         items.push(
-          <PaginationItem key="ellipsis1" >
+          <PaginationItem key="ellipsis1">
             <PaginationEllipsis />
           </PaginationItem>
         );
       } else {
         for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
@@ -306,7 +346,7 @@ export const MaterialPRDashboard = () => {
       if (currentPage > 3 && currentPage < totalPages - 2) {
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
           items.push(
-            <PaginationItem key={i} className='cursor-pointer'>
+            <PaginationItem key={i} className="cursor-pointer">
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
@@ -330,7 +370,7 @@ export const MaterialPRDashboard = () => {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
           if (!items.find((item) => item.key === i.toString())) {
             items.push(
-              <PaginationItem key={i} className='cursor-pointer'>
+              <PaginationItem key={i} className="cursor-pointer">
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
@@ -347,7 +387,7 @@ export const MaterialPRDashboard = () => {
 
       if (totalPages > 1) {
         items.push(
-          <PaginationItem key={totalPages} className='cursor-pointer'>
+          <PaginationItem key={totalPages} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
@@ -362,7 +402,7 @@ export const MaterialPRDashboard = () => {
     } else {
       for (let i = 1; i <= totalPages; i++) {
         items.push(
-          <PaginationItem key={i} className='cursor-pointer'>
+          <PaginationItem key={i} className="cursor-pointer">
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
@@ -408,14 +448,14 @@ export const MaterialPRDashboard = () => {
             <PaginationItem>
               <PaginationPrevious
                 onClick={() => handlePageChange(Math.max(1, pagination.current_page - 1))}
-                className={pagination.current_page === 1 || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                className={pagination.current_page === 1 || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
             {renderPaginationItems()}
             <PaginationItem>
               <PaginationNext
                 onClick={() => handlePageChange(Math.min(pagination.total_pages, pagination.current_page + 1))}
-                className={pagination.current_page === pagination.total_pages || loading ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                className={pagination.current_page === pagination.total_pages || loading ? "pointer-events-none opacity-50" : "cursor-pointer"}
               />
             </PaginationItem>
           </PaginationContent>

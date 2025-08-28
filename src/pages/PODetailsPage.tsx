@@ -242,6 +242,9 @@ export const PODetailsPage = () => {
     total_amount: "",
     show_send_sap_yes: false,
     approval_levels: [],
+    deliveryAddress: "",
+    email: "",
+    gst: ""
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -262,26 +265,6 @@ export const PODetailsPage = () => {
 
     fetchData();
   }, []);
-
-  const poDetail = {
-    poNumber: "121240",
-    createdBy: "Sony Bhosle",
-    createdOn: "22/04/2025",
-    supplier: "ABC",
-    status: "L1 Approval - Approved",
-    phone: "7234013238",
-    email: "xyz@zaamserveyservice@gmail.com",
-    pan: "BCCGP779796",
-    address: "demo world",
-    gst: "NA",
-    deliveryAddress: "jyoti",
-    paymentTenure: "-",
-    tds: "NA",
-    advanceAmount: "-",
-    relatedTo: "NA",
-    retention: "-",
-    qc: "-",
-  };
 
   const handlePrint = () => {
     window.print();
@@ -622,14 +605,14 @@ export const PODetailsPage = () => {
               <span className="text-sm font-medium text-gray-700 w-44">
                 GST
               </span>
-              <span className="text-sm">: {poDetail.gst}</span>
+              <span className="text-sm">: {poDetails.gst}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-44">
                 Delivery Address
               </span>
               <span className="text-sm">
-                : {poDetail.deliveryAddress}
+                : {poDetails.deliveryAddress}
                 <br />
                 demo world
               </span>
@@ -638,7 +621,7 @@ export const PODetailsPage = () => {
               <span className="text-sm font-medium text-gray-700 w-44">
                 Email
               </span>
-              <span className="text-sm">: {poDetail.email}</span>
+              <span className="text-sm">: {poDetails.email}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-44">

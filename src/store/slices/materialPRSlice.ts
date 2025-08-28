@@ -217,6 +217,23 @@ export const getFeeds = createAsyncThunk(
     }
 )
 
+export const updateActiveStaus = createAsyncThunk(
+    'updateActiveStaus',
+    async ({ baseUrl, token, id, data }: { baseUrl: string, token: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/purchase_orders/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update active status'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getSuppliersSlice = createApiSlice("getSuppliers", getSuppliers);
 const getPlantDetailsSlice = createApiSlice("getPlantDetails", getPlantDetails);
 const getAddressesSlice = createApiSlice("getAddresses", getAddresses);
@@ -227,6 +244,7 @@ const getMaterialPRByIdSlice = createApiSlice("getMaterialPRById", getMaterialPR
 const changePlantDetailsSlice = createApiSlice("changePlantDetails", changePlantDetails);
 const fetchWBSSlice = createApiSlice("fetchWBS", fetchWBS);
 const getFeedsSlice = createApiSlice("getFeeds", getFeeds);
+const updateActiveStausSlice = createApiSlice("updateActiveStaus", updateActiveStaus);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -238,3 +256,4 @@ export const getMaterialPRByIdReducer = getMaterialPRByIdSlice.reducer
 export const changePlantDetailsReducer = changePlantDetailsSlice.reducer
 export const fetchWBSReducer = fetchWBSSlice.reducer
 export const getFeedsReducer = getFeedsSlice.reducer
+export const updateActiveStausReducer = updateActiveStausSlice.reducer
