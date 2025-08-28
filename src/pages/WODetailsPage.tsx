@@ -413,7 +413,7 @@ export const WODetailsPage = () => {
             WORK ORDER DETAILS
           </h1>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             {
               workOrder?.approvals?.map((approval: any) => (
                 <div className='space-y-2' key={approval.id}>

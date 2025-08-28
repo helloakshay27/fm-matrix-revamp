@@ -401,7 +401,7 @@ export const PODetailsPage = () => {
           <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             PURCHASE ORDER DETAILS
           </h1>
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             {
               poDetails?.approval_levels?.map((level: any) => (
                 <div className='space-y-2' key={level.id}>
@@ -411,7 +411,7 @@ export const PODetailsPage = () => {
                   {
                     level.approved_by && level.approval_date &&
                     <div className='ms-2'>
-                      {`${level.approved_by} (${format(new Date(level.approval_date), 'dd/MM/yyyy')})`}
+                      {`${level.approved_by} (${level.approval_date})`}
                     </div>
                   }
                 </div>
