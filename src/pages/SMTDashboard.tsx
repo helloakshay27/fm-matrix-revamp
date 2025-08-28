@@ -107,9 +107,9 @@ const SMTDashboard = () => {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => navigate(`/maintenance/smt/${item.id}`, { state: { row: item } })}
+              onClick={() => navigate(`/maintenance/m-safe/smt/${item.id}`, { state: { row: item } })}
             >
-              <Eye className="h-4 w-4" onClick={() => navigate(`/maintenance/smt/${item.id}`, { state: { row: item } })} />
+              <Eye className="h-4 w-4" onClick={() => navigate(`/maintenance/m-safe/smt/${item.id}`, { state: { row: item } })} />
             </Button>
           </div>
         );
@@ -228,7 +228,7 @@ const SMTDashboard = () => {
   return (
     <div className="p-6">
       {/* SMT Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {cardData.map((card, index) => (
           <div
             key={index}
@@ -247,7 +247,7 @@ const SMTDashboard = () => {
             </div>
           </div>
         ))}
-      </div>
+      </div> */}
       <EnhancedTable
         data={tableData}
         columns={columns}
