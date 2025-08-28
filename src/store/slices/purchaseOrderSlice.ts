@@ -87,6 +87,7 @@ export const createPurchaseOrder = createAsyncThunk(
             const response = await axios.post(`https://${baseUrl}/pms/purchase_orders.json`, data, {
                 headers: {
                     Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
                 }
             })
             return response.data

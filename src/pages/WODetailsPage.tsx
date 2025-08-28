@@ -1,6 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Edit, Copy, Printer, Rss, ArrowLeft } from "lucide-react";
+import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -25,6 +25,8 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { format } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const boqColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
@@ -182,6 +184,8 @@ export const WODetailsPage = () => {
   const [rejectComment, setRejectComment] = useState("");
   const [debitCreditNote, setDebitCreditNote] = useState([]);
   const [invoices, setInvoices] = useState([]);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [debitCreditForm, setDebitCreditForm] = useState({
     type: "",
     amount: "",
@@ -808,22 +812,51 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Attachments
-        </h3>
-        <div className="flex items-center gap-4 flex-wrap">
-          {workOrder?.attachments?.length > 0 &&
-            workOrder.attachments.map((attachment, index) => (
-              <img
-                src={attachment.url}
-                alt=""
-                key={index}
-                className="w-24 h-24"
-              />
-            ))}
-        </div>
-      </div>
+      <Card className="shadow-sm border border-border mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Array.isArray(workOrder.attachments) && workOrder.attachments.length > 0 ? (
+            <div className="space-y-3">
+              {workOrder.attachments.map((attachment: any) => {
+                const getFileIcon = (fileName: string) => {
+                  const ext = fileName.split(".").pop()?.toLowerCase();
+                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
+                    return <Image className="w-5 h-5 text-blue-600" />;
+                  }
+                  if (ext === "pdf") {
+                    return <FileText className="w-5 h-5 text-red-600" />;
+                  }
+                  return <File className="w-5 h-5 text-gray-600" />;
+                };
+
+                return (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedAttachment(attachment);
+                      setIsPreviewModalOpen(true);
+                    }}
+                  >
+                    {getFileIcon(attachment.document_file_name)}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {attachment.document_file_name}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No attachments
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -1037,6 +1070,15 @@ export const WODetailsPage = () => {
         setRelatedTo={setRelatedTo}
         setNotes={setNotes}
         fetchWorkOrder={fetchWorkOrder}
+      />
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Edit, Copy, Printer, Rss, ArrowLeft } from 'lucide-react';
+import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppDispatch } from '@/store/hooks';
 import { approveRejectWO, getWorkOrderById } from '@/store/slices/workOrderSlice';
@@ -11,6 +11,8 @@ import type { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { format } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Define the interface for service items
 interface ServiceItem {
@@ -71,6 +73,8 @@ export const ServicePRDetailsPage = () => {
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
   const [servicePR, setServicePR] = useState<any>({});
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     showAddInvoice: false,
@@ -547,17 +551,52 @@ export const ServicePRDetailsPage = () => {
         </div>
       </div>
 
-      {/* Attachments Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
-        <div className='flex items-center gap-4 flex-wrap'>
-          {
-            servicePR.attachments?.map((attachment: any) => (
-              <img src={attachment.url} alt="" height={100} width={100} key={attachment.url} />
-            ))
-          }
-        </div>
-      </div>
+      {/* Attachments Card */}
+      <Card className="shadow-sm border border-border">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Array.isArray(servicePR.attachments) && servicePR.attachments.length > 0 ? (
+            <div className="space-y-3">
+              {servicePR.attachments.map((attachment: any) => {
+                const getFileIcon = (fileName: string) => {
+                  const ext = fileName.split(".").pop()?.toLowerCase();
+                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
+                    return <Image className="w-5 h-5 text-blue-600" />;
+                  }
+                  if (ext === "pdf") {
+                    return <FileText className="w-5 h-5 text-red-600" />;
+                  }
+                  return <File className="w-5 h-5 text-gray-600" />;
+                };
+
+                return (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedAttachment(attachment);
+                      setIsPreviewModalOpen(true);
+                    }}
+                  >
+                    {getFileIcon(attachment.document_file_name)}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {attachment.document_file_name}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No attachments
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {shouldShowButtons && (
         <div className="flex items-center justify-center gap-4">
@@ -610,6 +649,15 @@ export const ServicePRDetailsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
+      />
     </div>
   );
 };

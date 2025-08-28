@@ -549,13 +549,6 @@ export const MaterialPRDetailsPage = () => {
                           {attachment.document_file_name}
                         </p>
                       </div>
-                      <a
-                        href={attachment.url}
-                        download={attachment.document_file_name}
-                        onClick={(e) => e.stopPropagation()} // stop opening modal
-                      >
-                        <Download className="w-4 h-4 text-muted-foreground" />
-                      </a>
                     </div>
                   );
                 })}
@@ -566,7 +559,6 @@ export const MaterialPRDetailsPage = () => {
               </p>
             )}
           </CardContent>
-
         </Card>
 
         {/* Terms & Conditions Card */}
