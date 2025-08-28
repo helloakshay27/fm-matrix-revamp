@@ -85,19 +85,24 @@ const AddPollPage = () => {
         elevation={1}
         sx={{ 
           borderTop: 4, 
-          borderColor: 'cyan.400', 
+          borderColor: '#C72030', 
           p: 3,
-          borderRadius: 0
+          borderRadius: 0,
+          bgcolor: 'background.paper'
         }}
       >
         <Stack direction="row" alignItems="center" spacing={2}>
           <IconButton 
             onClick={() => navigate('/crm/polls')}
-            sx={{ p: 1 }}
+            sx={{ 
+              p: 1,
+              color: 'text.secondary',
+              '&:hover': { bgcolor: 'action.hover' }
+            }}
           >
             <ArrowLeft size={20} />
           </IconButton>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'text.primary' }}>
             Create New Poll
           </Typography>
         </Stack>
@@ -198,9 +203,31 @@ const AddPollPage = () => {
               </Box>
 
               {/* Participation Info */}
-              <Alert severity="info" sx={{ bgcolor: 'blue.50', color: 'text.primary' }}>
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  bgcolor: 'rgba(199, 32, 48, 0.08)', 
+                  borderColor: 'rgba(199, 32, 48, 0.2)',
+                  '& .MuiAlert-icon': {
+                    color: '#C72030'
+                  }
+                }}
+              >
                 <Stack direction="row" alignItems="center" spacing={2}>
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                  <FormControl 
+                    size="small" 
+                    sx={{ 
+                      minWidth: 120,
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                          borderColor: '#C72030'
+                        }
+                      },
+                      '& .MuiInputLabel-root.Mui-focused': {
+                        color: '#C72030'
+                      }
+                    }}
+                  >
                     <InputLabel>Share</InputLabel>
                     <Select
                       value={selectedShareWith}
@@ -255,9 +282,10 @@ const AddPollPage = () => {
                   startIcon={<Plus size={18} />}
                   sx={{ 
                     mt: 2,
-                    bgcolor: 'cyan.500',
-                    '&:hover': { bgcolor: 'cyan.600' },
-                    color: 'white'
+                    bgcolor: '#C72030',
+                    '&:hover': { bgcolor: '#B01E2A' },
+                    color: 'white',
+                    borderRadius: 2
                   }}
                   variant="contained"
                 >
@@ -270,8 +298,8 @@ const AddPollPage = () => {
                 variant="outlined" 
                 sx={{ 
                   p: 3, 
-                  bgcolor: 'teal.50',
-                  borderColor: 'teal.200'
+                  bgcolor: 'rgba(199, 32, 48, 0.04)',
+                  borderColor: 'rgba(199, 32, 48, 0.12)'
                 }}
               >
                 <Typography 
@@ -291,6 +319,14 @@ const AddPollPage = () => {
                   row
                   value={selectedShareWith}
                   onChange={(e) => setSelectedShareWith(e.target.value)}
+                  sx={{
+                    '& .MuiRadio-root': {
+                      color: 'rgba(199, 32, 48, 0.6)',
+                      '&.Mui-checked': {
+                        color: '#C72030'
+                      }
+                    }
+                  }}
                 >
                   <FormControlLabel 
                     value="all" 
@@ -317,12 +353,16 @@ const AddPollPage = () => {
                   variant="contained"
                   size="large"
                   sx={{
-                    bgcolor: 'success.main',
-                    '&:hover': { bgcolor: 'success.dark' },
+                    bgcolor: '#C72030',
                     px: 4,
                     py: 1.5,
                     borderRadius: 2,
-                    fontWeight: 600
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(199, 32, 48, 0.3)',
+                    '&:hover': { 
+                      bgcolor: '#B01E2A',
+                      boxShadow: '0 6px 16px rgba(199, 32, 48, 0.4)'
+                    }
                   }}
                 >
                   Submit Poll
