@@ -142,6 +142,10 @@ import { VisitingPurposePage } from './pages/VisitingPurposePage';
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
 import { PermitDetails } from "./pages/PermitDetails";
+import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsDashboard";
+import { VendorPermitForm } from "./pages/VendorPermitForm";
+import FillForm from "./pages/FillForm";
+import FillJSAForm from "./pages/FillJSAForm";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -1025,6 +1029,22 @@ function App() {
                 <Route
                   path="/safety/permit/details/:id"
                   element={<PermitDetails />}
+                />
+                <Route
+                  path="/safety/permit/vendor-form/:id?"
+                  element={<VendorPermitForm />}
+                />
+                <Route
+                  path="/safety/permit/fill-form/:id?"
+                  element={<FillForm />}
+                />
+                <Route
+                  path="/safety/permit/fill-jsa-form/:id?"
+                  element={<FillJSAForm />}
+                />
+                <Route
+                  path="/safety/permit/pending-approvals"
+                  element={<PermitPendingApprovalsDashboard />}
                 />
                 <Route path="/safety/m-safe" element={<MSafeDashboard />} />
                 <Route

@@ -346,12 +346,21 @@ const modulesByPackage = {
       ]
     },
 
+    // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
     { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
-    { name: 'Permit to Work', icon: FileText, href: '/safety/permit' },
+    {
+      name: 'Permit',
+      icon: FileText,
+      href: '/safety/permit',
+      subItems: [
+        { name: 'Permit ', href: '/safety/permit', color: 'text-[#1a1a1a]' },
+        { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]' }
+      ]
+    },
     { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
     { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
   ],

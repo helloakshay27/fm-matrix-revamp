@@ -81,6 +81,13 @@ interface QRCode {
     download_link: string;
 }
 
+interface ApprovalLevel {
+    name: string;
+    status: string;
+    updated_by: string;
+    status_updated_at: string | null;
+}
+
 interface Permit {
     id: number;
     reference_number: string;
@@ -106,7 +113,7 @@ interface Permit {
 
 interface PermitDetailsResponse {
     permit: Permit;
-    approval_levels: any[];
+    approval_levels: ApprovalLevel[];
     permit_extends: any[];
     permit_resume: any[];
     permit_closure: PermitClosure;
@@ -224,6 +231,22 @@ export const PermitDetails = () => {
         }
     };
 
+    // Get status color for approval levels
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case 'approved':
+            case 'approve':
+                return 'bg-green-100 text-green-800';
+            case 'rejected':
+            case 'reject':
+                return 'bg-red-100 text-red-800';
+            case 'pending':
+                return 'bg-yellow-100 text-yellow-800';
+            default:
+                return 'bg-gray-100 text-gray-800';
+        }
+    };
+
     // Section component for organized layout
     const Section = ({
         title,
@@ -322,6 +345,33 @@ export const PermitDetails = () => {
                     <Button
                         variant="outline"
                         size="sm"
+                        onClick={() => navigate(`/safety/permit/vendor-form/${id}`)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Vendor Form
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                    >
+                        <Clipboard className="w-4 h-4 mr-2" />
+                        Fill Form
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/safety/permit/fill-jsa-form/${id}`)}
+                        className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                    >
+                        <Clipboard className="w-4 h-4 mr-2" />
+                        Fill JSA Form
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
                         onClick={handleRefresh}
                         disabled={loading}
                     >
@@ -336,6 +386,24 @@ export const PermitDetails = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Approval Levels */}
+            {permitData.approval_levels && permitData.approval_levels.length > 0 && (
+                <div className="flex items-start gap-4 my-6">
+                    {permitData.approval_levels.map((level: ApprovalLevel, index: number) => (
+                        <div key={index} className="space-y-2">
+                            <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                {`${level.name} : ${level.status}`}
+                            </div>
+                            {level.updated_by && level.status_updated_at && (
+                                <div className="ms-2 text-sm text-gray-600">
+                                    {`${level.updated_by} (${formatDateOnly(level.status_updated_at)})`}
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            )}
 
             {/* Main Content */}
             <div className="space-y-6">
@@ -619,6 +687,95 @@ export const PermitDetails = () => {
                     </Section>
                 )}
 
+                {/* Permit Extension Section */}
+                <Section title="PERMIT EXTENSION" icon={<Clock />} sectionKey="permit-extension">
+                    <div className="space-y-6">
+                        {/* Form Fields */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                {/* Reason for Extension */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Reason for Extension<span className="text-red-500">*</span>
+                                    </label>
+                                    <textarea
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent resize-none"
+                                        rows={3}
+                                        placeholder="Enter Reason Here"
+                                    />
+                                </div>
+
+                                {/* Extension Date & Time */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Extension Date&Time<span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="datetime-local"
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                                        placeholder="dd/mm/yyyy, --:--"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                {/* Assignees */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Assignees<span className="text-red-500">*</span>
+                                    </label>
+                                    <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent bg-white">
+                                        <option value="">Select Here</option>
+                                        {/* Add options dynamically here */}
+                                    </select>
+                                </div>
+
+                                {/* Attachment */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Attachment
+                                    </label>
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex items-center gap-2 px-4 py-2 border border-orange-400 text-orange-600 rounded cursor-pointer hover:bg-orange-50 transition-colors">
+                                            <Upload className="w-4 h-4" />
+                                            Choose files
+                                            <input type="file" className="hidden" multiple />
+                                        </label>
+                                        <span className="text-sm text-gray-500">No file chosen</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Agreement Checkbox */}
+                        <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                            <div className="flex items-start gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="extensionAgreement"
+                                    className="mt-1 h-4 w-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                                />
+                                <label htmlFor="extensionAgreement" className="text-sm text-gray-700 leading-relaxed">
+                                    I have understood all the hazard and risk associated in the activity I pledge to implement on the control measure identified in the activity through risk analyses JSA and SOP. I hereby declare that the details given above are correct and also I have been trained by our company for the above mentioned work & I am mentally and physically fit, Alcohol/drugs free to perform it, will be performed with appropriate safety and supervision as per Panchshil & Norms.
+                                </label>
+                            </div>
+                        </div>
+
+                        {/* Extend Permit Button */}
+                        <div className="flex justify-center pt-4">
+                            <Button
+                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                onClick={() => {
+                                    // Handle extend permit functionality here
+                                    toast.success('Permit extension request submitted');
+                                }}
+                            >
+                                Extend Permit
+                            </Button>
+                        </div>
+                    </div>
+                </Section>
+
                 {/* Permit Closure Details Section */}
                 {permitData.permit_closure && (
                     <Section title="PERMIT CLOSURE DETAILS" icon={<CheckCircle />} sectionKey="closure">
@@ -684,8 +841,8 @@ export const PermitDetails = () => {
                     </Section>
                 )}
 
-                {/* QR Code Section */}
-                {permitData.qr_code && (
+                {/* QR Code Section - Only show when all levels are approved */}
+                {permitData.qr_code && permitData.permit.all_level_approved && (
                     <Section title="QR Code" icon={<QrCode />} sectionKey="qrcode">
                         <div className="text-center">
                             <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg">
