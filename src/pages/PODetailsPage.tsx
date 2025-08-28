@@ -11,18 +11,11 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
-import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
-  {
-    key: "availability",
-    label: "Availability",
-    sortable: false,
-    draggable: true,
-  },
   { key: "sacHsnCode", label: "SAC/HSN Code", sortable: true, draggable: true },
   {
     key: "expected_date",
@@ -30,20 +23,8 @@ const inventoryTableColumns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
-  {
-    key: "prod_desc",
-    label: "Product Description",
-    sortable: true,
-    draggable: true,
-  },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "unit", label: "Unit", sortable: true, draggable: true },
-  {
-    key: "movingAvgRate",
-    label: "Moving Avg Rate",
-    sortable: true,
-    draggable: true,
-  },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "total_value", label: "Amount", sortable: true, draggable: true },
   {

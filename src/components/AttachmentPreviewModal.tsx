@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@
 import { Button } from '@/components/ui/button';
 import { Download, X, FileText, File } from 'lucide-react';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 interface AttachmentPreviewModalProps {
   isOpen: boolean;
@@ -65,6 +66,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("File download failed:", error);
+      toast.error(error.message)
     }
   };
 

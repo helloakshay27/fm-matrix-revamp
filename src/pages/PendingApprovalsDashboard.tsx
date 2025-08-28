@@ -63,6 +63,7 @@ export const PendingApprovalsDashboard = () => {
 
   const { loading } = useAppSelector(state => state.fetchPendingApprovals)
 
+  const [searchQuery, setSearchQuery] = useState("")
   const [pendingApprovalsData, setPendingApprovalsData] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -293,10 +294,10 @@ export const PendingApprovalsDashboard = () => {
         enableSearch={true}
         enableExport={true}
         exportFileName="pending-approvals"
-        hideColumnsButton={true}
         hideTableExport={true}
-        hideTableSearch={true}
         loading={loading}
+        searchTerm={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
       <div className="flex justify-center mt-6">

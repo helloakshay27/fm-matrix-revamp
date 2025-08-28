@@ -67,7 +67,9 @@ interface MaterialPR {
   id?: string;
   external_id?: string;
   po_date?: string;
-  plantDetail?: string;
+  plant_detail?: {
+    plant_name?: string;
+  };
   related_to?: string;
   reference_number?: string;
   adminApproval?: string;
@@ -129,7 +131,9 @@ export const MaterialPRDetailsPage = () => {
     id: '',
     external_id: '',
     po_date: '',
-    plantDetail: '',
+    plant_detail: {
+      plant_name: '',
+    },
     related_to: '',
     reference_number: '',
     adminApproval: '',
@@ -375,7 +379,7 @@ export const MaterialPRDetailsPage = () => {
         {pr.approval_levels?.map((level, index) => (
           <div key={index} className="space-y-2">
             <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
-              {`${level.name} approved : ${level.status_label}`}
+              {`${level.name} Approval : ${level.status_label}`}
             </div>
             {level.approved_by && level.approval_date && (
               <div className="ms-2">
@@ -446,7 +450,7 @@ export const MaterialPRDetailsPage = () => {
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-40">Plant Detail</span>
-                  <span className="font-medium">: {pr.plantDetail ?? '-'}</span>
+                  <span className="font-medium">: {pr.plant_detail.plant_name ?? '-'}</span>
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-40">Address</span>
