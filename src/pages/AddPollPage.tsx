@@ -22,7 +22,16 @@ import {
   Divider,
   IconButton,
   Stack,
-  Alert
+  Alert,
+  Checkbox,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListItemSecondaryAction,
+  Chip,
+  Avatar
 } from '@mui/material';
 
 const AddPollPage = () => {
@@ -37,6 +46,24 @@ const AddPollPage = () => {
     options: ['', '']
   });
   const [selectedShareWith, setSelectedShareWith] = useState('all');
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+
+  // Mock data for users and groups
+  const users = [
+    { id: 'user1', name: 'John Doe', email: 'john@example.com' },
+    { id: 'user2', name: 'Jane Smith', email: 'jane@example.com' },
+    { id: 'user3', name: 'Mike Johnson', email: 'mike@example.com' },
+    { id: 'user4', name: 'Sarah Wilson', email: 'sarah@example.com' },
+    { id: 'user5', name: 'David Brown', email: 'david@example.com' },
+  ];
+
+  const groups = [
+    { id: 'group1', name: 'Management Team', members: 5 },
+    { id: 'group2', name: 'Development Team', members: 12 },
+    { id: 'group3', name: 'Marketing Team', members: 8 },
+    { id: 'group4', name: 'Sales Team', members: 10 },
+  ];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -68,6 +95,33 @@ const AddPollPage = () => {
         ...prev,
         options: newOptions
       }));
+    }
+  };
+
+  const handleUserSelection = (userId: string) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleGroupSelection = (groupId: string) => {
+    setSelectedGroups(prev => 
+      prev.includes(groupId)
+        ? prev.filter(id => id !== groupId)
+        : [...prev, groupId]
+    );
+  };
+
+  const handleShareWithChange = (value: string) => {
+    setSelectedShareWith(value);
+    // Reset selections when changing share type
+    if (value !== 'individual') {
+      setSelectedUsers([]);
+    }
+    if (value !== 'group') {
+      setSelectedGroups([]);
     }
   };
 
@@ -318,8 +372,9 @@ const AddPollPage = () => {
                 <RadioGroup
                   row
                   value={selectedShareWith}
-                  onChange={(e) => setSelectedShareWith(e.target.value)}
+                  onChange={(e) => handleShareWithChange(e.target.value)}
                   sx={{
+                    mb: 3,
                     '& .MuiRadio-root': {
                       color: 'rgba(199, 32, 48, 0.6)',
                       '&.Mui-checked': {
@@ -344,6 +399,171 @@ const AddPollPage = () => {
                     label="Group" 
                   />
                 </RadioGroup>
+
+                {/* Individual User Selection */}
+                {selectedShareWith === 'individual' && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+                      Select Users ({selectedUsers.length} selected)
+                    </Typography>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        maxHeight: 200, 
+                        overflow: 'auto',
+                        bgcolor: 'background.paper',
+                        zIndex: 10
+                      }}
+                    >
+                      <List dense>
+                        {users.map((user) => (
+                          <ListItem key={user.id} disablePadding>
+                            <ListItemButton 
+                              onClick={() => handleUserSelection(user.id)}
+                              sx={{ 
+                                '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+                              }}
+                            >
+                              <ListItemIcon>
+                                <Checkbox
+                                  edge="start"
+                                  checked={selectedUsers.includes(user.id)}
+                                  sx={{
+                                    '&.Mui-checked': {
+                                      color: '#C72030'
+                                    }
+                                  }}
+                                />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={user.name}
+                                secondary={user.email}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Paper>
+                    {selectedUsers.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                          Selected Users:
+                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                          {selectedUsers.map((userId) => {
+                            const user = users.find(u => u.id === userId);
+                            return user ? (
+                              <Chip
+                                key={userId}
+                                label={user.name}
+                                size="small"
+                                onDelete={() => handleUserSelection(userId)}
+                                sx={{
+                                  bgcolor: 'rgba(199, 32, 48, 0.1)',
+                                  color: '#C72030',
+                                  '& .MuiChip-deleteIcon': {
+                                    color: '#C72030'
+                                  }
+                                }}
+                              />
+                            ) : null;
+                          })}
+                        </Stack>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* Group Selection */}
+                {selectedShareWith === 'group' && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+                      Select Groups ({selectedGroups.length} selected)
+                    </Typography>
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        maxHeight: 200, 
+                        overflow: 'auto',
+                        bgcolor: 'background.paper',
+                        zIndex: 10
+                      }}
+                    >
+                      <List dense>
+                        {groups.map((group) => (
+                          <ListItem key={group.id} disablePadding>
+                            <ListItemButton 
+                              onClick={() => handleGroupSelection(group.id)}
+                              sx={{ 
+                                '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+                              }}
+                            >
+                              <ListItemIcon>
+                                <Checkbox
+                                  edge="start"
+                                  checked={selectedGroups.includes(group.id)}
+                                  sx={{
+                                    '&.Mui-checked': {
+                                      color: '#C72030'
+                                    }
+                                  }}
+                                />
+                              </ListItemIcon>
+                              <ListItemText 
+                                primary={group.name}
+                                secondary={`${group.members} members`}
+                              />
+                            </ListItemButton>
+                          </ListItem>
+                        ))}
+                      </List>
+                    </Paper>
+                    {selectedGroups.length > 0 && (
+                      <Box sx={{ mt: 2 }}>
+                        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+                          Selected Groups:
+                        </Typography>
+                        <Stack direction="row" spacing={1} flexWrap="wrap">
+                          {selectedGroups.map((groupId) => {
+                            const group = groups.find(g => g.id === groupId);
+                            return group ? (
+                              <Chip
+                                key={groupId}
+                                label={`${group.name} (${group.members})`}
+                                size="small"
+                                onDelete={() => handleGroupSelection(groupId)}
+                                sx={{
+                                  bgcolor: 'rgba(199, 32, 48, 0.1)',
+                                  color: '#C72030',
+                                  '& .MuiChip-deleteIcon': {
+                                    color: '#C72030'
+                                  }
+                                }}
+                              />
+                            ) : null;
+                          })}
+                        </Stack>
+                      </Box>
+                    )}
+                  </Box>
+                )}
+
+                {/* All Selection Info */}
+                {selectedShareWith === 'all' && (
+                  <Alert 
+                    severity="info" 
+                    sx={{ 
+                      mt: 2,
+                      bgcolor: 'rgba(199, 32, 48, 0.08)', 
+                      borderColor: 'rgba(199, 32, 48, 0.2)',
+                      '& .MuiAlert-icon': {
+                        color: '#C72030'
+                      }
+                    }}
+                  >
+                    This poll will be shared with all users in the system.
+                  </Alert>
+                )}
               </Card>
 
               {/* Submit Button */}
