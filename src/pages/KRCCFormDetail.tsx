@@ -269,10 +269,6 @@ export const KRCCFormDetail: React.FC = () => {
           <Button variant="ghost" onClick={handleBack} className="h-8 w-8 p-0"><ArrowLeft className="h-4 w-4" /></Button>
           <p className="text-gray-900">Back</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchDetails}>Refresh</Button>
-          <Button onClick={exportToExcel} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">Export</Button>
-        </div>
       </div>
 
       {/* Personal Details */}
