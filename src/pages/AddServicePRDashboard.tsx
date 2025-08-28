@@ -92,6 +92,7 @@ export const AddServicePRDashboard = () => {
   ]);
 
   const [attachedFiles, setAttachedFiles] = useState([]);
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -312,6 +313,7 @@ export const AddServicePRDashboard = () => {
     if (!validateForm()) {
       return;
     }
+    setSubmitting(true)
     const payload = {
       pms_work_order: {
         letter_of_indent: true,
@@ -360,6 +362,8 @@ export const AddServicePRDashboard = () => {
     } catch (error) {
       console.log(error);
       toast.error(error.message);
+    } finally {
+      setSubmitting(false)
     }
   };
 
@@ -1083,6 +1087,7 @@ export const AddServicePRDashboard = () => {
           <Button
             onClick={handleSubmit}
             className="bg-red-600 hover:bg-red-700 text-white px-8"
+            disabled={submitting}
           >
             Save Work Order
           </Button>

@@ -1,25 +1,551 @@
 
-import React, { useState } from 'react';
+// import React, { useEffect, useState } from 'react';
+// import { Calendar, Clock, Plus, Trash2, ArrowLeft } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom';
+// import {
+//   Box,
+//   Typography,
+//   TextField,
+//   Paper,
+//   Container,
+//   InputAdornment,
+//   RadioGroup,
+//   FormControlLabel,
+//   Radio,
+//   Card,
+//   IconButton,
+//   Stack,
+//   Alert,
+//   Checkbox,
+//   List,
+//   ListItem,
+//   ListItemButton,
+//   ListItemIcon,
+//   ListItemText,
+//   Chip,
+// } from '@mui/material';
+// import { Button } from '@/components/ui/button';
+// import { useAppDispatch } from '@/store/hooks';
+// import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+// import { fetchUserGroups } from '@/store/slices/userGroupSlice';
+
+
+// const AddPollPage = () => {
+//   const dispatch = useAppDispatch();
+//   const token = localStorage.getItem('token');
+//   const baseUrl = localStorage.getItem('baseUrl');
+
+//   const navigate = useNavigate();
+//   const [formData, setFormData] = useState({
+//     subject: '',
+//     startDate: '',
+//     endDate: '',
+//     startTime: '04:00 AM',
+//     endTime: '04:00 AM',
+//     shareWith: 'all',
+//     options: ['', '']
+//   });
+//   const [selectedShareWith, setSelectedShareWith] = useState('all');
+//   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+//   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+
+//   // Mock data for users and groups
+//   const [users, setUsers] = useState([]);
+//   const [groups, setGroups] = useState([]);
+
+//   useEffect(() => {
+//     const fethcUsers = async () => {
+//       try {
+//         const response = await dispatch(fetchFMUsers()).unwrap();
+//         setUsers(response.fm_users);
+//       } catch (error) {
+//         console.log(error)
+//       }
+//     }
+
+//     const fethcGroups = async () => {
+//       try {
+//         const response = await dispatch(fetchUserGroups({ token, baseUrl })).unwrap();
+//         setGroups(response);
+//       } catch (error) {
+//         console.log(error)
+//       }
+//     }
+
+//     fethcUsers()
+//     fethcGroups()
+//   }, [])
+
+//   const handleInputChange = (field: string, value: string) => {
+//     setFormData(prev => ({
+//       ...prev,
+//       [field]: value
+//     }));
+//   };
+
+//   const handleOptionChange = (index: number, value: string) => {
+//     const newOptions = [...formData.options];
+//     newOptions[index] = value;
+//     setFormData(prev => ({
+//       ...prev,
+//       options: newOptions
+//     }));
+//   };
+
+//   const addOption = () => {
+//     setFormData(prev => ({
+//       ...prev,
+//       options: [...prev.options, '']
+//     }));
+//   };
+
+//   const removeOption = (index: number) => {
+//     if (formData.options.length > 2) {
+//       const newOptions = formData.options.filter((_, i) => i !== index);
+//       setFormData(prev => ({
+//         ...prev,
+//         options: newOptions
+//       }));
+//     }
+//   };
+
+//   const handleUserSelection = (userId: string) => {
+//     setSelectedUsers(prev =>
+//       prev.includes(userId)
+//         ? prev.filter(id => id !== userId)
+//         : [...prev, userId]
+//     );
+//   };
+
+//   const handleGroupSelection = (groupId: string) => {
+//     setSelectedGroups(prev =>
+//       prev.includes(groupId)
+//         ? prev.filter(id => id !== groupId)
+//         : [...prev, groupId]
+//     );
+//   };
+
+//   const handleShareWithChange = (value: string) => {
+//     setSelectedShareWith(value);
+//     // Reset selections when changing share type
+//     if (value !== 'individual') {
+//       setSelectedUsers([]);
+//     }
+//     if (value !== 'group') {
+//       setSelectedGroups([]);
+//     }
+//   };
+
+//   const handleSubmit = (e: React.FormEvent) => {
+//     e.preventDefault();
+//     console.log('Poll Data:', formData);
+//     // Add your submission logic here
+//     navigate('/crm/polls');
+//   };
+
+//   return (
+//     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+//       <div className='px-6 pt-6 mx-auto'>
+//         <Button
+//           variant="ghost"
+//           onClick={() => navigate("/crm/polls")}
+//           className='p-0'
+//         >
+//           <ArrowLeft className="w-4 h-4 mr-2" />
+//           Back
+//         </Button>
+//         <h1 className="text-2xl font-bold mb-6">NEW POLL</h1>
+//       </div>
+//       {/* Form */}
+//       <Container maxWidth="lg">
+//         <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
+//           <Box component="form" onSubmit={handleSubmit}>
+//             <Stack spacing={4}>
+//               {/* Subject */}
+//               <TextField
+//                 label="Subject"
+//                 type="text"
+//                 value={formData.subject}
+//                 onChange={(e) => handleInputChange('subject', e.target.value)}
+//                 placeholder="Enter poll subject"
+//                 required
+//                 fullWidth
+//                 variant="outlined"
+//               />
+
+//               {/* Date and Time Row */}
+//               <Box
+//                 sx={{
+//                   display: 'grid',
+//                   gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+//                   gap: 3
+//                 }}
+//               >
+//                 <TextField
+//                   label="Start Date"
+//                   type="date"
+//                   value={formData.startDate}
+//                   onChange={(e) => handleInputChange('startDate', e.target.value)}
+//                   required
+//                   fullWidth
+//                   InputLabelProps={{ shrink: true }}
+//                   InputProps={{
+//                     startAdornment: (
+//                       <InputAdornment position="start">
+//                         <Calendar size={20} />
+//                       </InputAdornment>
+//                     ),
+//                   }}
+//                 />
+
+//                 <TextField
+//                   label="End Date"
+//                   type="date"
+//                   value={formData.endDate}
+//                   onChange={(e) => handleInputChange('endDate', e.target.value)}
+//                   required
+//                   fullWidth
+//                   InputLabelProps={{ shrink: true }}
+//                   InputProps={{
+//                     startAdornment: (
+//                       <InputAdornment position="start">
+//                         <Calendar size={20} />
+//                       </InputAdornment>
+//                     ),
+//                   }}
+//                 />
+
+//                 <TextField
+//                   label="Start Time"
+//                   type="time"
+//                   value={formData.startTime}
+//                   onChange={(e) => handleInputChange('startTime', e.target.value)}
+//                   required
+//                   fullWidth
+//                   InputLabelProps={{ shrink: true }}
+//                   InputProps={{
+//                     startAdornment: (
+//                       <InputAdornment position="start">
+//                         <Clock size={20} />
+//                       </InputAdornment>
+//                     ),
+//                   }}
+//                 />
+
+//                 <TextField
+//                   label="End Time"
+//                   type="time"
+//                   value={formData.endTime}
+//                   onChange={(e) => handleInputChange('endTime', e.target.value)}
+//                   required
+//                   fullWidth
+//                   InputLabelProps={{ shrink: true }}
+//                   InputProps={{
+//                     startAdornment: (
+//                       <InputAdornment position="start">
+//                         <Clock size={20} />
+//                       </InputAdornment>
+//                     ),
+//                   }}
+//                 />
+//               </Box>
+
+//               {/* Poll Options */}
+//               <Card variant="outlined" sx={{ p: 3 }}>
+//                 <Typography variant="h6" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
+//                   Poll Options
+//                 </Typography>
+
+//                 <Stack spacing={2}>
+//                   {formData.options.map((option, index) => (
+//                     <Stack key={index} direction="row" alignItems="center" spacing={2}>
+//                       <TextField
+//                         type="text"
+//                         value={option}
+//                         onChange={(e) => handleOptionChange(index, e.target.value)}
+//                         placeholder={`Option ${index + 1}`}
+//                         required
+//                         fullWidth
+//                         size="small"
+//                       />
+//                       {formData.options.length > 2 && (
+//                         <IconButton
+//                           onClick={() => removeOption(index)}
+//                           sx={{ color: 'error.main' }}
+//                           size="small"
+//                         >
+//                           <Trash2 size={18} />
+//                         </IconButton>
+//                       )}
+//                     </Stack>
+//                   ))}
+//                 </Stack>
+
+//                 <Button
+//                   type='button'
+//                   size="lg"
+//                   className="bg-[#C72030] hover:bg-[#C72030] text-white mt-4"
+//                   onClick={addOption}
+//                 >
+//                   Add Option
+//                 </Button>
+//               </Card>
+
+//               {/* Share With Section */}
+//               <Card
+//                 variant="outlined"
+//                 sx={{
+//                   p: 3,
+//                   bgcolor: 'rgba(199, 32, 48, 0.04)',
+//                   borderColor: 'rgba(199, 32, 48, 0.12)'
+//                 }}
+//               >
+//                 <Typography
+//                   variant="subtitle2"
+//                   sx={{
+//                     mb: 2,
+//                     fontWeight: 600,
+//                     textTransform: 'uppercase',
+//                     letterSpacing: 1,
+//                     color: 'text.secondary'
+//                   }}
+//                 >
+//                   Share With
+//                 </Typography>
+
+//                 <RadioGroup
+//                   row
+//                   value={selectedShareWith}
+//                   onChange={(e) => handleShareWithChange(e.target.value)}
+//                   sx={{
+//                     mb: 3,
+//                     '& .MuiRadio-root': {
+//                       color: 'rgba(199, 32, 48, 0.6)',
+//                       '&.Mui-checked': {
+//                         color: '#C72030'
+//                       }
+//                     }
+//                   }}
+//                 >
+//                   <FormControlLabel
+//                     value="all"
+//                     control={<Radio size="small" />}
+//                     label="All"
+//                   />
+//                   <FormControlLabel
+//                     value="individual"
+//                     control={<Radio size="small" />}
+//                     label="Individual"
+//                   />
+//                   <FormControlLabel
+//                     value="group"
+//                     control={<Radio size="small" />}
+//                     label="Group"
+//                   />
+//                 </RadioGroup>
+
+//                 {/* Individual User Selection */}
+//                 {selectedShareWith === 'individual' && (
+//                   <Box sx={{ mt: 2 }}>
+//                     <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+//                       Select Users ({selectedUsers.length} selected)
+//                     </Typography>
+//                     <Paper
+//                       variant="outlined"
+//                       sx={{
+//                         maxHeight: 200,
+//                         overflow: 'auto',
+//                         bgcolor: 'background.paper',
+//                         zIndex: 10
+//                       }}
+//                     >
+//                       <List dense>
+//                         {users.map((user) => (
+//                           <ListItem key={user.id} disablePadding>
+//                             <ListItemButton
+//                               onClick={() => handleUserSelection(user.id)}
+//                               sx={{
+//                                 '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+//                               }}
+//                             >
+//                               <ListItemIcon>
+//                                 <Checkbox
+//                                   edge="start"
+//                                   checked={selectedUsers.includes(user.id)}
+//                                   sx={{
+//                                     '&.Mui-checked': {
+//                                       color: '#C72030'
+//                                     }
+//                                   }}
+//                                 />
+//                               </ListItemIcon>
+//                               <ListItemText
+//                                 primary={user.firstname + ' ' + user.lastname}
+//                                 secondary={user.email}
+//                               />
+//                             </ListItemButton>
+//                           </ListItem>
+//                         ))}
+//                       </List>
+//                     </Paper>
+//                     {selectedUsers.length > 0 && (
+//                       <Box sx={{ mt: 2 }}>
+//                         <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+//                           Selected Users:
+//                         </Typography>
+//                         <Stack direction="row" spacing={1} flexWrap="wrap">
+//                           {selectedUsers.map((userId) => {
+//                             const user = users.find(u => u.id === userId);
+//                             return user ? (
+//                               <Chip
+//                                 key={userId}
+//                                 label={user.firstname + ' ' + user.lastname}
+//                                 size="small"
+//                                 onDelete={() => handleUserSelection(userId)}
+//                                 sx={{
+//                                   bgcolor: 'rgba(199, 32, 48, 0.1)',
+//                                   color: '#C72030',
+//                                   '& .MuiChip-deleteIcon': {
+//                                     color: '#C72030'
+//                                   }
+//                                 }}
+//                               />
+//                             ) : null;
+//                           })}
+//                         </Stack>
+//                       </Box>
+//                     )}
+//                   </Box>
+//                 )}
+
+//                 {/* Group Selection */}
+//                 {selectedShareWith === 'group' && (
+//                   <Box sx={{ mt: 2 }}>
+//                     <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
+//                       Select Groups ({selectedGroups.length} selected)
+//                     </Typography>
+//                     <Paper
+//                       variant="outlined"
+//                       sx={{
+//                         maxHeight: 200,
+//                         overflow: 'auto',
+//                         bgcolor: 'background.paper',
+//                         zIndex: 10
+//                       }}
+//                     >
+//                       <List dense>
+//                         {groups.map((group) => (
+//                           <ListItem key={group.id} disablePadding>
+//                             <ListItemButton
+//                               onClick={() => handleGroupSelection(group.id)}
+//                               sx={{
+//                                 '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
+//                               }}
+//                             >
+//                               <ListItemIcon>
+//                                 <Checkbox
+//                                   edge="start"
+//                                   checked={selectedGroups.includes(group.id)}
+//                                   sx={{
+//                                     '&.Mui-checked': {
+//                                       color: '#C72030'
+//                                     }
+//                                   }}
+//                                 />
+//                               </ListItemIcon>
+//                               <ListItemText
+//                                 primary={group.name}
+//                                 secondary={`${group.group_members.length} members`}
+//                               />
+//                             </ListItemButton>
+//                           </ListItem>
+//                         ))}
+//                       </List>
+//                     </Paper>
+//                     {selectedGroups.length > 0 && (
+//                       <Box sx={{ mt: 2 }}>
+//                         <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+//                           Selected Groups:
+//                         </Typography>
+//                         <Stack direction="row" spacing={1} flexWrap="wrap">
+//                           {selectedGroups.map((groupId) => {
+//                             const group = groups.find(g => g.id === groupId);
+//                             return group ? (
+//                               <Chip
+//                                 key={groupId}
+//                                 label={`${group.name} (${group.group_members.length} members)`}
+//                                 size="small"
+//                                 onDelete={() => handleGroupSelection(groupId)}
+//                                 sx={{
+//                                   bgcolor: 'rgba(199, 32, 48, 0.1)',
+//                                   color: '#C72030',
+//                                   '& .MuiChip-deleteIcon': {
+//                                     color: '#C72030'
+//                                   }
+//                                 }}
+//                               />
+//                             ) : null;
+//                           })}
+//                         </Stack>
+//                       </Box>
+//                     )}
+//                   </Box>
+//                 )}
+
+//                 {/* All Selection Info */}
+//                 {selectedShareWith === 'all' && (
+//                   <Alert
+//                     severity="info"
+//                     sx={{
+//                       mt: 2,
+//                       bgcolor: 'rgba(199, 32, 48, 0.08)',
+//                       borderColor: 'rgba(199, 32, 48, 0.2)',
+//                       '& .MuiAlert-icon': {
+//                         color: '#C72030'
+//                       }
+//                     }}
+//                   >
+//                     This poll will be shared with all users in the system.
+//                   </Alert>
+//                 )}
+//               </Card>
+
+//               {/* Submit Button */}
+//               <div className='flex items-center justify-center'>
+//                 <Button
+//                   type="submit"
+//                   size="lg"
+//                   className="bg-[#C72030] hover:bg-[#C72030] text-white"
+//                 >
+//                   Submit Poll
+//                 </Button>
+//               </div>
+//             </Stack>
+//           </Box>
+//         </Paper>
+//       </Container>
+//     </Box>
+//   );
+// };
+
+// export default AddPollPage;
+
+
+
+import React, { useEffect, useState } from 'react';
 import { Calendar, Clock, Plus, Trash2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   TextField,
-  Button,
   Paper,
   Container,
   InputAdornment,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   RadioGroup,
   FormControlLabel,
   Radio,
   Card,
-  CardContent,
-  Divider,
   IconButton,
   Stack,
   Alert,
@@ -29,12 +555,17 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  ListItemSecondaryAction,
   Chip,
-  Avatar
 } from '@mui/material';
+import { Button } from '@/components/ui/button';
+import { useAppDispatch } from '@/store/hooks';
+import { fetchFMUsers } from '@/store/slices/fmUserSlice';
+import { fetchUserGroups } from '@/store/slices/userGroupSlice';
 
 const AddPollPage = () => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     subject: '',
@@ -46,33 +577,42 @@ const AddPollPage = () => {
     options: ['', '']
   });
   const [selectedShareWith, setSelectedShareWith] = useState('all');
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
-  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedGroups, setSelectedGroups] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [groups, setGroups] = useState([]);
 
-  // Mock data for users and groups
-  const users = [
-    { id: 'user1', name: 'John Doe', email: 'john@example.com' },
-    { id: 'user2', name: 'Jane Smith', email: 'jane@example.com' },
-    { id: 'user3', name: 'Mike Johnson', email: 'mike@example.com' },
-    { id: 'user4', name: 'Sarah Wilson', email: 'sarah@example.com' },
-    { id: 'user5', name: 'David Brown', email: 'david@example.com' },
-  ];
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await dispatch(fetchFMUsers()).unwrap();
+        setUsers(response.fm_users);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-  const groups = [
-    { id: 'group1', name: 'Management Team', members: 5 },
-    { id: 'group2', name: 'Development Team', members: 12 },
-    { id: 'group3', name: 'Marketing Team', members: 8 },
-    { id: 'group4', name: 'Sales Team', members: 10 },
-  ];
+    const fetchGroups = async () => {
+      try {
+        const response = await dispatch(fetchUserGroups({ token, baseUrl })).unwrap();
+        setGroups(response);
+      } catch (error) {
+        console.log(error);
+      }
+    };
 
-  const handleInputChange = (field: string, value: string) => {
+    fetchUsers();
+    fetchGroups();
+  }, [dispatch, token, baseUrl]);
+
+  const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
 
-  const handleOptionChange = (index: number, value: string) => {
+  const handleOptionChange = (index, value) => {
     const newOptions = [...formData.options];
     newOptions[index] = value;
     setFormData(prev => ({
@@ -88,7 +628,7 @@ const AddPollPage = () => {
     }));
   };
 
-  const removeOption = (index: number) => {
+  const removeOption = (index) => {
     if (formData.options.length > 2) {
       const newOptions = formData.options.filter((_, i) => i !== index);
       setFormData(prev => ({
@@ -98,25 +638,24 @@ const AddPollPage = () => {
     }
   };
 
-  const handleUserSelection = (userId: string) => {
-    setSelectedUsers(prev => 
-      prev.includes(userId) 
+  const handleUserSelection = (userId) => {
+    setSelectedUsers(prev =>
+      prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
   };
 
-  const handleGroupSelection = (groupId: string) => {
-    setSelectedGroups(prev => 
+  const handleGroupSelection = (groupId) => {
+    setSelectedGroups(prev =>
       prev.includes(groupId)
         ? prev.filter(id => id !== groupId)
         : [...prev, groupId]
     );
   };
 
-  const handleShareWithChange = (value: string) => {
+  const handleShareWithChange = (value) => {
     setSelectedShareWith(value);
-    // Reset selections when changing share type
     if (value !== 'individual') {
       setSelectedUsers([]);
     }
@@ -125,49 +664,76 @@ const AddPollPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Poll Data:', formData);
-    // Add your submission logic here
-    navigate('/crm/polls');
+
+    // Format dates and times for API
+    const formatDateTime = (date, time) => {
+      const [hours, minutes] = time.split(/[: ]/);
+      const period = time.includes('PM') ? 12 : 0;
+      const hour = parseInt(hours) % 12 + period;
+      const dateTime = new Date(date);
+      dateTime.setHours(hour, parseInt(minutes));
+      const year = dateTime.getFullYear();
+      const month = String(dateTime.getMonth() + 1).padStart(2, '0');
+      const day = String(dateTime.getDate()).padStart(2, '0');
+      const formattedHours = String(dateTime.getHours()).padStart(2, '0');
+      const formattedMinutes = String(dateTime.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${formattedHours}:${formattedMinutes}`;
+    };
+
+    // Prepare payload
+    const payload = {
+      subject: formData.subject,
+      startdate: formData.startDate ? formData.startDate.replace(/-/g, '/') : '',
+      enddate: formData.endDate ? formData.endDate.replace(/-/g, '/') : '',
+      start: formData.startDate && formData.startTime ? formatDateTime(formData.startDate, formData.startTime) : '',
+      end: formData.endDate && formData.endTime ? formatDateTime(formData.endDate, formData.endTime) : '',
+      vote_limit: 'All',
+      options: formData.options.filter(opt => opt.trim() !== '').map(name => ({ name })),
+      shared: selectedShareWith.charAt(0).toUpperCase() + selectedShareWith.slice(1),
+      ...(selectedShareWith === 'individual' && { user_ids: selectedUsers }),
+      ...(selectedShareWith === 'group' && { group_ids: selectedGroups })
+    };
+
+    try {
+      const response = await fetch('https://fm-uat-api.lockated.com/pms/polls.json', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create poll');
+      }
+
+      navigate('/crm/polls');
+    } catch (error) {
+      console.error('Error submitting poll:', error);
+      // You might want to add error handling UI here
+    }
   };
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      {/* Header */}
-      <Paper 
-        elevation={1}
-        sx={{ 
-          borderTop: 4, 
-          borderColor: '#C72030', 
-          p: 3,
-          borderRadius: 0,
-          bgcolor: 'background.paper'
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={2}>
-          <IconButton 
-            onClick={() => navigate('/crm/polls')}
-            sx={{ 
-              p: 1,
-              color: 'text.secondary',
-              '&:hover': { bgcolor: 'action.hover' }
-            }}
-          >
-            <ArrowLeft size={20} />
-          </IconButton>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'text.primary' }}>
-            Create New Poll
-          </Typography>
-        </Stack>
-      </Paper>
-
-      {/* Form */}
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <div className='px-6 pt-6 mx-auto'>
+        <Button
+          variant="ghost"
+          onClick={() => navigate("/crm/polls")}
+          className='p-0'
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <h1 className="text-2xl font-bold mb-6">NEW POLL</h1>
+      </div>
+      <Container maxWidth="lg">
         <Paper elevation={2} sx={{ p: 4, borderRadius: 3 }}>
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              {/* Subject */}
               <TextField
                 label="Subject"
                 type="text"
@@ -178,13 +744,11 @@ const AddPollPage = () => {
                 fullWidth
                 variant="outlined"
               />
-
-              {/* Date and Time Row */}
-              <Box 
-                sx={{ 
-                  display: 'grid', 
-                  gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' }, 
-                  gap: 3 
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+                  gap: 3
                 }}
               >
                 <TextField
@@ -203,7 +767,6 @@ const AddPollPage = () => {
                     ),
                   }}
                 />
-
                 <TextField
                   label="End Date"
                   type="date"
@@ -220,7 +783,6 @@ const AddPollPage = () => {
                     ),
                   }}
                 />
-
                 <TextField
                   label="Start Time"
                   type="time"
@@ -237,7 +799,6 @@ const AddPollPage = () => {
                     ),
                   }}
                 />
-
                 <TextField
                   label="End Time"
                   type="time"
@@ -255,56 +816,10 @@ const AddPollPage = () => {
                   }}
                 />
               </Box>
-
-              {/* Participation Info */}
-              <Alert 
-                severity="info" 
-                sx={{ 
-                  bgcolor: 'rgba(199, 32, 48, 0.08)', 
-                  borderColor: 'rgba(199, 32, 48, 0.2)',
-                  '& .MuiAlert-icon': {
-                    color: '#C72030'
-                  }
-                }}
-              >
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <FormControl 
-                    size="small" 
-                    sx={{ 
-                      minWidth: 120,
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                          borderColor: '#C72030'
-                        }
-                      },
-                      '& .MuiInputLabel-root.Mui-focused': {
-                        color: '#C72030'
-                      }
-                    }}
-                  >
-                    <InputLabel>Share</InputLabel>
-                    <Select
-                      value={selectedShareWith}
-                      onChange={(e) => setSelectedShareWith(e.target.value)}
-                      label="Share"
-                    >
-                      <MenuItem value="all">All</MenuItem>
-                      <MenuItem value="individual">Individual</MenuItem>
-                      <MenuItem value="group">Group</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <Typography variant="body2" color="text.secondary">
-                    User can participate in the poll from a Flat.
-                  </Typography>
-                </Stack>
-              </Alert>
-
-              {/* Poll Options */}
               <Card variant="outlined" sx={{ p: 3 }}>
                 <Typography variant="h6" component="h3" sx={{ mb: 3, fontWeight: 600 }}>
                   Poll Options
                 </Typography>
-                
                 <Stack spacing={2}>
                   {formData.options.map((option, index) => (
                     <Stack key={index} direction="row" alignItems="center" spacing={2}>
@@ -329,37 +844,27 @@ const AddPollPage = () => {
                     </Stack>
                   ))}
                 </Stack>
-                
                 <Button
-                  type="button"
+                  type='button'
+                  size="lg"
+                  className="bg-[#C72030] hover:bg-[#C72030] text-white mt-4"
                   onClick={addOption}
-                  startIcon={<Plus size={18} />}
-                  sx={{ 
-                    mt: 2,
-                    bgcolor: '#C72030',
-                    '&:hover': { bgcolor: '#B01E2A' },
-                    color: 'white',
-                    borderRadius: 2
-                  }}
-                  variant="contained"
                 >
                   Add Option
                 </Button>
               </Card>
-
-              {/* Share With Section */}
-              <Card 
-                variant="outlined" 
-                sx={{ 
-                  p: 3, 
+              <Card
+                variant="outlined"
+                sx={{
+                  p: 3,
                   bgcolor: 'rgba(199, 32, 48, 0.04)',
                   borderColor: 'rgba(199, 32, 48, 0.12)'
                 }}
               >
-                <Typography 
-                  variant="subtitle2" 
-                  sx={{ 
-                    mb: 2, 
+                <Typography
+                  variant="subtitle2"
+                  sx={{
+                    mb: 2,
                     fontWeight: 600,
                     textTransform: 'uppercase',
                     letterSpacing: 1,
@@ -368,7 +873,6 @@ const AddPollPage = () => {
                 >
                   Share With
                 </Typography>
-                
                 <RadioGroup
                   row
                   value={selectedShareWith}
@@ -383,33 +887,31 @@ const AddPollPage = () => {
                     }
                   }}
                 >
-                  <FormControlLabel 
-                    value="all" 
-                    control={<Radio size="small" />} 
-                    label="All" 
+                  <FormControlLabel
+                    value="all"
+                    control={<Radio size="small" />}
+                    label="All"
                   />
-                  <FormControlLabel 
-                    value="individual" 
-                    control={<Radio size="small" />} 
-                    label="Individual" 
+                  <FormControlLabel
+                    value="individual"
+                    control={<Radio size="small" />}
+                    label="Individual"
                   />
-                  <FormControlLabel 
-                    value="group" 
-                    control={<Radio size="small" />} 
-                    label="Group" 
+                  <FormControlLabel
+                    value="group"
+                    control={<Radio size="small" />}
+                    label="Group"
                   />
                 </RadioGroup>
-
-                {/* Individual User Selection */}
                 {selectedShareWith === 'individual' && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
                       Select Users ({selectedUsers.length} selected)
                     </Typography>
-                    <Paper 
-                      variant="outlined" 
-                      sx={{ 
-                        maxHeight: 200, 
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        maxHeight: 200,
                         overflow: 'auto',
                         bgcolor: 'background.paper',
                         zIndex: 10
@@ -418,9 +920,9 @@ const AddPollPage = () => {
                       <List dense>
                         {users.map((user) => (
                           <ListItem key={user.id} disablePadding>
-                            <ListItemButton 
+                            <ListItemButton
                               onClick={() => handleUserSelection(user.id)}
-                              sx={{ 
+                              sx={{
                                 '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
                               }}
                             >
@@ -435,8 +937,8 @@ const AddPollPage = () => {
                                   }}
                                 />
                               </ListItemIcon>
-                              <ListItemText 
-                                primary={user.name}
+                              <ListItemText
+                                primary={user.firstname + ' ' + user.lastname}
                                 secondary={user.email}
                               />
                             </ListItemButton>
@@ -455,7 +957,7 @@ const AddPollPage = () => {
                             return user ? (
                               <Chip
                                 key={userId}
-                                label={user.name}
+                                label={user.firstname + ' ' + user.lastname}
                                 size="small"
                                 onDelete={() => handleUserSelection(userId)}
                                 sx={{
@@ -473,17 +975,15 @@ const AddPollPage = () => {
                     )}
                   </Box>
                 )}
-
-                {/* Group Selection */}
                 {selectedShareWith === 'group' && (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="body2" sx={{ mb: 2, fontWeight: 500 }}>
                       Select Groups ({selectedGroups.length} selected)
                     </Typography>
-                    <Paper 
-                      variant="outlined" 
-                      sx={{ 
-                        maxHeight: 200, 
+                    <Paper
+                      variant="outlined"
+                      sx={{
+                        maxHeight: 200,
                         overflow: 'auto',
                         bgcolor: 'background.paper',
                         zIndex: 10
@@ -492,9 +992,9 @@ const AddPollPage = () => {
                       <List dense>
                         {groups.map((group) => (
                           <ListItem key={group.id} disablePadding>
-                            <ListItemButton 
+                            <ListItemButton
                               onClick={() => handleGroupSelection(group.id)}
-                              sx={{ 
+                              sx={{
                                 '&:hover': { bgcolor: 'rgba(199, 32, 48, 0.08)' }
                               }}
                             >
@@ -509,9 +1009,9 @@ const AddPollPage = () => {
                                   }}
                                 />
                               </ListItemIcon>
-                              <ListItemText 
+                              <ListItemText
                                 primary={group.name}
-                                secondary={`${group.members} members`}
+                                secondary={`${group.group_members.length} members`}
                               />
                             </ListItemButton>
                           </ListItem>
@@ -529,7 +1029,7 @@ const AddPollPage = () => {
                             return group ? (
                               <Chip
                                 key={groupId}
-                                label={`${group.name} (${group.members})`}
+                                label={`${group.name} (${group.group_members.length} members)`}
                                 size="small"
                                 onDelete={() => handleGroupSelection(groupId)}
                                 sx={{
@@ -547,14 +1047,12 @@ const AddPollPage = () => {
                     )}
                   </Box>
                 )}
-
-                {/* All Selection Info */}
                 {selectedShareWith === 'all' && (
-                  <Alert 
-                    severity="info" 
-                    sx={{ 
+                  <Alert
+                    severity="info"
+                    sx={{
                       mt: 2,
-                      bgcolor: 'rgba(199, 32, 48, 0.08)', 
+                      bgcolor: 'rgba(199, 32, 48, 0.08)',
                       borderColor: 'rgba(199, 32, 48, 0.2)',
                       '& .MuiAlert-icon': {
                         color: '#C72030'
@@ -565,29 +1063,15 @@ const AddPollPage = () => {
                   </Alert>
                 )}
               </Card>
-
-              {/* Submit Button */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', pt: 2 }}>
+              <div className='flex items-center justify-center'>
                 <Button
                   type="submit"
-                  variant="contained"
-                  size="large"
-                  sx={{
-                    bgcolor: '#C72030',
-                    px: 4,
-                    py: 1.5,
-                    borderRadius: 2,
-                    fontWeight: 600,
-                    boxShadow: '0 4px 12px rgba(199, 32, 48, 0.3)',
-                    '&:hover': { 
-                      bgcolor: '#B01E2A',
-                      boxShadow: '0 6px 16px rgba(199, 32, 48, 0.4)'
-                    }
-                  }}
+                  size="lg"
+                  className="bg-[#C72030] hover:bg-[#C72030] text-white"
                 >
                   Submit Poll
                 </Button>
-              </Box>
+              </div>
             </Stack>
           </Box>
         </Paper>

@@ -54,6 +54,7 @@ export const AddMaterialPRDashboard = () => {
   const [wbsSelection, setWbsSelection] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [overallWbs, setOverallWbs] = useState("");
+  const [submitting, setSubmitting] = useState(false)
   const [items, setItems] = useState([
     {
       id: 1,
@@ -330,6 +331,7 @@ export const AddMaterialPRDashboard = () => {
     if (!validateForm()) {
       return
     }
+    setSubmitting(true)
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
@@ -369,6 +371,8 @@ export const AddMaterialPRDashboard = () => {
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
+    } finally {
+      setSubmitting(false)
     }
   };
 
@@ -890,6 +894,7 @@ export const AddMaterialPRDashboard = () => {
               type="submit"
               size="lg"
               className="bg-[#C72030] hover:bg-[#C72030] text-white"
+              disabled={submitting}
             >
               Submit
             </Button>

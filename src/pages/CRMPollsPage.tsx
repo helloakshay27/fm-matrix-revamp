@@ -282,115 +282,114 @@ const CRMPollsPage = () => {
         {/* Polls Grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
           {filteredPolls.map((poll) => (
-            <Card 
+            <Card
               key={poll.id}
-              elevation={2} 
-              sx={{ 
-                height: '100%', 
+              elevation={2}
+              sx={{
+                height: '100%',
                 borderRadius: 3,
                 transition: 'all 0.3s ease',
                 '&:hover': {
-                  transform: 'translateY(-4px)',
                   boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
                 }
               }}
             >
-                <CardContent sx={{ p: 3 }}>
-                  {/* Poll Header */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1.5 }}>
-                        {poll.title}
+              <CardContent sx={{ p: 3 }}>
+                {/* Poll Header */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1.5 }}>
+                      {poll.title}
+                    </Typography>
+
+                    <Stack spacing={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        <Calendar size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
+                        Created: {poll.createdDate} at {poll.startTime}
                       </Typography>
-                      
-                      <Stack spacing={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        <Clock size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
+                        Duration: {poll.createdDate} {poll.startTime} - {poll.endDate} {poll.endTime}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Shared with: <strong>{poll.sharedWith}</strong>
+                      </Typography>
+                      {poll.publishResults && (
                         <Typography variant="body2" color="text.secondary">
-                          <Calendar size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
-                          Created: {poll.createdDate} at {poll.startTime}
+                          Results: <strong>{poll.publishResults}</strong>
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          <Clock size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
-                          Duration: {poll.createdDate} {poll.startTime} - {poll.endDate} {poll.endTime}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Shared with: <strong>{poll.sharedWith}</strong>
-                        </Typography>
-                        {poll.publishResults && (
-                          <Typography variant="body2" color="text.secondary">
-                            Results: <strong>{poll.publishResults}</strong>
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Box>
-                    
-                    <Stack direction="column" alignItems="flex-end" spacing={1}>
-                      <IconButton
-                        size="small"
-                        onClick={(e) => handleMenuClick(e, poll.id)}
-                        sx={{ ml: 1 }}
-                      >
-                        <MoreHorizontal size={18} />
-                      </IconButton>
-                      
-                      <Chip
-                        label={poll.status}
-                        color={getStatusColor(poll.status) as any}
-                        size="small"
-                        sx={{ 
-                          fontWeight: 500,
-                          textTransform: 'capitalize'
-                        }}
-                      />
+                      )}
                     </Stack>
                   </Box>
 
-                  <Divider sx={{ my: 2 }} />
+                  <Stack direction="column" alignItems="flex-end" spacing={1}>
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleMenuClick(e, poll.id)}
+                      sx={{ ml: 1 }}
+                    >
+                      <MoreHorizontal size={18} />
+                    </IconButton>
 
-                  {/* Poll Options */}
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
-                      Poll Options & Results
-                    </Typography>
-                    
-                    {poll.options.length > 0 ? (
-                      <List dense sx={{ p: 0 }}>
-                        {poll.options.map((option, index) => (
-                          <ListItem 
-                            key={index} 
-                            sx={{ 
-                              px: 0, 
-                              py: 0.5,
-                              display: 'flex',
-                              justifyContent: 'space-between'
+                    <Chip
+                      label={poll.status}
+                      color={getStatusColor(poll.status) as any}
+                      size="small"
+                      sx={{
+                        fontWeight: 500,
+                        textTransform: 'capitalize'
+                      }}
+                    />
+                  </Stack>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                {/* Poll Options */}
+                <Box>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+                    Poll Options & Results
+                  </Typography>
+
+                  {poll.options.length > 0 ? (
+                    <List dense sx={{ p: 0 }}>
+                      {poll.options.map((option, index) => (
+                        <ListItem
+                          key={index}
+                          sx={{
+                            px: 0,
+                            py: 0.5,
+                            display: 'flex',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <ListItemText
+                            primary={option.name}
+                            primaryTypographyProps={{
+                              variant: 'body2',
+                              color: 'text.primary'
                             }}
-                          >
-                            <ListItemText 
-                              primary={option.name}
-                              primaryTypographyProps={{ 
-                                variant: 'body2',
-                                color: 'text.primary'
-                              }}
-                            />
-                            <Chip 
-                              label={option.votes} 
-                              size="small" 
-                              variant="outlined"
-                              sx={{ minWidth: 50 }}
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    ) : (
-                      <Box sx={{ textAlign: 'center', py: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          No options available
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
+                          />
+                          <Chip
+                            label={option.votes}
+                            size="small"
+                            variant="outlined"
+                            sx={{ minWidth: 50 }}
+                          />
+                        </ListItem>
+                      ))}
+                    </List>
+                  ) : (
+                    <Box sx={{ textAlign: 'center', py: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No options available
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          ))}
         </Box>
 
         {/* Menu */}
@@ -419,9 +418,9 @@ const CRMPollsPage = () => {
 
         {/* Pagination */}
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <Pagination 
-            count={10} 
-            page={1} 
+          <Pagination
+            count={10}
+            page={1}
             color="primary"
             sx={{
               '& .MuiPaginationItem-root': {
