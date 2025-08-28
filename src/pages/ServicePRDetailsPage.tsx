@@ -277,7 +277,7 @@ export const ServicePRDetailsPage = () => {
           <div className="flex items-center gap-4 mb-3">
             <h1 className="text-2xl font-semibold">Service PR Details</h1>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             {
               servicePR?.approvals?.map((level: any) => (
                 <div className='space-y-2' key={level.level}>
