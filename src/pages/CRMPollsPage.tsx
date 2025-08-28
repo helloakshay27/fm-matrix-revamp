@@ -8,12 +8,10 @@ import {
   TextField,
   Card,
   CardContent,
-  CardActions,
   Chip,
   IconButton,
   Menu,
   MenuItem,
-  Grid,
   Container,
   Paper,
   InputAdornment,
@@ -22,11 +20,8 @@ import {
   Divider,
   List,
   ListItem,
-  ListItemText,
-  Avatar,
-  Fab
+  ListItemText
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 
 const CRMPollsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
