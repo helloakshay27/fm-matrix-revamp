@@ -18,7 +18,8 @@ import {
   BarChart3,
   Pencil,
 } from "lucide-react";
-import { BulkUploadDialog } from "@/components/BulkUploadDialog";
+// Removed legacy BulkUploadDialog; using new design
+import { InventoryBulkUploadDialog } from "@/components/InventoryBulkUploaddialogbox";
 import { InventoryFilterDialog } from "@/components/InventoryFilterDialog";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -91,6 +92,7 @@ const mapInventoryData = (apiData: any[]) => {
       manufacturer: item.manufacturer || "",
       criticality: item.criticality || "",
       quantity: item.quantity?.toString() || "0",
+      expiryDate: (item as any).expiry_date || (item as any).expiration_date || "",
       active: item.active ? "Active" : "Inactive",
       unit: item.unit || "",
       cost: item.cost?.toString() || "",
@@ -554,6 +556,7 @@ export const InventoryDashboard = () => {
     { key: "manufacturer", label: "Manufacturer", sortable: true },
     { key: "criticality", label: "Criticality", sortable: true },
     { key: "quantity", label: "Quantity", sortable: true },
+    { key: "expiryDate", label: "Expiry Date", sortable: true },
     { key: "active", label: "Active", sortable: true },
     { key: "unit", label: "Unit", sortable: true },
     { key: "cost", label: "Cost", sortable: true },
@@ -610,6 +613,13 @@ export const InventoryDashboard = () => {
           )}
         </div>
       );
+    }
+    if (columnKey === "expiryDate") {
+      const raw = item.expiryDate as string | undefined;
+      if (!raw) return "-";
+      // Avoid timezone shifts; use the date portion before 'T' when present
+      const onlyDate = raw.includes('T') ? raw.split('T')[0] : raw;
+      return onlyDate;
     }
     if (columnKey === "criticality") {
       return (
@@ -1280,10 +1290,11 @@ export const InventoryDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
-      <BulkUploadDialog
+      <InventoryBulkUploadDialog
         open={showBulkUpload}
         onOpenChange={setShowBulkUpload}
         title="Bulk Upload"
+        onImported={() => dispatch(fetchInventoryData({ page: currentPage, pageSize, filters: activeFilters }))}
       />
       <InventoryFilterDialog
         open={showFilter}

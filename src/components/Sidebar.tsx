@@ -322,12 +322,16 @@ const modulesByPackage = {
       ]
     },
    {
-      name: 'MSafe User',
+      name: 'Users',
       icon: User,
       href: '/maintenance/m-safe',
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
-        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' }
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
+        { name: 'Krcc List', href: '/maintenance/krcc-list' },
+        { name: 'LMC', href: '/maintenance/lmc' },
+        { name: 'Training List', href: '/maintenance/training-list' },
+        { name: 'Reportees Reassign', href: '/maintenance/reportees-reassign' }
       ]
     },
     {
@@ -339,11 +343,9 @@ const modulesByPackage = {
         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'Krcc List', icon: ClipboardList, href: '/maintenance/krcc-list' },
-    { name: 'LMC', icon: BarChart, href: '/maintenance/lmc' },
+  
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
-    { name: 'Training List', icon: BookOpen, href: '/maintenance/training-list' },
-    { name: 'Reportees Reassign', icon: UserRoundPen, href: '/maintenance/reportees-reassign' }
+   
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
