@@ -107,7 +107,7 @@ export const InventoryDetailsPage = () => {
   };
 
   const getInventoryType = (type) => {
-    return type === 1 ? 'Consumable' : 'Non-Consumable';
+    return type === 1 ? 'Spares' : 'Consumable';
   };
 
   const getCriticality = (criticality) => {
