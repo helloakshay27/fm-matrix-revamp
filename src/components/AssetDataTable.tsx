@@ -359,7 +359,8 @@ export const AssetDataTable: React.FC<AssetDataTableProps> = ({
       case "critical":
         return (
           <span className="text-sm text-gray-600">
-            {asset.critical ? "YES" : "NO"}
+            {asset.critical === null ? "-" : asset.critical ? "Critical" : "Non-Critical"}
+
           </span>
         );
       case "actions":
