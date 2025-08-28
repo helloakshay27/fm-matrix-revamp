@@ -267,7 +267,7 @@ export const KRCCFormListDashboard = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(`/maintenance/krcc-list/${form.id}`)}
+              onClick={() => navigate(`/maintenance/m-safe/krcc-list/${form.id}`)}
               className="h-8 w-8 p-0"
               title="View Form"
             >

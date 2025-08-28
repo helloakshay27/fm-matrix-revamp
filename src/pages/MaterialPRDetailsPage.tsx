@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Copy, Printer, Rss, Download, ArrowLeft } from 'lucide-react';
+import { Copy, Printer, Rss, Download, ArrowLeft, Image, FileText, File } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
@@ -13,6 +13,7 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@mui/material';
 import { approvePO, rejectPO } from '@/store/slices/purchaseOrderSlice';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 // Define interfaces for type safety
 interface BillingAddress {
@@ -155,6 +156,8 @@ export const MaterialPRDetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -517,53 +520,53 @@ export const MaterialPRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            {pr.attachments === 'No attachments' || !pr.attachments ? (
-              <p className="text-muted-foreground">No attachments</p>
-            ) : (
-              <div className="flex flex-col gap-3">
-                {(pr.attachments as Attachment[])?.map((file, idx) => {
-                  const fileUrl = file.url;
-                  const fileName = file.name ?? `Attachment-${idx + 1}`;
-                  const fileExt = fileUrl.split('.').pop()?.toLowerCase() ?? '';
+            {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
+              <div className="space-y-3">
+                {pr.attachments.map((attachment: any) => {
+                  const getFileIcon = (fileName: string) => {
+                    const ext = fileName.split(".").pop()?.toLowerCase();
+                    if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
+                      return <Image className="w-5 h-5 text-blue-600" />;
+                    }
+                    if (ext === "pdf") {
+                      return <FileText className="w-5 h-5 text-red-600" />;
+                    }
+                    return <File className="w-5 h-5 text-gray-600" />;
+                  };
 
-                  if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
-                    return (
-                      <div key={idx} className="flex flex-col items-start gap-2">
-                        <img
-                          src={fileUrl}
-                          alt={fileName}
-                          className="max-h-40 w-40 rounded border"
-                        />
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedAttachment(attachment);
+                        setIsPreviewModalOpen(true);
+                      }}
+                    >
+                      {getFileIcon(attachment.document_file_name)}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">
+                          {attachment.document_file_name}
+                        </p>
                       </div>
-                    );
-                  } else if (fileExt === 'pdf') {
-                    return (
-                      <div key={idx} className="flex flex-col gap-2">
-                        <iframe
-                          src={fileUrl}
-                          className="w-40 h-40 border rounded"
-                          title={fileName}
-                        />
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <div key={idx} className="flex items-center gap-2">
-                        <Download className="w-4 h-4" />
-                        <a
-                          href={fileUrl}
-                          download={fileName}
-                          className="text-blue-500 underline text-sm"
-                        >
-                          {fileName}
-                        </a>
-                      </div>
-                    );
-                  }
+                      <a
+                        href={attachment.url}
+                        download={attachment.document_file_name}
+                        onClick={(e) => e.stopPropagation()} // stop opening modal
+                      >
+                        <Download className="w-4 h-4 text-muted-foreground" />
+                      </a>
+                    </div>
+                  );
                 })}
               </div>
+            ) : (
+              <p className='text-muted-foreground'>
+                No attachments
+              </p>
             )}
           </CardContent>
+
         </Card>
 
         {/* Terms & Conditions Card */}
@@ -622,6 +625,15 @@ export const MaterialPRDetailsPage = () => {
           </DialogActions>
         </Dialog>
       </div>
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
+      />
     </div>
   );
 };

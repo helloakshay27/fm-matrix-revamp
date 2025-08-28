@@ -75,11 +75,12 @@ interface TrainingRow {
   raw_date?: string | null; // original for potential sorting
   attachment_url?: string;
   attachment_doctype?: string | null;
+  attachment_id?: number | null;
 }
 
 
 import { useNavigate } from 'react-router-dom';
-import { Users, ClipboardList, CalendarCheck2, UserCheck, FileText, FileSpreadsheet } from 'lucide-react';
+import { Users, ClipboardList, CalendarCheck2, UserCheck, FileText, FileSpreadsheet, Download } from 'lucide-react';
 import TrainingFilterDialog from '@/components/TrainingFilterDialog';
 
 const TrainingDashboard = () => {
@@ -93,6 +94,8 @@ const TrainingDashboard = () => {
   const [searchTerm, setSearchTerm] = useState(''); // email search input
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewAttachmentId, setPreviewAttachmentId] = useState<number | null>(null);
+  const [downloadingAttachment, setDownloadingAttachment] = useState(false);
   // Filter dialog state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
@@ -167,6 +170,7 @@ const TrainingDashboard = () => {
         raw_date: r.training_date,
         attachment_url: r.training_attachments?.[0]?.url,
         attachment_doctype: r.training_attachments?.[0]?.doctype || null,
+        attachment_id: r.training_attachments?.[0]?.id ?? null,
       }));
       setTrainings(mapped);
       if (json.pagination) {
@@ -243,7 +247,11 @@ const TrainingDashboard = () => {
         if (isImage) {
           return (
             <div className="flex justify-center">
-              <div className="w-14 h-14 flex items-center justify-center bg-[#F6F4EE] rounded border overflow-hidden cursor-pointer group" onClick={() => setPreviewImage(url)} title="View image">
+              <div
+                className="w-14 h-14 flex items-center justify-center bg-[#F6F4EE] rounded border overflow-hidden cursor-pointer group"
+                onClick={() => { setPreviewImage(url); setPreviewAttachmentId(item.attachment_id ?? null); }}
+                title="View image"
+              >
                 <img src={url} alt="Attachment" className="w-full h-full object-cover transition-transform group-hover:scale-105" />
               </div>
             </div>
@@ -472,7 +480,7 @@ const TrainingDashboard = () => {
       )}
 
       {/* Image Preview Modal */}
-      <Dialog open={!!previewImage} onOpenChange={(open) => { if (!open) setPreviewImage(null); }}>
+      <Dialog open={!!previewImage} onOpenChange={(open) => { if (!open) { setPreviewImage(null); setPreviewAttachmentId(null); } }}>
         <DialogContent className="max-w-[90vw] md:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Attachment Preview</DialogTitle>
@@ -480,7 +488,65 @@ const TrainingDashboard = () => {
           {previewImage && (
             <div className="flex flex-col items-center gap-4">
               <img src={previewImage} alt="Preview" className="max-h-[70vh] w-auto object-contain rounded border" />
-              <Button variant="secondary" onClick={() => window.open(previewImage!, '_blank')}>Open in New Tab</Button>
+              <div className="flex gap-2">
+                {/* <Button variant="secondary" onClick={() => window.open(previewImage!, '_blank')}>Open in New Tab</Button> */}
+                <Button
+                  className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+                  disabled={downloadingAttachment}
+                  onClick={async () => {
+                    try {
+                      setDownloadingAttachment(true);
+                      const token = localStorage.getItem('token');
+                      const baseUrl = localStorage.getItem('baseUrl');
+                      if (previewAttachmentId && token && baseUrl) {
+                        const apiUrl = `https://${baseUrl}/attachfiles/${previewAttachmentId}?show_file=true`;
+                        const response = await fetch(apiUrl, {
+                          method: 'GET',
+                          headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+                        });
+                        if (!response.ok) throw new Error('Failed to fetch the file');
+                        // Try to extract filename from Content-Disposition
+                        const disposition = response.headers.get('Content-Disposition') || response.headers.get('content-disposition') || '';
+                        let fileName = `Training_Attachment_${previewAttachmentId}`;
+                        const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+                        if (match) fileName = decodeURIComponent(match[1] || match[2] || fileName);
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        window.URL.revokeObjectURL(url);
+                      } else {
+                        // Fallback: try direct URL download
+                        const a = document.createElement('a');
+                        a.href = previewImage!;
+                        a.download = 'Training_Attachment';
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                      }
+                    } catch (e) {
+                      console.error('Error downloading attachment:', e);
+                      window.open(previewImage!, '_blank');
+                    } finally {
+                      setDownloadingAttachment(false);
+                    }
+                  }}
+                >
+                  {downloadingAttachment ? (
+                    <svg className="animate-spin h-4 w-4 mr-2 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                  ) : (
+                    <Download className="w-4 h-4 mr-1" />
+                  )}
+                  {downloadingAttachment ? 'Downloading...' : 'Download'}
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>

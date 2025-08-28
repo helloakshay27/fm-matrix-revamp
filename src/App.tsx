@@ -682,7 +682,6 @@ function App() {
           <LayoutProvider>
             <Routes>
               {/* Login Route */}
-
               <Route
                 path="/login"
                 element={
@@ -1828,16 +1827,16 @@ function App() {
                 <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
                 <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
                 <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                <Route path="/maintenance/krcc-list" element={<KRCCFormListDashboard />} />
-                <Route path="/maintenance/krcc-list/:id" element={<KRCCFormDetail />} />
-                <Route path="/maintenance/lmc" element={<LMCDashboard />} />
-                <Route path="/maintenance/lmc/:id" element={<LMCUserDetail />} />
-                <Route path="/maintenance/training-list" element={<TrainingDashboard />} />
-                <Route path="/maintenance/training-list/:id" element={<TrainingDetailPage />} />
-                <Route path="/maintenance/smt" element={<SMTDashboard />} />
-                <Route path="/maintenance/smt/:id" element={<SMTDetailPage />} />
+                <Route path="/maintenance/m-safe/krcc-list" element={<KRCCFormListDashboard />} />
+                <Route path="/maintenance/m-safe/krcc-list/:id" element={<KRCCFormDetail />} />
+                <Route path="/maintenance/m-safe/lmc" element={<LMCDashboard />} />
+                <Route path="/maintenance/m-safe/lmc/:id" element={<LMCUserDetail />} />
+                <Route path="/maintenance/m-safe/training-list" element={<TrainingDashboard />} />
+                <Route path="/maintenance/m-safe/training-list/:id" element={<TrainingDetailPage />} />
+                <Route path="/maintenance/m-safe/smt" element={<SMTDashboard />} />
+                <Route path="/maintenance/m-safe/smt/:id" element={<SMTDetailPage />} />
                 <Route path="/maintenance/m-safe/external-users/multiple-delete" element={<MultipleUserDeletePage />} />
-                <Route path="/maintenance/reportees-reassign" element={<ReporteesReassignPage />} />
+                <Route path="/maintenance/m-safe/reportees-reassign" element={<ReporteesReassignPage />} />
                 <Route path="/maintenance/vi-miles/vehicle-details" element={<VehicleDetails />} />
                 <Route path="/maintenance/vi-miles/vehicle-check-in" element={<VehicleCheckIn />} />
                 <Route path="/vehicle-history/update" element={<UpdateVehicleHistoryPage />} />

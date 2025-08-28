@@ -84,7 +84,7 @@ const UpdateVehicleHistoryPage: React.FC = () => {
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
         <CardHeader className='bg-[#F6F4EE] mb-4'>
           <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#5B2D66] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
+            <span className="w-6 h-6 bg-red-600 text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
             UPDATE VEHICLE HISTORY
           </CardTitle>
         </CardHeader>
@@ -92,7 +92,7 @@ const UpdateVehicleHistoryPage: React.FC = () => {
           <Box component="form" onSubmit={onSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <TextField
-                required
+                
                 fullWidth
                 type="number"
                 label={

@@ -328,11 +328,11 @@ const modulesByPackage = {
       subItems: [
         { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
         { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
-        { name: 'LMC', href: '/maintenance/lmc' },
-        { name: 'SMT', href: '/maintenance/smt' },
-        { name: 'Krcc List', href: '/maintenance/krcc-list' },
-        { name: 'Training List', href: '/maintenance/training-list' },
-        { name: 'Reportees Reassign', href: '/maintenance/reportees-reassign' },
+        { name: 'LMC', href: '/maintenance/m-safe/lmc' },
+        { name: 'SMT', href: '/maintenance/m-safe/smt' },
+        { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list' },
+        { name: 'Training List', href: '/maintenance/m-safe/training-list' },
+        { name: 'Reportees Reassign', href: '/maintenance/m-safe/reportees-reassign' },
 
       ]
     },
