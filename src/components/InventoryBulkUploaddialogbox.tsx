@@ -69,9 +69,9 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
             setSubmitting(true);
             const formData = new FormData();
             // Align with service bulk upload field naming convention
-            formData.append('pms_inventories_file', file);
+            formData.append('pms_inventory_file', file);
 
-            const res = await fetch(`https://${baseUrl}/pms/inventories/bulk_upload.json`, {
+            const res = await fetch(`https://${baseUrl}/pms/inventory/inventory_import.json`, {
                 method: 'POST',
                 headers: { Authorization: `Bearer ${token}` },
                 body: formData,
