@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate, useParams } from 'react-router-dom';
-import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download } from 'lucide-react';
+import { Edit, Copy, Printer, Rss, Home, ChevronRight, Download, FileText, Image, File } from 'lucide-react';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 export const MaterialPRDetailsPage = () => {
   const navigate = useNavigate();
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   // Mock data - in real app this would come from API based on id
   const prData = {
@@ -49,7 +50,29 @@ export const MaterialPRDetailsPage = () => {
       transferQty: '',
       wbsCode: ''
     }],
-    attachments: 'No attachments',
+    attachments: [
+      {
+        id: '1',
+        name: 'Invoice_121250.pdf',
+        type: 'application/pdf',
+        url: '/placeholder.svg',
+        size: '2.5 MB'
+      },
+      {
+        id: '2', 
+        name: 'Product_Specification.jpg',
+        type: 'image/jpeg',
+        url: '/placeholder.svg',
+        size: '1.2 MB'
+      },
+      {
+        id: '3',
+        name: 'Terms_Conditions.docx',
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        url: '/placeholder.svg',
+        size: '890 KB'
+      }
+    ],
     termsConditions: ['Test'],
     sapResponse: {
       code: '',
@@ -458,12 +481,37 @@ export const MaterialPRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            {prData.attachments === 'No attachments' ? <p className="text-muted-foreground">{prData.attachments}</p> : <div className="flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                <Button variant="outline" size="sm">
-                  Download PDF
-                </Button>
-              </div>}
+            {prData.attachments.length === 0 ? (
+              <p className="text-muted-foreground">No attachments</p>
+            ) : (
+              <div className="space-y-3">
+                {prData.attachments.map((attachment: any) => {
+                  const getFileIcon = (type: string) => {
+                    if (type.startsWith('image/')) return <Image className="w-5 h-5 text-blue-600" />;
+                    if (type === 'application/pdf') return <FileText className="w-5 h-5 text-red-600" />;
+                    return <File className="w-5 h-5 text-gray-600" />;
+                  };
+
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                      onClick={() => {
+                        setSelectedAttachment(attachment);
+                        setIsPreviewModalOpen(true);
+                      }}
+                    >
+                      {getFileIcon(attachment.type)}
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{attachment.name}</p>
+                        <p className="text-xs text-muted-foreground">{attachment.size}</p>
+                      </div>
+                      <Download className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -482,5 +530,14 @@ export const MaterialPRDetailsPage = () => {
         {/* SAP Response Card */}
         
       </div>
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
+      />
     </div>;
 };
