@@ -1,28 +1,43 @@
 import React, { useState } from 'react';
 import { Plus, Search, Filter, MoreHorizontal, Eye, Edit, Trash2, Calendar, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
 import {
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Card,
+  CardContent,
+  Chip,
+  IconButton,
+  Menu,
+  MenuItem,
+  Container,
+  Paper,
+  InputAdornment,
   Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+  Stack,
+  Divider,
+  List,
+  ListItem,
+  ListItemText
+} from '@mui/material';
 
 const CRMPollsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedPollId, setSelectedPollId] = useState<number | null>(null);
   const navigate = useNavigate();
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>, pollId: number) => {
+    setAnchorEl(event.currentTarget);
+    setSelectedPollId(pollId);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setSelectedPollId(null);
+  };
 
   const polls = [
     {
@@ -186,16 +201,16 @@ const CRMPollsPage = () => {
     }
   ];
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'Active':
-        return 'default';
+        return 'success';
       case 'Draft':
-        return 'secondary';
+        return 'warning';
       case 'Closed':
-        return 'outline';
+        return 'default';
       default:
-        return 'secondary';
+        return 'default';
     }
   };
 
@@ -204,166 +219,219 @@ const CRMPollsPage = () => {
   );
 
   return (
-    <div className="space-y-6 p-6">
+    <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Polls</h1>
-          <p className="text-gray-600 mt-1">Manage your polls and surveys</p>
-        </div>
-        <Button 
-          className="bg-[#C72030] hover:bg-[#B01E2A] text-white"
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+        <Box>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: 'text.primary', mb: 1 }}>
+            Polls
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Manage your polls and surveys
+          </Typography>
+        </Box>
+        <Button
+          variant="contained"
+          startIcon={<Plus size={20} />}
           onClick={() => navigate('/crm/polls/add')}
+          sx={{
+            bgcolor: '#C72030',
+            '&:hover': { bgcolor: '#B01E2A' },
+            textTransform: 'none',
+            fontWeight: 600,
+            px: 3,
+            py: 1.5,
+            borderRadius: 2
+          }}
         >
-          <Plus className="w-4 h-4 mr-2" />
           Add Poll
         </Button>
-      </div>
+      </Box>
 
-      {/* Search */}
-      <div className="bg-white p-6 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-medium text-gray-900">All Polls</h2>
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search polls..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-64"
-              />
-            </div>
-            <Button variant="outline" size="sm">
-              <Filter className="w-4 h-4 mr-2" />
+      {/* Search and Filter */}
+      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
+            All Polls
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center">
+            <TextField
+              placeholder="Search polls..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              size="small"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search size={20} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{ width: 280 }}
+            />
+            <Button
+              variant="outlined"
+              startIcon={<Filter size={18} />}
+              sx={{ textTransform: 'none' }}
+            >
               Filter
             </Button>
-          </div>
-        </div>
+          </Stack>
+        </Box>
 
         {/* Polls Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
           {filteredPolls.map((poll) => (
-            <div key={poll.id} className="border border-gray-200 rounded-lg p-4 bg-white">
-              {/* Poll Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                  <h3 className="font-medium text-gray-900 mb-1">{poll.title}</h3>
-                  <div className="text-sm text-gray-500 space-y-1">
-                    <div className="flex items-center gap-4">
-                      <span>Created on - {poll.createdDate} / {poll.startTime}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span>Start Date & Time - {poll.createdDate} / {poll.startTime}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span>End Date & Time - {poll.endDate} / {poll.endTime}</span>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <span>Shared with - {poll.sharedWith}</span>
-                    </div>
-                    {poll.publishResults && (
-                      <div className="flex items-center gap-4">
-                        <span>Publish Results - {poll.publishResults}</span>
-                      </div>
+            <Card 
+              key={poll.id}
+              elevation={2} 
+              sx={{ 
+                height: '100%', 
+                borderRadius: 3,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
+                }
+              }}
+            >
+                <CardContent sx={{ p: 3 }}>
+                  {/* Poll Header */}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" component="h3" sx={{ fontWeight: 600, mb: 1.5 }}>
+                        {poll.title}
+                      </Typography>
+                      
+                      <Stack spacing={1}>
+                        <Typography variant="body2" color="text.secondary">
+                          <Calendar size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
+                          Created: {poll.createdDate} at {poll.startTime}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          <Clock size={14} style={{ marginRight: 8, verticalAlign: 'text-bottom' }} />
+                          Duration: {poll.createdDate} {poll.startTime} - {poll.endDate} {poll.endTime}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Shared with: <strong>{poll.sharedWith}</strong>
+                        </Typography>
+                        {poll.publishResults && (
+                          <Typography variant="body2" color="text.secondary">
+                            Results: <strong>{poll.publishResults}</strong>
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Box>
+                    
+                    <Stack direction="column" alignItems="flex-end" spacing={1}>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => handleMenuClick(e, poll.id)}
+                        sx={{ ml: 1 }}
+                      >
+                        <MoreHorizontal size={18} />
+                      </IconButton>
+                      
+                      <Chip
+                        label={poll.status}
+                        color={getStatusColor(poll.status) as any}
+                        size="small"
+                        sx={{ 
+                          fontWeight: 500,
+                          textTransform: 'capitalize'
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {/* Poll Options */}
+                  <Box>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+                      Poll Options & Results
+                    </Typography>
+                    
+                    {poll.options.length > 0 ? (
+                      <List dense sx={{ p: 0 }}>
+                        {poll.options.map((option, index) => (
+                          <ListItem 
+                            key={index} 
+                            sx={{ 
+                              px: 0, 
+                              py: 0.5,
+                              display: 'flex',
+                              justifyContent: 'space-between'
+                            }}
+                          >
+                            <ListItemText 
+                              primary={option.name}
+                              primaryTypographyProps={{ 
+                                variant: 'body2',
+                                color: 'text.primary'
+                              }}
+                            />
+                            <Chip 
+                              label={option.votes} 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ minWidth: 50 }}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Box sx={{ textAlign: 'center', py: 2 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          No options available
+                        </Typography>
+                      </Box>
                     )}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col items-end gap-2">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>
-                        <Eye className="w-4 h-4 mr-2" />
-                        View Results
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit Poll
-                      </DropdownMenuItem>
-                      <DropdownMenuItem className="text-red-600">
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  
-                  <Badge variant={getStatusBadgeVariant(poll.status)} className="bg-green-100 text-green-800 border-green-200">
-                    {poll.status}
-                  </Badge>
-                </div>
-              </div>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+        </Box>
 
-              {/* Poll Options and Votes */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center font-medium text-sm">
-                  <span>Options</span>
-                  <span>Votes</span>
-                </div>
-                {poll.options.map((option, index) => (
-                  <div key={index} className="flex justify-between items-center text-sm">
-                    <span className="text-gray-700">{option.name}</span>
-                    <span className="text-gray-500">{option.votes}</span>
-                  </div>
-                ))}
-                {poll.options.length === 0 && (
-                  <div className="text-sm text-gray-500 text-center py-2">
-                    No options available
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+        {/* Menu */}
+        <Menu
+          anchorEl={anchorEl}
+          open={Boolean(anchorEl)}
+          onClose={handleMenuClose}
+          PaperProps={{
+            elevation: 3,
+            sx: { borderRadius: 2, minWidth: 160 }
+          }}
+        >
+          <MenuItem onClick={handleMenuClose}>
+            <Eye size={16} style={{ marginRight: 12 }} />
+            View Results
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose}>
+            <Edit size={16} style={{ marginRight: 12 }} />
+            Edit Poll
+          </MenuItem>
+          <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
+            <Trash2 size={16} style={{ marginRight: 12 }} />
+            Delete
+          </MenuItem>
+        </Menu>
 
-        {/* Updated Pagination */}
-        <div className="mt-6">
-          <Pagination>
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious href="#" />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#" isActive>
-                  1
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">
-                  2
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">
-                  3
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">
-                  4
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationLink href="#">
-                  Last
-                </PaginationLink>
-              </PaginationItem>
-              <PaginationItem>
-                <PaginationNext href="#" />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        </div>
-      </div>
-    </div>
+        {/* Pagination */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Pagination 
+            count={10} 
+            page={1} 
+            color="primary"
+            sx={{
+              '& .MuiPaginationItem-root': {
+                borderRadius: 2
+              }
+            }}
+          />
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
