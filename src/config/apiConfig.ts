@@ -45,6 +45,17 @@ export const API_CONFIG = {
     ROLES: '/lock_roles.json',
     FUNCTIONS: '/lock_functions.json',
     SUB_FUNCTIONS: '/lock_sub_functions.json',
+    // Module, Function, Sub-Function CRUD endpoints
+    MODULES: '/lock_modules.json',
+    CREATE_MODULE: '/lock_modules.json',
+    UPDATE_MODULE: '/lock_modules', // Base path, will append /:id.json
+    DELETE_MODULE: '/lock_modules', // Base path, will append /:id.json
+    CREATE_FUNCTION: '/lock_functions.json',
+    UPDATE_FUNCTION: '/lock_functions', // Base path, will append /:id.json
+    DELETE_FUNCTION: '/lock_functions', // Base path, will append /:id.json
+    CREATE_SUB_FUNCTION: '/lock_sub_functions.json',
+    UPDATE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
+    DELETE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
     // Role Config endpoints
     ROLE_CONFIGS: '/admin/role_configs.json',
     ROLE_CONFIG_DETAILS: '/admin/role_configs', // Base path, will append /:id.json

@@ -632,6 +632,7 @@ import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
 import { RoleConfigList } from './pages/settings/RoleConfigList';
 import { LockFunctionList } from './pages/settings/LockFunctionList';
+import { LockModuleList } from './pages/settings/LockModuleList';
 import { LockSubFunctionList } from './pages/settings/LockSubFunctionList';
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
@@ -2001,6 +2002,7 @@ function App() {
                 <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
                 <Route path="/settings/account/role-config" element={<RoleConfigList />} />
+                <Route path="/settings/account/lock-module" element={<LockModuleList />} />
                 <Route path="/settings/account/lock-function" element={<LockFunctionList />} />
                 <Route path="/settings/account/lock-sub-function" element={<LockSubFunctionList />} />
               </Route>

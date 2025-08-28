@@ -7,6 +7,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
+import { CreateFunctionDialog } from './CreateFunctionDialog';
 import { lockFunctionService, LockFunctionItem as ApiLockFunctionItem } from '@/services/lockFunctionService';
 
 // Type definitions for the lock function data
