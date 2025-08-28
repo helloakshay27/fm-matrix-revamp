@@ -303,12 +303,6 @@ export const PODashboard = () => {
             className="w-4 h-4"
           />
         );
-      case "referenceNo":
-        return (
-          <span className="text-blue-600 hover:underline cursor-pointer">
-            {item.referenceNo}
-          </span>
-        );
       case "debitCreditNoteRaised":
         return (
           <span
