@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getPurchaseOrders } from "@/store/slices/purchaseOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { updateActiveStaus } from "@/store/slices/materialPRSlice";
 
 const columns: ColumnConfig[] = [
   {
@@ -202,6 +203,7 @@ export const PODashboard = () => {
     total_count: 0,
     total_pages: 0,
   });
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const fetchData = async (filterData = {}) => {
     try {
@@ -210,7 +212,7 @@ export const PODashboard = () => {
       ).unwrap();
       const formattedData = response.purchase_orders.map((item: any) => ({
         id: item.id,
-        poNumber: item.po_number,
+        poNumber: item.external_id,
         referenceNo: item.reference_number,
         createdBy: item.created_by,
         createdOn: item.created_at.split("T")[0],
@@ -282,6 +284,43 @@ export const PODashboard = () => {
     }
   };
 
+  const handleCheckboxChange = async (item: any) => {
+    const newStatus = !item.activeInactive;
+    const itemId = item.id;
+
+    if (updatingStatus[itemId]) return;
+
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
+
+      await dispatch(
+        updateActiveStaus({
+          baseUrl,
+          token,
+          id: itemId,
+          data: {
+            pms_purchase_order: {
+              active: newStatus,
+            },
+          },
+        })
+      ).unwrap();
+
+      setPoList((prevData: any[]) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, activeInactive: newStatus } : row
+        )
+      );
+
+      toast.success(`Purchase Order ${newStatus ? "activated" : "deactivated"} successfully`);
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast.error(error || "Failed to update active status. Please try again.");
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
       case "approvalStatus":
@@ -299,8 +338,9 @@ export const PODashboard = () => {
           <input
             type="checkbox"
             checked={item.activeInactive}
-            readOnly
-            className="w-4 h-4"
+            onChange={() => handleCheckboxChange(item)}
+            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            disabled={updatingStatus[item.id]}
           />
         );
       case "debitCreditNoteRaised":

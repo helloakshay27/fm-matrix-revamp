@@ -7,7 +7,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getServicePr } from "@/store/slices/servicePRSlice";
+import { getServicePr, updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
 const columns: ColumnConfig[] = [
@@ -105,6 +105,7 @@ export const ServicePRDashboard = () => {
     total_count: 0,
     total_pages: 0,
   });
+  const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
 
   const fetchData = async (filterParams = {}) => {
     try {
@@ -154,6 +155,43 @@ export const ServicePRDashboard = () => {
     }
   };
 
+  const handleCheckboxChange = async (item: any) => {
+    const newStatus = !item.active;
+    const itemId = item.id;
+
+    if (updatingStatus[itemId]) return;
+
+    try {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: true }));
+
+      await dispatch(
+        updateServiceActiveStaus({
+          baseUrl,
+          token,
+          id: itemId,
+          data: {
+            pms_work_order: {
+              active: newStatus,
+            },
+          },
+        })
+      ).unwrap();
+
+      setServicePR((prevData: any[]) =>
+        prevData.map((row) =>
+          row.id === itemId ? { ...row, active: newStatus } : row
+        )
+      );
+
+      toast.success(`Service PR ${newStatus ? "activated" : "deactivated"} successfully`);
+    } catch (error) {
+      console.error("Error updating active status:", error);
+      toast.error(error || "Failed to update active status. Please try again.");
+    } finally {
+      setUpdatingStatus((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
       case "approved_status":
@@ -171,8 +209,9 @@ export const ServicePRDashboard = () => {
           <input
             type="checkbox"
             checked={item.active}
-            readOnly
-            className="w-4 h-4"
+            onChange={() => handleCheckboxChange(item)}
+            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            disabled={updatingStatus[item.id]}
           />
         );
       case "prAmount":

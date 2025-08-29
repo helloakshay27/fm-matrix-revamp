@@ -105,12 +105,31 @@ export const getServiceFeeds = createAsyncThunk("getServiceFeeds", async ({ base
     }
 })
 
+export const updateServiceActiveStaus = createAsyncThunk(
+    'updateServiceActiveStaus',
+    async ({ baseUrl, token, id, data }: { baseUrl: string, token: string, id: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/work_orders/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to update active status'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getServicePrSlice = createApiSlice("getServicePr", getServicePr);
 const createServicePRSlice = createApiSlice("createServicePR", createServicePR);
 const getServicesSlice = createApiSlice("getServices", getServices);
 const getServiceFeedsSlice = createApiSlice("getServiceFeeds", getServiceFeeds);
+const updateServiceActiveStausSlice = createApiSlice("updateServiceActiveStaus", updateServiceActiveStaus);
 
 export const getServicePrReducer = getServicePrSlice.reducer
 export const createServicePRReducer = createServicePRSlice.reducer
 export const getServicesReducer = getServicesSlice.reducer
 export const getServiceFeedsReducer = getServiceFeedsSlice.reducer
+export const updateServiceActiveStausReducer = updateServiceActiveStausSlice.reducer
