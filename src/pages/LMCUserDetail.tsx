@@ -33,8 +33,8 @@ const SECTION_TITLE_MAP: Record<string, string> = {
     'KrccRequirementComingFrom.operateMHE': 'Operate MHE',
     'KrccRequirementComingFrom.liftMaterialManually': 'Lift Material Manually',
     // Base sections
-    'form': 'FORM',
-    'final_page_form': 'FINAL',
+    'form': 'LMC Form',
+    'final_page_form': 'Common LMC Form',
     'KrccRequirementComingFrom.noneOfTheAbove': 'None of the above',
 };
 
