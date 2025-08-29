@@ -8,7 +8,7 @@ import {
   Select as MuiSelect,
   MenuItem,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   getAddresses,
   getPlantDetails,
@@ -17,12 +17,20 @@ import {
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
+import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 
 export const WorkOrderAddPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const cloneId = searchParams.get("clone");
+
+  const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
@@ -130,6 +138,64 @@ export const WorkOrderAddPage: React.FC = () => {
     fetchAddresses();
     fetchServices();
   }, []);
+
+  useEffect(() => {
+    if (shouldFetch) {
+      const cloneData = async () => {
+        try {
+          const response = await dispatch(
+            getWorkOrderById({ baseUrl, token, id: cloneId })
+          ).unwrap();
+
+          const data = response.page
+
+          setFormData({
+            contractor: data.pms_supplier_id,
+            plantDetail: data.work_order?.plant_detail_id,
+            woDate: data.work_order?.wo_date,
+            billingAddress: data.work_order?.billing_address_id,
+            retention: data.work_order?.payment_terms?.retention,
+            tds: data.work_order?.payment_terms?.tds,
+            qc: data.work_order?.payment_terms?.quality_holding,
+            paymentTenure: data.work_order?.payment_terms?.payment_tenure,
+            advanceAmount: data.work_order.advance_amount,
+            relatedTo: data.work_order?.related_to,
+            kindAttention: data.work_order?.kind_attention,
+            subject: data.work_order.subject,
+            description: data.work_order.description,
+            termsConditions: data.work_order.term_condition,
+          });
+
+          setDetailsForms(
+            data.inventories.map((item, index) => ({
+              id: index + 1,
+              service: item.pms_service_id,
+              productDescription: item.product_description,
+              quantityArea: item.quantity,
+              uom: item.uom,
+              expectedDate: item.expected_date,
+              rate: item.rate,
+              cgstRate: item.cgst_rate,
+              cgstAmt: item.cgst_amount,
+              sgstRate: item.sgst_rate,
+              sgstAmt: item.sgst_amount,
+              igstRate: item.igst_rate,
+              igstAmt: item.igst_amount,
+              tcsRate: item.tcs_rate,
+              tcsAmt: item.tcs_amount,
+              taxAmount: item.tax_amount,
+              amount: item.total_amount,
+              totalAmount: item.total_value,
+            })))
+        } catch (error) {
+          console.log(error);
+          toast.error(error);
+        }
+      };
+
+      cloneData();
+    }
+  }, [shouldFetch]);
 
   const handleInputChange = (field: string, value: string | Date) => {
     setFormData((prev) => ({
@@ -1288,6 +1354,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   onChange={(e) =>
                     handleInputChange("kindAttention", e.target.value)
                   }
+                  value={formData.kindAttention}
                   InputLabelProps={{
                     shrink: true,
                   }}
@@ -1314,6 +1381,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   label="Subject"
                   placeholder="Subject"
                   fullWidth
+                  value={formData.subject}
                   variant="outlined"
                   onChange={(e) =>
                     handleInputChange("subject", e.target.value)
@@ -1346,6 +1414,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   label="Description"
                   placeholder="Enter description here..."
                   fullWidth
+                  value={formData.description}
                   variant="outlined"
                   onChange={(e) =>
                     handleInputChange("description", e.target.value)
@@ -1366,6 +1435,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   label="Terms & Conditions"
                   placeholder="Enter terms and conditions here..."
                   fullWidth
+                  value={formData.termsConditions}
                   variant="outlined"
                   onChange={(e) =>
                     handleInputChange("termsConditions", e.target.value)

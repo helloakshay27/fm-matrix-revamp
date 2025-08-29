@@ -650,6 +650,8 @@ import SacHsn from "./pages/SacHsn";
 import DetailPageSacHsn from "./pages/DetailPageSacHsn";
 import AddSacHsn from "./pages/AddSacHsn";
 import { WOFeedsPage } from "./pages/WOFeedsPage";
+import MsafeReportDownload from "./pages/MsafeReportDownload";
+import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 
 
 const queryClient = new QueryClient();
@@ -1587,6 +1589,8 @@ function App() {
                 <Route path="/security/visitor-management/support-staff/edit/:id" element={<EditSupportStaffPage />} />
                 <Route path="/security/visitor-management/visiting-purpose" element={<VisitingPurposePage />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
+                  <Route path="/maintenance/msafe-report" element={<MsafeReportDownload />} />
+                <Route path="/maintenance/msafe-detail-report" element={<MsafeDetailReportDownload />} />
                 <Route
                   path="/security/staff/details/:id"
                   element={<StaffDetailsPage />}

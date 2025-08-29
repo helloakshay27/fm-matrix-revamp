@@ -343,12 +343,12 @@ export const Header = () => {
                   <span>{user.email}</span>
                 </div>
                 <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  User
+                  {user?.lock_role?.name || "No Role"}{" "}
                 </div>
               </div>
               <DropdownMenuItem className="flex items-center gap-2">
-                <Settings className="w-4 h-4" />
-                <span>Profile Settings</span>
+                {/* <Settings className="w-4 h-4" />
+                <span>Profile Settings</span> */}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem

@@ -43,10 +43,28 @@ const roleWithModulesSlice = createSlice({
       const { roleId, moduleId, enabled } = action.payload;
       const role = state.roles.find(r => r.role_id === roleId);
       if (role) {
-        const module = role.modules.find(m => m.module_id === moduleId);
-        if (module) {
-          module.enabled = enabled;
+        let module = role.modules.find(m => (m.module_id ?? m.id) === moduleId);
+        
+        // If module doesn't exist in role, create it
+        if (!module) {
+          module = {
+            module_id: moduleId,
+            id: moduleId,
+            name: 'Unknown Module',
+            enabled: false,
+            functions: []
+          };
+          role.modules.push(module);
         }
+        
+        // Update module and all its functions and sub-functions
+        module.enabled = enabled;
+        module.functions.forEach(func => {
+          func.enabled = enabled;
+          func.sub_functions.forEach(subFunc => {
+            subFunc.enabled = enabled;
+          });
+        });
       }
     },
     updateFunctionEnabled: (state, action: PayloadAction<{
@@ -58,13 +76,42 @@ const roleWithModulesSlice = createSlice({
       const { roleId, moduleId, functionId, enabled } = action.payload;
       const role = state.roles.find(r => r.role_id === roleId);
       if (role) {
-        const module = role.modules.find(m => m.module_id === moduleId);
-        if (module) {
-          const func = module.functions.find(f => f.function_id === functionId);
-          if (func) {
-            func.enabled = enabled;
-          }
+        let module = role.modules.find(m => (m.module_id ?? m.id) === moduleId);
+        
+        // If module doesn't exist in role, create it
+        if (!module) {
+          module = {
+            module_id: moduleId,
+            id: moduleId,
+            name: 'Unknown Module',
+            enabled: false,
+            functions: []
+          };
+          role.modules.push(module);
         }
+        
+        let func = module.functions.find(f => (f.function_id ?? f.id) === functionId);
+        
+        // If function doesn't exist in module, create it
+        if (!func) {
+          func = {
+            function_id: functionId,
+            id: functionId,
+            function_name: 'Unknown Function',
+            enabled: false,
+            sub_functions: []
+          };
+          module.functions.push(func);
+        }
+        
+        // Update function and all its sub-functions
+        func.enabled = enabled;
+        func.sub_functions.forEach(subFunc => {
+          subFunc.enabled = enabled;
+        });
+        
+        // Update module enabled status based on functions
+        module.enabled = module.functions.some(f => f.enabled);
       }
     },
     updateSubFunctionEnabled: (state, action: PayloadAction<{
@@ -75,18 +122,68 @@ const roleWithModulesSlice = createSlice({
       enabled: boolean;
     }>) => {
       const { roleId, moduleId, functionId, subFunctionId, enabled } = action.payload;
+      console.log('Redux: updateSubFunctionEnabled called with:', action.payload);
+      
       const role = state.roles.find(r => r.role_id === roleId);
       if (role) {
-        const module = role.modules.find(m => m.module_id === moduleId);
-        if (module) {
-          const func = module.functions.find(f => f.function_id === functionId);
-          if (func) {
-            const subFunc = func.sub_functions.find(sf => sf.sub_function_id === subFunctionId);
-            if (subFunc) {
-              subFunc.enabled = enabled;
-            }
-          }
+        console.log('Redux: Found role:', role.role_name);
+        let module = role.modules.find(m => (m.module_id ?? m.id) === moduleId);
+        
+        // If module doesn't exist in role, create it
+        if (!module) {
+          console.log('Redux: Creating missing module:', moduleId);
+          module = {
+            module_id: moduleId,
+            id: moduleId,
+            name: 'Unknown Module',
+            enabled: false,
+            functions: []
+          };
+          role.modules.push(module);
         }
+        
+        let func = module.functions.find(f => (f.function_id ?? f.id) === functionId);
+        
+        // If function doesn't exist in module, create it
+        if (!func) {
+          console.log('Redux: Creating missing function:', functionId);
+          func = {
+            function_id: functionId,
+            id: functionId,
+            function_name: 'Unknown Function',
+            enabled: false,
+            sub_functions: []
+          };
+          module.functions.push(func);
+        }
+        
+        let subFunc = func.sub_functions.find(sf => (sf.sub_function_id ?? sf.id) === subFunctionId);
+        
+        // If sub-function doesn't exist in function, create it
+        if (!subFunc) {
+          console.log('Redux: Creating missing sub-function:', subFunctionId);
+          subFunc = {
+            sub_function_id: subFunctionId,
+            id: subFunctionId,
+            sub_function_name: 'Unknown Sub-function',
+            enabled: false
+          };
+          func.sub_functions.push(subFunc);
+        }
+        
+        // Update the sub-function enabled status
+        console.log('Redux: Updating sub-function enabled status:', { subFunctionId, enabled });
+        subFunc.enabled = enabled;
+        
+        // Update function enabled status based on sub-functions
+        func.enabled = func.sub_functions.some(sf => sf.enabled);
+        console.log('Redux: Function enabled status updated to:', func.enabled);
+        
+        // Update module enabled status based on functions
+        module.enabled = module.functions.some(f => f.enabled);
+        console.log('Redux: Module enabled status updated to:', module.enabled);
+      } else {
+        console.log('Redux: Role not found:', roleId);
       }
     }
   },

@@ -1,73 +1,32 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { Button } from '@/components/ui/button';
-import Checkbox from '@mui/material/Checkbox';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import FormGroup from '@mui/material/FormGroup';
+import { FileText } from 'lucide-react';
 
-const MsafeReportDownload: React.FC = () => {
-  const [reports, setReports] = useState({
-    masterSSO: false,
-    masterSignin: false,
-    smt: false,
-    lmc: false,
-    training: false,
-  });
-
-  const anySelected = Object.values(reports).some(Boolean);
-
-  const toggle = (key: keyof typeof reports) =>
-    setReports((prev) => ({ ...prev, [key]: !prev[key] }));
-
-  const handleGenerate = () => {
-    // Placeholder: wire to your export endpoints as needed
-    // Example: call different APIs based on selected checkboxes
-    // For now, just log selection
-    console.log('Generate reports for:', reports);
+const MsafeReportDownload = () => {
+  const handleDownload = () => {
+    // TODO: Wire up MSafe report generation/download API here
+    console.log('MSafe report download clicked');
   };
 
-  const checkboxSx = {
-    '&.Mui-checked': {
-      color: 'hsl(var(--primary))',
-    },
-    '&.MuiCheckbox-root.Mui-checked:hover': {
-      backgroundColor: 'hsl(var(--primary) / 0.08)',
-    },
-  } as const;
-
   return (
-    <div className="p-6 md:p-10">
-      <h1 className="text-4xl md:text-4xl font-bold mb-8">Generate Excel Report</h1>
+    <div className="p-6 sm:p-8">
+      <div className="max-w-4xl">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
+          MSafe Report Download
+        </h1>
+        <p className="text-gray-600 mb-6">
+          Generate and download the latest MSafe report for your records.
+        </p>
 
-      <FormGroup className="space-y-6 mb-8">
-        <FormControlLabel
-          control={<Checkbox sx={checkboxSx} checked={reports.masterSSO} onChange={() => toggle('masterSSO')} />}
-          label={<span className="text-base md:text-lg">Master Report SSO</span>}
-        />
-        <FormControlLabel
-          control={<Checkbox sx={checkboxSx} checked={reports.masterSignin} onChange={() => toggle('masterSignin')} />}
-          label={<span className="text-base md:text-lg">Master Report Signin</span>}
-        />
-        <FormControlLabel
-          control={<Checkbox sx={checkboxSx} checked={reports.smt} onChange={() => toggle('smt')} />}
-          label={<span className="text-base md:text-lg">SMT Report</span>}
-        />
-        <FormControlLabel
-          control={<Checkbox sx={checkboxSx} checked={reports.lmc} onChange={() => toggle('lmc')} />}
-          label={<span className="text-base md:text-lg">LMC Report</span>}
-        />
-        <FormControlLabel
-          control={<Checkbox sx={checkboxSx} checked={reports.training} onChange={() => toggle('training')} />}
-          label={<span className="text-base md:text-lg">Training Report</span>}
-        />
-      </FormGroup>
-
-      <Button
-        onClick={handleGenerate}
-        disabled={!anySelected}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-5 text-base md:text-lg rounded-md"
-      >
-        Generate Report
-      </Button>
+        <Button
+          onClick={handleDownload}
+          className="bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Download Report
+        </Button>
+      </div>
     </div>
   );
 };

@@ -348,6 +348,16 @@ const modulesByPackage = {
         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
       ]
     },
+    {
+      name: 'Msafe Report',
+      icon: Download,
+      href: '/maintenance/msafe-report',
+    },
+    {
+      name: 'Msafe Detail Report',
+      icon: Download,
+      href: '/maintenance/msafe-detail-report',
+    }
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 

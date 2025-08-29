@@ -5,7 +5,29 @@ export interface User {
   email: string;
   firstname: string;
   lastname: string;
+  mobile?: string;
   phone?: string;
+  latitude?: number;
+  longitude?: number;
+  country_code?: string;
+  spree_api_key?: string;
+  access_token?: string;
+  lock_role?: {
+    id: number;
+    name: string;
+    display_name: string;
+    access_level: any;
+    access_to: any;
+    company_id: number;
+    active: number;
+    created_at: string;
+    updated_at: string;
+    permissions_hash: string;
+    user_id: number;
+    phases: any;
+    modules: string[];
+    role_for: string;
+  };
 }
 
 export interface LoginResponse {
@@ -14,7 +36,27 @@ export interface LoginResponse {
   firstname: string;
   lastname: string;
   access_token: string;
-  phone?: string;
+  mobile?: string;
+  latitude?: number;
+  longitude?: number;
+  country_code?: string;
+  spree_api_key?: string;
+  lock_role?: {
+    id: number;
+    name: string;
+    display_name: string;
+    access_level: any;
+    access_to: any;
+    company_id: number;
+    active: number;
+    created_at: string;
+    updated_at: string;
+    permissions_hash: string;
+    user_id: number;
+    phases: any;
+    modules: string[];
+    role_for: string;
+  };
 }
 
 export interface OTPResponse {
@@ -112,7 +154,7 @@ export const getOrganizationsByEmail = async (email: string): Promise<Organizati
 };
 
 
-export const loginUser = async (email: string, password: string, baseUrl: string): Promise<{ id: number; email: string; firstname: string; lastname: string; access_token: string }> => {
+export const loginUser = async (email: string, password: string, baseUrl: string): Promise<User> => {
   const response = await fetch(`https://${baseUrl}/api/users/sign_in.json`, {
     method: 'POST',
     headers: {

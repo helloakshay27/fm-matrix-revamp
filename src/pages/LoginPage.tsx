@@ -167,7 +167,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         id: response.id,
         email: response.email,
         firstname: response.firstname,
-        lastname: response.lastname
+        lastname: response.lastname,
+        mobile: response.mobile,
+        latitude: response.latitude,
+        longitude: response.longitude,
+        country_code: response.country_code,
+        spree_api_key: response.spree_api_key,
+        lock_role: response.lock_role
       });
       saveToken(response.access_token);
       setToken(response.access_token);
