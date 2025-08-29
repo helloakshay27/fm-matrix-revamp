@@ -21,6 +21,8 @@ interface IAttachmentItem {
   id: number;
   document_file_name?: string;
   document_content_type?: string;
+  // Sometimes provided from API for top-level attachments
+  doctype?: string;
   document_file_size?: number;
   document_updated_at?: string;
   url?: string; // present in top-level attachments, may be absent in category attachments
@@ -121,6 +123,17 @@ const KeyValue: React.FC<{ label: string; value?: string | number | null; colSpa
 
 const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined }> = ({ title, items }) => {
   if (!items || items.length === 0) return null;
+
+  // Only keep items that have an image we can show
+  const imageItems = items.filter((item) => {
+    const contentType = (item.document_content_type || item.doctype || '').toLowerCase();
+    const isImageType = contentType.startsWith('image');
+    const urlLooksImage = item.url ? /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(item.url) : false;
+    return !!item.url && (isImageType || urlLooksImage);
+  });
+
+  if (imageItems.length === 0) return null;
+
   return (
     <div className="mb-6">
       <div className="flex items-center gap-2 mb-3">
@@ -128,24 +141,17 @@ const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | und
         <label className="block text-sm font-medium text-gray-700">{title}</label>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {items.map(item => {
+        {imageItems.map(item => {
           const display = item.document_file_name || item.id;
           return (
             <div key={item.id} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
               <div className="flex items-center justify-center h-20 bg-white rounded border mb-2 relative overflow-hidden">
-                {/* If URL & is image show thumbnail */}
-                {item.url && item.document_content_type?.startsWith('image') && (
-                  <img src={item.url} alt={display + ''} className="max-h-20 object-contain" />
-                )}
-                {(!item.url || !item.document_content_type?.startsWith('image')) && (
-                  <FileText className="h-8 w-8 text-gray-400" />
-                )}
+                <img src={item.url} alt={display + ''} className="max-h-20 object-contain" />
               </div>
               <div className="text-center">
                 <button
-                  disabled={!item.url}
-                  onClick={() => item.url && window.open(item.url, '_blank')}
-                  className={`flex items-center justify-center gap-1 text-[#C72030] mx-auto ${!item.url ? 'opacity-60 cursor-not-allowed' : ''}`}
+                  onClick={() => window.open(item.url!, '_blank')}
+                  className="flex items-center justify-center gap-1 text-[#C72030] mx-auto"
                 >
                   <Download className="h-3 w-3" />
                   <span className="text-xs font-medium truncate max-w-[140px]" title={display + ''}>{display}</span>
@@ -157,6 +163,118 @@ const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | und
       </div>
     </div>
   );
+};
+
+// --------------- Helpers for merging top-level attachments ---------------
+const filenameFromUrl = (url?: string) => {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/');
+    return parts[parts.length - 1] || undefined;
+  } catch {
+    const parts = url.split('?')[0].split('/');
+    return parts[parts.length - 1] || undefined;
+  }
+};
+
+const toAttachmentFromKrcc = (item: { id: number; url?: string; doctype?: string; added_from?: string }): IAttachmentItem => ({
+  id: item.id,
+  url: item.url,
+  doctype: item.doctype,
+  document_content_type: item.doctype,
+  document_file_name: filenameFromUrl(item.url),
+  added_from: item.added_from,
+});
+
+type CategoriesMutable = {
+  bike?: ICategoryBike;
+  car?: ICategoryCar;
+  electrical?: ICategoryElectrical;
+  height?: ICategoryHeight;
+  underground?: ICategoryUnderground;
+  bicycle?: ICategoryBicycle;
+  mhe?: ICategoryMHE;
+};
+
+const ensureAttachmentBucket = (obj: ICategoryCommonAttachments, key: string) => {
+  if (!obj[key]) obj[key] = [];
+  return obj[key]!;
+};
+
+const mergeKrccAttachmentsIntoCategories = (
+  krcc: Array<{ id: number; url?: string; doctype?: string; added_from?: string }> | undefined,
+  categories: ICategoriesResponse | undefined
+): ICategoriesResponse => {
+  if (!krcc || krcc.length === 0) return categories || {};
+  const merged: CategoriesMutable = {
+    bike: categories?.bike ? { ...categories.bike, attachments: { ...(categories.bike.attachments || {}) } } : undefined,
+    car: categories?.car ? { ...categories.car, attachments: { ...(categories.car.attachments || {}) } } : undefined,
+    electrical: categories?.electrical ? { ...categories.electrical, attachments: { ...(categories.electrical.attachments || {}) } } : undefined,
+    height: categories?.height ? { ...categories.height, attachments: { ...(categories.height.attachments || {}) } } : undefined,
+    underground: categories?.underground ? { ...categories.underground, attachments: { ...(categories.underground.attachments || {}) } } : undefined,
+    bicycle: categories?.bicycle ? { ...categories.bicycle } : undefined,
+    mhe: categories?.mhe ? { ...categories.mhe } : undefined,
+  };
+
+  const pushTo = (cat: keyof CategoriesMutable, key: string, att: IAttachmentItem) => {
+    if (!merged[cat]) return;
+    if (!('attachments' in (merged[cat] as any))) return;
+    const attObj = (merged[cat] as any).attachments as ICategoryCommonAttachments;
+    const bucket = ensureAttachmentBucket(attObj, key);
+    bucket.push(att);
+  };
+
+  for (const a of krcc) {
+    const added = (a.added_from || '').toLowerCase();
+    const att = toAttachmentFromKrcc(a);
+
+    if (added.startsWith('2w_')) {
+      const key = added.replace('2w_', '');
+      if (key.includes('insurance')) pushTo('bike', 'insurance', att);
+      else if (key.includes('helmet')) pushTo('bike', 'helmet', att);
+      else if (key.includes('puc')) pushTo('bike', 'puc', att);
+      else if (key.includes('medical')) pushTo('bike', 'medical_certificate', att);
+      else if (key.includes('mparivahan')) pushTo('bike', 'mparivahan', att);
+      else if (key.includes('vehicle')) pushTo('bike', 'vehicle', att);
+      continue;
+    }
+
+    if (added.startsWith('4w_')) {
+      const key = added.replace('4w_', '');
+      if (key.includes('insurance')) pushTo('car', 'insurance', att);
+      else if (key.includes('puc')) pushTo('car', 'puc', att);
+      else if (key.includes('medical')) pushTo('car', 'medical_certificate', att);
+      else if (key.includes('mparivahan')) pushTo('car', 'mparivahan', att);
+      else if (key.includes('vehicle')) pushTo('car', 'vehicle', att);
+      continue;
+    }
+
+    if (added.startsWith('electrical_')) {
+      const key = added.replace('electrical_', '');
+      if (key.includes('certificate') && !key.includes('experience')) pushTo('electrical', 'certificate', att);
+      else if (key.includes('license')) pushTo('electrical', 'license', att);
+      else if (key.includes('medical')) pushTo('electrical', 'medical_certificate', att);
+      else if (key.includes('experience')) pushTo('electrical', 'experience_certificate', att);
+      else if (key.includes('first_aid')) pushTo('electrical', 'first_aid', att);
+      continue;
+    }
+
+    if (added.startsWith('height_')) {
+      const key = added.replace('height_', '');
+      if (key.includes('medical')) pushTo('height', 'medical_certificate', att);
+      else if (key.includes('first_aid')) pushTo('height', 'first_aid', att);
+      continue;
+    }
+
+    if (added.startsWith('underground_')) {
+      const key = added.replace('underground_', '');
+      if (key.includes('medical')) pushTo('underground', 'medical_certificate', att);
+      continue;
+    }
+  }
+
+  return merged as ICategoriesResponse;
 };
 
 // --------------- Main Component ---------------
@@ -201,17 +319,20 @@ export const KRCCFormDetail: React.FC = () => {
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
   const user = data?.user;
-  const categories = data?.categories || {};
+  const mergedCategories = useMemo(
+    () => mergeKrccAttachmentsIntoCategories(data?.krcc_attachments, data?.categories),
+    [data?.krcc_attachments, data?.categories]
+  );
 
   const handleBack = () => navigate('/maintenance/krcc-list');
 
-  const bike = categories.bike;
-  const car = categories.car;
-  const electrical = categories.electrical;
-  const height = categories.height;
-  const underground = categories.underground;
-  const bicycle = categories.bicycle;
-  const mhe = categories.mhe;
+  const bike = mergedCategories?.bike;
+  const car = mergedCategories?.car;
+  const electrical = mergedCategories?.electrical;
+  const height = mergedCategories?.height;
+  const underground = mergedCategories?.underground;
+  const bicycle = mergedCategories?.bicycle;
+  const mhe = mergedCategories?.mhe;
 
   const exportToExcel = useCallback(() => {
     if (!data) return;
