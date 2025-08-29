@@ -276,11 +276,16 @@ export const KRCCFormListDashboard = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => console.log('Download form:', form.id)}
+              onClick={() => handleDownload(form)}
+              disabled={!!downloading[form.id]}
               className="h-8 w-8 p-0"
               title="Download Form"
             >
-              <Download className="h-4 w-4" />
+              {downloading[form.id] ? (
+                <RefreshCw className="h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
             </Button>
           </div>
         );
@@ -344,6 +349,46 @@ export const KRCCFormListDashboard = () => {
     setSearchTerm('');
     setCurrentPage(1);
     toast.success('Filters applied');
+  };
+
+  // Per-row PDF download with loader
+  const [downloading, setDownloading] = useState<Record<number, boolean>>({});
+
+  const handleDownload = async (form: KRCCForm) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      toast.error('Missing base URL or token');
+      return;
+    }
+    try {
+      setDownloading(prev => ({ ...prev, [form.id]: true }));
+      const url = `https://${baseUrl}/krcc_forms/${form.id}/krcc_form_report.pdf`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(text || `Download failed (${res.status})`);
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('content-disposition') || '';
+      const match = cd.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+      const filename = decodeURIComponent(match?.[1] || match?.[2] || `krcc-form-${form.id}.pdf`);
+
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+      toast.success(`PDF Downloaded Successfully`);
+    } catch (e: any) {
+      console.error('KRCC download error', e);
+      toast.error(e?.message || 'Download failed');
+    } finally {
+      setDownloading(prev => ({ ...prev, [form.id]: false }));
+    }
   };
 
   return (

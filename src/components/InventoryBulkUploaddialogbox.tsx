@@ -114,7 +114,6 @@ export const InventoryBulkUploadDialog: React.FC<Props> = ({
         // Mirror the Rails ERB anchor: <a href="/assets/services.xlsx" download="services.xlsx" target="_blank" class="btn purple-btn2 btn-sm">...
         const baseUrl = localStorage.getItem('baseUrl');
         const href = baseUrl ? `https://${baseUrl}/assets/inventory.xlsx` : '/assets/inventory.xlsx';
-
         const link = document.createElement('a');
         link.href = href;
         link.setAttribute('download', 'inventory.xlsx');
