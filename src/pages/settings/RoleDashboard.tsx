@@ -13,11 +13,15 @@ import {
 } from '@/components/ui/table';
 import { Plus, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { roleService, ApiRole } from '@/services/roleService';
+import { roleService, RoleWithModules, LockModule } from '@/services/roleService';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchRoles, updateRolePermissions } from '@/store/slices/roleSlice';
-import { fetchFunctions } from '@/store/slices/functionSlice';
-import { getAuthHeader } from '@/config/apiConfig';
+import { 
+  fetchRolesWithModules, 
+  updateSubFunctionEnabled, 
+  updateFunctionEnabled,
+  updateModuleEnabled,
+  setUpdating 
+} from '@/store/slices/roleWithModulesSlice';
 
 interface Permission {
   name: string;
@@ -40,273 +44,120 @@ interface Role {
 export const RoleDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { roles, loading, error } = useAppSelector((state) => state.role);
-  const { functions, loading: functionsLoading } = useAppSelector((state) => state.function);
+  const { roles, loading, error, updating } = useAppSelector((state) => state.roleWithModules);
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('all_functions');
-  const [selectedRole, setSelectedRole] = useState<ApiRole | null>(null);
-  const [rolePermissions, setRolePermissions] = useState<{ [roleId: number]: { [tab: string]: Permission[] } }>({});
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [activeModuleTab, setActiveModuleTab] = useState('');
+  const [selectedRole, setSelectedRole] = useState<RoleWithModules | null>(null);
+  const [allModules, setAllModules] = useState<LockModule[]>([]);
+  const [modulesLoading, setModulesLoading] = useState(false);
 
-  // Fetch roles and functions from API
+  // Fetch roles with modules from new API
   useEffect(() => {
-    dispatch(fetchRoles());
-    dispatch(fetchFunctions());
+    console.log('RoleDashboard: Starting to fetch roles with modules...');
+    dispatch(fetchRolesWithModules());
+    
+    // Fetch all available modules
+    const fetchAllModules = async () => {
+      setModulesLoading(true);
+      try {
+        console.log('RoleDashboard: Fetching all modules...');
+        const modules = await roleService.fetchModules();
+        console.log('RoleDashboard: Fetched modules:', modules);
+        setAllModules(modules);
+        // Set first module as active tab if no tab is set
+        if (modules.length > 0 && !activeModuleTab) {
+          const moduleId = modules[0].module_id ?? modules[0].id;
+          console.log('RoleDashboard: Setting active module tab to:', moduleId);
+          if (moduleId != null) {
+            setActiveModuleTab(moduleId.toString());
+          }
+        }
+      } catch (error) {
+        console.error('RoleDashboard: Error fetching modules:', error);
+        toast.error('Failed to load modules');
+      } finally {
+        setModulesLoading(false);
+      }
+    };
+    
+    fetchAllModules();
   }, [dispatch]);
 
-  // Helper function to map API permission key to function name
-  const mapApiKeyToFunctionName = (apiKey: string): string => {
-    // Create mapping for common API keys to function names
-    const mapping: { [key: string]: string } = {
-      'pms_notices': 'Broadcast',
-      'pms_complaints': 'Tickets', 
-      'pms_documents': 'Documents',
-      'pms_supplier': 'Supplier',
-      'pms_tasks': 'Tasks',
-      'pms_services': 'Service',
-      'pms_energy': 'Meters',
-      'pms_asset_amcs': 'AMC',
-      'pms_assets': 'Asset',
-      'pms_materials': 'Materials',
-      'pms_purchase_orders': 'PO',
-      'pms_work_orders': 'WO',
-      'pms_complaint_reports': 'Report',
-      'pms_attendances': 'Attendance',
-      'pms_business_directories': 'Business Directory',
-      'pms_purchase_orders_approval': 'PO Approval',
-      'pms_dashboard': 'Dashboard',
-      'pms_tracings': 'Tracing',
-      'pms_bi_reports': 'BI Reports',
-      'pms_restaurants': 'Restaurants',
-      'pms_my_ledgers': 'My Ledgers',
-      'pms_loi': 'Letter Of Indent',
-      'pms_work_order_invoices': 'Wo Invoices',
-      'pms_bills': 'Bill',
-      'pms_engineering_reports': 'Engineering Reports',
-      'pms_events': 'Events',
-      'customers': 'Customers',
-      'quikgate_report': 'QuickGate Report',
-      'task_management': 'Task Management',
-      'pms_ceo_dashboard': 'CEO Dashboard',
-      'operational_audits': 'Operational Audit',
-      'mom_details': 'Mom Details',
-      'pms_design_inputs': 'Pms Design Inputs',
-      'vendor_audit': 'Vendor Audit',
-      'permits': 'Permits',
-      'pending_approvals': 'Pending Approvals',
-      'accounts': 'Accounts',
-      'customer_bills': 'Customer Bills',
-      'my_bills': 'My Bills',
-      'pms_water': 'Water',
-      'pms_stp': 'STP',
-      'daily_readings': 'Daily Readings',
-      'utility_consumption': 'Utility Consumption',
-      'utility_request': 'Utility Request',
-      'space': 'Space',
-      'project_management': 'Project Management',
-      'pms_incidents': 'Pms Incidents',
-      'site_dashboard': 'Site Dashboard',
-      'stepathone_dashboard': 'Steppstone Dashboard',
-      'transport': 'Transport',
-      'waste_generation': 'Waste Generation',
-      'gdn': 'GDN',
-      'parking': 'Parking',
-      'gdn_dispatch': 'GDN Dispatch',
-      'pms_inventories': 'Inventory',
-      'pms_grns': 'GRN',
-      'pms_srns': 'SRNS',
-      'pms_accounts': 'Accounts',
-      'pms_consumption': 'Consumption',
-      'pms_setup': 'Account',
-      'pms_user_roles': 'User & Roles',
-      'pms_meter_types': 'Meter Types',
-      'pms_asset_groups': 'Asset Groups',
-      'pms_helpdesk_categories': 'Ticket',
-      'pms_email_rule_setup': 'Email Rule',
-      'pms_usergroups': 'FM Groups',
-      'pms_export': 'Export',
-      'pms_hsns': 'SAC/HSN Setup',
-      'pms_billing_addresses': 'Addresses',
-      'pms_master_checklist': 'Master Checklist',
-      'pms_visitors': 'Visitors',
-      'pms_rvehicles': 'R Vehicles',
-      'pms_gvehicles': 'G Vehicles',
-      'pms_staffs': 'Staffs',
-      'goods_in_out': 'Goods In Out',
-      'pms_patrolling': 'Patrolling'
-    };
-    
-    return mapping[apiKey] || apiKey;
-  };
-
-  // Helper function to map function name back to API key
-  const mapFunctionNameToApiKey = (functionName: string): string => {
-    const reverseMapping: { [key: string]: string } = {
-      'Broadcast': 'pms_notices',
-      'Tickets': 'pms_complaints', 
-      'Documents': 'pms_documents',
-      'Supplier': 'pms_supplier',
-      'Tasks': 'pms_tasks',
-      'Service': 'pms_services',
-      'Meters': 'pms_energy',
-      'AMC': 'pms_asset_amcs',
-      'Asset': 'pms_assets',
-      'Materials': 'pms_materials',
-      'PO': 'pms_purchase_orders',
-      'WO': 'pms_work_orders',
-      'Report': 'pms_complaint_reports',
-      'Attendance': 'pms_attendances',
-      'Business Directory': 'pms_business_directories',
-      'PO Approval': 'pms_purchase_orders_approval',
-      'Dashboard': 'pms_dashboard',
-      'Tracing': 'pms_tracings',
-      'BI Reports': 'pms_bi_reports',
-      'Restaurants': 'pms_restaurants',
-      'My Ledgers': 'pms_my_ledgers',
-      'Letter Of Indent': 'pms_loi',
-      'Wo Invoices': 'pms_work_order_invoices',
-      'Bill': 'pms_bills',
-      'Engineering Reports': 'pms_engineering_reports',
-      'Events': 'pms_events',
-      'Customers': 'customers',
-      'QuickGate Report': 'quikgate_report',
-      'Task Management': 'task_management',
-      'CEO Dashboard': 'pms_ceo_dashboard',
-      'Operational Audit': 'operational_audits',
-      'Mom Details': 'mom_details',
-      'Pms Design Inputs': 'pms_design_inputs',
-      'Vendor Audit': 'vendor_audit',
-      'Permits': 'permits',
-      'Pending Approvals': 'pending_approvals',
-      'Accounts': 'accounts',
-      'Customer Bills': 'customer_bills',
-      'My Bills': 'my_bills',
-      'Water': 'pms_water',
-      'STP': 'pms_stp',
-      'Daily Readings': 'daily_readings',
-      'Utility Consumption': 'utility_consumption',
-      'Utility Request': 'utility_request',
-      'Space': 'space',
-      'Project Management': 'project_management',
-      'Pms Incidents': 'pms_incidents',
-      'Site Dashboard': 'site_dashboard',
-      'Steppstone Dashboard': 'stepathone_dashboard',
-      'Transport': 'transport',
-      'Waste Generation': 'waste_generation',
-      'GDN': 'gdn',
-      'Parking': 'parking',
-      'GDN Dispatch': 'gdn_dispatch',
-      'Inventory': 'pms_inventories',
-      'GRN': 'pms_grns',
-      'SRNS': 'pms_srns',
-      'Consumption': 'pms_consumption',
-      'Account': 'pms_setup',
-      'User & Roles': 'pms_user_roles',
-      'Meter Types': 'pms_meter_types',
-      'Asset Groups': 'pms_asset_groups',
-      'Ticket': 'pms_helpdesk_categories',
-      'Email Rule': 'pms_email_rule_setup',
-      'FM Groups': 'pms_usergroups',
-      'Export': 'pms_export',
-      'SAC/HSN Setup': 'pms_hsns',
-      'Addresses': 'pms_billing_addresses',
-      'Master Checklist': 'pms_master_checklist',
-      'Visitors': 'pms_visitors',
-      'R Vehicles': 'pms_rvehicles',
-      'G Vehicles': 'pms_gvehicles',
-      'Staffs': 'pms_staffs',
-      'Goods In Out': 'goods_in_out',
-      'Patrolling': 'pms_patrolling'
-    };
-    
-    return reverseMapping[functionName] || functionName.toLowerCase().replace(/\s+/g, '_');
-  };
-
-  // Initialize permissions for roles when functions are loaded
+  // Set default selected role when roles are loaded
   useEffect(() => {
-    if (functions.length > 0 && roles.length > 0 && !isUpdating) {
-      const initialPermissions: { [roleId: number]: { [tab: string]: Permission[] } } = {};
-      
-      roles.forEach(role => {
-        // Only reinitialize if this role doesn't have permissions yet
-        if (!rolePermissions[role.id]) {
-          initialPermissions[role.id] = {};
-          
-          // Parse permissions_hash from API
-          let rolePermissionsData: any = {};
-          try {
-            const permissionsHashValue = role.permissions_hash || '{}';
-            console.log(`Loading permissions for role ${role.name}:`, permissionsHashValue);
-            const parsedData = JSON.parse(permissionsHashValue);
-            // Handle case where JSON.parse returns null (when permissions_hash is "null" string)
-            rolePermissionsData = parsedData && typeof parsedData === 'object' ? parsedData : {};
-            console.log('Parsed permissions data:', rolePermissionsData);
-          } catch (error) {
-            console.error('Error parsing permissions_hash for role:', role.name, error);
-            rolePermissionsData = {};
-          }
-          
-          tabs.forEach(tab => {
-            initialPermissions[role.id][tab] = functions
-              .filter(func => func.parent_function === tab)
-              .map(func => {
-                // Look for matching API permission using the function name directly 
-                // or try to find by mapped name
-                let apiPermissions: any = {};
-                
-                // First try direct match with function name
-                if (rolePermissionsData[func.name]) {
-                  apiPermissions = rolePermissionsData[func.name];
-                } else {
-                  // Try to find by reverse mapping - look for API key that maps to this function name
-                  const apiKey = Object.keys(rolePermissionsData).find(key => 
-                    mapApiKeyToFunctionName(key) === func.name
-                  );
-                  if (apiKey) {
-                    apiPermissions = rolePermissionsData[apiKey];
-                  }
-                }
-                
-                return {
-                  name: func.name,
-                  all: apiPermissions.all === "true",
-                  add: apiPermissions.create === "true", 
-                  view: apiPermissions.show === "true",
-                  edit: apiPermissions.update === "true",
-                  disable: apiPermissions.destroy === "true"
-                };
-              });
-          });
-        }
-      });
-      
-      // Only update if we have new permissions to add
-      if (Object.keys(initialPermissions).length > 0) {
-        setRolePermissions(prev => ({
-          ...prev,
-          ...initialPermissions
-        }));
+    if (Array.isArray(roles) && roles.length > 0) {
+      if (!selectedRole) {
+        setSelectedRole(roles[0]);
       }
     }
-  }, [functions, roles, isUpdating]);
+  }, [roles, selectedRole]);
 
-  // Get unique parent_function values as tabs
-  const tabs = ['all_functions', 'inventory', 'setup', 'quickgate'];
-  const tabLabels = ['All Functions', 'Inventory', 'Setup', 'Quickgate'];
+  // Get filtered roles based on search term
+  const filteredRoles = Array.isArray(roles) ? roles.filter(role =>
+    role.role_name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) : [];
 
-  const filteredRoles = roles.filter(role =>
-    role.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Get current role's modules for tabs - Use all available modules instead of just role's modules
+  const currentRole = selectedRole;
+  const tabs = Array.isArray(allModules) ? allModules
+    .filter(module => (module.module_id ?? module.id) != null)
+    .map(module => ({
+      id: (module.module_id ?? module.id).toString(),
+      name: module.name || 'Unknown Module'
+    })) : [];
 
-  // Get permissions for the selected role, default to first role if none selected
-  const currentRole = selectedRole || roles[0];
-  const currentPermissions = currentRole && rolePermissions[currentRole.id] 
-    ? rolePermissions[currentRole.id][activeTab] || []
-    : [];
+  // Get current module from the selected role's modules (this contains the actual enabled status)
+  const currentRoleModule = currentRole?.modules.find(m => {
+    const moduleId = m.module_id ?? m.id;
+    return moduleId != null && moduleId.toString() === activeModuleTab;
+  }) || null;
+  
+  // Get current module info from all modules (for metadata like name)
+  const currentModule = Array.isArray(allModules) ? allModules.find(m => {
+    const moduleId = m.module_id ?? m.id;
+    return moduleId != null && moduleId.toString() === activeModuleTab;
+  }) : null;
+  
+  // Use functions from the role's module if available, otherwise from the general module
+  const currentFunctions = currentRoleModule?.functions || currentModule?.functions || [];
+  
+  // Helper function to check if a sub-function is enabled for the current role
+  const isSubFunctionEnabled = (moduleId: number, functionId: number, subFunctionId: number): boolean => {
+    if (!currentRole) return false;
+    const roleModule = currentRole.modules.find(m => m.module_id === moduleId);
+    if (!roleModule) return false;
+    const roleFunction = roleModule.functions.find(f => f.function_id === functionId);
+    if (!roleFunction) return false;
+    const roleSubFunction = roleFunction.sub_functions.find(sf => sf.sub_function_id === subFunctionId);
+    return roleSubFunction?.enabled || false;
+  };
+  
+  // Helper function to check if a function is enabled for the current role
+  const isFunctionEnabled = (moduleId: number, functionId: number): boolean => {
+    if (!currentRole) return false;
+    const roleModule = currentRole.modules.find(m => (m.module_id ?? m.id) === moduleId);
+    if (!roleModule) return false;
+    const roleFunction = roleModule.functions.find(f => (f.function_id ?? f.id) === functionId);
+    return roleFunction?.enabled || false;
+  };
 
-  const handleRoleClick = (role: ApiRole) => {
+  // Helper function to check if a module is enabled for the current role
+  const isModuleEnabled = (moduleId: number): boolean => {
+    if (!currentRole) return false;
+    const roleModule = currentRole.modules.find(m => (m.module_id ?? m.id) === moduleId);
+    return roleModule?.enabled || false;
+  };
+
+  const handleRoleClick = (role: RoleWithModules) => {
     setSelectedRole(role);
+    // Keep the same tab when switching roles, or set first tab if none
+    if (!activeModuleTab && Array.isArray(allModules) && allModules.length > 0) {
+      const moduleId = allModules[0].module_id ?? allModules[0].id;
+      if (moduleId != null) {
+        setActiveModuleTab(moduleId.toString());
+      }
+    }
   };
 
   const handleAddRole = () => {
@@ -319,51 +170,51 @@ export const RoleDashboard = () => {
     // Search functionality is already handled by filteredRoles
   };
 
-  const handlePermissionChange = (roleId: number, permissionName: string, field: keyof Permission, value: boolean) => {
-    if (!rolePermissions[roleId] || !rolePermissions[roleId][activeTab]) return;
+  // Handle sub-function permission change
+  const handleSubFunctionToggle = (
+    moduleId: number,
+    functionId: number,
+    subFunctionId: number,
+    enabled: boolean
+  ) => {
+    if (!currentRole) return;
+    
+    dispatch(updateSubFunctionEnabled({
+      roleId: currentRole.role_id,
+      moduleId,
+      functionId,
+      subFunctionId,
+      enabled
+    }));
+  };
 
-    const updatedPermissions = rolePermissions[roleId][activeTab].map(permission => {
-      if (permission.name === permissionName) {
-        const updatedPermission = { ...permission, [field]: value };
-        
-        // If "All" is checked, check all other permissions
-        if (field === 'all' && value) {
-          updatedPermission.add = true;
-          updatedPermission.view = true;
-          updatedPermission.edit = true;
-          updatedPermission.disable = true;
-        }
-        // If "All" is unchecked, uncheck all other permissions
-        else if (field === 'all' && !value) {
-          updatedPermission.add = false;
-          updatedPermission.view = false;
-          updatedPermission.edit = false;
-          updatedPermission.disable = false;
-        }
-        // If any individual permission is unchecked, uncheck "All"
-        else if (!value && field !== 'all') {
-          updatedPermission.all = false;
-        }
-        // If all individual permissions are checked, check "All"
-        else if (value && field !== 'all') {
-          const allIndividualChecked = updatedPermission.add && updatedPermission.view && updatedPermission.edit && updatedPermission.disable;
-          if (allIndividualChecked) {
-            updatedPermission.all = true;
-          }
-        }
-        
-        return updatedPermission;
-      }
-      return permission;
-    });
+  // Handle function permission change (toggles all sub-functions)
+  const handleFunctionToggle = (
+    moduleId: number,
+    functionId: number,
+    enabled: boolean
+  ) => {
+    if (!currentRole) return;
+    
+    dispatch(updateFunctionEnabled({
+      roleId: currentRole.role_id,
+      moduleId,
+      functionId,
+      enabled
+    }));
+  };
 
-    // Update local state
-    setRolePermissions(prev => ({
-      ...prev,
-      [roleId]: {
-        ...prev[roleId],
-        [activeTab]: updatedPermissions
-      }
+  // Handle module permission change (toggles all functions and sub-functions)
+  const handleModuleToggle = (
+    moduleId: number,
+    enabled: boolean
+  ) => {
+    if (!currentRole) return;
+    
+    dispatch(updateModuleEnabled({
+      roleId: currentRole.role_id,
+      moduleId,
+      enabled
     }));
   };
 
@@ -373,76 +224,20 @@ export const RoleDashboard = () => {
       return;
     }
     
-    setIsUpdating(true);
+    dispatch(setUpdating(true));
     
     try {
-      // Get current role's existing permissions from API
-      const existingPermissionsHash = currentRole.permissions_hash ? JSON.parse(currentRole.permissions_hash) : {};
+      await roleService.updateRoleWithModules(currentRole);
+      toast.success(`Permissions updated successfully for ${currentRole.role_name}`);
       
-      // Get current tab permissions from state
-      const currentTabPermissions = rolePermissions[currentRole.id]?.[activeTab] || [];
-      
-      // Build permissions hash for current tab
-      const currentTabPermissionsHash: any = {};
-      currentTabPermissions.forEach(permission => {
-        // Use the proper API key mapping instead of lowercase transformation
-        const apiKey = mapFunctionNameToApiKey(permission.name);
-        currentTabPermissionsHash[apiKey] = {
-          all: permission.all ? "true" : "false",
-          create: permission.add ? "true" : "false", 
-          show: permission.view ? "true" : "false",
-          update: permission.edit ? "true" : "false",
-          destroy: permission.disable ? "true" : "false"
-        };
-      });
-      
-      // Merge with existing permissions (preserve other tabs' permissions)
-      const mergedPermissionsHash = {
-        ...existingPermissionsHash,
-        ...currentTabPermissionsHash
-      };
-      
-      // Prepare payload
-      const payload = {
-        lock_role: {
-          name: currentRole.name,
-        },
-        permissions_hash: mergedPermissionsHash,
-        lock_modules: null
-      };
-
-      // Make PATCH request
-      const response = await fetch(`https://fm-uat-api.lockated.com/lock_roles/${currentRole.id}.json`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': getAuthHeader()
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        toast.success(`Permissions updated successfully for ${currentRole.name}`);
-        
-        // Refresh roles data to reflect changes
-        await dispatch(fetchRoles());
-        
-        // Clear the local permissions for this role to force re-initialization with fresh API data
-        setRolePermissions(prev => {
-          const updated = { ...prev };
-          delete updated[currentRole.id];
-          return updated;
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update permissions');
-      }
+      // Refresh roles data to reflect changes
+      await dispatch(fetchRolesWithModules());
       
     } catch (error) {
       console.error('Error updating permissions:', error);
       toast.error(`Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
-      setIsUpdating(false);
+      dispatch(setUpdating(false));
     }
   };
 
@@ -490,18 +285,18 @@ export const RoleDashboard = () => {
                   <div className="text-gray-500">Loading roles...</div>
                 </div>
               ) : filteredRoles.length > 0 ? (
-                filteredRoles.map((role) => (
+                filteredRoles.map((role, index) => (
                   <div
-                    key={role.id}
+                    key={`${role.role_name}-${index}`}
                     onClick={() => handleRoleClick(role)}
                     className={`p-3 rounded border cursor-pointer transition-colors ${
-                      currentRole?.id === role.id 
+                      currentRole?.role_name === role.role_name 
                         ? 'bg-[#C72030] text-white border-[#C72030]' 
                         : 'bg-white hover:bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="text-sm font-medium">
-                      {role.id} - {role.name}
+                      {role.role_id} - {role.role_name}
                     </div>
                   </div>
                 ))
@@ -513,28 +308,44 @@ export const RoleDashboard = () => {
 
           {/* Right Panel - Permissions Matrix */}
           <div className="flex-1 min-w-0">
+            {/* Debug info */}
+            <div className="mb-2 text-xs text-gray-500">
+              Debug: Roles loaded: {Array.isArray(roles) ? roles.length : 'No'}, 
+              Modules loaded: {allModules.length}, 
+              Selected role: {currentRole?.role_name || 'None'}, 
+              Active tab: {activeModuleTab || 'None'},
+              Loading: {loading ? 'Yes' : 'No'},
+              Error: {error || 'None'}
+            </div>
+            
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
-              Permissions for: {currentRole?.name}
+              Permissions for: {currentRole?.role_name}
             </h3>
             
-            {/* Tabs - Responsive scrolling */}
+            {/* Module Tabs */}
             <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-              {tabs.map((tab, index) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
-                    activeTab === tab
-                      ? 'bg-[#C72030] text-white border-[#C72030]'
-                      : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
-                  }`}
-                >
-                  {tabLabels[index]}
-                </button>
-              ))}
+              {modulesLoading ? (
+                <div className="text-gray-500 text-sm">Loading modules...</div>
+              ) : tabs.length > 0 ? (
+                tabs.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveModuleTab(tab.id)}
+                    className={`px-3 lg:px-4 py-2 rounded border text-xs lg:text-sm font-medium transition-colors whitespace-nowrap ${
+                      activeModuleTab === tab.id
+                        ? 'bg-[#C72030] text-white border-[#C72030]'
+                        : 'bg-white text-[#C72030] border-[#C72030] hover:bg-[#C72030]/10'
+                    }`}
+                  >
+                    {tab.name}
+                  </button>
+                ))
+              ) : (
+                <div className="text-gray-500 text-sm">No modules available</div>
+              )}
             </div>
 
-            {/* Permissions Table - Responsive with horizontal scroll */}
+            {/* Functions and Sub-functions Table */}
             <div className="border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
                 <div className="max-h-64 lg:max-h-96 overflow-y-auto">
@@ -542,111 +353,80 @@ export const RoleDashboard = () => {
                     <TableHeader className="sticky top-0 bg-white z-10">
                       <TableRow className="bg-gray-50">
                         <TableHead className="font-semibold text-gray-700 min-w-[200px] lg:w-48 text-xs lg:text-sm">
-                          Permission
+                          Function / Sub-function
                         </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                          All
-                        </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                          Add
-                        </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                          View
-                        </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[60px] text-xs lg:text-sm">
-                          Edit
-                        </TableHead>
-                        <TableHead className="font-semibold text-gray-700 text-center min-w-[70px] text-xs lg:text-sm">
-                          Disable
+                        <TableHead className="font-semibold text-gray-700 text-center min-w-[80px] text-xs lg:text-sm">
+                          Enabled
                         </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {functionsLoading ? (
+                      {loading || modulesLoading ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4">
+                          <TableCell colSpan={2} className="text-center py-4">
                             Loading functions...
                           </TableCell>
                         </TableRow>
-                      ) : currentPermissions.length === 0 ? (
+                      ) : currentFunctions.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-4 text-gray-500">
-                            No functions found for this category
+                          <TableCell colSpan={2} className="text-center py-4 text-gray-500">
+                            {!currentRoleModule && !currentModule ? 'Please select a module' : 'No functions found for this module'}
                           </TableCell>
                         </TableRow>
                       ) : (
-                        currentPermissions.map((permission, index) => (
-                        <TableRow key={`${currentRole?.id}-${activeTab}-${permission.name}-${index}`} className="hover:bg-gray-50">
-                          <TableCell className="font-medium text-xs lg:text-sm py-2 lg:py-3">
-                            {permission.name}
-                          </TableCell>
-                          <TableCell className="text-center py-2 lg:py-3">
-                            <div className="flex justify-center">
-                               <Checkbox
-                                checked={permission.all}
-                                onCheckedChange={(checked) => {
-                                  if (currentRole) {
-                                    handlePermissionChange(currentRole.id, permission.name, 'all', checked as boolean);
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center py-2 lg:py-3">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={permission.add}
-                                onCheckedChange={(checked) => {
-                                  if (currentRole) {
-                                    handlePermissionChange(currentRole.id, permission.name, 'add', checked as boolean);
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center py-2 lg:py-3">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={permission.view}
-                                onCheckedChange={(checked) => {
-                                  if (currentRole) {
-                                    handlePermissionChange(currentRole.id, permission.name, 'view', checked as boolean);
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center py-2 lg:py-3">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={permission.edit}
-                                onCheckedChange={(checked) => {
-                                  if (currentRole) {
-                                    handlePermissionChange(currentRole.id, permission.name, 'edit', checked as boolean);
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-center py-2 lg:py-3">
-                            <div className="flex justify-center">
-                              <Checkbox
-                                checked={permission.disable}
-                                onCheckedChange={(checked) => {
-                                  if (currentRole) {
-                                    handlePermissionChange(currentRole.id, permission.name, 'disable', checked as boolean);
-                                  }
-                                }}
-                                className="w-4 h-4"
-                              />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        ))
+                        currentFunctions.flatMap((func) => [
+                          // Function row
+                          <TableRow key={`func-${func.function_id || func.id}`} className="hover:bg-gray-50 bg-gray-25">
+                            <TableCell className="font-semibold text-sm py-3 pl-4">
+                              📁 {func.function_name}
+                            </TableCell>
+                            <TableCell className="text-center py-3">
+                              <div className="flex justify-center">
+                                <Checkbox
+                                  checked={currentRoleModule ? isFunctionEnabled(currentRoleModule.module_id || currentRoleModule.id, func.function_id || func.id) : false}
+                                  onCheckedChange={(checked) => {
+                                    if (currentRoleModule) {
+                                      handleFunctionToggle(
+                                        currentRoleModule.module_id || currentRoleModule.id,
+                                        func.function_id || func.id,
+                                        checked as boolean
+                                      );
+                                    }
+                                  }}
+                                  className="w-4 h-4"
+                                  disabled={!currentRoleModule}
+                                />
+                              </div>
+                            </TableCell>
+                          </TableRow>,
+                          // Sub-function rows
+                          ...(func.sub_functions || []).map((subFunc) => (
+                            <TableRow key={`subfunc-${subFunc.sub_function_id || subFunc.id}`} className="hover:bg-gray-50">
+                              <TableCell className="text-sm py-2 pl-8 text-gray-600">
+                                ↳ {subFunc.sub_function_name}
+                              </TableCell>
+                              <TableCell className="text-center py-2">
+                                <div className="flex justify-center">
+                                  <Checkbox
+                                    checked={currentRoleModule ? isSubFunctionEnabled(currentRoleModule.module_id || currentRoleModule.id, func.function_id || func.id, subFunc.sub_function_id || subFunc.id) : false}
+                                    onCheckedChange={(checked) => {
+                                      if (currentRoleModule) {
+                                        handleSubFunctionToggle(
+                                          currentRoleModule.module_id || currentRoleModule.id,
+                                          func.function_id || func.id,
+                                          subFunc.sub_function_id || subFunc.id,
+                                          checked as boolean
+                                        );
+                                      }
+                                    }}
+                                    className="w-4 h-4"
+                                    disabled={!currentRoleModule}
+                                  />
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ])
                       )}
                     </TableBody>
                   </Table>

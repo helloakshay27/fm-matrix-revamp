@@ -134,68 +134,6 @@ export const ServicePRDetailsPage = () => {
     fetchData();
   }, [dispatch, baseUrl, token, id]);
 
-  // Mock data - in real app this would come from API based on ID
-  const servicePRData = {
-    id: id || "12985",
-    prNumber: "10060",
-    referenceNo: "10060",
-    adminApproval: "Pending",
-    prDate: "18-03-21",
-    contractor: "Harells Corp",
-    address:
-      "2nd Floor, Jyoti Tower, Opp. Versova Police Station, Andheri (West), Mumbai 400053, India",
-    phone: "+91 9954568992",
-    email: "customercare@lockated.com",
-    fax: "dvdkv",
-    pan: "fcfdsf",
-    gst: "dssdff",
-    kindAttention: "",
-    subject: "",
-    relatedTo: "",
-    paymentTenure: "7",
-    retention: "10.0",
-    tds: "10.0",
-    qc: "10.0",
-    advanceAmount: "",
-    description: "",
-    workCategory: "Serv1.1",
-    plantDetail: "Jyoti Tower - Default Site Org-Plant for Lockated Site 1",
-    services: [
-      {
-        sno: 1,
-        boqDetails: "P034",
-        quantity: 70.0,
-        uom: "NA",
-        expectedDate: "NA",
-        productDescription: "P034",
-        rate: 10.0,
-        wbsCode: "",
-        cgstRate: 2.0,
-        cgstAmount: 14.0,
-        sgstRate: 2.0,
-        sgstAmount: 14.0,
-        igstRate: 0.0,
-        igstAmount: 0.0,
-        tcsAmount: 0.0,
-        taxAmount: 28.0,
-        totalAmount: 700.0,
-      },
-    ],
-    netAmount: "700.00",
-    totalTaxableValue: 700.0,
-    taxes: 28.0,
-    totalValue: 728.0,
-    amountInWords: "Seven Hundred Twenty Eight Rupees Only",
-    termsConditions: "NA",
-    preparedBy: "Amit Acc",
-    signature: "",
-    attachments: "No attachments",
-    sapResponse: {
-      code: "",
-      message: "Service PR submitted successfully",
-    },
-  };
-
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -684,23 +622,23 @@ export const ServicePRDetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Terms & Conditions :
         </h3>
-        <p className="text-gray-700">{servicePRData.termsConditions}</p>
+        <p className="text-gray-700">{servicePR.termsConditions}</p>
 
         <div className="mt-6">
           <p className="text-gray-900 font-medium">
-            For {servicePRData.contractor} We Confirm & Accept,
+            For {servicePR.contractor} We Confirm & Accept,
           </p>
         </div>
 
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <p className="font-medium text-gray-900">
-              PREPARED BY: {servicePRData.preparedBy}
+              PREPARED BY: {servicePR.preparedBy}
             </p>
           </div>
           <div>
             <p className="font-medium text-gray-900">
-              SIGNATURE: {servicePRData.signature || "-"}
+              SIGNATURE: {servicePR.signature || "-"}
             </p>
           </div>
         </div>

@@ -34,7 +34,10 @@ const navigationStructure = {
           { name: 'Report Setup', href: '/settings/account/report-setup' },
           { name: 'Notification Setup', href: '/settings/account/notification-setup' },
           { name: 'Shift', href: '/settings/account/shift' },
-          { name: 'Roster', href: '/settings/account/roster' }
+          { name: 'Roster', href: '/settings/account/roster' },
+          { name: 'Role Config', href: '/settings/account/role-config' },
+          { name: 'Lock Function', href: '/settings/account/lock-function' },
+          { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
         ]
       },
       {
@@ -322,7 +325,7 @@ const modulesByPackage = {
       ]
     },
     {
-      name: 'Users',
+      name: 'M-Safe',
       icon: User,
       href: '/maintenance/m-safe',
       subItems: [
@@ -521,7 +524,10 @@ const modulesByPackage = {
         { name: 'Report Setup', href: '/settings/account/report-setup' },
         { name: 'Notification Setup', href: '/settings/account/notification-setup' },
         { name: 'Shift', href: '/settings/account/shift' },
-        { name: 'Roster', href: '/settings/account/roster' }
+                  { name: 'Roster', href: '/settings/account/roster' },
+                      { name: 'Role Config', href: '/settings/account/lock-module' },
+          { name: 'Lock Function', href: '/settings/account/lock-function' },
+          { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
 
 
       ]

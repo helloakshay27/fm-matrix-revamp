@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
+import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -161,6 +162,60 @@ export const AddServicePRDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (shouldFetch) {
+      const cloneData = async () => {
+        try {
+          const response = await dispatch(getWorkOrderById({ baseUrl, token, id: cloneId })).unwrap();
+          const data = response.page
+          setFormData({
+            contractor: data.pms_supplier_id,
+            plantDetail: data.work_order.plant_detail_id,
+            woDate: data.work_order.wo_date,
+            billingAddress: data.work_order.billing_address_id,
+            retention: data.work_order?.payment_terms?.retention,
+            tds: data.work_order?.payment_terms?.tds,
+            qc: data.work_order?.payment_terms?.quality_holding,
+            paymentTenure: data.work_order.payment_terms?.payment_tenure,
+            advanceAmount: data.work_order.advance_amount,
+            relatedTo: data.work_order.related_to,
+            kindAttention: data.work_order.kind_attention,
+            subject: data.work_order.subject,
+            description: data.work_order.description,
+            termsConditions: data.work_order.term_condition,
+          })
+
+          setDetailsForms(data.inventories.map((item, index) => ({
+            id: index + 1,
+            service: item.pms_service_id,
+            productDescription: item.product_description,
+            quantityArea: item.quantity,
+            uom: item.unit,
+            expectedDate: item.expected_date,
+            rate: item.rate,
+            cgstRate: item.cgst_rate,
+            cgstAmt: item.cgst_amount,
+            sgstRate: item.sgst_rate,
+            sgstAmt: item.sgst_amount,
+            igstRate: item.igst_rate,
+            igstAmt: item.igst_amount,
+            tcsRate: item.tcs_rate,
+            tcsAmt: item.tcs_amount,
+            taxAmount: item.tax_amount,
+            amount: item.total_value,
+            totalAmount: item.total_amount,
+            wbsCode: "",
+          })))
+        } catch (error) {
+          console.log(error)
+          toast.error(error)
+        }
+      }
+
+      cloneData();
+    }
+  }, [shouldFetch])
+
+  useEffect(() => {
     if (data.length > 0) {
       setShowRadio(true);
     }
@@ -247,6 +302,12 @@ export const AddServicePRDashboard = () => {
     setFormData((prev) => ({ ...prev, plantDetail: value }));
     dispatch(changePlantDetails({ baseUrl, id: value, token }));
   };
+
+  useEffect(() => {
+    if (formData.plantDetail) {
+      handlePlantDetailsChange({ target: { name: "plantDetail", value: formData.plantDetail } })
+    }
+  }, [formData.plantDetail])
 
   const handleFileUpload = (event) => {
     const files = event.target.files;
@@ -972,6 +1033,7 @@ export const AddServicePRDashboard = () => {
                 variant="outlined"
                 onChange={(e) => handleInputChange("kindAttention", e.target.value)}
                 InputLabelProps={{ shrink: true }}
+                value={formData.kindAttention}
                 sx={fieldStyles}
               />
 
@@ -983,6 +1045,7 @@ export const AddServicePRDashboard = () => {
                 onChange={(e) => handleInputChange("subject", e.target.value)}
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
+                value={formData.subject}
               />
 
               <TextField
@@ -994,6 +1057,7 @@ export const AddServicePRDashboard = () => {
                 multiline
                 rows={6}
                 InputLabelProps={{ shrink: true }}
+                value={formData.description}
                 sx={{ mt: 1 }}
               />
 
@@ -1008,6 +1072,7 @@ export const AddServicePRDashboard = () => {
                 multiline
                 rows={6}
                 InputLabelProps={{ shrink: true }}
+                value={formData.termsConditions}
                 sx={{ mt: 1 }}
               />
             </div>

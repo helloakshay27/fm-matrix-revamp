@@ -1,44 +1,59 @@
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 
-// Type definitions for Lock Function API
-export interface LockFunctionItem {
+// Type definitions for Lock Function API (matching actual backend structure)
+export interface LockFunction {
   id: number;
-  functionName: string;
-  description: string;
-  lockType: 'SYSTEM' | 'USER' | 'ADMIN' | 'TEMPORARY';
-  duration: string;
-  createdOn: string;
-  createdBy: string;
-  active: boolean;
-  // API response fields
-  function_name?: string;
-  action_name?: string;
-  module_name?: string;
+  lock_controller_id?: number;
+  name: string;
+  action_name: string;
+  active: number;
+  phase_id?: number;
+  module_id: string;
+  parent_function?: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  lock_sub_functions?: LockSubFunction[];
+}
+
+export interface LockSubFunction {
+  id: number;
+  lock_function_id: number;
+  name: string;
+  sub_function_name: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  url: string;
 }
 
 export interface CreateLockFunctionPayload {
   lock_function: {
-    function_name: string;
-    description: string;
-    lock_type: string;
-    duration: string;
+    lock_controller_id?: number;
+    name: string;
+    action_name: string;
     active: boolean;
+    phase_id?: number;
+    module_id: number;
+    parent_function?: string;
   };
 }
 
 export interface UpdateLockFunctionPayload {
   lock_function: {
-    function_name: string;
-    description: string;
-    lock_type: string;
-    duration: string;
+    lock_controller_id?: number;
+    name: string;
+    action_name: string;
     active: boolean;
+    phase_id?: number;
+    module_id: number;
+    parent_function?: string;
   };
 }
 
 export const lockFunctionService = {
   // Fetch all lock functions
-  async fetchLockFunctions(): Promise<LockFunctionItem[]> {
+  async fetchLockFunctions(): Promise<LockFunction[]> {
     try {
       const response = await fetch(
         getFullUrl(API_CONFIG.ENDPOINTS.FUNCTIONS),
@@ -56,23 +71,7 @@ export const lockFunctionService = {
       }
 
       const data = await response.json();
-      const functions = data.lock_functions || data || [];
-      
-      // Transform API response to match UI interface
-      return functions.map((func: any) => ({
-        id: func.id,
-        functionName: func.function_name || func.functionName || '',
-        description: func.description || '',
-        lockType: func.lock_type || func.lockType || 'SYSTEM',
-        duration: func.duration || 'Permanent',
-        createdOn: func.created_on || func.createdOn || new Date().toLocaleDateString(),
-        createdBy: func.created_by || func.createdBy || 'System',
-        active: func.active !== undefined ? func.active : true,
-        // Keep original fields for API operations
-        function_name: func.function_name,
-        action_name: func.action_name,
-        module_name: func.module_name,
-      }));
+      return data.lock_functions || data || [];
     } catch (error) {
       console.error('Error fetching lock functions:', error);
       throw error;
@@ -80,7 +79,7 @@ export const lockFunctionService = {
   },
 
   // Fetch single lock function
-  async fetchLockFunction(id: number): Promise<LockFunctionItem> {
+  async fetchLockFunction(id: number): Promise<LockFunction> {
     try {
       const response = await fetch(
         getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTIONS}/${id}.json`),
@@ -98,21 +97,7 @@ export const lockFunctionService = {
       }
 
       const data = await response.json();
-      const func = data.lock_function || data;
-      
-      return {
-        id: func.id,
-        functionName: func.function_name || func.functionName || '',
-        description: func.description || '',
-        lockType: func.lock_type || func.lockType || 'SYSTEM',
-        duration: func.duration || 'Permanent',
-        createdOn: func.created_on || func.createdOn || new Date().toLocaleDateString(),
-        createdBy: func.created_by || func.createdBy || 'System',
-        active: func.active !== undefined ? func.active : true,
-        function_name: func.function_name,
-        action_name: func.action_name,
-        module_name: func.module_name,
-      };
+      return data.lock_function || data;
     } catch (error) {
       console.error('Error fetching lock function:', error);
       throw error;
@@ -120,10 +105,10 @@ export const lockFunctionService = {
   },
 
   // Create new lock function
-  async createLockFunction(payload: CreateLockFunctionPayload): Promise<LockFunctionItem> {
+  async createLockFunction(payload: CreateLockFunctionPayload): Promise<LockFunction> {
     try {
       const response = await fetch(
-        getFullUrl(API_CONFIG.ENDPOINTS.FUNCTIONS.replace('.json', '.json')),
+        getFullUrl(API_CONFIG.ENDPOINTS.CREATE_FUNCTION),
         {
           method: 'POST',
           headers: {
@@ -140,21 +125,7 @@ export const lockFunctionService = {
       }
 
       const data = await response.json();
-      const func = data.lock_function || data;
-      
-      return {
-        id: func.id,
-        functionName: func.function_name || '',
-        description: func.description || '',
-        lockType: func.lock_type || 'SYSTEM',
-        duration: func.duration || 'Permanent',
-        createdOn: func.created_on || new Date().toLocaleDateString(),
-        createdBy: func.created_by || 'Current User',
-        active: func.active !== undefined ? func.active : true,
-        function_name: func.function_name,
-        action_name: func.action_name,
-        module_name: func.module_name,
-      };
+      return data.lock_function || data;
     } catch (error) {
       console.error('Error creating lock function:', error);
       throw error;
@@ -162,10 +133,10 @@ export const lockFunctionService = {
   },
 
   // Update existing lock function
-  async updateLockFunction(id: number, payload: UpdateLockFunctionPayload): Promise<LockFunctionItem> {
+  async updateLockFunction(id: number, payload: UpdateLockFunctionPayload): Promise<LockFunction> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTIONS.replace('.json', '')}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.UPDATE_FUNCTION}/${id}.json`),
         {
           method: 'PATCH',
           headers: {
@@ -182,21 +153,7 @@ export const lockFunctionService = {
       }
 
       const data = await response.json();
-      const func = data.lock_function || data;
-      
-      return {
-        id: func.id,
-        functionName: func.function_name || '',
-        description: func.description || '',
-        lockType: func.lock_type || 'SYSTEM',
-        duration: func.duration || 'Permanent',
-        createdOn: func.created_on || new Date().toLocaleDateString(),
-        createdBy: func.created_by || 'Current User',
-        active: func.active !== undefined ? func.active : true,
-        function_name: func.function_name,
-        action_name: func.action_name,
-        module_name: func.module_name,
-      };
+      return data.lock_function || data;
     } catch (error) {
       console.error('Error updating lock function:', error);
       throw error;
@@ -207,7 +164,7 @@ export const lockFunctionService = {
   async deleteLockFunction(id: number): Promise<void> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTIONS.replace('.json', '')}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.DELETE_FUNCTION}/${id}.json`),
         {
           method: 'DELETE',
           headers: {

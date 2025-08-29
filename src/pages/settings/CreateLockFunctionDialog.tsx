@@ -1,15 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { toast as sonnerToast } from 'sonner';
-import { lockFunctionService, CreateLockFunctionPayload } from '@/services/lockFunctionService';
+import { toast } from 'sonner';
+import { moduleService, LockModule } from '@/services/moduleService';
 
 interface CreateLockFunctionDialogProps {
   open: boolean;
@@ -17,75 +14,79 @@ interface CreateLockFunctionDialogProps {
   onLockFunctionCreated?: () => void;
 }
 
+interface CreateLockFunctionPayload {
+  lock_function: {
+    lock_controller_id?: number;
+    name: string;
+    action_name: string;
+    active: boolean;
+    phase_id?: number;
+    module_id: number;
+    parent_function?: string;
+  };
+}
+
 export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCreated }: CreateLockFunctionDialogProps) => {
-  const { toast } = useToast();
-  const [functionName, setFunctionName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [lockType, setLockType] = useState<string>("");
-  const [duration, setDuration] = useState<string>("");
-  const [durationUnit, setDurationUnit] = useState<string>("minutes");
-  const [active, setActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modules, setModules] = useState<LockModule[]>([]);
+  const [formData, setFormData] = useState({
+    name: '',
+    action_name: '',
+    module_id: '',
+    lock_controller_id: '',
+    phase_id: '',
+    parent_function: '',
+  });
 
-  const lockTypeOptions = [
-    { value: 'SYSTEM', label: 'System Lock' },
-    { value: 'USER', label: 'User Lock' },
-    { value: 'ADMIN', label: 'Admin Lock' },
-    { value: 'TEMPORARY', label: 'Temporary Lock' }
-  ];
+  // Fetch modules on component mount
+  useEffect(() => {
+    const fetchModules = async () => {
+      try {
+        const data = await moduleService.fetchModules();
+        setModules(data);
+      } catch (error) {
+        console.error('Error fetching modules:', error);
+        toast.error('Failed to load modules');
+      }
+    };
 
-  const durationUnitOptions = [
-    { value: 'minutes', label: 'Minutes' },
-    { value: 'hours', label: 'Hours' },
-    { value: 'days', label: 'Days' },
-    { value: 'permanent', label: 'Permanent' }
-  ];
+    if (open) {
+      fetchModules();
+    }
+  }, [open]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const validateForm = () => {
-    if (!functionName.trim()) {
-      toast({
-        title: "Validation Error",
-        description: "Function name is required",
-        variant: "destructive",
-      });
+    if (!formData.name.trim()) {
+      toast.error('Function name is required');
       return false;
     }
-
-    if (!lockType) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a lock type",
-        variant: "destructive",
-      });
+    if (!formData.action_name.trim()) {
+      toast.error('Action name is required');
       return false;
     }
-
-    if (durationUnit !== 'permanent' && (!duration || isNaN(Number(duration)) || Number(duration) <= 0)) {
-      toast({
-        title: "Validation Error",
-        description: "Please enter a valid duration",
-        variant: "destructive",
-      });
+    if (!formData.module_id) {
+      toast.error('Module selection is required');
       return false;
     }
-
     return true;
   };
 
   const resetForm = () => {
-    setFunctionName("");
-    setDescription("");
-    setLockType("");
-    setDuration("");
-    setDurationUnit("minutes");
-    setActive(true);
-  };
-
-  const formatDuration = () => {
-    if (durationUnit === 'permanent') {
-      return 'Permanent';
-    }
-    return `${duration} ${durationUnit}`;
+    setFormData({
+      name: '',
+      action_name: '',
+      module_id: '',
+      lock_controller_id: '',
+      phase_id: '',
+      parent_function: '',
+    });
   };
 
   const handleCreate = async () => {
@@ -93,42 +94,40 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
     
     setIsSubmitting(true);
 
-    const payload: CreateLockFunctionPayload = {
-      lock_function: {
-        function_name: functionName,
-        description: description,
-        lock_type: lockType,
-        duration: formatDuration(),
-        active: active
-      }
-    };
-
     try {
-      await lockFunctionService.createLockFunction(payload);
-      
-      console.log('Lock Function created successfully');
+      const payload: CreateLockFunctionPayload = {
+        lock_function: {
+          name: formData.name,
+          action_name: formData.action_name,
+          active: true,
+          module_id: parseInt(formData.module_id),
+          lock_controller_id: formData.lock_controller_id ? parseInt(formData.lock_controller_id) : undefined,
+          phase_id: formData.phase_id ? parseInt(formData.phase_id) : undefined,
+          parent_function: formData.parent_function || undefined,
+        }
+      };
 
-      sonnerToast.success('Lock Function created successfully!');
-      
-      // Reset form
-      resetForm();
-      
-      // Close dialog
-      onOpenChange(false);
-      
-      // Trigger callback to refresh parent data
-      if (onLockFunctionCreated) {
-        onLockFunctionCreated();
+      // For now, we'll use moduleService to create the function
+      // You can replace this with a dedicated lockFunctionService later
+      const response = await fetch('/api/lock_functions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        toast.success('Lock Function created successfully!');
+        resetForm();
+        onOpenChange(false);
+        onLockFunctionCreated?.();
+      } else {
+        throw new Error('Failed to create function');
       }
     } catch (error: any) {
       console.error('Error creating lock function:', error);
-      const errorMessage = error.message || 'Unknown error';
-        
-      toast({
-        title: "Error",
-        description: `Failed to create lock function: ${errorMessage}`,
-        variant: "destructive",
-      });
+      toast.error(`Failed to create lock function: ${error.message || 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -157,99 +156,96 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
         <div className="space-y-6 py-4">
           {/* Function Name */}
           <div className="space-y-2">
-            <Label htmlFor="functionName" className="text-sm font-medium">
+            <Label htmlFor="name" className="text-sm font-medium">
               Function Name *
             </Label>
             <Input
-              id="functionName"
+              id="name"
               type="text"
-              value={functionName}
-              onChange={(e) => setFunctionName(e.target.value)}
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
               placeholder="Enter function name"
               className="w-full"
             />
           </div>
 
-          {/* Lock Type */}
+          {/* Action Name */}
           <div className="space-y-2">
-            <Label htmlFor="lockType" className="text-sm font-medium">
-              Lock Type *
+            <Label htmlFor="action_name" className="text-sm font-medium">
+              Action Name *
             </Label>
-            <Select value={lockType} onValueChange={setLockType}>
+            <Input
+              id="action_name"
+              type="text"
+              value={formData.action_name}
+              onChange={(e) => handleInputChange('action_name', e.target.value)}
+              placeholder="Enter action name (e.g., unlock, pms_notices)"
+              className="w-full"
+            />
+          </div>
+
+          {/* Module Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="module_id" className="text-sm font-medium">
+              Module *
+            </Label>
+            <Select value={formData.module_id} onValueChange={(value) => handleInputChange('module_id', value)}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select lock type" />
+                <SelectValue placeholder="Select module" />
               </SelectTrigger>
               <SelectContent>
-                {lockTypeOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
+                {modules.map((module) => (
+                  <SelectItem key={module.id} value={module.id?.toString() || ''}>
+                    {module.show_name} ({module.abbreviation})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
-          {/* Duration */}
+          {/* Lock Controller ID (Optional) */}
           <div className="space-y-2">
-            <Label htmlFor="duration" className="text-sm font-medium">
-              Duration *
+            <Label htmlFor="lock_controller_id" className="text-sm font-medium">
+              Lock Controller ID
             </Label>
-            <div className="flex gap-2">
-              {durationUnit !== 'permanent' && (
-                <Input
-                  id="duration"
-                  type="number"
-                  value={duration}
-                  onChange={(e) => setDuration(e.target.value)}
-                  placeholder="Enter duration"
-                  className="flex-1"
-                  min="1"
-                />
-              )}
-              <Select value={durationUnit} onValueChange={(value) => {
-                setDurationUnit(value);
-                if (value === 'permanent') {
-                  setDuration('');
-                }
-              }}>
-                <SelectTrigger className={durationUnit === 'permanent' ? 'w-full' : 'w-32'}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {durationUnitOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter a brief description of the lock function"
-              className="w-full min-h-[100px]"
+            <Input
+              id="lock_controller_id"
+              type="number"
+              value={formData.lock_controller_id}
+              onChange={(e) => handleInputChange('lock_controller_id', e.target.value)}
+              placeholder="Enter controller ID (optional)"
+              className="w-full"
             />
           </div>
 
-          {/* Active Status */}
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="active" 
-              checked={active}
-              onCheckedChange={(checked) => setActive(checked as boolean)}
-            />
-            <Label htmlFor="active" className="text-sm font-medium cursor-pointer">
-              Active
+          {/* Phase ID (Optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="phase_id" className="text-sm font-medium">
+              Phase ID
             </Label>
+            <Input
+              id="phase_id"
+              type="number"
+              value={formData.phase_id}
+              onChange={(e) => handleInputChange('phase_id', e.target.value)}
+              placeholder="Enter phase ID (optional)"
+              className="w-full"
+            />
+          </div>
+
+          {/* Parent Function (Optional) */}
+          <div className="space-y-2">
+            <Label htmlFor="parent_function" className="text-sm font-medium">
+              Parent Function
+            </Label>
+            <Input
+              id="parent_function"
+              type="text"
+              value={formData.parent_function}
+              onChange={(e) => handleInputChange('parent_function', e.target.value)}
+              placeholder="Enter parent function (optional)"
+              className="w-full"
+            />
           </div>
         </div>
 
