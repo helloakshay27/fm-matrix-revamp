@@ -325,7 +325,7 @@ const modulesByPackage = {
       ]
     },
     {
-      name: 'Users',
+      name: 'M-Safe',
       icon: User,
       href: '/maintenance/m-safe',
       subItems: [
