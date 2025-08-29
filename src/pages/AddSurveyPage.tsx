@@ -21,6 +21,11 @@ interface Question {
   answerOptions?: AnswerOption[];
   rating?: number;
   selectedEmoji?: string;
+  additionalFieldOnNegative?: boolean;
+  additionalFields?: Array<{
+    title: string;
+    files: File[];
+  }>;
 }
 
 interface Category {
@@ -78,9 +83,12 @@ export const AddSurveyPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
+  const [checkType, setCheckType] = useState('');
+  const [createTicket, setCreateTicket] = useState(false);
+  const [additionalTitle, setAdditionalTitle] = useState('');
+  const [additionalDescription, setAdditionalDescription] = useState('');
   const [questions, setQuestions] = useState<Question[]>([
-    { id: '1', text: '', answerType: '', mandatory: false },
-    { id: '2', text: '', answerType: '', mandatory: false }
+    { id: '1', text: '', answerType: '', mandatory: false }
   ]);
   // File upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -127,17 +135,78 @@ export const AddSurveyPage = () => {
     }
   };
 
-  const handleQuestionChange = (id: string, field: keyof Question, value: any) => {
+  const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean | number | AnswerOption[]) => {
     setQuestions(questions.map(q => {
       if (q.id === id) {
         const updatedQuestion = { ...q, [field]: value };
         if (field === 'answerType' && value === 'multiple-choice' && !updatedQuestion.answerOptions) {
           updatedQuestion.answerOptions = [{ text: '', type: 'P' }, { text: '', type: 'P' }];
         }
+        if (field === 'additionalFieldOnNegative' && value === true && !updatedQuestion.additionalFields) {
+          updatedQuestion.additionalFields = [{ title: '', files: [] }];
+        }
         return updatedQuestion;
       }
       return q;
     }));
+  };
+
+  // Additional field handlers
+  const handleAddAdditionalField = (questionId: string) => {
+    setQuestions(questions.map(q =>
+      q.id === questionId
+        ? { ...q, additionalFields: [...(q.additionalFields || []), { title: '', files: [] }] }
+        : q
+    ));
+  };
+
+  const handleRemoveAdditionalField = (questionId: string, fieldIndex: number) => {
+    setQuestions(questions.map(q =>
+      q.id === questionId
+        ? { ...q, additionalFields: q.additionalFields?.filter((_, index) => index !== fieldIndex) }
+        : q
+    ));
+  };
+
+  const handleAdditionalFieldTitleChange = (questionId: string, fieldIndex: number, value: string) => {
+    setQuestions(questions.map(q =>
+      q.id === questionId
+        ? {
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, title: value } : field
+            )
+          }
+        : q
+    ));
+  };
+
+  const handleAdditionalFieldFilesChange = (questionId: string, fieldIndex: number, files: File[]) => {
+    setQuestions(questions.map(q =>
+      q.id === questionId
+        ? {
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex ? { ...field, files } : field
+            )
+          }
+        : q
+    ));
+  };
+
+  const removeAdditionalFieldFile = (questionId: string, fieldIndex: number, fileIndex: number) => {
+    setQuestions(questions.map(q =>
+      q.id === questionId
+        ? {
+            ...q,
+            additionalFields: q.additionalFields?.map((field, index) =>
+              index === fieldIndex 
+                ? { ...field, files: field.files.filter((_, i) => i !== fileIndex) }
+                : field
+            )
+          }
+        : q
+    ));
   };
 
   const handleAddAnswerOption = (questionId: string) => {
@@ -185,12 +254,12 @@ export const AddSurveyPage = () => {
 
   const handleCreateSurvey = async () => {
     // Validation
-    if (!category) {
-      alert('Please select a category');
-      return;
-    }
     if (!title.trim()) {
       alert('Please enter a title');
+      return;
+    }
+    if (!checkType) {
+      alert('Please select a check type');
       return;
     }
     // if (questions.some(q => !q.text.trim())) {
@@ -208,8 +277,8 @@ export const AddSurveyPage = () => {
       const requestData = {
         snag_checklist: {
           name: title,
-          snag_audit_category_id: parseInt(category),
-          check_type: "survey"
+          snag_audit_category_id: parseInt(category) || null,
+          check_type: checkType
         },
         question: questions.map(question => ({
           descr: question.text,
@@ -279,8 +348,8 @@ export const AddSurveyPage = () => {
             </h2>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
                 <InputLabel shrink>Category</InputLabel>
                 <MuiSelect
                   value={category}
@@ -295,7 +364,7 @@ export const AddSurveyPage = () => {
                     <MenuItem key={cat.id} value={cat.id.toString()}>{cat.name}</MenuItem>
                   ))}
                 </MuiSelect>
-              </FormControl>
+              </FormControl> */}
 
               <TextField
                 label="Title *"
@@ -307,6 +376,32 @@ export const AddSurveyPage = () => {
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
               />
+
+              <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Check Type</InputLabel>
+                <MuiSelect
+                  value={checkType}
+                  onChange={(e) => setCheckType(e.target.value)}
+                  label="Check Type*"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Check Type</MenuItem>
+                  <MenuItem value="patrolling">Patrolling</MenuItem>
+                  <MenuItem value="survey">Survey</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="create-ticket"
+                  checked={createTicket}
+                  onCheckedChange={(checked) => setCreateTicket(checked as boolean)}
+                />
+                <label htmlFor="create-ticket" className="text-sm font-medium text-gray-700">
+                  Create Ticket
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -322,7 +417,7 @@ export const AddSurveyPage = () => {
             </h2>
             <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">No. of Questions:</span>
-                <span className="font-medium text-gray-900">{questions.length.toString().padStart(2, '0')}</span>
+                <span className="font-medium text-gray-900">{questions.length.toString().padStart(1, '0')}</span>
             </div>
           </div>
           <div className="p-6">
@@ -427,9 +522,9 @@ export const AddSurveyPage = () => {
                      </FormControl>
                   )}
 
-                  {question.answerType === 'emojis' && (
+                  {/* {question.answerType === 'emojis' && (
                       <FormControl fullWidth>
-                          {/* <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Select Reaction</InputLabel> */}
+                          <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Select Reaction</InputLabel>
                            <div className="flex items-center justify-around p-3 border border-gray-200 rounded-lg bg-white">
                               {EMOJIS.map((emoji) => (
                                 <button
@@ -442,7 +537,7 @@ export const AddSurveyPage = () => {
                               ))}
                             </div>
                       </FormControl>
-                  )}
+                  )} */}
 
                   <div className="flex items-center space-x-2 pt-2">
                     <Checkbox
@@ -454,6 +549,116 @@ export const AddSurveyPage = () => {
                       Mandatory
                     </label>
                   </div>
+
+                  <div className="flex items-center space-x-2 pt-2">
+                    <Checkbox
+                      id={`additional-negative-${question.id}`}
+                      checked={question.additionalFieldOnNegative || false}
+                      onCheckedChange={(checked) => handleQuestionChange(question.id, 'additionalFieldOnNegative', checked as boolean)}
+                    />
+                    <label htmlFor={`additional-negative-${question.id}`} className="text-sm font-medium text-gray-700">
+                      Do you want to open additional field on negative selection
+                    </label>
+                  </div>
+
+                  {question.additionalFieldOnNegative && (
+                    <div className="space-y-3 pt-2 border-t border-gray-200 mt-4 pt-4">
+                      <label className="text-sm font-medium text-gray-700">Additional Fields for Negative Selection</label>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(question.additionalFields || []).map((field, fieldIndex) => (
+                          <div key={fieldIndex} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/30">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
+                              {(question.additionalFields?.length || 0) > 1 && (
+                                <Button 
+                                  onClick={() => handleRemoveAdditionalField(question.id, fieldIndex)} 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
+                                >
+                                  <X className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                            
+                            <TextField
+                              label="Title"
+                              placeholder="Enter title"
+                              value={field.title}
+                              onChange={(e) => handleAdditionalFieldTitleChange(question.id, fieldIndex, e.target.value)}
+                              fullWidth
+                              variant="outlined"
+                              InputLabelProps={{ shrink: true }}
+                              InputProps={{ sx: {...fieldStyles, height: '36px'} }}
+                            />
+                            
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-white flex flex-col items-center justify-center">
+                              <input
+                                type="file"
+                                multiple
+                                className="hidden"
+                                id={`additional-file-${question.id}-${fieldIndex}`}
+                                onChange={(e) => {
+                                  if (e.target.files) {
+                                    handleAdditionalFieldFilesChange(question.id, fieldIndex, Array.from(e.target.files));
+                                  }
+                                }}
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                              />
+                              <div className="flex items-center justify-center gap-1 mb-2">
+                                <span className="text-[#C72030] font-medium text-[11px]">Choose File</span>
+                                <span className="text-gray-500 text-[11px]">
+                                  {field.files.length > 0 ? `${field.files.length} file(s)` : 'No file'}
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => document.getElementById(`additional-file-${question.id}-${fieldIndex}`)?.click()}
+                                className="bg-[#f6f4ee] text-[#C72030] px-2 py-1 rounded text-xs flex items-center justify-center"
+                              >
+                                <span className="text-xs mr-1">+</span> Upload
+                              </button>
+                            </div>
+                            
+                            {field.files.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {field.files.map((file, fileIndex) => (
+                                  <div
+                                    key={`${file.name}-${file.lastModified}`}
+                                    className="flex relative flex-col items-center border rounded-md pt-3 px-1 pb-2 w-[80px] bg-[#F6F4EE] shadow-sm"
+                                  >
+                                    <div className="w-5 h-5 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
+                                      <svg className="w-2 h-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <rect width="20" height="20" x="2" y="2" rx="2"/>
+                                      </svg>
+                                    </div>
+                                    <span className="text-[7px] text-center truncate max-w-[60px] mb-1">{file.name}</span>
+                                    <button
+                                      type="button"
+                                      className="absolute top-0 right-0 text-gray-600 hover:text-red-600 p-0"
+                                      onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                    >
+                                      <X className="w-2 h-2" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      
+                      <Button 
+                        onClick={() => handleAddAdditionalField(question.id)} 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center"
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Add More Field
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -466,18 +671,42 @@ export const AddSurveyPage = () => {
           </div>
         </div>
 
-         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="bg-white mb-4 rounded-t-lg px-6 py-3 px-6 py-4 border-b border-gray-200">
-            <div className="text-lg text-black flex items-center">
-              {/* This span has been updated to show a file icon */}
+        {/* <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
-                {/* You can use an appropriate file icon from a library like react-icons or an SVG */}
                 <ClipboardList size={16} color="#C72030" />
               </span>
-              UPLOAD ICON
-            </div>
+              Additional Data
+            </h2>
           </div>
-          <div className="px-6 pb-6">
+          <div className="p-6 space-y-6">
+          
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField
+                label="Title"
+                placeholder="Enter title"
+                value={additionalTitle}
+                onChange={(e) => setAdditionalTitle(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+              
+              <TextField
+                label="Description"
+                placeholder="Enter description"
+                value={additionalDescription}
+                onChange={(e) => setAdditionalDescription(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+              />
+            </div>
+            
+           
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-white flex flex-col items-center justify-center">
               <input
                 type="file"
@@ -548,7 +777,7 @@ export const AddSurveyPage = () => {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">

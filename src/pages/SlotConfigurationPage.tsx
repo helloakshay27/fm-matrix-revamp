@@ -3,16 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Plus, Search, Edit } from 'lucide-react';
+import { Plus, Search, Edit, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { SlotConfigBulkUploadModal } from '../components/SlotConfigBulkUploadModal';
 import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
 
 interface SlotConfigurationData {
   id: string;
+  building_id: number;
+  floor_id: number;
   location: string;
   floor: string;
+  qrcode_needed: boolean;
   twoWheeler: {
     totalParkings: number;
     nonStackParkings: number;
@@ -35,10 +39,12 @@ export const SlotConfigurationPage = () => {
   const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     actions: true,
     location: true,
     floor: true,
+    qrcode_needed: true,
     twoWheelerTotal: true,
     twoWheelerNonStack: true,
     twoWheelerStack: true,
@@ -108,9 +114,12 @@ export const SlotConfigurationPage = () => {
       });
 
       tableData.push({
-        id: `${group.floor_id}`, // Use floor_id as unique identifier
+        id: `${group.building_id}-${group.floor_id}`, // Use building_id-floor_id as unique identifier for edit navigation
+        building_id: parseInt(group.building_id), // Store building_id for API calls
+        floor_id: group.floor_id, // Store floor_id for API calls
         location: group.building_name,
         floor: group.floor_name,
+        qrcode_needed: group.qrcode_needed === 'true' || group.qrcode_needed === true,
         twoWheeler: twoWheelerData,
         fourWheeler: fourWheelerData,
         createdOn: new Date().toLocaleDateString() // API doesn't provide this, using current date
@@ -126,12 +135,23 @@ export const SlotConfigurationPage = () => {
     item.id.toString().includes(searchTerm)
   );
 
-  const handleEdit = (id: string) => {
-    navigate(`/settings/vas/parking-management/slot-configuration/edit/${id}`);
+  const handleEdit = (item: SlotConfigurationData) => {
+    // Navigate with building_id-floor_id format for the EditSlotConfigurationPage
+    // This will trigger the API call: /pms/manage/parking_configurations.json?q[building_id_eq]=123&q[floor_id_eq]=123
+    console.log('Navigating to edit with building_id:', item.building_id, 'floor_id:', item.floor_id);
+    navigate(`/settings/vas/parking-management/slot-configuration/edit/${item.building_id}-${item.floor_id}`);
   };
 
   const handleAdd = () => {
     navigate('/settings/vas/parking-management/slot-configuration/add');
+  };
+
+  const handleBulkUpload = () => {
+    setIsBulkUploadOpen(true);
+  };
+
+  const handleBulkUploadClose = () => {
+    setIsBulkUploadOpen(false);
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {
@@ -146,6 +166,7 @@ export const SlotConfigurationPage = () => {
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
     { key: 'location', label: 'Location', visible: visibleColumns.location },
     { key: 'floor', label: 'Floor', visible: visibleColumns.floor },
+    { key: 'qrcode_needed', label: 'QR Code Needed', visible: visibleColumns.qrcode_needed },
     { key: 'twoWheelerTotal', label: '2W Total Parkings', visible: visibleColumns.twoWheelerTotal },
     { key: 'twoWheelerNonStack', label: '2W Non Stack', visible: visibleColumns.twoWheelerNonStack },
     { key: 'twoWheelerStack', label: '2W Stack', visible: visibleColumns.twoWheelerStack },
@@ -178,6 +199,14 @@ export const SlotConfigurationPage = () => {
               className="pl-10 w-80"
             />
           </div>
+          <Button 
+            onClick={handleBulkUpload}
+            variant="outline"
+            className="px-4 py-2 border-gray-300"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
           <ColumnVisibilityDropdown
             columns={columns}
             onColumnToggle={handleColumnToggle}
@@ -208,6 +237,7 @@ export const SlotConfigurationPage = () => {
                 {visibleColumns.actions && <TableHead className="text-center" rowSpan={2}>Actions</TableHead>}
                 {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
                 {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
+                {visibleColumns.qrcode_needed && <TableHead className="text-center" rowSpan={2}>QR<br/>Needed</TableHead>}
                 <TableHead className="text-center" colSpan={4}>2 Wheeler</TableHead>
                 <TableHead className="text-center" colSpan={4}>4 Wheeler</TableHead>
               </TableRow>
@@ -225,7 +255,7 @@ export const SlotConfigurationPage = () => {
             <TableBody>
               {filteredData.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={12} className="text-center py-8 text-gray-500">
                     No parking configurations found
                   </TableCell>
                 </TableRow>
@@ -236,7 +266,7 @@ export const SlotConfigurationPage = () => {
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleEdit(item.id)}
+                            onClick={() => handleEdit(item)}
                             className="p-1 hover:bg-gray-100 rounded"
                             title="Edit"
                           >
@@ -247,6 +277,16 @@ export const SlotConfigurationPage = () => {
                     )}
                     {visibleColumns.location && <TableCell className="font-medium">{item.location}</TableCell>}
                     {visibleColumns.floor && <TableCell>{item.floor}</TableCell>}
+                    {visibleColumns.qrcode_needed && (
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          checked={item.qrcode_needed}
+                          disabled
+                          className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded cursor-not-allowed"
+                        />
+                      </TableCell>
+                    )}
                     {visibleColumns.twoWheelerTotal && <TableCell className="text-center">{item.twoWheeler.totalParkings}</TableCell>}
                     {visibleColumns.twoWheelerNonStack && <TableCell className="text-center">{item.twoWheeler.nonStackParkings}</TableCell>}
                     {visibleColumns.twoWheelerStack && <TableCell className="text-center">{item.twoWheeler.stackParkings}</TableCell>}
@@ -262,6 +302,12 @@ export const SlotConfigurationPage = () => {
           </Table>
         )}
       </div>
+
+      {/* Bulk Upload Modal */}
+      <SlotConfigBulkUploadModal 
+        isOpen={isBulkUploadOpen} 
+        onClose={handleBulkUploadClose} 
+      />
     </div>
   );
 };

@@ -35,11 +35,6 @@ export const SurveyDetailsPage = () => {
   const [surveyMappings, setSurveyMappings] = useState<any[]>([]);
   const [loadingSurveyMappings, setLoadingSurveyMappings] = useState(false);
   const [locationConfig, setLocationConfig] = useState({
-    building: false,
-    wing: false,
-    floor: false,
-    zone: false,
-    room: false,
     selectedBuildings: [],
     selectedWings: [],
     selectedFloors: [],
@@ -425,11 +420,6 @@ export const SurveyDetailsPage = () => {
 
       // Reset form
       setLocationConfig({
-        building: false,
-        wing: false,
-        floor: false,
-        zone: false,
-        room: false,
         selectedBuildings: [],
         selectedWings: [],
         selectedFloors: [],
@@ -639,327 +629,201 @@ export const SurveyDetailsPage = () => {
               </DialogHeader>
               
               <div className="space-y-6">
-                {/* Checkboxes Grid */}
-                <div className="grid grid-cols-3 gap-4">
-                  {/* Building */}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="building" 
-                        checked={locationConfig.building}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, building: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="building" className="text-sm font-medium">Building</label>
-                    </div>
-                  </div>
-
-                  {/* Wing */}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="wing" 
-                        checked={locationConfig.wing}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, wing: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="wing" className="text-sm font-medium">Wing</label>
-                    </div>
-                  </div>
-
-                  {/* Floor */}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="floor" 
-                        checked={locationConfig.floor}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, floor: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="floor" className="text-sm font-medium">Floor</label>
-                    </div>
-                  </div>
-
-                  {/* Zone */}
-                  {/* <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="zone" 
-                        checked={locationConfig.zone}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, zone: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="zone" className="text-sm font-medium">Zone</label>
-                    </div>
-                  </div> */}
-
-                  {/* Room */}
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id="room" 
-                        checked={locationConfig.room}
-                        onCheckedChange={(checked) => setLocationConfig({...locationConfig, room: !!checked})}
-                        className="data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
-                      />
-                      <label htmlFor="room" className="text-sm font-medium">Room</label>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Dropdown sections based on checked items */}
-                <div className="space-y-4">
+                {/* Direct Dropdowns Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Buildings Dropdown */}
-                  {locationConfig.building && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">Buildings</h4>
-                       <Select onValueChange={(value) => {
-                         // value contains the building ID, find the building name for display
-                         const selectedBuilding = buildings.find(b => b.id.toString() === value)
-                         if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
-                           addSelectedItem('building', selectedBuilding.name);
-                           // Also store the building ID for the API call
-                           setLocationConfig(prev => ({
-                             ...prev,
-                             selectedBuildingIds: [...prev.selectedBuildingIds, selectedBuilding.id]
-                           }));
-                           console.log('Selected building ID:', value, 'Name:', selectedBuilding.name)
-                         }
-                       }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={`${locationConfig.selectedBuildings.length} building(s) selected`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingBuildings ? (
-                            <SelectItem value="loading" disabled>Loading buildings...</SelectItem>
-                          ) : (
-                            buildings.map((building) => (
-                              <SelectItem key={building.id} value={building.id.toString()}>
-                                {building.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                       {/* Selected buildings */}
-                      {locationConfig.selectedBuildings.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedBuildings.map((building) => (
-                            <span key={building} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {building}
-                              <button
-                                onClick={() => removeSelectedItem('building', building)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900">Buildings</h4>
+                     <Select onValueChange={(value) => {
+                       // value contains the building ID, find the building name for display
+                       const selectedBuilding = buildings.find(b => b.id.toString() === value)
+                       if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
+                         addSelectedItem('building', selectedBuilding.name);
+                         // Also store the building ID for the API call
+                         setLocationConfig(prev => ({
+                           ...prev,
+                           selectedBuildingIds: [...prev.selectedBuildingIds, selectedBuilding.id]
+                         }));
+                         console.log('Selected building ID:', value, 'Name:', selectedBuilding.name)
+                       }
+                     }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={`${locationConfig.selectedBuildings.length} building(s) selected`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingBuildings ? (
+                          <SelectItem value="loading" disabled>Loading buildings...</SelectItem>
+                        ) : (
+                          buildings.map((building) => (
+                            <SelectItem key={building.id} value={building.id.toString()}>
+                              {building.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                     {/* Selected buildings */}
+                    {locationConfig.selectedBuildings.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {locationConfig.selectedBuildings.map((building) => (
+                          <span key={building} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                            {building}
+                            <button
+                              onClick={() => removeSelectedItem('building', building)}
+                              className="ml-1 text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Wings Dropdown */}
-                  {locationConfig.wing && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">Wings</h4>
-                       <Select onValueChange={(value) => {
-                         // value contains the wing ID, find the wing name for display
-                         const selectedWing = wings.find(w => w.id.toString() === value);
-                         if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
-                           addSelectedItem('wing', selectedWing.name);
-                           // Also store the wing ID for the API call
-                           setLocationConfig(prev => ({
-                             ...prev,
-                             selectedWingIds: [...prev.selectedWingIds, selectedWing.id]
-                           }));
-                           console.log('Selected wing ID:', value, 'Name:', selectedWing.name);
-                         }
-                       }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder={`${locationConfig.selectedWings.length} wing(s) selected`} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {loadingWings ? (
-                            <SelectItem value="loading" disabled>Loading wings...</SelectItem>
-                          ) : (
-                            wings.map((wing) => (
-                              <SelectItem key={wing.id} value={wing.id.toString()}>
-                                {wing.name}
-                              </SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      {/* Selected wings */}
-                      {locationConfig.selectedWings.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedWings.map((wing) => (
-                            <span key={wing} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {wing}
-                              <button
-                                onClick={() => removeSelectedItem('wing', wing)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900">Wings</h4>
+                     <Select onValueChange={(value) => {
+                       // value contains the wing ID, find the wing name for display
+                       const selectedWing = wings.find(w => w.id.toString() === value);
+                       if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
+                         addSelectedItem('wing', selectedWing.name);
+                         // Also store the wing ID for the API call
+                         setLocationConfig(prev => ({
+                           ...prev,
+                           selectedWingIds: [...prev.selectedWingIds, selectedWing.id]
+                         }));
+                         console.log('Selected wing ID:', value, 'Name:', selectedWing.name);
+                       }
+                     }}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder={`${locationConfig.selectedWings.length} wing(s) selected`} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingWings ? (
+                          <SelectItem value="loading" disabled>Loading wings...</SelectItem>
+                        ) : (
+                          wings.map((wing) => (
+                            <SelectItem key={wing.id} value={wing.id.toString()}>
+                              {wing.name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                    {/* Selected wings */}
+                    {locationConfig.selectedWings.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {locationConfig.selectedWings.map((wing) => (
+                          <span key={wing} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                            {wing}
+                            <button
+                              onClick={() => removeSelectedItem('wing', wing)}
+                              className="ml-1 text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Floors Dropdown */}
-                  {locationConfig.floor && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">Floors</h4>
-                        <Select onValueChange={(value) => {
-                          // value contains the floor ID, find the floor name for display
-                          const selectedFloor = floors.find(f => f.id.toString() === value);
-                          if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
-                            addSelectedItem('floor', selectedFloor.name);
-                            // Also store the floor ID for the API call
-                            setLocationConfig(prev => ({
-                              ...prev,
-                              selectedFloorIds: [...prev.selectedFloorIds, selectedFloor.id]
-                            }));
-                            console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
-                          }
-                        }}>
-                         <SelectTrigger className="w-full">
-                           <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {loadingFloors ? (
-                             <SelectItem value="loading" disabled>Loading floors...</SelectItem>
-                           ) : (
-                             floors.map((floor) => (
-                               <SelectItem key={floor.id} value={floor.id.toString()}>
-                                 {floor.name}
-                               </SelectItem>
-                             ))
-                           )}
-                         </SelectContent>
-                       </Select>
-                      {/* Selected floors */}
-                      {locationConfig.selectedFloors.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedFloors.map((floor) => (
-                            <span key={floor} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {floor}
-                              <button
-                                onClick={() => removeSelectedItem('floor', floor)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Zones Dropdown */}
-                  {/* {locationConfig.zone && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">Zones</h4>
-                       <Select onValueChange={(value) => {
-                      
-                         const selectedZone = zones.find(z => z.id.toString() === value);
-                         if (selectedZone && !locationConfig.selectedZones.includes(selectedZone.name)) {
-                           addSelectedItem('zone', selectedZone.name);
-                         
-                           console.log('Selected zone ID:', value, 'Name:', selectedZone.name);
-                         }
-                       }}>
-                         <SelectTrigger className="w-full">
-                           <SelectValue placeholder={`${locationConfig.selectedZones.length} zone(s) selected`} />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {loadingZones ? (
-                             <SelectItem value="loading" disabled>Loading zones...</SelectItem>
-                           ) : (
-                             zones.map((zone) => (
-                               <SelectItem key={zone.id} value={zone.id.toString()}>
-                                 {zone.name}
-                               </SelectItem>
-                             ))
-                           )}
-                         </SelectContent>
-                       </Select>
-                    
-                      {locationConfig.selectedZones.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedZones.map((zone) => (
-                            <span key={zone} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {zone}
-                              <button
-                                onClick={() => removeSelectedItem('zone', zone)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )} */}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900">Floors</h4>
+                      <Select onValueChange={(value) => {
+                        // value contains the floor ID, find the floor name for display
+                        const selectedFloor = floors.find(f => f.id.toString() === value);
+                        if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
+                          addSelectedItem('floor', selectedFloor.name);
+                          // Also store the floor ID for the API call
+                          setLocationConfig(prev => ({
+                            ...prev,
+                            selectedFloorIds: [...prev.selectedFloorIds, selectedFloor.id]
+                          }));
+                          console.log('Selected floor ID:', value, 'Name:', selectedFloor.name);
+                        }
+                      }}>
+                       <SelectTrigger className="w-full">
+                         <SelectValue placeholder={`${locationConfig.selectedFloors.length} floor(s) selected`} />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {loadingFloors ? (
+                           <SelectItem value="loading" disabled>Loading floors...</SelectItem>
+                         ) : (
+                           floors.map((floor) => (
+                             <SelectItem key={floor.id} value={floor.id.toString()}>
+                               {floor.name}
+                             </SelectItem>
+                           ))
+                         )}
+                       </SelectContent>
+                     </Select>
+                    {/* Selected floors */}
+                    {locationConfig.selectedFloors.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {locationConfig.selectedFloors.map((floor) => (
+                          <span key={floor} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                            {floor}
+                            <button
+                              onClick={() => removeSelectedItem('floor', floor)}
+                              className="ml-1 text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
 
                   {/* Rooms Dropdown */}
-                  {locationConfig.room && (
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
-                       <Select onValueChange={(value) => {
-                     
-                         const selectedRoom = rooms.find(r => r.id.toString() === value);
-                         if (selectedRoom && !locationConfig.selectedRooms.includes(selectedRoom.name)) {
-                           addSelectedItem('room', selectedRoom.name);
-                         
-                           setLocationConfig(prev => ({
-                             ...prev,
-                             selectedRoomIds: [...prev.selectedRoomIds, selectedRoom.id]
-                           }));
-                           console.log('Selected room ID:', value, 'Name:', selectedRoom.name);
-                         }
-                       }}>
-                         <SelectTrigger className="w-full">
-                           <SelectValue placeholder={`${locationConfig.selectedRooms.length} room(s) selected`} />
-                         </SelectTrigger>
-                         <SelectContent>
-                           {loadingRooms ? (
-                             <SelectItem value="loading" disabled>Loading rooms...</SelectItem>
-                           ) : (
-                             rooms.map((room) => (
-                               <SelectItem key={room.id} value={room.id.toString()}>
-                                 {room.name}
-                               </SelectItem>
-                             ))
-                           )}
-                         </SelectContent>
-                       </Select>
-                     
-                      {locationConfig.selectedRooms.length > 0 && (
-                        <div className="flex flex-wrap gap-2">
-                          {locationConfig.selectedRooms.map((room) => (
-                            <span key={room} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
-                              {room}
-                              <button
-                                onClick={() => removeSelectedItem('room', room)}
-                                className="ml-1 text-gray-500 hover:text-gray-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
+                     <Select onValueChange={(value) => {
+                       const selectedRoom = rooms.find(r => r.id.toString() === value);
+                       if (selectedRoom && !locationConfig.selectedRooms.includes(selectedRoom.name)) {
+                         addSelectedItem('room', selectedRoom.name);
+                         setLocationConfig(prev => ({
+                           ...prev,
+                           selectedRoomIds: [...prev.selectedRoomIds, selectedRoom.id]
+                         }));
+                         console.log('Selected room ID:', value, 'Name:', selectedRoom.name);
+                       }
+                     }}>
+                       <SelectTrigger className="w-full">
+                         <SelectValue placeholder={`${locationConfig.selectedRooms.length} room(s) selected`} />
+                       </SelectTrigger>
+                       <SelectContent>
+                         {loadingRooms ? (
+                           <SelectItem value="loading" disabled>Loading rooms...</SelectItem>
+                         ) : (
+                           rooms.map((room) => (
+                             <SelectItem key={room.id} value={room.id.toString()}>
+                               {room.name}
+                             </SelectItem>
+                           ))
+                         )}
+                       </SelectContent>
+                     </Select>
+                   
+                    {locationConfig.selectedRooms.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {locationConfig.selectedRooms.map((room) => (
+                          <span key={room} className="inline-flex items-center px-2 py-1 bg-gray-100 text-sm rounded">
+                            {room}
+                            <button
+                              onClick={() => removeSelectedItem('room', room)}
+                              className="ml-1 text-gray-500 hover:text-gray-700"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-4">
@@ -974,7 +838,7 @@ export const SurveyDetailsPage = () => {
         
         <div className="border border-gray-200 rounded-lg overflow-hidden">
           {/* Table Header */}
-          <div className="grid grid-cols-6 bg-gray-100">
+          <div className="grid grid-cols-5 bg-gray-100">
             <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
               Building
             </div>
@@ -1002,7 +866,7 @@ export const SurveyDetailsPage = () => {
             </div>
           ) : surveyMappings.length > 0 ? (
             surveyMappings.map((mapping) => (
-                <div key={mapping.id} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0">
+                <div key={mapping.id} className="grid grid-cols-5 border-b border-gray-200 last:border-b-0">
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || mapping.building_id || '-'}</div>
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || mapping.wing_id || '-'}</div>
                   <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || mapping.floor_id || '-'}</div>

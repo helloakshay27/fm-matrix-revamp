@@ -477,7 +477,7 @@ export const VisitorFormPage = () => {
               className="h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
-            </Button>
+            </Button> 
           </div>
 
           {/* Camera permissions checkbox */}
@@ -510,6 +510,11 @@ export const VisitorFormPage = () => {
                 📹 Preview
               </span>
             </div>
+          </div>
+
+          {/* Capture Image Label */}
+          <div className="text-center mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
+            <span className="text-lg text-blue-800 font-bold">Capture Image</span>
           </div>
 
           {/* Camera Selection Dropdown */}
@@ -689,7 +694,7 @@ export const VisitorFormPage = () => {
                 required
                 sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
-                <InputLabel shrink>Host</InputLabel>
+                <InputLabel shrink>Host </InputLabel>
                 <MuiSelect
                   value={formData.host || ""}
                   onChange={(e) => handleInputChange("host", e.target.value)}
