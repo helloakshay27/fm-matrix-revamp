@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Printer, Rss } from "lucide-react";
+import { ArrowLeft, Printer, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -330,6 +330,14 @@ export const InvoiceDetails = () => {
 
     return (
         <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+            <Button
+                variant="ghost"
+                onClick={() => navigate(-1)}
+                className="mb-2 p-0"
+            >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+            </Button>
             {/* Header */}
             <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
                 <div className="flex flex-col">

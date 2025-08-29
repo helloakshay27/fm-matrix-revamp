@@ -14,7 +14,7 @@ export const EditServicePRPage = () => {
   const { id } = useParams();
   const [totalAmount, setTotalAmount] = useState(700);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+
   // Sample data based on the ID - in real app this would come from API
   const [formData, setFormData] = useState({
     contractor: "Harells Corp PAN 1234...",
@@ -66,9 +66,9 @@ export const EditServicePRPage = () => {
       amount: "Amount",
       totalAmount: "Total Amount"
     };
-    setFormData(prev => ({ 
-      ...prev, 
-      services: [...prev.services, newService] 
+    setFormData(prev => ({
+      ...prev,
+      services: [...prev.services, newService]
     }));
   };
 
@@ -93,16 +93,15 @@ export const EditServicePRPage = () => {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           onClick={() => navigate('/finance/service-pr')}
-          className="mb-4"
+          className="mb-2 p-0"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to Service PR
+          Back
         </Button>
         <div>
-          
           <h1 className="text-2xl font-bold">Edit Service PR</h1>
         </div>
       </div>
@@ -144,14 +143,14 @@ export const EditServicePRPage = () => {
               </div>
               <div>
                 <Label className="text-sm font-medium">QC(%)</Label>
-                <Input 
+                <Input
                   value={formData.qc}
                   onChange={(e) => handleInputChange('qc', e.target.value)}
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium">Related To*</Label>
-                <Textarea 
+                <Textarea
                   value={formData.relatedTo}
                   onChange={(e) => handleInputChange('relatedTo', e.target.value)}
                   className="min-h-[80px]"
@@ -175,14 +174,14 @@ export const EditServicePRPage = () => {
               </div>
               <div>
                 <Label className="text-sm font-medium">Retention(%)</Label>
-                <Input 
+                <Input
                   value={formData.retention}
                   onChange={(e) => handleInputChange('retention', e.target.value)}
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium">Payment Tenure(In Days)</Label>
-                <Input 
+                <Input
                   value={formData.paymentTenure}
                   onChange={(e) => handleInputChange('paymentTenure', e.target.value)}
                 />
@@ -192,21 +191,21 @@ export const EditServicePRPage = () => {
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium">Select LOI Date*</Label>
-                <Input 
+                <Input
                   value={formData.loiDate}
                   onChange={(e) => handleInputChange('loiDate', e.target.value)}
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium">TDS(%)</Label>
-                <Input 
+                <Input
                   value={formData.tds}
                   onChange={(e) => handleInputChange('tds', e.target.value)}
                 />
               </div>
               <div>
                 <Label className="text-sm font-medium">Advance Amount</Label>
-                <Input 
+                <Input
                   value={formData.advanceAmount}
                   onChange={(e) => handleInputChange('advanceAmount', e.target.value)}
                 />
@@ -244,14 +243,14 @@ export const EditServicePRPage = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-medium">UOM</Label>
-                    <Input 
+                    <Input
                       value={service.uom}
                       onChange={(e) => handleServiceChange(index, 'uom', e.target.value)}
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Amount</Label>
-                    <Input 
+                    <Input
                       value={service.amount}
                       onChange={(e) => handleServiceChange(index, 'amount', e.target.value)}
                     />
@@ -261,21 +260,21 @@ export const EditServicePRPage = () => {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium">Product Description*</Label>
-                    <Input 
+                    <Input
                       value={service.productDescription}
                       onChange={(e) => handleServiceChange(index, 'productDescription', e.target.value)}
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Expected Date*</Label>
-                    <Input 
+                    <Input
                       value={service.expectedDate}
                       onChange={(e) => handleServiceChange(index, 'expectedDate', e.target.value)}
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Total Amount</Label>
-                    <Input 
+                    <Input
                       value={service.totalAmount}
                       onChange={(e) => handleServiceChange(index, 'totalAmount', e.target.value)}
                     />
@@ -285,21 +284,21 @@ export const EditServicePRPage = () => {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium">Quantity/Area*</Label>
-                    <Input 
+                    <Input
                       value={service.quantityArea}
                       onChange={(e) => handleServiceChange(index, 'quantityArea', e.target.value)}
                     />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Rate*</Label>
-                    <Input 
+                    <Input
                       value={service.rate}
                       onChange={(e) => handleServiceChange(index, 'rate', e.target.value)}
                     />
                   </div>
                   <div className="flex justify-end">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       onClick={() => removeService(index)}
                       className="text-gray-500 hover:text-red-500"
                     >
@@ -310,14 +309,14 @@ export const EditServicePRPage = () => {
               </div>
             </div>
           ))}
-          
-          <Button 
+
+          <Button
             onClick={addNewService}
             className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
           >
             Add Items
           </Button>
-          
+
           <div className="flex justify-end">
             <div className="bg-[#C72030] text-white px-4 py-2 rounded">
               Total Amount: {totalAmount}
@@ -338,7 +337,7 @@ export const EditServicePRPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <Label className="text-sm font-medium">Kind Attention</Label>
-              <Input 
+              <Input
                 value={formData.kindAttention}
                 onChange={(e) => handleInputChange('kindAttention', e.target.value)}
                 placeholder="Kind Attention"
@@ -346,14 +345,14 @@ export const EditServicePRPage = () => {
             </div>
             <div>
               <Label className="text-sm font-medium">Subject</Label>
-              <Input 
+              <Input
                 value={formData.subject}
                 onChange={(e) => handleInputChange('subject', e.target.value)}
                 placeholder="Subject"
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div>
               <Label className="text-sm font-medium">Description</Label>
@@ -372,7 +371,7 @@ export const EditServicePRPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Textarea 
+                <Textarea
                   value={formData.description}
                   onChange={(e) => handleInputChange('description', e.target.value)}
                   placeholder="Enter description here..."
@@ -397,7 +396,7 @@ export const EditServicePRPage = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                <Textarea 
+                <Textarea
                   value={formData.termsConditions}
                   onChange={(e) => handleInputChange('termsConditions', e.target.value)}
                   placeholder="Enter terms and conditions here..."
@@ -427,8 +426,8 @@ export const EditServicePRPage = () => {
               id="service-pr-file-upload"
               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
             />
-            <label 
-              htmlFor="service-pr-file-upload" 
+            <label
+              htmlFor="service-pr-file-upload"
               className="text-[#C72030] hover:text-[#A01020] cursor-pointer"
             >
               Choose Files
@@ -442,7 +441,7 @@ export const EditServicePRPage = () => {
 
       {/* Submit Button */}
       <div className="flex justify-center">
-        <Button 
+        <Button
           onClick={handleSubmit}
           className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
         >

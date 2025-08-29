@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from "sonner";
+import { ArrowLeft } from 'lucide-react';
 
 export const EditGRNDashboard = () => {
   const navigate = useNavigate();
@@ -183,11 +184,11 @@ export const EditGRNDashboard = () => {
     const sgstAmount = parseFloat(inventoryDetails.sgstAmount) || 0;
     const igstAmount = parseFloat(inventoryDetails.igstAmount) || 0;
     const tcsAmount = parseFloat(inventoryDetails.tcsAmount) || 0;
-    
+
     const amount = rate * approvedQty;
     const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
     const totalAmount = amount + totalTaxes;
-    
+
     setInventoryDetails(prev => ({
       ...prev,
       amount: amount.toFixed(2),
@@ -224,7 +225,7 @@ export const EditGRNDashboard = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validation
     if (!grnDetails.purchaseOrder) {
       toast.error('Please select a Purchase Order');
@@ -255,18 +256,21 @@ export const EditGRNDashboard = () => {
     console.log('Updated GRN Details:', grnDetails);
     console.log('Updated Inventory Details:', inventoryDetails);
     console.log('Attachments:', selectedFiles.map(file => ({ name: file.name, size: file.size, type: file.type })));
-    
+
     toast.success(`GRN ${id} updated successfully!`);
     navigate('/finance/grn-srn');
   };
 
   return (
     <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Finance &gt; GRN / SRN &gt; Edit GRN #{id}
-      </div>
-
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className="mb-2 p-0"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       {/* Page Title */}
       <h1 className="text-2xl font-bold mb-6">EDIT GRN</h1>
 
@@ -283,7 +287,7 @@ export const EditGRNDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <Label className="text-sm font-medium">Purchase Order*</Label>
-              <Select value={grnDetails.purchaseOrder} onValueChange={(value) => setGrnDetails({...grnDetails, purchaseOrder: value})}>
+              <Select value={grnDetails.purchaseOrder} onValueChange={(value) => setGrnDetails({ ...grnDetails, purchaseOrder: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Purchase Order" />
                 </SelectTrigger>
@@ -297,7 +301,7 @@ export const EditGRNDashboard = () => {
 
             <div>
               <Label className="text-sm font-medium">Supplier*</Label>
-              <Select value={grnDetails.supplier} onValueChange={(value) => setGrnDetails({...grnDetails, supplier: value})}>
+              <Select value={grnDetails.supplier} onValueChange={(value) => setGrnDetails({ ...grnDetails, supplier: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Supplier" />
                 </SelectTrigger>
@@ -315,7 +319,7 @@ export const EditGRNDashboard = () => {
               <Input
                 placeholder="Enter Number"
                 value={grnDetails.invoiceNumber}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceNumber: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })}
               />
             </div>
 
@@ -324,7 +328,7 @@ export const EditGRNDashboard = () => {
               <Input
                 placeholder="Enter Text"
                 value={grnDetails.relatedTo}
-                onChange={(e) => setGrnDetails({...grnDetails, relatedTo: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, relatedTo: e.target.value })}
               />
             </div>
 
@@ -334,13 +338,13 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Enter Number"
                 value={grnDetails.invoiceAmount}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceAmount: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })}
               />
             </div>
 
             <div>
               <Label className="text-sm font-medium">Payment Mode</Label>
-              <Select value={grnDetails.paymentMode} onValueChange={(value) => setGrnDetails({...grnDetails, paymentMode: value})}>
+              <Select value={grnDetails.paymentMode} onValueChange={(value) => setGrnDetails({ ...grnDetails, paymentMode: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select Payment Mode" />
                 </SelectTrigger>
@@ -360,7 +364,7 @@ export const EditGRNDashboard = () => {
                 type="date"
                 placeholder="Enter Date"
                 value={grnDetails.invoiceDate}
-                onChange={(e) => setGrnDetails({...grnDetails, invoiceDate: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })}
               />
             </div>
 
@@ -370,7 +374,7 @@ export const EditGRNDashboard = () => {
                 type="date"
                 placeholder="20/06/2025"
                 value={grnDetails.postingDate}
-                onChange={(e) => setGrnDetails({...grnDetails, postingDate: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, postingDate: e.target.value })}
               />
             </div>
 
@@ -380,7 +384,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Other Expense"
                 value={grnDetails.otherExpense}
-                onChange={(e) => setGrnDetails({...grnDetails, otherExpense: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, otherExpense: e.target.value })}
               />
             </div>
 
@@ -390,7 +394,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Enter Number"
                 value={grnDetails.loadingExpense}
-                onChange={(e) => setGrnDetails({...grnDetails, loadingExpense: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })}
               />
             </div>
 
@@ -400,7 +404,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Enter Number"
                 value={grnDetails.adjustmentAmount}
-                onChange={(e) => setGrnDetails({...grnDetails, adjustmentAmount: e.target.value})}
+                onChange={(e) => setGrnDetails({ ...grnDetails, adjustmentAmount: e.target.value })}
               />
             </div>
           </div>
@@ -412,7 +416,7 @@ export const EditGRNDashboard = () => {
               rows={4}
               placeholder="Enter any additional notes..."
               value={grnDetails.notes}
-              onChange={(e) => setGrnDetails({...grnDetails, notes: e.target.value})}
+              onChange={(e) => setGrnDetails({ ...grnDetails, notes: e.target.value })}
             />
           </div>
         </div>
@@ -429,7 +433,7 @@ export const EditGRNDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
             <div>
               <Label className="text-sm font-medium">Inventory Type</Label>
-              <Select value={inventoryDetails.inventoryType} onValueChange={(value) => setInventoryDetails({...inventoryDetails, inventoryType: value})}>
+              <Select value={inventoryDetails.inventoryType} onValueChange={(value) => setInventoryDetails({ ...inventoryDetails, inventoryType: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
@@ -449,7 +453,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Expected Quantity"
                 value={inventoryDetails.expectedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, expectedQuantity: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, expectedQuantity: e.target.value })}
               />
             </div>
 
@@ -459,7 +463,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Received Quantity"
                 value={inventoryDetails.receivedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, receivedQuantity: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, receivedQuantity: e.target.value })}
               />
             </div>
 
@@ -469,7 +473,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Approved Quantity"
                 value={inventoryDetails.approvedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, approvedQuantity: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, approvedQuantity: e.target.value })}
               />
             </div>
 
@@ -479,7 +483,7 @@ export const EditGRNDashboard = () => {
                 type="number"
                 placeholder="Rejected Quantity"
                 value={inventoryDetails.rejectedQuantity}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, rejectedQuantity: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, rejectedQuantity: e.target.value })}
               />
             </div>
 
@@ -490,7 +494,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.rate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, rate: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, rate: e.target.value })}
               />
             </div>
 
@@ -501,7 +505,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.cgstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, cgstRate: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, cgstRate: e.target.value })}
               />
             </div>
 
@@ -512,7 +516,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.cgstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, cgstAmount: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, cgstAmount: e.target.value })}
               />
             </div>
 
@@ -523,7 +527,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.sgstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, sgstRate: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, sgstRate: e.target.value })}
               />
             </div>
 
@@ -534,7 +538,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.sgstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, sgstAmount: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, sgstAmount: e.target.value })}
               />
             </div>
 
@@ -545,7 +549,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.igstRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, igstRate: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, igstRate: e.target.value })}
               />
             </div>
 
@@ -556,7 +560,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.igstAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, igstAmount: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, igstAmount: e.target.value })}
               />
             </div>
 
@@ -567,7 +571,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.tcsRate}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, tcsRate: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, tcsRate: e.target.value })}
               />
             </div>
 
@@ -578,7 +582,7 @@ export const EditGRNDashboard = () => {
                 step="0.01"
                 placeholder="Enter Number"
                 value={inventoryDetails.tcsAmount}
-                onChange={(e) => setInventoryDetails({...inventoryDetails, tcsAmount: e.target.value})}
+                onChange={(e) => setInventoryDetails({ ...inventoryDetails, tcsAmount: e.target.value })}
               />
             </div>
 
@@ -638,7 +642,7 @@ export const EditGRNDashboard = () => {
             <h2 className="text-lg font-semibold text-[#C72030]">ATTACHMENTS</h2>
           </div>
 
-          <div 
+          <div
             className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
@@ -690,7 +694,7 @@ export const EditGRNDashboard = () => {
           <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
             Total Amount- {inventoryDetails.totalAmount || '0.00'}
           </div>
-          <Button 
+          <Button
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
           >

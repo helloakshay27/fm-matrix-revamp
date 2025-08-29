@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { useNavigate, useParams } from 'react-router-dom';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
@@ -26,7 +26,7 @@ interface ItemDetail {
 export const EditMaterialPRDashboard = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  
+
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: 'ABC-979GHGH--',
     plantDetail: 'Select Plant Detail',
@@ -95,7 +95,7 @@ export const EditMaterialPRDashboard = () => {
   };
 
   const updateItemDetail = (itemId: string, field: keyof ItemDetail, value: string) => {
-    setItemDetails(itemDetails.map(item => 
+    setItemDetails(itemDetails.map(item =>
       item.id === itemId ? { ...item, [field]: value } : item
     ));
   };
@@ -106,6 +106,14 @@ export const EditMaterialPRDashboard = () => {
 
   return (
     <div className="p-6 mx-auto">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Edit Material PR</h1>
@@ -303,7 +311,7 @@ export const EditMaterialPRDashboard = () => {
                   <X className="h-4 w-4" />
                 </Button>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                   <InputLabel shrink>Item Details*</InputLabel>
@@ -394,7 +402,7 @@ export const EditMaterialPRDashboard = () => {
         </div>
 
         <div className="mt-6">
-          <Button 
+          <Button
             onClick={addNewItem}
             className="bg-[#C72030] hover:bg-[#A01020] text-white"
           >
@@ -405,13 +413,13 @@ export const EditMaterialPRDashboard = () => {
 
       {/* Action Buttons */}
       <div className="flex gap-3 mt-6 justify-end">
-        <Button 
+        <Button
           variant="outline"
           onClick={() => navigate('/finance/material-pr')}
         >
           Cancel
         </Button>
-        <Button 
+        <Button
           className="bg-[#C72030] hover:bg-[#A01020] text-white"
           onClick={() => {
             console.log('Saving Material PR changes...');
