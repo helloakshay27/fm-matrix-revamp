@@ -239,7 +239,8 @@ export const PODetailsPage = () => {
     deliveryAddress: "",
     email: "",
     gst: "",
-    attachments: []
+    attachments: [],
+    terms_conditions: "",
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -433,6 +434,7 @@ export const PODetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={() => navigate(`/finance/po/add?clone=${id}`)}
             >
               <Copy className="w-4 h-4 mr-1" />
               Clone
@@ -735,7 +737,7 @@ export const PODetailsPage = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Terms & Conditions:
             </h3>
-            <p className="text-gray-700 ml-4">NA</p>
+            <p className="text-gray-700 ml-4">{poDetails.terms_conditions}</p>
           </div>
 
           <div className="border-t border-gray-200 pt-6">

@@ -23,7 +23,7 @@ interface Approval {
   status: string;
   approved_by?: string;
   approved_at?: string;
-  comment?: string; // Added for rejection reason tooltip
+  rejection_reason?: string; // Added for rejection reason tooltip
 }
 
 // Define column configurations
@@ -195,7 +195,7 @@ export const GRNDetailsPage = () => {
       level_id: levelId,
       approve: "false",
       user_id: userId,
-      comment: rejectComment,
+      rejection_reason: rejectComment,
     };
 
     try {
@@ -253,7 +253,7 @@ export const GRNDetailsPage = () => {
                           </div>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Rejection Reason: {approval.comment ?? 'No reason provided'}</p>
+                          <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
                         </TooltipContent>
                       </Tooltip>
                     ) : (

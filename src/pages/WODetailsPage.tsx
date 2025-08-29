@@ -485,6 +485,7 @@ export const WODetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
             >
               <Copy className="w-4 h-4 mr-1" />
               Clone
