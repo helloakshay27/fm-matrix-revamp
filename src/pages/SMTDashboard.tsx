@@ -8,6 +8,15 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const SMTDashboard = () => {
+  // simple debounce hook (local)
+  function useDebounce<T>(value: T, delay: number) {
+    const [debounced, setDebounced] = useState(value);
+    useEffect(() => {
+      const id = setTimeout(() => setDebounced(value), delay);
+      return () => clearTimeout(id);
+    }, [value, delay]);
+    return debounced;
+  }
 
   // Server-driven data and pagination
   type SMTRecord = {
@@ -17,7 +26,7 @@ const SMTDashboard = () => {
     other_facility_name?: string | null;
     created_at?: string | null;
     circle_name?: string | null;
-    smt_user?: { id: number; name?: string | null; department?: string | null } | null;
+    smt_user?: { id: number; name?: string | null; department?: string | null; email?: string | null } | null;
     people_interacted_with?: (string | null)[];
   };
 
@@ -41,6 +50,7 @@ const SMTDashboard = () => {
   const columns = [
     { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
     { key: 'smt_done_by_name', label: 'SMT Done By Name', sortable: true, defaultVisible: true },
+    { key: 'smt_done_by_email', label: 'SMT Done By Email', sortable: true, defaultVisible: true },
     { key: 'smt_done_by_function', label: 'SMT Done By Function', sortable: true, defaultVisible: true },
     { key: 'smt_done_by_circle', label: 'SMT Done By Circle', sortable: true, defaultVisible: true },
     { key: 'area_of_visit', label: 'Area Of Visit', sortable: true, defaultVisible: true },
@@ -54,16 +64,22 @@ const SMTDashboard = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const debouncedSearch = useDebounce(searchTerm, 500);
   const navigate = useNavigate();
 
   // Fetch data from API
-  const fetchSMTs = useCallback(async (page: number) => {
+  const fetchSMTs = useCallback(async (page: number, searchValue?: string) => {
     try {
       setLoading(true);
       setError(null);
       const token = localStorage.getItem('token');
       const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-      const url = `https://${baseUrl}/smts.json?page=${page}&per_page=${pageSize}`;
+      const trimmed = (searchValue || '').trim();
+      let url = `https://${baseUrl}/smts.json?page=${page}&per_page=${pageSize}`;
+      if (trimmed) {
+        url += `&q[user_email_cont]=${encodeURIComponent(trimmed)}`;
+      }
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const resp = await axios.get(url, { headers });
       const payload = resp.data || {};
@@ -81,14 +97,20 @@ const SMTDashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchSMTs(currentPage);
-  }, [fetchSMTs, currentPage]);
+    // Always fetch from page 1 when search changes
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    fetchSMTs(currentPage, debouncedSearch);
+  }, [fetchSMTs, currentPage, debouncedSearch]);
 
   // Map server data to table rows expected by EnhancedTable
   const tableData = useMemo(() => {
     return serverData.map((r) => ({
       id: r.id,
       smt_done_by_name: r.smt_user?.name || '-',
+      smt_done_by_email: r.smt_user?.email || '-',
       smt_done_by_function: r.smt_user?.department || '-',
       smt_done_by_circle: r.circle_name || '-',
       area_of_visit: r.area_of_visit || '-',
@@ -258,8 +280,10 @@ const SMTDashboard = () => {
         onSelectItem={handleSelectItem}
         getItemId={item => item.id.toString()}
         storageKey="smt-dashboard-table"
-        emptyMessage="No SMT records found"
-        searchPlaceholder="Search..."
+  emptyMessage="No SMT records found"
+  searchTerm={searchTerm}
+  onSearchChange={setSearchTerm}
+  searchPlaceholder="Search by email..."
         enableExport={false}
         showBulkActions={false}
         pagination={false}
