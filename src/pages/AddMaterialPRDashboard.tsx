@@ -885,7 +885,7 @@ export const AddMaterialPRDashboard = () => {
           </Card>
 
           <div className="flex items-center justify-end">
-            <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+            <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
               Total Amount: {calculateTotalAmount()}
             </Button>
           </div>
