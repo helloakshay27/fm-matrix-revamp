@@ -579,7 +579,6 @@ export const ExternalUsersDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search..."
             handleExport={handleExport}
-            enableExport={true}
             exportFileName="external-users"
             pagination={false}
             pageSize={pageSize}

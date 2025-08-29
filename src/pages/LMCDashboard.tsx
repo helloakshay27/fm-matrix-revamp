@@ -238,7 +238,6 @@ const LMCDashboard = () => {
                     getItemId={(row: LMCTableRow) => row.id.toString()}
                     onFilterClick={handleFilterClick}
                     handleExport={handleExport}
-                    enableExport={true}
                     exportFileName="lmc-export"
                     emptyMessage={loading ? 'Loading LMCs...' : 'No LMC records found'}
                 />
