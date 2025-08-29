@@ -350,12 +350,12 @@ const modulesByPackage = {
     },
     {
       name: 'Msafe Report',
-      icon: Archive,
+      icon: Download,
       href: '/maintenance/msafe-report',
     },
     {
       name: 'Msafe Detail Report',
-      icon: Archive,
+      icon: Download,
       href: '/maintenance/msafe-detail-report',
     }
 
