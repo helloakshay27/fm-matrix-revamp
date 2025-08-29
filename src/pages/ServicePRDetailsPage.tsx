@@ -622,7 +622,7 @@ export const ServicePRDetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Terms & Conditions :
         </h3>
-        <p className="text-gray-700">{servicePR.termsConditions}</p>
+        <p className="text-gray-700">{servicePR.work_order?.term_condition ?? 'No terms and conditions available'}</p>
 
         <div className="mt-6">
           <p className="text-gray-900 font-medium">
