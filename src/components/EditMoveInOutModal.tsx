@@ -156,7 +156,7 @@ export const EditMoveInOutModal = ({ isOpen, onClose, moveInOutData, onUpdate }:
           {/* Multiple Move In/Out Purpose Input */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Enter move in/ out purpose</Label>
+              <Label>Enter move in/ out purpose <span className="text-red-500">*</span></Label>
               <Button
                 type="button"
                 variant="outline"
