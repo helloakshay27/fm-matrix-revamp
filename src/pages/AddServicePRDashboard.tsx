@@ -14,7 +14,7 @@ import {
   FormControlLabel,
   Autocomplete,
 } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   changePlantDetails,
   fetchWBS,
@@ -40,6 +40,13 @@ export const AddServicePRDashboard = () => {
   const navigate = useNavigate();
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const cloneId = searchParams.get("clone");
+
+  const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);

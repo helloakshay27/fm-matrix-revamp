@@ -296,7 +296,7 @@ export const MaterialPRDetailsPage = () => {
 
   const handleClone = () => {
     if (id) {
-      navigate(`/finance/material-pr/clone/${id}`);
+      navigate(`/finance/material-pr/add?clone=${id}`);
     }
   };
 
