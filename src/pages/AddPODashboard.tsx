@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { FileText, ListChecks, Paperclip, Upload, X } from "lucide-react";
+import { ArrowLeft, FileText, ListChecks, Paperclip, Upload, X } from "lucide-react";
 import {
   TextField,
   FormControl,
@@ -382,6 +382,14 @@ export const AddPODashboard = () => {
 
   return (
     <div className="p-6 mx-auto max-w-7xl">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       <h1 className="text-2xl font-bold mb-6">NEW PURCHASE ORDER</h1>
 
       <form onSubmit={handleSubmit}>
