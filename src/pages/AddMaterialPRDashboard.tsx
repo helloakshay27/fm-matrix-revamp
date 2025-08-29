@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   TextField,
   FormControl,
@@ -23,6 +23,7 @@ import {
   fetchWBS,
   getAddresses,
   getInventories,
+  getMaterialPRById,
   getPlantDetails,
   getSuppliers,
 } from "@/store/slices/materialPRSlice";
@@ -45,6 +46,13 @@ export const AddMaterialPRDashboard = () => {
   const fileInputRef = useRef(null);
 
   const { data } = useAppSelector((state) => state.changePlantDetails);
+
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const cloneId = searchParams.get("clone");
+
+  const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
@@ -109,6 +117,49 @@ export const AddMaterialPRDashboard = () => {
       fetchData()
     }
   }, [showRadio])
+
+  useEffect(() => {
+    if (shouldFetch) {
+      const cloneData = async () => {
+        try {
+          const response = await dispatch(getMaterialPRById({ baseUrl, token, id: cloneId })).unwrap();
+          setSupplierDetails({
+            supplier: response.supplier?.id,
+            plantDetail: response.plant_detail?.id,
+            prDate: response.po_date,
+            billingAddress: response.billing_address_id,
+            deliveryAddress: response.shipping_address_id,
+            transportation: response.transportation,
+            retention: response.retention,
+            tds: response.tds,
+            qc: response.quality_holding,
+            paymentTenure: response.payment_tenure,
+            advanceAmount: response.advance_amount,
+            relatedTo: response.related_to,
+            termsConditions: response.terms_conditions,
+            wbsCode: ""
+          });
+
+          setItems(response.pms_po_inventories.map((item, index) => ({
+            id: index + 1,
+            itemDetails: item.inventory?.id,
+            sacHsnCode: item.sac_hsn_code,
+            productDescription: item.prod_desc,
+            each: item.rate,
+            quantity: item.quantity,
+            expectedDate: item.expected_date,
+            amount: item.total_value,
+            wbsCode: ""
+          })))
+        } catch (error) {
+          console.log(error)
+          toast.error(error)
+        }
+      }
+
+      cloneData();
+    }
+  }, [shouldFetch])
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -179,6 +230,12 @@ export const AddMaterialPRDashboard = () => {
     setSupplierDetails((prev) => ({ ...prev, [name]: value }));
     dispatch(changePlantDetails({ baseUrl, id: value, token }));
   };
+
+  useEffect(() => {
+    if (supplierDetails.plantDetail) {
+      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } })
+    }
+  }, [supplierDetails.plantDetail])
 
   const handleItemChange = (id, field, value) => {
     setItems((prevItems) =>
