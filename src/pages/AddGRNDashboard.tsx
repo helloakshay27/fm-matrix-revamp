@@ -18,6 +18,7 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
+import { ArrowLeft } from "lucide-react";
 
 // Define interfaces for type safety
 interface GRNDetails {
@@ -485,6 +486,14 @@ export const AddGRNDashboard = () => {
 
   return (
     <div className="p-6">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className='p-0'
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
       <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-8">
