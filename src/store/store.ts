@@ -7,6 +7,7 @@ import { servicesReducer } from './slices/servicesSlice'
 import { serviceDetailsReducer } from './slices/serviceDetailsSlice'
 import { departmentReducer } from './slices/departmentSlice'
 import roleReducer from './slices/roleSlice'
+import roleWithModulesReducer from './slices/roleWithModulesSlice'
 import { functionReducer } from './slices/functionSlice'
 import fmUserReducer, { createFmUserReducer, editFMUserReducer, fetchRolesReducer, fetchSuppliersReducer, fetchUnitsReducer, getFMUsersReducer, getUserDetailsReducer } from './slices/fmUserSlice'
 import userCountsReducer from './slices/userCountsSlice'
@@ -66,6 +67,7 @@ export const store = configureStore({
     serviceDetails: serviceDetailsReducer,
     department: departmentReducer,
     role: roleReducer,
+    roleWithModules: roleWithModulesReducer,
     function: functionReducer,
     fmUsers: fmUserReducer,
     userCounts: userCountsReducer,

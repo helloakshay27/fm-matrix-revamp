@@ -43,6 +43,7 @@ export const API_CONFIG = {
     SITES: '/pms/sites.json',
     UNITS: '/pms/units.json',
     ROLES: '/lock_roles.json',
+    ROLES_WITH_MODULES: '/lock_roles_with_modules.json',
     FUNCTIONS: '/lock_functions.json',
     SUB_FUNCTIONS: '/lock_sub_functions.json',
     // Module, Function, Sub-Function CRUD endpoints

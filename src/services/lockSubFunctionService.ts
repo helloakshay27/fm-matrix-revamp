@@ -1,47 +1,43 @@
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 
-// Type definitions for Lock Sub Function API
-export interface LockSubFunctionItem {
+// Type definitions for Lock Sub Function API (matching actual backend structure)
+export interface LockSubFunction {
   id: number;
-  subFunctionName: string;
-  parentFunction: string;
-  description: string;
-  priority: 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL';
-  conditions: string[];
-  createdOn: string;
-  createdBy: string;
-  active: boolean;
-  // API response fields
-  sub_function_name?: string;
-  parent_function_id?: number;
-  parent_function_name?: string;
+  lock_function_id: number;
+  name: string;
+  sub_function_name: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  url: string;
+  lock_function?: {
+    id: number;
+    name: string;
+    action_name: string;
+  };
 }
 
 export interface CreateLockSubFunctionPayload {
   lock_sub_function: {
+    lock_function_id: number;
+    name: string;
     sub_function_name: string;
-    parent_function_id: number;
-    description: string;
-    priority: string;
-    conditions: string[];
     active: boolean;
   };
 }
 
 export interface UpdateLockSubFunctionPayload {
   lock_sub_function: {
+    lock_function_id: number;
+    name: string;
     sub_function_name: string;
-    parent_function_id: number;
-    description: string;
-    priority: string;
-    conditions: string[];
     active: boolean;
   };
 }
 
 export const lockSubFunctionService = {
   // Fetch all lock sub functions
-  async fetchLockSubFunctions(): Promise<LockSubFunctionItem[]> {
+  async fetchLockSubFunctions(): Promise<LockSubFunction[]> {
     try {
       const response = await fetch(
         getFullUrl(API_CONFIG.ENDPOINTS.SUB_FUNCTIONS),
@@ -59,24 +55,7 @@ export const lockSubFunctionService = {
       }
 
       const data = await response.json();
-      const subFunctions = data.lock_sub_functions || data || [];
-      
-      // Transform API response to match UI interface
-      return subFunctions.map((subFunc: any) => ({
-        id: subFunc.id,
-        subFunctionName: subFunc.sub_function_name || subFunc.subFunctionName || '',
-        parentFunction: subFunc.parent_function_name || subFunc.parentFunction || 'Unknown',
-        description: subFunc.description || '',
-        priority: subFunc.priority || 'MEDIUM',
-        conditions: subFunc.conditions || [],
-        createdOn: subFunc.created_on || subFunc.createdOn || new Date().toLocaleDateString(),
-        createdBy: subFunc.created_by || subFunc.createdBy || 'System',
-        active: subFunc.active !== undefined ? subFunc.active : true,
-        // Keep original fields for API operations
-        sub_function_name: subFunc.sub_function_name,
-        parent_function_id: subFunc.parent_function_id,
-        parent_function_name: subFunc.parent_function_name,
-      }));
+      return data.lock_sub_functions || data || [];
     } catch (error) {
       console.error('Error fetching lock sub functions:', error);
       throw error;
@@ -84,7 +63,7 @@ export const lockSubFunctionService = {
   },
 
   // Fetch single lock sub function
-  async fetchLockSubFunction(id: number): Promise<LockSubFunctionItem> {
+  async fetchLockSubFunction(id: number): Promise<LockSubFunction> {
     try {
       const response = await fetch(
         getFullUrl(`${API_CONFIG.ENDPOINTS.SUB_FUNCTIONS}/${id}.json`),
@@ -102,22 +81,7 @@ export const lockSubFunctionService = {
       }
 
       const data = await response.json();
-      const subFunc = data.lock_sub_function || data;
-      
-      return {
-        id: subFunc.id,
-        subFunctionName: subFunc.sub_function_name || subFunc.subFunctionName || '',
-        parentFunction: subFunc.parent_function_name || subFunc.parentFunction || 'Unknown',
-        description: subFunc.description || '',
-        priority: subFunc.priority || 'MEDIUM',
-        conditions: subFunc.conditions || [],
-        createdOn: subFunc.created_on || subFunc.createdOn || new Date().toLocaleDateString(),
-        createdBy: subFunc.created_by || subFunc.createdBy || 'System',
-        active: subFunc.active !== undefined ? subFunc.active : true,
-        sub_function_name: subFunc.sub_function_name,
-        parent_function_id: subFunc.parent_function_id,
-        parent_function_name: subFunc.parent_function_name,
-      };
+      return data.lock_sub_function || data;
     } catch (error) {
       console.error('Error fetching lock sub function:', error);
       throw error;
@@ -125,10 +89,10 @@ export const lockSubFunctionService = {
   },
 
   // Create new lock sub function
-  async createLockSubFunction(payload: CreateLockSubFunctionPayload): Promise<LockSubFunctionItem> {
+  async createLockSubFunction(payload: CreateLockSubFunctionPayload): Promise<LockSubFunction> {
     try {
       const response = await fetch(
-        getFullUrl(API_CONFIG.ENDPOINTS.SUB_FUNCTIONS.replace('.json', '.json')),
+        getFullUrl(API_CONFIG.ENDPOINTS.CREATE_SUB_FUNCTION),
         {
           method: 'POST',
           headers: {
@@ -145,22 +109,7 @@ export const lockSubFunctionService = {
       }
 
       const data = await response.json();
-      const subFunc = data.lock_sub_function || data;
-      
-      return {
-        id: subFunc.id,
-        subFunctionName: subFunc.sub_function_name || '',
-        parentFunction: subFunc.parent_function_name || 'Unknown',
-        description: subFunc.description || '',
-        priority: subFunc.priority || 'MEDIUM',
-        conditions: subFunc.conditions || [],
-        createdOn: subFunc.created_on || new Date().toLocaleDateString(),
-        createdBy: subFunc.created_by || 'Current User',
-        active: subFunc.active !== undefined ? subFunc.active : true,
-        sub_function_name: subFunc.sub_function_name,
-        parent_function_id: subFunc.parent_function_id,
-        parent_function_name: subFunc.parent_function_name,
-      };
+      return data.lock_sub_function || data;
     } catch (error) {
       console.error('Error creating lock sub function:', error);
       throw error;
@@ -168,10 +117,10 @@ export const lockSubFunctionService = {
   },
 
   // Update existing lock sub function
-  async updateLockSubFunction(id: number, payload: UpdateLockSubFunctionPayload): Promise<LockSubFunctionItem> {
+  async updateLockSubFunction(id: number, payload: UpdateLockSubFunctionPayload): Promise<LockSubFunction> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.SUB_FUNCTIONS.replace('.json', '')}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.UPDATE_SUB_FUNCTION}/${id}.json`),
         {
           method: 'PATCH',
           headers: {
@@ -188,22 +137,7 @@ export const lockSubFunctionService = {
       }
 
       const data = await response.json();
-      const subFunc = data.lock_sub_function || data;
-      
-      return {
-        id: subFunc.id,
-        subFunctionName: subFunc.sub_function_name || '',
-        parentFunction: subFunc.parent_function_name || 'Unknown',
-        description: subFunc.description || '',
-        priority: subFunc.priority || 'MEDIUM',
-        conditions: subFunc.conditions || [],
-        createdOn: subFunc.created_on || new Date().toLocaleDateString(),
-        createdBy: subFunc.created_by || 'Current User',
-        active: subFunc.active !== undefined ? subFunc.active : true,
-        sub_function_name: subFunc.sub_function_name,
-        parent_function_id: subFunc.parent_function_id,
-        parent_function_name: subFunc.parent_function_name,
-      };
+      return data.lock_sub_function || data;
     } catch (error) {
       console.error('Error updating lock sub function:', error);
       throw error;
@@ -214,7 +148,7 @@ export const lockSubFunctionService = {
   async deleteLockSubFunction(id: number): Promise<void> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.SUB_FUNCTIONS.replace('.json', '')}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.DELETE_SUB_FUNCTION}/${id}.json`),
         {
           method: 'DELETE',
           headers: {
