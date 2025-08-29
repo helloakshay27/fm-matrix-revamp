@@ -6,6 +6,8 @@ import { Header } from './Header';
 import { useLayout } from '../contexts/LayoutContext';
 import { OmanSidebar } from './OmanSidebar';
 import { OmanDynamicHeader } from './OmanDynamicHeader';
+import ViSidebar from './ViSidebar';
+import ViDynamicHeader from './ViDynamicHeader';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -19,6 +21,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   // Check if it's Oman site
   const isOmanSite = hostname.includes('oig.gophygital.work');
+  const isViSite = hostname.includes('web.gophygital.work');
 
   return (
     <div className="min-h-screen bg-[#fafafa]">
@@ -29,6 +32,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         <>
           <OmanSidebar />
           <OmanDynamicHeader />
+        </>
+      ) : isViSite ? (
+        <>
+          <ViSidebar />
+          <ViDynamicHeader />
         </>
       ) : (
         <>
