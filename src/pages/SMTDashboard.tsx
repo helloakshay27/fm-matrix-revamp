@@ -17,7 +17,7 @@ const SMTDashboard = () => {
     other_facility_name?: string | null;
     created_at?: string | null;
     circle_name?: string | null;
-    smt_user?: { id: number; name?: string | null } | null;
+    smt_user?: { id: number; name?: string | null; department?: string | null } | null;
     people_interacted_with?: (string | null)[];
   };
 
@@ -89,7 +89,7 @@ const SMTDashboard = () => {
     return serverData.map((r) => ({
       id: r.id,
       smt_done_by_name: r.smt_user?.name || '-',
-      smt_done_by_function: '-',
+      smt_done_by_function: r.smt_user?.department || '-',
       smt_done_by_circle: r.circle_name || '-',
       area_of_visit: r.area_of_visit || '-',
       type_of_facility: r.facility_name || r.other_facility_name || '-',

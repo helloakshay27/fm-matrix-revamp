@@ -27,7 +27,7 @@ const SMTDetailPage = () => {
     form_details?: Record<string, any> | null;
     key_observations?: string | null;
     responsible_person?: { name?: string | null; email?: string | null; mobile?: string | null } | null;
-    smt_user?: { id: number; name?: string | null; email?: string | null; mobile?: string | null } | null;
+    smt_user?: { id: number; name?: string | null; email?: string | null; mobile?: string | null; department?: string | null } | null;
     card_attachments?: { url?: string }[];
     other_attachments?: { url?: string }[];
   };
@@ -163,7 +163,7 @@ const SMTDetailPage = () => {
             </div>
             <div>
               <span className="text-gray-500 text-sm">Function</span>
-              <p className="text-gray-900 font-medium">-</p>
+              <p className="text-gray-900 font-medium">{smtDetails.smt_user?.department || '-'}</p>
             </div>
             <div>
               <span className="text-gray-500 text-sm">Circle</span>
