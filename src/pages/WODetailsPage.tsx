@@ -1,5 +1,6 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
@@ -27,6 +28,16 @@ import axios from "axios";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+
+// Define the interface for Approval
+interface Approval {
+  id: string;
+  level: string;
+  status: string;
+  updated_by?: string;
+  updated_at?: string;
+  rejection_reason?: string; // Added for rejection reason tooltip
+}
 
 const boqColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
@@ -69,32 +80,27 @@ const invoiceColumns: ColumnConfig[] = [
   {
     key: "invoice_number",
     label: "Invoice Number",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "invoice_date",
     label: "Invoice Date",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "total_amount",
     label: "Total Invoice Amount",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "payable_amount",
     label: "Payable Amount",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "retention_amount",
     label: "Retention Amount",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   { key: "tds_amount", label: "TDS Amount", sortable: true, draggable: true },
   { key: "qc_amount", label: "QC Amount", sortable: true, draggable: true },
@@ -102,14 +108,12 @@ const invoiceColumns: ColumnConfig[] = [
   {
     key: "physical_sent",
     label: "Physical Invoice Sent to Accounts",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "physical_received",
     label: "Physical Invoice Received",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
 ];
 
@@ -119,28 +123,24 @@ const paymentColumn: ColumnConfig[] = [
   {
     key: "payment_mode",
     label: "Payment Mode",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   {
     key: "transaction_number",
     label: "Transaction Number",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   { key: "status", label: "Status", sortable: true, draggable: true },
   {
     key: "payment_date",
     label: "Payment Date",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
   { key: "note", label: "Note", sortable: true, draggable: true },
   {
     key: "date_of_entry",
     label: "Date of Entry",
-    sortable: true,
-    draggable: true,
+    sortable: true, draggable: true,
   },
 ];
 
@@ -194,7 +194,7 @@ export const WODetailsPage = () => {
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
     editWbsCode: false
-  })
+  });
 
   const [workOrder, setWorkOrder] = useState({
     letter_of_indent: false,
@@ -257,7 +257,7 @@ export const WODetailsPage = () => {
       setButtonCondition({
         showSap: response.show_send_sap_yes,
         editWbsCode: response.can_edit_wbs_codes
-      })
+      });
     } catch (error) {
       console.log(error);
       toast.error(error);
@@ -416,24 +416,38 @@ export const WODetailsPage = () => {
           <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             WORK ORDER DETAILS
           </h1>
-
-          <div className="flex items-start gap-3">
-            {
-              workOrder?.approvals?.map((approval: any) => (
-                <div className='space-y-2' key={approval.id}>
-                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
-                    {`${approval.level} Approval : ${approval.status}`}
+          <TooltipProvider>
+            <div className="flex items-start gap-3">
+              {
+                workOrder?.approvals?.map((approval: Approval) => (
+                  <div className='space-y-2' key={approval.id}>
+                    {approval.status.toLowerCase() === 'rejected' ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
+                            {`${approval.level} Approval : ${approval.status}`}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
+                        {`${approval.level} Approval : ${approval.status}`}
+                      </div>
+                    )}
+                    {
+                      approval.updated_by && approval.updated_at &&
+                      <div className='ms-2 w-[190px]'>
+                        {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
+                      </div>
+                    }
                   </div>
-                  {
-                    approval.updated_by && approval.updated_at &&
-                    <div className='ms-2 w-[190px]'>
-                      {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
-                    </div>
-                  }
-                </div>
-              ))
-            }
-          </div>
+                ))
+              }
+            </div>
+          </TooltipProvider>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">

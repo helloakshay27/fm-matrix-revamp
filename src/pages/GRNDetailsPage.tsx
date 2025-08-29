@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Printer, Rss } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +15,16 @@ import {
 } from "@mui/material";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+
+// Define the interface for Approval
+interface Approval {
+  id: string;
+  name: string;
+  status: string;
+  approved_by?: string;
+  approved_at?: string;
+  comment?: string; // Added for rejection reason tooltip
+}
 
 // Define column configurations
 const itemsColumns: ColumnConfig[] = [
@@ -229,23 +240,38 @@ export const GRNDetailsPage = () => {
           <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             GRN DETAILS
           </h1>
-          <div className="flex items-center gap-3">
-            {
-              approvalStatus?.approval_levels?.map((approval: any) => (
-                <div className='space-y-2' key={approval.id}>
-                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
-                    {`${approval.name} Approval : ${approval.status}`}
+          <TooltipProvider>
+            <div className="flex items-center gap-3">
+              {
+                approvalStatus?.approval_levels?.map((approval: Approval) => (
+                  <div className='space-y-2' key={approval.id}>
+                    {approval.status.toLowerCase() === 'rejected' ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
+                            {`${approval.name} Approval : ${approval.status}`}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Rejection Reason: {approval.comment ?? 'No reason provided'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
+                        {`${approval.name} Approval : ${approval.status}`}
+                      </div>
+                    )}
+                    {
+                      approval.approved_by && approval.approved_at &&
+                      <div className='ms-2 w-[190px]'>
+                        {`${approval.approved_by} (${approval.approved_at})`}
+                      </div>
+                    }
                   </div>
-                  {
-                    approval.approved_by && approval.approved_at &&
-                    <div className='ms-2 w-[190px]'>
-                      {`${approval.approved_by} (${approval.approved_at})`}
-                    </div>
-                  }
-                </div>
-              ))
-            }
-          </div>
+                ))
+              }
+            </div>
+          </TooltipProvider>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
@@ -680,3 +706,6 @@ export const GRNDetailsPage = () => {
     </div>
   );
 };
+
+
+
