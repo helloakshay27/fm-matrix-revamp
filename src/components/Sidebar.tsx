@@ -325,6 +325,11 @@ const modulesByPackage = {
       ]
     },
     {
+      name: 'Vendor',
+      icon: UserRoundPen,
+      href: '/maintenance/vendor',
+    },
+    {
       name: 'M-Safe',
       icon: User,
       href: '/maintenance/m-safe',
