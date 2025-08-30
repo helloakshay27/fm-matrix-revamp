@@ -98,6 +98,8 @@ export const API_CONFIG = {
     OCCUPANT_USERS: '/pms/account_setups/occupant_users.json',
     PERMITS: '/pms/permits.json',
     PERMIT_DETAILS: '/pms/permits', // Base path, will append /:id.json
+    PERMIT_COMMENT: '/pms/permits', // Base path, will append /:id/permit_comment
+
     PERMIT_COUNTS: '/pms/permits/counts.json',
     // Add template endpoints
     TEMPLATES: '/pms/custom_forms/get_templates.json',

@@ -53,4 +53,27 @@ export const vendorService = {
       throw error;
     }
   },
+
+  getVendorById: async (id: string) => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/${id}.json`, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to fetch vendor details at service');
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error fetching vendor details:', error);
+      toast.error(error.message || 'An unknown error occurred');
+      throw error;
+    }
+  },
 };
