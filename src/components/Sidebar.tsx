@@ -251,7 +251,7 @@ const modulesByPackage = {
         name: 'Gate Number',
         icon: DoorOpen,
         href: '/master/gate-number'
-      },
+      }
       // {
       //   name: 'Inventory Type',
       //   icon: Package,
