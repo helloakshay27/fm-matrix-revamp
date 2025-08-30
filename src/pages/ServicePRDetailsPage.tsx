@@ -312,7 +312,7 @@ export const ServicePRDetailsPage = () => {
                 Send To SAP Team
               </Button>
             )}
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/service-pr/edit/${id}`)}>
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
