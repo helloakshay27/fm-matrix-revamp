@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Eye, Upload, Plus } from 'lucide-react';
@@ -9,34 +9,49 @@ import { toast, Toaster } from "sonner";
 import { apiClient } from '@/utils/apiClient';
 import { ENDPOINTS } from '@/config/apiConfig';
 
-const checklistData = [
-  {
-    id: 440,
-    activityName: 'qawertyhuhjkjkjjkjjkjubjbjbj',
-    meterCategory: '',
-    numberOfQuestions: 1,
-    scheduledFor: 'Asset'
-  },
-  {
-    id: 435,
-    activityName: 'VI Repair Preparedness Checklist',
-    meterCategory: '',
-    numberOfQuestions: 5,
-    scheduledFor: 'Service'
-  },
-  {
-    id: 309,
-    activityName: 'Daily Meeting Room Readiness Checklist',
-    meterCategory: '',
-    numberOfQuestions: 21,
-    scheduledFor: 'Service'
-  }
-];
+interface ChecklistItem {
+  id: number;
+  activityName: string;
+  meterCategory: string;
+  numberOfQuestions: number;
+  scheduledFor: string;
+}
 
 export const ChecklistMasterDashboard = () => {
   const navigate = useNavigate();
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [checklistData, setChecklistData] = useState<ChecklistItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchChecklistData = async () => {
+      setLoading(true);
+      try {
+        const response = await apiClient.get(ENDPOINTS.CHECKLIST_MASTER);
+        const data = response.data.custom_forms || response.data || [];
+        if (Array.isArray(data)) {
+          const transformedData = data.map((item: any) => ({
+            id: item.id,
+            activityName: item.form_name || 'N/A',
+            meterCategory: item.meter_category || '',
+            numberOfQuestions: item.questions_count || 0,
+            scheduledFor: item.checklist_for ? item.checklist_for.split('::')[1] : 'N/A'
+          }));
+          setChecklistData(transformedData);
+        } else {
+          toast.error('Unexpected data format from API.');
+        }
+      } catch (error) {
+        console.error('Error fetching checklist master data:', error);
+        toast.error('Failed to fetch checklist master data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChecklistData();
+  }, []);
 
   const handleAddChecklist = () => {
     navigate('/settings/masters/checklist-master/add');
@@ -147,33 +162,45 @@ export const ChecklistMasterDashboard = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {checklistData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleEditClick(item.id)}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => handleViewClick(item.id)}
-                  >
-                    <Eye className="w-4 h-4" />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
-                <TableCell>{item.activityName}</TableCell>
-                <TableCell>{item.meterCategory}</TableCell>
-                <TableCell>{item.numberOfQuestions}</TableCell>
-                <TableCell>{item.scheduledFor}</TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center">Loading...</TableCell>
               </TableRow>
-            ))}
+            ) : checklistData.length > 0 ? (
+              checklistData.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditClick(item.id)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleViewClick(item.id)}
+                    >
+                      <Eye className="w-4 h-4" />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-blue-600 font-medium">{item.id}</TableCell>
+                  <TableCell>{item.activityName}</TableCell>
+                  <TableCell>{item.meterCategory}</TableCell>
+                  <TableCell>{item.numberOfQuestions}</TableCell>
+                  <TableCell>{item.scheduledFor}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center">
+                  No checklist data found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

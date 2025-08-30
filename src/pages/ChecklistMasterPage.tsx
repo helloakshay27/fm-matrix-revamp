@@ -369,7 +369,7 @@ export const ChecklistMasterPage = () => {
 
   const handleSubmit = () => {
     // Validate required fields
-    if (!formData.activityName || !formData.assetType) {
+    if (!formData.activityName ) {
       toast.error('Please fill in all required fields');
       return;
     }
