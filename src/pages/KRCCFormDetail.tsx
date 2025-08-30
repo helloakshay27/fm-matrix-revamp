@@ -324,7 +324,7 @@ export const KRCCFormDetail: React.FC = () => {
     [data?.krcc_attachments, data?.categories]
   );
 
-  const handleBack = () => navigate('/maintenance/krcc-list');
+  const handleBack = () => navigate(-1);
 
   const bike = mergedCategories?.bike;
   const car = mergedCategories?.car;
