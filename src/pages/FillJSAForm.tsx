@@ -14,19 +14,15 @@ import {
     ClipboardCheck
 } from "lucide-react";
 import { toast } from "sonner";
+import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
 interface JSAActivity {
     id: string;
     activity: string;
     subActivity: string;
     hazard: string;
-    risk: string;
-    controlMeasures: {
-        useSafetyShoes: 'yes' | 'no' | '';
-        safetyHelmet: 'yes' | 'no' | '';
-        reflectiveJacket: 'yes' | 'no' | '';
-        electricalGloves: 'yes' | 'no' | '';
-    };
+    risks: string[];
+    controlMeasures: Record<string, 'yes' | 'no' | null>;
 }
 
 export const FillJSAForm = () => {
@@ -36,107 +32,100 @@ export const FillJSAForm = () => {
 
     // JSA Form Basic Information
     const [jsaInfo, setJsaInfo] = useState({
-        permitId: '307',
+        permitId: '',
         nameOfDepartment: '',
-        date: '28/08/2025',
+        date: '',
         checkedByName: '',
-        location: 'Site - Panchshil Test / Building - TOWER B / Wing - NA / Floor - NA / Area - NA / Room - NA',
-        permitFor: '🏢',
-        workPermitType: 'Cold Work',
+        location: '',
+        permitFor: '',
+        workPermitType: '',
         checkedBySign: ''
     });
 
     // JSA Activities
-    const [jsaActivities, setJsaActivities] = useState<JSAActivity[]>([
-        {
-            id: '1',
-            activity: 'Asbestos survey & removing work',
-            subActivity: 'Isolating power supply',
-            hazard: 'Expose to current',
-            risk: 'Physical injury',
-            controlMeasures: {
-                useSafetyShoes: '',
-                safetyHelmet: '',
-                reflectiveJacket: '',
-                electricalGloves: ''
-            }
-        }
-    ]);
+    const [jsaActivities, setJsaActivities] = useState<JSAActivity[]>([]);
 
     // Comments
     const [comments, setComments] = useState('');
 
     useEffect(() => {
         if (id) {
-            console.log('Permit ID for JSA:', id);
             fetchJSADetails(id);
         }
     }, [id]);
 
     const fetchJSADetails = async (permitId: string) => {
         try {
-            const baseUrl = localStorage.getItem('baseUrl');
-            const token = localStorage.getItem('token');
-
-            if (!baseUrl || !token) {
-                toast.error('Authentication required');
-                return;
-            }
-
             setLoading(true);
-            // This would be the JSA-specific API endpoint
-            const response = await fetch(`${baseUrl}/pms/permits/${permitId}/jsa.json`, {
+
+            const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${permitId}/fill_jsa_form.json`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
+                    'Authorization': getAuthHeader(),
                     'Content-Type': 'application/json',
                 },
             });
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('JSA Details:', data);
+                console.log('JSA API Response:', data);
 
-                // Map API data to JSA info fields
-                setJsaInfo(prev => ({
-                    ...prev,
-                    permitId: data.permit_id?.toString() || permitId,
-                    nameOfDepartment: data.department_name || '',
-                    date: data.date || '28/08/2025',
-                    location: data.location || prev.location,
-                    workPermitType: data.work_permit_type || 'Cold Work'
-                }));
+                const jsaFormData = data.jsa_form;
 
-                // Map activities if provided by API
-                if (data.activities && data.activities.length > 0) {
-                    setJsaActivities(data.activities.map((activity: any, index: number) => ({
-                        id: (index + 1).toString(),
-                        activity: activity.activity || '',
-                        subActivity: activity.sub_activity || '',
-                        hazard: activity.hazard || '',
-                        risk: activity.risk || '',
-                        controlMeasures: {
-                            useSafetyShoes: activity.control_measures?.use_safety_shoes || '',
-                            safetyHelmet: activity.control_measures?.safety_helmet || '',
-                            reflectiveJacket: activity.control_measures?.reflective_jacket || '',
-                            electricalGloves: activity.control_measures?.electrical_gloves || ''
-                        }
-                    })));
+                if (!jsaFormData) {
+                    toast.error('Invalid response format from server');
+                    return;
                 }
 
+                // Map API data to JSA info fields according to the response structure
+                setJsaInfo(prev => ({
+                    ...prev,
+                    permitId: jsaFormData.permit_id?.toString() || permitId,
+                    nameOfDepartment: jsaFormData.department_name || '',
+                    date: jsaFormData.date || '',
+                    location: jsaFormData.location || '',
+                    permitFor: jsaFormData.permit_for || '',
+                    workPermitType: jsaFormData.permit_type || '',
+                    checkedByName: jsaFormData.checked_by_name || ''
+                }));
+
+                // Map permit details to JSA activities
+                if (jsaFormData.permit_details && Array.isArray(jsaFormData.permit_details)) {
+                    const mappedActivities = jsaFormData.permit_details.map((detail: any) => ({
+                        id: detail.id?.toString() || '',
+                        activity: detail.activity || '',
+                        subActivity: detail.sub_activity || '',
+                        hazard: detail.hazard || '',
+                        risks: Array.isArray(detail.risks) ? detail.risks : [],
+                        controlMeasures: detail.control_measures || {}
+                    }));
+
+                    console.log('Mapped JSA Activities:', mappedActivities);
+                    setJsaActivities(mappedActivities);
+                } else {
+                    console.log('No permit details found in response');
+                    setJsaActivities([]);
+                }
+
+                // Set comments
+                setComments(jsaFormData.comments || '');
+
+                toast.success('JSA form data loaded successfully');
+
             } else {
-                console.error('Failed to fetch JSA details');
-                toast.error('Failed to load JSA details');
+                const errorText = await response.text();
+                console.error('Failed to fetch JSA details:', response.status, response.statusText, errorText);
+                toast.error(`Failed to load JSA details: ${response.status} ${response.statusText}`);
             }
         } catch (error) {
             console.error('Error fetching JSA details:', error);
-            toast.error('Error loading JSA details');
+            toast.error('Error loading JSA details. Please check your connection.');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleControlMeasureChange = (activityId: string, measure: keyof JSAActivity['controlMeasures'], value: 'yes' | 'no') => {
+    const handleControlMeasureChange = (activityId: string, measure: string, value: 'yes' | 'no') => {
         setJsaActivities(prev =>
             prev.map(activity =>
                 activity.id === activityId
@@ -157,11 +146,36 @@ export const FillJSAForm = () => {
         setLoading(true);
 
         try {
-            // Here you would implement the API call to submit the JSA form
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
+            if (!id) {
+                toast.error('Permit ID is required');
+                return;
+            }
 
-            toast.success('JSA form submitted successfully!');
-            navigate('/safety/permit');
+            const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${id}/submit_jsa_form.json`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Authorization': getAuthHeader(),
+                },
+                body: JSON.stringify({
+                    pms_permit_jsa_form: {
+                        checked_by_name: jsaInfo.checkedByName,
+                        comments: comments
+                    }
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('JSA form submitted successfully:', data);
+                toast.success('JSA form submitted successfully!');
+                navigate('/safety/permit');
+            } else {
+                const errorText = await response.text();
+                console.error('Failed to submit JSA form:', response.status, response.statusText, errorText);
+                toast.error(`Failed to submit JSA form: ${response.status} ${response.statusText}`);
+            }
         } catch (error) {
             toast.error('Failed to submit JSA form');
             console.error('Error:', error);
@@ -299,112 +313,66 @@ export const FillJSAForm = () => {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {jsaActivities.map((activity, index) => (
-                                            <tr key={activity.id}>
-                                                <td className="border border-gray-300 p-3 text-sm text-center font-medium">
-                                                    {index + 1}
-                                                </td>
-                                                <td className="border border-gray-300 p-3 text-sm">
-                                                    {activity.activity}
-                                                </td>
-                                                <td className="border border-gray-300 p-3 text-sm">
-                                                    {activity.subActivity}
-                                                </td>
-                                                <td className="border border-gray-300 p-3 text-sm">
-                                                    {activity.hazard}
-                                                </td>
-                                                <td className="border border-gray-300 p-3 text-sm">
-                                                    {activity.risk}
-                                                </td>
-                                                <td className="border border-gray-300 p-3">
-                                                    <div className="space-y-3">
-                                                        {/* Use Safety Shoes */}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs text-gray-700">Use Safety Shoes(EN-345/IS15298)</span>
-                                                            <div className="flex gap-4">
-                                                                <RadioGroup
-                                                                    value={activity.controlMeasures.useSafetyShoes}
-                                                                    onValueChange={(value) => handleControlMeasureChange(activity.id, 'useSafetyShoes', value as 'yes' | 'no')}
-                                                                    className="flex gap-4"
-                                                                >
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="yes" id={`safety-shoes-yes-${activity.id}`} />
-                                                                        <Label htmlFor={`safety-shoes-yes-${activity.id}`} className="text-xs">Yes</Label>
+                                        {jsaActivities.length > 0 ? (
+                                            jsaActivities.map((activity, index) => (
+                                                <tr key={activity.id}>
+                                                    <td className="border border-gray-300 p-3 text-sm text-center font-medium">
+                                                        {index + 1}
+                                                    </td>
+                                                    <td className="border border-gray-300 p-3 text-sm">
+                                                        {activity.activity}
+                                                    </td>
+                                                    <td className="border border-gray-300 p-3 text-sm">
+                                                        {activity.subActivity}
+                                                    </td>
+                                                    <td className="border border-gray-300 p-3 text-sm">
+                                                        {activity.hazard}
+                                                    </td>
+                                                    <td className="border border-gray-300 p-3 text-sm">
+                                                        {activity.risks && activity.risks.length > 0
+                                                            ? activity.risks.join(', ')
+                                                            : '-'
+                                                        }
+                                                    </td>
+                                                    <td className="border border-gray-300 p-3">
+                                                        <div className="space-y-3">
+                                                            {Object.keys(activity.controlMeasures || {}).map((measure) => (
+                                                                <div key={measure} className="flex items-center justify-between">
+                                                                    <span className="text-xs text-gray-700">{measure}</span>
+                                                                    <div className="flex gap-4">
+                                                                        <RadioGroup
+                                                                            value={activity.controlMeasures[measure] || ''}
+                                                                            onValueChange={(value) => handleControlMeasureChange(activity.id, measure, value as 'yes' | 'no')}
+                                                                            className="flex gap-4"
+                                                                        >
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <RadioGroupItem value="yes" id={`${measure}-yes-${activity.id}`} />
+                                                                                <Label htmlFor={`${measure}-yes-${activity.id}`} className="text-xs">Yes</Label>
+                                                                            </div>
+                                                                            <div className="flex items-center space-x-2">
+                                                                                <RadioGroupItem value="no" id={`${measure}-no-${activity.id}`} />
+                                                                                <Label htmlFor={`${measure}-no-${activity.id}`} className="text-xs">No</Label>
+                                                                            </div>
+                                                                        </RadioGroup>
                                                                     </div>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="no" id={`safety-shoes-no-${activity.id}`} />
-                                                                        <Label htmlFor={`safety-shoes-no-${activity.id}`} className="text-xs">No</Label>
-                                                                    </div>
-                                                                </RadioGroup>
-                                                            </div>
+                                                                </div>
+                                                            ))}
+                                                            {(!activity.controlMeasures || Object.keys(activity.controlMeasures).length === 0) && (
+                                                                <div className="text-xs text-gray-500 text-center">
+                                                                    No control measures available
+                                                                </div>
+                                                            )}
                                                         </div>
-
-                                                        {/* Safety Helmet */}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs text-gray-700">Safety Helmet IS 2925:1984)</span>
-                                                            <div className="flex gap-4">
-                                                                <RadioGroup
-                                                                    value={activity.controlMeasures.safetyHelmet}
-                                                                    onValueChange={(value) => handleControlMeasureChange(activity.id, 'safetyHelmet', value as 'yes' | 'no')}
-                                                                    className="flex gap-4"
-                                                                >
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="yes" id={`helmet-yes-${activity.id}`} />
-                                                                        <Label htmlFor={`helmet-yes-${activity.id}`} className="text-xs">Yes</Label>
-                                                                    </div>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="no" id={`helmet-no-${activity.id}`} />
-                                                                        <Label htmlFor={`helmet-no-${activity.id}`} className="text-xs">No</Label>
-                                                                    </div>
-                                                                </RadioGroup>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Reflective Jacket */}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs text-gray-700">Reflective Jacket (EN20471:2013)</span>
-                                                            <div className="flex gap-4">
-                                                                <RadioGroup
-                                                                    value={activity.controlMeasures.reflectiveJacket}
-                                                                    onValueChange={(value) => handleControlMeasureChange(activity.id, 'reflectiveJacket', value as 'yes' | 'no')}
-                                                                    className="flex gap-4"
-                                                                >
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="yes" id={`jacket-yes-${activity.id}`} />
-                                                                        <Label htmlFor={`jacket-yes-${activity.id}`} className="text-xs">Yes</Label>
-                                                                    </div>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="no" id={`jacket-no-${activity.id}`} />
-                                                                        <Label htmlFor={`jacket-no-${activity.id}`} className="text-xs">No</Label>
-                                                                    </div>
-                                                                </RadioGroup>
-                                                            </div>
-                                                        </div>
-
-                                                        {/* Electrical Gloves */}
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-xs text-gray-700">Electrical Gloves (EN 60903/ IS 4270:1991)</span>
-                                                            <div className="flex gap-4">
-                                                                <RadioGroup
-                                                                    value={activity.controlMeasures.electricalGloves}
-                                                                    onValueChange={(value) => handleControlMeasureChange(activity.id, 'electricalGloves', value as 'yes' | 'no')}
-                                                                    className="flex gap-4"
-                                                                >
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="yes" id={`gloves-yes-${activity.id}`} />
-                                                                        <Label htmlFor={`gloves-yes-${activity.id}`} className="text-xs">Yes</Label>
-                                                                    </div>
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <RadioGroupItem value="no" id={`gloves-no-${activity.id}`} />
-                                                                        <Label htmlFor={`gloves-no-${activity.id}`} className="text-xs">No</Label>
-                                                                    </div>
-                                                                </RadioGroup>
-                                                            </div>
-                                                        </div>
-                                                    </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr>
+                                                <td colSpan={6} className="border border-gray-300 p-8 text-center text-gray-500">
+                                                    {loading ? 'Loading activities...' : 'No JSA activities found'}
                                                 </td>
                                             </tr>
-                                        ))}
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
