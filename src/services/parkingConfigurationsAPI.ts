@@ -33,6 +33,7 @@ export interface GroupedParkingConfiguration {
   building_id: string;
   building_name: string;
   total_count: number;
+  qrcode_needed?: string | boolean;
   parking_configurations: ParkingConfiguration[];
 }
 
@@ -55,7 +56,9 @@ export interface CategoryParkingData {
 export interface CreateParkingConfigurationRequest {
   building_id: string;
   floor_id: string;
-  [categoryId: string]: string | CategoryParkingData;
+  qrcode_needed?: boolean;
+  attachment?: File | string; // Use 'attachment' parameter for image upload
+  [categoryId: string]: string | boolean | CategoryParkingData | File | undefined;
 }
 
 export interface Building {
@@ -100,7 +103,68 @@ export const fetchParkingConfigurations = async (): Promise<ParkingConfiguration
 export const createParkingConfiguration = async (data: CreateParkingConfigurationRequest): Promise<{ success: boolean; message?: string }> => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.PARKING_CONFIGURATIONS);
-    const options = getAuthenticatedFetchOptions('POST', data);
+    
+    // Check if there's a file to upload
+    const hasFile = data.attachment && data.attachment instanceof File;
+    
+    let options: RequestInit;
+    
+    if (hasFile) {
+      // Use FormData for file upload but maintain the exact same structure
+      const formData = new FormData();
+      
+      // Add basic fields
+      formData.append('building_id', data.building_id);
+      formData.append('floor_id', data.floor_id);
+      
+      // Add the attachment file
+      formData.append('attachment', data.attachment as File);
+      
+      // Add qrcode_needed field if it exists
+      if (data.qrcode_needed !== undefined) {
+        formData.append('qrcode_needed', data.qrcode_needed.toString());
+      }
+      
+      // Add category data maintaining exact object structure
+      Object.keys(data).forEach(key => {
+        if (key !== 'building_id' && key !== 'floor_id' && key !== 'attachment' && key !== 'qrcode_needed') {
+          const categoryData = data[key] as CategoryParkingData;
+          if (categoryData && typeof categoryData === 'object' && 'no_of_parkings' in categoryData) {
+            // Add the category as nested parameters to maintain object structure
+            formData.append(`${key}[no_of_parkings]`, categoryData.no_of_parkings.toString());
+            formData.append(`${key}[reserved_parkings]`, categoryData.reserved_parkings.toString());
+            
+            // Add parking array using Rails array parameter syntax
+            if (categoryData.parking && Array.isArray(categoryData.parking)) {
+              categoryData.parking.forEach((parking: ParkingSlotData, index: number) => {
+                formData.append(`${key}[parking][][parking_name]`, parking.parking_name);
+                formData.append(`${key}[parking][][reserved]`, parking.reserved.toString());
+                if (parking.stacked !== undefined) {
+                  formData.append(`${key}[parking][][stacked]`, parking.stacked.toString());
+                }
+              });
+            }
+          }
+        }
+      });
+      
+      options = {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          // Don't set Content-Type header for FormData, browser will set it automatically
+        },
+        body: formData
+      };
+    } else {
+      // Use regular JSON for non-file requests
+      // Remove attachment field if it's not a file to avoid sending strings to Rails Paperclip
+      const cleanData = { ...data };
+      if (cleanData.attachment && typeof cleanData.attachment === 'string') {
+        delete cleanData.attachment;
+      }
+      options = getAuthenticatedFetchOptions('POST', cleanData);
+    }
 
     const response = await fetch(url, options);
     

@@ -83,17 +83,14 @@ export const VisitingPurposePage = () => {
   const [isEditVisitorCommentModalOpen, setIsEditVisitorCommentModalOpen] = useState(false);
   const [editingVisitorComment, setEditingVisitorComment] = useState<VisitorCommentData | null>(null);
   const [formData, setFormData] = useState({
-    site: '',
     purpose: '',
     active: true
   });
   const [moveInOutFormData, setMoveInOutFormData] = useState({
-    site: '',
     purpose: '',
     active: true
   });
   const [workTypeFormData, setWorkTypeFormData] = useState({
-    site: '',
     staffType: '',
     workType: '',
     active: true
@@ -350,7 +347,6 @@ export const VisitingPurposePage = () => {
   const handleMoveInOutModalClose = () => {
     setIsMoveInOutModalOpen(false);
     setMoveInOutFormData({
-      site: '',
       purpose: '',
       active: true
     });
@@ -366,27 +362,15 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    if (!moveInOutFormData.site) {
-      toast({
-        title: "Error",
-        description: "Please select a site",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSubmittingMoveInOut(true);
     
     try {
-      // Get resource_id from selected site
-      const resourceId = parseInt(moveInOutFormData.site);
-      
       // Split purposes by pipe separator for multiple purposes
       const purposeList = moveInOutFormData.purpose.split('|').filter(p => p.trim());
       
-      // Create each purpose via API
+      // Create each purpose via API (resource_id will be handled by backend)
       const createPromises = purposeList.map(async (purpose) => {
-        const result = await createMoveInOutPurpose(purpose.trim(), resourceId, moveInOutFormData.active);
+        const result = await createMoveInOutPurpose(purpose.trim(), moveInOutFormData.active);
         return result;
       });
       
@@ -451,7 +435,6 @@ export const VisitingPurposePage = () => {
   const handleWorkTypeModalClose = () => {
     setIsWorkTypeModalOpen(false);
     setWorkTypeFormData({
-      site: '',
       staffType: '',
       workType: '',
       active: true
@@ -477,30 +460,17 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    if (!workTypeFormData.site) {
-      toast({
-        title: "Error",
-        description: "Please select a site",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSubmittingWorkType(true);
     
     try {
-      // Get resource_id from selected site
-      const resourceId = parseInt(workTypeFormData.site);
-      
       // Split work types by pipe separator for multiple work types
       const workTypeList = workTypeFormData.workType.split('|').filter(wt => wt.trim());
       
-      // Create each work type via API
+      // Create each work type via API (resource_id will be handled by backend)
       const createPromises = workTypeList.map(async (workType) => {
         const result = await createWorkType(
-          workType.trim(), // This becomes staff_type in API
-          workTypeFormData.staffType, // This becomes related_to in API
-          resourceId, 
+          workType.trim(),
+          workTypeFormData.staffType,
           workTypeFormData.active
         );
         return result;
@@ -643,7 +613,6 @@ export const VisitingPurposePage = () => {
   const handleModalClose = () => {
     setIsAddModalOpen(false);
     setFormData({
-      site: '',
       purpose: '',
       active: true
     });
@@ -659,27 +628,15 @@ export const VisitingPurposePage = () => {
       return;
     }
 
-    if (!formData.site) {
-      toast({
-        title: "Error",
-        description: "Please select a site",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
-      // Get resource_id from selected site
-      const resourceId = parseInt(formData.site);
-      
       // Split purposes by pipe separator for multiple purposes
       const purposeList = formData.purpose.split('|').filter(p => p.trim());
       
-      // Create each purpose via API
+      // Create each purpose via API (resource_id will be handled by backend)
       const createPromises = purposeList.map(async (purpose) => {
-        const result = await createVisitPurpose(purpose.trim(), resourceId, formData.active);
+        const result = await createVisitPurpose(purpose.trim(), formData.active);
         return result;
       });
       
@@ -1050,7 +1007,7 @@ export const VisitingPurposePage = () => {
                       <TableHead className="px-4 py-3 min-w-[200px]">Purpose</TableHead>
                       <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
                       <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1081,7 +1038,7 @@ export const VisitingPurposePage = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
                         </TableRow>
                       ))
                     )}
@@ -1097,7 +1054,7 @@ export const VisitingPurposePage = () => {
                       <TableHead className="px-4 py-3 min-w-[200px]">Move In/Out Purpose</TableHead>
                       <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
                       <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1128,7 +1085,7 @@ export const VisitingPurposePage = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
                         </TableRow>
                       ))
                     )}
@@ -1145,7 +1102,7 @@ export const VisitingPurposePage = () => {
                       <TableHead className="px-4 py-3 min-w-[150px]">Work Type</TableHead>
                       <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
                       <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1177,7 +1134,7 @@ export const VisitingPurposePage = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
                         </TableRow>
                       ))
                     )}
@@ -1193,7 +1150,7 @@ export const VisitingPurposePage = () => {
                       <TableHead className="px-4 py-3 min-w-[300px]">Comment</TableHead>
                       <TableHead className="px-4 py-3 w-32 text-center">Status</TableHead>
                       <TableHead className="px-4 py-3 min-w-[150px]">Created On</TableHead>
-                      <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead>
+                      {/* <TableHead className="px-4 py-3 min-w-[120px]">Created By</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1224,7 +1181,7 @@ export const VisitingPurposePage = () => {
                             </span>
                           </TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdOn}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell>
+                          {/* <TableCell className="px-4 py-3 text-sm text-gray-600">{item.createdBy}</TableCell> */}
                         </TableRow>
                       ))
                     )}
@@ -1253,37 +1210,10 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Site Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select site</Label>
-              <Select 
-                value={formData.site} 
-                onValueChange={(value) => setFormData({...formData, site: value})}
-                disabled={loadingSites}
-              >
-                <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  {loadingSites ? (
-                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
-                  ) : sites.length > 0 ? (
-                    sites.map((site) => (
-                      <SelectItem key={site.id} value={site.id.toString()}>
-                        {site.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>No sites available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Multiple Users Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter Purpose</Label>
+                <Label>Enter Purpose <span className="text-red-500">*</span></Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -1360,7 +1290,7 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -1396,37 +1326,10 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Site Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select site</Label>
-              <Select 
-                value={moveInOutFormData.site} 
-                onValueChange={(value) => setMoveInOutFormData({...moveInOutFormData, site: value})}
-                disabled={loadingSites}
-              >
-                <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  {loadingSites ? (
-                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
-                  ) : sites.length > 0 ? (
-                    sites.map((site) => (
-                      <SelectItem key={site.id} value={site.id.toString()}>
-                        {site.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>No sites available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Multiple Move In/Out Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter move in/ out purpose</Label>
+                <Label>Enter move in/ out purpose <span className="text-red-500">*</span></Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -1503,7 +1406,7 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleMoveInOutSubmit}
                 disabled={isSubmittingMoveInOut}
@@ -1539,36 +1442,9 @@ export const VisitingPurposePage = () => {
           </DialogHeader>
           
           <div className="space-y-4">
-            {/* Site Selection */}
-            <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select Site</Label>
-              <Select 
-                value={workTypeFormData.site} 
-                onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, site: value})}
-                disabled={loadingSites}
-              >
-                <SelectTrigger className="w-full bg-white border border-gray-300">
-                  <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
-                </SelectTrigger>
-                <SelectContent className="bg-white z-[60] border border-gray-300 shadow-lg">
-                  {loadingSites ? (
-                    <SelectItem value="loading" disabled>Loading sites...</SelectItem>
-                  ) : sites.length > 0 ? (
-                    sites.map((site) => (
-                      <SelectItem key={site.id} value={site.id.toString()}>
-                        {site.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <SelectItem value="" disabled>No sites available</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-
             {/* Staff Type Selection */}
             <div className="space-y-2">
-              <Label className="text-sm text-gray-600">Select Staff Type</Label>
+              <Label className="text-sm text-gray-600">Select Staff Type <span className="text-red-500">*</span></Label>
               <Select 
                 value={workTypeFormData.staffType} 
                 onValueChange={(value) => setWorkTypeFormData({...workTypeFormData, staffType: value})}
@@ -1585,7 +1461,7 @@ export const VisitingPurposePage = () => {
 
             {/* Work Type Input */}
             <div className="space-y-2">
-              <Label>Enter Work Type</Label>
+              <Label>Enter Work Type <span className="text-red-500">*</span> </Label>
               <TextField
                 placeholder="Enter Work Type"
                 value={workTypeFormData.workType}
@@ -1620,7 +1496,7 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleWorkTypeSubmit}
                 disabled={isSubmittingWorkType}
@@ -1644,7 +1520,7 @@ export const VisitingPurposePage = () => {
       <Dialog open={isCommentModalOpen} onOpenChange={setIsCommentModalOpen}>
         <DialogContent className="max-w-md bg-white z-50">
           <DialogHeader className="flex flex-row items-center justify-between border-b pb-3">
-            <DialogTitle className="text-lg font-semibold">Add Comment</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Add Comment <span className="text-red-500">*</span></DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -1694,7 +1570,7 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleCommentSubmit}
                 disabled={isSubmittingComment}
@@ -1733,7 +1609,7 @@ export const VisitingPurposePage = () => {
             {/* Multiple Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter Purpose</Label>
+                <Label>Enter Purpose *</Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -1799,7 +1675,7 @@ export const VisitingPurposePage = () => {
             </div>
 
             {/* Update Button */}
-            <div className="flex justify-start pt-4">
+            <div className="flex justify-center pt-4">
               <Button 
                 onClick={handleEditSubmit}
                 className="bg-green-500 hover:bg-green-600 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"

@@ -1,132 +1,762 @@
-import React, { useEffect, useMemo, useState, ReactNode } from 'react';
+
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    ResponsiveContainer,
+    Label,
+    LabelList,
+    Line,
+    Scatter
+} from "recharts";
 import { ArrowRightLeft } from "lucide-react";
-// @ts-ignore
+
 import logo from "../../assets/pdf/urbon.svg";
 
 // @ts-ignore
 import GoPhygital from "../../assets/pdf/Gophygital.svg";
-import { Bar, BarChart, CartesianGrid, Label, LabelList, Legend, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from 'recharts';
+import axios from 'axios';
 
-type OverSumData = {
-    total_wallet_balance?: number;
-    total_wallet_topups?: number;
-    total_wallet_usage?: number;
-    complimentary_credit_points?: number;
-    expired_wallet_points?: number;
-    total_active_wallet_users?: number;
-};
 
-type SiteWiseWalletData = {
-    site_name: string;
-    total_wallet_balance: number;
-    topup_balance: number;
-    usage: number;
-    complimentary_points: number;
-    refunds: number;
-    expiry_points: number;
-}[];
+const AllContent = () => {
 
-type CustoWallData = {
-    entity_name: string;
-    site_name: string;
-    amount: number;
-    total_users: number;
-}[];
 
-type RevenueRow = {
-    site: string;
-    meeting: {
-        util: string;
-        cancel: string;
-        revenue: string;
-        utilUp: boolean;
-        cancelUp: boolean;
-        revenueUp: boolean;
-    };
-    hotDesk: {
-        util: string;
-        cancel: string;
-        revenue: string;
-        utilUp: boolean;
-        cancelUp: boolean;
-        revenueUp: boolean;
-    };
-};
-type RevenueData = {
-    table: RevenueRow[];
-};
-
-type CommunityRow = {
-    center: string;
-    events: number;
-    attendance: string;
-    chatUsers: number;
-    chatMsgs: number;
-    posts: number;
-    interaction: number;
-    members: number;
-    android: number;
-    ios: number;
-};
-
-type AdoptionRow = [string, ...number[]];
-
-// ----------- Arrow component -------------
-const Arrow: React.FC<{ up: boolean }> = ({ up }) => (
-    <span style={{ color: up ? "green" : "red" }}>{up ? "▲" : "▼"}</span>
-);
-
-// ----------- Main Component -------------
-const AllContent: React.FC = () => {
-
-    const token = "297348f4201fd1bc931666e13e49500a056783aa8bf10913";
-
-    const [overSumData, setOverSumData] = useState<OverSumData>({});
-    const [siteWiseData, setSiteWiseData] = useState<SiteWiseWalletData>([]);
-    const [custoWallData, setCustoWallData] = useState<CustoWallData>([]);
-
-    // API fetch handlers
-    const fetchOverSumData = async () => {
-        const response = await fetch(`https://app.lockated.com/wallet_overview_summary?token=${token}`);
-        const data = await response.json();
-        setOverSumData(data);
-    };
-    const fetchSiteWiseData = async () => {
-        const response = await fetch(`https://app.lockated.com/get_site_wise_wallet_summary?token=${token}`);
-        const data = await response.json();
-        setSiteWiseData(data || []);
-    };
-    const fetchCustoWallData = async () => {
-        const response = await fetch(`https://app.lockated.com/top_ten_wallet_users?token=${token}`);
-        const data = await response.json();
-        setCustoWallData(data || []);
-    };
+    const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
+    const [utilizationData, setUtilizationData] = useState<any>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [siteAdoptionData, setSiteAdoptionData] = useState<any>(null);
+    const [loadingSiteAdoption, setLoadingSiteAdoption] = useState<boolean>(true);
+    const [helpdeskSnapshotData, setHelpdeskSnapshotData] = useState<any>(null);
+    const [loadingHelpdeskSnapshot, setLoadingHelpdeskSnapshot] = useState<boolean>(true);
+    // Separate effect to fetch helpdesk management snapshot
     useEffect(() => {
-        fetchOverSumData();
-        fetchSiteWiseData();
-        fetchCustoWallData();
+        const fetchHelpdeskSnapshot = async () => {
+            setLoadingHelpdeskSnapshot(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/helpdesk_management_snapshot?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setHelpdeskSnapshotData(resp.data);
+                console.log('helpdesk_snapshot ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching helpdesk_snapshot:', err);
+            } finally {
+                setLoadingHelpdeskSnapshot(false);
+            }
+        };
+
+        fetchHelpdeskSnapshot();
     }, []);
 
-    const revenueData: RevenueData = {
-        table: [
-            {
-                site: "Sai Radhe, Bund garden",
-                meeting: { util: "78%", cancel: "12%", revenue: "12,083 | 12%", utilUp: true, cancelUp: false, revenueUp: true },
-                hotDesk: { util: "78%", cancel: "12%", revenue: "12,083 | 12%", utilUp: true, cancelUp: false, revenueUp: true }
-            },
-            { site: "Westport, Baner", meeting: { util: "19%", cancel: "1%", revenue: "19,840 | 10%", utilUp: false, cancelUp: true, revenueUp: false }, hotDesk: { util: "19%", cancel: "1%", revenue: "19,840 | 10%", utilUp: false, cancelUp: true, revenueUp: false } },
-            { site: "Peninsula Corporate Park", meeting: { util: "13%", cancel: "13%", revenue: "13,840 | 11%", utilUp: false, cancelUp: true, revenueUp: false }, hotDesk: { util: "13%", cancel: "13%", revenue: "13,840 | 11%", utilUp: false, cancelUp: true, revenueUp: false } },
-            { site: "Koncord Probiz", meeting: { util: "38%", cancel: "8%", revenue: "38,760 | 5%", utilUp: false, cancelUp: true, revenueUp: false }, hotDesk: { util: "38%", cancel: "8%", revenue: "38,760 | 5%", utilUp: false, cancelUp: true, revenueUp: false } },
-            { site: "AeroMall", meeting: { util: "66%", cancel: "6%", revenue: "66,390 | 12%", utilUp: false, cancelUp: true, revenueUp: true }, hotDesk: { util: "66%", cancel: "6%", revenue: "66,390 | 12%", utilUp: false, cancelUp: true, revenueUp: true } },
-            { site: "Raheja Mindspace", meeting: { util: "54%", cancel: "1%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true }, hotDesk: { util: "54%", cancel: "1%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true } },
-            { site: "Nandan Probiz", meeting: { util: "60%", cancel: "14%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true }, hotDesk: { util: "60%", cancel: "14%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true } },
-            { site: "Max House", meeting: { util: "64%", cancel: "1%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true }, hotDesk: { util: "64%", cancel: "1%", revenue: "14,140 | 15%", utilUp: true, cancelUp: false, revenueUp: true } },
-            { site: "Bani-Statement Gurgaon", meeting: { util: "34%", cancel: "1%", revenue: "14,140 | 15%", utilUp: false, cancelUp: true, revenueUp: false }, hotDesk: { util: "34%", cancel: "1%", revenue: "14,140 | 15%", utilUp: false, cancelUp: true, revenueUp: false } },
-            { site: "Technopolis", meeting: { util: "74%", cancel: "14%", revenue: "14,140 | 15%", utilUp: false, cancelUp: false, revenueUp: false }, hotDesk: { util: "74%", cancel: "14%", revenue: "14,140 | 15%", utilUp: false, cancelUp: false, revenueUp: false } },
-        ]
+
+    useEffect(() => {
+        const fetchMeetingRoomReport = async () => {
+            setLoading(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/meeting_room_day_pass_performance?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const response = await axios.get(url, { headers });
+                setMeetingRoomData(response.data);
+                console.log('meeting_room_day_pass_performance ->', response.data);
+            } catch (err) {
+                console.error('Error fetching meeting_room_day_pass_performance:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchMeetingRoomReport();
+    }, []);
+
+    const [loadingUtilization, setLoadingUtilization] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchUtilization = async () => {
+            setLoadingUtilization(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const utilEndpoint = '/api/pms/reports/center_wise_meeting_room_utilization?start_date=2025-01-15&end_date=2025-02-15';
+                const utilUrl = `https://${baseUrl}${utilEndpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const utilResp = await axios.get(utilUrl, { headers });
+                setUtilizationData(utilResp.data);
+                console.log('center_wise_meeting_room_utilization ->', utilResp.data);
+            } catch (utilErr) {
+                console.error('Error fetching center_wise_meeting_room_utilization:', utilErr);
+            } finally {
+                setLoadingUtilization(false);
+            }
+        };
+
+        fetchUtilization();
+    }, []);
+
+    // Separate effect to fetch site-wise adoption rate
+    useEffect(() => {
+        const fetchSiteAdoption = async () => {
+            setLoadingSiteAdoption(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/site_wise_adoption_rate?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setSiteAdoptionData(resp.data);
+                console.log('site_wise_adoption_rate ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching site_wise_adoption_rate:', err);
+            } finally {
+                setLoadingSiteAdoption(false);
+            }
+        };
+
+        fetchSiteAdoption();
+    }, []);
+
+    // Asset Overview - fetch and log separately
+    const [assetOverviewData, setAssetOverviewData] = useState<any>(null);
+    const [loadingAssetOverview, setLoadingAssetOverview] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchAssetOverview = async () => {
+            setLoadingAssetOverview(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/asset_overview?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setAssetOverviewData(resp.data);
+                console.log('asset_overview ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching asset_overview:', err);
+            } finally {
+                setLoadingAssetOverview(false);
+            }
+        };
+
+        fetchAssetOverview();
+    }, []);
+
+    console.log("Meeting Room Data:", meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? null);
+    console.log('Asset Overview Data:', assetOverviewData ?? null);
+
+
+    const [ticketAgingClosureData, setTicketAgingClosureData] = useState<any>(null);
+    const [loadingTicketAgingClosure, setLoadingTicketAgingClosure] = useState<boolean>(true);
+    // Separate effect to fetch ticket aging closure efficiency
+    useEffect(() => {
+        const fetchTicketAgingClosure = async () => {
+            setLoadingTicketAgingClosure(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/ticket_aging_closure_efficiency?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setTicketAgingClosureData(resp.data);
+                console.log('ticket_aging_closure_efficiency ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching ticket_aging_closure_efficiency:', err);
+            } finally {
+                setLoadingTicketAgingClosure(false);
+            }
+        };
+        fetchTicketAgingClosure();
+    }, []);
+
+    const [ticketPerformanceMetricsData, setTicketPerformanceMetricsData] = useState<any>(null);
+    const [loadingTicketPerformanceMetrics, setLoadingTicketPerformanceMetrics] = useState<boolean>(true);
+    // Separate effect to fetch ticket performance metrics
+    useEffect(() => {
+        const fetchTicketPerformanceMetrics = async () => {
+            setLoadingTicketPerformanceMetrics(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/ticket_performance_metrics?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setTicketPerformanceMetricsData(resp.data);
+                console.log('ticket_performance_metrics ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching ticket_performance_metrics:', err);
+            } finally {
+                setLoadingTicketPerformanceMetrics(false);
+            }
+        };
+        fetchTicketPerformanceMetrics();
+    }, []);
+
+    const [customerExperienceFeedbackData, setCustomerExperienceFeedbackData] = useState<any>(null);
+    const [loadingCustomerExperienceFeedback, setLoadingCustomerExperienceFeedback] = useState<boolean>(true);
+    // Separate effect to fetch customer experience feedback
+    useEffect(() => {
+        const fetchCustomerExperienceFeedback = async () => {
+            setLoadingCustomerExperienceFeedback(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/customer_experience_feedback?start_date=2025-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setCustomerExperienceFeedbackData(resp.data);
+                console.log('customer_experience_feedback ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching customer_experience_feedback:', err);
+            } finally {
+                setLoadingCustomerExperienceFeedback(false);
+            }
+        };
+        fetchCustomerExperienceFeedback();
+    }, []);
+
+    // Response TAT Quarterly - fetch and log separately
+    const [responseTATQuarterlyData, setResponseTATQuarterlyData] = useState<any>(null);
+    const [loadingResponseTATQuarterly, setLoadingResponseTATQuarterly] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchResponseTATQuarterly = async () => {
+            setLoadingResponseTATQuarterly(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/response_tat_performance_quarterly';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setResponseTATQuarterlyData(resp.data);
+                console.log('response_tat_performance_quarterly ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching response_tat_performance_quarterly:', err);
+            } finally {
+                setLoadingResponseTATQuarterly(false);
+            }
+        };
+        fetchResponseTATQuarterly();
+    }, []);
+
+    // Resolution TAT Quarterly - fetch and log separately
+    const [resolutionTATQuarterlyData, setResolutionTATQuarterlyData] = useState<any>(null);
+    const [loadingResolutionTATQuarterly, setLoadingResolutionTATQuarterly] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchResolutionTATQuarterly = async () => {
+            setLoadingResolutionTATQuarterly(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/resolution_tat_performance_quarterly';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setResolutionTATQuarterlyData(resp.data);
+                console.log('resolution_tat_performance_quarterly ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching resolution_tat_performance_quarterly:', err);
+            } finally {
+                setLoadingResolutionTATQuarterly(false);
+            }
+        };
+
+        fetchResolutionTATQuarterly();
+    }, []);
+
+
+    // Device Platform Statistics - fetch and log separately
+    const [devicePlatformStatsData, setDevicePlatformStatsData] = useState<any>(null);
+    const [loadingDevicePlatformStats, setLoadingDevicePlatformStats] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchDevicePlatformStats = async () => {
+            setLoadingDevicePlatformStats(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/device_platform_statistics';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setDevicePlatformStatsData(resp.data);
+                console.log('device_platform_statistics ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching device_platform_statistics:', err);
+            } finally {
+                setLoadingDevicePlatformStats(false);
+            }
+        };
+
+        fetchDevicePlatformStats();
+    }, []);
+
+    // Parking Date Site-wise - fetch separately and log
+    const [parkingDateSiteWiseData, setParkingDateSiteWiseData] = useState<any>(null);
+    const [loadingParkingDateSiteWise, setLoadingParkingDateSiteWise] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchParkingDateSiteWise = async () => {
+            setLoadingParkingDateSiteWise(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/parking_date_site_wise';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setParkingDateSiteWiseData(resp.data);
+                console.log('parking_date_site_wise ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching parking_date_site_wise:', err);
+            } finally {
+                setLoadingParkingDateSiteWise(false);
+            }
+        };
+
+        fetchParkingDateSiteWise();
+    }, []);
+
+    // Visitor Trend Analysis - fetch separately and log
+    const [visitorTrendAnalysisData, setVisitorTrendAnalysisData] = useState<any>(null);
+    const [loadingVisitorTrendAnalysis, setLoadingVisitorTrendAnalysis] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchVisitorTrendAnalysis = async () => {
+            setLoadingVisitorTrendAnalysis(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/visitor_trend_analysis';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setVisitorTrendAnalysisData(resp.data);
+                console.log('visitor_trend_analysis ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching visitor_trend_analysis:', err);
+            } finally {
+                setLoadingVisitorTrendAnalysis(false);
+            }
+        };
+
+        fetchVisitorTrendAnalysis();
+    }, []);
+
+    // Consumable Inventory Comparison - fetch separately and log
+    const [consumableInventoryComparisonData, setConsumableInventoryComparisonData] = useState<any>(null);
+    const [loadingConsumableInventoryComparison, setLoadingConsumableInventoryComparison] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchConsumableInventoryComparison = async () => {
+            setLoadingConsumableInventoryComparison(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/consumable_inventory_comparison';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setConsumableInventoryComparisonData(resp.data);
+                console.log('consumable_inventory_comparison ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching consumable_inventory_comparison:', err);
+            } finally {
+                setLoadingConsumableInventoryComparison(false);
+            }
+        };
+
+        fetchConsumableInventoryComparison();
+    }, []);
+
+    // Center-wise Consumables - fetch separately and log
+    const [centerWiseConsumablesData, setCenterWiseConsumablesData] = useState<any>(null);
+    const [loadingCenterWiseConsumables, setLoadingCenterWiseConsumables] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchCenterWiseConsumables = async () => {
+            setLoadingCenterWiseConsumables(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/center_wise_consumables';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setCenterWiseConsumablesData(resp.data);
+                console.log('center_wise_consumables ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching center_wise_consumables:', err);
+            } finally {
+                setLoadingCenterWiseConsumables(false);
+            }
+        };
+
+        fetchCenterWiseConsumables();
+    }, []);
+
+    // Parking Management – derive chart rows from API
+    const parkingSummary = useMemo(() => {
+        const root = parkingDateSiteWiseData?.data?.parking_summary
+            ?? parkingDateSiteWiseData?.parking_summary
+            ?? [];
+        return Array.isArray(root) ? root : [];
+    }, [parkingDateSiteWiseData]);
+
+    const parkingChartData = useMemo(() => {
+        return parkingSummary.map((r: any) => ({
+            site: r.site_name || r.site || '-',
+            Free: Number(r.free_parking ?? 0),
+            Paid: Number(r.paid_parking ?? 0),
+            Vacant: Number(r.vacant_parking ?? 0),
+        }));
+    }, [parkingSummary]);
+
+    // Visitor Management – derive chart rows from API
+    const visitorTrendRows = useMemo(() => {
+        // Support both { data: { visitor_trend_analysis: [...] } } and flat array
+        const root = visitorTrendAnalysisData?.data?.visitor_trend_analysis
+            ?? visitorTrendAnalysisData?.visitor_trend_analysis
+            ?? visitorTrendAnalysisData
+            ?? [];
+        const arr = Array.isArray(root) ? root : [];
+        return arr.map((r: any) => ({
+            site: r.site_name || r.site || '-',
+            last: Number(r.last_quarter ?? 0),
+            current: Number(r.current_quarter ?? 0),
+        }));
+    }, [visitorTrendAnalysisData]);
+
+    const visitorChartHeight = useMemo(() => {
+        const rows = visitorTrendRows.length || 1;
+        // 40px per row + padding; clamp to sensible range for print
+        return Math.min(800, Math.max(240, rows * 40 + 80));
+    }, [visitorTrendRows]);
+
+    // Inventory Overstock Report - fetch separately and log
+    const [inventoryOverstockReportData, setInventoryOverstockReportData] = useState<any>(null);
+    const [loadingInventoryOverstockReport, setLoadingInventoryOverstockReport] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchInventoryOverstockReport = async () => {
+            setLoadingInventoryOverstockReport(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/inventory_overstock_report';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setInventoryOverstockReportData(resp.data);
+                console.log('inventory_overstock_report ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching inventory_overstock_report:', err);
+            } finally {
+                setLoadingInventoryOverstockReport(false);
+            }
+        };
+        fetchInventoryOverstockReport();
+    }, []);
+
+    // Site-wise Checklist - fetch separately and log
+    const [siteWiseChecklistData, setSiteWiseChecklistData] = useState<any>(null);
+    const [loadingSiteWiseChecklist, setLoadingSiteWiseChecklist] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchSiteWiseChecklist = async () => {
+            setLoadingSiteWiseChecklist(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/site_wise_checklist';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setSiteWiseChecklistData(resp.data);
+                console.log('site_wise_checklist ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching site_wise_checklist:', err);
+            } finally {
+                setLoadingSiteWiseChecklist(false);
+            }
+        };
+        fetchSiteWiseChecklist();
+    }, []);
+
+    // AMC Contract Summary - fetch separately and log
+    const [amcContractSummaryData, setAmcContractSummaryData] = useState<any>(null);
+    const [loadingAmcContractSummary, setLoadingAmcContractSummary] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchAmcContractSummary = async () => {
+            setLoadingAmcContractSummary(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/amc_contract_summary';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setAmcContractSummaryData(resp.data);
+                console.log('amc_contract_summary ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching amc_contract_summary:', err);
+            } finally {
+                setLoadingAmcContractSummary(false);
+            }
+        };
+
+        fetchAmcContractSummary();
+    }, []);
+
+    // Highest Maintenance Assets - fetch separately and log
+    const [highestMaintenanceAssetsData, setHighestMaintenanceAssetsData] = useState<any>(null);
+    const [loadingHighestMaintenanceAssets, setLoadingHighestMaintenanceAssets] = useState<boolean>(true);
+    useEffect(() => {
+        const fetchHighestMaintenanceAssets = async () => {
+            setLoadingHighestMaintenanceAssets(true);
+            try {
+                const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
+                const token = localStorage.getItem('token');
+                const endpoint = '/api/pms/reports/highest_maintenance_assets?start_date=2018-01-15&end_date=2025-02-15';
+                const url = `https://${baseUrl}${endpoint}`;
+                const headers = token ? { Authorization: `Bearer ${token}` } : {};
+                const resp = await axios.get(url, { headers });
+                setHighestMaintenanceAssetsData(resp.data);
+                console.log('highest_maintenance_assets ->', resp.data);
+            } catch (err) {
+                console.error('Error fetching highest_maintenance_assets:', err);
+            } finally {
+                setLoadingHighestMaintenanceAssets(false);
+            }
+        };
+
+        fetchHighestMaintenanceAssets();
+    }, []);
+
+    // Asset Overview derived selections (support both {data: {...}} and flat JSON)
+    const assetOverview = useMemo(() => assetOverviewData?.data ?? assetOverviewData ?? null, [assetOverviewData]);
+    const companyAssetOverview = assetOverview?.company_asset_overview;
+    const centerMetrics = useMemo(
+        () => (Array.isArray(assetOverview?.center_metrics) ? assetOverview.center_metrics : []),
+        [assetOverview]
+    );
+
+    // Highest Maintenance Assets: derive normalized structures for easy rendering
+    const highestReport = useMemo(() => {
+        // Support both { data: {...} } and flat JSON
+        return highestMaintenanceAssetsData?.data ?? highestMaintenanceAssetsData ?? null;
+    }, [highestMaintenanceAssetsData]);
+
+    const highestAssets = useMemo(() => {
+        const arr = highestReport?.assets_with_highest_maintenance_spend;
+        return Array.isArray(arr) ? arr : [];
+    }, [highestReport]);
+
+    const highestTotals = useMemo(() => {
+        const total_cost = Number(highestReport?.total_maintenance_cost ?? 0);
+        const total_percent = Number(highestReport?.total_maintenance_percent ?? 0);
+        return { total_cost, total_percent };
+    }, [highestReport]);
+
+    // Checklist Progress – normalize site_wise_checklist shape
+    const checklistProgress = useMemo(() => {
+        const root = siteWiseChecklistData?.data ?? siteWiseChecklistData ?? null;
+        const list = root?.checklist_progress ?? root?.progress ?? [];
+        return Array.isArray(list) ? list : [];
+    }, [siteWiseChecklistData]);
+
+    // Inventory Overstock Report – Overview Summary derivation
+    const overstockSummary = useMemo(() => {
+        const src = inventoryOverstockReportData?.data?.summary
+            ?? inventoryOverstockReportData?.summary
+            ?? null;
+        return src && typeof src === 'object' ? src : null;
+    }, [inventoryOverstockReportData]);
+
+    const formatINR = (n: any) => `₹ ${Number(n || 0).toLocaleString('en-IN')}`;
+
+    // Format numeric values to "k" as per requirement (e.g., 932813.75 -> 93.2k)
+    const formatToK = (n: any) => {
+        const val = Number(n || 0);
+        // Divide by 10,000 to match the provided example mapping
+        const scaled = val / 10000;
+        return `${scaled.toFixed(1)}k`;
     };
 
+    const inventoryOverviewCards = useMemo(() => {
+        const s: any = overstockSummary ?? {};
+        return [
+            { label: 'Over Stock Items', value: String(s.over_stock_items ?? 0) },
+            { label: 'Under Stock Items', value: String(s.under_stock_items ?? 0) },
+            { label: 'Total Value Of Inventory', value: formatINR(s.total_value_inventory) },
+            { label: 'Capital Blocked In Overstocking', value: formatINR(s.capital_blocked) },
+            { label: 'Total Value Of Spares', value: formatINR(s.total_value_spares) },
+            { label: 'Total Value Of Consumables', value: formatINR(s.total_value_consumables) },
+        ];
+    }, [overstockSummary]);
 
+    // Inventory Overstock – Top 10 Items grid derived from API
+    const overstockTopItems = useMemo(() => {
+        const root = inventoryOverstockReportData?.data?.overstock_top_items_by_site
+            ?? inventoryOverstockReportData?.overstock_top_items_by_site
+            ?? [];
+        return Array.isArray(root) ? root : [];
+    }, [inventoryOverstockReportData]);
+
+    // Consumable Inventory Comparison – derive chart rows from API
+    const consumableComparisonRows = useMemo(() => {
+        const root = consumableInventoryComparisonData?.data?.consumable_inventory_comparison
+            ?? consumableInventoryComparisonData?.consumable_inventory_comparison
+            ?? consumableInventoryComparisonData
+            ?? [];
+        const arr = Array.isArray(root) ? root : [];
+        return arr.map((r: any) => ({
+            site: r.site_name || r.site || '-',
+            lastQuarter: Number(r.last_quarter ?? 0),
+            currentQuarter: Number(r.current_quarter ?? 0),
+        }));
+    }, [consumableInventoryComparisonData]);
+
+    // Compute dynamic domain and ticks for the consumable comparison chart (based on raw values)
+    const consumableMaxRaw = useMemo(() => {
+        if (!Array.isArray(consumableComparisonRows) || consumableComparisonRows.length === 0) return 0;
+        const vals = consumableComparisonRows.flatMap(r => [r.lastQuarter, r.currentQuarter]);
+        const max = Math.max(0, ...vals);
+        // Round up to nearest 100k for headroom
+        const rounded = Math.ceil(max / 100000) * 100000;
+        return Math.max(rounded, max || 0);
+    }, [consumableComparisonRows]);
+
+    const consumableTicks = useMemo(() => {
+        const max = consumableMaxRaw || 0;
+        if (max === 0) return [0];
+        const steps = 5;
+        const step = max / steps;
+        return Array.from({ length: steps + 1 }, (_, i) => Math.round(step * i));
+    }, [consumableMaxRaw]);
+
+    const overstockTopGrid = useMemo(() => {
+        const sites: string[] = overstockTopItems.map((s: any) => s?.site_name).filter(Boolean);
+        if (!sites.length) return { sites: [] as string[], items: [] as any[] };
+        // Rank items by total blocked_value across all sites and pick top 10
+        const totals = new Map<string, number>();
+        overstockTopItems.forEach((site: any) => {
+            const items = Array.isArray(site?.items) ? site.items : [];
+            items.forEach((it: any) => {
+                const name = it?.item_name || '';
+                if (!name) return;
+                const bv = Number(it?.blocked_value ?? 0);
+                totals.set(name, (totals.get(name) ?? 0) + bv);
+            });
+        });
+        const itemNames = Array.from(totals.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([name]) => name);
+        const items = itemNames.map((name) => {
+            const capitalsRaw = sites.map((siteName) => {
+                const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
+                const it = (site?.items || []).find((x: any) => x?.item_name === name);
+                return Number(it?.capital_book ?? 0);
+            });
+            const stocksRaw = sites.map((siteName) => {
+                const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
+                const it = (site?.items || []).find((x: any) => x?.item_name === name);
+                return Number(it?.current_stock ?? 0);
+            });
+            const capital = capitalsRaw.map((v) => Math.round(v / 1000)); // display in k
+            const stock = stocksRaw.map((v) => {
+                const n = Number(v) || 0;
+                // If value looks like a ratio (0-1), convert to %; else treat as already a count/percentage
+                if (n > 0 && n <= 1) return Math.round(n * 100);
+                return Math.round(n);
+            }); // display %
+            return { name, capital, stock };
+        });
+        return { sites, items };
+    }, [overstockTopItems]);
+
+    // Top 10 Overdue Checklists – normalize shape from site_wise_checklist
+    const top10Overdue = useMemo(() => {
+        const root = siteWiseChecklistData?.data?.top_10_overdue_checklists
+            ?? siteWiseChecklistData?.top_10_overdue_checklists
+            ?? null;
+        if (!root || typeof root !== 'object') return { categories: [] as string[], siteRows: [] as any[] };
+        const categories: string[] = Array.isArray((root as any).categories) ? (root as any).categories : [];
+        const siteRows: any[] = Array.isArray((root as any).site_wise) ? (root as any).site_wise : [];
+        return { categories, siteRows };
+    }, [siteWiseChecklistData]);
+
+    // AMC summary derived object
+    const amcSummary = useMemo(() => {
+        const src = amcContractSummaryData?.data?.summary ?? amcContractSummaryData?.summary ?? amcContractSummaryData ?? null;
+        if (!src || typeof src !== 'object') return null;
+        return {
+            active: Number((src as any).active_amc_contracts ?? 0),
+            expiry90: Number((src as any).contract_expiry_in_90_days ?? 0),
+            expired: Number((src as any).contract_expired ?? 0),
+        };
+    }, [amcContractSummaryData]);
+
+    // AMC expiring contracts (90 days) list
+    const amcExpiringContracts = useMemo(() => {
+        const arr = amcContractSummaryData?.data?.expiring_contracts ?? amcContractSummaryData?.expiring_contracts ?? [];
+        return Array.isArray(arr) ? arr : [];
+    }, [amcContractSummaryData]);
+
+    // AMC expired contracts list
+    const amcExpiredContracts = useMemo(() => {
+        const arr = amcContractSummaryData?.data?.expired_contracts ?? amcContractSummaryData?.expired_contracts ?? [];
+        return Array.isArray(arr) ? arr : [];
+    }, [amcContractSummaryData]);
+
+
+    // Derived list of site names from customer experience feedback (safe, defensive)
+    const customerExperienceSiteNames = useMemo(() => {
+        const apiArr = customerExperienceFeedbackData?.data?.site_performance?.data
+            ?? customerExperienceFeedbackData?.site_performance?.data
+            ?? [];
+
+        if (!Array.isArray(apiArr) || apiArr.length === 0) return [];
+
+        const names = apiArr.map((site: any) => site.site_name ?? '');
+        console.log('customerExperienceSiteNames ->', names);
+        return names;
+    }, [customerExperienceFeedbackData]);
+
+    const transformCustomerRatingData = (sitePerformance) => {
+        if (!sitePerformance?.data) return { rows: [], headers: [] };
+
+        const labels = {
+            excellent: "Excellent",
+            good: "Good",
+            average: "Average",
+            bad: "Bad",
+            poor: "Poor",
+            total_percentage: "Total %"
+        };
+
+        // Table headers = all site names
+        const headers = sitePerformance.data.map((site) => site.site_name);
+
+        // Build rows (one per label)
+        const rows = Object.keys(labels).map((key) => ({
+            label: labels[key],
+            values: sitePerformance.data.map(
+                (site) => site[key] ?? "0%" // pick directly from site object
+            ),
+        }));
+
+        return { headers, rows };
+    };
+
+    const customerRatingData = transformCustomerRatingData(
+        customerExperienceFeedbackData?.data?.site_performance
+    );
 
 
     const Arrow = ({ up }) => (
@@ -135,87 +765,48 @@ const AllContent: React.FC = () => {
         </span>
     );
 
-    const sites = [
-        "MontClaire",
-        "AeroMall",
-        "Raheja Mindspace",
-        "Nandan Probiz",
-        "Koncord",
-        "Lower Parel",
-        "Westport",
-        "Sai Radhe",
-    ]
+    // Derive center list and utilization ranges from API when available
+    const centerList = useMemo(() => {
+        const apiCenters = utilizationData?.data?.center_utilization_data ?? utilizationData?.center_utilization_data ?? null;
+        if (Array.isArray(apiCenters) && apiCenters.length > 0) return apiCenters;
+        return [];
+    }, [utilizationData]);
 
-    const utilizationRanges = [
-        "Less 30%",
-        "30%-39%",
-        "40%-50%",
-        "50%-60%",
-        "60%-69%",
-        "70%-80%",
-        "80%-90%",
-        "90%-95%",
-        "95%-100%",
-    ]
+    const rangeList = useMemo(() => {
+        const apiRanges = utilizationData?.data?.utilization_ranges ?? utilizationData?.utilization_ranges ?? null;
+        if (apiRanges && typeof apiRanges === 'object') return Object.keys(apiRanges);
+        return [];
+    }, [utilizationData]);
 
-    const roomData = {
-        MontClaire: {
-            "Less 30%": "ARES",
-            "40%-50%": "RIWAZ",
-            "60%-69%": "ARES",
-            "70%-80%": "",
-            "80%-90%": "",
-            "90%-95%": "RIWAZ",
-            "95%-100%": "",
-        },
-        AeroMall: {
-            "30%-39%": "BANYAN",
-            "40%-50%": "UNNATI",
-            "50%-60%": "CINNAMON, PEPPER",
-            "70%-80%": "CINNAMON, PEPPER",
-            "80%-90%": "BANYAN",
-            "90%-95%": "UNNATI",
-            "95%-100%": "CINNAMON, PEPPER",
-        },
-        "Raheja Mindspace": {
-            "Less 30%": "APOLLO",
-            "30%-39%": "PALM",
-            "50%-60%": "CHIVES",
-            "60%-69%": "APOLLO",
-            "70%-80%": "CHIVES",
-            "80%-90%": "PALM",
-            "95%-100%": "CHIVES",
-        },
-        "Nandan Probiz": {
-            "Less 30%": "OLYMPUS",
-            "30%-39%": "KALPAVRIK SHA",
-            "60%-69%": "OLYMPUS",
-            "80%-90%": "KALPAVRIK SHA",
-        },
-        Koncord: {
-            "30%-39%": "PARIJAT",
-            "40%-50%": "SARATHI, RISTHA",
-            "80%-90%": "PARIJAT",
-            "90%-95%": "SARATHI, RISTHA",
-        },
-        "Lower Parel": {
-            "50%-60%": "GINGER",
-            "70%-80%": "GINGER",
-            "95%-100%": "GINGER",
-        },
-        Westport: {
-            "Less 30%": "ZEUS, HERMES",
-            "50%-60%": "CLOVE",
-            "60%-69%": "ZEUS, HERMES",
-            "70%-80%": "CLOVE",
-            "95%-100%": "CLOVE",
-        },
-        "Sai Radhe": {
-            "50%-60%": "SAFFRON",
-            "70%-80%": "SAFFRON",
-            "95%-100%": "SAFFRON",
-        },
-    }
+    const parseRange = (label: string) => {
+        if (!label || typeof label !== 'string') return { min: -Infinity, max: Infinity };
+        const lessMatch = label.match(/Less\s*(\d+)%?/i);
+        if (lessMatch) {
+            const max = Number(lessMatch[1]);
+            return { min: -Infinity, max };
+        }
+        const rangeMatch = label.match(/(\d+)[^\d]*(\d+)?/);
+        if (rangeMatch) {
+            const a = Number(rangeMatch[1]);
+            const b = rangeMatch[2] ? Number(rangeMatch[2]) : a;
+            return { min: a, max: b };
+        }
+        return { min: -Infinity, max: Infinity };
+    };
+
+    const getRoomsForRange = (center: any, rangeLabel: string) => {
+        const rooms = center?.rooms ?? [];
+        if (!Array.isArray(rooms) || rooms.length === 0) return '';
+        const { min, max } = parseRange(rangeLabel);
+        const matched = rooms.filter((r: any) => {
+            const pct = Number(r.utilization_percentage ?? r.utilization_percentage_percentage ?? NaN);
+            if (Number.isNaN(pct)) return false;
+            return pct >= min && pct <= max;
+        }).map((r: any) => r.room_name || '').filter(Boolean);
+        return matched.join(', ');
+    };
+
+
 
     const getCellColor = (range) => {
         if (range === "Less 30%" || range === "30%-39%") {
@@ -227,201 +818,51 @@ const AllContent: React.FC = () => {
         }
     }
 
-    const getRoomName = (site, range) => {
-        return roomData[site]?.[range] || ""
-    }
-
-    const walletOverviewData = useMemo(
-        () => [
-            {
-                label: "Total Wallet Balance",
-                value: `₹${Number(overSumData.total_wallet_balance || 0).toLocaleString()}`,
-                bg: "bg-[#f7f4ed]",
-            },
-            {
-                label: "Total Wallet Top-ups",
-                value: `₹${Number(overSumData.total_wallet_topups || 0).toLocaleString()}`,
-                bg: "bg-[#f7f4ed]",
-            },
-            {
-                label: "Total Wallet Usage (deductions)",
-                value: `₹${Number(overSumData.total_wallet_usage || 0).toLocaleString()}`,
-                bg: "bg-[#c2a791]",
-            },
-            {
-                label: "Complimentary Credits Points",
-                value: Number(overSumData.complimentary_credit_points || 0).toLocaleString(),
-                bg: "bg-[#c2a791]",
-            },
-            {
-                label: "Expired Wallet Points",
-                value: Number(overSumData.expired_wallet_points || 0).toLocaleString(),
-                bg: "bg-[#d7d0bf]",
-            },
-            {
-                label: "Total Active Wallet Users (Last Vs Current Quarter)",
-                value: (
-                    <>
-                        {Number(overSumData.total_active_wallet_users || 0).toLocaleString()}{" "}
-                        <span className="text-green-600 text-xs">↑18%</span>
-                    </>
-                ),
-                bg: "bg-[#d7d0bf]",
-            },
-        ],
-        [overSumData]
-    );
-
-    const siteWiseWallData = [
-        ["Sai Radhe, Bund Garden", "50,000", "10,000", "8,000", "1,000", "500", "0"],
-        ["Westport, Baner", "50,001", "10,001", "8,001", "1,001", "5001", "1"],
-        ["Westport, Baner", "50,002", "10,002", "8,002", "1,002", "5002", "2"],
-        ["Peninsula Corporate Park", "50,003", "10,003", "8,003", "1,003", "5003", "3"],
-        ["Koncord, Bund Garden", "50,004", "10,004", "8,004", "1,004", "5004", "4"],
-        ["MontClaire, Baner", "50,005", "10,005", "8,005", "1,005", "5005", "5"],
-        ["Aeromall, Vimaan Nagar", "50,006", "10,006", "8,006", "1,006", "5006", "6"],
-        ["Golf Course Road", "50,007", "10,007", "8,007", "1,007", "5007", "7"],
-        ["Peninsula Corporate Park", "50,008", "10,008", "8,008", "1,008", "5008", "8"],
-        ["Raheja Mindspace, Hitech City", "50,009", "10,009", "8,009", "1,009", "5009", "9"]
-    ];
-
-    const topCustomersData = [
-        { name: "John Deere", site: "Sai Radhe, Bund Garden", usage: "15000", balance: "15000", users: 15 },
-        { name: "HDFc", site: "Westport, Baner", usage: "1200", balance: "1200", users: 12 },
-        { name: "Amazon", site: "Raheja Mindspace, Hitech City", usage: "1000", balance: "1000", users: 10 },
-        { name: "Quickr", site: "Peninsula Corporate Park", usage: "8000", balance: "8000", users: 8 },
-        { name: "Bisleri", site: "Koncord, Bund Garden", usage: "6000", balance: "6000", users: 6 },
-        { name: "HP", site: "MontClaire, Baner", usage: "9000", balance: "9000", users: 9 },
-        { name: "Bisleri", site: "AeroMall, Vimaan Nagar", usage: "4980", balance: "4980", users: 49 },
-        { name: "Quickr", site: "Golf Course Road", usage: "80007", balance: "80007", users: 8 },
-        { name: "HDFc", site: "Peninsula Corporate Park", usage: "2899", balance: "2899", users: 28 },
-        { name: "John Doe", site: "Raheja Mindspace, Hitech City", usage: "2890", balance: "2890", users: 29 },
-    ];
 
 
-    const communityData = [
-        {
-            center: "Sai Radhe, Bund Garden",
-            events: 9,
-            attendance: "10%",
-            chatUsers: 9,
-            chatMsgs: 234,
-            posts: 290,
-            interaction: 12,
-            members: 120,
-            android: 9,
-            ios: 12,
-        },
-        {
-            center: "Westport, Baner",
-            events: 8,
-            attendance: "17%",
-            chatUsers: 8,
-            chatMsgs: 123,
-            posts: 127,
-            interaction: 5,
-            members: 128,
-            android: 8,
-            ios: 3,
-        },
-        {
-            center: "Peninsula",
-            events: 8,
-            attendance: "16%",
-            chatUsers: 12,
-            chatMsgs: 111,
-            posts: 346,
-            interaction: 7,
-            members: 324,
-            android: 8,
-            ios: 4,
-        },
-        {
-            center: "Koncord",
-            events: 8,
-            attendance: "11%",
-            chatUsers: 15,
-            chatMsgs: 321,
-            posts: 321,
-            interaction: 9,
-            members: 122,
-            android: 8,
-            ios: 2,
-        },
-        {
-            center: "Aero Mall",
-            events: 8,
-            attendance: "10%",
-            chatUsers: 11,
-            chatMsgs: 124,
-            posts: 124,
-            interaction: 4,
-            members: 338,
-            android: 8,
-            ios: 12,
-        },
-        {
-            center: "Nandan Probiz",
-            events: 8,
-            attendance: "10%",
-            chatUsers: 15,
-            chatMsgs: 321,
-            posts: 412,
-            interaction: 8,
-            members: 834,
-            android: 8,
-            ios: 11,
-        },
-        {
-            center: "Raheja Mindspace",
-            events: 8,
-            attendance: "10%",
-            chatUsers: 16,
-            chatMsgs: 412,
-            posts: 234,
-            interaction: 12,
-            members: 328,
-            android: 8,
-            ios: 17,
-        },
-        {
-            center: "Technopolis, Salt Lake",
-            events: 8,
-            attendance: "10%",
-            chatUsers: 19,
-            chatMsgs: 234,
-            posts: 125,
-            interaction: 4,
-            members: 328,
-            android: 3,
-            ios: 8,
-        },
-        {
-            center: "Koncord Tower",
-            events: 8,
-            attendance: "10%",
-            chatUsers: 18,
-            chatMsgs: 125,
-            posts: 234,
-            interaction: 15,
-            members: 128,
-            android: 33,
-            ios: 4,
-        },
-    ];
+    //   const walletOverviewData = useMemo(
+    //     () => [
+    //       {
+    //         label: "Total Wallet Balance",
+    //         value: `₹${Number(overSumData.total_wallet_balance || 0).toLocaleString()}`,
+    //         bg: "bg-[#f7f4ed]",
+    //       },
+    //       {
+    //         label: "Total Wallet Top-ups",
+    //         value: `₹${Number(overSumData.total_wallet_topups || 0).toLocaleString()}`,
+    //         bg: "bg-[#f7f4ed]",
+    //       },
+    //       {
+    //         label: "Total Wallet Usage (deductions)",
+    //         value: `₹${Number(overSumData.total_wallet_usage || 0).toLocaleString()}`,
+    //         bg: "bg-[#c2a791]",
+    //       },
+    //       {
+    //         label: "Complimentary Credits Points",
+    //         value: Number(overSumData.complimentary_credit_points || 0).toLocaleString(),
+    //         bg: "bg-[#c2a791]",
+    //       },
+    //       {
+    //         label: "Expired Wallet Points",
+    //         value: Number(overSumData.expired_wallet_points || 0).toLocaleString(),
+    //         bg: "bg-[#d7d0bf]",
+    //       },
+    //       {
+    //         label: "Total Active Wallet Users (Last Vs Current Quarter)",
+    //         value: (
+    //           <>
+    //             {Number(overSumData.total_active_wallet_users || 0).toLocaleString()}{" "}
+    //             <span className="text-green-600 text-xs">↑18%</span>
+    //           </>
+    //         ),
+    //         bg: "bg-[#d7d0bf]",
+    //       },
+    //     ],
+    //     [overSumData]
+    //   );
 
-    const adoptionData = [
-        ["Sai Radhe, Bund Garden", 87, 55, 38, 76, 36, 87, 24, 33],
-        ["Westport, Baner", 44, 44, 66, 66, 66, 66, 66, 16],
-        ["Peninsula Corporate Park", 38, 68, 87, 87, 87, 87, 87, 87],
-        ["Koncord, Bund Garden", 98, 78, 34, 34, 34, 34, 56, 49],
-        ["Nandan Probiz, Balewadi", 26, 40, 12, 11, 15, 10, 65, 65],
-        ["Peninsula Corporate Park", 60, 34, 12, 78, 12, 12, 12, 89],
-        ["Aeromall, Vimaan Nagar", 12, 20, 56, 56, 56, 56, 19, 12],
-        ["MontClaire, Baner", 78, 28, 76, 76, 76, 76, 76, 15],
-        ["Golf Course Road", 54, 50, 30, 20, 40, 88, 40, 40],
-        ["Raheja Mindspace, Hitech City", 66, 60, 25, 15, 45, 69, 14, 45],
-    ];
+
+
 
     const getColor = (value) => {
         if (value >= 70) return "border-b-2 border-green-600";
@@ -430,148 +871,75 @@ const AllContent: React.FC = () => {
     };
 
 
-    const siteNames = [
-        "Site Name",
-        "Sai Radhe, Bund Garden",
-        "Westport, Baner",
-        "Peninsula Corporate Park",
-        "Koncord, Bund Garden",
-        "Nandan Probiz, Balewadi",
-        "Aeromall, Viman Nagar",
-        "MontClaire, Baner",
-        "Raheja Mindspace",
-        "Technopolis, Salt Lake"
-    ];
+    const displayCustomerExperienceData = useMemo(() => {
+        const summary = customerExperienceFeedbackData?.data?.overall_summary;
+        if (summary && typeof summary === 'object') {
+            const order = ['excellent', 'good', 'average', 'bad', 'poor'];
+            const colors: Record<string, string> = {
+                excellent: '#F6F4EE',
+                good: '#DAD6C9',
+                average: '#C4B89D',
+                bad: '#C4AE9D',
+                poor: '#D5DBDB',
+            };
+            return order.map((k) => ({
+                label: k.charAt(0).toUpperCase() + k.slice(1),
+                value: summary[k]?.count ?? 0,
+                percent: summary[k]?.percentage ?? '0%',
+                bg: colors[k] || '#fff',
+                text: summary[k]?.text || undefined,
+            }));
+        }
 
-    const tableData: [string, string[]][] = [
-        ["40+ days", ["1%", "%", "20%", "57%", "50%", "13%", "20%", "%", "%"]],
-        ["31-40 days", ["5%", "56%", "96%", "57%", "50%", "63%", "96%", "57%", "50%"]],
-        ["21-30 days", ["82%", "56%", "96%", "57%", "50%", "63%", "96%", "57%", "50%"]],
-        ["11-20 days", ["82%", "56%", "96%", "57%", "50%", "63%", "96%", "57%", "50%"]],
-        ["0-10 days", ["43%", "0%", "20%", "1%", "20%", "20%", "20%", "1%", "20%"]],
-        ["Total Closure %", ["82%", "56%", "96%", "57%", "50%", "63%", "96%", "57%", "50%"]],
-        ["No. of response", ["5", "4", "2", "76", "70", "13", "56", "42", "22"]],
-        ["% of Response", ["1%", "20%", "43%", "54%", "8%", "43%", "65%", "5%", "6%"]]
-      ];
-      
-
-    const customerExperienceData = [
-        { label: "Excellent", value: 56, percent: "8.52%", bg: "#F6F4EE" },
-        { label: "Good", value: 19, percent: "2.89%", bg: "#DAD6C9" },
-        { label: "Average", value: 14, percent: "2.13%", bg: "#C4B89D" },
-        { label: "Bad", value: 8, percent: "1.22%", bg: "#C4AE9D" },
-        { label: "Poor", value: 3, percent: "0.36%", bg: "#D5DBDB", text: "black" }
-    ];
-
-    const customerRatingTable = {
-        headers: [
-            "Sai Radhe, Bund Garden",
-            "Westport, Baner",
-            "Peninsula Corporate Park",
-            "Koncord, Bund Garden",
-            "Nandan Probiz, Balewadi",
-            "AeroMall",
-            "MontClaire",
-            "Raheja Mindspace",
-            "Technopolis"
-        ],
-        rows: [
-            { label: "Excellent", values: ["38%", "12%", "8%", "27%", "25%", "13%", "20%", "11%", "56%"] },
-            { label: "Good", values: ["22%", "24%", "12%", "17%", "1%", "63%", "96%", "7%", "14%"] },
-            { label: "Average", values: ["10%", "30%", "12%", "3%", "8%", "63%", "96%", "3%", "20%"] },
-            { label: "Bad", values: ["4%", "6%", "8%", "0%", "15%", "63%", "96%", "2%", "5%"] },
-            { label: "Poor", values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"] },
-            { label: "Total %", values: ["625", "76%", "48%", "57%", "50%", "13%", "20%", "23%", "89%"] }
-        ]
-    };
+        // Fallback default when API data is not available
+        return [
+            { label: 'Excellent', value: 0, percent: '0%', bg: '#F6F4EE' },
+            { label: 'Good', value: 0, percent: '0%', bg: '#DAD6C9' },
+            { label: 'Average', value: 0, percent: '0%', bg: '#C4B89D' },
+            { label: 'Bad', value: 0, percent: '0%', bg: '#C4AE9D' },
+            { label: 'Poor', value: 0, percent: '0%', bg: '#D5DBDB' },
+        ];
+    }, [customerExperienceFeedbackData]);
 
 
-    const items = [
-        "Tissue Paper", "Marker", "Mouse", "Barista Coffee", "Amul Butter",
-        "Sketch Pen", "Steel Basket", "Air Freshner", "Water Gallon"
-    ];
-
-    const baristaData = ['20k', '19k', '43k', '21k', '19k', '11k', '118k', '118k', '34k', '34k'];
-    const baristaStock = [29, 100, 29, 29, 112, 24, 32, 40, 33, 111];
-
-    const getCapital = (item, i) => {
-        if (item === "Barista Coffee") return baristaData[i];
-        return i % 2 === 0 ? "10k" : "15k";
-    };
-
-    const getStock = (item, i) => {
-        if (item === "Barista Coffee") return baristaStock[i];
-        return 29;
-    };
-
-    const Cell = ({ capital, stock }) => (
-        <div className="relative w-[80px] h-[80px]">
-            {/* Top Right Triangle (Capital Block) */}
-            <div className="absolute top-0 left-0  w-full border h-full bg-[#d6c7ae] clip-triangle-tr flex items-start justify-end p-1 text-xs font-semibold">
-                {capital}
-            </div>
-            {/* Bottom Left Triangle (Current Stock) */}
-            <div className="absolute top-0 border left-0 w-full h-full clip-triangle-bl flex items-end justify-start p-1 text-xs font-semibold">
-                {stock}
-            </div>
-        </div>
-    );
-
-    const headers = [
-        "High\nlighter",
-        "Coffee",
-        "Jaggery Stirrer",
-        "Sticky Notes",
-        "Whitener Pen",
-        "Sugar",
-        "Dura Cell",
-        "Green Tea",
-        "Caustic Soda",
-    ];
 
 
-    const tablesData = [
-        {
-            inventory: "Sai Radhe, Bund Garden",
-            values: [23.4, 14.3, 44.4, 7.6, 33.3, 12.4, 45.6, 35.6, 25.6],
-        },
-        {
-            inventory: "Westport,Baner",
-            values: [8.9, 8.9, 8.9, 93.1, 8.9, 43.2, 8.9, 8.9, 8.9],
-        },
-        {
-            inventory: "Max House",
-            values: [3.2, 3.2, 3.2, 26.3, 3.2, 3.2, 3.2, 3.2, 3.2],
-        },
-        {
-            inventory: "Peninsula Corporate Park,",
-            values: [4.5, 4.5, 4.5, 11.1, 4.5, 4.5, 4.5, 4.5, 4.5],
-        },
-        {
-            inventory: "Koncord, Bund Garden",
-            values: [35.2, 35.2, 35.2, 18.9, 35.2, 35.2, 35.2, 35.2, 35.2],
-        },
-        {
-            inventory: "Raheja Mindspace",
-            values: [34.6, 34.6, 34.6, 34.5, 34.6, 34.6, 34.6, 34.6, 34.6],
-        },
-        {
-            inventory: "Technopolis",
-            values: [78.6, 78.6, 78.6, 38.9, 78.6, 78.6, 78.6, 78.6, 78.6],
-        },
-        {
-            inventory: "Baani-The Statement",
-            values: [54.3, 54.3, 54.3, 45.6, 54.3, 54.3, 54.3, 54.3, 54.3],
-        },
-        {
-            inventory: "AeroMall",
-            values: [23.4, 23.4, 23.4, 65.4, 23.4, 23.4, 23.4, 23.4, 23.4],
-        },
-        {
-            inventory: "Nandan Probiz",
-            values: [12.5, 12.5, 12.5, 43.1, 12.5, 12.5, 12.5, 12.5, 12.5],
-        },
-    ];
+
+
+
+    // Center-wise Consumables – compute top 10 items across centers and per-site values
+    const centerWiseConsumables = useMemo(() => {
+        const root = centerWiseConsumablesData?.data?.center_wise_consumables
+            ?? centerWiseConsumablesData?.center_wise_consumables
+            ?? [];
+        return Array.isArray(root) ? root : [];
+    }, [centerWiseConsumablesData]);
+
+    const topConsumableHeaders = useMemo(() => {
+        const totals = new Map<string, number>();
+        centerWiseConsumables.forEach((row: any) => {
+            const cons = row?.consumables && typeof row.consumables === 'object' ? row.consumables : {};
+            Object.entries(cons).forEach(([name, val]) => {
+                const n = Number(val) || 0;
+                totals.set(name, (totals.get(name) ?? 0) + n);
+            });
+        });
+        return Array.from(totals.entries())
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10)
+            .map(([name]) => name);
+    }, [centerWiseConsumables]);
+
+    const consumablesTableData = useMemo(() => {
+        return centerWiseConsumables.map((row: any) => {
+            const cons = row?.consumables && typeof row.consumables === 'object' ? row.consumables : {};
+            const values = topConsumableHeaders.map((name) => Number((cons as any)[name] ?? 0));
+            return {
+                inventory: row?.site_name || row?.site || '-',
+                values,
+            };
+        });
+    }, [centerWiseConsumables, topConsumableHeaders]);
 
 
     const inventoryData = [
@@ -601,193 +969,12 @@ const AllContent: React.FC = () => {
     };
 
 
-
-    const visitorData = [
-        { site: "Sai Radhe, Bund Garden", last: 150, current: 140 },
-        { site: "Westpo rt, Baner", last: 90, current: 125 },
-        { site: "Peninsula Corporate Park Lower Parel", last: 70, current: 80 },
-        { site: "Koncord Towers, Garden", last: 115, current: 120 },
-        { site: "Nandan Probiz, Balewadi", last: 70, current: 60 },
-        { site: "Aero Mall, Viman nagar, Hitec City", last: 80, current: 70 },
-        { site: "Raheja Mindspace, salt lake", last: 120, current: 100 },
-        { site: "Technopolis, Max House, Okha", last: 90, current: 85 },
-        { site: "Baani The Statement, Gurgaon", last: 80, current: 90 },
-    ];
-
-    const Perdata = [
-        { site: "Sai Radhe, Bund Garden", Free: 80, Paid: 55, Vacant: 143 },
-        { site: "Westport, Baner", Free: 50, Paid: 90, Vacant: 90 },
-        { site: "Peninsula Corporate Park, Lower Parel", Free: 20, Paid: 20, Vacant: 125 },
-        { site: "Koncord Towers, Bund Garden", Free: 60, Paid: 40, Vacant: 80 },
-        { site: "Nandan Probiz, Balewadi", Free: 90, Paid: 30, Vacant: 110 },
-        { site: "Aeromall, Vimaan nagar", Free: 70, Paid: 30, Vacant: 70 },
-        { site: "Raheja Mindspace, Hitec City", Free: 80, Paid: 70, Vacant: 90 },
-        { site: "Technopolis, Salt lake", Free: 70, Paid: 50, Vacant: 40 },
-        { site: "Max House, Okhla", Free: 75, Paid: 70, Vacant: 10 },
-        { site: "Baani- The Statement, Gurgaon", Free: 80, Paid: 40, Vacant: 85 },
-    ];
+    // removed unused CustomResolutionDots and sample Bardata
 
 
+    const sitesk = useMemo(() => overstockTopGrid.sites, [overstockTopGrid]);
 
-    const Bardata = [
-        {
-            site: 'Sai Radhe',
-            responseLast: 35,
-            responseCurrent: 45,
-            resolutionLast: 20,
-            resolutionCurrent: 55,
-        },
-        {
-            site: 'Baani–The Statement',
-            responseLast: 49,
-            responseCurrent: 35,
-            resolutionLast: 32,
-            resolutionCurrent: 60,
-        },
-        {
-            site: 'AeroMall',
-            responseLast: 64,
-            responseCurrent: 70,
-            resolutionLast: 50,
-            resolutionCurrent: 66,
-        },
-        {
-            site: 'Max House',
-            responseLast: 45,
-            responseCurrent: 5,
-            resolutionLast: 40,
-            resolutionCurrent: 70,
-        },
-        {
-            site: 'Nandan Probiz',
-            responseLast: 52,
-            responseCurrent: 65,
-            resolutionLast: 48,
-            resolutionCurrent: 72,
-        },
-        {
-            site: 'Peninsula Corporate Park',
-            responseLast: 40,
-            responseCurrent: 51,
-            resolutionLast: 35,
-            resolutionCurrent: 95,
-        },
-        {
-            site: 'Raheja Mindspace',
-            responseLast: 40,
-            responseCurrent: 35,
-            resolutionLast: 38,
-            resolutionCurrent: 43,
-        },
-        {
-            site: 'Koncord Tower',
-            responseLast: 15,
-            responseCurrent: 10,
-            resolutionLast: 8,
-            resolutionCurrent: 19,
-        },
-        {
-            site: 'Technopolis, Salt Lake',
-            responseLast: 5,
-            responseCurrent: 10,
-            resolutionLast: 4,
-            resolutionCurrent: 16,
-        },
-        {
-            site: 'Baani–The Statement',
-            responseLast: 1,
-            responseCurrent: 10,
-            resolutionLast: 3,
-            resolutionCurrent: 20,
-        },
-    ];
-
-
-    const CustomResolutionDots = ({ data }) => {
-        return (
-            <>
-                {Bardata.map((entry, index) => {
-                    const y = 80 + index * 80; // rough vertical spacing
-                    return (
-                        <g key={index}>
-                            <circle cx={`${entry.resolutionLast}%`} cy={y - 8} r={3} fill="#000" />
-                            <circle cx={`${entry.resolutionCurrent}%`} cy={y + 8} r={3} fill="#c72030" />
-                            <line
-                                x1={`${entry.resolutionLast}%`}
-                                y1={y - 8}
-                                x2={`${entry.resolutionCurrent}%`}
-                                y2={y + 8}
-                                stroke="#d9cbb0"
-                                strokeWidth={1}
-                            />
-                        </g>
-                    );
-                })}
-            </>
-        );
-    };
-
-
-    const sitesk = [
-        "Sai Radhe, Bund Garden",
-        "Westport, Baner",
-        "Max House",
-        "Peninsula Corporate Park",
-        "Koncord, Bund Garden",
-        "Raheja Mindspace",
-        "Technopolis",
-        "Bani - The statement",
-        "Aeromall, Viman nagar",
-        "Nandan Probiz"
-    ];
-
-    const itemss = [
-        {
-            name: "Tissue Paper",
-            capital: [10, 20, 15, 20, 10, 15, 20, 10, 15, 15],
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Marker",
-            capital: [10, 20, 15, 20, 10, 15, 20, 10, 15, 15],
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Mouse",
-            capital: [10, 20, 15, 20, 10, 15, 20, 10, 15, 15],
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Barista Coffee",
-            capital: [20, 19, 43, 21, 28, 112, 24, 32, 40, 34],
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 33, 111]
-        },
-        {
-            name: "Amul Butter",
-            capital: Array(10).fill(19),
-            stock: [29, 69, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Sketch Pen",
-            capital: Array(10).fill(19),
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Steel Basket",
-            capital: Array(10).fill(19),
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 29, 29]
-        },
-        {
-            name: "Air Freshner",
-            capital: Array(10).fill(19),
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 28, 29]
-        },
-        {
-            name: "Water Gallon",
-            capital: Array(10).fill(19),
-            stock: [29, 29, 29, 29, 29, 29, 29, 29, 28, 29]
-        }
-    ];
+    const itemss = useMemo(() => overstockTopGrid.items, [overstockTopGrid]);
 
     const Block = ({ capital, stock }) => (
         <td className="border border-black w-20 h-14 p-1">
@@ -812,123 +999,153 @@ const AllContent: React.FC = () => {
     );
 
 
-    const categories = [
-        "Air Conditioning",
-        "IT",
-        "Hardware",
-        "Others",
-        "Cleaning",
-        "Plumbing",
-        "Electrical",
-        "Gophygital",
-    ];
+    // removed old static fallbacks (categories, sites, sample grid)
 
-    const Newsites = [
-        "Sai Radhe, Bund Garden",
-        "Westport, Baner",
-        "Peninsula Corporate Park, Lower Parel",
-        "Koncord Towers, Bund Garden",
-        "Nandan Probiz, Balewadi",
-        "AeroMall, Hager",
-        "Rahjea Mindspace, HiTech City",
-        "Technopolis, Salt Lake",
-        "Max House, Okhla",
-        "Baani-The Statement, Gurgaon",
-    ];
+    // Map ticket performance API into categories, unique sites and per-category×site grid
+    const ticketCategories = useMemo(() => {
+        const apiMetrics = ticketPerformanceMetricsData?.data?.metrics ?? ticketPerformanceMetricsData?.metrics ?? null;
+        if (Array.isArray(apiMetrics) && apiMetrics.length > 0) return apiMetrics.map((m: any) => m.category_name ?? m.category ?? 'Unknown');
+        return [] as string[];
+    }, [ticketPerformanceMetricsData]);
 
-    const Newdata = [
-        { volume: 55, closure: 80, aging: "0-10" }, // Index 0 (Row 1)
-        { volume: 65, closure: 29, aging: "0-10" }, // Index 1
-        { volume: 59, closure: 29, aging: "0-10" }, // Index 2
-        { volume: 39, closure: 29, aging: "21-30" }, // Index 3
-        { volume: 9, closure: 29, aging: "31-40" }, // Index 4
-        { volume: 19, closure: 29, aging: "31-40" },
+    const ticketSites = useMemo(() => {
+        const apiMetrics = ticketPerformanceMetricsData?.data?.metrics ?? ticketPerformanceMetricsData?.metrics ?? null;
+        if (Array.isArray(apiMetrics) && apiMetrics.length > 0) {
+            const set = new Set<string>();
+            apiMetrics.forEach((m: any) => {
+                if (Array.isArray(m.sites)) {
+                    m.sites.forEach((s: any) => {
+                        if (s && (s.site_name || s.site)) set.add(s.site_name ?? s.site);
+                    });
+                }
+            });
+            const arr = Array.from(set);
+            if (arr.length > 0) return arr;
+        }
+        return [] as string[];
+    }, [ticketPerformanceMetricsData]);
 
-        { volume: 16, closure: 29, aging: "21-30" }, // Index 5
-        { volume: 6, closure: 29, aging: "40+" }, // Index 6
-        { volume: 15, closure: 29, aging: "11-20" }, // Index 7
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 8
-        { volume: 19, closure: 79, aging: "11-20" }, // Index 10 (Row 2)
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 11
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 12
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 13
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 14
-        { volume: 19, closure: 29, aging: "40+" }, // Index 15
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 16
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 17
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 18
-        { volume: 19, closure: 29, aging: "40+" }, // Index 19
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 20 (Row 3)
-        { volume: 19, closure: 29, aging: "40+" }, // Index 21
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 22
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 23
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 24
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 25
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 26
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 27
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 28
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 29
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 30 (Row 4)
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 31
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 32
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 33
-        { volume: 19, closure: 29, aging: "40+" }, // Index 34
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 35
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 36
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 37
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 38
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 39
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 40 (Row 5)
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 41
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 42
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 43
-        { volume: 29, closure: 19, aging: "11-20" }, // Index 44
-        { volume: 19, closure: 29, aging: "40+" }, // Index 45
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 46
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 47
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 48
-        { volume: 19, closure: 29, aging: "40+" }, // Index 49
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 50 (Row 6)
-        { volume: 19, closure: 29, aging: "40+" }, // Index 51
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 52
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 53
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 54
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 55
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 56
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 57
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 58
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 59
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 60 (Row 7)
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 61
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 62
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 63
-        { volume: 19, closure: 29, aging: "40+" }, // Index 64
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 65
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 66
-        { volume: 19, closure: 29, aging: "40+" }, // Index 67
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 68
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 69
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 70 (Row 8)
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 71
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 72
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 73
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 74
-        { volume: 19, closure: 29, aging: "40+" }, // Index 75
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 76
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 77
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 78
-        { volume: 19, closure: 29, aging: "0-10" }, // Index 79
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 80 (Row 9)
-        { volume: 19, closure: 29, aging: "40+" }, // Index 81
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 82
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 83
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 84
-        { volume: 19, closure: 29, aging: "31-40" }, // Index 85
-        { volume: 19, closure: 29, aging: "40+" }, // Index 86
-        { volume: 19, closure: 29, aging: "11-20" }, // Index 87
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 88
-        { volume: 19, closure: 29, aging: "21-30" }, // Index 89
-    ];
+
+
+
+    // Normalize ageing labels coming from API (e.g., "0_10", "0-10 days", "40_plus", "40+_days") into canonical keys
+    const normalizeAgingBucket = (key: string): string => {
+        if (!key) return '';
+        let s = String(key).toLowerCase();
+        s = s.replace(/days?/g, '');
+        s = s.replace(/\s+/g, '');
+        s = s.replace(/_/g, '-');
+        s = s.replace(/to/g, '-');
+        // Handle 40+ variations
+        if (s.includes('40') && (s.includes('+') || s.includes('plus') || s.includes('above') || s.includes('more'))) {
+            return '40+';
+        }
+        if (/^0-?10$/.test(s)) return '0-10';
+        if (/^11-?20$/.test(s)) return '11-20';
+        if (/^21-?30$/.test(s)) return '21-30';
+        if (/^31-?40$/.test(s)) return '31-40';
+        const dashMatch = s.match(/(\d+)-(\d+)/);
+        if (dashMatch) {
+            const a = parseInt(dashMatch[1], 10);
+            const b = parseInt(dashMatch[2], 10);
+            if (a === 0 && b === 10) return '0-10';
+            if (a === 11 && b === 20) return '11-20';
+            if (a === 21 && b === 30) return '21-30';
+            if (a === 31 && b === 40) return '31-40';
+        }
+        return s;
+    };
+
+    // Parse a percentage value that may come as a number or a string like "38.46%"
+    const parsePercentValue = (p: any): number => {
+        if (p === null || p === undefined) return NaN;
+        if (typeof p === 'number') return p;
+        const s = String(p).replace(/[^0-9.\-]/g, '');
+        const n = parseFloat(s);
+        return Number.isFinite(n) ? n : NaN;
+    };
+
+    // Map a numeric percentage (e.g., 7.69, 15.38) to the ageing color band labels
+    const percentToAgeBand = (p: number | string | null | undefined): string => {
+        const n = typeof p === 'number' ? p : parsePercentValue(p);
+        if (!Number.isFinite(n) || Number.isNaN(n)) return '';
+        if (n <= 10) return '0-10';
+        if (n <= 20) return '11-20';
+        if (n <= 30) return '21-30';
+        if (n <= 40) return '31-40';
+        return '40+';
+    };
+
+    const ticketGridData = useMemo(() => {
+        const apiMetrics = ticketPerformanceMetricsData?.data?.metrics ?? ticketPerformanceMetricsData?.metrics ?? null;
+        if (!Array.isArray(apiMetrics) || apiMetrics.length === 0) {
+            return [] as any[];
+        }
+
+        const grid: any[] = [];
+        const cats = ticketCategories && ticketCategories.length ? ticketCategories : apiMetrics.map((m: any) => m.category_name ?? m.category ?? 'Unknown');
+        const sites = ticketSites && ticketSites.length ? ticketSites : (() => {
+            const set = new Set<string>();
+            apiMetrics.forEach((m: any) => {
+                if (Array.isArray(m.sites)) m.sites.forEach((s: any) => s && set.add(s.site_name ?? s.site));
+            });
+            return Array.from(set);
+        })();
+
+        cats.forEach((cat) => {
+            const metric = apiMetrics.find((m: any) => (m.category_name ?? m.category) === cat) || {};
+            sites.forEach((site) => {
+                const siteObj = Array.isArray(metric.sites) ? metric.sites.find((s: any) => (s.site_name ?? s.site) === site) : undefined;
+                let aging = '';
+                const agingObj = siteObj?.aging_distribution ?? metric?.aging_distribution ?? null;
+                if (agingObj && typeof agingObj === 'object' && Object.keys(agingObj).length > 0) {
+                    let maxKey = '';
+                    let maxVal = -Infinity;
+                    Object.entries(agingObj).forEach(([k, v]) => {
+                        const num = typeof v === 'number' ? v : parseFloat(String(v).toString().replace(/[^\d.]/g, '')) || 0;
+                        if (num > maxVal) {
+                            maxVal = num;
+                            maxKey = k;
+                        }
+                    });
+                    aging = normalizeAgingBucket(maxKey);
+                }
+
+                grid.push({
+                    category: cat,
+                    site,
+                    volume: siteObj?.volume_percentage ?? siteObj?.volume ?? metric?.volume_percentage ?? '',
+                    closure: siteObj?.closure_rate_percentage ?? siteObj?.closure_rate_percentage ?? metric?.closure_rate_percentage ?? '',
+                    // Determine color band from the displayed percentage: use volume % (top-right). Fallback to closure %, then ageing %, else distribution-derived aging.
+                    agingBand: (() => {
+                        const volumeRaw = siteObj?.volume_percentage ?? metric?.volume_percentage;
+                        const closureRaw = siteObj?.closure_rate_percentage ?? metric?.closure_rate_percentage;
+                        const ageingRaw = siteObj?.ageing_percentage ?? siteObj?.aging_percentage ?? metric?.ageing_percentage ?? metric?.aging_percentage;
+                        const volumeNum = parsePercentValue(volumeRaw);
+                        const closureNum = parsePercentValue(closureRaw);
+                        const ageingNum = parsePercentValue(ageingRaw);
+                        const chosen = Number.isFinite(volumeNum)
+                            ? volumeNum
+                            : (Number.isFinite(closureNum)
+                                ? closureNum
+                                : (Number.isFinite(ageingNum) ? ageingNum : undefined));
+                        const band = chosen !== undefined ? percentToAgeBand(chosen) : '';
+                        return band || aging;
+                    })(),
+                    aging,
+                });
+            });
+        });
+
+        return grid;
+    }, [ticketPerformanceMetricsData, ticketCategories, ticketSites]);
+
+    // Normalize display of percentage values, avoiding double "%"
+    const displayPercent = (p: any): string => {
+        if (p === null || p === undefined || p === '') return '';
+        const s = String(p).trim();
+        return s.endsWith('%') ? s : `${s}%`;
+    };
 
     const agingColors = {
         "0-10": "bg-[#F6F4EE]", // Beige
@@ -950,40 +1167,164 @@ const AllContent: React.FC = () => {
                 return "text-black";
         }
     };
-    const ResponseAchieved = [
-        { site: "Sai Radhe", responseLast: 35, responseCurrent: 45 },
-        { site: "Baani-The Statement", responseLast: 41, responseCurrent: 35 },
-        { site: "AeroMall", responseLast: 65, responseCurrent: 70 },
-        { site: "Max House", responseLast: 45, responseCurrent: 50 },
-        { site: "Nandan Probiz", responseLast: 65, responseCurrent: 65 },
-        { site: "Peninsula Corporate Park", responseLast: 40, responseCurrent: 55 },
-        { site: "Raheja Mindspace", responseLast: 40, responseCurrent: 35 },
-        { site: "Koncord Tower", responseLast: 15, responseCurrent: 10 },
-        { site: "Technopolis, Salt Lake", responseLast: 5, responseCurrent: 10 },
-        { site: "Baani-The Statement (2)", responseLast: 5, responseCurrent: 10 },
-    ];
+    // removed static fallbacks for response/resolution achieved
 
-    const ResolutionAchieved = [
-        { site: "Sai Radhe", resolutionLast: 75, resolutionCurrent: 65 },
-        { site: "Baani-The Statement", resolutionLast: 30, resolutionCurrent: 35 },
-        { site: "AeroMall", resolutionLast: 45, resolutionCurrent: 35 },
-        { site: "Max House", resolutionLast: 30, resolutionCurrent: 35 },
-        { site: "Nandan Probiz", resolutionLast: 45, resolutionCurrent: 40 },
-        { site: "Peninsula Corporate Park", resolutionLast: 40, resolutionCurrent: 45 },
-        { site: "Raheja Mindspace", resolutionLast: 35, resolutionCurrent: 40 },
-        { site: "Koncord Tower", resolutionLast: 65, resolutionCurrent: 60 },
-        { site: "Technopolis, Salt Lake", resolutionLast: 70, resolutionCurrent: 65 },
-        { site: "Baani-The Statement (2)", resolutionLast: 65, resolutionCurrent: 60 },
-    ];
+    // If API provides quarterly response/resolution performance, map it into chart shape
+    const dynamicResponseAchieved = useMemo(() => {
+        const perf = responseTATQuarterlyData?.data?.performance_data ?? [];
+        if (!Array.isArray(perf) || perf.length === 0) return [] as any[];
+        return perf.map((row: any) => ({
+            site: row.center_name || '',
+            responseLast: Number(row.last_quarter?.response_achieved_percentage ?? 0),
+            responseCurrent: Number(row.current_quarter?.response_achieved_percentage ?? 0),
+        }));
+    }, [responseTATQuarterlyData]);
 
-    const scatterDataLast = ResolutionAchieved.map(item => ({ site: item.site, value: item.resolutionLast }));
-    const scatterDataCurrent = ResolutionAchieved.map(item => ({ site: item.site, value: item.resolutionCurrent }));
+    const dynamicResolutionAchieved = useMemo(() => {
+        // Prefer resolution-specific API if available, otherwise fall back to responseTATQuarterlyData
+        const perf = resolutionTATQuarterlyData?.data?.performance_data ?? responseTATQuarterlyData?.data?.performance_data ?? [];
+        if (!Array.isArray(perf) || perf.length === 0) return [] as any[];
+        return perf.map((row: any) => ({
+            site: row.center_name || '',
+            resolutionLast: Number(row.last_quarter?.resolution_achieved_percentage ?? 0),
+            resolutionCurrent: Number(row.current_quarter?.resolution_achieved_percentage ?? 0),
+        }));
+    }, [responseTATQuarterlyData, resolutionTATQuarterlyData]);
 
+    // Compute dynamic max for X axis so charts scale to API values (rounded up to nearest 10, minimum 100)
+    const chartMaxResponse = useMemo(() => {
+        const values = dynamicResponseAchieved.flatMap(d => [Number(d.responseLast) || 0, Number(d.responseCurrent) || 0]);
+        const max = values.length ? Math.max(...values) : 100;
+        const rounded = Math.ceil(Math.max(max, 100) / 10) * 10;
+        return rounded;
+    }, [dynamicResponseAchieved]);
 
+    const chartMaxResolution = useMemo(() => {
+        const values = dynamicResolutionAchieved.flatMap(d => [Number((d as any).resolutionLast) || 0, Number((d as any).resolutionCurrent) || 0]);
+        const max = values.length ? Math.max(...values) : 100;
+        const rounded = Math.ceil(Math.max(max, 100) / 10) * 10;
+        return rounded;
+    }, [dynamicResolutionAchieved]);
 
+    const scatterDataLast = dynamicResolutionAchieved.map(item => ({ site: item.site, value: (item as any).resolutionLast }));
+    const scatterDataCurrent = dynamicResolutionAchieved.map(item => ({ site: item.site, value: (item as any).resolutionCurrent }));
+
+    // Normalize center performance rows to an array so .map is always safe.
+    // Prefer API shape meetingRoomData.center_performance.data, then meetingRoomData.data, then fallback to revenueData.table
+    // If none present, use empty array.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // Handle API shapes like:
+    // { data: { center_performance: { data: [...] } } }
+    const _centerRowsSource: any = (
+        meetingRoomData?.data?.center_performance?.data
+        ?? meetingRoomData?.data?.center_performance
+        ?? meetingRoomData?.center_performance?.data
+        ?? meetingRoomData?.data
+        ?? meetingRoomData
+        ?? []
+    );
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const centerRows: any[] = Array.isArray(_centerRowsSource) ? _centerRowsSource : (_centerRowsSource ? [_centerRowsSource] : []);
+
+    // Global loading: keep the loader visible until ALL APIs have finished loading
+    const isGlobalLoading = (
+        loading ||
+        loadingUtilization ||
+        loadingSiteAdoption ||
+        loadingHelpdeskSnapshot ||
+        loadingTicketAgingClosure ||
+        loadingTicketPerformanceMetrics ||
+        loadingCustomerExperienceFeedback ||
+        loadingResponseTATQuarterly ||
+        loadingResolutionTATQuarterly ||
+        loadingDevicePlatformStats ||
+        loadingAssetOverview
+    );
+
+    if (isGlobalLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-red-600 mx-auto mb-3" />
+                    <div className="text-gray-700">Loading report...</div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <>
+
+            <style>{`@media print {
+    @page {
+        size: A4;
+        margin: 0;
+    }
+
+    html,
+    body {
+        font-size: 18px;
+        margin: 0;
+        padding: 0;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .print-page {
+        page-break-before: always;
+        break-before: page;
+      }
+
+    .page-break {
+        break-before: page;
+    }
+
+    .print-small li {
+        font-size: 0.75rem;
+        line-height: 1.25rem;
+    }
+
+    .print-removespace {
+        padding-top: 12px !important;
+    }
+
+    .print-footer-bar {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    h3 {
+        font-size: 0.85rem;
+        line-height: 1rem;
+    }
+
+    .print-avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .print-avoid-break * {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+    .clip-triangle-tr {
+        clip-path: polygon(0 0, 100% 0, 100% 100%);
+      }
+      
+      .clip-triangle-bl {
+        clip-path: polygon(0 100%, 0 0, 100% 100%);
+      }
+      img {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    
+      .print-bg-force {
+        background-color: #bf0c0c !important;
+        color: white !important;
+      }     
+}
+`}</style>
 
             {/* main page */}
             <div className="font-sans bg-white min-h-screen print:h-screen print:scale-95">
@@ -1023,14 +1364,14 @@ const AllContent: React.FC = () => {
                 print:ml-[50%] print:w-[50%] print:h-[100%] print:border print:border-gray-400 print:bg-white print:justify-center print:px-10 print:py-20">
 
                         {/* Overlaid Report Letters */}
-                        <div className="absolute top-[-100px] print:top-[-76px] print: left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700 
+                        <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[40.2%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
                             <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">ERLY</div>
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
                         </div>
 
                         <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
-                            <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700">
+                            <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
                                 Jan 2025 to Mar 2025
                             </p>
                         </div>
@@ -1047,6 +1388,8 @@ const AllContent: React.FC = () => {
                 </div>
 
             </div>
+
+
 
 
             {/* Disclaimer Page */}
@@ -1198,9 +1541,10 @@ const AllContent: React.FC = () => {
 
 
             {/* First Section: Meeting Room / Hot Desk Performance Overview */}
+
             <div className="print-only-enhanced print-page break-before-page revenue-section">
                 <h1 className="report-title text-2xl font-bold text-center mb-6 py-4 bg-[#C4B89D33]">
-                    Meeting Room / Day Pass
+                    Meeting Room
                 </h1>
 
                 <div className="border p-6 bg-white text-black shadow print:text-black print:bg-white print:p-6 print:border print:shadow-none print:w-[95%] print:mx-auto">
@@ -1220,30 +1564,30 @@ const AllContent: React.FC = () => {
                                     UrbanWrk
                                 </p>
                                 <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                                    ₹1,00,000
+                                    {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
                                 </p>
                             </div>
                         </div>
 
-                        <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
-                            <p className="italic text-lg mb-1 print:italic print:text-lg">
-                                Total Revenue from
-                            </p>
-                            <div className="flex justify-between items-center print:flex print:justify-between">
-                                <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                                    My HQ
-                                </p>
-                                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
-                                    ₹60,000
-                                </p>
-                            </div>
-                        </div>
+                        {/* <div className="bg-[#dfd9ce] p-6 print:bg-[#dfd9ce]">
+              <p className="italic text-lg mb-1 print:italic print:text-lg">
+                Total Revenue from
+              </p>
+              <div className="flex justify-between items-center print:flex print:justify-between">
+                <p className="text-2xl font-bold print:text-1xl print:font-bold">
+                  My HQ
+                </p>
+                <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
+                  ₹60,000
+                </p>
+              </div>
+            </div> */}
                     </div>
                 </div>
 
                 <div className="bg-white p-4 mt-4 avoid-break">
                     <h2 className="text-lg font-semibold text-red-600 mb-4">
-                        Center Wise - Meeting Room / Day Pass Performance Overview
+                        Center Wise - Meeting Room Performance Overview
                     </h2>
                     <div className="overflow-x-auto print:overflow-visible">
                         <table className="min-w-full border text-sm text-center print:text-xs print:w-full print:table-fixed">
@@ -1255,14 +1599,8 @@ const AllContent: React.FC = () => {
                                     <th className="border border-black p-3 text-center" colSpan={3}>
                                         Meeting Room
                                     </th>
-                                    <th className="border border-black p-3 text-center" colSpan={3}>
-                                        Day Pass
-                                    </th>
                                 </tr>
                                 <tr>
-                                    <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
-                                    <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
                                     <th className="border border-black p-2 text-center">Utilization<br />Rate (in %)</th>
                                     <th className="border border-black p-2 text-center">Cancellation<br />Rate (in %)</th>
                                     <th className="border border-black p-2 text-center">Revenue<br />(in ₹)</th>
@@ -1270,34 +1608,35 @@ const AllContent: React.FC = () => {
                             </thead>
 
                             <tbody>
-                                {revenueData.table.map((row, idx) => (
-                                    <tr key={idx} className="border-t">
-                                        <td className="p-2 border font-medium print:p-1">{row.site}</td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.meeting.util} <Arrow up={row.meeting.utilUp} />
-                                        </td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.meeting.cancel} <Arrow up={row.meeting.cancelUp} />
-                                        </td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.meeting.revenue} <Arrow up={row.meeting.revenueUp} />
-                                        </td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.hotDesk.util} <Arrow up={row.hotDesk.utilUp} />
-                                        </td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.hotDesk.cancel} <Arrow up={row.hotDesk.cancelUp} />
-                                        </td>
-                                        <td className="p-2 border print:p-1">
-                                            {row.hotDesk.revenue} <Arrow up={row.hotDesk.revenueUp} />
-                                        </td>
-                                    </tr>
-                                ))}
+                                {centerRows.map((row: any, idx: number) => {
+                                    const meeting = row.meeting_room || row.meeting || {};
+                                    const utilTrend = meeting.utilization_trend || meeting.utilization_trend === undefined ? meeting.utilization_trend : null;
+                                    const cancelTrend = meeting.cancellation_trend || null;
+                                    const revenueTrend = meeting.revenue_trend || null;
+
+                                    return (
+                                        <tr key={idx} className="border-t">
+                                            <td className="p-2 border font-medium print:p-1">{row.site_name || row.site || '-'}</td>
+                                            <td className="p-2 border print:p-1">
+                                                {meeting.utilization_rate ?? '-'}{' '}
+                                                <Arrow up={utilTrend === '↑'} />
+                                            </td>
+                                            <td className="p-2 border print:p-1">
+                                                {meeting.cancellation_rate ?? '-'}{' '}
+                                                <Arrow up={cancelTrend === '↑'} />
+                                            </td>
+                                            <td className="p-2 border print:p-1">
+                                                {meeting.revenue ?? '-'}{' '}
+                                                <Arrow up={revenueTrend === '↑'} />
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                         <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
-                            <strong>Note:</strong> This table illustrates meeting utilization, cancellations, and revenue generation,
-                            along with directional arrows indicating growth or decline compared to the previous quarter.
+                            <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
+                            along with directional arrows indicating growth, decline or neutral trend compared to the previous quarter.
                         </p>
                     </div>
                 </div>
@@ -1331,30 +1670,30 @@ const AllContent: React.FC = () => {
 
                     {/* Chart Grid */}
                     <div className="border border-gray-400 no-break">
-                        {/* Data Grid */}
-                        {sites.map((site, siteIndex) => (
+                        {/* Data Grid (driven by API when available) */}
+                        {centerList.map((center: any, siteIndex: number) => (
                             <div key={siteIndex} className="grid grid-cols-9 border-b border-gray-400">
                                 {/* Site Label (NO left border) */}
                                 <div className="p-3 font-medium text-base text-right print:p-2 print:text-sm border-b border-gray-400">
-                                    {site}
+                                    {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
                                 </div>
 
                                 {/* Utilization Range Cells */}
-                                {utilizationRanges.slice(0, 8).map((range, rangeIndex) => {
-                                    const roomName = getRoomName(site, range);
+                                {rangeList.slice(0, 8).map((range: any, rangeIndex: number) => {
+                                    const roomName = getRoomsForRange(center, range);
                                     const cellColor = getCellColor(range);
                                     return (
                                         <div
                                             key={rangeIndex}
                                             className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px]`}
                                         >
-                                            {roomName && (
+                                            {roomName ? (
                                                 <div className="leading-tight">
                                                     {roomName.includes(",")
-                                                        ? roomName.split(",").map((name, i) => <div key={i}>{name.trim()}</div>)
+                                                        ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
                                                         : roomName}
                                                 </div>
-                                            )}
+                                            ) : null}
                                         </div>
                                     );
                                 })}
@@ -1364,7 +1703,7 @@ const AllContent: React.FC = () => {
                         {/* Bottom Header Row: Utilization Rate */}
                         <div className="grid grid-cols-9">
                             <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base"></div>
-                            {utilizationRanges.slice(0, 8).map((range, index) => (
+                            {rangeList.slice(0, 8).map((range, index) => (
                                 <div
                                     key={index}
                                     className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px]"
@@ -1391,136 +1730,136 @@ const AllContent: React.FC = () => {
             </div>
 
             {/* Third Section: Wallet Management */}
-            <div className="print-page break-before-page">
-                <h1 className="report-title text-2xl font-bold mb-4 text-center bg-[#F6F4EE] py-4 print:text-2xl print:font-bold print:mb-2 print:bg-[#F6F4EE] print:py-3">
-                    Wallet Management
-                </h1>
+            {/* <div className="print-page break-before-page"> */}
+            {/* <h1 className="report-title text-2xl font-bold mb-4 text-center bg-[#F6F4EE] py-4 print:text-2xl print:font-bold print:mb-2 print:bg-[#F6F4EE] print:py-3">
+          Wallet Management
+        </h1> */}
 
-                {/* Overview Summary */}
-                <div className="border p-6 no-break overview-summary-section print:p-3 print:w-[95%] print:mx-auto">
-                    <h2 className="text-xl font-semibold mb-4 print:text-lg print:font-semibold print:mb-2">
-                        Overview Summary
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 print:grid-cols-2 print:grid-rows-3 print:gap-1">
-                        {walletOverviewData.map((item, index) => (
-                            <div
-                                key={index}
-                                className={`overview-box rounded-md p-6 flex flex-col justify-center items-center h-[120px] print:p-2 print:h-[80px] ${item.bg} print:${item.bg}`}
-                            >
-                                <div className="text-[28px] font-bold text-[#ba1f2f] print:text-[18px]">
-                                    {item.value}
-                                </div>
-                                <div className="text-[16px] font-semibold text-black text-center mt-1 print:text-[10px] print:mt-0">
-                                    {item.label}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+            {/* Overview Summary */}
+            {/* <div className="border p-6 no-break overview-summary-section print:p-3 print:w-[95%] print:mx-auto">
+          <h2 className="text-xl font-semibold mb-4 print:text-lg print:font-semibold print:mb-2">
+            Overview Summary
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4 print:grid-cols-2 print:grid-rows-3 print:gap-1">
+            {walletOverviewData.map((item, index) => (
+              <div
+                key={index}
+                className={`overview-box rounded-md p-6 flex flex-col justify-center items-center h-[120px] print:p-2 print:h-[80px] ${item.bg} print:${item.bg}`}
+              >
+                <div className="text-[28px] font-bold text-[#ba1f2f] print:text-[18px]">
+                  {item.value}
                 </div>
-
-                {/* Site-wise Wallet Summary and Top 10 Customers */}
-                <div className="border py-4 px-4 no-break wallet-tables print:p-3 print:w-[95%] print:mx-auto">
-                    {/* Site-wise Wallet Summary */}
-                    <div className="no-break">
-                        <h2 className="text-lg font-semibold mb-4 print:text-base print:font-semibold print:mb-1">Site-wise Wallet Summary</h2>
-                        <div className="overflow-x-auto print:overflow-visible">
-                            <table className="min-w-full divide-y divide-gray-300 border print:text-[10px] print:w-full print:table-fixed">
-                                <thead>
-                                    <tr className="bg-[#dfdbcf] text-[#b61624] text-center text-xs font-semibold border border-black print:text-[10px]">
-                                        {[
-                                            "Site Name",
-                                            "Total Wallet\nBalance",
-                                            "Top-ups",
-                                            "Usage",
-                                            "Comp.\nPoints",
-                                            "Refunds",
-                                            "Expiry Point",
-                                        ].map((header, i) => (
-                                            <th
-                                                key={i}
-                                                className="py-1 px-1 whitespace-pre-line border border-black print:py-[2px] print:px-[2px]"
-                                            >
-                                                {header}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-
-
-                                <tbody className="text-sm text-black print:text-[10px] text-center align-middle">
-                                    {siteWiseData.map((row, idx) => (
-                                        <tr key={idx} className="bg-white border-b border-gray-300 print:border-b print:border-black">
-                                            <td className="px-4 py-2 bg-[#f8f6f4] font-medium print:px-1 print:py-0.5 text-center align-middle">
-                                                {row.site_name}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.total_wallet_balance || 0).toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.topup_balance || 0).toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.usage || 0).toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.complimentary_points || 0).toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.refunds || 0).toLocaleString()}
-                                            </td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
-                                                ₹{Number(row.expiry_points || 0).toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-
-
-
-                            </table>
-                            <p className="text-xs text-gray-700 italic mt-2 px-2 pb-2 print:text-[8px] print:mt-1 print:pb-1">
-                                <strong>Note</strong> : This table presents the total wallet balance across sites along with a
-                                detailed breakdown of usage, complimentary credits, top-ups, and expired points, offering a
-                                comprehensive view of wallet activity and status.
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Top 10 Customers */}
-                    <div className="no-break">
-                        <h2 className="text-lg font-semibold mb-2 print:text-sm print:font-semibold print:mb-1">Top 10 Customers by Wallet Usage</h2>
-                        <div className="overflow-auto print:overflow-visible">
-                            <table className="min-w-full table-auto border border-gray-300 print:text-[10px] print:w-full print:table-fixed">
-                                <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
-                                    <tr>
-                                        <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[20%]">Customer Name</th>
-                                        <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[30%]">Site</th>
-                                        <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[15%]">Wallet Usage</th>
-                                        <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[15%]">Current Wallet Balance</th>
-                                        <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[10%]">Active Users</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {custoWallData.map((cust, i) => (
-                                        <tr key={i} className="text-center">
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5 bg-[#F3F1EB]">{cust.entity_name}</td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5">{cust.site_name}</td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5">{Number(cust.amount).toLocaleString()}</td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5">{Number(cust.amount).toLocaleString()}</td>
-                                            <td className="px-4 py-2 print:px-1 print:py-0.5">{cust.total_users}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-
-                            <p className="text-xs text-gray-700 italic mt-2 px-2 pb-2 print:text-[8px] print:mt-1 print:pb-1">
-                                <strong>Note</strong> : This table presents the top customers by wallet usage, highlighting key
-                                clients and their activity across sites.
-                            </p>
-                        </div>
-                    </div>
+                <div className="text-[16px] font-semibold text-black text-center mt-1 print:text-[10px] print:mt-0">
+                  {item.label}
                 </div>
+              </div>
+            ))}
+          </div>
+        </div> */}
+
+            {/* Site-wise Wallet Summary and Top 10 Customers */}
+            {/* <div className="border py-4 px-4 no-break wallet-tables print:p-3 print:w-[95%] print:mx-auto"> */}
+            {/* Site-wise Wallet Summary */}
+            {/* <div className="no-break">
+            <h2 className="text-lg font-semibold mb-4 print:text-base print:font-semibold print:mb-1">Site-wise Wallet Summary</h2>
+            <div className="overflow-x-auto print:overflow-visible">
+              <table className="min-w-full divide-y divide-gray-300 border print:text-[10px] print:w-full print:table-fixed">
+                <thead>
+                  <tr className="bg-[#dfdbcf] text-[#b61624] text-center text-xs font-semibold border border-black print:text-[10px]">
+                    {[
+                      "Site Name",
+                      "Total Wallet\nBalance",
+                      "Top-ups",
+                      "Usage",
+                      "Comp.\nPoints",
+                      "Refunds",
+                      "Expiry Point",
+                    ].map((header, i) => (
+                      <th
+                        key={i}
+                        className="py-1 px-1 whitespace-pre-line border border-black print:py-[2px] print:px-[2px]"
+                      >
+                        {header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+
+
+                <tbody className="text-sm text-black print:text-[10px] text-center align-middle">
+                  {siteWiseData.map((row, idx) => (
+                    <tr key={idx} className="bg-white border-b border-gray-300 print:border-b print:border-black">
+                      <td className="px-4 py-2 bg-[#f8f6f4] font-medium print:px-1 print:py-0.5 text-center align-middle">
+                        {row.site_name}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.total_wallet_balance || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.topup_balance || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.usage || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.complimentary_points || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.refunds || 0).toLocaleString()}
+                      </td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 text-center align-middle">
+                        ₹{Number(row.expiry_points || 0).toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+
+
+
+              </table>
+              <p className="text-xs text-gray-700 italic mt-2 px-2 pb-2 print:text-[8px] print:mt-1 print:pb-1">
+                <strong>Note</strong> : This table presents the total wallet balance across sites along with a
+                detailed breakdown of usage, complimentary credits, top-ups, and expired points, offering a
+                comprehensive view of wallet activity and status.
+              </p>
             </div>
+          </div> */}
+
+            {/* Top 10 Customers */}
+            {/* <div className="no-break">
+            <h2 className="text-lg font-semibold mb-2 print:text-sm print:font-semibold print:mb-1">Top 10 Customers by Wallet Usage</h2>
+            <div className="overflow-auto print:overflow-visible">
+              <table className="min-w-full table-auto border border-gray-300 print:text-[10px] print:w-full print:table-fixed">
+                <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
+                  <tr>
+                    <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[20%]">Customer Name</th>
+                    <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[30%]">Site</th>
+                    <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[15%]">Wallet Usage</th>
+                    <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[15%]">Current Wallet Balance</th>
+                    <th className="px-4 py-2 print:px-1 print:py-0.5 print:w-[10%]">Active Users</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {custoWallData.map((cust, i) => (
+                    <tr key={i} className="text-center">
+                      <td className="px-4 py-2 print:px-1 print:py-0.5 bg-[#F3F1EB]">{cust.entity_name}</td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5">{cust.site_name}</td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5">{Number(cust.amount).toLocaleString()}</td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5">{Number(cust.amount).toLocaleString()}</td>
+                      <td className="px-4 py-2 print:px-1 print:py-0.5">{cust.total_users}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <p className="text-xs text-gray-700 italic mt-2 px-2 pb-2 print:text-[8px] print:mt-1 print:pb-1">
+                <strong>Note</strong> : This table presents the top customers by wallet usage, highlighting key
+                clients and their activity across sites.
+              </p>
+            </div>
+          </div> */}
+            {/* </div> */}
+            {/* </div> */}
 
             {/* Fourth Section: Community Programs Dashboard */}
             <div className="print-page break-before-page">
@@ -1533,7 +1872,7 @@ const AllContent: React.FC = () => {
                         <div className="bg-[#DAD6C9] p-6 rounded shadow print:p-2 print:shadow-none">
                             {/* Top section: 450 + Total Active Users */}
                             <div className="flex items-center justify-center gap-4 mb-6 print:mb-2">
-                                <p className="text-4xl font-bold text-[#C72030] print:text-xl">450</p>
+                                <p className="text-4xl font-bold text-[#C72030] print:text-xl">{devicePlatformStatsData?.data?.summary?.total_active_users ?? devicePlatformStatsData?.data?.total_active_users ?? '-'}</p>
                                 <div>
                                     <p className="text-lg font-bold text-black leading-tight print:text-sm">Total Active Users</p>
                                     <p className="text-sm text-black print:text-[10px]">(App Downloaded)</p>
@@ -1543,12 +1882,12 @@ const AllContent: React.FC = () => {
                             {/* Bottom section: Android and iOS */}
                             <div className="flex items-center justify-center gap-6 text-[#C72030] print:gap-2">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-2xl font-bold print:text-sm">250</p>
+                                    <p className="text-2xl font-bold print:text-sm">{devicePlatformStatsData?.data?.summary?.platform_breakdown?.android ?? devicePlatformStatsData?.data?.android ?? '-'}</p>
                                     <p className="text-black font-semibold text-sm print:text-[10px]">Android</p>
                                 </div>
                                 <div className="border-l h-6 border-black"></div>
                                 <div className="flex items-center gap-2">
-                                    <p className="text-2xl font-bold print:text-sm">100</p>
+                                    <p className="text-2xl font-bold print:text-sm">{devicePlatformStatsData?.data?.summary?.platform_breakdown?.ios ?? devicePlatformStatsData?.data?.ios ?? '-'}</p>
                                     <p className="text-black font-semibold text-sm print:text-[10px]">IOS</p>
                                 </div>
                             </div>
@@ -1557,13 +1896,14 @@ const AllContent: React.FC = () => {
                         {/* New Users Block */}
                         <div className="bg-[#DAD6C9] p-6 rounded shadow print:p-2 print:shadow-none">
                             <div className="flex items-center justify-center gap-3">
-                                <p className="text-4xl font-bold text-[#C72030] print:text-xl">56</p>
+                                <p className="text-4xl font-bold text-[#C72030] print:text-xl">{devicePlatformStatsData?.data?.new_users ?? devicePlatformStatsData?.data?.summary?.new_users ?? '-'}</p>
                                 <span className="text-green-600 text-2xl print:text-base">↑</span>
                             </div>
                             <p className="text-black text-center font-semibold text-lg mt-2 print:text-[10px]">New Users</p>
                         </div>
                     </div>
 
+                    {/*
                     <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm print:mb-1">Community Health and Engagement Summary</h2>
                     <hr className="border-t border-gray-400 mb-4 print:border-black print:mb-1" />
 
@@ -1595,6 +1935,7 @@ const AllContent: React.FC = () => {
                             </tbody>
                         </table>
                     </div>
+                    */}
 
                     {/* Section Heading & Divider */}
                     <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">            Site Wise Adoption Rate
@@ -1603,19 +1944,52 @@ const AllContent: React.FC = () => {
 
                     {/* Legend */}
                     <div className="flex items-end gap-16 mb-4 justify-end print:gap-2  print:text-[10px]">
-                        {[
-                            { color: "bg-red-600", underline: "border-red-600", label: "0–39%" },
-                            { color: "bg-yellow-400", underline: "border-yellow-400", label: "40–69%" },
-                            { color: "bg-green-600", underline: "border-green-600", label: "70–100%" },
-                        ].map(({ color, underline, label }, idx) => (
-                            <div key={idx} className="flex flex-col items-center gap-1 print:gap-[2px]">
-                                <div className="flex items-center gap-1">
-                                    <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
-                                    <span className="text-sm font-bold text-black print:text-black print:text-[8.8px]">{label}</span>
+                        {(() => {
+                            // Try to use legend from API, else fallback
+                            const legendObj = siteAdoptionData?.data?.legend;
+                            const colorMap = {
+                                red: 'bg-red-600',
+                                yellow: 'bg-yellow-400',
+                                green: 'bg-green-600',
+                                'bg-red-600': 'bg-red-600',
+                                'bg-yellow-400': 'bg-yellow-400',
+                                'bg-green-600': 'bg-green-600',
+                            };
+                            const underlineMap = {
+                                red: 'border-red-600',
+                                yellow: 'border-yellow-400',
+                                green: 'border-green-600',
+                                'bg-red-600': 'border-red-600',
+                                'bg-yellow-400': 'border-yellow-400',
+                                'bg-green-600': 'border-green-600',
+                            };
+                            let legendArr;
+                            if (legendObj && typeof legendObj === 'object') {
+                                legendArr = Object.entries(legendObj).filter(([k]) => k.includes('%')).map(([label, color]) => {
+                                    const colorKey = String(color);
+                                    return {
+                                        label,
+                                        color: colorMap[colorKey] || colorKey,
+                                        underline: underlineMap[colorKey] || colorKey,
+                                    };
+                                });
+                            } else {
+                                legendArr = [
+                                    { color: "bg-red-600", underline: "border-red-600", label: "0–39%" },
+                                    { color: "bg-yellow-400", underline: "border-yellow-400", label: "40–69%" },
+                                    { color: "bg-green-600", underline: "border-green-600", label: "70–100%" },
+                                ];
+                            }
+                            return legendArr.map(({ color, underline, label }, idx) => (
+                                <div key={idx} className="flex flex-col items-center gap-1 print:gap-[2px]">
+                                    <div className="flex items-center gap-1">
+                                        <span className={`w-4 h-4 rounded-full ${color} inline-block print:w-3 print:h-3`} />
+                                        <span className="text-sm font-bold text-black print:text-black print:text-[8.8px]">{label}</span>
+                                    </div>
+                                    <span className={`border-b-1 ${underline} w-full rounded-full`}></span>
                                 </div>
-                                <span className={`border-b-1 ${underline} w-full rounded-full`}></span>
-                            </div>
-                        ))}
+                            ));
+                        })()}
                     </div>
 
 
@@ -1628,7 +2002,7 @@ const AllContent: React.FC = () => {
                                     {[
                                         "Site Name", "Helpdesk", "Assets", "Checklist (Tech)",
                                         "Checklist (Non-Tech)", "Inventory", "Meeting Room",
-                                        "Day Pass"
+
                                     ].map((header, idx) => (
                                         <th
                                             key={idx}
@@ -1640,21 +2014,41 @@ const AllContent: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {adoptionData.map((row, i) => (
-                                    <tr key={i} className="text-center print:even:bg-white">
-                                        <td className="p-2 border border-black font-semibold text-left print:p-1">{row[0]}</td>
-                                        {row.slice(1, 8).map((value, idx) => (
-                                            <td
-                                                key={idx}
-                                                className="p-2 border border-black print:p-1"
-                                            >
-                                                <div className={`inline-block border-b-2 ${getColor(value)}`}>
-                                                    {value}%
-                                                </div>
-                                            </td>
-                                        ))}
-                                    </tr>
-                                ))}
+                                {(siteAdoptionData?.data?.adoption_rates ?? []).map((row: any, i: number) => {
+                                    // If API row is object, extract fields; else fallback to array shape
+                                    const isApiObj = row && typeof row === 'object' && !Array.isArray(row);
+                                    const fields = isApiObj
+                                        ? [
+                                            row.site_name || '-',
+                                            row.helpdesk || '0%',
+                                            row.assets || '0%',
+                                            row.checklist_tech || '0%',
+                                            row.checklist_nontech || row.checklist_non_tech || '0%',
+                                            row.inventory || '0%',
+                                            row.meeting_room || '0%',
+                                            // row.day_pass || '0%'
+                                        ]
+                                        : row;
+                                    return (
+                                        <tr key={i} className="text-center print:even:bg-white">
+                                            <td className="p-2 border border-black font-semibold text-left print:p-1">{fields[0]}</td>
+                                            {fields.slice(1, 8).map((value: string, idx: number) => {
+                                                // Strip % and convert to number for coloring
+                                                const num = Number(String(value).replace(/[^\d.\-]+/g, ''));
+                                                return (
+                                                    <td
+                                                        key={idx}
+                                                        className="p-2 border border-black print:p-1"
+                                                    >
+                                                        <div className={`inline-block border-b-2 ${getColor(num)}`}>
+                                                            {value}
+                                                        </div>
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -1685,32 +2079,38 @@ const AllContent: React.FC = () => {
                     <div className="mb-10 print:mb-5 border border-gray-300  print:px-2 ">
                         <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Snapshot</h2>
                         <div className="grid grid-cols-3 gap-6 print:gap-3">
+                            {/* Total Tickets */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold print:text-xl">657</div>
-                                <div className="text-sm font-medium print:text-[10px]">100.0 %</div>
-                                <div className="text-sm font-bold print:text-[10px]">Total Tickets</div>
+                                <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.count ?? 0}</div>
+                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.total_tickets?.label ?? 'Total Tickets'}</div>
                             </div>
+                            {/* Closed Tickets */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold text-green-600 print:text-xl print:text-green-600">555</div>
-                                <div className="text-sm font-medium print:text-[10px]">84.47 %</div>
-                                <div className="text-sm font-bold print:text-[10px]">Closed Tickets</div>
+                                <div className="text-3xl font-bold text-green-600 print:text-xl print:text-green-600">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.count ?? 0}</div>
+                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.closed_tickets?.label ?? 'Closed Tickets'}</div>
                             </div>
+                            {/* Open Tickets */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold text-red-600 print:text-xl print:text-red-600">102</div>
-                                <div className="text-sm font-medium print:text-[10px]">15.53 %</div>
-                                <div className="text-sm font-bold print:text-[10px]">Open Tickets</div>
+                                <div className="text-3xl font-bold text-red-600 print:text-xl print:text-red-600">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.count ?? 0}</div>
+                                <div className="text-sm font-medium print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.percentage ?? '-'} %</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.open_tickets?.label ?? 'Open Tickets'}</div>
                             </div>
+                            {/* Customer Tickets */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold print:text-xl">9</div>
-                                <div className="text-sm font-bold print:text-[10px]">Customer Tickets</div>
+                                <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.count ?? 0}</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.customer_tickets?.label ?? 'Customer Tickets'}</div>
                             </div>
+                            {/* FM Tickets */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold print:text-xl">49</div>
-                                <div className="text-sm font-bold print:text-[10px]">FM Tickets</div>
+                                <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.count ?? 0}</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.snapshot?.fm_tickets?.label ?? 'FM Tickets'}</div>
                             </div>
+                            {/* Total Average Customer Rating */}
                             <div className="bg-[#f9f7f2] p-6 text-center print:bg-[#f9f7f2] print:p-5">
-                                <div className="text-3xl font-bold print:text-xl">0</div>
-                                <div className="text-sm font-bold print:text-[10px]">Total Average Customer Rating</div>
+                                <div className="text-3xl font-bold print:text-xl">{helpdeskSnapshotData?.data?.average_customer_rating?.rating ?? 0}</div>
+                                <div className="text-sm font-bold print:text-[10px]">{helpdeskSnapshotData?.data?.average_customer_rating?.label ?? 'Total Average Customer Rating'}</div>
                             </div>
                         </div>
                     </div>
@@ -1721,36 +2121,83 @@ const AllContent: React.FC = () => {
                         <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[12px]">
                             <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] font-semibold print-bg-red">
                                 <tr>
-                                    {siteNames.map((site, idx) => (
+                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]">Site Name</th>
+                                    {ticketAgingClosureData?.data?.centers?.map((center, idx) => (
                                         <th
                                             key={idx}
                                             className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]"
                                             style={{ wordWrap: "break-word", whiteSpace: "normal" }}
                                         >
-                                            {site}
+                                            {center.center_name ?? '-'}
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {tableData.map(([label, values], idx) => (
-                                    <tr
-                                        key={idx}
-                                        className={`${idx === 5 ? "bg-[#DAD6C9] font-semibold print:bg-[#DAD6C9]" : ""}`}
-                                    >
+                                {/* Aging Buckets Rows */}
+                                {[
+                                    { label: "40+ days", key: "40+_days" },
+                                    { label: "31-40 days", key: "31-40_days" },
+                                    { label: "21-30 days", key: "21-30_days" },
+                                    { label: "11-20 days", key: "11-20_days" },
+                                    { label: "0-10 days", key: "0-10_days" },
+                                ].map((row, idx) => (
+                                    <tr key={row.key}>
                                         <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
-                                            {label}
+                                            {row.label}
                                         </td>
-                                        {values.map((value, vIdx) => (
+                                        {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                             <td
-                                                key={vIdx}
+                                                key={cIdx}
                                                 className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
                                             >
-                                                {value}
+                                                {center.aging_buckets?.[row.key] ?? '-'}
                                             </td>
                                         ))}
                                     </tr>
                                 ))}
+                                {/* Total Closure % Row */}
+                                <tr className="bg-[#DAD6C9] font-semibold print:bg-[#DAD6C9]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                        Total Closure %
+                                    </td>
+                                    {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
+                                        <td
+                                            key={cIdx}
+                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                        >
+                                            {center.total_closure_efficiency ?? '-'}
+                                        </td>
+                                    ))}
+                                </tr>
+                                {/* No. of response Row */}
+                                <tr>
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                        No. of response
+                                    </td>
+                                    {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
+                                        <td
+                                            key={cIdx}
+                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                        >
+                                            {center.feedback_metrics?.response_count ?? '-'}
+                                        </td>
+                                    ))}
+                                </tr>
+                                {/* % of Response Row */}
+                                <tr>
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                        % of Response
+                                    </td>
+                                    {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
+                                        <td
+                                            key={cIdx}
+                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                        >
+                                            {center.feedback_metrics?.response_percentage !== undefined ? `${(center.feedback_metrics.response_percentage).toFixed(2)}%` : '-'}
+                                        </td>
+                                    ))}
+                                </tr>
                             </tbody>
                         </table>
                         <p className="text-xs mt-2 text-gray-600 print:text-[8px] print:mt-1">
@@ -1816,7 +2263,7 @@ const AllContent: React.FC = () => {
                             <div className="flex">
                                 {/* Left Categories */}
                                 <div className="flex flex-col justify-around gap-[2px]">
-                                    {categories.map((cat, idx) => (
+                                    {ticketCategories.map((cat, idx) => (
                                         <div key={idx} className="h-16 flex items-center justify-end pr-1 text-[10px] font-medium print:text-[8px] print:h-15">
                                             {cat}
                                         </div>
@@ -1827,16 +2274,16 @@ const AllContent: React.FC = () => {
                                 <div className="flex flex-col">
                                     {/* Grid Box */}
                                     <div className="grid grid-cols-10 gap-[10px] border-l border-b p-1 print:gap-[10px]">
-                                        {Newdata.map((item, index) => (
-                                            <div key={index} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
-                                                <div className={`absolute inset-0 clip-triangle-tr ${agingColors[item.aging]}`}></div>
+                                        {ticketGridData.map((item, index) => (
+                        <div key={index} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
+                                                <div className={`absolute inset-0 clip-triangle-tr ${agingColors[item.agingBand || item.aging] || 'bg-white'}`}></div>
                                                 <div className="absolute inset-0 clip-triangle-bl bg-white"></div>
 
-                                                <div className={`absolute top-1 right-1 text-xs print:text-[9px] ${getTextColor(item.aging)} print:rotate-print`}>
-                                                    <span className="font-bold">{item.volume}%</span>
+                                                <div className={`absolute top-1 right-1 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)} print:rotate-print`}>
+                            <span className="font-bold">{displayPercent(item.volume)}</span>
                                                 </div>
-                                                <div className={`absolute bottom-1 left-2 text-xs print:text-[9px] ${getTextColor(item.aging)}`}>
-                                                    <span>{item.closure ?? ""}%</span>
+                                                <div className={`absolute bottom-1 left-2 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)}`}>
+                            <span>{displayPercent(item.closure)}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -1844,7 +2291,7 @@ const AllContent: React.FC = () => {
 
                                     {/* Site Row */}
                                     <div className="grid grid-cols-10 gap-[2px] print:gap-[2px] mt-2 print:mt-1">
-                                        {Newsites.map((site, index) => (
+                                        {ticketSites.map((site, index) => (
                                             <div key={index} className="text-center text-[10px] font-medium print:text-[8px] w-[100px] print:w-[50px]">
                                                 {site}
                                             </div>
@@ -1868,7 +2315,7 @@ const AllContent: React.FC = () => {
                 <div className="border print:w-[95%] w-[95%] m-auto print:mt-10 border-gray-300 p-6 mb-10 no-break print:p-2 print:mb-2">
                     <h2 className="text-lg font-bold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-1 print:pb-1">Customer Experience Feedback</h2>
                     <div className="grid grid-cols-5 print:gap-1">
-                        {customerExperienceData.map((item, idx) => (
+                        {displayCustomerExperienceData.map((item, idx) => (
                             <div
                                 key={idx}
                                 className="flex flex-col items-center justify-center h-[140px] print:h-[100px] border-r last:border-r-0"
@@ -1893,21 +2340,26 @@ const AllContent: React.FC = () => {
                                 <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]">
                                     Site Name
                                 </th>
-                                {customerRatingTable.headers.map((site, idx) => (
+
+                                {customerExperienceSiteNames.map((name, index) => (
                                     <th
-                                        key={idx}
+                                        key={index}
                                         className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]"
                                     >
-                                        {site}
+                                        {name}
                                     </th>
                                 ))}
                             </tr>
                         </thead>
+
                         <tbody>
-                            {customerRatingTable.rows.map((row, idx) => {
-                                const isTotal = row.label === "Total %";
+                            {customerRatingData.rows.map((row, idx) => {
+                                const isTotal = row.label === "Total Responses";
                                 return (
-                                    <tr key={idx} className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}>
+                                    <tr
+                                        key={idx}
+                                        className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}
+                                    >
                                         <td
                                             className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] font-medium ${isTotal
                                                 ? "border border-gray-300"
@@ -1919,9 +2371,7 @@ const AllContent: React.FC = () => {
                                         {row.values.map((val, vIdx) => (
                                             <td
                                                 key={vIdx}
-                                                className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] ${isTotal
-                                                    ? "border border-gray-300"
-                                                    : "border-l border-r border-gray-200"
+                                                className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"
                                                     }`}
                                             >
                                                 {val}
@@ -1992,7 +2442,7 @@ const AllContent: React.FC = () => {
                         <BarChart
                             width={750}
                             height={700}
-                            data={ResponseAchieved}
+                            data={dynamicResponseAchieved}
                             layout="vertical"
                             margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                         >
@@ -2014,8 +2464,8 @@ const AllContent: React.FC = () => {
                             {/* 2. X Axis at top with % */}
                             <XAxis
                                 type="number"
-                                domain={[0, 100]}
-                                ticks={[10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+                                domain={[0, chartMaxResponse]}
+                                ticks={Array.from({ length: Math.max(2, chartMaxResponse / 10) }, (_, i) => (i + 1) * 10)}
                                 tickFormatter={(tick) => `${tick}%`}
                                 orientation="top"
                                 tick={{ fontSize: 12 }}
@@ -2030,7 +2480,7 @@ const AllContent: React.FC = () => {
                                 width={140}
                             />
 
-                            <Tooltip />
+                            <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
                             <Legend verticalAlign="top" align="right" />
 
                             {/* 3. Apply striped pattern to Last Quarter bar */}
@@ -2064,7 +2514,7 @@ const AllContent: React.FC = () => {
                         <BarChart
                             width={780}
                             height={700}
-                            data={ResolutionAchieved}
+                            data={dynamicResolutionAchieved}
                             layout="vertical"
                             margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
                         >
@@ -2085,8 +2535,8 @@ const AllContent: React.FC = () => {
 
                             <XAxis
                                 type="number"
-                                domain={[0, 100]}
-                                ticks={[10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+                                domain={[0, chartMaxResolution]}
+                                ticks={Array.from({ length: Math.max(2, chartMaxResolution / 10) }, (_, i) => (i + 1) * 10)}
                                 tickFormatter={(tick) => `${tick}%`}
                                 orientation="top"
                                 tick={{ fontSize: 12 }}
@@ -2101,7 +2551,7 @@ const AllContent: React.FC = () => {
                                 width={140}
                             />
 
-                            <Tooltip />
+                            <Tooltip content={(props: any) => <CustomTooltip {...props} />} cursor={{ fill: "rgba(0, 0, 0, 0.05)" }} />
                             <Legend verticalAlign="top" align="right" />
 
                             {/* Last Quarter with Stripes */}
@@ -2160,9 +2610,9 @@ const AllContent: React.FC = () => {
                             <div className="py-4 print:py-2.5 print:text-[12px]">Average Downtime</div>
                         </div>
                         <div className="grid grid-cols-3 bg-[#f2f0eb] text-center font-bold text-2xl py-6 border-t border-black print:text-lg print:py-2.5">
-                            <div className="border-r border-black">30,000</div>
-                            <div className="border-r border-black">500</div>
-                            <div>8 Days</div>
+                            <div className="border-r border-black">{companyAssetOverview?.total_available_asset ?? '-'}</div>
+                            <div className="border-r border-black">{companyAssetOverview?.asset_in_breakdown ?? '-'}</div>
+                            <div>{companyAssetOverview?.average_downtime_days !== undefined ? `${companyAssetOverview?.average_downtime_days} Days` : '-'}</div>
                         </div>
                     </div>
 
@@ -2181,7 +2631,6 @@ const AllContent: React.FC = () => {
                                     <th rowSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Total No. of Assets</th>
                                     <th colSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Critical</th>
                                     <th colSpan={2} className="border border-black px-2 py-1 print:px-1 print:py-1">Non-Critical</th>
-
                                 </tr>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] font-bold text-[13px] print:text-[10px]">
                                     <th className="border border-black px-2 py-1 print:px-1 print:py-1">Total No. of Breakdown</th>
@@ -2192,26 +2641,22 @@ const AllContent: React.FC = () => {
                             </thead>
 
                             <tbody>
-                                {[
-                                    ["Sai Radhe Bund Garden", 1000, 300, 10, 300, 8],
-                                    ["Westport, Baner", 500, 450, 15, 450, 10],
-                                    ["Peninsula", 324, 245, 5, 245, 8],
-                                    ["Koncord", 542, 170, 12, 170, 7],
-                                    ["AeroMall", 896, 476, 9, 234, 3],
-                                    ["Nandan Probiz", 987, 476, 9, 432, 7],
-                                    ["Raheja Mindspace", 678, 476, 7, 222, 8],
-                                    ["Technopolis, Salt Lake", 654, 476, 4, 325, 4],
-                                    ["Bani - The Statement", 876, 476, 8, 542, 6],
-                                ].map(([site, assets, cBreak, cAvg, ncBreak, ncAvg], idx) => (
-                                    <tr key={idx} className="text-[13px] print:text-[10px]">
-                                        <td className="border border-black px-2 py-2 text-left bg-[#F3F1EB80] print:px-1 print:py-1">{site}</td>
-                                        <td className="border border-black px-2 py-2 print:px-1 print:py-1">{assets}</td>
-                                        <td className="border border-black px-2 py-2 print:px-1 print:py-1">{cBreak}</td>
-                                        <td className="border border-black px-2 py-2 print:px-1 print:py-1">{cAvg}</td>
-                                        <td className="border border-black px-2 py-2 print:px-1 print:py-1">{ncBreak}</td>
-                                        <td className="border border-black px-2 py-2 print:px-1 print:py-1">{ncAvg}</td>
+                                {centerMetrics.length > 0 ? (
+                                    centerMetrics.map((row: any, idx: number) => (
+                                        <tr key={idx} className="text-[13px] print:text-[10px]">
+                                            <td className="border border-black px-2 py-2 text-left bg-[#F3F1EB80] print:px-1 print:py-1">{row.site_name ?? '-'}</td>
+                                            <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.total_assets ?? 0}</td>
+                                            <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.critical?.breakdown ?? 0}</td>
+                                            <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.critical?.average_day ?? 0}</td>
+                                            <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.non_critical?.breakdown ?? 0}</td>
+                                            <td className="border border-black px-2 py-2 print:px-1 print:py-1">{row.non_critical?.average_day ?? 0}</td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <tr>
+                                        <td colSpan={6} className="border border-black px-2 py-2 text-center print:px-1 print:py-1">No data available</td>
                                     </tr>
-                                ))}
+                                )}
                             </tbody>
                         </table>
 
@@ -2236,34 +2681,35 @@ const AllContent: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {[
-                                        [1, "AC-Unit-XL23", "HVAC", "Sai Radhe", "₹9,000", "9%", "Frequent breakdowns"],
-                                        [2, "Gen-Back200", "Generator", "Peninsula", "₹1,000", "1%", "Ageing equipment"],
-                                        [3, "Lift-Mk2", "Elevator", "Westport", "₹7,000", "7%", "Under AMC contract"],
-                                        [4, "WaterPump-ZX", "Plumbing", "Koncord", "₹6,000", "6%", "Leakage issues"],
-                                        [5, "ServerRack-QT3", "IT Equipment", "Airomall", "₹5,000", "5%", "Overheating issue"],
-                                        [6, "AC-Unit-XL23", "HVAC", "Sai Radhe", "₹3,000", "3%", "Frequent breakdowns"],
-                                        [7, "Gen-Back200", "Generator", "Peninsula", "₹5,000", "5%", "Ageing equipment"],
-                                        [8, "Lift-Mk2", "Elevator", "Westport", "₹8,500", "8%", "Under AMC contract"],
-                                        [9, "WaterPump-ZX", "Plumbing", "Koncord", "₹8,000", "8%", "Leakage issues"],
-                                        [10, "ServerRack-QT3", "IT Equipment", "Airomall", "₹7,000", "7%", "Overheating issue"],
-                                    ].map(([rank, id, cat, site, cost, perc, remark], idx) => (
-                                        <tr key={idx} className="bg-white print:bg-white">
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{rank}</td>
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{id}</td>
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{cat}</td>
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{site}</td>
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{cost}</td>
-                                            <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{perc}</td>
-                                            <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[10px]">{remark}</td>
+                                    {loadingHighestMaintenanceAssets ? (
+                                        <tr>
+                                            <td colSpan={7} className="border border-black px-2 py-2 text-center print:px-1 print:py-1">Loading...</td>
                                         </tr>
-                                    ))}
-                                    <tr className="font-semibold">
-                                        <td colSpan={4} className="border border-black px-2 py-1.5 text-right print:px-1 print:py-[10px]">Total</td>
-                                        <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">₹59,000</td>
-                                        <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">59%</td>
-                                        <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]"></td>
-                                    </tr>
+                                    ) : highestAssets.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={7} className="border border-black px-2 py-2 text-center print:px-1 print:py-1">No data available</td>
+                                        </tr>
+                                    ) : (
+                                        <>
+                                            {highestAssets.map((row: any, idx: number) => (
+                                                <tr key={idx} className="bg-white print:bg-white">
+                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{row.rank ?? ''}</td>
+                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[8px]">{row.asset_name_id ?? ''}</td>
+                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{row.asset_category ?? '-'}</td>
+                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[8px]">{row.site_name ?? '-'}</td>
+                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">₹{Number(row.total_maintenance_cost ?? 0).toLocaleString()}</td>
+                                                    <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{Number(row.maintenance_percent ?? 0).toFixed(2)}%</td>
+                                                    <td className="border border-black px-2 py-1.5 text-left print:px-1 print:py-[10px]">{row.remark ?? '-'}</td>
+                                                </tr>
+                                            ))}
+                                            <tr className="font-semibold">
+                                                <td colSpan={4} className="border border-black px-2 py-1.5 text-right print:px-1 print:py-[10px]">Total</td>
+                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">₹{highestTotals.total_cost.toLocaleString()}</td>
+                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]">{highestTotals.total_percent.toFixed(2)}%</td>
+                                                <td className="border border-black px-2 py-1.5 print:px-1 print:py-[8px]"></td>
+                                            </tr>
+                                        </>
+                                    )}
                                 </tbody>
 
                             </table>
@@ -2288,15 +2734,21 @@ const AllContent: React.FC = () => {
                     <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold">
                         <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
                             Active AMC Contracts<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">60</span>
+                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                                {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.active.toLocaleString() : '-')}
+                            </span>
                         </div>
                         <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
                             Contract Expiry in 90 Days<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">23</span>
+                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                                {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
+                            </span>
                         </div>
                         <div className="px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
                             Contract Expired<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">14</span>
+                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                                {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expired.toLocaleString() : '-')}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -2321,83 +2773,27 @@ const AllContent: React.FC = () => {
                             </thead>
 
                             <tbody className="text-left">
-                                {[
-                                    {
-                                        site: "Sai Radhe, Bund Garden",
-                                        amc: "Air Condition",
-                                        start: "01st Jan 2024",
-                                        end: "31st Dec 2024",
-                                        reminder: "Expires in 6 months",
-                                        cost: "₹360,000",
-                                        contact: "John Doe (Vendor A)",
-                                        highlight: false,
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        amc: "Diesel Generator",
-                                        start: "15th Mar 2023",
-                                        end: "14th Mar 2024",
-                                        reminder: "Expires in 1 Month",
-                                        cost: "₹300,000",
-                                        contact: "Jane Smith",
-                                        highlight: true,
-                                    },
-                                    {
-                                        site: "Peninsula Corporate Park,",
-                                        amc: "Camera",
-                                        start: "01st Jul 2023",
-                                        end: "30th Jun 2024",
-                                        reminder: "Expires in 3 months",
-                                        cost: "₹480,000",
-                                        contact: "Robert Brown",
-                                        highlight: false,
-                                    },
-                                    {
-                                        site: "Koncord Towers, Bund Garden",
-                                        amc: "Printer",
-                                        start: "31th Dec 2023",
-                                        end: "31st Dec 2024",
-                                        reminder: "Expires in 7 days",
-                                        cost: "₹240,000",
-                                        contact: "Mike Lee",
-                                        highlight: true,
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        amc: "Air Condition",
-                                        start: "01st Apr 2023",
-                                        end: "31st Dec 2024",
-                                        reminder: "Expires in 1 month",
-                                        cost: "₹360,000",
-                                        contact: "John Doe (Vendor A)",
-                                        highlight: true,
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        amc: "Diesel Generator",
-                                        start: "01st Jan 2024",
-                                        end: "31st Dec 2024",
-                                        reminder: "Expires in 6 months",
-                                        cost: "₹420,000",
-                                        contact: "Linda Green",
-                                        highlight: false,
-                                    },
-                                ].map((row, i) => (
-                                    <tr key={i} className="bg-white">
-                                        <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.start}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.end}</td>
-                                        <td
-                                            className={`border px-4 py-3 print:border print:border-black print:px-1 print:py-1.5 ${row.highlight ? "text-[#c72030] font-semibold" : ""
-                                                }`}
-                                        >
-                                            {row.reminder}
-                                        </td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.cost}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.contact}</td>
+                                {loadingAmcContractSummary ? (
+                                    <tr>
+                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
                                     </tr>
-                                ))}
+                                ) : amcExpiringContracts.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
+                                    </tr>
+                                ) : (
+                                    amcExpiringContracts.map((row: any, i: number) => (
+                                        <tr key={i} className="bg-white">
+                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:border print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
 
@@ -2427,72 +2823,27 @@ const AllContent: React.FC = () => {
 
 
                             <tbody className="text-left">
-                                {[
-                                    {
-                                        siteName: "Sai Radhe, Bund Garden",
-                                        amcName: "Air Condition",
-                                        startDate: "01st Jan 2024",
-                                        endDate: "31st Dec 2024",
-                                        status: "Expired",
-                                        cost: "₹360,000",
-                                        contact: "John Doe (Vendor A)",
-                                    },
-                                    {
-                                        siteName: "Westport, Baner",
-                                        amcName: "Diesel Generator",
-                                        startDate: "15th Mar 2023",
-                                        endDate: "14th Mar 2024",
-                                        status: "Expired",
-                                        cost: "₹300,000",
-                                        contact: "Jane Smith",
-                                    },
-                                    {
-                                        siteName: "Peninsula Corporate Park,",
-                                        amcName: "Camera",
-                                        startDate: "01st Jul 2023",
-                                        endDate: "30th Jun 2024",
-                                        status: "Expired",
-                                        cost: "₹480,000",
-                                        contact: "Robert Brown",
-                                    },
-                                    {
-                                        siteName: "Koncord Towers, Bund Garden",
-                                        amcName: "Printer",
-                                        startDate: "31th Dec 2023",
-                                        endDate: "31st Dec 2024",
-                                        status: "Expired",
-                                        cost: "₹240,000",
-                                        contact: "Mike Lee",
-                                    },
-                                    {
-                                        siteName: "Westport, Baner",
-                                        amcName: "Air Condition",
-                                        startDate: "01st Apr 2023",
-                                        endDate: "31st Dec 2024",
-                                        status: "Expired",
-                                        cost: "₹360,000",
-                                        contact: "John Doe (Vendor A)",
-                                    },
-                                    {
-                                        siteName: "Westport, Baner",
-                                        amcName: "Diesel Generator",
-                                        startDate: "01st Jan 2024",
-                                        endDate: "31st Dec 2024",
-                                        status: "Expired",
-                                        cost: "₹420,000",
-                                        contact: "Linda Green",
-                                    },
-                                ].map((row, i) => (
-                                    <tr key={i} className={"bg-white"}>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.siteName}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.amcName}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.startDate}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.endDate}</td>
-                                        <td className="border px-4 py-3 font-semibold print:px-1 print:py-2">{row.status}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.cost}</td>
-                                        <td className="border px-4 py-3 print:px-1 print:py-2">{row.contact}</td>
+                                {loadingAmcContractSummary ? (
+                                    <tr>
+                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">Loading...</td>
                                     </tr>
-                                ))}
+                                ) : amcExpiredContracts.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="border px-4 py-3 text-center print:px-1 print:py-2">No data available</td>
+                                    </tr>
+                                ) : (
+                                    amcExpiredContracts.map((row: any, i: number) => (
+                                        <tr key={i} className={"bg-white"}>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 font-semibold print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
 
@@ -2509,12 +2860,55 @@ const AllContent: React.FC = () => {
             <div className="print-page break-before-page">
                 <div className="py-6 bg-white min-h-screen text-black print:bg-white print:text-black print:p-2 print:w-[100%] print:mx-auto no-break">
 
-                    <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
+                                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
                         Checklist Management
                     </h1>
 
+                                        {/* Print-specific styles to improve table fit and prevent header/arrow overflow */}
+                                        <style>{`
+                                            @media print {
+                                                /* General tightening for both checklist tables */
+                                                .checklist-progress-table table,
+                                                .overdue-table table {
+                                                    font-size: 9px !important;
+                                                }
+                                                .checklist-progress-table th,
+                                                .checklist-progress-table td,
+                                                .overdue-table th,
+                                                .overdue-table td {
+                                                    padding: 2px 4px !important;
+                                                    line-height: 1.15 !important;
+                                                    vertical-align: middle !important;
+                                                }
+                                                /* Allow long headers to wrap instead of overflowing */
+                                                .overdue-table thead th,
+                                                .checklist-progress-table thead th {
+                                                    white-space: normal !important;
+                                                    word-break: break-word !important;
+                                                    overflow-wrap: anywhere !important;
+                                                    hyphens: auto !important;
+                                                }
+                                                /* Slightly smaller header text */
+                                                .overdue-table thead th,
+                                                .checklist-progress-table thead th {
+                                                    font-size: 9px !important;
+                                                }
+                                                /* Ensure arrows don’t stretch row height */
+                                                .arrow-print {
+                                                    font-size: 10px !important;
+                                                    line-height: 1 !important;
+                                                    display: inline-block !important;
+                                                    transform: translateY(-1px);
+                                                }
+                                                /* Narrow the first column a bit to free space for categories */
+                                                .overdue-table .site-col {
+                                                    width: 16% !important;
+                                                }
+                                            }
+                                        `}</style>
+
                     {/* Table 1: Checklist Progress Status */}
-                    <div className="border border-gray-300 px-3 rounded mb-10 comment  print:mb-2 min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px]">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Checklist Progress Status – Center-Wise Quarterly Comparison
                         </div>
@@ -2530,81 +2924,74 @@ const AllContent: React.FC = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {[
-                                    {
-                                        site: "Sai Radhe, Bund Garden",
-                                        open: "38%",
-                                        inProgress: "38%",
-                                        overdue: { current: "38%", last: "40%", change: "down" },
-                                        partiallyClosed: "38%",
-                                        closed: { current: "38%", last: "40%", change: "up" },
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        open: "22%",
-                                        inProgress: "22%",
-                                        overdue: { current: "22%", last: "10%", change: "up" },
-                                        partiallyClosed: "22%",
-                                        closed: { current: "22%", last: "10%", change: "down" },
-                                    },
-                                    {
-                                        site: "Peninsula Corporate Park",
-                                        open: "38%",
-                                        inProgress: "38%",
-                                        overdue: { current: "38%", last: "10%", change: "up" },
-                                        partiallyClosed: "38%",
-                                        closed: { current: "38%", last: "10%", change: "down" },
-                                    },
-                                    {
-                                        site: "Koncord Towers, Bund Garden",
-                                        open: "22%",
-                                        inProgress: "22%",
-                                        overdue: { current: "22%", last: "12%", change: "up" },
-                                        partiallyClosed: "22%",
-                                        closed: { current: "22%", last: "12%", change: "down" },
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        open: "38%",
-                                        inProgress: "38%",
-                                        overdue: { current: "38%", last: "10%", change: "up" },
-                                        partiallyClosed: "38%",
-                                        closed: { current: "38%", last: "10%", change: "down" },
-                                    },
-                                    {
-                                        site: "Westport, Baner",
-                                        open: "22%",
-                                        inProgress: "22%",
-                                        overdue: { current: "22%", last: "10%", change: "down" },
-                                        partiallyClosed: "22%",
-                                        closed: { current: "22%", last: "10%", change: "up" },
-                                    },
-                                ].map((row, i) => (
-                                    <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                        <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">
-                                            {row.site}
-                                        </td>
-                                        <td className="py-5 px-4 print:py-2 print:px-2">{row.open}</td>
-                                        <td className="py-5 px-4 print:py-2 print:px-2">{row.inProgress}</td>
-                                        <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                            {row.overdue.current} | {row.overdue.last}{" "}
-                                            {row.overdue.change === "up" ? (
-                                                <span className="text-red-600">▲</span>
-                                            ) : (
-                                                <span className="text-green-600">▼</span>
-                                            )}
-                                        </td>
-                                        <td className="py-5 px-4 print:py-2 print:px-2">{row.partiallyClosed}</td>
-                                        <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
-                                            {row.closed.current} | {row.closed.last}{" "}
-                                            {row.closed.change === "up" ? (
-                                                <span className="text-green-600">▲</span>
-                                            ) : (
-                                                <span className="text-red-600">▼</span>
-                                            )}
+                                {loadingSiteWiseChecklist ? (
+                                    <tr>
+                                        <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                            Loading checklist progress...
                                         </td>
                                     </tr>
-                                ))}
+                                ) : checklistProgress.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="py-6 text-center text-gray-500 print:py-2">
+                                            No checklist progress data available
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    checklistProgress.map((row: any, i: number) => {
+                                        const site = row.site_name ?? row.center_name ?? row.site ?? '-';
+                                        const cur = row.current ?? {};
+                                        const diff = row.difference ?? row.delta ?? {};
+                                        const fmt = (v: any) =>
+                                            typeof v === 'number'
+                                                ? `${v.toFixed(2)}%`
+                                                : typeof v === 'string' && v.match(/%$/)
+                                                    ? v
+                                                    : v != null
+                                                        ? `${v}%`
+                                                        : '0%';
+                                        const toNum = (v: any) => {
+                                            if (typeof v === 'number') return v;
+                                            if (typeof v === 'string') {
+                                                const s = v.trim().replace('%', '');
+                                                const n = parseFloat(s);
+                                                return isNaN(n) ? 0 : n;
+                                            }
+                                            return 0;
+                                        };
+                                        // Overdue: show current | last with colored arrow (increase = red ▲, decrease = green ▼)
+                                        const curOverNum = toNum(cur.overdue);
+                                        const diffOverNum = toNum(diff.overdue ?? 0);
+                                        const lastOverNum = curOverNum - diffOverNum;
+                                        const overdueArrowUp = diffOverNum > 0;
+                                        const overdueArrowDown = diffOverNum < 0;
+                                        // Closed: show current | last with colored arrow (increase = green ▲, decrease = red ▼)
+                                        const curClosedNum = toNum(cur.closed);
+                                        const diffClosedNum = toNum(diff.closed ?? 0);
+                                        const lastClosedNum = curClosedNum - diffClosedNum;
+                                        const closedArrowUp = diffClosedNum > 0;
+                                        const closedArrowDown = diffClosedNum < 0;
+                                        return (
+                                            <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
+                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open)}</td>
+                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
+                                                <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
+                                                    {fmt(curOverNum)} | {fmt(lastOverNum)}{' '}
+                                                    {overdueArrowUp && <span className="text-red-600 arrow-print">▲</span>}
+                                                    {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
+                                                    {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
+                                                </td>
+                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed)}</td>
+                                                <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
+                                                    {fmt(curClosedNum)} | {fmt(lastClosedNum)}{' '}
+                                                    {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
+                                                    {closedArrowDown && <span className="text-red-600 arrow-print">▼</span>}
+                                                    {!closedArrowUp && !closedArrowDown && <span className="text-gray-400">—</span>}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
@@ -2613,77 +3000,57 @@ const AllContent: React.FC = () => {
                     </div>
 
                     {/* Table 2: Top 10 Overdue Checklists */}
-                    <div className="border border-gray-300 px-3 rounded comment  min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px]">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Top 10 Overdue Checklists – Center-wise Contribution Comparison
                         </div>
                         <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] ">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
-                                    <th className="py-4 px-4 print:py-2 print:px-2 print:w-[15%]">Category</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Pest Control Checklist</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Plants Hydration</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Fire Alarm</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Sanitary Bins</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Pest Control</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Plants Hydration</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Fire Alarm</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Pest Control</th>
-                                    <th className="py-4 px-2 print:py-2 print:px-1 print:w-[8.5%]">Pest Control</th>
+                                    <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
+                                    {top10Overdue.categories.map((cat, idx) => (
+                                        <th key={idx} className="py-4 px-2 text-center print:py-2 print:px-1">
+                                            {cat}
+                                        </th>
+                                    ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {[
-                                    {
-                                        category: "Sai Radhe, Bund Garden",
-                                        values: ["38%", "12%", "8%", "27%", "25%", "13%", "20%", "11%", "56%"],
-                                    },
-                                    {
-                                        category: "Westport,Baner",
-                                        values: ["22%", "24%", "12%", "17%", "1%", "63%", "96%", "7%", "14%"],
-                                    },
-                                    {
-                                        category: "Westport,Baner",
-                                        values: ["10%", "30%", "12%", "3%", "8%", "63%", "96%", "3%", "20%"],
-                                    },
-                                    {
-                                        category: "Peninsula Corporate Park,",
-                                        values: ["4%", "6%", "8%", "0%", "15%", "63%", "96%", "2%", "5%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                    {
-                                        category: "Koncord, Bund Garden",
-                                        values: ["0%", "4%", "8%", "10%", "1%", "20%", "20%", "0%", "4%"],
-                                    },
-                                ].map((row, i) => (
-                                    <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                        <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{row.category}</td>
-                                        {row.values.map((value, index) => (
-                                            <td key={index} className="py-5 px-2 text-center print:py-2 print:px-1">
-                                                {value}
-                                            </td>
-                                        ))}
+                                {loadingSiteWiseChecklist ? (
+                                    <tr>
+                                        <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                            Loading top overdue checklists...
+                                        </td>
                                     </tr>
-                                ))}
+                                ) : !top10Overdue.categories.length || !top10Overdue.siteRows.length ? (
+                                    <tr>
+                                        <td colSpan={(top10Overdue.categories.length || 0) + 1} className="py-6 text-center text-gray-500 print:py-2">
+                                            No overdue checklist data available
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    top10Overdue.siteRows.map((site, i) => {
+                                        const byCat = new Map<string, number>();
+                                        if (Array.isArray(site.categories)) {
+                                            site.categories.forEach((c: any) => {
+                                                if (c && typeof c.category === 'string') {
+                                                    byCat.set(c.category, Number(c.overdue_percentage ?? 0));
+                                                }
+                                            });
+                                        }
+                                        const fmt = (n: number) => `${Number(n || 0).toFixed(0)}%`;
+                                        return (
+                                            <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
+                                                <td className="py-5 px-4 site-col bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site.site_name ?? '-'}</td>
+                                                {top10Overdue.categories.map((cat, j) => (
+                                                    <td key={j} className="py-5 px-2 text-center print:py-2 print:px-1">
+                                                        {fmt(byCat.get(cat) ?? 0)}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        );
+                                    })
+                                )}
                             </tbody>
                         </table>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
@@ -2709,22 +3076,21 @@ const AllContent: React.FC = () => {
                         <hr className="border-t border-gray-300 mb-6 print:mb-2" />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 print:grid-cols-2 gap-6 print:gap-3 print:w-[92%] print:mx-auto">
-                            {[
-                                { label: "Over Stock Items", value: "220" },
-                                { label: "Under Stock Items", value: "326" },
-                                { label: "Total Value Of Inventory", value: "₹ 3,27,35,227" },
-                                { label: "Capital Blocked In Overstocking", value: "₹ 3,12,54,499" },
-                                { label: "Total Value Of Spares", value: "₹ 2,04,004" },
-                                { label: "Total Value Of Consumables", value: "₹ 3,25,31,223" },
-                            ].map((item, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-[#f2eee9] p-6 text-center shadow-sm print:bg-[#f2eee9] print:p-3 print:shadow-none print:text-[10px] print:leading-relaxed"
-                                >
-                                    <div className="text-xl font-extrabold mb-1 print:text-[12px] print:mb-2">{item.value}</div>
-                                    <div className="text-gray-700 text-sm print:text-[10px]">{item.label}</div>
-                                </div>
-                            ))}
+                            {loadingInventoryOverstockReport ? (
+                                <div className="col-span-2 text-center text-gray-500 print:text-[10px]">Loading overview...</div>
+                            ) : !overstockSummary ? (
+                                <div className="col-span-2 text-center text-gray-500 print:text-[10px]">No overview data available</div>
+                            ) : (
+                                inventoryOverviewCards.map((item, index) => (
+                                    <div
+                                        key={index}
+                                        className="bg-[#f2eee9] p-6 text-center shadow-sm print:bg-[#f2eee9] print:p-3 print:shadow-none print:text-[10px] print:leading-relaxed"
+                                    >
+                                        <div className="text-xl font-extrabold mb-1 print:text-[12px] print:mb-2">{item.value}</div>
+                                        <div className="text-gray-700 text-sm print:text-[10px]">{item.label}</div>
+                                    </div>
+                                ))
+                            )}
                         </div>
                     </div>
 
@@ -2774,48 +3140,55 @@ const AllContent: React.FC = () => {
 
                         </div>
                         <div className="overflow-x-auto print:overflow-x-visible">
-                            <table className="overstock-table print:border-separate">
-                                <tbody>
-                                    {itemss.map((item, rowIdx) => (
-                                        <tr key={rowIdx}>
-                                            <td
-                                                className="p-2  text-xs text-end font-semibold bg-white w-[150px] mx-0 my-0 
+                            {loadingInventoryOverstockReport ? (
+                                <div className="text-center text-gray-500 text-sm print:text-[10px]">Loading overstock items...</div>
+                            ) : (!itemss?.length || !sitesk?.length) ? (
+                                <div className="text-center text-gray-500 text-sm print:text-[10px]">No overstock analysis data available</div>
+                            ) : (
+                                <>
+                                    <table className="overstock-table print:border-separate">
+                                        <tbody>
+                                            {itemss.map((item, rowIdx) => (
+                                                <tr key={rowIdx}>
+                                                    <td
+                                                        className="p-2  text-xs text-end font-semibold bg-white w-[150px] mx-0 my-0 
                                     print:text-[10px] print:font-semibold print:bg-white print:w-[150px] print:text-left print:mx-2 print:my-1"
-                                            >
-                                                {item.name}
-                                            </td>
-                                            {item.capital.map((cap, colIdx) => (
-                                                <Block
-                                                    key={colIdx}
-                                                    capital={cap}
-                                                    stock={item.stock[colIdx]}
-                                                />
+                                                    >
+                                                        {item.name}
+                                                    </td>
+                                                    {item.capital.map((cap, colIdx) => (
+                                                        <Block
+                                                            key={colIdx}
+                                                            capital={cap}
+                                                            stock={item.stock[colIdx]}
+                                                        />
+                                                    ))}
+                                                </tr>
                                             ))}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr>
-                                        <th
-                                            className="w-[150px] bg-white mx-0 my-0 
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <th
+                                                    className="w-[150px] bg-white mx-0 my-0 
                                 print:w-[150px] print:bg-white print:mx-1 print:my-1"
-                                        ></th>
-                                        {sitesk.map((site, idx) => (
-                                            <th
-                                                key={idx}
-                                                className="p-2   text-[10px] font-medium text-center bg-white w-20 mx-0 my-0 
+                                                ></th>
+                                                {sitesk.map((site, idx) => (
+                                                    <th
+                                                        key={idx}
+                                                        className="p-2   text-[10px] font-medium text-center bg-white w-20 mx-0 my-0 
                                     print:text-[8px] print:font-medium print:text-center print:bg-white print:w-20 print:mx-1 print:my-1"
-                                            >
-                                                {site}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </tfoot>
-                            </table>
-                            <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                                <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
-                                breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
-                            </div>
+                                                    >
+                                                        {site}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                    <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
+                                        <strong>Note :</strong> This grid shows the Top 10 overstocked items per site. Each cell displays the capital blocked (in k) and the current stock (in %).
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
 
@@ -2837,35 +3210,41 @@ const AllContent: React.FC = () => {
                             Top Consumables – Centre-wise Overview
                         </div>
                         <div className="overflow-auto print:overflow-visible">
-                            <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
-                                <thead>
-                                    <tr className="bg-[#DAD6C9] text-[#C72030] text-left print:bg-[#DAD6C9] print:text-[#C72030]">
-                                        <th className="py-1 px-4 print:py-1 print:px-2 print:w-[17%]">Inventory</th>
-                                        {headers.map((header, index) => (
-                                            <th
-                                                key={index}
-                                                className="py-1 px-2 text-left print:py-1 print:px-2 print:w-[9%]"
-                                            >
-                                                {header}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {tablesData.map((row, i) => (
-                                        <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                            <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE]">
-                                                {row.inventory}
-                                            </td>
-                                            {row.values.map((value, j) => (
-                                                <td key={j} className="py-1 px-2 text-center print:py-1 print:px-2">
-                                                    {value}
-                                                </td>
+                            {loadingCenterWiseConsumables ? (
+                                <div className="p-4 text-sm text-gray-600">Loading center-wise consumables…</div>
+                            ) : topConsumableHeaders.length === 0 ? (
+                                <div className="p-4 text-sm text-gray-600">No consumables data available.</div>
+                            ) : (
+                                <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
+                                    <thead>
+                                        <tr className="bg-[#DAD6C9] text-[#C72030] text-left print:bg-[#DAD6C9] print:text-[#C72030]">
+                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[20%]">Inventory</th>
+                                            {topConsumableHeaders.map((header, index) => (
+                                                <th
+                                                    key={index}
+                                                    className="py-1 px-2 text-left print:py-1 print:px-2"
+                                                >
+                                                    {header}
+                                                </th>
                                             ))}
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        {consumablesTableData.map((row, i) => (
+                                            <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
+                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE]">
+                                                    {row.inventory}
+                                                </td>
+                                                {row.values.map((value, j) => (
+                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-2">
+                                                        {value}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
 
 
@@ -2884,57 +3263,65 @@ const AllContent: React.FC = () => {
                             Consumable Inventory Value – Quarterly Comparison
                         </h2>
                         <div className="h-[500px] print:h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={inventoryData}
-                                    margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
-                                    barCategoryGap={20}
-                                >
-                                    <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
-                                    <XAxis
-                                        dataKey="site"
-                                        angle={-45}
-                                        textAnchor="end"
-                                        interval={0}
-                                        height={100}
-                                        tick={{ fontSize: 14 }}
-                                    />
-                                    <YAxis
-                                        domain={[0, 16000]}
-                                        ticks={[0, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000]}
-                                        tickFormatter={(v) => `${v / 1000}k`}
+                            {loadingConsumableInventoryComparison ? (
+                                <div className="p-4 text-sm text-gray-600">Loading consumable comparison…</div>
+                            ) : consumableComparisonRows.length === 0 ? (
+                                <div className="p-4 text-sm text-gray-600">No consumable comparison data available.</div>
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart
+                                        data={consumableComparisonRows}
+                                        margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
+                                        barCategoryGap={20}
                                     >
-                                        <Label
-                                            value="Total Value of Consumption"
-                                            angle={-90}
-                                            position="insideLeft"
-                                            className="text-sm"
+                                        <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="site"
+                                            angle={-45}
+                                            textAnchor="end"
+                                            interval={0}
+                                            height={100}
+                                            tick={{ fontSize: 12 }}
                                         />
-                                    </YAxis>
-                                    <Tooltip content={CustomTooltip} cursor={{ fill: "rgba(0, 0, 0, 0.05)" }} />
-
-                                    <Legend
-                                        iconType="circle"
-                                        wrapperStyle={{ fontSize: "14px" }}
-                                        verticalAlign="top"
-                                        align="right"
-                                    />
-                                    <Bar
-                                        dataKey="lastQuarter"
-                                        fill="#D6BBAF" // Light Beige
-                                        name="Last Quarter"
-                                        barSize={40}
-                                        label={{ position: "top", formatter: (val) => `${val / 1000}k`, fill: "#444" }}
-                                    />
-                                    <Bar
-                                        dataKey="currentQuarter"
-                                        fill="#D3D6D4" // Light Grey like your screenshot
-                                        name="Current Quarter"
-                                        barSize={40}
-                                        label={{ position: "top", formatter: (val) => `${val / 1000}k`, fill: "#444" }}
-                                    />
-                                </BarChart>
-                            </ResponsiveContainer>
+                                        <YAxis
+                                            domain={[0, consumableMaxRaw || 0]}
+                                            ticks={consumableTicks}
+                                            tickFormatter={(v) => formatToK(v)}
+                                        >
+                                            <Label
+                                                // value="Total Value of Consumption"
+                                                angle={-90}
+                                                position="insideLeft"
+                                                className="text-sm"
+                                            />
+                                        </YAxis>
+                                        <Tooltip
+                                            formatter={(val: any) => formatToK(val)}
+                                            cursor={{ fill: "rgba(0, 0, 0, 0.05)" }}
+                                        />
+                                        <Legend
+                                            iconType="circle"
+                                            wrapperStyle={{ fontSize: "12px" }}
+                                            verticalAlign="top"
+                                            align="right"
+                                        />
+                                        <Bar
+                                            dataKey="lastQuarter"
+                                            fill="#D6BBAF"
+                                            name="Last Quarter"
+                                            barSize={40}
+                                            label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
+                                        />
+                                        <Bar
+                                            dataKey="currentQuarter"
+                                            fill="#D3D6D4"
+                                            name="Current Quarter"
+                                            barSize={40}
+                                            label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
+                                        />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
                         </div>
                         <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
                             <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
@@ -2959,46 +3346,49 @@ const AllContent: React.FC = () => {
 
                     {/* Chart */}
                     <div className="w-full overflow-x-auto">
-                        <BarChart
-                            width={800}
-                            height={700}
-                            data={Perdata}
-                            layout="vertical"
-                            margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
-                            barCategoryGap="10%"
-                            barGap={0}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                type="number"
-                                label={{
-                                    value: "Count of Parking Slots",
-                                    position: "insideBottom",
-                                    offset: -5,
-                                }}
-                                tick={{ fontSize: 12 }}
-                            />
-                            <YAxis
-                                type="category"
-                                dataKey="site"
-                                tick={{ fontSize: 12 }}
-                                width={140}
-                            />
-                            <Tooltip />
-                            <Legend verticalAlign="top" align="right" />
-                            <Bar dataKey="Free" fill="#a0b5c1" name="Free">
-                                <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }}
+                        {loadingParkingDateSiteWise ? (
+                            <div className="text-center py-6 text-gray-600">Loading parking data…</div>
+                        ) : parkingChartData.length === 0 ? (
+                            <div className="text-center py-6 text-gray-600">No parking data available.</div>
+                        ) : (
+                            <BarChart
+                                width={800}
+                                height={Math.max(300, parkingChartData.length * 50)}
+                                data={parkingChartData}
+                                layout="vertical"
+                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                barCategoryGap="10%"
+                                barGap={3}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis
+                                    type="number"
+                                    label={{
+                                        value: "Count of Parking Slots",
+                                        position: "insideBottom",
+                                        offset: -5,
+                                    }}
+                                    tick={{ fontSize: 12 }}
                                 />
-                            </Bar>
-                            <Bar dataKey="Paid" fill="#c5ae94" name="Paid">
-                                <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }}
+                                <YAxis
+                                    type="category"
+                                    dataKey="site"
+                                    tick={{ fontSize: 12 }}
+                                    width={200}
                                 />
-                            </Bar>
-                            <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant">
-                                <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }}
-                                />
-                            </Bar>
-                        </BarChart>
+                                <Tooltip />
+                                <Legend verticalAlign="top" align="right" />
+                                <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                    <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                </Bar>
+                                <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                    <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                </Bar>
+                                <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                    <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                </Bar>
+                            </BarChart>
+                        )}
                     </div>
 
                     {/* Bottom note */}
@@ -3024,39 +3414,45 @@ const AllContent: React.FC = () => {
 
                     {/* Chart container with max height and scroll in screen if needed */}
                     <div className="w-full overflow-x-auto">
-                        <BarChart
-                            width={800}
-                            height={700}
-                            data={visitorData}
-                            layout="vertical"
-                            barCategoryGap="20%"
-                            barGap={5}
-                            margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                type="number"
-                                label={{ value: "Counts", position: "insideBottom", offset: -5 }}
-                                fontSize={15}
-                            />
-                            <YAxis
-                                type="category"
-                                dataKey="site"
-                                tick={{ fontSize: 12 }}
-                                width={140}
-                                fontSize={15}
-                            />
-                            <Tooltip />
-                            <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                        {loadingVisitorTrendAnalysis ? (
+                            <div className="p-4 text-sm text-gray-600">Loading visitor trends…</div>
+                        ) : visitorTrendRows.length === 0 ? (
+                            <div className="p-4 text-sm text-gray-600">No visitor trend data available.</div>
+                        ) : (
+                            <BarChart
+                                width={800}
+                                height={visitorChartHeight}
+                                data={visitorTrendRows}
+                                layout="vertical"
+                                barCategoryGap="10%"
+                                barGap={3}
+                                margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis
+                                    type="number"
+                                    label={{ value: "Counts", position: "insideBottom", offset: -5 }}
+                                    fontSize={15}
+                                />
+                                <YAxis
+                                    type="category"
+                                    dataKey="site"
+                                    tick={{ fontSize: 12 }}
+                                    width={180}
+                                    fontSize={15}
+                                />
+                                <Tooltip />
+                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
 
-                            <Bar dataKey="last" fill="#dad8cf" name="Last Quarter">
-                                <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
-                            </Bar>
+                                <Bar dataKey="last" fill="#dad8cf" name="Last Quarter" barSize={28}>
+                                    <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                </Bar>
 
-                            <Bar dataKey="current" fill="#c5ae94" name="Current Quarter">
-                                <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
-                            </Bar>
-                        </BarChart>
+                                <Bar dataKey="current" fill="#c5ae94" name="Current Quarter" barSize={28}>
+                                    <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                </Bar>
+                            </BarChart>
+                        )}
                     </div>
 
 

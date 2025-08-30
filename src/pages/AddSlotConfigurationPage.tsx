@@ -15,18 +15,24 @@ import {
   CreateParkingConfigurationRequest,
   ParkingSlotData 
 } from '../services/parkingConfigurationsAPI';
+import { 
+  fetchParkingCategories, 
+  ParkingCategory 
+} from '../services/parkingConfigAPI';
 
 export const AddSlotConfigurationPage = () => {
   const navigate = useNavigate();
   const { setCurrentSection } = useLayout();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
+  const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     building_id: '',
     floor_id: '',
+    qrcode_needed: false,
     twoWheeler: {
       nonStack: 0, // Initial value for better visualization
       stack: 0,    // Initial value for better visualization
@@ -66,10 +72,22 @@ export const AddSlotConfigurationPage = () => {
     }
   }, []);
 
+  const fetchParkingCategoriesData = useCallback(async () => {
+    try {
+      const categoriesData = await fetchParkingCategories();
+      setParkingCategories(categoriesData);
+      console.log('Fetched parking categories:', categoriesData);
+    } catch (error) {
+      console.error('Error fetching parking categories:', error);
+      toast.error('Failed to fetch parking categories');
+    }
+  }, []);
+
   useEffect(() => {
     setCurrentSection('Settings');
     fetchBuildingsData();
-  }, [setCurrentSection, fetchBuildingsData]);
+    fetchParkingCategoriesData();
+  }, [setCurrentSection, fetchBuildingsData, fetchParkingCategoriesData]);
 
   useEffect(() => {
     if (formData.building_id) {
@@ -100,6 +118,27 @@ export const AddSlotConfigurationPage = () => {
       return;
     }
 
+    // Find category IDs dynamically
+    const twoWheelerCategory = parkingCategories.find(category => 
+      category.name.toLowerCase().includes('2') && 
+      category.name.toLowerCase().includes('wheeler')
+    );
+    
+    const fourWheelerCategory = parkingCategories.find(category => 
+      category.name.toLowerCase().includes('4') && 
+      category.name.toLowerCase().includes('wheeler')
+    );
+
+    if (!twoWheelerCategory || !fourWheelerCategory) {
+      toast.error('Unable to find parking categories. Please ensure 2 Wheeler and 4 Wheeler categories exist.');
+      return;
+    }
+
+    console.log('Found categories:', {
+      twoWheeler: twoWheelerCategory,
+      fourWheeler: fourWheelerCategory
+    });
+
     try {
       setSubmitting(true);
       
@@ -110,21 +149,28 @@ export const AddSlotConfigurationPage = () => {
       const requestData: CreateParkingConfigurationRequest = {
         building_id: formData.building_id,
         floor_id: formData.floor_id,
-        '5': { // 2 Wheeler category ID
+        // qrcode_needed: true, // Add QR code generation flag
+        [twoWheelerCategory.id]: { // Use dynamic 2 Wheeler category ID
           no_of_parkings: twoWheelerSlots.length,
           reserved_parkings: twoWheelerSlots.filter(slot => slot.reserved).length,
           parking: twoWheelerSlots
         },
-        '6': { // 4 Wheeler category ID  
+        [fourWheelerCategory.id]: { // Use dynamic 4 Wheeler category ID  
           no_of_parkings: fourWheelerSlots.length,
           reserved_parkings: fourWheelerSlots.filter(slot => slot.reserved).length,
           parking: fourWheelerSlots
         }
       };
 
+      // Add image if selected
+      if (formData.floorMap) {
+        requestData.attachment = formData.floorMap;
+      }
+
       console.log('Submitting parking configuration:', requestData);
       console.log('Two Wheeler Slots:', twoWheelerSlots);
       console.log('Four Wheeler Slots:', fourWheelerSlots);
+      console.log('Floor Map File:', formData.floorMap ? formData.floorMap.name : 'None selected');
       
       await createParkingConfiguration(requestData);
       toast.success('Parking configuration created successfully!');
@@ -308,7 +354,7 @@ export const AddSlotConfigurationPage = () => {
 
       <div className="bg-white rounded-lg p-6 shadow-sm">
         {/* Location and Floor Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">Location</label>
             <Select 
@@ -352,6 +398,22 @@ export const AddSlotConfigurationPage = () => {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+        </div>
+
+        {/* QR Code Configuration */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              id="qrcode_needed"
+              checked={formData.qrcode_needed}
+              onChange={(e) => setFormData(prev => ({ ...prev, qrcode_needed: e.target.checked }))}
+              className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-black-500 focus:ring-2"
+            />
+            <label htmlFor="qrcode_needed" className="text-sm font-medium text-gray-700">
+              QR Code Needed for Parking Access
+            </label>
           </div>
         </div>
 
