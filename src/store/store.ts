@@ -49,9 +49,9 @@ import { createEventReducer, fetchEventByIdReducer, fetchEventsReducer } from '.
 import { createUserGroupReducer, fetchUserGroupsReducer } from './slices/userGroupSlice'
 import { createBroadcastReducer, fetchBroadcastByIdReducer, fetchBroadcastsReducer } from './slices/broadcastSlice'
 import { addWOInvoiceReducer, approveRejectWOReducer, fetchBOQReducer, fetchWorkOrdersReducer, getWorkOrderByIdReducer } from './slices/workOrderSlice'
-import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer, updateActiveStausReducer } from './slices/materialPRSlice'
+import { changePlantDetailsReducer, createMaterialPRReducer, fetchWBSReducer, getAddressesReducer, getFeedsReducer, getInventoriesReducer, getMaterialPRByIdReducer, getMaterialPRReducer, getPlantDetailsReducer, getSuppliersReducer, updateActiveStausReducer, updateMaterialPRReducer } from './slices/materialPRSlice'
 import { approvePOReducer, createPurchaseOrderReducer, getPurchaseOrdersReducer, getUnitsReducer, materialPRChangeReducer, rejectPOReducer } from './slices/purchaseOrderSlice'
-import { createServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer, updateServiceActiveStausReducer } from './slices/servicePRSlice'
+import { createServicePRReducer, editServicePRReducer, getServiceFeedsReducer, getServicePrReducer, getServicesReducer, updateServiceActiveStausReducer } from './slices/servicePRSlice'
 import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer, getGRNFeedsReducer } from './slices/grnSlice'
 import { getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
@@ -193,6 +193,7 @@ export const store = configureStore({
     fetchWBS: fetchWBSReducer,
     getFeeds: getFeedsReducer,
     updateActiveStaus: updateActiveStausReducer,
+    updateMaterialPR: updateMaterialPRReducer,
 
     // Purchase Order
     getPurchaseOrders: getPurchaseOrdersReducer,
@@ -208,6 +209,7 @@ export const store = configureStore({
     getServices: getServicesReducer,
     getServiceFeeds: getServiceFeedsReducer,
     updateServiceActiveStaus: updateServiceActiveStausReducer,
+    editServicePR: editServicePRReducer,
 
     // Pending Approval
     fetchPendingApprovals: fetchPendingApprovalsReducer,

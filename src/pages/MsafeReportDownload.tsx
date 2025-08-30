@@ -176,11 +176,11 @@ const MsafeReportDownload = () => {
         setStatus('completed');
         setMessage('Report is ready to download.');
         setDownloadUrl(maybeUrl.startsWith('http') ? maybeUrl : `${baseUrl}${maybeUrl}`);
-  return;
+        return;
       }
 
-  // Begin polling against the status endpoint until completed
-  beginPolling();
+      // Begin polling against the status endpoint until completed
+      beginPolling();
     } catch (error: any) {
       clearPoll();
       setStatus('error');
@@ -226,13 +226,13 @@ const MsafeReportDownload = () => {
                 rel="noopener noreferrer"
                 className="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
               >
-                Open Download
+                Click to Download
               </a>
             )}
           </div>
         </div>
 
-  <Button onClick={startExport} disabled={status === 'processing'} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed">
+        <Button onClick={startExport} disabled={status === 'processing' || status === 'completed'} className="bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed">
           <FileText className="w-4 h-4 mr-2" />
           Download Report
         </Button>

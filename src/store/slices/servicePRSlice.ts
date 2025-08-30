@@ -77,6 +77,24 @@ export const createServicePR = createAsyncThunk(
     }
 )
 
+export const editServicePR = createAsyncThunk(
+    'editServicePR',
+    async ({ data, baseUrl, token, id }: { data: any, baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/work_orders/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const getServices = createAsyncThunk("getServices", async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
     try {
         const response = await axios.get(`https://${baseUrl}/pms/services/get_services.json`, {
@@ -127,9 +145,11 @@ const createServicePRSlice = createApiSlice("createServicePR", createServicePR);
 const getServicesSlice = createApiSlice("getServices", getServices);
 const getServiceFeedsSlice = createApiSlice("getServiceFeeds", getServiceFeeds);
 const updateServiceActiveStausSlice = createApiSlice("updateServiceActiveStaus", updateServiceActiveStaus);
+const editServicePRSlice = createApiSlice("editServicePR", editServicePR);
 
 export const getServicePrReducer = getServicePrSlice.reducer
 export const createServicePRReducer = createServicePRSlice.reducer
 export const getServicesReducer = getServicesSlice.reducer
 export const getServiceFeedsReducer = getServiceFeedsSlice.reducer
 export const updateServiceActiveStausReducer = updateServiceActiveStausSlice.reducer
+export const editServicePRReducer = editServicePRSlice.reducer

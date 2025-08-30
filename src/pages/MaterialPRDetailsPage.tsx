@@ -331,8 +331,27 @@ export const MaterialPRDetailsPage = () => {
     wbs_code: item.wbs_code ?? '-',
   })) ?? [];
 
-  const renderCell = (item, columnKey) => {
-    return item[columnKey] ?? '-';
+  const renderCell = (item: any, columnKey: string) => {
+    const value = item[columnKey] ?? "-";
+
+    if (columnKey === "prod_desc") {
+      const truncated = value.length > 30 ? value.slice(0, 30) + "..." : value; // adjust 30 as needed
+
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-pointer">{truncated}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-[20rem] text-wrap break-words">{value}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return value;
   };
 
   return (
@@ -587,7 +606,7 @@ export const MaterialPRDetailsPage = () => {
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='text-wrap break-words'>
             <p className="text-muted-foreground">{pr.terms_conditions ?? 'No terms and conditions available'}</p>
           </CardContent>
         </Card>
