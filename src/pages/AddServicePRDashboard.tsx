@@ -100,7 +100,7 @@ export const AddServicePRDashboard = () => {
   ]);
 
   const [attachedFiles, setAttachedFiles] = useState([]);
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -166,7 +166,7 @@ export const AddServicePRDashboard = () => {
       const cloneData = async () => {
         try {
           const response = await dispatch(getWorkOrderById({ baseUrl, token, id: cloneId })).unwrap();
-          const data = response.page
+          const data = response.page;
           setFormData({
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order.plant_detail_id,
@@ -182,7 +182,7 @@ export const AddServicePRDashboard = () => {
             subject: data.work_order.subject,
             description: data.work_order.description,
             termsConditions: data.work_order.term_condition,
-          })
+          });
 
           setDetailsForms(data.inventories.map((item, index) => ({
             id: index + 1,
@@ -204,16 +204,16 @@ export const AddServicePRDashboard = () => {
             amount: item.total_value,
             totalAmount: item.total_amount,
             wbsCode: "",
-          })))
+          })));
         } catch (error) {
-          console.log(error)
-          toast.error(error)
+          console.log(error);
+          toast.error(error);
         }
-      }
+      };
 
       cloneData();
     }
-  }, [shouldFetch])
+  }, [shouldFetch]);
 
   useEffect(() => {
     if (data.length > 0) {
@@ -246,22 +246,60 @@ export const AddServicePRDashboard = () => {
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantityArea) || 0;
     const rate = parseFloat(item.rate) || 0;
+    const cgstRate = parseFloat(item.cgstRate) || 0;
+    const sgstRate = parseFloat(item.sgstRate) || 0;
+    const igstRate = parseFloat(item.igstRate) || 0;
+    const tcsRate = parseFloat(item.tcsRate) || 0;
+
+    // Calculate base amount
     const amount = quantity * rate;
+
+    // Calculate tax amounts
+    const cgstAmt = (amount * cgstRate) / 100;
+    const sgstAmt = (amount * sgstRate) / 100;
+    const igstAmt = (amount * igstRate) / 100;
+    const tcsAmt = (amount * tcsRate) / 100;
+
+    // Calculate total tax amount
+    const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
+
+    // Calculate total amount including taxes
+    const totalAmount = amount + taxAmount;
 
     return {
       ...item,
       amount: amount.toFixed(2),
-      totalAmount: amount.toFixed(2),
+      cgstAmt: cgstAmt.toFixed(2),
+      sgstAmt: sgstAmt.toFixed(2),
+      igstAmt: igstAmt.toFixed(2),
+      tcsAmt: tcsAmt.toFixed(2),
+      taxAmount: taxAmount.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
     };
   };
 
   const handleDetailsChange = (id, field, value) => {
     setDetailsForms((prev) =>
-      prev.map((form) =>
-        form.id === id
-          ? calculateItem({ ...form, [field]: value })
-          : form
-      )
+      prev.map((form) => {
+        if (form.id === id) {
+          const updatedForm = { ...form, [field]: value };
+          // Recalculate only if relevant fields are changed
+          if (
+            [
+              "quantityArea",
+              "rate",
+              "cgstRate",
+              "sgstRate",
+              "igstRate",
+              "tcsRate",
+            ].includes(field)
+          ) {
+            return calculateItem(updatedForm);
+          }
+          return updatedForm;
+        }
+        return form;
+      })
     );
   };
 
@@ -305,9 +343,9 @@ export const AddServicePRDashboard = () => {
 
   useEffect(() => {
     if (formData.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: formData.plantDetail } })
+      handlePlantDetailsChange({ target: { name: "plantDetail", value: formData.plantDetail } });
     }
-  }, [formData.plantDetail])
+  }, [formData.plantDetail]);
 
   const handleFileUpload = (event) => {
     const files = event.target.files;
@@ -360,16 +398,16 @@ export const AddServicePRDashboard = () => {
         toast.error("Product Description is required for all items");
         return false;
       }
-      if (!item.quantityArea) {
-        toast.error("Quantity/Area is required for all items");
+      if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
+        toast.error("Quantity/Area must be a valid positive number for all items");
         return false;
       }
       if (!item.expectedDate) {
         toast.error("Expected Date is required for all items");
         return false;
       }
-      if (!item.rate) {
-        toast.error("Rate is required for all items");
+      if (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0) {
+        toast.error("Rate must be a valid positive number for all items");
         return false;
       }
     }
@@ -381,7 +419,7 @@ export const AddServicePRDashboard = () => {
     if (!validateForm()) {
       return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
     const payload = {
       pms_work_order: {
         letter_of_indent: true,
@@ -416,7 +454,8 @@ export const AddServicePRDashboard = () => {
           tcs_rate: item.tcsRate,
           tcs_amount: item.tcsAmt,
           tax_amount: item.taxAmount,
-          total_value: item.totalAmount,
+          total_value: item.amount,
+          total_amount: item.totalAmount,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
@@ -431,7 +470,7 @@ export const AddServicePRDashboard = () => {
       console.log(error);
       toast.error(error.message);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   };
 
@@ -441,7 +480,7 @@ export const AddServicePRDashboard = () => {
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
-          className='p-0 mb-4'
+          className="p-0 mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back
@@ -656,9 +695,9 @@ export const AddServicePRDashboard = () => {
                 <Autocomplete
                   options={wbsCodes}
                   getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.id === overallWbs) || null}
+                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
                   onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.id : "");
+                    setOverallWbs(newValue ? newValue.wbs_code : "");
                   }}
                   renderInput={(params) => (
                     <TextField
@@ -832,14 +871,18 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="CGST Amt"
                     value={detailsData.cgstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "cgstAmt", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      mt: 1,
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                        backgroundColor: "#f5f5f5",
+                      },
+                      height: { xs: 28, sm: 36, md: 45 },
+                    }}
                   />
 
                   <TextField
@@ -858,14 +901,18 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="SGST Amt"
                     value={detailsData.sgstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "sgstAmt", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      mt: 1,
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                        backgroundColor: "#f5f5f5",
+                      },
+                      height: { xs: 28, sm: 36, md: 45 },
+                    }}
                   />
 
                   <TextField
@@ -884,14 +931,18 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="IGST Amt"
                     value={detailsData.igstAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "igstAmt", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      mt: 1,
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                        backgroundColor: "#f5f5f5",
+                      },
+                      height: { xs: 28, sm: 36, md: 45 },
+                    }}
                   />
 
                   <TextField
@@ -910,27 +961,35 @@ export const AddServicePRDashboard = () => {
                   <TextField
                     label="TCS Amt"
                     value={detailsData.tcsAmt}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "tcsAmt", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      mt: 1,
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                        backgroundColor: "#f5f5f5",
+                      },
+                      height: { xs: 28, sm: 36, md: 45 },
+                    }}
                   />
 
                   <TextField
                     label="Tax Amount"
                     value={detailsData.taxAmount}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "taxAmount", e.target.value)
-                    }
                     fullWidth
                     variant="outlined"
-                    type="number"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ readOnly: true }}
+                    sx={{
+                      mt: 1,
+                      "& .MuiInputBase-input": {
+                        padding: { xs: "8px", sm: "10px", md: "12px" },
+                        backgroundColor: "#f5f5f5",
+                      },
+                      height: { xs: 28, sm: 36, md: 45 },
+                    }}
                   />
 
                   <TextField
@@ -971,9 +1030,9 @@ export const AddServicePRDashboard = () => {
                     <Autocomplete
                       options={wbsCodes}
                       getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.id === detailsData.wbsCode) || null}
+                      value={wbsCodes.find((wbs) => wbs.wbs_code === detailsData.wbsCode) || null}
                       onChange={(event, newValue) => {
-                        setOverallWbs(newValue ? newValue.id : "");
+                        handleDetailsChange(detailsData.id, "wbsCode", newValue ? newValue.wbs_code : "");
                       }}
                       renderInput={(params) => (
                         <TextField
