@@ -107,6 +107,7 @@ interface ApiRoleModule {
 }
 
 interface ApiRoleWithModules {
+  role_id?: number;  // Add role_id field
   role_name: string;
   display_name: string;
   active: number;
@@ -158,6 +159,19 @@ export interface CreateRoleResponse {
   data?: any;
 }
 
+interface CreateRoleWithPayload {
+  lock_role: {
+    name: string;
+    display_name: string;
+    access_level: null;
+    access_to: null;
+    active: number;
+    role_for: string;
+  };
+  permissions_hash: Record<string, Record<string, string>>;
+  lock_modules: number[]; // Array of module IDs instead of null
+}
+
 export const roleService = {
   // Fetch all roles
   async fetchRoles(): Promise<ApiRole[]> {
@@ -200,6 +214,40 @@ export const roleService = {
     } catch (error) {
       console.error('Error creating role:', error)
       throw error
+    }
+  },
+
+  // Create new role with modules structure
+  async createRoleWithModules(roleData: any): Promise<CreateRoleResponse> {
+    try {
+      // For now, we'll use the existing createRole endpoint
+      // You may need to adjust this based on your API structure
+      const payload = {
+        lock_role: {
+          name: roleData.role_name
+        },
+        permissions_hash: {}, // You may need to build this from the modules data
+        lock_modules: roleData.modules?.length || 0,
+        modules: roleData.modules
+      };
+      
+      const response = await apiClient.post<CreateRoleResponse>(ENDPOINTS.ROLES, payload)
+      return response.data
+    } catch (error) {
+      console.error('Error creating role with modules:', error)
+      throw error
+    }
+  },
+
+  // Create new role with payload structure
+  async createRoleWithPayload(payload: CreateRoleWithPayload): Promise<CreateRoleResponse> {
+    try {
+      console.log('Creating role with payload:', payload);
+      const response = await apiClient.post<CreateRoleResponse>(ENDPOINTS.ROLES, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating role with payload:', error);
+      throw error;
     }
   },
 
@@ -373,8 +421,13 @@ export const roleService = {
       const response = await apiClient.get<ApiRolesWithModulesResponse>(ENDPOINTS.ROLES_WITH_MODULES)
       console.log('Raw roles with modules response:', response.data)
       
+      // Also fetch regular roles to get the role IDs
+      console.log('Fetching regular roles for ID mapping...')
+      const rolesResponse = await apiClient.get<ApiRole[]>(ENDPOINTS.ROLES)
+      console.log('Regular roles response:', rolesResponse.data)
+      
       // Transform the API response to match frontend structure
-      return this.transformApiResponseToRoleWithModules(response.data)
+      return this.transformApiResponseToRoleWithModules(response.data, rolesResponse.data)
     } catch (error) {
       console.error('Error fetching roles with modules:', error)
       
@@ -493,8 +546,9 @@ export const roleService = {
   },
 
   // Transform API response to frontend structure
-  transformApiResponseToRoleWithModules(apiResponse: ApiRolesWithModulesResponse): RoleWithModules[] {
+  transformApiResponseToRoleWithModules(apiResponse: ApiRolesWithModulesResponse, regularRoles?: ApiRole[]): RoleWithModules[] {
     console.log('transformApiResponseToRoleWithModules - Input:', apiResponse)
+    console.log('Regular roles for ID mapping:', regularRoles)
     
     if (!apiResponse || !apiResponse.success || !Array.isArray(apiResponse.data)) {
       console.warn('Invalid API response structure, returning empty array')
@@ -504,9 +558,31 @@ export const roleService = {
     const transformedRoles = apiResponse.data.map((apiRole, index) => {
       console.log('Processing role:', apiRole)
       
+      // Try to find the role_id from regular roles by matching role name
+      let roleId = apiRole.role_id;
+      if (!roleId && regularRoles) {
+        const matchingRole = regularRoles.find(r => r.name === apiRole.role_name);
+        roleId = matchingRole?.id;
+        console.log('Found matching role ID from regular roles:', { 
+          roleName: apiRole.role_name, 
+          matchedId: roleId 
+        });
+      }
+      
+      // Fallback to index + 1 if still no role_id
+      const finalRoleId = roleId || (index + 1);
+      
+      console.log('Role ID assignment:', { 
+        apiRoleId: apiRole.role_id, 
+        matchedFromRegular: roleId,
+        fallbackId: index + 1, 
+        finalRoleId: finalRoleId,
+        roleName: apiRole.role_name 
+      });
+      
       return {
-        id: index + 1, // Generate ID since the API doesn't provide one
-        role_id: index + 1, // Generate role_id
+        id: finalRoleId,
+        role_id: finalRoleId,
         role_name: apiRole.role_name,
         modules: (apiRole.lock_modules || []).map(apiModule => {
           console.log('Processing module:', apiModule)
@@ -548,12 +624,76 @@ export const roleService = {
   // Update role with modules
   async updateRoleWithModules(roleWithModules: RoleWithModules): Promise<void> {
     try {
+      // Build permissions_hash from enabled sub-functions
+      const permissionsHash: Record<string, Record<string, string>> = {};
+      
+      roleWithModules.modules.forEach(module => {
+        if (module.enabled) {
+          module.functions.forEach(func => {
+            if (func.enabled) {
+              // Use function name as key (like "notices", "banners")
+              const functionKey = func.function_name.toLowerCase().replace(/\s+/g, '_');
+              permissionsHash[functionKey] = {};
+              
+              // Check which sub-functions are enabled
+              func.sub_functions.forEach(subFunc => {
+                if (subFunc.enabled) {
+                  // Map sub-function names to standard CRUD operations
+                  let actionKey = subFunc.sub_function_name.toLowerCase();
+                  
+                  // Normalize common action names
+                  if (actionKey.includes('all') || actionKey.includes('index')) {
+                    actionKey = 'all';
+                  } else if (actionKey.includes('create') || actionKey.includes('new')) {
+                    actionKey = 'create';
+                  } else if (actionKey.includes('show') || actionKey.includes('view') || actionKey.includes('read')) {
+                    actionKey = 'show';
+                  } else if (actionKey.includes('update') || actionKey.includes('edit')) {
+                    actionKey = 'update';
+                  } else if (actionKey.includes('destroy') || actionKey.includes('delete')) {
+                    actionKey = 'destroy';
+                  }
+                  
+                  permissionsHash[functionKey][actionKey] = "true";
+                }
+              });
+              
+              // If no sub-functions enabled but function is enabled, add default permissions
+              if (Object.keys(permissionsHash[functionKey]).length === 0) {
+                permissionsHash[functionKey] = {
+                  "all": "true",
+                  "create": "true",
+                  "show": "true", 
+                  "update": "true",
+                  "destroy": "true"
+                };
+              }
+            }
+          });
+        }
+      });
+
+      // Get enabled module IDs
+      const enabledModuleIds = roleWithModules.modules
+        .filter(module => module.enabled)
+        .map(module => module.module_id ?? module.id);
+
       const payload = {
         lock_role: {
-          name: roleWithModules.role_name
+          name: roleWithModules.role_name,
+          display_name: roleWithModules.role_name,
+          access_level: null,
+          access_to: null,
+          active: 1,
+          role_for: "pms"
         },
-        lock_modules: roleWithModules.modules
+        permissions_hash: permissionsHash,
+        lock_modules: enabledModuleIds
       };
+
+      console.log('Updating role with payload:', payload);
+      console.log('Role ID being used:', roleWithModules.role_id);
+      console.log('API endpoint:', `${ENDPOINTS.ROLES.replace('.json', '')}/${roleWithModules.role_id}.json`);
       
       await apiClient.patch(`${ENDPOINTS.ROLES.replace('.json', '')}/${roleWithModules.role_id}.json`, payload);
     } catch (error) {

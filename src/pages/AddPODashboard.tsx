@@ -1,8 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, ListChecks, Paperclip, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  ListChecks,
+  Paperclip,
+  Upload,
+  X,
+} from "lucide-react";
 import {
   TextField,
   FormControl,
@@ -16,9 +23,14 @@ import {
   getAddresses,
   getInventories,
   getMaterialPR,
+  getMaterialPRById,
   getPlantDetails,
 } from "@/store/slices/materialPRSlice";
-import { createPurchaseOrder, getUnits, materialPRChange } from "@/store/slices/purchaseOrderSlice";
+import {
+  createPurchaseOrder,
+  getUnits,
+  materialPRChange,
+} from "@/store/slices/purchaseOrderSlice";
 import axios from "axios";
 
 const fieldStyles = {
@@ -43,13 +55,20 @@ export const AddPODashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
 
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+
+  const cloneId = searchParams.get("clone");
+
+  const shouldFetch = Boolean(cloneId);
+
   const [materialPR, setMaterialPR] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [plantDetails, setPlantDetails] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [inventories, setInventories] = useState([]);
   const [units, setUnits] = useState([]);
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     materialPR: "",
@@ -142,9 +161,7 @@ export const AddPODashboard = () => {
 
     const fetchUnits = async () => {
       try {
-        const response = await dispatch(
-          getUnits({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getUnits({ baseUrl, token })).unwrap();
         setUnits(response.units);
         setSuppliers(response.pms_suppliers);
       } catch (error) {
@@ -160,6 +177,62 @@ export const AddPODashboard = () => {
     fetchUnits();
   }, []);
 
+  useEffect(() => {
+    if (shouldFetch) {
+      const cloneData = async () => {
+        try {
+          const response = await dispatch(
+            getMaterialPRById({ baseUrl, token, id: cloneId })
+          ).unwrap();
+          setFormData({
+            materialPR: "",
+            supplier: response.pms_supplier_id || "",
+            plantDetail: response.plant_detail?.id || "",
+            poDate: response.po_date || "",
+            billingAddress: response.billing_address_id || "",
+            deliveryAddress: response.shipping_address_id || "",
+            relatedTo: response.related_to || "",
+            retention: response.retention || "",
+            tds: response.tds || "",
+            qc: response.quality_holding || "",
+            paymentTenure: response.payment_tenure || "",
+            advanceAmount: response.advance_amount || "",
+            termsConditions: response.terms_conditions || "",
+            attachments: [],
+          });
+
+          setItems(
+            response.pms_po_inventories?.map((item, index) => ({
+              id: index + 1,
+              itemDetails: item.inventory?.id || "",
+              sacHsnCode: item.sac_hsn_code || "",
+              quantity: item.quantity || "",
+              unit: item.unit || "",
+              expectedDate: item.expected_date || "",
+              rate: item.rate || "",
+              cgstRate: item.cgst_rate || "",
+              cgstAmount: item.cgst_amount || "",
+              sgstRate: item.sgst_rate || "",
+              sgstAmount: item.sgst_amount || "",
+              igstRate: item.igst_rate || "",
+              igstAmount: item.igst_amount || "",
+              tcsRate: item.tcs_rate || "",
+              tcsAmount: item.tcs_amount || "",
+              taxAmount: item.taxable_value || "",
+              amount: item.total_value || "",
+              totalAmount: item.total_value || "",
+            }))
+          );
+        } catch (error) {
+          console.log(error);
+          toast.error(error);
+        }
+      };
+
+      cloneData();
+    }
+  }, [shouldFetch]);
+
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantity) || 0;
     const rate = parseFloat(item.rate) || 0;
@@ -168,10 +241,10 @@ export const AddPODashboard = () => {
     const sgstRate = parseFloat(item.sgstRate) || 0;
     const igstRate = parseFloat(item.igstRate) || 0;
     const tcsRate = parseFloat(item.tcsRate) || 0;
-    const cgstAmount = baseAmount * cgstRate / 100;
-    const sgstAmount = baseAmount * sgstRate / 100;
-    const igstAmount = baseAmount * igstRate / 100;
-    const tcsAmount = baseAmount * tcsRate / 100;
+    const cgstAmount = (baseAmount * cgstRate) / 100;
+    const sgstAmount = (baseAmount * sgstRate) / 100;
+    const igstAmount = (baseAmount * igstRate) / 100;
+    const tcsAmount = (baseAmount * tcsRate) / 100;
     const taxAmount = cgstAmount + sgstAmount + igstAmount + tcsAmount;
     const totalAmount = baseAmount + taxAmount;
     return {
@@ -188,7 +261,7 @@ export const AddPODashboard = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitting(true)
+    setSubmitting(true);
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: formData.supplier,
@@ -228,16 +301,17 @@ export const AddPODashboard = () => {
     };
 
     try {
-      await dispatch(createPurchaseOrder({ baseUrl, token, data: payload })).unwrap();
+      await dispatch(
+        createPurchaseOrder({ baseUrl, token, data: payload })
+      ).unwrap();
       toast.success("Purchase Order created successfully");
       navigate("/finance/po");
     } catch (error) {
       console.log(error);
       toast.error(error);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
-
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,9 +356,7 @@ export const AddPODashboard = () => {
   const updateItem = (itemId: number, field: string, value: string) => {
     setItems(
       items.map((item) =>
-        item.id === itemId
-          ? calculateItem({ ...item, [field]: value })
-          : item
+        item.id === itemId ? calculateItem({ ...item, [field]: value }) : item
       )
     );
     if (field === "itemDetails") {
@@ -308,8 +380,8 @@ export const AddPODashboard = () => {
       });
 
       // map all items from pms_po_inventories
-      const newItems = response.pms_po_inventories?.map(
-        (inv: any, index: number) => ({
+      const newItems =
+        response.pms_po_inventories?.map((inv: any, index: number) => ({
           id: index + 1,
           itemDetails: inv?.inventory?.id || "",
           sacHsnCode: "",
@@ -328,8 +400,7 @@ export const AddPODashboard = () => {
           taxAmount: "",
           amount: "",
           totalAmount: "",
-        })
-      ) || [];
+        })) || [];
 
       setItems(newItems);
 
@@ -346,7 +417,6 @@ export const AddPODashboard = () => {
       toast.error("Failed to fetch material PR details");
     }
   };
-
 
   const onInventoryChange = async (inventoryId, itemId) => {
     try {
@@ -382,11 +452,7 @@ export const AddPODashboard = () => {
 
   return (
     <div className="p-6 mx-auto max-w-7xl">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className='p-0'
-      >
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
@@ -465,7 +531,9 @@ export const AddPODashboard = () => {
                       <em>Select...</em>
                     </MenuItem>
                     {plantDetails.map((plantDetail) => (
-                      <MenuItem value={plantDetail.id}>{plantDetail.plant_name}</MenuItem>
+                      <MenuItem value={plantDetail.id}>
+                        {plantDetail.plant_name}
+                      </MenuItem>
                     ))}
                   </MuiSelect>
                 </FormControl>

@@ -8,18 +8,15 @@ import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { 
   fetchParkingConfigByBuildingAndFloor, 
+  updateParkingConfig, 
   ParkingNumber, 
-  ParkingConfiguration,
-  fetchParkingCategories,
-  ParkingCategory
+  ParkingConfiguration 
 } from '../services/parkingConfigAPI';
 import { 
-  createParkingConfiguration, // Use same function as Add page
   fetchBuildings, 
   fetchFloors,
   Building,
   Floor,
-  CreateParkingConfigurationRequest,
   ParkingSlotData 
 } from '../services/parkingConfigurationsAPI';
 
@@ -29,14 +26,12 @@ export const EditSlotConfigurationPage = () => {
   const { setCurrentSection } = useLayout();
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
-  const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     building_id: '',
     floor_id: '',
-    qrcode_needed: false,
     twoWheeler: {
       nonStack: 0,
       stack: 0,
@@ -74,21 +69,9 @@ export const EditSlotConfigurationPage = () => {
     }
   }, []);
 
-  const fetchParkingCategoriesData = useCallback(async () => {
-    try {
-      const categoriesData = await fetchParkingCategories();
-      setParkingCategories(categoriesData);
-      console.log('Fetched parking categories:', categoriesData);
-    } catch (error) {
-      console.error('Error fetching parking categories:', error);
-      toast.error('Failed to fetch parking categories');
-    }
-  }, []);
-
   useEffect(() => {
     setCurrentSection('Settings');
     fetchBuildingsData();
-    fetchParkingCategoriesData();
     
     if (!id) return;
     
@@ -162,7 +145,6 @@ export const EditSlotConfigurationPage = () => {
           setFormData({
             building_id: groupData.building_id.toString(),
             floor_id: groupData.floor_id.toString(),
-            qrcode_needed: groupData.qrcode_needed === 'true' || groupData.qrcode_needed === true,
             twoWheeler: get2WheelerCounts(twoWheelerConfig),
             fourWheeler: get4WheelerCounts(fourWheelerConfig),
             floorMap: null,
@@ -191,7 +173,7 @@ export const EditSlotConfigurationPage = () => {
         navigate('/settings/vas/parking-management/slot-configuration');
       })
       .finally(() => setLoading(false));
-  }, [setCurrentSection, id, navigate, fetchBuildingsData, fetchFloorsData, fetchParkingCategoriesData]);
+  }, [setCurrentSection, id, navigate, fetchBuildingsData, fetchFloorsData]);
 
   const handleBack = () => {
     navigate('/settings/vas/parking-management/slot-configuration');
@@ -212,27 +194,6 @@ export const EditSlotConfigurationPage = () => {
       return;
     }
 
-    // Find category IDs dynamically
-    const twoWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('2') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
-    
-    const fourWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('4') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
-
-    if (!twoWheelerCategory || !fourWheelerCategory) {
-      toast.error('Unable to find parking categories. Please ensure 2 Wheeler and 4 Wheeler categories exist.');
-      return;
-    }
-
-    console.log('Found categories:', {
-      twoWheeler: twoWheelerCategory,
-      fourWheeler: fourWheelerCategory
-    });
-
     try {
       setSubmitting(true);
       
@@ -240,44 +201,38 @@ export const EditSlotConfigurationPage = () => {
       const twoWheelerSlots = generateParkingSlotsData('twoWheeler', 'P');
       const fourWheelerSlots = generateParkingSlotsData('fourWheeler', 'B');
 
-      // Build the request body using same structure as Add page
-      const requestData: CreateParkingConfigurationRequest = {
-        building_id: formData.building_id,
-        floor_id: formData.floor_id,
-        qrcode_needed: formData.qrcode_needed // Use checkbox value
-      };
-
-      // Add 2 Wheeler category data if there are slots
-      if (formData.twoWheeler.nonStack > 0 || formData.twoWheeler.stack > 0 || formData.twoWheeler.reserved > 0) {
-        requestData[twoWheelerCategory.id] = {
-          no_of_parkings: twoWheelerSlots.length,
-          reserved_parkings: twoWheelerSlots.filter(slot => slot.reserved).length,
-          parking: twoWheelerSlots
+      // Build the request body as per API spec - update each category separately
+      if (formData.twoWheeler.parkingNumbers.length > 0) {
+        const body = {
+          building_id: formData.building_id,
+          floor_id: formData.floor_id,
+          '5': { // 2 Wheeler category ID
+            no_of_parkings: twoWheelerSlots.length,
+            reserved_parkings: twoWheelerSlots.filter(slot => slot.reserved).length,
+            parking: twoWheelerSlots
+          }
         };
+        
+        // Find the 2 wheeler config ID
+        const twoWheelerConfigId = formData.parking_config_id; // We'll use this for now
+        await updateParkingConfig(twoWheelerConfigId, body);
       }
 
-      // Add 4 Wheeler category data if there are slots
-      if (formData.fourWheeler.nonStack > 0 || formData.fourWheeler.stack > 0 || formData.fourWheeler.reserved > 0) {
-        requestData[fourWheelerCategory.id] = {
-          no_of_parkings: fourWheelerSlots.length,
-          reserved_parkings: fourWheelerSlots.filter(slot => slot.reserved).length,
-          parking: fourWheelerSlots
+      if (formData.fourWheeler.parkingNumbers.length > 0) {
+        const body = {
+          building_id: formData.building_id,
+          floor_id: formData.floor_id,
+          '6': { // 4 Wheeler category ID
+            no_of_parkings: fourWheelerSlots.length,
+            reserved_parkings: fourWheelerSlots.filter(slot => slot.reserved).length,
+            parking: fourWheelerSlots
+          }
         };
+        
+        // Find the 4 wheeler config ID 
+        const fourWheelerConfigId = formData.parking_config_id; // We'll use this for now
+        await updateParkingConfig(fourWheelerConfigId, body);
       }
-
-      // Handle image replacement - always send attachment if new file is selected
-      if (formData.floorMap) {
-        requestData.attachment = formData.floorMap;
-        console.log('Replacing existing floor map with new file:', formData.floorMap.name);
-      }
-      // If no new file selected, existing image will remain unchanged
-
-      console.log('Updating parking config with requestData:', requestData);
-      console.log('Two Wheeler Slots:', twoWheelerSlots);
-      console.log('Four Wheeler Slots:', fourWheelerSlots);
-      console.log('Floor Map File:', formData.floorMap ? formData.floorMap.name : 'None selected');
-      console.log('Existing Image URL:', formData.parking_image_url || 'None');
-      await createParkingConfiguration(requestData); // Use same function as Add page
 
       toast.success('Parking configuration updated successfully!');
       navigate('/settings/vas/parking-management/slot-configuration');
@@ -443,6 +398,112 @@ export const EditSlotConfigurationPage = () => {
     );
   };
 
+  useEffect(() => {
+    setCurrentSection('Settings');
+    fetchBuildingsData();
+    
+    if (!id) return;
+    
+    // Parse building_id and floor_id from URL parameter
+    const idParts = id.split('-');
+    
+    if (idParts.length !== 2) {
+      toast.error('Invalid URL format. Expected format: buildingId-floorId');
+      navigate('/settings/vas/parking-management/slot-configuration');
+      return;
+    }
+
+    const buildingId = parseInt(idParts[0]);
+    const floorId = parseInt(idParts[1]);
+    
+    if (isNaN(buildingId) || isNaN(floorId)) {
+      toast.error('Invalid building ID or floor ID');
+      navigate('/settings/vas/parking-management/slot-configuration');
+      return;
+    }
+    
+    console.log('Edit Slot Config - Fetching parking config with building ID:', buildingId, 'floor ID:', floorId);
+    setLoading(true);
+    
+    fetchParkingConfigByBuildingAndFloor(buildingId, floorId)
+      .then((data) => {
+        console.log('Edit Slot Config - API Response:', data);
+        
+        // The API returns grouped_parking_configurations structure
+        if (data.grouped_parking_configurations && 
+            data.grouped_parking_configurations.length > 0) {
+          
+          const groupData = data.grouped_parking_configurations[0];
+          const configs = groupData.parking_configurations;
+          
+          // Find 2 Wheeler and 4 Wheeler configurations
+          const twoWheelerConfig = configs.find(config => config.category_name === '2 Wheeler');
+          const fourWheelerConfig = configs.find(config => config.category_name === '4 Wheeler');
+          
+          // Count different parking types for each category
+          const get2WheelerCounts = (config: ParkingConfiguration | undefined) => {
+            if (!config) return { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
+            
+            const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
+            const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length / 2; // Stack comes in pairs
+            const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
+            
+            return {
+              nonStack: nonStackCount,
+              stack: stackCount,
+              reserved: reservedCount,
+              parkingNumbers: config.parking_numbers
+            };
+          };
+
+          const get4WheelerCounts = (config: ParkingConfiguration | undefined) => {
+            if (!config) return { nonStack: 0, stack: 0, reserved: 0, parkingNumbers: [] };
+            
+            const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
+            const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length / 2; // Stack comes in pairs
+            const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
+            
+            return {
+              nonStack: nonStackCount,
+              stack: stackCount,
+              reserved: reservedCount,
+              parkingNumbers: config.parking_numbers
+            };
+          };
+
+          setFormData({
+            building_id: groupData.building_id.toString(),
+            floor_id: groupData.floor_id.toString(),
+            twoWheeler: get2WheelerCounts(twoWheelerConfig),
+            fourWheeler: get4WheelerCounts(fourWheelerConfig),
+            floorMap: null,
+            parking_image_url: twoWheelerConfig?.parking_image_url || fourWheelerConfig?.parking_image_url || '',
+            parking_config_id: twoWheelerConfig?.id || fourWheelerConfig?.id || 0
+          });
+          
+          // Fetch floors for the selected building
+          fetchFloorsData(groupData.building_id.toString());
+        } else {
+          throw new Error(`No parking configurations found for building ${buildingId} and floor ${floorId}`);
+        }
+      })
+      .catch((error) => {
+        console.error('Edit Slot Config - Error:', error);
+        
+        // Show clean error message, not HTML content
+        let errorMessage = 'Slot configuration not found';
+        if (error.message && !error.message.includes('<html')) {
+          if (error.message.length < 200) {
+            errorMessage = error.message;
+          }
+        }
+        
+        toast.error(errorMessage);
+        navigate('/settings/vas/parking-management/slot-configuration');
+      })
+      .finally(() => setLoading(false));
+  }, [setCurrentSection, id, navigate, fetchBuildingsData, fetchFloorsData]);
+
   if (loading) {
     return (
       <div className="p-6 min-h-screen bg-gray-50 flex items-center justify-center">
@@ -467,7 +528,7 @@ export const EditSlotConfigurationPage = () => {
 
       <div className="bg-white rounded-lg p-6 shadow-sm">
         {/* Location and Floor Selection */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">Location</label>
             <Select 
@@ -517,24 +578,8 @@ export const EditSlotConfigurationPage = () => {
           </div>
         </div>
 
-        {/* QR Code Configuration */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="qrcode_needed"
-              checked={formData.qrcode_needed}
-              onChange={(e) => setFormData(prev => ({ ...prev, qrcode_needed: e.target.checked }))}
-              className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-black-500 focus:ring-2"
-            />
-            <label htmlFor="qrcode_needed" className="text-sm font-medium text-gray-700">
-              QR Code Needed for Parking Access
-            </label>
-          </div>
-        </div>
-
         {/* Summary Section */}
-        {/* {(formData.twoWheeler.nonStack + formData.twoWheeler.stack + formData.twoWheeler.reserved +
+        {(formData.twoWheeler.nonStack + formData.twoWheeler.stack + formData.twoWheeler.reserved +
           formData.fourWheeler.nonStack + formData.fourWheeler.stack + formData.fourWheeler.reserved) > 0 && (
           <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h3 className="text-sm font-semibold text-blue-800 mb-2">Parking Summary</h3>
@@ -553,7 +598,7 @@ export const EditSlotConfigurationPage = () => {
               </div>
             </div>
           </div>
-        )} */}
+        )}
 
         {/* Parking Configuration */}
         <div className="mb-8">
@@ -629,29 +674,15 @@ export const EditSlotConfigurationPage = () => {
               onChange={handleFileChange}
               className="hidden"
             />
-            <div className="flex items-center justify-center gap-4">
-              <label
-                htmlFor="floorMap"
-                className="cursor-pointer text-red-600 font-medium hover:text-red-700"
-              >
-                Choose File
-              </label>
-              {formData.parking_image_url && (
-                <a
-                  href={formData.parking_image_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 font-medium hover:text-blue-700 underline"
-                >
-                  View Image
-                </a>
-              )}
-            </div>
-            <div className="mt-2">
-              <span className="text-gray-500">
-                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
-              </span>
-            </div>
+            <label
+              htmlFor="floorMap"
+              className="cursor-pointer text-red-600 font-medium hover:text-red-700"
+            >
+              Choose File
+            </label>
+            <span className="ml-2 text-gray-500">
+              {formData.floorMap ? formData.floorMap.name : (formData.parking_image_url ? <a href={formData.parking_image_url} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">View current image</a> : 'No file chosen')}
+            </span>
           </div>
         </div>
 

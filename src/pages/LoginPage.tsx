@@ -61,6 +61,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
   // Check if it's Oman site
   const isOmanSite = hostname.includes('oig.gophygital.work');
+  // Check if it's VI site
+  const isViSite = hostname.includes('web.gophygital.work');
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
@@ -167,7 +169,13 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         id: response.id,
         email: response.email,
         firstname: response.firstname,
-        lastname: response.lastname
+        lastname: response.lastname,
+        mobile: response.mobile,
+        latitude: response.latitude,
+        longitude: response.longitude,
+        country_code: response.country_code,
+        spree_api_key: response.spree_api_key,
+        lock_role: response.lock_role
       });
       saveToken(response.access_token);
       setToken(response.access_token);
@@ -179,7 +187,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
       // Add a slight delay for better UX, then redirect to dashboard
       setTimeout(() => {
-        navigate('/maintenance/asset');
+        navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
       }, 500);
     } catch (error) {
       console.error("Login error:", error);

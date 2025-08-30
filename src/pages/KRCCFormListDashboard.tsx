@@ -448,7 +448,6 @@ export const KRCCFormListDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search..."
             handleExport={handleExport}
-            enableExport={true}
             exportFileName="krcc-forms"
             pagination={false} // using server-side pagination below
             loading={loading}

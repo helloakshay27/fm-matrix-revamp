@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Copy, Printer, Rss, Download, ArrowLeft, Image, FileText, File } from 'lucide-react';
+import { Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
@@ -36,6 +37,7 @@ interface ApprovalLevel {
   status_label: string;
   approved_by?: string;
   approval_date?: string;
+  rejection_reason?: string; // Added for rejection reason tooltip
 }
 
 interface Inventory {
@@ -118,7 +120,6 @@ const columns: ColumnConfig[] = [
   { key: 'transfer_qty', label: 'Transfer Qty', sortable: true, defaultVisible: true },
   { key: 'wbs_code', label: 'Wbs Code', sortable: true, defaultVisible: true },
 ];
-
 
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
@@ -375,20 +376,36 @@ export const MaterialPRDetailsPage = () => {
         </div>
       </div>
 
-      <div className="flex items-start gap-4 my-6">
-        {pr.approval_levels?.map((level, index) => (
-          <div key={index} className="space-y-2">
-            <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
-              {`${level.name} Approval : ${level.status_label}`}
+      {/* Approval Levels with Tooltip */}
+      <TooltipProvider>
+        <div className="flex items-start gap-4 my-6">
+          {pr.approval_levels?.map((level, index) => (
+            <div key={index} className="space-y-2">
+              {level.status_label.toLowerCase() === 'rejected' ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status_label)}`}>
+                      {`${level.name} Approval : ${level.status_label}`}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
+                  {`${level.name} Approval : ${level.status_label}`}
+                </div>
+              )}
+              {level.approved_by && level.approval_date && (
+                <div className="ms-2">
+                  {`${level.approved_by} (${level.approval_date})`}
+                </div>
+              )}
             </div>
-            {level.approved_by && level.approval_date && (
-              <div className="ms-2">
-                {`${level.approved_by} (${level.approval_date})`}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </TooltipProvider>
 
       <div className="space-y-6">
         {/* Contact Information Card */}

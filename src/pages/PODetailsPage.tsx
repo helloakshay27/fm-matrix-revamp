@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Printer, Copy, Rss, ArrowLeft, Podcast, Image, FileText, File } from "lucide-react";
+import { Printer, Copy, Rss, ArrowLeft, Image, FileText, File } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById } from "@/store/slices/materialPRSlice";
@@ -13,6 +14,16 @@ import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+
+// Define the interface for ApprovalLevel
+interface ApprovalLevel {
+  id: string;
+  name: string;
+  status_label: string;
+  approved_by?: string;
+  approval_date?: string;
+  rejection_reason?: string; // Added for rejection reason tooltip
+}
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
@@ -228,7 +239,8 @@ export const PODetailsPage = () => {
     deliveryAddress: "",
     email: "",
     gst: "",
-    attachments: []
+    attachments: [],
+    terms_conditions: "",
   });
 
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
@@ -370,23 +382,38 @@ export const PODetailsPage = () => {
           <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
             PURCHASE ORDER DETAILS
           </h1>
-          <div className="flex items-start gap-3">
-            {
-              poDetails?.approval_levels?.map((level: any) => (
-                <div className='space-y-2' key={level.id}>
-                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
-                    {`${level.name} Approval : ${level.status_label}`}
+          <TooltipProvider>
+            <div className="flex items-start gap-3">
+              {
+                poDetails?.approval_levels?.map((level: ApprovalLevel) => (
+                  <div className='space-y-2' key={level.id}>
+                    {level.status_label.toLowerCase() === 'rejected' ? (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status_label)}`}>
+                            {`${level.name} Approval : ${level.status_label}`}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
+                        {`${level.name} Approval : ${level.status_label}`}
+                      </div>
+                    )}
+                    {
+                      level.approved_by && level.approval_date &&
+                      <div className='ms-2'>
+                        {`${level.approved_by} (${level.approval_date})`}
+                      </div>
+                    }
                   </div>
-                  {
-                    level.approved_by && level.approval_date &&
-                    <div className='ms-2'>
-                      {`${level.approved_by} (${level.approval_date})`}
-                    </div>
-                  }
-                </div>
-              ))
-            }
-          </div>
+                ))
+              }
+            </div>
+          </TooltipProvider>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
@@ -407,6 +434,7 @@ export const PODetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={() => navigate(`/finance/po/add?clone=${id}`)}
             >
               <Copy className="w-4 h-4 mr-1" />
               Clone
@@ -709,7 +737,7 @@ export const PODetailsPage = () => {
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Terms & Conditions:
             </h3>
-            <p className="text-gray-700 ml-4">NA</p>
+            <p className="text-gray-700 ml-4">{poDetails.terms_conditions}</p>
           </div>
 
           <div className="border-t border-gray-200 pt-6">

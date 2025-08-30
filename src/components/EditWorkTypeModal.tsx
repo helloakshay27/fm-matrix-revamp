@@ -172,7 +172,7 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
             <>
               <div className="space-y-2">
                 <Label htmlFor="staffType" className="text-sm font-medium text-gray-700">
-                  Staff Type
+                  Select Staff Type <span className="text-red-500">*</span>
                 </Label>
                 <Select value={staffType} onValueChange={setStaffType}>
                   <SelectTrigger>
@@ -187,7 +187,7 @@ export const EditWorkTypeModal = ({ isOpen, onClose, workTypeData, onUpdate }: E
               
               <div className="space-y-2">
                 <Label htmlFor="workType" className="text-sm font-medium text-gray-700">
-                  Work Type
+                  Enter Work Type <span className="text-red-500">*</span>
                 </Label>
                 <Input
                   id="workType"

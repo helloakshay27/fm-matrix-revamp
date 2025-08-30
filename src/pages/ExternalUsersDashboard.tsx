@@ -75,6 +75,11 @@ export const ExternalUsersDashboard = () => {
   const navigate = useNavigate();
   const pageSize = 25; // backend default (adjust if needed)
 
+  // Permission: show Action button only for these userIds
+  const allowedActionIds = useMemo(() => new Set(['92501', '88468']), []);
+  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem('userId') : null;
+  const canSeeActionButton = currentUserId ? allowedActionIds.has(String(currentUserId)) : false;
+
 
   useEffect(() => {
     const fetchExternalUsers = async () => {
@@ -553,13 +558,15 @@ export const ExternalUsersDashboard = () => {
             data={externalUsers || []}
             leftActions={
               <div className="flex gap-2">
-                <Button
-                  onClick={handleActionClick}
-                  className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
-                >
-                  <Plus className="w-4 h-4" />
-                  Action
-                </Button>
+                {canSeeActionButton && (
+                  <Button
+                    onClick={handleActionClick}
+                    className="text-white bg-[#C72030] hover:bg-[#C72030]/90"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Action
+                  </Button>
+                )}
                 <Button
                   onClick={() => navigate('/maintenance/m-safe/external-users/multiple-delete')}
                   className="text-white bg-red-500 hover:bg-red-600"
@@ -579,7 +586,6 @@ export const ExternalUsersDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search..."
             handleExport={handleExport}
-            enableExport={true}
             exportFileName="external-users"
             pagination={false}
             pageSize={pageSize}

@@ -211,7 +211,10 @@ export const API_CONFIG = {
     EDIT_WORK_TYPE: '/pms/society_staff_types', // Base path, will append /{id}.json
     CREATE_VISITOR_COMMENT: '/visitor_comments.json',
     EDIT_VISITOR_COMMENT: '/visitor_comments',
-    
+    PARKING_CONFIGURATIONS_SEARCH: '/pms/admin/parking_configurations.json',
+    PARKING_CONFIG_SAMPLE_FORMAT: '/assets/parking_configuration.xlsx',
+    // Parking configuration bulk import
+    PARKING_CONFIG_IMPORT: '/pms/admin/parking_configurations/import.json',
   },
 } as const
 

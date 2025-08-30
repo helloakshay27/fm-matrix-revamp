@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   Edit,
@@ -51,6 +52,15 @@ interface ServiceItem {
   tcs_amount: number;
   tax_amount: number;
   total_amount: number;
+}
+
+// Define the interface for approvals
+interface Approval {
+  level: string;
+  status: string;
+  updated_by?: string;
+  updated_at?: string;
+  rejection_reason?: string; // Added for rejection reason tooltip
 }
 
 // Define column configurations for the EnhancedTable
@@ -255,27 +265,39 @@ export const ServicePRDetailsPage = () => {
           <div className="flex items-center gap-4 mb-3">
             <h1 className="text-2xl font-semibold">Service PR Details</h1>
           </div>
-          <div className="flex items-start gap-3">
-            {servicePR?.approvals?.map((level: any) => (
-              <div className="space-y-2" key={level.level}>
-                <div
-                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
-                    level.status
-                  )}`}
-                >
-                  {`${level.level} approval : ${level.status}`}
+          <TooltipProvider>
+            <div className="flex items-start gap-3">
+              {servicePR?.approvals?.map((level: Approval) => (
+                <div className="space-y-2" key={level.level}>
+                  {level.status.toLowerCase() === 'rejected' ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}
+                        >
+                          {`${level.level} approval : ${level.status}`}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <div
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}
+                    >
+                      {`${level.level} approval : ${level.status}`}
+                    </div>
+                  )}
+                  {level.updated_by && level.updated_at && (
+                    <div className="ms-2 w-[190px]">
+                      {`${level.updated_by} (${format(new Date(level.updated_at), "dd/MM/yyyy")})`}
+                    </div>
+                  )}
                 </div>
-                {level.updated_by && level.updated_at && (
-                  <div className="ms-2 w-[190px]">
-                    {`${level.updated_by} (${format(
-                      new Date(level.updated_at),
-                      "dd/MM/yyyy"
-                    )})`}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </TooltipProvider>
         </div>
 
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">

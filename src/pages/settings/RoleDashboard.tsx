@@ -84,14 +84,27 @@ export const RoleDashboard = () => {
     fetchAllModules();
   }, [dispatch]);
 
-  // Set default selected role when roles are loaded
+  // Set default selected role when roles are loaded and update when roles change
   useEffect(() => {
     if (Array.isArray(roles) && roles.length > 0) {
       if (!selectedRole) {
+        console.log('Setting default selected role to:', roles[0]);
         setSelectedRole(roles[0]);
+      } else {
+        // Update the selected role with the latest data from Redux store
+        const updatedRole = roles.find(r => r.role_id === selectedRole.role_id);
+        if (updatedRole && JSON.stringify(updatedRole) !== JSON.stringify(selectedRole)) {
+          console.log('Updating selected role with latest data:', { 
+            oldRole: selectedRole.role_name, 
+            newRole: updatedRole.role_name,
+            oldModulesCount: selectedRole.modules.length,
+            newModulesCount: updatedRole.modules.length
+          });
+          setSelectedRole(updatedRole);
+        }
       }
     }
-  }, [roles, selectedRole]);
+  }, [roles, selectedRole?.role_id]); // Only depend on role_id to avoid infinite loops
 
   // Get filtered roles based on search term
   const filteredRoles = Array.isArray(roles) ? roles.filter(role =>
@@ -99,7 +112,8 @@ export const RoleDashboard = () => {
   ) : [];
 
   // Get current role's modules for tabs - Use all available modules instead of just role's modules
-  const currentRole = selectedRole;
+  // Always get the current role from the Redux store to ensure it's up-to-date
+  const currentRole = selectedRole ? roles.find(r => r.role_id === selectedRole.role_id) || selectedRole : null;
   const tabs = Array.isArray(allModules) ? allModules
     .filter(module => (module.module_id ?? module.id) != null)
     .map(module => ({
@@ -122,31 +136,100 @@ export const RoleDashboard = () => {
   // Use functions from the role's module if available, otherwise from the general module
   const currentFunctions = currentRoleModule?.functions || currentModule?.functions || [];
   
+  // Debug logging
+  console.log('RoleDashboard Debug:', {
+    currentRole: currentRole?.role_name,
+    roleId: currentRole?.role_id,
+    activeModuleTab,
+    currentRoleModule: currentRoleModule?.module_id,
+    currentModule: currentModule?.module_id,
+    functionsCount: currentFunctions.length,
+    currentRoleModuleData: currentRoleModule,
+    reduxRolesCount: Array.isArray(roles) ? roles.length : 0,
+    functions: currentFunctions.map(f => ({
+      id: f.function_id ?? f.id,
+      name: f.function_name,
+      enabled: f.enabled,
+      subFunctionsCount: f.sub_functions?.length || 0
+    }))
+  });
+  
   // Helper function to check if a sub-function is enabled for the current role
   const isSubFunctionEnabled = (moduleId: number, functionId: number, subFunctionId: number): boolean => {
-    if (!currentRole) return false;
-    const roleModule = currentRole.modules.find(m => m.module_id === moduleId);
-    if (!roleModule) return false;
-    const roleFunction = roleModule.functions.find(f => f.function_id === functionId);
-    if (!roleFunction) return false;
-    const roleSubFunction = roleFunction.sub_functions.find(sf => sf.sub_function_id === subFunctionId);
-    return roleSubFunction?.enabled || false;
+    if (!currentRole) {
+      console.log('isSubFunctionEnabled: No current role');
+      return false;
+    }
+    
+    const roleModule = currentRole.modules.find(m => (m.module_id ?? m.id) === moduleId);
+    if (!roleModule) {
+      console.log('isSubFunctionEnabled: Role module not found:', { moduleId, availableModules: currentRole.modules.map(m => m.module_id ?? m.id) });
+      return false;
+    }
+    
+    const roleFunction = roleModule.functions.find(f => (f.function_id ?? f.id) === functionId);
+    if (!roleFunction) {
+      console.log('isSubFunctionEnabled: Role function not found:', { functionId, availableFunctions: roleModule.functions.map(f => f.function_id ?? f.id) });
+      return false;
+    }
+    
+    const roleSubFunction = roleFunction.sub_functions.find(sf => (sf.sub_function_id ?? sf.id) === subFunctionId);
+    const enabled = roleSubFunction?.enabled || false;
+    
+    console.log('isSubFunctionEnabled result:', { 
+      moduleId, 
+      functionId, 
+      subFunctionId, 
+      enabled, 
+      roleSubFunction: roleSubFunction ? { id: roleSubFunction.sub_function_id ?? roleSubFunction.id, name: roleSubFunction.sub_function_name, enabled: roleSubFunction.enabled } : null 
+    });
+    
+    return enabled;
   };
   
   // Helper function to check if a function is enabled for the current role
   const isFunctionEnabled = (moduleId: number, functionId: number): boolean => {
-    if (!currentRole) return false;
+    if (!currentRole) {
+      console.log('isFunctionEnabled: No current role');
+      return false;
+    }
+    
     const roleModule = currentRole.modules.find(m => (m.module_id ?? m.id) === moduleId);
-    if (!roleModule) return false;
+    if (!roleModule) {
+      console.log('isFunctionEnabled: Role module not found:', { moduleId, availableModules: currentRole.modules.map(m => m.module_id ?? m.id) });
+      return false;
+    }
+    
     const roleFunction = roleModule.functions.find(f => (f.function_id ?? f.id) === functionId);
-    return roleFunction?.enabled || false;
+    const enabled = roleFunction?.enabled || false;
+    
+    console.log('isFunctionEnabled result:', { 
+      moduleId, 
+      functionId, 
+      enabled, 
+      roleFunction: roleFunction ? { id: roleFunction.function_id ?? roleFunction.id, name: roleFunction.function_name, enabled: roleFunction.enabled } : null 
+    });
+    
+    return enabled;
   };
 
   // Helper function to check if a module is enabled for the current role
   const isModuleEnabled = (moduleId: number): boolean => {
-    if (!currentRole) return false;
+    if (!currentRole) {
+      console.log('isModuleEnabled: No current role');
+      return false;
+    }
+    
     const roleModule = currentRole.modules.find(m => (m.module_id ?? m.id) === moduleId);
-    return roleModule?.enabled || false;
+    const enabled = roleModule?.enabled || false;
+    
+    console.log('isModuleEnabled result:', { 
+      moduleId, 
+      enabled, 
+      roleModule: roleModule ? { id: roleModule.module_id ?? roleModule.id, name: roleModule.name, enabled: roleModule.enabled } : null 
+    });
+    
+    return enabled;
   };
 
   const handleRoleClick = (role: RoleWithModules) => {
@@ -179,6 +262,8 @@ export const RoleDashboard = () => {
   ) => {
     if (!currentRole) return;
     
+    console.log('Toggling sub-function:', { moduleId, functionId, subFunctionId, enabled });
+    
     dispatch(updateSubFunctionEnabled({
       roleId: currentRole.role_id,
       moduleId,
@@ -196,6 +281,8 @@ export const RoleDashboard = () => {
   ) => {
     if (!currentRole) return;
     
+    console.log('Toggling function:', { moduleId, functionId, enabled });
+    
     dispatch(updateFunctionEnabled({
       roleId: currentRole.role_id,
       moduleId,
@@ -211,6 +298,8 @@ export const RoleDashboard = () => {
   ) => {
     if (!currentRole) return;
     
+    console.log('Toggling module:', { moduleId, enabled });
+    
     dispatch(updateModuleEnabled({
       roleId: currentRole.role_id,
       moduleId,
@@ -224,6 +313,13 @@ export const RoleDashboard = () => {
       return;
     }
     
+    console.log('Updating permissions for role:', {
+      role_id: currentRole.role_id,
+      role_name: currentRole.role_name,
+      modules_count: currentRole.modules.length,
+      full_role_data: currentRole
+    });
+    
     dispatch(setUpdating(true));
     
     try {
@@ -233,9 +329,10 @@ export const RoleDashboard = () => {
       // Refresh roles data to reflect changes
       await dispatch(fetchRolesWithModules());
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating permissions:', error);
-      toast.error(`Failed to update permissions: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Unknown error';
+      toast.error(`Failed to update permissions: ${errorMessage}`);
     } finally {
       dispatch(setUpdating(false));
     }
@@ -346,7 +443,32 @@ export const RoleDashboard = () => {
             </div>
 
             {/* Functions and Sub-functions Table */}
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-hidden" key={`role-${currentRole?.role_id}-module-${activeModuleTab}`}>
+              {/* Module Toggle */}
+              {currentModule && (
+                <div className="bg-gray-100 p-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <span className="font-semibold text-sm">
+                      {currentModule.name} Module
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-gray-600">Enable All</span>
+                      <Checkbox
+                        checked={isModuleEnabled((currentModule.module_id ?? currentModule.id))}
+                        onCheckedChange={(checked) => {
+                          handleModuleToggle(
+                            (currentModule.module_id ?? currentModule.id),
+                            checked as boolean
+                          );
+                        }}
+                        className="w-4 h-4"
+                        disabled={updating || !currentModule}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="overflow-x-auto">
                 <div className="max-h-64 lg:max-h-96 overflow-y-auto">
                   <Table className="min-w-full">
@@ -376,51 +498,51 @@ export const RoleDashboard = () => {
                       ) : (
                         currentFunctions.flatMap((func) => [
                           // Function row
-                          <TableRow key={`func-${func.function_id || func.id}`} className="hover:bg-gray-50 bg-gray-25">
+                          <TableRow key={`func-${func.function_id ?? func.id}`} className="hover:bg-gray-50 bg-gray-25">
                             <TableCell className="font-semibold text-sm py-3 pl-4">
-                              📁 {func.function_name}
+                              📁 {func.function_name || (func as any).name || 'Unknown Function'}
                             </TableCell>
                             <TableCell className="text-center py-3">
                               <div className="flex justify-center">
                                 <Checkbox
-                                  checked={currentRoleModule ? isFunctionEnabled(currentRoleModule.module_id || currentRoleModule.id, func.function_id || func.id) : false}
+                                  checked={currentModule ? isFunctionEnabled((currentModule.module_id ?? currentModule.id), (func.function_id ?? func.id)) : false}
                                   onCheckedChange={(checked) => {
-                                    if (currentRoleModule) {
+                                    if (currentModule) {
                                       handleFunctionToggle(
-                                        currentRoleModule.module_id || currentRoleModule.id,
-                                        func.function_id || func.id,
+                                        (currentModule.module_id ?? currentModule.id),
+                                        (func.function_id ?? func.id),
                                         checked as boolean
                                       );
                                     }
                                   }}
                                   className="w-4 h-4"
-                                  disabled={!currentRoleModule}
+                                  disabled={updating || !currentModule}
                                 />
                               </div>
                             </TableCell>
                           </TableRow>,
                           // Sub-function rows
                           ...(func.sub_functions || []).map((subFunc) => (
-                            <TableRow key={`subfunc-${subFunc.sub_function_id || subFunc.id}`} className="hover:bg-gray-50">
+                            <TableRow key={`subfunc-${subFunc.sub_function_id ?? subFunc.id}`} className="hover:bg-gray-50">
                               <TableCell className="text-sm py-2 pl-8 text-gray-600">
-                                ↳ {subFunc.sub_function_name}
+                                ↳ {subFunc.sub_function_name || (subFunc as any).name || 'Unknown Sub-function'}
                               </TableCell>
                               <TableCell className="text-center py-2">
                                 <div className="flex justify-center">
                                   <Checkbox
-                                    checked={currentRoleModule ? isSubFunctionEnabled(currentRoleModule.module_id || currentRoleModule.id, func.function_id || func.id, subFunc.sub_function_id || subFunc.id) : false}
+                                    checked={currentModule ? isSubFunctionEnabled((currentModule.module_id ?? currentModule.id), (func.function_id ?? func.id), (subFunc.sub_function_id ?? subFunc.id)) : false}
                                     onCheckedChange={(checked) => {
-                                      if (currentRoleModule) {
+                                      if (currentModule) {
                                         handleSubFunctionToggle(
-                                          currentRoleModule.module_id || currentRoleModule.id,
-                                          func.function_id || func.id,
-                                          subFunc.sub_function_id || subFunc.id,
+                                          (currentModule.module_id ?? currentModule.id),
+                                          (func.function_id ?? func.id),
+                                          (subFunc.sub_function_id ?? subFunc.id),
                                           checked as boolean
                                         );
                                       }
                                     }}
                                     className="w-4 h-4"
-                                    disabled={!currentRoleModule}
+                                    disabled={updating || !currentModule}
                                   />
                                 </div>
                               </TableCell>
@@ -439,8 +561,9 @@ export const RoleDashboard = () => {
               <Button 
                 onClick={handleUpdatePermissions}
                 className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
+                disabled={updating || !currentRole}
               >
-                Update Permissions
+                {updating ? 'Updating...' : 'Update Permissions'}
               </Button>
             </div>
           </div>
