@@ -663,16 +663,13 @@ import { AddVendorPage } from "./pages/AddVendorPage";
 import MsafeReportDownload from "./pages/MsafeReportDownload";
 import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 import DetailsVendorPage from "./pages/DetailsVendorPage";
-<<<<<<< Updated upstream
 import { EditPODashboard } from "./pages/EditPODashboard";
 import { EditWODashboard } from "./pages/EditWODashboard";
-=======
 import GateNumberPage from "./pages/master/GateNumberPage";
 import GatePassTypePage from "./pages/master/GatePassTypePage";
 import InventoryTypePage from "./pages/master/InventoryTypePage";
 import InventorySubTypePage from "./pages/master/InventorySubTypePage";
 import AddGateNumberPage from "./pages/master/AddGateNumberPage";
->>>>>>> Stashed changes
 
 
 const queryClient = new QueryClient();
