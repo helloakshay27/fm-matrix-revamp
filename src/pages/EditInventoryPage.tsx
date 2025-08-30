@@ -593,7 +593,26 @@ export const EditInventoryPage = () => {
                     label="Cost"
                     placeholder="Cost"
                     value={formData.cost}
-                    onChange={(e) => handleInputChange('cost', e.target.value)}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = v.split('.');
+                      if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+                      handleInputChange('cost', v);
+                    }}
+                    onPaste={(e) => {
+                      const text = (e.clipboardData || (window as any).clipboardData).getData('text');
+                      const sanitized = text.replace(/[^0-9.]/g, '');
+                      const parts = sanitized.split('.');
+                      const finalVal = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitized;
+                      e.preventDefault();
+                      handleInputChange('cost', finalVal);
+                    }}
+                    onKeyDown={(e) => {
+                      const invalid = ['e', 'E', '+', '-'];
+                      if (invalid.includes(e.key)) e.preventDefault();
+                      if (e.key === '.' && (formData.cost || '').includes('.')) e.preventDefault();
+                    }}
+                    inputProps={{ inputMode: 'decimal' }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}

@@ -189,6 +189,24 @@ export const InventoryDashboard = () => {
   // Track currently applied server-side filters so pagination & refresh honor them
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
 
+  // Snapshot baseline counts when no filters are applied so cards don't fluctuate on filter clicks
+  const [baselineCounts, setBaselineCounts] = useState({
+    totalInventories: totalInventories || 0,
+    activeCount: activeCount || 0,
+    inactiveCount: inactiveCount || 0,
+    greenInventories: greenInventories || 0,
+  });
+  useEffect(() => {
+    if (!activeFilters || Object.keys(activeFilters).length === 0) {
+      setBaselineCounts({
+        totalInventories: totalInventories || 0,
+        activeCount: activeCount || 0,
+        inactiveCount: inactiveCount || 0,
+        greenInventories: greenInventories || 0,
+      });
+    }
+  }, [totalInventories, activeCount, inactiveCount, greenInventories, activeFilters]);
+
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
   const [analyticsDateRange, setAnalyticsDateRange] = useState({
@@ -305,10 +323,17 @@ export const InventoryDashboard = () => {
   // Map API data to display format
   const inventoryData = mapInventoryData(inventory);
 
-  // Fetch inventory data on component mount or page change
+  // Fetch inventory data when page or filters change (preserve filters across pagination)
   useEffect(() => {
-    dispatch(fetchInventoryData({ page: currentPage, pageSize }));
-  }, [dispatch, currentPage]);
+    const hasFilters = activeFilters && Object.keys(activeFilters).length > 0;
+    dispatch(
+      fetchInventoryData({
+        page: currentPage,
+        pageSize,
+        filters: hasFilters ? (activeFilters as any) : undefined,
+      })
+    );
+  }, [dispatch, currentPage, activeFilters]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -430,7 +455,6 @@ export const InventoryDashboard = () => {
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
     setLocalCurrentPage(1);
-    dispatch(fetchInventoryData({ page: 1, pageSize, filters: newFilters }));
   };
 
   const handleViewItem = (itemId: string) => {
@@ -666,7 +690,6 @@ export const InventoryDashboard = () => {
     setLocalCurrentPage(page);
     dispatch(setCurrentPage(page));
     setSelectedItems([]);
-    dispatch(fetchInventoryData({ page, pageSize, filters: activeFilters }));
   };
 
   const renderPaginationItems = () => {
@@ -1117,7 +1140,10 @@ export const InventoryDashboard = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() => dispatch(fetchInventoryData({}))}
+                  onClick={() => {
+                    setActiveFilters({});
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1127,7 +1153,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {totalInventories || 0}
+                    {baselineCounts.totalInventories}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total Inventories
@@ -1136,9 +1162,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
-                }
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1148,7 +1176,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {activeCount || 0}
+                    {baselineCounts.activeCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Active Inventory
@@ -1157,9 +1185,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
-                }
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1169,7 +1199,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {inactiveCount || 0}
+                    {baselineCounts.inactiveCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Inactive
@@ -1178,13 +1208,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(
-                    fetchInventoryData({
-                      filters: { "q[green_product_eq]": true },
-                    })
-                  )
-                }
+                  onClick={() => {
+                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <img
@@ -1199,7 +1227,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {greenInventories || 0}
+                    {baselineCounts.greenInventories}
                   </div>
                   <div className="text-xs sm:text-sm text-green-600 font-medium leading-tight">
                     Ecofriendly
