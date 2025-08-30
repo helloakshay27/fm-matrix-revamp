@@ -88,6 +88,24 @@ export const createMaterialPR = createAsyncThunk(
     }
 )
 
+export const updateMaterialPR = createAsyncThunk(
+    'updateMaterialPR',
+    async ({ baseUrl, token, data, id }: { baseUrl: string, token: string, data: any, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/purchase_orders/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const getMaterialPR = createAsyncThunk(
     "getMaterialPR",
     async (
@@ -245,6 +263,7 @@ const changePlantDetailsSlice = createApiSlice("changePlantDetails", changePlant
 const fetchWBSSlice = createApiSlice("fetchWBS", fetchWBS);
 const getFeedsSlice = createApiSlice("getFeeds", getFeeds);
 const updateActiveStausSlice = createApiSlice("updateActiveStaus", updateActiveStaus);
+const updateMaterialPRSlice = createApiSlice("updateMaterialPR", updateMaterialPR);
 
 export const getSuppliersReducer = getSuppliersSlice.reducer
 export const getPlantDetailsReducer = getPlantDetailsSlice.reducer
@@ -257,3 +276,4 @@ export const changePlantDetailsReducer = changePlantDetailsSlice.reducer
 export const fetchWBSReducer = fetchWBSSlice.reducer
 export const getFeedsReducer = getFeedsSlice.reducer
 export const updateActiveStausReducer = updateActiveStausSlice.reducer
+export const updateMaterialPRReducer = updateMaterialPRSlice.reducer

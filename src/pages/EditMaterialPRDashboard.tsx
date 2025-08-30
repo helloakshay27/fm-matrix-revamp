@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Upload, X } from "lucide-react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   TextField,
   FormControl,
@@ -26,6 +26,7 @@ import {
   getMaterialPRById,
   getPlantDetails,
   getSuppliers,
+  updateMaterialPR,
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
 import axios from "axios";
@@ -38,7 +39,7 @@ const fieldStyles = {
 };
 
 export const EditMaterialPRDashboard = () => {
-  const { id } = useParams()
+  const { id } = useParams();
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
@@ -56,7 +57,7 @@ export const EditMaterialPRDashboard = () => {
   const [wbsSelection, setWbsSelection] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [overallWbs, setOverallWbs] = useState("");
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState([
     {
       id: 1,
@@ -70,7 +71,6 @@ export const EditMaterialPRDashboard = () => {
       wbsCode: "",
     },
   ]);
-
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
     plantDetail: "",
@@ -87,8 +87,9 @@ export const EditMaterialPRDashboard = () => {
     termsConditions: "",
     wbsCode: "",
   });
-
   const [files, setFiles] = useState([]);
+  const [existingAttachments, setExistingAttachments] = useState([]);
+  const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -103,14 +104,13 @@ export const EditMaterialPRDashboard = () => {
           const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
           setWbsCodes(response.wbs);
         } catch (error) {
-          console.log(error)
-          toast.error(error)
+          console.log(error);
+          toast.error(error);
         }
-      }
-
-      fetchData()
+      };
+      fetchData();
     }
-  }, [showRadio])
+  }, [showRadio, dispatch, baseUrl, token]);
 
   useEffect(() => {
     const getData = async () => {
@@ -130,35 +130,43 @@ export const EditMaterialPRDashboard = () => {
           advanceAmount: response.advance_amount,
           relatedTo: response.related_to,
           termsConditions: response.terms_conditions,
-          wbsCode: ""
+          wbsCode: "",
         });
 
-        setItems(response.pms_po_inventories.map((item, index) => ({
-          id: index + 1,
-          itemDetails: item.inventory?.id,
-          sacHsnCode: item.sac_hsn_code,
-          productDescription: item.prod_desc,
-          each: item.rate,
-          quantity: item.quantity,
-          expectedDate: item.expected_date,
-          amount: item.total_value,
-          wbsCode: ""
-        })))
+        setItems(
+          response.pms_po_inventories.map((item, index) => ({
+            id: item.id,
+            itemDetails: item.inventory?.id,
+            sacHsnCode: item.sac_hsn_code,
+            productDescription: item.prod_desc,
+            each: item.rate,
+            quantity: item.quantity,
+            expectedDate: item.expected_date,
+            amount: item.total_value,
+            wbsCode: "",
+          }))
+        );
+
+        setExistingAttachments(
+          response.attachments?.map((attachment) => ({
+            id: attachment.id,
+            url: attachment.url,
+            name: attachment.file_name || `Attachment-${attachment.id}`,
+          })) || []
+        );
       } catch (error) {
-        console.log(error)
-        toast.error(error)
+        console.log(error);
+        toast.error(error);
       }
-    }
+    };
 
     getData();
-  }, [])
+  }, [id, dispatch, baseUrl, token]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
-        const response = await dispatch(
-          getSuppliers({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
         setSuppliers(response.suppliers);
       } catch (error) {
         console.log(error);
@@ -169,9 +177,7 @@ export const EditMaterialPRDashboard = () => {
 
     const fetchPlantDetails = async () => {
       try {
-        const response = await dispatch(
-          getPlantDetails({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
         setPlantDetails(response);
       } catch (error) {
         console.log(error);
@@ -182,9 +188,7 @@ export const EditMaterialPRDashboard = () => {
 
     const fetchAddresses = async () => {
       try {
-        const response = await dispatch(
-          getAddresses({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
         setAddresses(response.admin_invoice_addresses);
       } catch (error) {
         console.log(error);
@@ -195,9 +199,7 @@ export const EditMaterialPRDashboard = () => {
 
     const fetchInventories = async () => {
       try {
-        const response = await dispatch(
-          getInventories({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
         setInventories(response.inventories);
       } catch (error) {
         console.log(error);
@@ -210,7 +212,7 @@ export const EditMaterialPRDashboard = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchInventories();
-  }, []);
+  }, [dispatch, baseUrl, token]);
 
   const handleSupplierChange = (e) => {
     const { name, value } = e.target;
@@ -225,9 +227,9 @@ export const EditMaterialPRDashboard = () => {
 
   useEffect(() => {
     if (supplierDetails.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } })
+      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } });
     }
-  }, [supplierDetails.plantDetail])
+  }, [supplierDetails.plantDetail, dispatch, baseUrl, token]);
 
   const handleItemChange = (id, field, value) => {
     setItems((prevItems) =>
@@ -251,10 +253,13 @@ export const EditMaterialPRDashboard = () => {
     setFiles((prevFiles) => [...prevFiles, ...selectedFiles]);
   };
 
-  const removeFile = (indexToRemove) => {
-    setFiles((prevFiles) =>
-      prevFiles.filter((_, index) => index !== indexToRemove)
-    );
+  const removeFile = (index, type) => {
+    if (type === "existing") {
+      setExistingAttachments((prev) => prev.filter((_, i) => i !== index));
+      setAttachmentsToDelete((prev) => [...prev, existingAttachments[index].id]);
+    } else {
+      setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
+    }
   };
 
   const handleDashedBorderClick = () => {
@@ -318,7 +323,6 @@ export const EditMaterialPRDashboard = () => {
   };
 
   const validateForm = () => {
-    // Supplier Details Validation
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
       return false;
@@ -348,7 +352,6 @@ export const EditMaterialPRDashboard = () => {
       return false;
     }
 
-    // Item Details Validation
     for (const item of items) {
       if (!item.itemDetails) {
         toast.error("Item Details is required for all items");
@@ -378,9 +381,9 @@ export const EditMaterialPRDashboard = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      return
+      return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
@@ -399,6 +402,7 @@ export const EditMaterialPRDashboard = () => {
         advance_amount: supplierDetails.advanceAmount,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
+          id: item.id,
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
           rate: item.each,
@@ -407,21 +411,19 @@ export const EditMaterialPRDashboard = () => {
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
-        }))
+        })),
       },
       attachments: files,
     };
 
     try {
-      await dispatch(
-        createMaterialPR({ baseUrl, token, data: payload })
-      ).unwrap();
+      await dispatch(updateMaterialPR({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
       toast.success("Material PR created successfully");
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   };
 
@@ -430,7 +432,7 @@ export const EditMaterialPRDashboard = () => {
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
-        className='p-0'
+        className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -438,7 +440,6 @@ export const EditMaterialPRDashboard = () => {
       <h1 className="text-2xl font-bold mb-6">EDIT MATERIAL PR</h1>
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
-          {/* Supplier Details */}
           <Card>
             <CardHeader>
               <CardTitle className="text-[#C72030] flex items-center">
@@ -503,7 +504,7 @@ export const EditMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date().toISOString().split("T")[0], // today as min date
+                  min: new Date().toISOString().split("T")[0],
                 }}
               />
 
@@ -673,7 +674,6 @@ export const EditMaterialPRDashboard = () => {
                     <FormControlLabel value="individual" control={<Radio />} label="Individual" />
                     <FormControlLabel value="overall" control={<Radio />} label="All Items" />
                   </RadioGroup>
-
                 </Box>
               )}
 
@@ -911,29 +911,44 @@ export const EditMaterialPRDashboard = () => {
                     ref={fileInputRef}
                   />
                   <span className="ml-1">
-                    {files.length > 0
-                      ? `${files.length} image(s) selected`
+                    {(files.length + existingAttachments.length) > 0
+                      ? `${files.length + existingAttachments.length} image(s) selected`
                       : "No images chosen"}
                   </span>
                 </div>
               </div>
 
-              {files.length > 0 && (
+              {(files.length > 0 || existingAttachments.length > 0) && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-10 gap-10 my-6">
+                  {existingAttachments.map((attachment, index) => (
+                    <div key={`existing-${attachment.id}`} className="relative w-24 h-24">
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        className="w-full h-full object-cover rounded-lg bg-gray-50"
+                      />
+                      <div className="text-xs text-gray-600 truncate mt-1" title={attachment.name}>
+                        {attachment.name} (Existing)
+                      </div>
+                    </div>
+                  ))}
                   {files.map((file, index) => (
-                    <div key={index} className="relative w-24 h-24">
+                    <div key={`new-${index}`} className="relative w-24 h-24">
                       <img
                         src={URL.createObjectURL(file)}
                         alt={`Preview ${index + 1}`}
                         className="w-full h-full object-cover rounded-lg"
                       />
                       <Button
-                        onClick={() => removeFile(index)}
+                        onClick={() => removeFile(index, "new")}
                         size="sm"
                         className="absolute -top-2 -right-2 p-1 h-7 w-7 rounded-full bg-red-500 hover:bg-red-600"
                       >
                         <X className="w-4 h-4 text-white" />
                       </Button>
+                      <div className="text-xs text-gray-600 truncate mt-1" title={file.name}>
+                        {file.name} (New)
+                      </div>
                     </div>
                   ))}
                 </div>
