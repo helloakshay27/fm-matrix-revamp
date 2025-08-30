@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Eye } from "lucide-react";
+import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { POFilterDialog } from "@/components/POFilterDialog";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -361,14 +361,27 @@ export const PODashboard = () => {
   };
 
   const renderActions = (item: any) => (
-    <Button
-      size="sm"
-      variant="ghost"
-      className="p-1"
-      onClick={() => navigate(`/finance/po/details/${item.id}`)}
-    >
-      <Eye className="w-4 h-4" />
-    </Button>
+    <div className="flex gap-2">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/finance/po/edit/${item.id}`);
+        }}
+      >
+        <Edit className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/finance/po/details/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    </div>
   );
 
   const handlePageChange = async (page: number) => {

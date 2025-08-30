@@ -98,6 +98,24 @@ export const createPurchaseOrder = createAsyncThunk(
     }
 )
 
+export const updatePurchaseOrder = createAsyncThunk(
+    "updatePurchaseOrder",
+    async ({ data, baseUrl, token, id }: { data: any, baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/purchase_orders/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to create work order'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const approvePO = createAsyncThunk(
     "approvePO",
     async ({ id, baseUrl, token, data }: { id: number, baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
@@ -139,6 +157,7 @@ const materialPRChangeSlice = createApiSlice("materialPRChange", materialPRChang
 const createPurchaseOrderSlice = createApiSlice("createPurchaseOrder", createPurchaseOrder);
 const approvePOSlice = createApiSlice("approvePO", approvePO);
 const rejectPOSlice = createApiSlice("rejectPO", rejectPO);
+const updatePurchaseOrderSlice = createApiSlice("updatePurchaseOrder", updatePurchaseOrder);
 
 export const getPurchaseOrdersReducer = getPurchaseOrdersSlice.reducer
 export const getUnitsReducer = getUnitsSlice.reducer
@@ -146,3 +165,4 @@ export const materialPRChangeReducer = materialPRChangeSlice.reducer
 export const createPurchaseOrderReducer = createPurchaseOrderSlice.reducer
 export const approvePOReducer = approvePOSlice.reducer
 export const rejectPOReducer = rejectPOSlice.reducer
+export const updatePurchaseOrderReducer = updatePurchaseOrderSlice.reducer
