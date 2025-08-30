@@ -15,7 +15,7 @@ import {
   Currency,
   User,
   BarChart,
-  UserRoundPen
+  UserRoundPen, DoorOpen
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -233,6 +233,11 @@ const modulesByPackage = {
       icon: FileText,
       href: '/master/material-ebom'
     },
+    {
+      name: 'Gate Number',
+      icon: DoorOpen,
+      href: '/master/gate-number'
+    }
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
@@ -539,10 +544,10 @@ const modulesByPackage = {
         { name: 'Report Setup', href: '/settings/account/report-setup' },
         { name: 'Notification Setup', href: '/settings/account/notification-setup' },
         { name: 'Shift', href: '/settings/account/shift' },
-                  { name: 'Roster', href: '/settings/account/roster' },
-                      { name: 'Role Config', href: '/settings/account/lock-module' },
-          { name: 'Lock Function', href: '/settings/account/lock-function' },
-          { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
+        { name: 'Roster', href: '/settings/account/roster' },
+        { name: 'Role Config', href: '/settings/account/lock-module' },
+        { name: 'Lock Function', href: '/settings/account/lock-function' },
+        { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
 
 
       ]
