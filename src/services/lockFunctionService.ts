@@ -51,6 +51,11 @@ export interface UpdateLockFunctionPayload {
   };
 }
 
+// LockFunctionItem type alias for frontend use
+export interface LockFunctionItem extends LockFunction {
+  // Frontend display type (alias for better naming in components)
+}
+
 export const lockFunctionService = {
   // Fetch all lock functions
   async fetchLockFunctions(): Promise<LockFunction[]> {
