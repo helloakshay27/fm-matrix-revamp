@@ -58,11 +58,11 @@ export const API_CONFIG = {
     UPDATE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
     DELETE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
     // Role Config endpoints
-    ROLE_CONFIGS: '/admin/role_configs.json',
-    ROLE_CONFIG_DETAILS: '/admin/role_configs', // Base path, will append /:id.json
-    CREATE_ROLE_CONFIG: '/admin/role_configs.json',
-    UPDATE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
-    DELETE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
+    ROLE_CONFIGS: '/lock_roles.json',
+    ROLE_CONFIG_DETAILS: '/lock_roles', // Base path, will append /:id.json
+    CREATE_ROLE_CONFIG: '/lock_roles.json',
+    UPDATE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
+    DELETE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
     EMAIL_RULES: '/pms/email_rule_setups.json',
     FM_USERS: '/pms/account_setups/fm_users.json',
     ALLOWED_COMPANIES: '/allowed_companies.json',

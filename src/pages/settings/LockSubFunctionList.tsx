@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockSubFunctionDialog } from './LockSubFunctionCreate';
 import { CreateSubFunctionDialog } from './CreateSubFunctionDialog';
-import { lockSubFunctionService, LockSubFunctionItem as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
+import { lockSubFunctionService, LockSubFunction as ApiLockSubFunctionItem } from '@/services/lockSubFunctionService';
 
 // Type definitions for the lock sub function data
 interface LockSubFunctionItem {
@@ -149,6 +149,21 @@ const mockLockSubFunctionData: LockSubFunctionItem[] = [
   }
 ];
 
+// Transform API data to frontend format
+const transformLockSubFunctionData = (apiData: ApiLockSubFunctionItem[]): LockSubFunctionItem[] => {
+  return apiData.map(item => ({
+    id: item.id,
+    subFunctionName: item.sub_function_name,
+    parentFunction: item.lock_function?.name || 'Unknown',
+    description: item.name || 'No description available',
+    priority: 'MEDIUM' as 'HIGH' | 'MEDIUM' | 'LOW' | 'CRITICAL', // API doesn't provide priority, might need to be added to backend
+    conditions: ['Active'], // API doesn't provide conditions, might need to be added to backend
+    createdOn: new Date(item.created_at).toLocaleDateString('en-GB'),
+    createdBy: 'System', // API doesn't provide created_by, might need to be added to backend
+    active: Boolean(item.active)
+  }));
+};
+
 export const LockSubFunctionList = () => {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -163,9 +178,10 @@ export const LockSubFunctionList = () => {
   const fetchLockSubFunctionData = async () => {
     setLoading(true);
     try {
-      const data = await lockSubFunctionService.fetchLockSubFunctions();
-      setAllLockSubFunctionData(data);
-      console.log('Lock Sub Function Data Count:', data.length);
+      const apiData = await lockSubFunctionService.fetchLockSubFunctions();
+      const transformedData = transformLockSubFunctionData(apiData);
+      setAllLockSubFunctionData(transformedData);
+      console.log('Lock Sub Function Data Count:', transformedData.length);
     } catch (error: any) {
       console.error('Error fetching lock sub function data:', error);
       toast.error(`Failed to load lock sub function data: ${error.message}`, {

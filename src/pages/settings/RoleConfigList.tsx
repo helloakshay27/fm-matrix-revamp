@@ -122,6 +122,19 @@ const mockRoleConfigData: RoleConfigItem[] = [
   }
 ];
 
+// Transform API data to frontend format
+const transformRoleConfigData = (apiData: ApiRoleConfigItem[]): RoleConfigItem[] => {
+  return apiData.map(item => ({
+    id: item.id,
+    roleName: item.roleName || 'Unnamed Role',
+    description: item.description || 'No description available',
+    permissions: item.permissions || [],
+    createdOn: item.createdOn || new Date().toLocaleDateString('en-GB'),
+    createdBy: item.createdBy || 'System',
+    active: Boolean(item.active)
+  }));
+};
+
 export const RoleConfigList = () => {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -136,14 +149,23 @@ export const RoleConfigList = () => {
   const fetchRoleConfigData = async () => {
     setLoading(true);
     try {
-      const data = await roleConfigService.fetchRoleConfigs();
-      setAllRoleConfigData(data);
-      console.log('Role Config Data Count:', data.length);
+      const apiData = await roleConfigService.fetchRoleConfigs();
+      const transformedData = transformRoleConfigData(apiData);
+      setAllRoleConfigData(transformedData);
+      console.log('Role Config Data Count:', transformedData.length);
     } catch (error: any) {
       console.error('Error fetching role config data:', error);
-      toast.error(`Failed to load role configuration data: ${error.message}`, {
-        duration: 5000,
-      });
+      
+      // Check if it's a 404 error and show specific message
+      if (error.message.includes('404')) {
+        toast.error('Role configuration API endpoint not found. Using mock data for development.', {
+          duration: 3000,
+        });
+      } else {
+        toast.error(`Failed to load role configuration data: ${error.message}`, {
+          duration: 5000,
+        });
+      }
       
       // Fallback to mock data on API error for development
       setAllRoleConfigData(mockRoleConfigData);

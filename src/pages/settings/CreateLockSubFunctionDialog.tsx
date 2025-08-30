@@ -51,7 +51,7 @@ export const CreateLockSubFunctionDialog = ({
     const fetchLockFunctions = async () => {
       try {
         // Replace with actual API call to fetch lock functions
-        const response = await fetch('/api/lock_functions');
+        const response = await fetch('/lock_functions.json');
         if (response.ok) {
           const data = await response.json();
           setLockFunctions(data);
@@ -125,14 +125,11 @@ export const CreateLockSubFunctionDialog = ({
         body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
         toast.success('Lock Sub Function created successfully!');
         resetForm();
         onOpenChange(false);
         onLockSubFunctionCreated?.();
-      } else {
-        throw new Error('Failed to create sub function');
-      }
+     
     } catch (error: any) {
       console.error('Error creating lock sub function:', error);
       toast.error(`Failed to create lock sub function: ${error.message || 'Unknown error'}`);

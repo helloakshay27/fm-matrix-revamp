@@ -11,6 +11,7 @@ import { store } from "./store/store";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
+import { PermissionsProvider } from "./contexts/PermissionsContext";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
@@ -63,6 +64,7 @@ import { IncidentListDashboard } from "./pages/IncidentListDashboard";
 import { AddIncidentPage } from "./pages/AddIncidentPage";
 import { IncidentDetailsPage } from "./pages/IncidentDetailsPage";
 import { EditIncidentDetailsPage } from "./pages/EditIncidentDetailsPage";
+import PermissionsTestPage from "./pages/PermissionsTestPage";
 // import { IncidentListDashboard } from './pages/IncidentListDashboard';
 // import { AddIncidentPage } from './pages/AddIncidentPage';
 // import { IncidentDetailsPage } from './pages/IncidentDetailsPage';
@@ -635,9 +637,15 @@ import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
 import { RoleConfigList } from './pages/settings/RoleConfigList';
+import { RoleConfigView } from './pages/settings/RoleConfigView';
+import { RoleConfigEdit } from './pages/settings/RoleConfigEdit';
 import { LockFunctionList } from './pages/settings/LockFunctionList';
+import { LockFunctionView } from './pages/settings/LockFunctionView';
+import { LockFunctionEdit } from './pages/settings/LockFunctionEdit';
 import { LockModuleList } from './pages/settings/LockModuleList';
 import { LockSubFunctionList } from './pages/settings/LockSubFunctionList';
+import { LockSubFunctionView } from './pages/settings/LockSubFunctionView';
+import { LockSubFunctionEdit } from './pages/settings/LockSubFunctionEdit';
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
@@ -692,6 +700,7 @@ function App() {
       <Router>
         <QueryClientProvider client={queryClient}>
           <LayoutProvider>
+            <PermissionsProvider>
             <Routes>
               {/* Login Route */}
               <Route
@@ -722,6 +731,14 @@ function App() {
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/permissions-test" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PermissionsTestPage />
+                  </Layout>
                 </ProtectedRoute>
               } />
 
@@ -2024,11 +2041,6 @@ function App() {
                 />
                 <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
                 <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
-                <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
-                <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
-                <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
-                <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
-                <Route path="/settings/inventory-management/sac-hsn-code" element={<SacHsn />} />
                 <Route path="/settings/inventory-management/sac-hsn-code/add" element={<AddSacHsn />} />
                 <Route path="/settings/inventory-management/sac-hsn-code/:id" element={<DetailPageSacHsn />} />
                 <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
@@ -2049,9 +2061,15 @@ function App() {
                 <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
                 <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
                 <Route path="/settings/account/role-config" element={<RoleConfigList />} />
+                <Route path="/settings/account/role-config/view/:id" element={<RoleConfigView />} />
+                <Route path="/settings/account/role-config/edit/:id" element={<RoleConfigEdit />} />
                 <Route path="/settings/account/lock-module" element={<LockModuleList />} />
                 <Route path="/settings/account/lock-function" element={<LockFunctionList />} />
+                <Route path="/settings/account/lock-function/view/:id" element={<LockFunctionView />} />
+                <Route path="/settings/account/lock-function/edit/:id" element={<LockFunctionEdit />} />
                 <Route path="/settings/account/lock-sub-function" element={<LockSubFunctionList />} />
+                <Route path="/settings/account/lock-sub-function/view/:id" element={<LockSubFunctionView />} />
+                <Route path="/settings/account/lock-sub-function/edit/:id" element={<LockSubFunctionEdit />} />
               </Route>
 
               {/* Setup Routes - Outside of settings parent route */}
@@ -2118,6 +2136,7 @@ function App() {
                 },
               }}
             />
+            </PermissionsProvider>
           </LayoutProvider>
         </QueryClientProvider>
       </Router>

@@ -1,6 +1,18 @@
 import { API_CONFIG, getAuthHeader, getFullUrl } from '@/config/apiConfig';
 
-// Type definitions for Role Config API
+// Type definitions for Role Config API (backend format)
+export interface ApiRoleConfig {
+  id: number;
+  name: string;
+  description?: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  lock_modules?: any[];
+  permissions?: string[];
+}
+
+// Type definitions for Role Config API (frontend format)
 export interface RoleConfigItem {
   id: number;
   roleName: string;
@@ -12,22 +24,33 @@ export interface RoleConfigItem {
 }
 
 export interface CreateRoleConfigPayload {
-  role_config: {
+  lock_role: {
     name: string;
-    description: string;
-    permissions: string[];
+    description?: string;
     active: boolean;
   };
 }
 
 export interface UpdateRoleConfigPayload {
-  role_config: {
+  lock_role: {
     name: string;
-    description: string;
-    permissions: string[];
+    description?: string;
     active: boolean;
   };
 }
+
+// Transform API data to frontend format
+const transformRoleConfig = (apiRole: ApiRoleConfig): RoleConfigItem => {
+  return {
+    id: apiRole.id,
+    roleName: apiRole.name || 'Unnamed Role',
+    description: apiRole.description || 'No description available',
+    permissions: apiRole.permissions || [],
+    createdOn: new Date(apiRole.created_at).toLocaleDateString('en-GB'),
+    createdBy: 'System', // API doesn't provide created_by, might need to be added to backend
+    active: Boolean(apiRole.active)
+  };
+};
 
 export const roleConfigService = {
   // Fetch all role configurations
@@ -49,7 +72,8 @@ export const roleConfigService = {
       }
 
       const data = await response.json();
-      return data.role_configs || data || [];
+      const apiRoles: ApiRoleConfig[] = data.lock_roles || data || [];
+      return apiRoles.map(transformRoleConfig);
     } catch (error) {
       console.error('Error fetching role configs:', error);
       throw error;
@@ -75,7 +99,8 @@ export const roleConfigService = {
       }
 
       const data = await response.json();
-      return data.role_config || data;
+      const apiRole: ApiRoleConfig = data.lock_role || data;
+      return transformRoleConfig(apiRole);
     } catch (error) {
       console.error('Error fetching role config:', error);
       throw error;
@@ -103,7 +128,8 @@ export const roleConfigService = {
       }
 
       const data = await response.json();
-      return data.role_config || data;
+      const apiRole: ApiRoleConfig = data.lock_role || data;
+      return transformRoleConfig(apiRole);
     } catch (error) {
       console.error('Error creating role config:', error);
       throw error;
@@ -131,7 +157,8 @@ export const roleConfigService = {
       }
 
       const data = await response.json();
-      return data.role_config || data;
+      const apiRole: ApiRoleConfig = data.lock_role || data;
+      return transformRoleConfig(apiRole);
     } catch (error) {
       console.error('Error updating role config:', error);
       throw error;
