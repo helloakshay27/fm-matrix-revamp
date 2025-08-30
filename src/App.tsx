@@ -655,6 +655,8 @@ import { AddVendorPage } from "./pages/AddVendorPage";
 import MsafeReportDownload from "./pages/MsafeReportDownload";
 import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 import DetailsVendorPage from "./pages/DetailsVendorPage";
+import { EditPODashboard } from "./pages/EditPODashboard";
+import { EditWODashboard } from "./pages/EditWODashboard";
 
 
 const queryClient = new QueryClient();
@@ -1283,10 +1285,15 @@ function App() {
                   path="/finance/po/details/:id"
                   element={<PODetailsPage />}
                 />
+                <Route
+                  path="/finance/po/edit/:id"
+                  element={<EditPODashboard />}
+                />
                 <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
                 <Route path="/finance/wo" element={<WODashboard />} />
                 <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
                 <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
+                <Route path="/finance/wo/edit/:id" element={<EditWODashboard />} />
                 <Route path="/finance/wo/feeds/:id" element={<WOFeedsPage />} />
                 <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
                 <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
@@ -1605,7 +1612,7 @@ function App() {
                 <Route path="/security/visitor-management/support-staff/edit/:id" element={<EditSupportStaffPage />} />
                 <Route path="/security/visitor-management/visiting-purpose" element={<VisitingPurposePage />} />
                 <Route path="/security/staff" element={<StaffsDashboard />} />
-                  <Route path="/maintenance/msafe-report" element={<MsafeReportDownload />} />
+                <Route path="/maintenance/msafe-report" element={<MsafeReportDownload />} />
                 <Route path="/maintenance/msafe-detail-report" element={<MsafeDetailReportDownload />} />
                 <Route
                   path="/security/staff/details/:id"
