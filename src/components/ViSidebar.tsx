@@ -20,15 +20,15 @@ const modulesByPackage = {
                 { name: 'Reportees Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
             ],
         },
-        {
-            name: 'Vi Miles',
-            icon: Car,
-            href: '/maintenance/vi-miles',
-            subItems: [
-                { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
-                { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
-            ],
-        },
+        // {
+        //     name: 'Vi Miles',
+        //     icon: Car,
+        //     href: '/maintenance/vi-miles',
+        //     subItems: [
+        //         { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
+        //         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
+        //     ],
+        // },
         { name: 'Msafe Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
     ],

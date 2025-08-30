@@ -654,6 +654,7 @@ import { VendorPage } from "./pages/VendorPage";
 import { AddVendorPage } from "./pages/AddVendorPage";
 import MsafeReportDownload from "./pages/MsafeReportDownload";
 import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
+import DetailsVendorPage from "./pages/DetailsVendorPage";
 
 
 const queryClient = new QueryClient();
@@ -1505,6 +1506,10 @@ function App() {
                 <Route
                   path="/maintenance/vendor/add"
                   element={<AddVendorPage />}
+                />
+                <Route
+                  path="/maintenance/vendor/view/:id"
+                  element={<DetailsVendorPage />}
                 />
 
                 {/* Utility Routes */}
