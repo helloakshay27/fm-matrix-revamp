@@ -665,6 +665,11 @@ import MsafeDetailReportDownload from "./pages/MsafeDetailReportDownload";
 import DetailsVendorPage from "./pages/DetailsVendorPage";
 import { EditPODashboard } from "./pages/EditPODashboard";
 import { EditWODashboard } from "./pages/EditWODashboard";
+import GateNumberPage from "./pages/master/GateNumberPage";
+import GatePassTypePage from "./pages/master/GatePassTypePage";
+import InventoryTypePage from "./pages/master/InventoryTypePage";
+import InventorySubTypePage from "./pages/master/InventorySubTypePage";
+import AddGateNumberPage from "./pages/master/AddGateNumberPage";
 
 
 const queryClient = new QueryClient();
@@ -1997,6 +2002,26 @@ function App() {
                 <Route
                   path="/master/material-ebom"
                   element={<MaterialMasterPage />}
+                />
+                <Route
+                  path="/master/gate-number"
+                  element={<GateNumberPage />}
+                />
+                <Route
+                  path="/master/gate-number/add"
+                  element={<AddGateNumberPage />}
+                />
+                <Route
+                  path="/master/gate-pass-type"
+                  element={<GatePassTypePage />}
+                />
+                <Route
+                  path="/master/inventory-type"
+                  element={<InventoryTypePage />}
+                />
+                <Route
+                  path="/master/inventory-sub-type"
+                  element={<InventorySubTypePage />}
                 />
 
                 <Route

@@ -1139,7 +1139,7 @@ export const ChecklistMasterPage = () => {
                             { id: 'text', label: 'Text', value: 'text' },
                             { id: 'number', label: 'Numeric', value: 'number' },
                             { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
-                            { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
+                            // { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
                             { id: 'radio-group', label: 'Radio', value: 'radio-group' },
                             { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
                           ]}
@@ -1538,7 +1538,7 @@ export const ChecklistMasterPage = () => {
           ))}
         </div>
 
-        <div className="flex justify-end space-x-4 p-6 bg-white">
+        <div className="flex justify-center space-x-4 p-6 bg-white">
           <Button
             type="button"
             variant="outline"
