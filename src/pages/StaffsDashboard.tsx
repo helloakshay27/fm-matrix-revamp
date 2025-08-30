@@ -9,7 +9,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Filter, Eye, Edit, FileText, QrCode, Search, Trash2 } from 'lucide-react';
 import { StaffsFilterModal } from '@/components/StaffsFilterModal';
-import { AddStaffModal } from '@/components/AddStaffModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
@@ -137,7 +136,6 @@ const getStatusBadgeColor = (status: string) => {
 export const StaffsDashboard = () => {
   const navigate = useNavigate();
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
   const [searchTrigger, setSearchTrigger] = useState(0);
@@ -426,7 +424,7 @@ export const StaffsDashboard = () => {
             leftActions={
               <div className="flex gap-3">
                 <Button 
-                  onClick={() => setIsAddModalOpen(true)}
+                  onClick={() => navigate('/security/staff/add')}
                   style={{ backgroundColor: '#C72030' }}
                   className="hover:bg-[#C72030]/90 text-white px-4 py-2"
                 >
@@ -521,12 +519,6 @@ export const StaffsDashboard = () => {
       <StaffsFilterModal 
         isOpen={isFilterModalOpen}
         onClose={() => setIsFilterModalOpen(false)}
-      />
-
-      {/* Add Staff Modal */}
-      <AddStaffModal 
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
       />
     </div>
   );

@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, X, Star, ClipboardList, HelpCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiClient } from '@/utils/apiClient';
+import { ticketManagementAPI, CategoryResponse } from '@/services/ticketManagementAPI';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 
 // --- Interface Definitions ---
@@ -85,6 +86,12 @@ export const AddSurveyPage = () => {
   const [title, setTitle] = useState('');
   const [checkType, setCheckType] = useState('');
   const [createTicket, setCreateTicket] = useState(false);
+  const [ticketCategory, setTicketCategory] = useState('');
+  const [assignTo, setAssignTo] = useState('');
+  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>([]);
+  const [fmUsers, setFmUsers] = useState<{id: number; firstname: string; lastname: string; email?: string}[]>([]);
+  const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingFmUsers, setLoadingFmUsers] = useState(false);
   const [additionalTitle, setAdditionalTitle] = useState('');
   const [additionalDescription, setAdditionalDescription] = useState('');
   const [questions, setQuestions] = useState<Question[]>([
@@ -118,6 +125,50 @@ export const AddSurveyPage = () => {
     };
     fetchCategories();
   }, []);
+
+  // Load ticket categories when createTicket is enabled
+  const loadTicketCategories = useCallback(async () => {
+    if (!createTicket) return;
+    
+    setLoadingTicketCategories(true);
+    try {
+      const response = await ticketManagementAPI.getCategories();
+      setTicketCategories(response.helpdesk_categories || []);
+      console.log('Ticket categories loaded:', response.helpdesk_categories);
+    } catch (error) {
+      console.error('Error loading ticket categories:', error);
+    } finally {
+      setLoadingTicketCategories(false);
+    }
+  }, [createTicket]);
+
+  // Load FM users for assign to dropdown
+  const loadFMUsers = useCallback(async () => {
+    if (!createTicket) return;
+    
+    setLoadingFmUsers(true);
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      setFmUsers(response.fm_users || []);
+      console.log('FM users loaded:', response.fm_users);
+    } catch (error) {
+      console.error('Error loading FM users:', error);
+    } finally {
+      setLoadingFmUsers(false);
+    }
+  }, [createTicket]);
+
+  // Load ticket data when createTicket checkbox is checked
+  useEffect(() => {
+    if (createTicket) {
+      loadTicketCategories();
+      loadFMUsers();
+    } else {
+      // Reset selections when unchecked
+      setTicketCategory('');
+      setAssignTo('');
+    }
+  }, [createTicket, loadTicketCategories, loadFMUsers]);
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
@@ -262,6 +313,19 @@ export const AddSurveyPage = () => {
       alert('Please select a check type');
       return;
     }
+    
+    // Validate ticket fields if create ticket is checked
+    if (createTicket) {
+      if (!ticketCategory) {
+        alert('Please select a ticket category');
+        return;
+      }
+      if (!assignTo) {
+        alert('Please select assign to');
+        return;
+      }
+    }
+    
     // if (questions.some(q => !q.text.trim())) {
     //   alert('Please fill in all question texts');
     //   return;
@@ -278,7 +342,15 @@ export const AddSurveyPage = () => {
         snag_checklist: {
           name: title,
           snag_audit_category_id: parseInt(category) || null,
-          check_type: checkType
+          check_type: checkType,
+          project_id: 1,
+          snag_audit_sub_category_id: 1,
+          // Add ticket creation fields if create ticket is checked
+          ...(createTicket && {
+            create_ticket: true,
+            ticket_category_id: parseInt(ticketCategory),
+            assigned_to: parseInt(assignTo)
+          })
         },
         question: questions.map(question => ({
           descr: question.text,
@@ -295,7 +367,20 @@ export const AddSurveyPage = () => {
             }))
           } : {}),
           ...(question.answerType === 'rating' ? { rating: question.rating } : {}),
-          ...(question.answerType === 'emojis' ? { emoji: question.selectedEmoji } : {})
+          ...(question.answerType === 'emojis' ? { emoji: question.selectedEmoji } : {}),
+          ...(question.additionalFieldOnNegative && question.additionalFields && question.additionalFields.length > 0 ? {
+            generic_tags: question.additionalFields.map(field => ({
+              category_name: field.title,
+              category_type: "questionss",
+              tag_type: "not generic",
+              active: true,
+              icons: field.files.length > 0 ? field.files.map(file => ({ 
+                name: file.name,
+                type: file.type,
+                size: file.size
+              })) : []
+            }))
+          } : {})
         }))
       };
 
@@ -386,7 +471,7 @@ export const AddSurveyPage = () => {
                   notched
                   displayEmpty
                 >
-                  <MenuItem value="">Select Check Type</MenuItem>
+                  <MenuItem value="" disabled>Select Check Type</MenuItem>
                   <MenuItem value="patrolling">Patrolling</MenuItem>
                   <MenuItem value="survey">Survey</MenuItem>
                 </MuiSelect>
@@ -403,6 +488,55 @@ export const AddSurveyPage = () => {
                 </label>
               </div>
             </div>
+
+            {/* Conditional Ticket Dropdowns */}
+            {createTicket && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+                {/* Ticket Category Dropdown */}
+                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Ticket Category</InputLabel>
+                  <MuiSelect
+                    value={ticketCategory}
+                    onChange={(e) => setTicketCategory(e.target.value)}
+                    label="Ticket Category*"
+                    notched
+                    displayEmpty
+                    disabled={loadingTicketCategories}
+                  >
+                    <MenuItem value="">
+                      {loadingTicketCategories ? "Loading categories..." : "Select Ticket Category"}
+                    </MenuItem>
+                    {ticketCategories.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Assign To Dropdown */}
+                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Assign To</InputLabel>
+                  <MuiSelect
+                    value={assignTo}
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    label="Assign To*"
+                    notched
+                    displayEmpty
+                    disabled={loadingFmUsers}
+                  >
+                    <MenuItem value="">
+                      {loadingFmUsers ? "Loading users..." : "Select Assign To"}
+                    </MenuItem>
+                    {fmUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id.toString()}>
+                        {`${user.firstname} ${user.lastname}`.trim()}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            )}
           </div>
         </div>
 
@@ -421,7 +555,7 @@ export const AddSurveyPage = () => {
             </div>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className={`grid gap-6 ${questions.length === 1 ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
               {questions.map((question) => (
                 <div key={question.id} className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50">
                   <div className="flex items-center justify-between">
@@ -565,88 +699,105 @@ export const AddSurveyPage = () => {
                     <div className="space-y-3 pt-2 border-t border-gray-200 mt-4 pt-4">
                       <label className="text-sm font-medium text-gray-700">Additional Fields for Negative Selection</label>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(question.additionalFields || []).map((field, fieldIndex) => (
-                          <div key={fieldIndex} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/30">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
-                              {(question.additionalFields?.length || 0) > 1 && (
-                                <Button 
-                                  onClick={() => handleRemoveAdditionalField(question.id, fieldIndex)} 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                            
-                            <TextField
-                              label="Title"
-                              placeholder="Enter title"
-                              value={field.title}
-                              onChange={(e) => handleAdditionalFieldTitleChange(question.id, fieldIndex, e.target.value)}
-                              fullWidth
-                              variant="outlined"
-                              InputLabelProps={{ shrink: true }}
-                              InputProps={{ sx: {...fieldStyles, height: '36px'} }}
-                            />
-                            
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-white flex flex-col items-center justify-center">
-                              <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                id={`additional-file-${question.id}-${fieldIndex}`}
-                                onChange={(e) => {
-                                  if (e.target.files) {
-                                    handleAdditionalFieldFilesChange(question.id, fieldIndex, Array.from(e.target.files));
-                                  }
-                                }}
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                      <div className="space-y-4">
+                        {(question.additionalFields || []).map((field, fieldIndex) => {
+                          const isOnlyField = (question.additionalFields?.length || 0) === 1;
+                          return (
+                            <div key={fieldIndex} className={`grid gap-3 items-end ${isOnlyField ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-3'}`}>
+                              <TextField
+                                label="Title"
+                                placeholder="Enter title"
+                                value={field.title}
+                                onChange={(e) => handleAdditionalFieldTitleChange(question.id, fieldIndex, e.target.value)}
+                                fullWidth
+                                variant="outlined"
+                                InputLabelProps={{ shrink: true }}
+                                InputProps={{ sx: {...fieldStyles, height: '36px'} }}
                               />
-                              <div className="flex items-center justify-center gap-1 mb-2">
-                                <span className="text-[#C72030] font-medium text-[11px]">Choose File</span>
-                                <span className="text-gray-500 text-[11px]">
-                                  {field.files.length > 0 ? `${field.files.length} file(s)` : 'No file'}
-                                </span>
+                              
+                              <div className="relative">
+                                <TextField
+                                  label="Upload File"
+                                  value={
+                                    field.files.length > 0 
+                                      ? field.files.map(file => file.name).join(', ')
+                                      : 'Choose File: No file chosen'
+                                  }
+                                  fullWidth
+                                  variant="outlined"
+                                  InputLabelProps={{ shrink: true }}
+                                  InputProps={{ 
+                                    sx: {
+                                      ...fieldStyles, 
+                                      height: '36px', 
+                                      cursor: 'pointer',
+                                      '& input': {
+                                        color: field.files.length > 0 ? '#C72030' : 'inherit',
+                                        fontWeight: field.files.length > 0 ? '500' : 'normal',
+                                        cursor: 'pointer'
+                                      }
+                                    },
+                                    readOnly: true
+                                  }}
+                                  onClick={() => document.getElementById(`additional-file-${question.id}-${fieldIndex}`)?.click()}
+                                  style={{ cursor: 'pointer' }}
+                                />
+                                <input
+                                  type="file"
+                                  multiple
+                                  className="hidden"
+                                  id={`additional-file-${question.id}-${fieldIndex}`}
+                                  onChange={(e) => {
+                                    if (e.target.files) {
+                                      handleAdditionalFieldFilesChange(question.id, fieldIndex, Array.from(e.target.files));
+                                    }
+                                  }}
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                                />
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => document.getElementById(`additional-file-${question.id}-${fieldIndex}`)?.click()}
-                                className="bg-[#f6f4ee] text-[#C72030] px-2 py-1 rounded text-xs flex items-center justify-center"
-                              >
-                                <span className="text-xs mr-1">+</span> Upload
-                              </button>
-                            </div>
-                            
-                            {field.files.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {field.files.map((file, fileIndex) => (
-                                  <div
-                                    key={`${file.name}-${file.lastModified}`}
-                                    className="flex relative flex-col items-center border rounded-md pt-3 px-1 pb-2 w-[80px] bg-[#F6F4EE] shadow-sm"
-                                  >
-                                    <div className="w-5 h-5 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                                      <svg className="w-2 h-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <rect width="20" height="20" x="2" y="2" rx="2"/>
-                                      </svg>
-                                    </div>
-                                    <span className="text-[7px] text-center truncate max-w-[60px] mb-1">{file.name}</span>
-                                    <button
-                                      type="button"
-                                      className="absolute top-0 right-0 text-gray-600 hover:text-red-600 p-0"
-                                      onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                              
+                              {!isOnlyField && (
+                                <>
+                                  {/* <div className="flex items-center justify-center">
+                                    <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
+                                  </div> */}
+                                  
+                                  <div className="flex items-center justify-center">
+                                    <Button 
+                                      onClick={() => handleRemoveAdditionalField(question.id, fieldIndex)} 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
                                     >
-                                      <X className="w-2 h-2" />
-                                    </button>
+                                      <X className="w-3 h-3" />
+                                    </Button>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
+                                </>
+                              )}
+                              
+                              {/* File names list with remove option */}
+                              {/* {field.files.length > 0 && (
+                                <div className="col-span-full space-y-1 mt-2">
+                                  {field.files.map((file, fileIndex) => (
+                                    <div
+                                      key={`${file.name}-${file.lastModified}`}
+                                      className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs"
+                                    >
+                                      <span className="truncate">{file.name}</span>
+                                      <button
+                                        type="button"
+                                        className="text-gray-600 hover:text-red-600 ml-2"
+                                        onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )} */}
+                            </div>
+                          );
+                        })}
                       </div>
                       
                       <Button 

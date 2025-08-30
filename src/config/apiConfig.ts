@@ -91,6 +91,11 @@ export const API_CONFIG = {
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',
     STATUSES_UPDATE: '/pms/admin/modify_complaint_status.json',
     MODIFY_COMPLAINT_STATUS: '/pms/admin/modify_complaint_status.json',
+    // Holiday Calendar endpoints
+    HOLIDAY_CALENDARS: '/pms/admin/holiday_calendars.json',
+    CREATE_HOLIDAY: '/pms/admin/holiday_calendars.json',
+    GET_HOLIDAY: '/pms/admin/holiday_calendars', // Base path, will append /:id.json
+    UPDATE_HOLIDAY: '/pms/admin/holiday_calendars', // Base path, will append /:id.json
     // New endpoints for ticket creation
     CREATE_TICKET: '/pms/admin/complaints.json',
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',

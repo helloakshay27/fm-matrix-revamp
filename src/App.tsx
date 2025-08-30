@@ -212,6 +212,8 @@ import { StaffDetailsPage } from "./pages/StaffDetailsPage";
 // Import Edit Staff page
 import { EditStaffPage } from "./pages/EditStaffPage";
 
+// Import Add Staff page
+import { AddStaffPage } from "./pages/AddStaffPage";
 
 import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
 import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
@@ -1654,6 +1656,7 @@ function App() {
                 />
                 <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
                 <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
+                <Route path="/security/staff/add" element={<AddStaffPage />} />
                 <Route path="/security/patrolling" element={<PatrollingDashboard />} />
                 <Route path="/security/patrolling/create" element={<PatrollingCreatePage />} />
                 <Route path="/security/patrolling/edit/:id" element={<PatrollingEditPage />} />
@@ -2066,6 +2069,10 @@ function App() {
                 />
                 <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
                 <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
+                <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
+                <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
+                <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
+                <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
                 <Route path="/settings/inventory-management/sac-hsn-code/add" element={<AddSacHsn />} />
                 <Route path="/settings/inventory-management/sac-hsn-code/:id" element={<DetailPageSacHsn />} />
                 <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />

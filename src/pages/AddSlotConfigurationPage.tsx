@@ -356,7 +356,7 @@ export const AddSlotConfigurationPage = () => {
         {/* Location and Floor Selection */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Location</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700">Location <span className="text-red-500">*</span></label>
             <Select 
               value={formData.building_id} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, building_id: value }))}
@@ -375,7 +375,7 @@ export const AddSlotConfigurationPage = () => {
             </Select>
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700">Floor</label>
+            <label className="block text-sm font-medium mb-2 text-gray-700">Floor <span className="text-red-500">*</span></label>
             <Select 
               value={formData.floor_id} 
               onValueChange={(value) => setFormData(prev => ({ ...prev, floor_id: value }))}

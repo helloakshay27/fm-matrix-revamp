@@ -7,6 +7,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { SurveyListFilterModal } from '@/components/SurveyListFilterModal';
+import { SurveySelectionPanel } from '@/components/SurveyActionModal';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -32,7 +33,7 @@ export const SurveyListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -116,6 +117,40 @@ export const SurveyListDashboard = () => {
     fetchSurveyData();
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(filteredSurveys.map(survey => survey.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
+
+  const handleAction = (action: string, item: SurveyItem) => {
+    console.log(`${action} action for survey ${item.id}`);
+    if (action === 'Edit') {
+      navigate(`/maintenance/survey/edit/${item.id}`);
+    } else if (action === 'View') {
+      navigate(`/maintenance/survey/details/${item.id}`);
+    } else {
+      toast({
+        title: `${action} Action`,
+        description: `${action} action performed for survey ${item.id}`
+      });
+    }
+  };
+
   const handleStatusChange = (item: SurveyItem, newStatus: string) => {
     setSurveys(prevSurveys => 
       prevSurveys.map((survey) => 
@@ -128,7 +163,7 @@ export const SurveyListDashboard = () => {
     });
   };
 
-  const handleAction = (action: string, surveyId: number) => {
+  const handleRowAction = (action: string, surveyId: number) => {
     console.log(`${action} action for survey ${surveyId}`);
     if (action === 'Edit') {
       navigate(`/maintenance/survey/edit/${surveyId}`);
@@ -159,7 +194,7 @@ export const SurveyListDashboard = () => {
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     { key: 'name', label: 'Survey Name', sortable: true, draggable: true },
-    { key: 'snag_audit_category', label: 'Ticket Category', sortable: true, draggable: true },
+    // { key: 'snag_audit_category', label: 'Ticket Category', sortable: true, draggable: true },
     // { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true }, // Hidden
     { key: 'questions_count', label: 'No. of Associations', sortable: true, draggable: true },
     // { key: 'status', label: 'Status', sortable: true, draggable: true } // Hidden
@@ -169,22 +204,16 @@ export const SurveyListDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex space-x-1 ml-4">
-            {/* <button 
-              onClick={() => handleAction('Edit', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Edit className="w-4 h-4" />
-            </button> */}
+          <div className="flex justify-center items-center">
             <button 
-              onClick={() => handleAction('View', item.id)}
+              onClick={() => handleRowAction('View', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
               <Eye className="w-4 h-4" />
             </button>
           </div>
         );
-      case 'status':
+      case 'status': {
         const status = item.active === 1 ? 'Active' : 'Inactive';
         return (
           <DropdownMenu>
@@ -207,6 +236,7 @@ export const SurveyListDashboard = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         );
+      }
       case 'snag_audit_sub_category':
         return item.snag_audit_sub_category || '-';
       case 'questions_count':
@@ -223,6 +253,11 @@ export const SurveyListDashboard = () => {
     
     return matchesSearch;
   });
+
+  // Get selected survey objects for the panel
+  const selectedSurveyObjects = filteredSurveys.filter(survey => 
+    selectedItems.includes(survey.id.toString())
+  );
 
   if (loading) {
     return (
@@ -248,7 +283,11 @@ export const SurveyListDashboard = () => {
         <EnhancedTable
           data={filteredSurveys}
           columns={columns}
-          // selectable={true}
+          selectable={true}
+          selectedItems={selectedItems}
+          onSelectAll={handleSelectAll}
+          onSelectItem={handleSelectItem}
+          getItemId={(item) => item.id.toString()}
           renderCell={renderCell}
           storageKey="survey-list-table"
           enableExport={true}
@@ -279,7 +318,13 @@ export const SurveyListDashboard = () => {
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
-        currentFilters={appliedFilters}
+      />
+
+      {/* Survey Selection Panel */}
+      <SurveySelectionPanel
+        selectedSurveys={selectedItems}
+        selectedSurveyObjects={selectedSurveyObjects}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );
