@@ -224,7 +224,7 @@ const MsafeReportDownload = () => {
                 href={downloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center rounded-md bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+                className="inline-flex items-center rounded-md bg-[#F2EEE9] px-3 py-2 text-sm font-medium text-[#BF213E] hover:bg-green-700"
               >
                 Click to Download
               </a>
