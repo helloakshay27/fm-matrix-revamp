@@ -252,21 +252,21 @@ const modulesByPackage = {
         icon: DoorOpen,
         href: '/master/gate-number'
       },
-      {
-        name: 'Inventory Type',
-        icon: Package,
-        href: '/master/inventory-type'
-      },
-      {
-        name: 'Inventory Sub Type',
-        icon: PackagePlus,
-        href: '/master/inventory-sub-type'
-      },
-      {
-        name: 'Gate Pass Type',
-        icon: Ticket,
-        href: '/master/gate-pass-type'
-      }
+      // {
+      //   name: 'Inventory Type',
+      //   icon: Package,
+      //   href: '/master/inventory-type'
+      // },
+      // {
+      //   name: 'Inventory Sub Type',
+      //   icon: PackagePlus,
+      //   href: '/master/inventory-sub-type'
+      // },
+      // {
+      //   name: 'Gate Pass Type',
+      //   icon: Ticket,
+      //   href: '/master/gate-pass-type'
+      // }
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
