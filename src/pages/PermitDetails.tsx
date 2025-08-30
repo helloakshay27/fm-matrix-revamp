@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
-import { AddCommentModal } from "@/components/AddCommentModal";
+import { AddPermitCommentModal } from "@/components/AddPermitCommentModal";
 
 // Type definitions for permit details
 interface CreatedBy {
@@ -111,6 +111,16 @@ interface Permit {
     all_level_approved: boolean;
 }
 
+interface CommentLog {
+    id: number;
+    description: string;
+    created_by: {
+        full_name: string;
+    };
+    created_at: string;
+    updated_at: string;
+}
+
 interface PermitDetailsResponse {
     permit: Permit;
     approval_levels: ApprovalLevel[];
@@ -121,7 +131,7 @@ interface PermitDetailsResponse {
     main_attachments: MainAttachment[];
     vendor_attachments: VendorAttachments;
     manpower_details: any[];
-    comment_logs: any[];
+    comment_logs: CommentLog[];
     safety_check_audits: any[];
     qr_code: QRCode;
 }
@@ -143,6 +153,29 @@ const fetchPermitDetails = async (id: string): Promise<PermitDetailsResponse> =>
     return await response.json();
 };
 
+// API function to add permit comment
+const addPermitComment = async (permitId: string, comment: string): Promise<void> => {
+    const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.PERMIT_COMMENT}/${permitId}/permit_comment`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+            pms_permit_comment_log: {
+                description: comment
+            }
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error(`Failed to add comment: ${response.statusText}`);
+    }
+
+    return await response.json();
+};
+
 export const PermitDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -151,6 +184,31 @@ export const PermitDetails = () => {
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState("details");
     const [commentModalOpen, setCommentModalOpen] = useState(false);
+    const [isAddingComment, setIsAddingComment] = useState(false);
+
+    // Handle adding comment
+    const handleAddComment = async (comment: string) => {
+        if (!id || !comment.trim()) {
+            toast.error('Comment cannot be empty');
+            return;
+        }
+
+        setIsAddingComment(true);
+        try {
+            await addPermitComment(id, comment.trim());
+            toast.success('Comment added successfully');
+            setCommentModalOpen(false);
+
+            // Refresh permit details to show the new comment
+            const response = await fetchPermitDetails(id);
+            setPermitData(response);
+        } catch (error) {
+            console.error('Error adding comment:', error);
+            toast.error('Failed to add comment. Please try again.');
+        } finally {
+            setIsAddingComment(false);
+        }
+    };
 
     // Fetch permit details on component mount
     useEffect(() => {
@@ -190,6 +248,25 @@ export const PermitDetails = () => {
         });
     };
 
+    const formatDateWithTimezone = (dateString: string) => {
+        if (!dateString) return '-';
+        const date = new Date(dateString);
+        return date.toLocaleString('en-IN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            timeZone: 'Asia/Kolkata'
+        }) + ' (IST)';
+    };
+
+    const formatRawDate = (dateString: string) => {
+        if (!dateString) return '-';
+        return dateString; // Show the raw ISO format
+    };
+
     // Format date only
     const formatDateOnly = (dateString: string) => {
         if (!dateString) return '-';
@@ -209,6 +286,42 @@ export const PermitDetails = () => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+    };
+
+    // Handle print form
+    const handlePrintForm = async () => {
+        if (!id) {
+            toast.error('Permit ID is required');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_CONFIG.BASE_URL}/pms/permits/${id}/download_print_pdf.pdf`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+                },
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `permit-${id}-form.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                toast.success('PDF form downloaded successfully');
+            } else {
+                console.error('Failed to download PDF:', response.status, response.statusText);
+                toast.error('Failed to download PDF form');
+            }
+        } catch (error) {
+            console.error('Error downloading PDF:', error);
+            toast.error('Error downloading PDF form');
         }
     };
 
@@ -368,6 +481,15 @@ export const PermitDetails = () => {
                     >
                         <Clipboard className="w-4 h-4 mr-2" />
                         Fill JSA Form
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePrintForm}
+                        className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                    >
+                        <FileText className="w-4 h-4 mr-2" />
+                        PRINT Form
                     </Button>
                     <Button
                         variant="outline"
@@ -807,13 +929,33 @@ export const PermitDetails = () => {
                 {permitData.comment_logs && permitData.comment_logs.length > 0 ? (
                     <Section title="COMMENT LOG" icon={<MessageSquare />} sectionKey="comments">
                         <div className="space-y-4">
-                            {permitData.comment_logs.map((comment: any, index: number) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <span className="font-medium text-sm text-gray-900">{comment.user || 'Unknown User'}</span>
-                                        <span className="text-xs text-gray-500">{formatDate(comment.created_at)}</span>
+                            {permitData.comment_logs.map((comment: CommentLog, index: number) => (
+                                <div key={comment.id || index} className="p-4 bg-gray-50 rounded-lg">
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-start">
+                                            <span className="font-medium text-sm text-gray-900">
+                                                <strong>Created By:</strong> {comment.created_by?.full_name || 'Unknown User'}
+                                            </span>
+                                        </div>
+                                        <div className="grid grid-cols-1 gap-3 text-sm">
+                                            <div className="bg-white p-3 rounded border">
+                                                <div className="mb-3">
+                                                    <span className="font-semibold text-gray-700 block mb-1">Created At:</span>
+                                                    <span className="text-gray-900 block">
+                                                        {formatDateWithTimezone(comment.created_at)}
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-sm text-gray-700">
+                                                <strong>Description:</strong>
+                                            </span>
+                                            <p className="text-sm text-gray-700 mt-1">{comment.description || 'No description provided'}</p>
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-gray-700">{comment.comment}</p>
                                 </div>
                             ))}
                         </div>
@@ -821,8 +963,9 @@ export const PermitDetails = () => {
                             <Button
                                 className="bg-[#C72030] hover:bg-[#B01D2A] text-white"
                                 onClick={() => setCommentModalOpen(true)}
+                                disabled={isAddingComment}
                             >
-                                Add Comment
+                                {isAddingComment ? 'Adding...' : 'Add Comment'}
                             </Button>
                         </div>
                     </Section>
@@ -834,8 +977,9 @@ export const PermitDetails = () => {
                             <Button
                                 className="bg-[#C72030] hover:bg-[#B01D2A] text-white"
                                 onClick={() => setCommentModalOpen(true)}
+                                disabled={isAddingComment}
                             >
-                                Add Comment
+                                {isAddingComment ? 'Adding...' : 'Add Comment'}
                             </Button>
                         </div>
                     </Section>
@@ -919,12 +1063,12 @@ export const PermitDetails = () => {
             </div>
 
             {/* Add Comment Modal */}
-            <AddCommentModal
+            <AddPermitCommentModal
                 open={commentModalOpen}
                 onOpenChange={setCommentModalOpen}
-                itemId={id}
+                onAddComment={handleAddComment}
                 title={`Add Comment to Permit ${permitData?.permit.reference_number || permitData?.permit.id}`}
-                itemType="ticket"
+                isSubmitting={isAddingComment}
             />
         </div>
     );
