@@ -18,7 +18,10 @@ import {
   Currency,
   User,
   BarChart,
-  UserRoundPen
+  UserRoundPen,
+  DoorOpen,
+    PackagePlus,
+    Ticket
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -244,6 +247,26 @@ const modulesByPackage = {
       icon: FileText,
       href: '/master/material-ebom'
     },
+    {
+        name: 'Gate Number',
+        icon: DoorOpen,
+        href: '/master/gate-number'
+      },
+      {
+        name: 'Inventory Type',
+        icon: Package,
+        href: '/master/inventory-type'
+      },
+      {
+        name: 'Inventory Sub Type',
+        icon: PackagePlus,
+        href: '/master/inventory-sub-type'
+      },
+      {
+        name: 'Gate Pass Type',
+        icon: Ticket,
+        href: '/master/gate-pass-type'
+      }
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
