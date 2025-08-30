@@ -59,7 +59,12 @@ export const AddInventoryPage = () => {
   const { assets = [], loading = false } = inventoryAssetsState || {};
 
   const suppliersState = useSelector((state: RootState) => state.suppliers);
-  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersData = suppliersState?.data as any;
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : Array.isArray(suppliersData?.pms_suppliers)
+      ? suppliersData.pms_suppliers
+      : [];
   const suppliersLoading = suppliersState?.loading || false;
 
   const [inventoryType, setInventoryType] = useState('spares');
@@ -828,7 +833,7 @@ export const AddInventoryPage = () => {
                         {suppliersLoading ? 'Loading...' : 'Select Vendor'}
                       </MenuItem>
                       {suppliers.map((supplier: any) => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                        <MenuItem key={supplier.id} value={String(supplier.id)}>
                           {supplier.company_name}
                         </MenuItem>
                       ))}

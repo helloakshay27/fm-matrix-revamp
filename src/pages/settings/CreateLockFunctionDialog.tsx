@@ -7,23 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
 import { moduleService, LockModule } from '@/services/moduleService';
+import { lockFunctionService, CreateLockFunctionPayload } from '@/services/lockFunctionService';
 
 interface CreateLockFunctionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onLockFunctionCreated?: () => void;
-}
-
-interface CreateLockFunctionPayload {
-  lock_function: {
-    lock_controller_id?: number;
-    name: string;
-    action_name: string;
-    active: boolean;
-    phase_id?: number;
-    module_id: number;
-    parent_function?: string;
-  };
 }
 
 export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCreated }: CreateLockFunctionDialogProps) => {
@@ -107,23 +96,16 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
         }
       };
 
-      // For now, we'll use moduleService to create the function
-      // You can replace this with a dedicated lockFunctionService later
-      const response = await fetch('/api/lock_functions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
+      // Use the lockFunctionService to create the function
+      const createdFunction = await lockFunctionService.createLockFunction(payload);
+      
+      if (createdFunction) {
         toast.success('Lock Function created successfully!');
         resetForm();
         onOpenChange(false);
         onLockFunctionCreated?.();
       } else {
-        throw new Error('Failed to create function');
+        toast.error('Failed to create lock function');
       }
     } catch (error: any) {
       console.error('Error creating lock function:', error);
@@ -204,49 +186,7 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
           </div>
 
           {/* Lock Controller ID (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="lock_controller_id" className="text-sm font-medium">
-              Lock Controller ID
-            </Label>
-            <Input
-              id="lock_controller_id"
-              type="number"
-              value={formData.lock_controller_id}
-              onChange={(e) => handleInputChange('lock_controller_id', e.target.value)}
-              placeholder="Enter controller ID (optional)"
-              className="w-full"
-            />
-          </div>
 
-          {/* Phase ID (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="phase_id" className="text-sm font-medium">
-              Phase ID
-            </Label>
-            <Input
-              id="phase_id"
-              type="number"
-              value={formData.phase_id}
-              onChange={(e) => handleInputChange('phase_id', e.target.value)}
-              placeholder="Enter phase ID (optional)"
-              className="w-full"
-            />
-          </div>
-
-          {/* Parent Function (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="parent_function" className="text-sm font-medium">
-              Parent Function
-            </Label>
-            <Input
-              id="parent_function"
-              type="text"
-              value={formData.parent_function}
-              onChange={(e) => handleInputChange('parent_function', e.target.value)}
-              placeholder="Enter parent function (optional)"
-              className="w-full"
-            />
-          </div>
         </div>
 
         <div className="flex justify-end space-x-3 pt-4 border-t">

@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { useDebounce } from '@/hooks/useDebounce';
 import { CreateLockFunctionDialog } from './CreateLockFunctionDialog';
 import { CreateFunctionDialog } from './CreateFunctionDialog';
-import { lockFunctionService, LockFunctionItem as ApiLockFunctionItem } from '@/services/lockFunctionService';
+import { lockFunctionService, LockFunction as ApiLockFunctionItem } from '@/services/lockFunctionService';
 
 // Type definitions for the lock function data
 interface LockFunctionItem {
@@ -136,6 +136,20 @@ const mockLockFunctionData: LockFunctionItem[] = [
   }
 ];
 
+// Transform API data to frontend format
+const transformLockFunctionData = (apiData: ApiLockFunctionItem[]): LockFunctionItem[] => {
+  return apiData.map(item => ({
+    id: item.id,
+    functionName: item.name,
+    description: item.action_name || 'No description available',
+    lockType: item.parent_function ? item.parent_function.toUpperCase() as 'SYSTEM' | 'USER' | 'ADMIN' | 'TEMPORARY' : 'SYSTEM',
+    duration: 'N/A', // API doesn't provide duration, might need to be added to backend
+    createdOn: new Date(item.created_at).toLocaleDateString('en-GB'),
+    createdBy: 'System', // API doesn't provide created_by, might need to be added to backend
+    active: Boolean(item.active)
+  }));
+};
+
 export const LockFunctionList = () => {
   const navigate = useNavigate();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -150,9 +164,10 @@ export const LockFunctionList = () => {
   const fetchLockFunctionData = async () => {
     setLoading(true);
     try {
-      const data = await lockFunctionService.fetchLockFunctions();
-      setAllLockFunctionData(data);
-      console.log('Lock Function Data Count:', data.length);
+      const apiData = await lockFunctionService.fetchLockFunctions();
+      const transformedData = transformLockFunctionData(apiData);
+      setAllLockFunctionData(transformedData);
+      console.log('Lock Function Data Count:', transformedData.length);
     } catch (error: any) {
       console.error('Error fetching lock function data:', error);
       toast.error(`Failed to load lock function data: ${error.message}`, {

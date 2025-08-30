@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, Settings, Trash2, X, Paperclip } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, Paperclip, Settings, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     TextField,
@@ -16,7 +16,7 @@ import {
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { createServicePR, editServicePR, getServices } from "@/store/slices/servicePRSlice";
+import { editServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 
 export const EditWODashboard: React.FC = () => {
@@ -32,7 +32,6 @@ export const EditWODashboard: React.FC = () => {
     const [services, setServices] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [existingAttachments, setExistingAttachments] = useState([]);
-    const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
 
     const [formData, setFormData] = useState({
         contractor: "",
@@ -49,7 +48,7 @@ export const EditWODashboard: React.FC = () => {
         subject: "",
         description: "",
         termsConditions: "",
-        attachments: [] as File[],
+        attachments: []
     });
 
     const [detailsForms, setDetailsForms] = useState([
@@ -132,7 +131,7 @@ export const EditWODashboard: React.FC = () => {
         fetchPlantDetails();
         fetchAddresses();
         fetchServices();
-    }, [dispatch, baseUrl, token]);
+    }, []);
 
     useEffect(() => {
         const cloneData = async () => {
@@ -141,52 +140,47 @@ export const EditWODashboard: React.FC = () => {
                     getWorkOrderById({ baseUrl, token, id })
                 ).unwrap();
 
-                const data = response.page;
+                const data = response.page
 
                 setFormData({
-                    contractor: data.pms_supplier_id || "",
-                    plantDetail: data.work_order?.plant_detail_id || "",
-                    woDate: data.work_order?.wo_date
-                        ? new Date(data.work_order.wo_date)
-                        : new Date(),
-                    billingAddress: data.work_order?.billing_address_id || "",
-                    retention: data.work_order?.payment_terms?.retention || "",
-                    tds: data.work_order?.payment_terms?.tds || "",
-                    qc: data.work_order?.payment_terms?.quality_holding || "",
-                    paymentTenure: data.work_order?.payment_terms?.payment_tenure || "",
-                    advanceAmount: data.work_order?.advance_amount || "",
-                    relatedTo: data.work_order?.related_to || "",
-                    kindAttention: data.work_order?.kind_attention || "",
-                    subject: data.work_order?.subject || "",
-                    description: data.work_order?.description || "",
-                    termsConditions: data.work_order?.term_condition || "",
-                    attachments: [],
+                    contractor: data.pms_supplier_id,
+                    plantDetail: data.work_order?.plant_detail_id,
+                    woDate: data.work_order?.wo_date,
+                    billingAddress: data.work_order?.billing_address_id,
+                    retention: data.work_order?.payment_terms?.retention,
+                    tds: data.work_order?.payment_terms?.tds,
+                    qc: data.work_order?.payment_terms?.quality_holding,
+                    paymentTenure: data.work_order?.payment_terms?.payment_tenure,
+                    advanceAmount: data.work_order.advance_amount,
+                    relatedTo: data.work_order?.related_to,
+                    kindAttention: data.work_order?.kind_attention,
+                    subject: data.work_order.subject,
+                    description: data.work_order.description,
+                    termsConditions: data.work_order.term_condition,
+                    attachments: []
                 });
 
                 setDetailsForms(
-                    data.inventories?.map((item) => ({
+                    data.inventories.map((item) => ({
                         id: item.id,
-                        service: item.pms_service_id || "",
-                        productDescription: item.product_description || "",
-                        quantityArea: item.quantity || "",
-                        uom: item.uom || "",
-                        expectedDate: item.expected_date
-                            ? new Date(item.expected_date)
-                            : new Date(),
-                        rate: item.rate || "",
-                        cgstRate: item.cgst_rate || "",
-                        cgstAmt: item.cgst_amount || "",
-                        sgstRate: item.sgst_rate || "",
-                        sgstAmt: item.sgst_amount || "",
-                        igstRate: item.igst_rate || "",
-                        igstAmt: item.igst_amount || "",
-                        tcsRate: item.tcs_rate || "",
-                        tcsAmt: item.tcs_amount || "",
-                        taxAmount: item.tax_amount || "",
-                        amount: item.total_amount || "",
-                        totalAmount: item.total_value || "",
-                    })) || []
-                );
+                        service: item.pms_service_id,
+                        productDescription: item.product_description,
+                        quantityArea: item.quantity,
+                        uom: item.uom,
+                        expectedDate: item.expected_date,
+                        rate: item.rate,
+                        cgstRate: item.cgst_rate,
+                        cgstAmt: item.cgst_amount,
+                        sgstRate: item.sgst_rate,
+                        sgstAmt: item.sgst_amount,
+                        igstRate: item.igst_rate,
+                        igstAmt: item.igst_amount,
+                        tcsRate: item.tcs_rate,
+                        tcsAmt: item.tcs_amount,
+                        taxAmount: item.tax_amount,
+                        amount: item.total_amount,
+                        totalAmount: item.total_value,
+                    })))
 
                 setExistingAttachments(
                     data.attachments?.map((attachment) => ({
@@ -202,7 +196,7 @@ export const EditWODashboard: React.FC = () => {
         };
 
         cloneData();
-    }, [id, dispatch, baseUrl, token]);
+    }, []);
 
     const handleInputChange = (field: string, value: string | Date) => {
         setFormData((prev) => ({
@@ -305,10 +299,6 @@ export const EditWODashboard: React.FC = () => {
     const removeFile = (index: number, type: string) => {
         if (type === "existing") {
             setExistingAttachments((prev) => prev.filter((_, i) => i !== index));
-            setAttachmentsToDelete((prev) => [
-                ...prev,
-                existingAttachments[index].id,
-            ]);
         } else {
             setFormData((prev) => ({
                 ...prev,
@@ -359,14 +349,14 @@ export const EditWODashboard: React.FC = () => {
                     tax_amount: item.taxAmount,
                 })),
             },
-            attachments: formData.attachments
+            attachments: formData.attachments,
         };
 
         try {
             setSubmitting(true);
             await dispatch(editServicePR({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
-            toast.success("Work Order updated successfully");
-            navigate("/finance/wo");
+            toast.success("Work Order created successfully");
+            navigate('/finance/wo');
         } catch (error) {
             console.log(error);
             toast.error(error);
@@ -382,7 +372,7 @@ export const EditWODashboard: React.FC = () => {
                 <Button
                     variant="ghost"
                     onClick={() => navigate(-1)}
-                    className="p-0 mb-4"
+                    className='p-0 mb-4'
                 >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
@@ -488,7 +478,9 @@ export const EditWODashboard: React.FC = () => {
                             <TextField
                                 label="Select WO Date*"
                                 value={
-                                    formData.woDate
+                                    formData.woDate instanceof Date
+                                        ? formData.woDate.toISOString().split("T")[0]
+                                        : ""
                                 }
                                 onChange={(e) =>
                                     handleInputChange("woDate", new Date(e.target.value))
@@ -922,7 +914,9 @@ export const EditWODashboard: React.FC = () => {
                                     <TextField
                                         label="Expected Date*"
                                         value={
-                                            detailsData.expectedDate
+                                            detailsData.expectedDate instanceof Date
+                                                ? detailsData.expectedDate.toISOString().split("T")[0]
+                                                : ""
                                         }
                                         onChange={(e) =>
                                             handleDetailsChange(
@@ -1490,16 +1484,15 @@ export const EditWODashboard: React.FC = () => {
                             className="hidden"
                             id="file-upload"
                             onChange={handleFileUpload}
-                            accept="image/*,.pdf,.doc,.docx"
                         />
                         <label htmlFor="file-upload" className="block cursor-pointer">
                             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
                                 <span className="text-gray-600">
                                     Drag & Drop or{" "}
                                     <span className="text-red-500 underline">Choose files</span>{" "}
-                                    {(formData.attachments.length + existingAttachments.length) === 0
+                                    {formData.attachments.length === 0
                                         ? "No file chosen"
-                                        : `${formData.attachments.length + existingAttachments.length} file(s) selected`}
+                                        : `${formData.attachments.length} file(s) selected`}
                                 </span>
                             </div>
                         </label>

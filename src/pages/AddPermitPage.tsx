@@ -634,8 +634,8 @@ export const AddPermitPage = () => {
 
         if (response.ok) {
           const result = await response.json();
-          if (result.buildings && Array.isArray(result.buildings)) {
-            setBuildings(result.buildings.map((building: any) => ({
+          if (result.pms_buildings && Array.isArray(result.pms_buildings)) {
+            setBuildings(result.pms_buildings.map((building: any) => ({
               id: building.id,
               name: building.name
             })));

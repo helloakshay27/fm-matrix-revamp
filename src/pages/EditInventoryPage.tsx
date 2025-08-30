@@ -21,7 +21,12 @@ export const EditInventoryPage = () => {
   const { assets = [], loading = false } = inventoryAssetsState || {};
 
   const suppliersState = useSelector((state: RootState) => state.suppliers);
-  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersData = suppliersState?.data as any;
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : Array.isArray(suppliersData?.pms_suppliers)
+      ? suppliersData.pms_suppliers
+      : [];
   const suppliersLoading = suppliersState?.loading || false;
 
   const { loading: editLoading, error, fetchedInventory, updatedInventory } = useSelector((state: RootState) => state.inventoryEdit);
@@ -83,6 +88,7 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     fetchSAC();
   }, []);
+
 
   // Fetch inventory name suggestions (Edit page)
   const fetchNameSuggestions = async (query: string) => {
@@ -194,7 +200,7 @@ export const EditInventoryPage = () => {
         minStockLevel: fetchedInventory.min_stock_level?.toString() || '',
         minOrderLevel: fetchedInventory.min_order_level?.toString() || '',
         // Prefer hsn_id (numeric) for dropdown value; fallback to hsc_hsn_code if API only returns code
-        sacHsnCode: ( (fetchedInventory as any)?.hsn_id != null
+        sacHsnCode: ((fetchedInventory as any)?.hsn_id != null
           ? String((fetchedInventory as any).hsn_id)
           : ((fetchedInventory as any).hsc_hsn_code ? String((fetchedInventory as any).hsc_hsn_code) : '')
         ),
@@ -215,7 +221,8 @@ export const EditInventoryPage = () => {
       setInventoryType(inventoryTypeValue);
       setCriticality(criticalityValue);
       setTaxApplicable(fetchedInventory.tax_applicable || false);
-      setEcoFriendly(fetchedInventory.eco_friendly || false);
+      // Support both boolean eco_friendly and numeric green_product
+      setEcoFriendly(Boolean((fetchedInventory as any)?.eco_friendly || (fetchedInventory as any)?.green_product));
     }
   }, [fetchedInventory]);
 
@@ -279,6 +286,7 @@ export const EditInventoryPage = () => {
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: formData.minStockLevel || "0",
       min_order_level: formData.minOrderLevel || "0",
+      green_product: ecoFriendly ? 1 : 0,
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
       // Map vendor name back to id
       rate_contract_vendor_code: (() => {
@@ -448,6 +456,18 @@ export const EditInventoryPage = () => {
                 </RadioGroup>
               </div>
 
+              {/* Eco-friendly toggle (parity with Add page) */}
+              <div className="flex items-center space-x-2">
+                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">
+                  Eco-friendly Inventory
+                </label>
+                <Checkbox
+                  id="eco-friendly"
+                  checked={ecoFriendly}
+                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
+                />
+              </div>
+
 
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -503,12 +523,12 @@ export const EditInventoryPage = () => {
                       InputLabelProps={{ shrink: true }}
                       sx={fieldStyles}
                     />
-          {showNameSuggestions && (
+                    {showNameSuggestions && (
                       <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
                         {nameSuggestLoading && (
                           <div className="px-3 py-2 text-gray-500">Loading...</div>
                         )}
-            {!nameSuggestLoading && filteredNameSuggestions.map(s => (
+                        {!nameSuggestLoading && filteredNameSuggestions.map(s => (
                           <button
                             type="button"
                             key={s.id}
