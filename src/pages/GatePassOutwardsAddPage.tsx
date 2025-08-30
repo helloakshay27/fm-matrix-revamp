@@ -263,12 +263,12 @@ export const GatePassOutwardsAddPage = () => {
 
         {/* Document Attachment Section */}
         <div>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
+          <Box sx={{  gap: 2, mb: 2 }}>
             {attachments.map((attachment) => {
               const isImage = attachment.file.type.startsWith('image/');
               return (
                 <>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
                 
                 <Box
                   key={attachment.id}

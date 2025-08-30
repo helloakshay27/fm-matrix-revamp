@@ -155,7 +155,7 @@ export const ChecklistMasterPage = () => {
             id: `${Date.now()}-${i}`,
             name: file.name,
             url: URL.createObjectURL(file),
-            content: base64.split(',')[1],
+            content: base64, // Use the full base64 string
             content_type: file.type,
           });
 
@@ -322,7 +322,7 @@ export const ChecklistMasterPage = () => {
               id: `${Date.now()}-${i}`,
               name: file.name,
               url: URL.createObjectURL(file),
-              content: base64.split(',')[1],
+              content: base64, // Use the full base64 string
               content_type: file.type,
             };
             setAttachments(prev => [...prev, newAttachment]);
@@ -412,26 +412,26 @@ export const ChecklistMasterPage = () => {
       }))
     );
 
-    const payload = {
+    const payload: any = {
       source: "form",
       schedule_type: formData.type.toLowerCase(),
       sch_type: formData.type.toLowerCase(),
       checklist_type: formData.scheduleFor,
       group_id: formData.groupId,
       sub_group_id: formData.subGroupId,
-      attachments: attachments.map(att => ({
-        content: att.content,
-        content_type: att.content_type,
-        file_name: att.name,
-      })),
       tmp_custom_form: {
+        // attachments: attachments.map(att => ({
+        //   content: att.content,
+        //   content_type: att.content_type,
+        //   file_name: att.name,
+        // })),
         ticket_level: formData.ticketLevel,
         helpdesk_category_id: formData.ticketCategory || "",
         schedule_type: formData.type,
         organization_id: "1",
         form_name: formData.activityName,
         description: formData.description,
-        asset_meter_type_id: 1,
+        asset_meter_type_id: 1, // Use number as per user payload
         create_ticket: autoTicket ? "1" : "0",
         task_assigner_id: formData.ticketAssignedTo || "",
         weightage_enabled: weightage ? "1" : "0"
@@ -439,18 +439,21 @@ export const ChecklistMasterPage = () => {
       content
     };
 
-    // Add help text attachments to payload
-    sections.forEach(section => {
-      section.tasks.forEach((task, taskIndex) => {
-        if (task.helpTextAttachments && task.helpTextAttachments.length > 0) {
-          payload[`question_for_${taskIndex + 1}`] = task.helpTextAttachments.map(att => ({
-            content: att.content,
-            content_type: att.content_type,
-            file_name: att.name,
-          }));
-        }
-      });
-    });
+    // Add help text attachments to payload, keyed by the task's 1-based index
+    // let taskIndex = 1;
+    // sections.forEach(section => {
+    //   section.tasks.forEach(task => {
+    //     if (task.helpTextAttachments && task.helpTextAttachments.length > 0) {
+    //       const taskKey = `question_for_${taskIndex}`;
+    //       payload.tmp_custom_form[taskKey] = task.helpTextAttachments.map(att => ({
+    //         content: att.content,
+    //         content_type: att.content_type,
+    //         file_name: att.name,
+    //       }));
+    //     }
+    //     taskIndex++;
+    //   });
+    // });
 
     createChecklistMutation.mutate(payload);
   };
@@ -747,7 +750,7 @@ export const ChecklistMasterPage = () => {
           }
 
           {/* Attachments Section - Match AddSchedulePage */}
-          <Box sx={{ my: 3 }}>
+          {/* <Box sx={{ my: 3 }}>
             <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <MuiButton
                 variant="outlined"
@@ -850,7 +853,7 @@ export const ChecklistMasterPage = () => {
                 })}
               </Box>
             )}
-          </Box>
+          </Box> */}
         </SectionCard>
 
         {/* Question Setup Section - Match AddSchedulePage styling */}
@@ -1199,7 +1202,7 @@ export const ChecklistMasterPage = () => {
                             value={task.helpTextValue}
                             onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
                           />
-                          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          {/* <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Button
                               type="button"
                               variant="outline"
@@ -1209,8 +1212,8 @@ export const ChecklistMasterPage = () => {
                               <AttachFile sx={{ mr: 1, fontSize: 16 }} />
                               Attach File
                             </Button>
-                          </Box>
-                          {task.helpTextAttachments && task.helpTextAttachments.length > 0 && (
+                          </Box> */}
+                          {/* {task.helpTextAttachments && task.helpTextAttachments.length > 0 && (
                             <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
                               {task.helpTextAttachments.map(attachment => {
                                 const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
@@ -1258,7 +1261,7 @@ export const ChecklistMasterPage = () => {
                                 );
                               })}
                             </Box>
-                          )}
+                          )} */}
                         </Box>
                       )}
 

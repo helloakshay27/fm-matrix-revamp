@@ -6,7 +6,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Upload } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, QrCode, Box, User } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export const GatePassInwardsDetailPage = () => {
   const { id } = useParams();
@@ -188,8 +189,8 @@ export const GatePassInwardsDetailPage = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => navigate('/security/gate-pass/inwards')}
           className="mb-4"
         >
@@ -199,115 +200,194 @@ export const GatePassInwardsDetailPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Gate Pass Inward Details</h1>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Panel - Employee/Visitor Details */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow-sm border p-6">
-            {/* Profile Section */}
-            <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <span className="text-yellow-600 font-bold text-xl">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
-              </div>
-              <h2 className="text-lg font-semibold text-gray-900">{selectedEntry.personName}</h2>
-              <p className="text-sm text-gray-600">{selectedEntry.category}</p>
-            </div>
 
-            {/* Details */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Employee/Visitor Name:
-                </label>
-                <p className="text-sm text-gray-900">{selectedEntry.personName}</p>
+      <div className=" bg-white rounded-lg border border-gray-200 shadow-sm w-full">
+        <Tabs defaultValue="profile" className="w-full">
+          <TabsList className="flex justify-start flex-nowrap overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg text-sm ">
+            <TabsTrigger
+              value="profile"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+            >
+              PROFILE
+            </TabsTrigger>
+            <TabsTrigger
+              value="details"
+              className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+            >
+              DETAILS
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Profile */}
+          <TabsContent value="profile" className="p-4 sm:p-6">
+            <div className="bg-white rounded-lg border">
+              <div className="flex p-4 items-center bg-[#F6F4EE]">
+                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  <User className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-[700]">PROFILE</h2>
               </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Visitor Mobile No.:
-                </label>
-                <p className="text-sm text-gray-900">086907860</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Department:
-                </label>
-                <p className="text-sm text-gray-900">UI/UX Designer</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Company Name:
-                </label>
-                <p className="text-sm text-gray-900">Lovated</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date/Time:
-                </label>
-                <p className="text-sm text-gray-900">2 July 2025 12:45 Pm</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Mode Of Transport:
-                </label>
-                <p className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</p>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Expected Date:
-                </label>
-                <p className="text-sm text-gray-900">-</p>
+              <div className="bg-white rounded-lg shadow-sm border p-6">
+                {/* Profile Section */}
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <span className="text-yellow-600 font-bold text-xl">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
+                  </div>
+                  <h2 className="text-lg font-semibold text-gray-900">{selectedEntry.personName}</h2>
+                  <p className="text-sm text-gray-600">{selectedEntry.category}</p>
+                </div>
+
+                {/* Details */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Employee/Visitor Name:
+                    </label>
+                    <p className="text-sm text-gray-900">{selectedEntry.personName}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Visitor Mobile No.:
+                    </label>
+                    <p className="text-sm text-gray-900">086907860</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Department:
+                    </label>
+                    <p className="text-sm text-gray-900">UI/UX Designer</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Company Name:
+                    </label>
+                    <p className="text-sm text-gray-900">Lovated</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Date/Time:
+                    </label>
+                    <p className="text-sm text-gray-900">2 July 2025 12:45 Pm</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Mode Of Transport:
+                    </label>
+                    <p className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Expected Date:
+                    </label>
+                    <p className="text-sm text-gray-900">-</p>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
 
-        {/* Right Panel - Items Table */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
-                  <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Updates</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {itemsData.map((item, index) => (
-                  <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.sNo}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemName}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemNameDetail}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
-                    <TableCell className="px-4 py-3 text-sm">
-                      <button 
-                        className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                        onClick={() => handleReceiveClick(index)}
-                      >
-                        {item.updates}
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+          {/* Details */}
+          <TabsContent value="details" className="p-4 sm:p-6">
+            <div className="bg-white rounded-lg border">
+                <div className="flex p-4 items-center bg-[#F6F4EE]">
+                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                        <Box className="w-4 h-4" />
+                    </div>
+                    <h2 className="text-lg font-[700]">DETAILS</h2>
+                </div>
+                <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
+                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Updates</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {itemsData.map((item, index) => (
+                      <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.sNo}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemName}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemNameDetail}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm">
+                          <button
+                            className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
+                            onClick={() => handleReceiveClick(index)}
+                          >
+                            {item.updates}
+                          </button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* DOCUMENTS */}
+          <TabsContent value="documents" className="p-4 sm:p-6">
+            <div className="bg-white rounded-lg border">
+              <div className="flex items-center bg-[#F6F4EE] p-4">
+                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  <FileText className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-[700]">DOCUMENTS</h2>
+              </div>
+              <div className="border border-[#D9D9D9] bg-[#F6F7F7] p-3 text-sm text-gray-600">
+                No documents available
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* QR CODE */}
+          <TabsContent value="qr-code" className="p-4 sm:p-6">
+            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
+              <div className="flex items-center mb-4 bg-[#F6F4EE] p-4">
+                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-[700]">QR CODE</h2>
+              </div>
+              <div className="text-center p-3 text-sm text-gray-600">
+                No QR code available
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* ASSOCIATED ASSETS */}
+          <TabsContent value="associated-assets" className="p-4 sm:p-6">
+            <div className="border border-[#D9D9D9] bg-[#F6F7F7] rounded-lg">
+              <div className="flex items-center mb-2 bg-[#F6F4EE] p-4">
+                <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                  <Box className="w-4 h-4" />
+                </div>
+                <h2 className="text-lg font-[700]">ASSOCIATED ASSETS</h2>
+              </div>
+              <div className="p-4 max-w-5xl mx-auto overflow-x-auto text-sm text-gray-600">
+                No associated assets
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Receive Modal */}
@@ -316,7 +396,7 @@ export const GatePassInwardsDetailPage = () => {
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">Return Process</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
@@ -328,7 +408,7 @@ export const GatePassInwardsDetailPage = () => {
                 className="w-full"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
                 Remarks
@@ -339,7 +419,7 @@ export const GatePassInwardsDetailPage = () => {
                 className="w-full min-h-[80px]"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
                 Attachment
@@ -356,9 +436,9 @@ export const GatePassInwardsDetailPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="flex justify-center pt-4">
-            <Button 
+            <Button
               onClick={handleSubmitReceive}
               className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
             >

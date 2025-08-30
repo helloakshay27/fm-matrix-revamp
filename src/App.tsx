@@ -650,6 +650,8 @@ import SacHsn from "./pages/SacHsn";
 import DetailPageSacHsn from "./pages/DetailPageSacHsn";
 import AddSacHsn from "./pages/AddSacHsn";
 import { WOFeedsPage } from "./pages/WOFeedsPage";
+import { VendorPage } from "./pages/VendorPage";
+import { AddVendorPage } from "./pages/AddVendorPage";
 
 
 const queryClient = new QueryClient();
@@ -1492,6 +1494,15 @@ function App() {
                 <Route
                   path="/maintenance/schedule/performance/:id"
                   element={<ViewPerformancePage />}
+                />
+
+                <Route
+                  path="/maintenance/vendor"
+                  element={<VendorPage />}
+                />
+                <Route
+                  path="/maintenance/vendor/add"
+                  element={<AddVendorPage />}
                 />
 
                 {/* Utility Routes */}
