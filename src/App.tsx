@@ -148,6 +148,9 @@ import { PermitPendingApprovalsDashboard } from "./pages/PermitPendingApprovalsD
 import { VendorPermitForm } from "./pages/VendorPermitForm";
 import FillForm from "./pages/FillForm";
 import FillJSAForm from "./pages/FillJSAForm";
+import { AddPermitChecklist } from "./pages/AddPermitChecklist";
+import { PermitChecklistList } from "./pages/PermitChecklistList";
+import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -1057,6 +1060,18 @@ function App() {
                   element={<PermitToWorkDashboard />}
                 />
                 <Route path="/safety/permit/add" element={<AddPermitPage />} />
+                <Route
+                  path="/safety/permit/checklist"
+                  element={<PermitChecklistList />}
+                />
+                <Route
+                  path="/safety/permit/checklist/details/:id"
+                  element={<PermitChecklistDetails />}
+                />
+                <Route
+                  path="/safety/permit-checklist/add"
+                  element={<AddPermitChecklist />}
+                />
                 <Route
                   path="/safety/permit/details/:id"
                   element={<PermitDetails />}
