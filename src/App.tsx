@@ -113,6 +113,7 @@ import { AddSurveyPage } from './pages/AddSurveyPage';
 import { EditSurveyPage } from './pages/EditSurveyPage';
 import { SurveyDetailsPage } from './pages/SurveyDetailsPage';
 import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
+import { AddSurveyMapping } from './pages/AddSurveyMapping';
 import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
 import { SurveyResponsePage } from './pages/SurveyResponsePage';
 import { SurveyResponseDetailPage } from './pages/SurveyResponseDetailPage';
@@ -1244,8 +1245,16 @@ function App() {
                   path="/maintenance/survey/list"
                   element={<SurveyListDashboard />}
                 />
+                 <Route
+                  path="/master/survey/list"
+                  element={<SurveyListDashboard />}
+                />
                 <Route
                   path="/maintenance/survey/add"
+                  element={<AddSurveyPage />}
+                />
+                 <Route
+                  path="/master/survey/add"
                   element={<AddSurveyPage />}
                 />
                 <Route
@@ -1265,6 +1274,7 @@ function App() {
                 <Route path="/maintenance/survey/edit/:id" element={<EditSurveyPage />} />
                 <Route path="/maintenance/survey/details/:id" element={<SurveyDetailsPage />} />
                 <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
+                <Route path="/maintenance/survey/mapping/add" element={<AddSurveyMapping />} />
                 <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
                 <Route path="/maintenance/survey/response/details/:surveyId" element={<SurveyResponseDetailPage />} />
                 <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />

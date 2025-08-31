@@ -168,8 +168,8 @@ export const AddSurveyForm = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <div className="text-sm text-gray-600 mb-1">Survey</div>
-          <h1 className="text-2xl font-bold">Add Survey Form</h1>
+          <div className="text-sm text-gray-600 mb-1">Question</div>
+          <h1 className="text-2xl font-bold">Add Question Form</h1>
         </div>
       </div>
 

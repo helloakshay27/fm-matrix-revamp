@@ -355,7 +355,7 @@ export const SurveySelectionPanel: React.FC<SurveySelectionPanelProps> = ({
       console.error('Error submitting location mapping:', error);
       toast({
         title: "Error",
-        description: "Failed to add survey mapping. Please try again.",
+        description: "Failed to add Question mapping. Please try again.",
         variant: "destructive"
       });
     }
