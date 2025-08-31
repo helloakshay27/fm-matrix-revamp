@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -188,6 +188,13 @@ export const InventoryDashboard = () => {
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  // Track last filter signature we already showed a no-results toast for
+  const lastNoResultSigRef = useRef<string | null>(null);
+
+  const buildFilterSignature = (obj: Record<string, string>) => {
+    const keys = Object.keys(obj || {}).sort();
+    return keys.map((k) => `${k}=${String(obj[k])}`).join('&');
+  };
 
   // Snapshot baseline counts when no filters are applied so cards don't fluctuate on filter clicks
   const [baselineCounts, setBaselineCounts] = useState({
@@ -456,6 +463,22 @@ export const InventoryDashboard = () => {
     setActiveFilters(newFilters);
     setLocalCurrentPage(1);
   };
+
+  // Toast when any active filters yield zero results (once per unique filter signature)
+  useEffect(() => {
+    if (loading) return; // wait for fetch to complete
+    const currentSig = buildFilterSignature(activeFilters);
+    if (!currentSig) return; // only when filters are applied
+    const count = Array.isArray(inventoryItems) ? inventoryItems.length : 0;
+    if (count === 0 && lastNoResultSigRef.current !== currentSig) {
+      toast.info('No records found for the applied filters');
+      lastNoResultSigRef.current = currentSig; // prevent duplicate toasts for the same filters
+    }
+    // If results appear for current filters, allow future toasts if filters change again
+    if (count > 0 && lastNoResultSigRef.current === currentSig) {
+      lastNoResultSigRef.current = null;
+    }
+  }, [loading, activeFilters, inventoryItems]);
 
   const handleViewItem = (itemId: string) => {
     if (!itemId || typeof itemId !== "string" || itemId === "[object Object]") {
