@@ -330,7 +330,7 @@ const modulesByPackage = {
       icon: FileSpreadsheet,
       href: '/maintenance/survey',
       subItems: [
-        { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
+        // { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
         { name: 'Survey Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]

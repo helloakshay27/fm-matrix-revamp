@@ -94,7 +94,6 @@ export const SurveyMappingDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [loading, setLoading] = useState(true);
@@ -122,26 +121,6 @@ export const SurveyMappingDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(filteredMappings.map(mapping => mapping.id.toString()));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
-    } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
-    }
-  };
-
-  const handleClearSelection = () => {
-    setSelectedItems([]);
   };
 
   const handleStatusToggle = (item: SurveyMapping) => {
@@ -290,11 +269,6 @@ export const SurveyMappingDashboard = () => {
     mapping.created_by?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Get selected mapping objects for the panel
-  const selectedMappingObjects = filteredMappings.filter(mapping => 
-    selectedItems.includes(mapping.id.toString())
-  );
-
   // Debug logs
   console.log('Filtered mappings:', filteredMappings);
   console.log('Columns:', columns);
@@ -318,11 +292,7 @@ export const SurveyMappingDashboard = () => {
           <EnhancedTable
             data={filteredMappings}
             columns={columns}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            getItemId={(item) => item.id.toString()}
+            selectable={false}
             renderCell={renderCell}
             storageKey="survey-mapping-table"
             enableExport={true}
@@ -344,19 +314,6 @@ export const SurveyMappingDashboard = () => {
               </div>
             }
           />
-        </div>
-      )}
-
-      {/* Clear selection button */}
-      {selectedItems.length > 0 && (
-        <div className="flex justify-end">
-          <Button 
-            variant="outline" 
-            onClick={handleClearSelection}
-            className="text-sm"
-          >
-            Clear Selection ({selectedItems.length})
-          </Button>
         </div>
       )}
     </div>

@@ -1,14 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowLeft, Loader2, MapPin, List, Plus, X, Search } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
+import { X, Plus, Type, MapPin, List, Loader2, Search } from 'lucide-react';
+import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, CircularProgress } from '@mui/material';
+import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
 interface Survey {
@@ -26,26 +22,43 @@ interface LocationItem {
   name: string;
 }
 
-interface FormData {
-  surveyId: string;
-  selectedBuildingIds: number[];
-  selectedWingIds: number[];
-  selectedFloorIds: number[];
-  selectedRoomIds: number[];
+interface SurveyMapping {
+  id: string;
+  surveyId: number | null;
+  buildingIds: number[];
+  wingIds: number[];
+  floorIds: number[];
+  areaIds: number[];
+  roomIds: number[];
 }
+
+// Section component matching PatrollingCreatePage
+const Section: React.FC<{ title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ title, icon, children }) => (
+  <section className="bg-card rounded-lg border border-border shadow-sm">
+    <div className="px-6 py-4 border-b border-border flex items-center gap-3">
+      <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+        {icon}
+      </div>
+      <h2 className="text-sm font-semibold tracking-wide uppercase">{title}</h2>
+    </div>
+    <div className="p-6">{children}</div>
+  </section>
+);
 
 export const AddSurveyMapping = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  
+  useEffect(() => { document.title = 'Create Survey Mapping'; }, []);
+
   // Form state
-  const [formData, setFormData] = useState<FormData>({
-    surveyId: '',
-    selectedBuildingIds: [],
-    selectedWingIds: [],
-    selectedFloorIds: [],
-    selectedRoomIds: []
-  });
+  const [surveyMappings, setSurveyMappings] = useState<SurveyMapping[]>([{
+    id: `sm-${Date.now()}`,
+    surveyId: null,
+    buildingIds: [],
+    wingIds: [],
+    floorIds: [],
+    areaIds: [],
+    roomIds: []
+  }]);
 
   // Survey data
   const [surveys, setSurveys] = useState<Survey[]>([]);
@@ -55,31 +68,32 @@ export const AddSurveyMapping = () => {
   const [buildings, setBuildings] = useState<LocationItem[]>([]);
   const [wings, setWings] = useState<LocationItem[]>([]);
   const [floors, setFloors] = useState<LocationItem[]>([]);
+  const [areas, setAreas] = useState<LocationItem[]>([]);
   const [rooms, setRooms] = useState<LocationItem[]>([]);
 
   // Loading states
   const [loadingBuildings, setLoadingBuildings] = useState(false);
   const [loadingWings, setLoadingWings] = useState(false);
   const [loadingFloors, setLoadingFloors] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Selected items for display
-  const [selectedBuildings, setSelectedBuildings] = useState<string[]>([]);
-  const [selectedWings, setSelectedWings] = useState<string[]>([]);
-  const [selectedFloors, setSelectedFloors] = useState<string[]>([]);
-  const [selectedRooms, setSelectedRooms] = useState<string[]>([]);
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+    },
+  };
 
-  // Search terms for filtering location lists
-  const [buildingSearch, setBuildingSearch] = useState('');
-  const [wingSearch, setWingSearch] = useState('');
-  const [floorSearch, setFloorSearch] = useState('');
-  const [roomSearch, setRoomSearch] = useState('');
-
-  // Fetch surveys on component mount
+  // Fetch surveys and locations on component mount
   useEffect(() => {
     fetchSurveys();
     fetchBuildings();
+    fetchWings();
+    fetchFloors();
+    fetchAreas();
+    fetchRooms();
   }, []);
 
   const fetchSurveys = async () => {
@@ -107,11 +121,7 @@ export const AddSurveyMapping = () => {
       setSurveys(activeSurveys);
     } catch (error) {
       console.error('Error fetching surveys:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch surveys",
-        variant: "destructive"
-      });
+      toast.error('Failed to fetch surveys', { duration: 5000 });
       setSurveys([]);
     } finally {
       setLoadingSurveys(false);
@@ -140,11 +150,6 @@ export const AddSurveyMapping = () => {
     } catch (error) {
       console.error('Error fetching buildings:', error);
       setBuildings([]);
-      toast({
-        title: "Error",
-        description: "Failed to load buildings",
-        variant: "destructive"
-      });
     } finally {
       setLoadingBuildings(false);
     }
@@ -204,6 +209,33 @@ export const AddSurveyMapping = () => {
     }
   };
 
+  const fetchAreas = async () => {
+    try {
+      setLoadingAreas(true);
+      const response = await fetch(getFullUrl('/pms/areas.json'), {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch areas');
+      }
+      
+      const areasData = await response.json();
+      setAreas(areasData.areas ? areasData.areas.map((area: any) => ({
+        id: area.id,
+        name: area.name
+      })) : []);
+    } catch (error) {
+      console.error('Error fetching areas:', error);
+      setAreas([]);
+    } finally {
+      setLoadingAreas(false);
+    }
+  };
+
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
@@ -219,7 +251,6 @@ export const AddSurveyMapping = () => {
       }
       
       const roomsData = await response.json();
-      // Note: Based on SurveyDetailsPage, it's a direct array, not wrapped in an object
       setRooms(roomsData.map((room: any) => ({
         id: room.id,
         name: room.name
@@ -232,460 +263,423 @@ export const AddSurveyMapping = () => {
     }
   };
 
-  // Load all location data when component mounts
-  useEffect(() => {
-    fetchWings();
-    fetchFloors();
-    fetchRooms();
-  }, []);
-
-  const addSelectedItem = (type: 'building' | 'wing' | 'floor' | 'room', name: string) => {
-    switch (type) {
-      case 'building':
-        if (!selectedBuildings.includes(name)) {
-          setSelectedBuildings(prev => [...prev, name]);
-        }
-        break;
-      case 'wing':
-        if (!selectedWings.includes(name)) {
-          setSelectedWings(prev => [...prev, name]);
-        }
-        break;
-      case 'floor':
-        if (!selectedFloors.includes(name)) {
-          setSelectedFloors(prev => [...prev, name]);
-        }
-        break;
-      case 'room':
-        if (!selectedRooms.includes(name)) {
-          setSelectedRooms(prev => [...prev, name]);
-        }
-        break;
-    }
+  // Update functions
+  const updateSurveyMapping = (index: number, field: keyof SurveyMapping, value: any) => {
+    setSurveyMappings(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ));
   };
 
-  const removeSelectedItem = (type: 'building' | 'wing' | 'floor' | 'room', name: string) => {
-    const setterMap = {
-      'building': setSelectedBuildings,
-      'wing': setSelectedWings,
-      'floor': setSelectedFloors,
-      'room': setSelectedRooms
-    };
-    
-    const idFieldMap = {
-      'building': 'selectedBuildingIds',
-      'wing': 'selectedWingIds',
-      'floor': 'selectedFloorIds',
-      'room': 'selectedRoomIds'
-    };
+  const addSurveyMapping = () => setSurveyMappings(prev => [...prev, {
+    id: `sm-${Date.now()}`,
+    surveyId: null,
+    buildingIds: [],
+    wingIds: [],
+    floorIds: [],
+    areaIds: [],
+    roomIds: []
+  }]);
 
-    setterMap[type]((prev: string[]) => prev.filter(item => item !== name));
-    
-    // Also remove from form data IDs
-    const items = type === 'building' ? buildings : 
-                 type === 'wing' ? wings :
-                 type === 'floor' ? floors : rooms;
-    const item = items.find(item => item.name === name);
-    
-    if (item) {
-      setFormData(prev => ({
-        ...prev,
-        [idFieldMap[type]]: (prev[idFieldMap[type] as keyof FormData] as number[]).filter(id => id !== item.id)
-      }));
-    }
-  };
+  const removeSurveyMapping = (idx: number) => setSurveyMappings(prev => prev.filter((_, i) => i !== idx));
 
-  const handleSurveyChange = (surveyId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      surveyId
+  const handleLocationToggle = (mappingIndex: number, locationType: 'buildingIds' | 'wingIds' | 'floorIds' | 'areaIds' | 'roomIds', locationId: number) => {
+    setSurveyMappings(prev => prev.map((mapping, index) => {
+      if (index === mappingIndex) {
+        const currentIds = mapping[locationType];
+        const updatedIds = currentIds.includes(locationId)
+          ? currentIds.filter(id => id !== locationId)
+          : [...currentIds, locationId];
+        return { ...mapping, [locationType]: updatedIds };
+      }
+      return mapping;
     }));
   };
 
-  const handleLocationSelect = (type: 'building' | 'wing' | 'floor' | 'room', value: string) => {
-    const items = type === 'building' ? buildings : 
-                 type === 'wing' ? wings :
-                 type === 'floor' ? floors : rooms;
-    
-    const selectedItem = items.find(item => item.id.toString() === value);
-    
-    if (selectedItem) {
-      // Check if item is already selected
-      const selectedNames = type === 'building' ? selectedBuildings :
-                           type === 'wing' ? selectedWings :
-                           type === 'floor' ? selectedFloors : selectedRooms;
-      
-      if (!selectedNames.includes(selectedItem.name)) {
-        addSelectedItem(type, selectedItem.name);
-        
-        // Add to form data IDs
-        const idFieldMap = {
-          'building': 'selectedBuildingIds',
-          'wing': 'selectedWingIds',
-          'floor': 'selectedFloorIds',
-          'room': 'selectedRoomIds'
-        };
-        
-        setFormData(prev => ({
-          ...prev,
-          [idFieldMap[type]]: [...(prev[idFieldMap[type] as keyof FormData] as number[]), selectedItem.id]
-        }));
-        
-        console.log(`Selected ${type} ID:`, value, 'Name:', selectedItem.name);
-      }
-    }
-  };
-
   const handleSubmit = async () => {
-    // Validation
-    if (!formData.surveyId) {
-      toast({
-        title: "Error",
-        description: "Please select a survey",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
-    if (formData.selectedBuildingIds.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select at least one building",
-        variant: "destructive"
+    // Validation
+    const validMappings = surveyMappings.filter(mapping => 
+      mapping.surveyId && 
+      (mapping.buildingIds.length > 0 || mapping.wingIds.length > 0 || 
+       mapping.floorIds.length > 0 || mapping.areaIds.length > 0 || 
+       mapping.roomIds.length > 0)
+    );
+
+    if (validMappings.length === 0) {
+      toast.error('Please add at least one survey mapping with selected locations', {
+        duration: 5000,
       });
+      setIsSubmitting(false);
       return;
     }
 
     try {
-      setSubmitting(true);
+      // Create mappings one by one
+      const results = [];
       
-      // Prepare the API request payload to match SurveyDetailsPage format
-      const requestData = {
-        survey_id: parseInt(formData.surveyId), // Convert to number as required by API
-        building_ids: formData.selectedBuildingIds,
-        wing_ids: formData.selectedWingIds,
-        floor_ids: formData.selectedFloorIds,
-        room_ids: formData.selectedRoomIds
-      };
+      for (const mapping of validMappings) {
+        const requestData = {
+          survey_id: mapping.surveyId,
+          building_ids: mapping.buildingIds,
+          wing_ids: mapping.wingIds,
+          floor_ids: mapping.floorIds,
+          area_ids: mapping.areaIds,
+          room_ids: mapping.roomIds
+        };
 
-      console.log('Submitting survey mapping:', requestData);
+        console.log('Submitting survey mapping:', requestData);
 
-      // Make the POST API call using the same pattern as SurveyDetailsPage
-      const response = await fetch(getFullUrl('/survey_mappings.json'), {
-        method: 'POST',
-        headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
-      });
+        const response = await fetch(getFullUrl('/survey_mappings.json'), {
+          method: 'POST',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
 
-      if (!response.ok) {
-        throw new Error('Failed to create survey mapping');
+        if (!response.ok) {
+          throw new Error('Failed to create survey mapping');
+        }
+
+        const result = await response.json();
+        results.push(result);
       }
 
-      const result = await response.json();
-      console.log('Survey mapping created successfully:', result);
+      console.log('Survey mappings created successfully:', results);
 
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Survey mapping created successfully"
+      toast.success(`${validMappings.length} survey mapping(s) created successfully!`, {
+        duration: 3000,
       });
 
-      // Navigate back to survey mapping dashboard
-      navigate('/maintenance/survey/mapping');
+      setTimeout(() => {
+        navigate('/maintenance/survey/mapping');
+      }, 1000);
 
     } catch (error: any) {
-      console.error('Error creating survey mapping:', error);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create survey mapping",
-        variant: "destructive"
+      console.error('Error creating survey mappings:', error);
+      toast.error(`Failed to create survey mappings: ${error.message || 'Unknown error'}`, {
+        duration: 5000,
       });
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleBack = () => {
-    navigate('/maintenance/survey/mapping');
-  };
-
-  const selectedSurvey = surveys.find(survey => survey.id.toString() === formData.surveyId);
-
   return (
-    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={handleBack} 
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Survey Mapping
-        </Button>
-      </div>
+    <div className="p-6 space-y-6 relative">
+      {isSubmitting && (
+        <div className="absolute inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+        </div>
+      )}
+      
+      <header className="flex items-center justify-between">
+        <h1 className="text-xl font-bold tracking-wide uppercase">Survey Mapping</h1>
+      </header>
 
-      <div>
-        <Heading level="h1" variant="default">Add Survey Mapping</Heading>
-        <p className="text-muted-foreground text-sm mt-2">
-          Map a survey to specific locations for QR code generation
-        </p>
-      </div>
+      <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
+        <div className="space-y-6">
+          {surveyMappings.map((mapping, idx) => (
+            <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+              {idx > 0 && (
+                <button
+                  type="button"
+                  onClick={() => removeSurveyMapping(idx)}
+                  className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Remove survey mapping"
+                  disabled={isSubmitting}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              
+              <p className="mb-3 text-sm font-medium text-muted-foreground">Survey Mapping {idx + 1}</p>
+              
+              <div className="space-y-4">
+                {/* Survey Selection */}
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Survey<span className="text-red-500">*</span></InputLabel>
+                      <MuiSelect
+                        value={mapping.surveyId || ''}
+                        onChange={(e) => updateSurveyMapping(idx, 'surveyId', Number(e.target.value))}
+                        label="Survey*"
+                        notched
+                        displayEmpty
+                        disabled={isSubmitting || loadingSurveys}
+                      >
+                        <MenuItem value="">Select Survey</MenuItem>
+                        {loadingSurveys ? (
+                          <MenuItem disabled>
+                            <CircularProgress size={20} sx={{ mr: 1 }} />
+                            Loading surveys...
+                          </MenuItem>
+                        ) : (
+                          surveys.map((survey) => (
+                            <MenuItem key={survey.id} value={survey.id}>
+                              {survey.name} ({survey.questions_count} questions)
+                            </MenuItem>
+                          ))
+                        )}
+                      </MuiSelect>
+                    </FormControl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+          
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={addSurveyMapping} disabled={isSubmitting}>
+              <Plus className="w-4 h-4 mr-2" /> Add Survey Mapping
+            </Button>
+          </div>
+        </div>
+      </Section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Survey Selection Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <List className="w-5 h-5 text-[#C72030]" />
-              Survey Selection
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="survey" className="text-sm font-medium">
-                Select Survey <span className="text-red-500">*</span>
-              </Label>
-              <Select 
-                value={formData.surveyId} 
-                onValueChange={handleSurveyChange}
-                disabled={loadingSurveys}
-              >
-                <SelectTrigger className="mt-2">
-                  <SelectValue placeholder={loadingSurveys ? "Loading surveys..." : "Select a survey"} />
-                </SelectTrigger>
-                <SelectContent className="bg-white border shadow-lg z-50">
-                  {surveys.map((survey) => (
-                    <SelectItem key={survey.id} value={survey.id.toString()}>
-                      <div className="flex flex-col">
-                        <span className="font-medium">{survey.name}</span>
-                        <span className="text-xs text-gray-500">
-                          {survey.questions_count} questions • {survey.check_type}
-                        </span>
+      <Section title="Location Configuration" icon={<MapPin className="w-3.5 h-3.5" />}>
+        <div className="space-y-6">
+          {surveyMappings.map((mapping, mappingIdx) => (
+            <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+              <p className="mb-4 text-sm font-medium text-muted-foreground">
+                Locations for Survey Mapping {mappingIdx + 1}
+                {mapping.surveyId && (
+                  <span className="ml-2 text-blue-600">
+                    ({surveys.find(s => s.id === mapping.surveyId)?.name})
+                  </span>
+                )}
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Buildings */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Buildings</Label>
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
+                    {loadingBuildings ? (
+                      <div className="flex items-center justify-center p-4">
+                        <CircularProgress size={20} />
+                        <span className="ml-2 text-sm">Loading...</span>
                       </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                    ) : buildings.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center p-2">No buildings available</p>
+                    ) : (
+                      buildings.map((building) => (
+                        <div key={building.id} className="flex items-center space-x-2 p-1">
+                          <input
+                            type="checkbox"
+                            id={`building-${mappingIdx}-${building.id}`}
+                            checked={mapping.buildingIds.includes(building.id)}
+                            onChange={() => handleLocationToggle(mappingIdx, 'buildingIds', building.id)}
+                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
+                            disabled={isSubmitting}
+                          />
+                          <label 
+                            htmlFor={`building-${mappingIdx}-${building.id}`}
+                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
+                          >
+                            {building.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {mapping.buildingIds.length} selected
+                  </p>
+                </div>
 
-            {/* Selected Survey Info */}
-            {selectedSurvey && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Selected Survey</h4>
-                <div className="space-y-1 text-sm">
-                  <div><span className="font-medium">Name:</span> {selectedSurvey.name}</div>
-                  <div><span className="font-medium">Questions:</span> {selectedSurvey.questions_count}</div>
-                  <div><span className="font-medium">Type:</span> {selectedSurvey.check_type}</div>
-                  {selectedSurvey.snag_audit_category && (
-                    <div><span className="font-medium">Category:</span> {selectedSurvey.snag_audit_category}</div>
-                  )}
+                {/* Wings */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Wings</Label>
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
+                    {loadingWings ? (
+                      <div className="flex items-center justify-center p-4">
+                        <CircularProgress size={20} />
+                        <span className="ml-2 text-sm">Loading...</span>
+                      </div>
+                    ) : wings.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center p-2">No wings available</p>
+                    ) : (
+                      wings.map((wing) => (
+                        <div key={wing.id} className="flex items-center space-x-2 p-1">
+                          <input
+                            type="checkbox"
+                            id={`wing-${mappingIdx}-${wing.id}`}
+                            checked={mapping.wingIds.includes(wing.id)}
+                            onChange={() => handleLocationToggle(mappingIdx, 'wingIds', wing.id)}
+                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
+                            disabled={isSubmitting}
+                          />
+                          <label 
+                            htmlFor={`wing-${mappingIdx}-${wing.id}`}
+                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
+                          >
+                            {wing.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {mapping.wingIds.length} selected
+                  </p>
+                </div>
+
+                {/* Floors */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Floors</Label>
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
+                    {loadingFloors ? (
+                      <div className="flex items-center justify-center p-4">
+                        <CircularProgress size={20} />
+                        <span className="ml-2 text-sm">Loading...</span>
+                      </div>
+                    ) : floors.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center p-2">No floors available</p>
+                    ) : (
+                      floors.map((floor) => (
+                        <div key={floor.id} className="flex items-center space-x-2 p-1">
+                          <input
+                            type="checkbox"
+                            id={`floor-${mappingIdx}-${floor.id}`}
+                            checked={mapping.floorIds.includes(floor.id)}
+                            onChange={() => handleLocationToggle(mappingIdx, 'floorIds', floor.id)}
+                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
+                            disabled={isSubmitting}
+                          />
+                          <label 
+                            htmlFor={`floor-${mappingIdx}-${floor.id}`}
+                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
+                          >
+                            {floor.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {mapping.floorIds.length} selected
+                  </p>
+                </div>
+
+                {/* Areas */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Areas</Label>
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
+                    {loadingAreas ? (
+                      <div className="flex items-center justify-center p-4">
+                        <CircularProgress size={20} />
+                        <span className="ml-2 text-sm">Loading...</span>
+                      </div>
+                    ) : areas.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center p-2">No areas available</p>
+                    ) : (
+                      areas.map((area) => (
+                        <div key={area.id} className="flex items-center space-x-2 p-1">
+                          <input
+                            type="checkbox"
+                            id={`area-${mappingIdx}-${area.id}`}
+                            checked={mapping.areaIds.includes(area.id)}
+                            onChange={() => handleLocationToggle(mappingIdx, 'areaIds', area.id)}
+                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
+                            disabled={isSubmitting}
+                          />
+                          <label 
+                            htmlFor={`area-${mappingIdx}-${area.id}`}
+                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
+                          >
+                            {area.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {mapping.areaIds.length} selected
+                  </p>
+                </div>
+
+                {/* Rooms */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Rooms</Label>
+                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
+                    {loadingRooms ? (
+                      <div className="flex items-center justify-center p-4">
+                        <CircularProgress size={20} />
+                        <span className="ml-2 text-sm">Loading...</span>
+                      </div>
+                    ) : rooms.length === 0 ? (
+                      <p className="text-sm text-gray-500 text-center p-2">No rooms available</p>
+                    ) : (
+                      rooms.map((room) => (
+                        <div key={room.id} className="flex items-center space-x-2 p-1">
+                          <input
+                            type="checkbox"
+                            id={`room-${mappingIdx}-${room.id}`}
+                            checked={mapping.roomIds.includes(room.id)}
+                            onChange={() => handleLocationToggle(mappingIdx, 'roomIds', room.id)}
+                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
+                            disabled={isSubmitting}
+                          />
+                          <label 
+                            htmlFor={`room-${mappingIdx}-${room.id}`}
+                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
+                          >
+                            {room.name}
+                          </label>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {mapping.roomIds.length} selected
+                  </p>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Location Selection Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-[#C72030]" />
-              Location Configuration
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Buildings Dropdown */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">
-                  Buildings <span className="text-red-500">*</span>
-                </Label>
-                <Select 
-                  onValueChange={(value) => handleLocationSelect('building', value)}
-                  disabled={loadingBuildings}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingBuildings ? "Loading..." : `${selectedBuildings.length} building(s) selected`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    {buildings.map((building) => (
-                      <SelectItem key={building.id} value={building.id.toString()}>
-                        {building.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Selected buildings */}
-                {selectedBuildings.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedBuildings.map((building) => (
-                      <span key={building} className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-sm rounded">
-                        {building}
-                        <button
-                          onClick={() => removeSelectedItem('building', building)}
-                          className="ml-1 text-blue-600 hover:text-blue-800"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Wings Dropdown */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Wings</Label>
-                <Select 
-                  onValueChange={(value) => handleLocationSelect('wing', value)}
-                  disabled={loadingWings}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingWings ? "Loading..." : `${selectedWings.length} wing(s) selected`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    {wings.map((wing) => (
-                      <SelectItem key={wing.id} value={wing.id.toString()}>
-                        {wing.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Selected wings */}
-                {selectedWings.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedWings.map((wing) => (
-                      <span key={wing} className="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-sm rounded">
-                        {wing}
-                        <button
-                          onClick={() => removeSelectedItem('wing', wing)}
-                          className="ml-1 text-green-600 hover:text-green-800"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Floors Dropdown */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Floors</Label>
-                <Select 
-                  onValueChange={(value) => handleLocationSelect('floor', value)}
-                  disabled={loadingFloors}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingFloors ? "Loading..." : `${selectedFloors.length} floor(s) selected`} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    {floors.map((floor) => (
-                      <SelectItem key={floor.id} value={floor.id.toString()}>
-                        {floor.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Selected floors */}
-                {selectedFloors.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedFloors.map((floor) => (
-                      <span key={floor} className="inline-flex items-center px-2 py-1 bg-yellow-100 text-yellow-800 text-sm rounded">
-                        {floor}
-                        <button
-                          onClick={() => removeSelectedItem('floor', floor)}
-                          className="ml-1 text-yellow-600 hover:text-yellow-800"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Rooms Dropdown */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-900">Rooms</Label>
-                <Select 
-                  onValueChange={(value) => handleLocationSelect('room', value)}
-                  disabled={loadingRooms}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={loadingRooms ? "Loading..." : "Select rooms"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border shadow-lg z-50">
-                    {rooms.map((room) => (
-                      <SelectItem key={room.id} value={room.id.toString()}>
-                        {room.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Selected rooms */}
-                {selectedRooms.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {selectedRooms.map((room) => (
-                      <span key={room} className="inline-flex items-center px-2 py-1 bg-purple-100 text-purple-800 text-sm rounded">
-                        {room}
-                        <button
-                          onClick={() => removeSelectedItem('room', room)}
-                          className="ml-1 text-purple-600 hover:text-purple-800"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Location Summary */}
-            {(selectedBuildings.length > 0 || selectedWings.length > 0 || selectedFloors.length > 0 || selectedRooms.length > 0) && (
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Selected Locations</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Buildings:</span> {selectedBuildings.length || 0}
-                  </div>
-                  <div>
-                    <span className="font-medium">Wings:</span> {selectedWings.length || 0}
-                  </div>
-                  <div>
-                    <span className="font-medium">Floors:</span> {selectedFloors.length || 0}
-                  </div>
-                  <div>
-                    <span className="font-medium">Rooms:</span> {selectedRooms.length || 0}
-                  </div>
+              {/* Location Summary */}
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-800 mb-2">Selection Summary:</p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+                  <div><span className="font-medium">Buildings:</span> {mapping.buildingIds.length}</div>
+                  <div><span className="font-medium">Wings:</span> {mapping.wingIds.length}</div>
+                  <div><span className="font-medium">Floors:</span> {mapping.floorIds.length}</div>
+                  <div><span className="font-medium">Areas:</span> {mapping.areaIds.length}</div>
+                  <div><span className="font-medium">Rooms:</span> {mapping.roomIds.length}</div>
                 </div>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+            </div>
+          ))}
+        </div>
+      </Section>
 
-      {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-4 pt-6">
-        <Button 
-          variant="outline" 
-          onClick={handleBack}
-          disabled={submitting}
+      <div className="flex items-center gap-3 justify-center pt-2">
+        <Button
+          variant="destructive"
+          className="px-8"
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating...
+            </>
+          ) : (
+            'Submit'
+          )}
+        </Button>
+        <Button
+          variant="outline"
+          className="px-8"
+          onClick={() => navigate('/maintenance/survey/mapping')}
+          disabled={isSubmitting}
         >
           Cancel
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          disabled={submitting || !formData.surveyId || formData.selectedBuildingIds.length === 0}
-          className="bg-[#C72030] hover:bg-[#B01E2E] text-white"
-        >
-          {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Create Survey Mapping
         </Button>
       </div>
     </div>
