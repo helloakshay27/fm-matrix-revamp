@@ -157,6 +157,19 @@ export const ParkingCategoryPage = () => {
     setIsCreateModalOpen(true);
   };
 
+  const handleCloseCreateModal = () => {
+    setCategoryName('');
+    setCategoryImage(null);
+    setIsCreateModalOpen(false);
+  };
+
+  const handleCloseEditModal = () => {
+    setEditingCategory(null);
+    setEditCategoryName('');
+    setEditCategoryImage(null);
+    setIsEditModalOpen(false);
+  };
+
   const handleCreateCategory = async () => {
     if (!categoryName) {
       toast.error('Please select a category name');
@@ -212,10 +225,8 @@ export const ParkingCategoryPage = () => {
       await fetchParkingCategories();
       toast.success('Parking category created successfully');
       
-      // Reset form
-      setCategoryName('');
-      setCategoryImage(null);
-      setIsCreateModalOpen(false);
+      // Reset form and close modal
+      handleCloseCreateModal();
       
     } catch (error) {
       console.error('❌ Error creating parking category:', error);
@@ -280,11 +291,8 @@ export const ParkingCategoryPage = () => {
       await fetchParkingCategories();
       toast.success('Parking category updated successfully');
       
-      // Reset form
-      setEditingCategory(null);
-      setEditCategoryName('');
-      setEditCategoryImage(null);
-      setIsEditModalOpen(false);
+      // Reset form and close modal
+      handleCloseEditModal();
       
     } catch (error) {
       console.error('❌ Error updating parking category:', error);
@@ -425,14 +433,14 @@ export const ParkingCategoryPage = () => {
       </div>
 
       {/* Create Category Modal */}
-      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+      <Dialog open={isCreateModalOpen} onOpenChange={handleCloseCreateModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold">Create Category</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsCreateModalOpen(false)}
+              onClick={handleCloseCreateModal}
               className="h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />
@@ -477,10 +485,24 @@ export const ParkingCategoryPage = () => {
                   className="hidden"
                 />
               </div>
+              
+              {/* Image Preview */}
+              {categoryImage && (
+                <div className="mt-2">
+                  <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                  <div className="w-24 h-24 bg-gray-100 rounded border overflow-hidden">
+                    <img 
+                      src={URL.createObjectURL(categoryImage)} 
+                      alt="Category preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-center pt-4">
               <Button
                 onClick={handleCreateCategory}
                 disabled={isCreating}
@@ -494,14 +516,14 @@ export const ParkingCategoryPage = () => {
       </Dialog>
 
       {/* Edit Category Modal */}
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+      <Dialog open={isEditModalOpen} onOpenChange={handleCloseEditModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <DialogTitle className="text-lg font-semibold">Edit Category</DialogTitle>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setIsEditModalOpen(false)}
+              onClick={handleCloseEditModal}
               className="h-6 w-6 p-0 hover:bg-gray-100"
             >
               <X className="h-4 w-4" />

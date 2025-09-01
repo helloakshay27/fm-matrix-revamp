@@ -271,12 +271,11 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
           onClick={handleApply}
-          startIcon={<span style={{ fontSize: 18, fontWeight: 'bold' }}>+</span>}
           sx={{
             height: '45px',
             backgroundColor: '#F7F3F0',
             color: '#C72030',
-            borderRadius: '6px',
+            // borderRadius: '6px',
             textTransform: 'none',
             fontWeight: 500,
             fontSize: '16px',
@@ -297,7 +296,7 @@ export const InventoryFilterDialog: React.FC<InventoryFilterDialogProps> = ({
             height: '45px',
             backgroundColor: '#F7F3F0',
             color: '#C72030',
-            borderRadius: '6px',
+            // borderRadius: '6px',
             textTransform: 'none',
             fontWeight: 500,
             fontSize: '16px',

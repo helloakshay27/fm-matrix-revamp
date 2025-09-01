@@ -7,6 +7,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { SurveyListFilterModal } from '@/components/SurveyListFilterModal';
+import { SurveySelectionPanel } from '@/components/SurveyActionModal';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -17,10 +18,30 @@ import {
 interface SurveyItem {
   id: number;
   name: string;
-  snag_audit_category: string;
+  snag_audit_category: string | null;
   snag_audit_sub_category: string | null;
   questions_count: number;
   active: number;
+  check_type: string;
+  snag_questions?: Array<{
+    id: number;
+    qtype: string;
+    descr: string;
+    checklist_id: number;
+    img_mandatory: boolean;
+    quest_mandatory: boolean;
+    no_of_associations: number;
+    ticket_configs: {
+      category: string;
+      category_id: number;
+      assigned_to: string;
+      assigned_to_id: number;
+      tag_type: string | null;
+      active: boolean;
+      tag_created_at: string;
+      tag_updated_at: string;
+    };
+  }>;
 }
 
 interface FilterState {
@@ -32,7 +53,7 @@ export const SurveyListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -68,8 +89,9 @@ export const SurveyListDashboard = () => {
       }
       
       const response = await apiClient.get(url);
-      console.log('Survey data response:', response.data);
+      console.log('Question data response:', response.data);
       const surveyData = response.data || [];
+      console.log('First survey item:', surveyData[0]); // Debug log
       setSurveys(surveyData);
       
       // Store all surveys when no filters are applied
@@ -77,11 +99,11 @@ export const SurveyListDashboard = () => {
         setAllSurveys(surveyData);
       }
     } catch (error) {
-      console.error('Error fetching survey data:', error);
+      console.error('Error fetching Question data:', error);
       setSurveys([]); // Set empty array on error
       toast({
         title: "Error",
-        description: "Failed to fetch survey data",
+        description: "Failed to fetch Question data",
         variant: "destructive"
       });
     } finally {
@@ -90,7 +112,7 @@ export const SurveyListDashboard = () => {
   };
 
   const handleAddSurvey = () => {
-    navigate('/maintenance/survey/add');
+    navigate('/master/survey/add');
   };
 
   const handleOpenFilterModal = () => {
@@ -116,6 +138,40 @@ export const SurveyListDashboard = () => {
     fetchSurveyData();
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedItems(filteredSurveys.map(survey => survey.id.toString()));
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedItems([]);
+  };
+
+  const handleAction = (action: string, item: SurveyItem) => {
+    console.log(`${action} action for Question ${item.id}`);
+    if (action === 'Edit') {
+      navigate(`/maintenance/survey/edit/${item.id}`);
+    } else if (action === 'View') {
+      navigate(`/maintenance/survey/details/${item.id}`);
+    } else {
+      toast({
+        title: `${action} Action`,
+        description: `${action} action performed for Question ${item.id}`
+      });
+    }
+  };
+
   const handleStatusChange = (item: SurveyItem, newStatus: string) => {
     setSurveys(prevSurveys => 
       prevSurveys.map((survey) => 
@@ -124,12 +180,12 @@ export const SurveyListDashboard = () => {
     );
     toast({
       title: "Status Updated",
-      description: `Survey status changed to ${newStatus}`
+      description: `Question status changed to ${newStatus}`
     });
   };
 
-  const handleAction = (action: string, surveyId: number) => {
-    console.log(`${action} action for survey ${surveyId}`);
+  const handleRowAction = (action: string, surveyId: number) => {
+    console.log(`${action} action for Question ${surveyId}`);
     if (action === 'Edit') {
       navigate(`/maintenance/survey/edit/${surveyId}`);
     } else if (action === 'View') {
@@ -137,7 +193,7 @@ export const SurveyListDashboard = () => {
     } else {
       toast({
         title: `${action} Action`,
-        description: `${action} action performed for survey ${surveyId}`
+        description: `${action} action performed for Question ${surveyId}`
       });
     }
   };
@@ -157,34 +213,56 @@ export const SurveyListDashboard = () => {
 
   // Updated columns according to requirements
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: 'name', label: 'Survey Name', sortable: true, draggable: true },
-    { key: 'snag_audit_category', label: 'Ticket Category', sortable: true, draggable: true },
-    // { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true }, // Hidden
-    { key: 'questions_count', label: 'No. of Associations', sortable: true, draggable: true },
-    // { key: 'status', label: 'Status', sortable: true, draggable: true } // Hidden
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true },
+    { key: 'name', label: 'Title/Question Name', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'questions_count', label: 'No. of Questions', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'associations_count', label: 'No. of Associations', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true, defaultVisible: true },
   ];
 
   const renderCell = (item: SurveyItem, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex space-x-1 ml-4">
-            {/* <button 
-              onClick={() => handleAction('Edit', item.id)}
-              className="p-1 text-gray-600 hover:text-gray-800"
-            >
-              <Edit className="w-4 h-4" />
-            </button> */}
+          <div className="flex justify-center items-center">
             <button 
-              onClick={() => handleAction('View', item.id)}
+              onClick={() => handleRowAction('View', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
             >
               <Eye className="w-4 h-4" />
             </button>
           </div>
         );
-      case 'status':
+      case 'name':
+        return <span>{item.name}</span>;
+      case 'check_type':
+        return <span className="capitalize">{item.check_type || '-'}</span>;
+      case 'questions_count':
+        return <div className="text-center">{item.questions_count || 0}</div>;
+      case 'associations_count':
+        return (
+          <div className="text-center">
+            {item.snag_questions?.[0]?.no_of_associations || 0}
+          </div>
+        );
+      case 'ticket_category':
+        return (
+          <span>
+            {item.snag_questions?.[0]?.ticket_configs?.category || '-'}
+          </span>
+        );
+      case 'assigned_to':
+        return (
+          <span>
+            {item.snag_questions?.[0]?.ticket_configs?.assigned_to || '-'}
+          </span>
+        );
+      case 'snag_audit_sub_category':
+        return <span>{item.snag_audit_sub_category || '-'}</span>;
+      case 'status': {
         const status = item.active === 1 ? 'Active' : 'Inactive';
         return (
           <DropdownMenu>
@@ -207,22 +285,31 @@ export const SurveyListDashboard = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         );
-      case 'snag_audit_sub_category':
-        return item.snag_audit_sub_category || '-';
-      case 'questions_count':
-        return <div className="text-center">{item.questions_count}</div>;
+      }
       default:
-        return item[columnKey as keyof SurveyItem];
+        // Fallback for any other columns
+        const value = item[columnKey as keyof SurveyItem];
+        return <span>{value !== null && value !== undefined ? String(value) : '-'}</span>;
     }
   };
 
   // Filter surveys based on search term (API filtering handles the main filters)
   const filteredSurveys = surveys.filter(survey => {
     const matchesSearch = survey.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         survey.snag_audit_category.toLowerCase().includes(searchTerm.toLowerCase());
+                         (survey.snag_audit_category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (survey.snag_audit_sub_category || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     return matchesSearch;
   });
+
+  // Get selected survey objects for the panel
+  const selectedSurveyObjects = filteredSurveys.filter(survey => 
+    selectedItems.includes(survey.id.toString())
+  );
+
+  // Debug logs
+  console.log('Filtered surveys:', filteredSurveys);
+  console.log('Columns:', columns);
 
   if (loading) {
     return (
@@ -239,25 +326,28 @@ export const SurveyListDashboard = () => {
           {/* <p className="text-muted-foreground text-sm mb-2">
             Survey &gt; Survey List
           </p> */}
-          <Heading level="h1" variant="default">Survey List</Heading>
+          <Heading level="h1" variant="default">Question Bank</Heading>
         </div>
       </div>
       
       {/* Enhanced Survey List Table */}
-      <div>
-        <EnhancedTable
-          data={filteredSurveys}
-          columns={columns}
-          // selectable={true}
-          renderCell={renderCell}
-          storageKey="survey-list-table"
-          enableExport={true}
-          exportFileName="survey-list-data"
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search surveys..."
-          pagination={true}
-          pageSize={10}
+      <div>          <EnhancedTable
+            data={filteredSurveys}
+            columns={columns}
+            selectable={true}
+            selectedItems={selectedItems}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            getItemId={(item) => item.id.toString()}
+            renderCell={renderCell}
+            storageKey="survey-list-table-v2"
+            enableExport={true}
+            exportFileName="survey-list-data"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search surveys..."
+            pagination={true}
+            pageSize={10}
           leftActions={
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <Button 
@@ -279,7 +369,13 @@ export const SurveyListDashboard = () => {
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
-        currentFilters={appliedFilters}
+      />
+
+      {/* Survey Selection Panel */}
+      <SurveySelectionPanel
+        selectedSurveys={selectedItems}
+        selectedSurveyObjects={selectedSurveyObjects}
+        onClearSelection={handleClearSelection}
       />
     </div>
   );
