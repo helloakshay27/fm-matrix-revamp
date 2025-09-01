@@ -433,9 +433,10 @@ export const VisitorsDashboard = () => {
     // { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
     { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
     { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'guest_from', label: 'From', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_number', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
     { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'created_at_formatted', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     { key: 'tableActions', label: 'Actions', sortable: false, hideable: false, draggable: false }
@@ -445,9 +446,10 @@ export const VisitorsDashboard = () => {
   const expectedVisitorColumns: ColumnConfig[] = [
     { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
     { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
-    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_number', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
     { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'created_at_formatted', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     { key: 'expected_at_formatted', label: 'Expected At', sortable: true, hideable: true, draggable: true },
@@ -458,6 +460,7 @@ export const VisitorsDashboard = () => {
   const visitorOutColumns: ColumnConfig[] = [
     { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
     { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_number', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
     { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
@@ -471,9 +474,10 @@ export const VisitorsDashboard = () => {
     // { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
     { key: 'visitor_image', label: 'Visitor Image', sortable: false, hideable: true, draggable: true },
     { key: 'guest_name', label: 'Visitor Name', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_number', label: 'Mobile Number', sortable: true, hideable: true, draggable: true },
     { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
-    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
+    { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     // { key: 'pass_number', label: 'Pass Number', sortable: true, hideable: true, draggable: true }

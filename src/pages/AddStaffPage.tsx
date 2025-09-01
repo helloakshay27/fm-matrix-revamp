@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
+import { staffService, StaffFormData, ScheduleData, StaffAttachments, Unit, Department } from '@/services/staffService';
+import { toast } from 'sonner';
 
 export const AddStaffPage = () => {
   const navigate = useNavigate();
@@ -35,6 +37,34 @@ export const AddStaffPage = () => {
     sunday: { checked: false, startTime: '00', startMinute: '00', endTime: '00', endMinute: '00' }
   });
 
+  const [attachments, setAttachments] = useState<StaffAttachments>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [units, setUnits] = useState<Unit[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(true);
+  const [loadingDepartments, setLoadingDepartments] = useState(true);
+
+  // Fetch units and departments on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [unitsData, departmentsData] = await Promise.all([
+          staffService.getUnits(),
+          staffService.getDepartments()
+        ]);
+        setUnits(unitsData);
+        setDepartments(departmentsData);
+      } catch (error) {
+        console.error('Failed to fetch dropdown data:', error);
+      } finally {
+        setLoadingUnits(false);
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -46,15 +76,54 @@ export const AddStaffPage = () => {
     }));
   };
 
-  const handleSubmit = () => {
-    console.log('Staff data:', formData);
-    console.log('Schedule:', schedule);
-    // Add your submission logic here
-    navigate(-1); // Go back to previous page
+  const handleFileChange = (field: keyof StaffAttachments, file: File | null) => {
+    setAttachments(prev => ({
+      ...prev,
+      [field]: file || undefined
+    }));
+  };
+
+  const handleSubmit = async () => {
+    // Validate required fields
+    if (!formData.firstName || !formData.lastName || !formData.mobile) {
+      toast.error('Please fill in all required fields (First Name, Last Name, Mobile)');
+      return;
+    }
+
+    if (!formData.validFrom) {
+      toast.error('Please select a valid from date');
+      return;
+    }
+
+    // If validTill is not provided, calculate it from validFrom + 90 days
+    let validTill = formData.validTill;
+    if (!validTill && formData.validFrom) {
+      const fromDate = new Date(formData.validFrom);
+      fromDate.setDate(fromDate.getDate() + 90);
+      validTill = fromDate.toISOString().split('T')[0];
+    }
+
+    setIsSubmitting(true);
+    try {
+      const staffDataWithCalculated = {
+        ...formData,
+        validTill,
+        status: formData.status || 'active'
+      };
+      
+      await staffService.createSocietyStaff(staffDataWithCalculated, schedule, attachments);
+      toast.success('Society staff created successfully!');
+      navigate('/security/staff'); // Navigate back to staff dashboard
+    } catch (error) {
+      console.error('Failed to create staff:', error);
+      // Error is already handled in the service with toast
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
-    navigate(-1); // Go back to previous page
+    navigate('/security/staff'); // Go back to staff dashboard
   };
 
   const timeOptions = Array.from({ length: 24 }, (_, i) => 
@@ -145,12 +214,14 @@ export const AddStaffPage = () => {
                 <Label className="text-sm font-medium text-gray-700">Unit</Label>
                 <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
                   <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Unit" />
+                    <SelectValue placeholder={loadingUnits ? "Loading units..." : "Select Unit"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="512">512</SelectItem>
-                    <SelectItem value="helpdesk">HELP DESK</SelectItem>
-                    <SelectItem value="1110">1110</SelectItem>
+                    {units.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.unit_name}>
+                        {unit.unit_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -159,13 +230,14 @@ export const AddStaffPage = () => {
                 <Label className="text-sm font-medium text-gray-700">Department</Label>
                 <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
                   <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Department" />
+                    <SelectValue placeholder={loadingDepartments ? "Loading departments..." : "Select Department"} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="operations">Operations</SelectItem>
-                    <SelectItem value="hr">HR</SelectItem>
-                    <SelectItem value="accounts">ACCOUNTS</SelectItem>
-                    <SelectItem value="housekeeping">Housekeeping A</SelectItem>
+                    {departments.map((department) => (
+                      <SelectItem key={department.id} value={department.department_name}>
+                        {department.department_name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -253,20 +325,58 @@ export const AddStaffPage = () => {
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Picture Upload</Label>
                 <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center hover:border-orange-400 transition-colors cursor-pointer">
-                  <p className="text-sm text-gray-600">
-                    Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">No file chosen</p>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFileChange('profilePicture', e.target.files?.[0] || null)}
+                    className="hidden"
+                    id="profile-picture-upload"
+                  />
+                  <label htmlFor="profile-picture-upload" className="cursor-pointer">
+                    {attachments.profilePicture ? (
+                      <div className="space-y-2">
+                        <img
+                          src={URL.createObjectURL(attachments.profilePicture)}
+                          alt="Profile Preview"
+                          className="w-16 h-16 object-cover rounded-lg mx-auto"
+                        />
+                        <p className="text-xs text-[#C72030] font-medium">{attachments.profilePicture.name}</p>
+                        <p className="text-xs text-gray-500">Click to change</p>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">No file chosen</p>
+                      </>
+                    )}
+                  </label>
                 </div>
               </div>
               
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">Manuals Upload</Label>
                 <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center hover:border-orange-400 transition-colors cursor-pointer">
-                  <p className="text-sm text-gray-600">
-                    Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">No file chosen</p>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx"
+                    onChange={(e) => handleFileChange('manuals', e.target.files?.[0] || null)}
+                    className="hidden"
+                    id="manuals-upload"
+                  />
+                  <label htmlFor="manuals-upload" className="cursor-pointer">
+                    <p className="text-sm text-gray-600">
+                      Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
+                    </p>
+                    <p className="text-xs mt-1">
+                      {attachments.manuals ? (
+                        <span className="text-[#C72030] font-medium">{attachments.manuals.name}</span>
+                      ) : (
+                        <span className="text-gray-500">No file chosen</span>
+                      )}
+                    </p>
+                  </label>
                 </div>
               </div>
             </div>
@@ -382,9 +492,10 @@ export const AddStaffPage = () => {
             </Button>
             <Button
               onClick={handleSubmit}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+              disabled={isSubmitting}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 disabled:opacity-50"
             >
-              Submit
+              {isSubmitting ? 'Creating...' : 'Submit'}
             </Button>
           </div>
         </div>
