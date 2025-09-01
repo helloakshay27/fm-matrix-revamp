@@ -85,7 +85,7 @@ const ReporteesReassignPage = () => {
     return (
         <div className="p-6">
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-[#1a1a1a]">REPORTEES REASSIGN</h1>
+                <h1 className="text-2xl font-bold text-[#1a1a1a]">EXTERNAL REPORTEE REASSIGN</h1>
                 <p className="text-sm text-gray-600 mt-1">Enter the current and updated reporting emails, then submit.</p>
             </div>
 

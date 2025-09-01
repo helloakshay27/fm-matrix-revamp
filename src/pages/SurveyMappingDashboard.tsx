@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { SurveyMappingTable } from '../components/SurveyMappingTable';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Plus, Upload, Filter, Download, RotateCcw, Search, Eye, Loader2 } from 'lucide-react';
+import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
-import { Switch } from "@/components/ui/switch";
-import { QRCodeModal } from '../components/QRCodeModal';
+import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
-import { toast } from 'sonner';
+import { Switch } from "@/components/ui/switch";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
 
 interface SurveyMapping {
   id: number;
@@ -49,7 +54,7 @@ interface SurveyMapping {
   snag_checklist: {
     id: number;
     name: string;
-    snag_audit_category_id: number;
+    snag_audit_category_id: number | null;
     snag_audit_sub_category_id: number | null;
     active: number;
     project_id: number | null;
@@ -60,21 +65,35 @@ interface SurveyMapping {
     user_id: number | null;
     resource_id: number;
     resource_type: string;
-    snag_audit_category: string;
+    snag_audit_category: string | null;
     snag_audit_sub_category: string | null;
     questions_count: number;
-    snag_questions: any[];
+    snag_questions: Array<{
+      id: number;
+      qtype: string;
+      descr: string;
+      checklist_id: number;
+      img_mandatory: boolean;
+      quest_mandatory: boolean;
+      no_of_associations: number;
+      ticket_configs: {
+        category: string | null;
+        category_id: number | null;
+        assigned_to: string | null;
+        assigned_to_id: number | null;
+        tag_type: string | null;
+        active: boolean | null;
+        tag_created_at?: string;
+        tag_updated_at?: string;
+      };
+    }>;
   };
 }
 
 export const SurveyMappingDashboard = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [selectedQR, setSelectedQR] = useState<{
-    qrCode: string;
-    serviceName: string;
-    site: string;
-  } | null>(null);
+  const { toast } = useToast();
   
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [loading, setLoading] = useState(true);
@@ -88,10 +107,17 @@ export const SurveyMappingDashboard = () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/survey_mappings.json');
-      setMappings(response.data || []);
+      console.log('Survey mapping data response:', response.data);
+      const mappingData = response.data || [];
+      console.log('First mapping item:', mappingData[0]); // Debug log
+      setMappings(mappingData);
     } catch (error: any) {
       console.error('Error fetching survey mappings:', error);
-      toast.error('Failed to fetch survey mappings');
+      toast({
+        title: "Error",
+        description: "Failed to fetch survey mappings",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -103,62 +129,96 @@ export const SurveyMappingDashboard = () => {
         ? { ...mapping, active: !mapping.active }
         : mapping
     ));
+    toast({
+      title: "Status Updated",
+      description: `Survey mapping status ${item.active ? 'deactivated' : 'activated'}`
+    });
   };
 
   const handleQRClick = (mapping: SurveyMapping) => {
-    setSelectedQR({
-      qrCode: mapping.qr_code_url || '',
-      serviceName: mapping.snag_checklist?.name || mapping.survey_title || '',
-      site: mapping.site_name || ''
-    });
+    if (mapping.qr_code_url) {
+      window.open(mapping.qr_code_url, '_blank');
+    }
   };
 
   const handleViewClick = (item: SurveyMapping) => {
     console.log('View clicked for item:', item.id);
+    navigate(`/maintenance/survey/mapping/details/${item.id}`);
+  };
+
+  const handleAddMapping = () => {
+    navigate('/maintenance/survey/mapping/add');
   };
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: 'serviceId', label: 'ID', sortable: true, draggable: true },
-    { key: 'serviceName', label: 'Service Name', sortable: true, draggable: true },
-    { key: 'site', label: 'Site', sortable: true, draggable: true },
-    { key: 'building', label: 'Building', sortable: true, draggable: true },
-    { key: 'wing', label: 'Wing', sortable: true, draggable: true },
-    { key: 'area', label: 'Area', sortable: true, draggable: true },
-    { key: 'floor', label: 'Floor', sortable: true, draggable: true },
-    { key: 'room', label: 'Room', sortable: true, draggable: true },
-    { key: 'status', label: 'Status', sortable: false, draggable: true },
-    { key: 'createdOn', label: 'Created On', sortable: true, draggable: true },
-    { key: 'qrCode', label: 'QR', sortable: false, draggable: true }
+    { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true },
+    { key: 'survey_title', label: 'Survey Title', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'site_name', label: 'Site', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'associations_count', label: 'Associations', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'status', label: 'Status', sortable: false, draggable: true, defaultVisible: true },
+    { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true },
+    { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true }
   ];
 
   const renderCell = (item: SurveyMapping, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
-          <button 
-            onClick={() => handleViewClick(item)}
-            className="text-gray-600 hover:text-gray-800"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+          <div className="flex justify-center items-center gap-2">
+            <button 
+              onClick={() => handleViewClick(item)}
+              className="p-1 text-blue-600 hover:text-blue-800"
+              title="View"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          </div>
         );
-      case 'serviceId':
-        return item.snag_checklist?.id || '-';
-      case 'serviceName':
-        return item.snag_checklist?.name || item.survey_title || '-';
-      case 'site':
-        return item.site_name || '-';
-      case 'building':
-        return item.building_name || '-';
-      case 'wing':
-        return item.wing_name || '-';
-      case 'area':
-        return item.area_name || '-';
-      case 'floor':
-        return item.floor_name || '-';
-      case 'room':
-        return item.room_name || '-';
+      case 'survey_title':
+        return <span className="font-medium">{item.survey_title}</span>;
+      case 'site_name':
+        return <span>{item.site_name}</span>;
+      case 'building_name':
+        return <span>{item.building_name}</span>;
+      case 'wing_name':
+        return <span>{item.wing_name || '-'}</span>;
+      case 'floor_name':
+        return <span>{item.floor_name || '-'}</span>;
+      case 'room_name':
+        return <span>{item.room_name || '-'}</span>;
+      case 'check_type':
+        return <span className="capitalize">{item.snag_checklist?.check_type || '-'}</span>;
+      case 'questions_count':
+        return <div className="text-center">{item.snag_checklist?.questions_count || 0}</div>;
+      case 'associations_count':
+        return (
+          <div className="text-center">
+            {item.snag_checklist?.snag_questions?.[0]?.no_of_associations || 0}
+          </div>
+        );
+      case 'ticket_category':
+        return (
+          <span>
+            {item.snag_checklist?.snag_questions?.[0]?.ticket_configs?.category || '-'}
+          </span>
+        );
+      case 'assigned_to':
+        return (
+          <span>
+            {item.snag_checklist?.snag_questions?.[0]?.ticket_configs?.assigned_to || '-'}
+          </span>
+        );
+      case 'created_by':
+        return <span>{item.created_by}</span>;
       case 'status':
         return (
           <Switch
@@ -166,25 +226,32 @@ export const SurveyMappingDashboard = () => {
             onCheckedChange={() => handleStatusToggle(item)}
           />
         );
-      case 'createdOn':
+      case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
-      case 'qrCode':
+      case 'qr_code':
         return (
-          <button 
-            onClick={() => handleQRClick(item)}
-            className="w-8 h-8 bg-black flex items-center justify-center hover:opacity-80 transition-opacity"
-          >
-            <div className="w-6 h-6 bg-white grid grid-cols-3 gap-px">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="bg-black" style={{ 
-                  backgroundColor: Math.random() > 0.5 ? 'black' : 'white' 
-                }}></div>
-              ))}
-            </div>
-          </button>
+          <div className="flex justify-center">
+            {item.qr_code_url ? (
+              <button 
+                onClick={() => handleQRClick(item)}
+                className="p-1 text-blue-600 hover:text-blue-800"
+                title="View QR Code"
+              >
+                <img 
+                  src={item.qr_code_url} 
+                  alt="QR Code" 
+                  className="w-8 h-8 object-contain cursor-pointer hover:opacity-80"
+                />
+              </button>
+            ) : (
+              <span>-</span>
+            )}
+          </div>
         );
       default:
-        return '-';
+        // Fallback for any other columns
+        const value = item[columnKey as keyof SurveyMapping];
+        return <span>{value !== null && value !== undefined ? String(value) : '-'}</span>;
     }
   };
 
@@ -195,20 +262,22 @@ export const SurveyMappingDashboard = () => {
     mapping.survey_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     mapping.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     mapping.building_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.wing_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.area_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.floor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.room_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    (mapping.wing_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (mapping.area_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (mapping.floor_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (mapping.room_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    mapping.created_by?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Debug logs
+  console.log('Filtered mappings:', filteredMappings);
+  console.log('Columns:', columns);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          {/* <p className="text-muted-foreground text-sm mb-2">
-            Survey &gt; Mapping
-          </p> */}
-          <Heading level="h1" variant="default">Mapping List</Heading>
+          <Heading level="h1" variant="default">Survey Mapping</Heading>
         </div>
       </div>
       
@@ -221,52 +290,32 @@ export const SurveyMappingDashboard = () => {
         /* Enhanced Survey Mapping Table */
         <div>
           <EnhancedTable
-          data={filteredMappings}
-          columns={columns}
-          // selectable={true}
-          renderCell={renderCell}
-          storageKey="survey-mapping-table"
-          enableExport={true}
-          exportFileName="survey-mapping-data"
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          searchPlaceholder="Search mappings..."
-          pagination={true}
-          pageSize={10}
-          leftActions={
-            <div className="flex flex-wrap items-center gap-2 md:gap-4">
-              <Button className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80">
-                <Plus className="w-4 h-4" />
-                Add
-              </Button>
-              
-              {/* <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Import</span>
-              </Button>
-              
-              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-                <Filter className="w-4 h-4" />
-                <span className="hidden sm:inline">Filter</span>
-              </Button>
-              
-              <Button variant="outline" className="flex items-center gap-2 border-gray-300 text-gray-700">
-                <span className="hidden sm:inline">Print QR</span>
-              </Button> */}
-            </div>
-          }
-        />
-      </div>
+            data={filteredMappings}
+            columns={columns}
+            selectable={false}
+            renderCell={renderCell}
+            storageKey="survey-mapping-table"
+            enableExport={true}
+            exportFileName="survey-mapping-data"
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search survey mappings..."
+            pagination={true}
+            pageSize={10}
+            leftActions={
+              <div className="flex flex-wrap items-center gap-2 md:gap-4">
+                <Button 
+                  onClick={handleAddMapping}
+                  className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Survey Mapping
+                </Button>
+              </div>
+            }
+          />
+        </div>
       )}
-
-      {/* QR Code Modal */}
-      <QRCodeModal
-        isOpen={!!selectedQR}
-        onClose={() => setSelectedQR(null)}
-        qrCode={selectedQR?.qrCode || ''}
-        serviceName={selectedQR?.serviceName || ''}
-        site={selectedQR?.site || ''}
-      />
     </div>
   );
 };

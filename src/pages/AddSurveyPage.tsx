@@ -1,16 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, X, Star, ClipboardList, HelpCircle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiClient } from '@/utils/apiClient';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Plus, X, Star, ClipboardList, HelpCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { apiClient } from "@/utils/apiClient";
+import {
+  ticketManagementAPI,
+  CategoryResponse,
+} from "@/services/ticketManagementAPI";
+import {
+  TextField,
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+} from "@mui/material";
 
 // --- Interface Definitions ---
 interface AnswerOption {
   text: string;
-  type: 'P' | 'N';
+  type: "P" | "N";
 }
 
 interface Question {
@@ -35,60 +51,69 @@ interface Category {
 
 // --- Field Styles for Material-UI Components ---
 const fieldStyles = {
-  height: '48px',
-  backgroundColor: '#fff',
-  borderRadius: '8px',
-  '& .MuiOutlinedInput-root': {
-    height: '48px',
-    '& fieldset': {
-      borderColor: '#e5e7eb',
+  height: "48px",
+  backgroundColor: "#fff",
+  borderRadius: "8px",
+  "& .MuiOutlinedInput-root": {
+    height: "48px",
+    "& fieldset": {
+      borderColor: "#e5e7eb",
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    "&:hover fieldset": {
+      borderColor: "#C72030",
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
     },
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": {
+      color: "#C72030",
     },
   },
 };
 
 const textareaStyles = {
   ...fieldStyles,
-  height: 'auto',
-  '& .MuiOutlinedInput-root': {
-    height: 'auto',
-    minHeight: '80px',
-    padding: '16.5px 14px',
-    '& fieldset': {
-      borderColor: '#e5e7eb',
+  height: "auto",
+  "& .MuiOutlinedInput-root": {
+    height: "auto",
+    minHeight: "80px",
+    padding: "16.5px 14px",
+    "& fieldset": {
+      borderColor: "#e5e7eb",
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    "&:hover fieldset": {
+      borderColor: "#C72030",
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    "&.Mui-focused fieldset": {
+      borderColor: "#C72030",
     },
-  }
+  },
 };
-
 
 export const AddSurveyPage = () => {
   const navigate = useNavigate();
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
-  const [title, setTitle] = useState('');
-  const [checkType, setCheckType] = useState('');
+  const [title, setTitle] = useState("");
+  const [checkType, setCheckType] = useState("");
   const [createTicket, setCreateTicket] = useState(false);
-  const [additionalTitle, setAdditionalTitle] = useState('');
-  const [additionalDescription, setAdditionalDescription] = useState('');
+  const [ticketCategory, setTicketCategory] = useState("");
+  const [assignTo, setAssignTo] = useState("");
+  const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
+    []
+  );
+  const [fmUsers, setFmUsers] = useState<
+    { id: number; firstname: string; lastname: string; email?: string }[]
+  >([]);
+  const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
+  const [loadingFmUsers, setLoadingFmUsers] = useState(false);
+  const [additionalTitle, setAdditionalTitle] = useState("");
+  const [additionalDescription, setAdditionalDescription] = useState("");
   const [questions, setQuestions] = useState<Question[]>([
-    { id: '1', text: '', answerType: '', mandatory: false }
+    { id: "1", text: "", answerType: "", mandatory: false },
   ]);
   // File upload state
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -101,17 +126,17 @@ export const AddSurveyPage = () => {
     }
   };
   const removeSelectedFile = (index: number) => {
-    setSelectedFiles(files => files.filter((_, i) => i !== index));
+    setSelectedFiles((files) => files.filter((_, i) => i !== index));
   };
 
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/snag_audit_categories.json');
+        const response = await apiClient.get("/snag_audit_categories.json");
         setCategories(response.data || []);
       } catch (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
       } finally {
         setLoading(false);
       }
@@ -119,149 +144,291 @@ export const AddSurveyPage = () => {
     fetchCategories();
   }, []);
 
+  // Load ticket categories when createTicket is enabled
+  const loadTicketCategories = useCallback(async () => {
+    if (!createTicket) return;
+
+    setLoadingTicketCategories(true);
+    try {
+      const response = await ticketManagementAPI.getCategories();
+      setTicketCategories(response.helpdesk_categories || []);
+      console.log("Ticket categories loaded:", response.helpdesk_categories);
+    } catch (error) {
+      console.error("Error loading ticket categories:", error);
+    } finally {
+      setLoadingTicketCategories(false);
+    }
+  }, [createTicket]);
+
+  // Load FM users for assign to dropdown
+  const loadFMUsers = useCallback(async () => {
+    if (!createTicket) return;
+
+    setLoadingFmUsers(true);
+    try {
+      const response = await ticketManagementAPI.getEngineers();
+      setFmUsers(response.fm_users || []);
+      console.log("FM users loaded:", response.fm_users);
+    } catch (error) {
+      console.error("Error loading FM users:", error);
+    } finally {
+      setLoadingFmUsers(false);
+    }
+  }, [createTicket]);
+
+  // Load ticket data when createTicket checkbox is checked
+  useEffect(() => {
+    if (createTicket) {
+      loadTicketCategories();
+      loadFMUsers();
+    } else {
+      // Reset selections when unchecked
+      setTicketCategory("");
+      setAssignTo("");
+    }
+  }, [createTicket, loadTicketCategories, loadFMUsers]);
+
   const handleAddQuestion = () => {
     const newQuestion: Question = {
       id: Date.now().toString(),
-      text: '',
-      answerType: '',
-      mandatory: false
+      text: "",
+      answerType: "",
+      mandatory: false,
     };
     setQuestions([...questions, newQuestion]);
   };
 
   const handleRemoveQuestion = (id: string) => {
     if (questions.length > 1) {
-      setQuestions(questions.filter(q => q.id !== id));
+      setQuestions(questions.filter((q) => q.id !== id));
     }
   };
 
-  const handleQuestionChange = (id: string, field: keyof Question, value: string | boolean | number | AnswerOption[]) => {
-    setQuestions(questions.map(q => {
-      if (q.id === id) {
-        const updatedQuestion = { ...q, [field]: value };
-        if (field === 'answerType' && value === 'multiple-choice' && !updatedQuestion.answerOptions) {
-          updatedQuestion.answerOptions = [{ text: '', type: 'P' }, { text: '', type: 'P' }];
+  const handleQuestionChange = (
+    id: string,
+    field: keyof Question,
+    value: string | boolean | number | AnswerOption[]
+  ) => {
+    setQuestions(
+      questions.map((q) => {
+        if (q.id === id) {
+          const updatedQuestion = { ...q, [field]: value };
+          if (
+            field === "answerType" &&
+            value === "multiple-choice" &&
+            !updatedQuestion.answerOptions
+          ) {
+            updatedQuestion.answerOptions = [
+              { text: "", type: "P" },
+              { text: "", type: "P" },
+            ];
+          }
+          if (
+            field === "additionalFieldOnNegative" &&
+            value === true &&
+            !updatedQuestion.additionalFields
+          ) {
+            updatedQuestion.additionalFields = [{ title: "", files: [] }];
+          }
+          return updatedQuestion;
         }
-        if (field === 'additionalFieldOnNegative' && value === true && !updatedQuestion.additionalFields) {
-          updatedQuestion.additionalFields = [{ title: '', files: [] }];
-        }
-        return updatedQuestion;
-      }
-      return q;
-    }));
+        return q;
+      })
+    );
   };
 
   // Additional field handlers
   const handleAddAdditionalField = (questionId: string) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? { ...q, additionalFields: [...(q.additionalFields || []), { title: '', files: [] }] }
-        : q
-    ));
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: [
+                ...(q.additionalFields || []),
+                { title: "", files: [] },
+              ],
+            }
+          : q
+      )
+    );
   };
 
-  const handleRemoveAdditionalField = (questionId: string, fieldIndex: number) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? { ...q, additionalFields: q.additionalFields?.filter((_, index) => index !== fieldIndex) }
-        : q
-    ));
+  const handleRemoveAdditionalField = (
+    questionId: string,
+    fieldIndex: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.filter(
+                (_, index) => index !== fieldIndex
+              ),
+            }
+          : q
+      )
+    );
   };
 
-  const handleAdditionalFieldTitleChange = (questionId: string, fieldIndex: number, value: string) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? {
-            ...q,
-            additionalFields: q.additionalFields?.map((field, index) =>
-              index === fieldIndex ? { ...field, title: value } : field
-            )
-          }
-        : q
-    ));
+  const handleAdditionalFieldTitleChange = (
+    questionId: string,
+    fieldIndex: number,
+    value: string
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex ? { ...field, title: value } : field
+              ),
+            }
+          : q
+      )
+    );
   };
 
-  const handleAdditionalFieldFilesChange = (questionId: string, fieldIndex: number, files: File[]) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? {
-            ...q,
-            additionalFields: q.additionalFields?.map((field, index) =>
-              index === fieldIndex ? { ...field, files } : field
-            )
-          }
-        : q
-    ));
+  const handleAdditionalFieldFilesChange = (
+    questionId: string,
+    fieldIndex: number,
+    files: File[]
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex ? { ...field, files } : field
+              ),
+            }
+          : q
+      )
+    );
   };
 
-  const removeAdditionalFieldFile = (questionId: string, fieldIndex: number, fileIndex: number) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? {
-            ...q,
-            additionalFields: q.additionalFields?.map((field, index) =>
-              index === fieldIndex 
-                ? { ...field, files: field.files.filter((_, i) => i !== fileIndex) }
-                : field
-            )
-          }
-        : q
-    ));
+  const removeAdditionalFieldFile = (
+    questionId: string,
+    fieldIndex: number,
+    fileIndex: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex
+                  ? {
+                      ...field,
+                      files: field.files.filter((_, i) => i !== fileIndex),
+                    }
+                  : field
+              ),
+            }
+          : q
+      )
+    );
   };
 
   const handleAddAnswerOption = (questionId: string) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? { ...q, answerOptions: [...(q.answerOptions || []), { text: '', type: 'P' }] }
-        : q
-    ));
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answerOptions: [
+                ...(q.answerOptions || []),
+                { text: "", type: "P" },
+              ],
+            }
+          : q
+      )
+    );
   };
 
-  const handleRemoveAnswerOption = (questionId: string, optionIndex: number) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? { ...q, answerOptions: q.answerOptions?.filter((_, index) => index !== optionIndex) }
-        : q
-    ));
+  const handleRemoveAnswerOption = (
+    questionId: string,
+    optionIndex: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answerOptions: q.answerOptions?.filter(
+                (_, index) => index !== optionIndex
+              ),
+            }
+          : q
+      )
+    );
   };
 
-  const handleAnswerOptionChange = (questionId: string, optionIndex: number, value: string) => {
-    setQuestions(questions.map(q =>
-      q.id === questionId
-        ? {
-            ...q,
-            answerOptions: q.answerOptions?.map((option, index) =>
-              index === optionIndex ? { ...option, text: value } : option
-            )
-          }
-        : q
-    ));
+  const handleAnswerOptionChange = (
+    questionId: string,
+    optionIndex: number,
+    value: string
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answerOptions: q.answerOptions?.map((option, index) =>
+                index === optionIndex ? { ...option, text: value } : option
+              ),
+            }
+          : q
+      )
+    );
   };
 
-  const handleAnswerOptionTypeChange = (questionId: string, optionIndex: number, value: 'P' | 'N') => {
-      setQuestions(questions.map(q =>
-          q.id === questionId
-              ? {
-                  ...q,
-                  answerOptions: q.answerOptions?.map((option, index) =>
-                      index === optionIndex ? { ...option, type: value } : option
-                  )
-              }
-              : q
-      ));
+  const handleAnswerOptionTypeChange = (
+    questionId: string,
+    optionIndex: number,
+    value: "P" | "N"
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              answerOptions: q.answerOptions?.map((option, index) =>
+                index === optionIndex ? { ...option, type: value } : option
+              ),
+            }
+          : q
+      )
+    );
   };
-
 
   const handleCreateSurvey = async () => {
     // Validation
     if (!title.trim()) {
-      alert('Please enter a title');
+      alert("Please enter a title");
       return;
     }
     if (!checkType) {
-      alert('Please select a check type');
+      alert("Please select a check type");
       return;
     }
+
+    // Validate ticket fields if create ticket is checked
+    if (createTicket) {
+      if (!ticketCategory) {
+        alert("Please select a ticket category");
+        return;
+      }
+      if (!assignTo) {
+        alert("Please select assign to");
+        return;
+      }
+    }
+
     // if (questions.some(q => !q.text.trim())) {
     //   alert('Please fill in all question texts');
     //   return;
@@ -273,50 +440,101 @@ export const AddSurveyPage = () => {
 
     try {
       setLoading(true);
-      
+
       const requestData = {
+        ...(createTicket && {
+          create_ticket: true,
+          category_name: parseInt(ticketCategory),
+          category_type: parseInt(assignTo),
+        }),
         snag_checklist: {
           name: title,
           snag_audit_category_id: parseInt(category) || null,
-          check_type: checkType
+          check_type: checkType,
+          project_id: 1,
+          snag_audit_sub_category_id: 1,
+          // Add ticket creation fields if create ticket is checked
         },
-        question: questions.map(question => ({
+        question: questions.map((question) => ({
           descr: question.text,
-          qtype: question.answerType === 'multiple-choice' ? 'multiple' : 
-                 question.answerType === 'input-box' ? 'input' : 
-                 question.answerType === 'rating' ? 'rating' :
-                 question.answerType === 'emojis' ? 'emoji' : 'description',
+          qtype:
+            question.answerType === "multiple-choice"
+              ? "multiple"
+              : question.answerType === "input-box"
+              ? "input"
+              : question.answerType === "rating"
+              ? "rating"
+              : question.answerType === "emojis"
+              ? "emoji"
+              : "description",
           quest_mandatory: question.mandatory,
           image_mandatory: false,
-          ...(question.answerType === 'multiple-choice' && question.answerOptions ? {
-            quest_options: question.answerOptions.map(option => ({
-              option_name: option.text,
-              option_type: option.type.toLowerCase()
-            }))
-          } : {}),
-          ...(question.answerType === 'rating' ? { rating: question.rating } : {}),
-          ...(question.answerType === 'emojis' ? { emoji: question.selectedEmoji } : {})
-        }))
+          ...(question.answerType === "multiple-choice" &&
+          question.answerOptions
+            ? {
+                quest_options: question.answerOptions.map((option) => ({
+                  option_name: option.text,
+                  option_type: option.type.toLowerCase(),
+                })),
+              }
+            : {}),
+          ...(question.answerType === "rating"
+            ? { rating: question.rating }
+            : {}),
+          ...(question.answerType === "emojis"
+            ? { emoji: question.selectedEmoji }
+            : {}),
+          ...(question.additionalFieldOnNegative &&
+          question.additionalFields &&
+          question.additionalFields.length > 0
+            ? {
+                generic_tags: question.additionalFields.map((field) => ({
+                  category_name: field.title,
+                  category_type: "questionss",
+                  tag_type: "not generic",
+                  active: true,
+                  icons:
+                    field.files.length > 0
+                      ? field.files.map((file) => ({
+                          name: file.name,
+                          type: file.type,
+                          size: file.size,
+                        }))
+                      : [],
+                })),
+              }
+            : {}),
+        })),
       };
 
-      console.log('Survey request data:', JSON.stringify(requestData, null, 2));
-      
-      const response = await apiClient.post('/pms/admin/snag_checklists.json', requestData);
-      console.log('Survey created successfully:', response.data);
-      
+      console.log(
+        "Question request data:",
+        JSON.stringify(requestData, null, 2)
+      );
+
+      const response = await apiClient.post(
+        "/pms/admin/snag_checklists.json",
+        requestData
+      );
+      console.log("Question created successfully:", response.data);
+
       // Show success message
-      alert('Survey created successfully!');
-      navigate('/maintenance/survey/list');
+      alert("Question created successfully!");
+      navigate("/master/survey/list");
     } catch (error) {
-      console.error('Error creating survey:', error);
-      
+      console.error("Error creating survey:", error);
+
       // Show detailed error message
       if (error.response) {
-        console.error('Response data:', error.response.data);
-        console.error('Response status:', error.response.status);
-        alert(`Failed to create survey: ${error.response.data?.message || error.response.statusText}`);
+        console.error("Response data:", error.response.data);
+        console.error("Response status:", error.response.status);
+        alert(
+          `Failed to create survey: ${
+            error.response.data?.message || error.response.statusText
+          }`
+        );
       } else if (error.request) {
-        alert('Network error: Unable to connect to server');
+        alert("Network error: Unable to connect to server");
       } else {
         alert(`Error: ${error.message}`);
       }
@@ -325,26 +543,29 @@ export const AddSurveyPage = () => {
     }
   };
 
-  const EMOJIS = ['😞', '😟', '😐', '😊', '😁'];
+  const EMOJIS = ["😞", "😟", "😐", "😊", "😁"];
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Add Survey</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Add Question</h1>
       </div>
 
-  <div className="space-y-6">
+      <div className="space-y-6">
         {/* Section: Files Upload */}
-        
+
         {/* Section 1: Survey Details */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200">
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+              <span
+                className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
                 <ClipboardList size={16} color="#C72030" />
               </span>
-              Survey Details
+              Question Details
             </h2>
           </div>
           <div className="p-6">
@@ -377,7 +598,12 @@ export const AddSurveyPage = () => {
                 InputProps={{ sx: fieldStyles }}
               />
 
-              <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ "& .MuiInputBase-root": fieldStyles }}
+              >
                 <InputLabel shrink>Check Type</InputLabel>
                 <MuiSelect
                   value={checkType}
@@ -386,48 +612,135 @@ export const AddSurveyPage = () => {
                   notched
                   displayEmpty
                 >
-                  <MenuItem value="">Select Check Type</MenuItem>
+                  <MenuItem value="" disabled>
+                    Select Check Type
+                  </MenuItem>
                   <MenuItem value="patrolling">Patrolling</MenuItem>
                   <MenuItem value="survey">Survey</MenuItem>
                 </MuiSelect>
               </FormControl>
-              
+
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="create-ticket"
                   checked={createTicket}
-                  onCheckedChange={(checked) => setCreateTicket(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setCreateTicket(checked as boolean)
+                  }
                 />
-                <label htmlFor="create-ticket" className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="create-ticket"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Create Ticket
                 </label>
               </div>
             </div>
+
+            {/* Conditional Ticket Dropdowns */}
+            {createTicket && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+                {/* Ticket Category Dropdown */}
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel shrink>Ticket Category</InputLabel>
+                  <MuiSelect
+                    value={ticketCategory}
+                    onChange={(e) => setTicketCategory(e.target.value)}
+                    label="Ticket Category*"
+                    notched
+                    displayEmpty
+                    disabled={loadingTicketCategories}
+                  >
+                    <MenuItem value="">
+                      {loadingTicketCategories
+                        ? "Loading categories..."
+                        : "Select Ticket Category"}
+                    </MenuItem>
+                    {ticketCategories.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id.toString()}>
+                        {cat.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                {/* Assign To Dropdown */}
+                <FormControl
+                  fullWidth
+                  variant="outlined"
+                  required
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel shrink>Assign To</InputLabel>
+                  <MuiSelect
+                    value={assignTo}
+                    onChange={(e) => setAssignTo(e.target.value)}
+                    label="Assign To*"
+                    notched
+                    displayEmpty
+                    disabled={loadingFmUsers}
+                  >
+                    <MenuItem value="">
+                      {loadingFmUsers ? "Loading users..." : "Select Assign To"}
+                    </MenuItem>
+                    {fmUsers.map((user) => (
+                      <MenuItem key={user.id} value={user.id.toString()}>
+                        {`${user.firstname} ${user.lastname}`.trim()}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Section 2: Questions */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-             <h2 className="text-lg font-medium text-gray-900 flex items-center">
-              <span className="w-8 h-8 rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span
+                className="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                style={{ backgroundColor: "#E5E0D3" }}
+              >
                 <HelpCircle size={16} color="#C72030" />
               </span>
               Questions
             </h2>
             <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">No. of Questions:</span>
-                <span className="font-medium text-gray-900">{questions.length.toString().padStart(1, '0')}</span>
+              <span className="text-sm text-gray-600">No. of Questions:</span>
+              <span className="font-medium text-gray-900">
+                {questions.length.toString().padStart(1, "0")}
+              </span>
             </div>
           </div>
           <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div
+              className={`grid gap-6 ${
+                questions.length === 1
+                  ? "grid-cols-1"
+                  : "grid-cols-1 md:grid-cols-2"
+              }`}
+            >
               {questions.map((question) => (
-                <div key={question.id} className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50">
+                <div
+                  key={question.id}
+                  className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50"
+                >
                   <div className="flex items-center justify-between">
                     <h3 className="font-medium text-gray-800">New Question</h3>
                     {questions.length > 1 && (
-                      <Button onClick={() => handleRemoveQuestion(question.id)} variant="ghost" size="sm" className="text-red-500 hover:text-red-700 p-1">
+                      <Button
+                        onClick={() => handleRemoveQuestion(question.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
                         <X className="w-4 h-4" />
                       </Button>
                     )}
@@ -437,7 +750,9 @@ export const AddSurveyPage = () => {
                     label="Question Text"
                     placeholder="Enter your Question"
                     value={question.text}
-                    onChange={(e) => handleQuestionChange(question.id, 'text', e.target.value)}
+                    onChange={(e) =>
+                      handleQuestionChange(question.id, "text", e.target.value)
+                    }
                     fullWidth
                     variant="outlined"
                     multiline
@@ -445,81 +760,134 @@ export const AddSurveyPage = () => {
                     InputProps={{ sx: textareaStyles }}
                   />
 
-                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl
+                    fullWidth
+                    variant="outlined"
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  >
                     <InputLabel shrink>Answer Type</InputLabel>
                     <MuiSelect
                       value={question.answerType}
-                      onChange={(e) => handleQuestionChange(question.id, 'answerType', e.target.value)}
+                      onChange={(e) =>
+                        handleQuestionChange(
+                          question.id,
+                          "answerType",
+                          e.target.value
+                        )
+                      }
                       label="Answer Type"
                       notched
                       displayEmpty
                     >
                       <MenuItem value="">Choose Answer Type</MenuItem>
-                      <MenuItem value="multiple-choice">Multiple Choice</MenuItem>
+                      <MenuItem value="multiple-choice">
+                        Multiple Choice
+                      </MenuItem>
                       <MenuItem value="input-box">Input Box</MenuItem>
-                      <MenuItem value="description-box">Description Box</MenuItem>
+                      <MenuItem value="description-box">
+                        Description Box
+                      </MenuItem>
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
                     </MuiSelect>
                   </FormControl>
-                  
-                  {question.answerType === 'multiple-choice' && (
+
+                  {question.answerType === "multiple-choice" && (
                     <div className="space-y-3 pt-2">
-                      <label className="text-sm font-medium text-gray-700">Answer Options</label>
-                       {(question.answerOptions || []).map((option, index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <TextField
-                              placeholder={`Option ${index + 1}`}
-                              value={option.text}
-                              onChange={(e) => handleAnswerOptionChange(question.id, index, e.target.value)}
-                              fullWidth
-                              variant="outlined"
-                              InputProps={{ sx: {...fieldStyles, height: '40px'} }}
-                            />
-                            <Select
-                              value={option.type}
-                              onValueChange={(value) => handleAnswerOptionTypeChange(question.id, index, value as 'P' | 'N')}
-                            >
-                              <SelectTrigger className="w-28 h-10 border-gray-300 rounded-md">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="P">P</SelectItem>
-                                <SelectItem value="N">N</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Button onClick={() => handleRemoveAnswerOption(question.id, index)} variant="ghost" size="sm" className="text-gray-400 hover:text-red-500 p-1 h-10 w-10">
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        <Button onClick={() => handleAddAnswerOption(question.id)} variant="ghost" size="sm" className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center">
-                          <Plus className="w-4 h-4 mr-1" /> Add Option
-                        </Button>
+                      <label className="text-sm font-medium text-gray-700">
+                        Answer Options
+                      </label>
+                      {(question.answerOptions || []).map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <TextField
+                            placeholder={`Option ${index + 1}`}
+                            value={option.text}
+                            onChange={(e) =>
+                              handleAnswerOptionChange(
+                                question.id,
+                                index,
+                                e.target.value
+                              )
+                            }
+                            fullWidth
+                            variant="outlined"
+                            InputProps={{
+                              sx: { ...fieldStyles, height: "40px" },
+                            }}
+                          />
+                          <Select
+                            value={option.type}
+                            onValueChange={(value) =>
+                              handleAnswerOptionTypeChange(
+                                question.id,
+                                index,
+                                value as "P" | "N"
+                              )
+                            }
+                          >
+                            <SelectTrigger className="w-28 h-10 border-gray-300 rounded-md">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="P">P</SelectItem>
+                              <SelectItem value="N">N</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Button
+                            onClick={() =>
+                              handleRemoveAnswerOption(question.id, index)
+                            }
+                            variant="ghost"
+                            size="sm"
+                            className="text-gray-400 hover:text-red-500 p-1 h-10 w-10"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        onClick={() => handleAddAnswerOption(question.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center"
+                      >
+                        <Plus className="w-4 h-4 mr-1" /> Add Option
+                      </Button>
                     </div>
                   )}
 
-                  {question.answerType === 'rating' && (
-                     <FormControl fullWidth>
-                        {/* <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Rating</InputLabel> */}
-                        <div className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg bg-white">
-                           {/* The div below is intentionally empty as per the previous request */}
-                           <div className="flex w-full justify-between px-2 text-xs text-gray-500">
-                           </div>
-                           <div className="flex items-center gap-9"> {/* <-- This is the updated line */}
-                            {[...Array(5)].map((_, index) => {
-                              const ratingValue = index + 1;
-                              return (
-                                <Star
-                                  key={ratingValue}
-                                  className={`w-8 h-8 cursor-pointer transition-colors ${ratingValue <= (question.rating || 0) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300 hover:text-yellow-300'}`}
-                                  onClick={() => handleQuestionChange(question.id, 'rating', ratingValue)}
-                                />
-                              );
-                            })}
-                          </div>
+                  {question.answerType === "rating" && (
+                    <FormControl fullWidth>
+                      {/* <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Rating</InputLabel> */}
+                      <div className="flex flex-col items-center gap-2 p-4 border border-gray-200 rounded-lg bg-white">
+                        {/* The div below is intentionally empty as per the previous request */}
+                        <div className="flex w-full justify-between px-2 text-xs text-gray-500"></div>
+                        <div className="flex items-center gap-9">
+                          {" "}
+                          {/* <-- This is the updated line */}
+                          {[...Array(5)].map((_, index) => {
+                            const ratingValue = index + 1;
+                            return (
+                              <Star
+                                key={ratingValue}
+                                className={`w-8 h-8 cursor-pointer transition-colors ${
+                                  ratingValue <= (question.rating || 0)
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-300 hover:text-yellow-300"
+                                }`}
+                                onClick={() =>
+                                  handleQuestionChange(
+                                    question.id,
+                                    "rating",
+                                    ratingValue
+                                  )
+                                }
+                              />
+                            );
+                          })}
                         </div>
-                     </FormControl>
+                      </div>
+                    </FormControl>
                   )}
 
                   {/* {question.answerType === 'emojis' && (
@@ -543,9 +911,18 @@ export const AddSurveyPage = () => {
                     <Checkbox
                       id={`mandatory-${question.id}`}
                       checked={question.mandatory}
-                      onCheckedChange={(checked) => handleQuestionChange(question.id, 'mandatory', checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleQuestionChange(
+                          question.id,
+                          "mandatory",
+                          checked as boolean
+                        )
+                      }
                     />
-                    <label htmlFor={`mandatory-${question.id}`} className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor={`mandatory-${question.id}`}
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Mandatory
                     </label>
                   </div>
@@ -554,105 +931,174 @@ export const AddSurveyPage = () => {
                     <Checkbox
                       id={`additional-negative-${question.id}`}
                       checked={question.additionalFieldOnNegative || false}
-                      onCheckedChange={(checked) => handleQuestionChange(question.id, 'additionalFieldOnNegative', checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        handleQuestionChange(
+                          question.id,
+                          "additionalFieldOnNegative",
+                          checked as boolean
+                        )
+                      }
                     />
-                    <label htmlFor={`additional-negative-${question.id}`} className="text-sm font-medium text-gray-700">
+                    <label
+                      htmlFor={`additional-negative-${question.id}`}
+                      className="text-sm font-medium text-gray-700"
+                    >
                       Do you want to open additional field on negative selection
                     </label>
                   </div>
 
                   {question.additionalFieldOnNegative && (
                     <div className="space-y-3 pt-2 border-t border-gray-200 mt-4 pt-4">
-                      <label className="text-sm font-medium text-gray-700">Additional Fields for Negative Selection</label>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(question.additionalFields || []).map((field, fieldIndex) => (
-                          <div key={fieldIndex} className="border border-gray-200 rounded-lg p-3 space-y-3 bg-gray-50/30">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
-                              {(question.additionalFields?.length || 0) > 1 && (
-                                <Button 
-                                  onClick={() => handleRemoveAdditionalField(question.id, fieldIndex)} 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
-                                >
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                            
-                            <TextField
-                              label="Title"
-                              placeholder="Enter title"
-                              value={field.title}
-                              onChange={(e) => handleAdditionalFieldTitleChange(question.id, fieldIndex, e.target.value)}
-                              fullWidth
-                              variant="outlined"
-                              InputLabelProps={{ shrink: true }}
-                              InputProps={{ sx: {...fieldStyles, height: '36px'} }}
-                            />
-                            
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-3 text-center bg-white flex flex-col items-center justify-center">
-                              <input
-                                type="file"
-                                multiple
-                                className="hidden"
-                                id={`additional-file-${question.id}-${fieldIndex}`}
-                                onChange={(e) => {
-                                  if (e.target.files) {
-                                    handleAdditionalFieldFilesChange(question.id, fieldIndex, Array.from(e.target.files));
-                                  }
-                                }}
-                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
-                              />
-                              <div className="flex items-center justify-center gap-1 mb-2">
-                                <span className="text-[#C72030] font-medium text-[11px]">Choose File</span>
-                                <span className="text-gray-500 text-[11px]">
-                                  {field.files.length > 0 ? `${field.files.length} file(s)` : 'No file'}
-                                </span>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => document.getElementById(`additional-file-${question.id}-${fieldIndex}`)?.click()}
-                                className="bg-[#f6f4ee] text-[#C72030] px-2 py-1 rounded text-xs flex items-center justify-center"
+                      <label className="text-sm font-medium text-gray-700">
+                        Additional Fields for Negative Selection
+                      </label>
+
+                      <div className="space-y-4">
+                        {(question.additionalFields || []).map(
+                          (field, fieldIndex) => {
+                            const isOnlyField =
+                              (question.additionalFields?.length || 0) === 1;
+                            return (
+                              <div
+                                key={fieldIndex}
+                                className={`grid gap-3 items-end ${
+                                  isOnlyField
+                                    ? "grid-cols-1 md:grid-cols-2"
+                                    : "grid-cols-1 md:grid-cols-3"
+                                }`}
                               >
-                                <span className="text-xs mr-1">+</span> Upload
-                              </button>
-                            </div>
-                            
-                            {field.files.length > 0 && (
-                              <div className="flex flex-wrap gap-1 mt-2">
-                                {field.files.map((file, fileIndex) => (
-                                  <div
-                                    key={`${file.name}-${file.lastModified}`}
-                                    className="flex relative flex-col items-center border rounded-md pt-3 px-1 pb-2 w-[80px] bg-[#F6F4EE] shadow-sm"
-                                  >
-                                    <div className="w-5 h-5 flex items-center justify-center border rounded text-gray-600 bg-white mb-1">
-                                      <svg className="w-2 h-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                        <rect width="20" height="20" x="2" y="2" rx="2"/>
-                                      </svg>
+                                <TextField
+                                  label="Title"
+                                  placeholder="Enter title"
+                                  value={field.title}
+                                  onChange={(e) =>
+                                    handleAdditionalFieldTitleChange(
+                                      question.id,
+                                      fieldIndex,
+                                      e.target.value
+                                    )
+                                  }
+                                  fullWidth
+                                  variant="outlined"
+                                  InputLabelProps={{ shrink: true }}
+                                  InputProps={{
+                                    sx: { ...fieldStyles, height: "36px" },
+                                  }}
+                                />
+
+                                <div className="relative">
+                                  <TextField
+                                    label="Upload File"
+                                    value={
+                                      field.files.length > 0
+                                        ? field.files
+                                            .map((file) => file.name)
+                                            .join(", ")
+                                        : "Choose File: No file chosen"
+                                    }
+                                    fullWidth
+                                    variant="outlined"
+                                    InputLabelProps={{ shrink: true }}
+                                    InputProps={{
+                                      sx: {
+                                        ...fieldStyles,
+                                        height: "36px",
+                                        cursor: "pointer",
+                                        "& input": {
+                                          color:
+                                            field.files.length > 0
+                                              ? "#C72030"
+                                              : "inherit",
+                                          fontWeight:
+                                            field.files.length > 0
+                                              ? "500"
+                                              : "normal",
+                                          cursor: "pointer",
+                                        },
+                                      },
+                                      readOnly: true,
+                                    }}
+                                    onClick={() =>
+                                      document
+                                        .getElementById(
+                                          `additional-file-${question.id}-${fieldIndex}`
+                                        )
+                                        ?.click()
+                                    }
+                                    style={{ cursor: "pointer" }}
+                                  />
+                                  <input
+                                    type="file"
+                                    multiple
+                                    className="hidden"
+                                    id={`additional-file-${question.id}-${fieldIndex}`}
+                                    onChange={(e) => {
+                                      if (e.target.files) {
+                                        handleAdditionalFieldFilesChange(
+                                          question.id,
+                                          fieldIndex,
+                                          Array.from(e.target.files)
+                                        );
+                                      }
+                                    }}
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                                  />
+                                </div>
+
+                                {!isOnlyField && (
+                                  <>
+                                    {/* <div className="flex items-center justify-center">
+                                    <span className="text-xs font-medium text-gray-600">Field {fieldIndex + 1}</span>
+                                  </div> */}
+
+                                    <div className="flex items-center justify-center">
+                                      <Button
+                                        onClick={() =>
+                                          handleRemoveAdditionalField(
+                                            question.id,
+                                            fieldIndex
+                                          )
+                                        }
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-gray-400 hover:text-red-500 p-1 h-6 w-6"
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </Button>
                                     </div>
-                                    <span className="text-[7px] text-center truncate max-w-[60px] mb-1">{file.name}</span>
-                                    <button
-                                      type="button"
-                                      className="absolute top-0 right-0 text-gray-600 hover:text-red-600 p-0"
-                                      onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                  </>
+                                )}
+
+                                {/* File names list with remove option */}
+                                {/* {field.files.length > 0 && (
+                                <div className="col-span-full space-y-1 mt-2">
+                                  {field.files.map((file, fileIndex) => (
+                                    <div
+                                      key={`${file.name}-${file.lastModified}`}
+                                      className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs"
                                     >
-                                      <X className="w-2 h-2" />
-                                    </button>
-                                  </div>
-                                ))}
+                                      <span className="truncate">{file.name}</span>
+                                      <button
+                                        type="button"
+                                        className="text-gray-600 hover:text-red-600 ml-2"
+                                        onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                      >
+                                        <X className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )} */}
                               </div>
-                            )}
-                          </div>
-                        ))}
+                            );
+                          }
+                        )}
                       </div>
-                      
-                      <Button 
-                        onClick={() => handleAddAdditionalField(question.id)} 
-                        variant="ghost" 
-                        size="sm" 
+
+                      <Button
+                        onClick={() => handleAddAdditionalField(question.id)}
+                        variant="ghost"
+                        size="sm"
                         className="text-red-600 hover:text-red-700 p-0 h-auto font-medium flex items-center"
                       >
                         <Plus className="w-4 h-4 mr-1" /> Add More Field
@@ -664,7 +1110,11 @@ export const AddSurveyPage = () => {
             </div>
 
             <div className="flex justify-center mt-8">
-              <Button onClick={handleAddQuestion} variant="outline" className="border-dashed border-gray-300 hover:border-red-400 hover:text-red-600">
+              <Button
+                onClick={handleAddQuestion}
+                variant="outline"
+                className="border-dashed border-gray-300 hover:border-red-400 hover:text-red-600"
+              >
                 <Plus className="w-4 h-4 mr-2" /> Add More Questions
               </Button>
             </div>
@@ -781,10 +1231,19 @@ export const AddSurveyPage = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">
-          <Button onClick={handleCreateSurvey} disabled={loading} className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto">
-            {loading ? 'Creating...' : 'Create Survey'}
+          <Button
+            onClick={handleCreateSurvey}
+            disabled={loading}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto"
+          >
+            {loading ? "Creating..." : "Create Survey"}
           </Button>
-          <Button type="button" variant="outline" onClick={() => navigate(-1)} className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto"
+          >
             Cancel
           </Button>
         </div>

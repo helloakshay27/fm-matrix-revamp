@@ -101,7 +101,7 @@ export const AddSurveyForm = ({ isOpen, onClose }: AddSurveyFormProps) => {
               type="submit"
               className="flex-1 px-4 py-2 bg-[#C72030] text-white rounded-lg hover:bg-[#A01B28]"
             >
-              Add Survey
+              Add Question
             </button>
           </div>
         </form>

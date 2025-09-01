@@ -1461,14 +1461,14 @@ const AllContent = () => {
                                 <li>Center Wise - Meeting Room Utilization</li>
                             </ul>
 
-                            <h3 className="font-semibold mt-2">2- Wallet Management</h3>
+                            {/* <h3 className="font-semibold mt-2">2- Wallet Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 <li>Overview Summary</li>
                                 <li>Site-wise Wallet Summary</li>
                                 <li>Top 10 Customers by Wallet Usage</li>
-                            </ul>
+                            </ul> */}
 
-                            <h3 className="font-semibold mt-2">3- Community Programs Dashboard</h3>
+                            <h3 className="font-semibold mt-2">2- Community Programs Dashboard</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
                                 <li>Community Health and Engagement Summary</li>
                                 <li>Site Wise Adoption Rate</li>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -188,6 +188,31 @@ export const InventoryDashboard = () => {
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  // Track last filter signature we already showed a no-results toast for
+  const lastNoResultSigRef = useRef<string | null>(null);
+
+  const buildFilterSignature = (obj: Record<string, string>) => {
+    const keys = Object.keys(obj || {}).sort();
+    return keys.map((k) => `${k}=${String(obj[k])}`).join('&');
+  };
+
+  // Snapshot baseline counts when no filters are applied so cards don't fluctuate on filter clicks
+  const [baselineCounts, setBaselineCounts] = useState({
+    totalInventories: totalInventories || 0,
+    activeCount: activeCount || 0,
+    inactiveCount: inactiveCount || 0,
+    greenInventories: greenInventories || 0,
+  });
+  useEffect(() => {
+    if (!activeFilters || Object.keys(activeFilters).length === 0) {
+      setBaselineCounts({
+        totalInventories: totalInventories || 0,
+        activeCount: activeCount || 0,
+        inactiveCount: inactiveCount || 0,
+        greenInventories: greenInventories || 0,
+      });
+    }
+  }, [totalInventories, activeCount, inactiveCount, greenInventories, activeFilters]);
 
   // Analytics state
   const [isAnalyticsFilterOpen, setIsAnalyticsFilterOpen] = useState(false);
@@ -305,10 +330,17 @@ export const InventoryDashboard = () => {
   // Map API data to display format
   const inventoryData = mapInventoryData(inventory);
 
-  // Fetch inventory data on component mount or page change
+  // Fetch inventory data when page or filters change (preserve filters across pagination)
   useEffect(() => {
-    dispatch(fetchInventoryData({ page: currentPage, pageSize }));
-  }, [dispatch, currentPage]);
+    const hasFilters = activeFilters && Object.keys(activeFilters).length > 0;
+    dispatch(
+      fetchInventoryData({
+        page: currentPage,
+        pageSize,
+        filters: hasFilters ? (activeFilters as any) : undefined,
+      })
+    );
+  }, [dispatch, currentPage, activeFilters]);
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -430,8 +462,23 @@ export const InventoryDashboard = () => {
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
     setLocalCurrentPage(1);
-    dispatch(fetchInventoryData({ page: 1, pageSize, filters: newFilters }));
   };
+
+  // Toast when any active filters yield zero results (once per unique filter signature)
+  useEffect(() => {
+    if (loading) return; // wait for fetch to complete
+    const currentSig = buildFilterSignature(activeFilters);
+    if (!currentSig) return; // only when filters are applied
+    const count = Array.isArray(inventoryItems) ? inventoryItems.length : 0;
+    if (count === 0 && lastNoResultSigRef.current !== currentSig) {
+      toast.info('No records found for the applied filters');
+      lastNoResultSigRef.current = currentSig; // prevent duplicate toasts for the same filters
+    }
+    // If results appear for current filters, allow future toasts if filters change again
+    if (count > 0 && lastNoResultSigRef.current === currentSig) {
+      lastNoResultSigRef.current = null;
+    }
+  }, [loading, activeFilters, inventoryItems]);
 
   const handleViewItem = (itemId: string) => {
     if (!itemId || typeof itemId !== "string" || itemId === "[object Object]") {
@@ -622,14 +669,22 @@ export const InventoryDashboard = () => {
       return onlyDate;
     }
     if (columnKey === "criticality") {
+      const raw = item.criticality;
+      let label = '-';
+      if (typeof raw === 'number') {
+        label = raw === 1 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
+      } else if (typeof raw === 'string') {
+        const v = raw.trim().toLowerCase();
+        if (v === '1' || v === 'critical') label = 'Critical';
+        else if (v === '2' || v === 'non-critical' || v === 'non_critical') label = 'Non-Critical';
+        else label = raw || '-';
+      }
+      const isCritical = label === 'Critical';
       return (
         <span
-          className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
-            ? "bg-red-100 text-red-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
+          className={`px-2 py-1 rounded text-xs ${isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
         >
-          {item.criticality}
+          {label}
         </span>
       );
     }
@@ -666,7 +721,6 @@ export const InventoryDashboard = () => {
     setLocalCurrentPage(page);
     dispatch(setCurrentPage(page));
     setSelectedItems([]);
-    dispatch(fetchInventoryData({ page, pageSize, filters: activeFilters }));
   };
 
   const renderPaginationItems = () => {
@@ -1117,7 +1171,10 @@ export const InventoryDashboard = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() => dispatch(fetchInventoryData({}))}
+                  onClick={() => {
+                    setActiveFilters({});
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1127,7 +1184,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {totalInventories || 0}
+                    {baselineCounts.totalInventories}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Total Inventories
@@ -1136,9 +1193,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(fetchInventoryData({ filters: { 'q[active_eq]': true } }))
-                }
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1148,7 +1207,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {activeCount || 0}
+                    {baselineCounts.activeCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Active Inventory
@@ -1157,9 +1216,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(fetchInventoryData({ filters: { 'q[active_eq]': false } }))
-                }
+                  onClick={() => {
+                    const nf = { 'q[active_eq]': false as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings
@@ -1169,7 +1230,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {inactiveCount || 0}
+                    {baselineCounts.inactiveCount}
                   </div>
                   <div className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">
                     Inactive
@@ -1178,13 +1239,11 @@ export const InventoryDashboard = () => {
               </div>
               <div
                 className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
-                onClick={() =>
-                  dispatch(
-                    fetchInventoryData({
-                      filters: { "q[green_product_eq]": true },
-                    })
-                  )
-                }
+                  onClick={() => {
+                    const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
+                    setActiveFilters(nf);
+                    setLocalCurrentPage(1);
+                  }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <img
@@ -1199,7 +1258,7 @@ export const InventoryDashboard = () => {
                 </div>
                 <div className="flex flex-col min-w-0">
                   <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                    {greenInventories || 0}
+                    {baselineCounts.greenInventories}
                   </div>
                   <div className="text-xs sm:text-sm text-green-600 font-medium leading-tight">
                     Ecofriendly

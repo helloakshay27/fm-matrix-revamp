@@ -442,7 +442,7 @@ export const TimeSlotSetupPage = () => {
           <div className="grid grid-cols-2 gap-6">
   {/* Start Time */}
   <div className="space-y-2">
-    <label className="text-sm font-medium text-gray-900">Start Time</label>
+    <label className="text-sm font-medium text-gray-900">Start Time <span className="text-red-500">*</span></label>
     <Input
       type="time"
       value={startTime}
@@ -453,7 +453,7 @@ export const TimeSlotSetupPage = () => {
 
   {/* End Time */}
   <div className="space-y-2">
-    <label className="text-sm font-medium text-gray-900">End Time</label>
+    <label className="text-sm font-medium text-gray-900">End Time <span className="text-red-500">*</span></label>
     <Input
       type="time"
       value={endTime}
@@ -495,7 +495,7 @@ export const TimeSlotSetupPage = () => {
           <div className="grid grid-cols-2 gap-6">
             {/* Start Time */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-900">Start Time</label>
+              <label className="text-sm font-medium text-gray-900">Start Time <span className="text-red-500">*</span></label>
               <Input
                 type="time"
                 value={editStartTime}
@@ -506,7 +506,7 @@ export const TimeSlotSetupPage = () => {
 
             {/* End Time */}
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-900">End Time</label>
+              <label className="text-sm font-medium text-gray-900">End Time <span className="text-red-500">*</span></label>
               <Input
                 type="time"
                 value={editEndTime}
