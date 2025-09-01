@@ -264,12 +264,17 @@ export const RoleDashboard = () => {
     
     console.log('Toggling sub-function:', { moduleId, functionId, subFunctionId, enabled });
     
+    // Find the sub-function data from currentFunctions to pass complete structure
+    const functionData = currentFunctions.find(f => (f.function_id ?? f.id) === functionId);
+    const subFunctionData = functionData?.sub_functions?.find(sf => (sf.sub_function_id ?? sf.id) === subFunctionId);
+    
     dispatch(updateSubFunctionEnabled({
       roleId: currentRole.role_id,
       moduleId,
       functionId,
       subFunctionId,
-      enabled
+      enabled,
+      subFunctionData // Pass the complete sub-function structure
     }));
   };
 
@@ -283,11 +288,15 @@ export const RoleDashboard = () => {
     
     console.log('Toggling function:', { moduleId, functionId, enabled });
     
+    // Find the function data from currentFunctions to pass complete structure
+    const functionData = currentFunctions.find(f => (f.function_id ?? f.id) === functionId);
+    
     dispatch(updateFunctionEnabled({
       roleId: currentRole.role_id,
       moduleId,
       functionId,
-      enabled
+      enabled,
+      functionData // Pass the complete function structure
     }));
   };
 
@@ -300,10 +309,14 @@ export const RoleDashboard = () => {
     
     console.log('Toggling module:', { moduleId, enabled });
     
+    // Find the module data from allModules to pass complete structure
+    const moduleData = allModules.find(m => (m.module_id ?? m.id) === moduleId);
+    
     dispatch(updateModuleEnabled({
       roleId: currentRole.role_id,
       moduleId,
-      enabled
+      enabled,
+      moduleData // Pass the complete module structure
     }));
   };
 
