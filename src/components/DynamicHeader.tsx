@@ -37,27 +37,17 @@ export const DynamicHeader = () => {
     setShouldShowHeader(hasAccess);
 
     if (hasAccess) {
-      // Get modules user has access to
+      // Get modules user has access to based on their actual permissions
       const userAccessibleModules = getAccessibleModules(userRole);
       
-      // Add default modules if not already included
-      const modulesWithDefaults = [...userAccessibleModules];
-      const defaultModules = ['Master', 'Settings'];
-      
-      defaultModules.forEach(defaultModule => {
-        if (!modulesWithDefaults.includes(defaultModule)) {
-          modulesWithDefaults.push(defaultModule);
-        }
-      });
-      
-      setAccessibleModules(modulesWithDefaults);
+      // Only show modules that user has explicit function access to
+      // Remove the automatic addition of default modules unless user has specific permissions
+      setAccessibleModules(userAccessibleModules);
 
       // Debug logging
-      console.log('🔍 Dynamic Header Debug:', {
+      console.log('🔍 Dynamic Header Debug (STRICT MODE):', {
         hasAccess,
-        originalModules: userAccessibleModules,
-        modulesWithDefaults: modulesWithDefaults,
-        addedDefaults: modulesWithDefaults.filter(m => !userAccessibleModules.includes(m)),
+        accessibleModules: userAccessibleModules,
         totalModules: userRole.lock_modules?.length,
         activeFunctions: userRole.lock_modules?.flatMap(m => 
           m.module_active === 1 ? m.lock_functions.filter(f => f.function_active === 1) : []
@@ -79,13 +69,12 @@ export const DynamicHeader = () => {
 
       // Set the active module based on user's first accessible function
       const activeModule = getActiveModuleForUser(userRole);
-      if (activeModule && modulesWithDefaults.includes(activeModule)) {
+      if (activeModule && userAccessibleModules.includes(activeModule)) {
         setCurrentSection(activeModule);
-      } else if (modulesWithDefaults.length > 0) {
+      } else if (userAccessibleModules.length > 0) {
         // Fallback to first accessible module
-        setCurrentSection(modulesWithDefaults[0]);
+        setCurrentSection(userAccessibleModules[0]);
       }
-      // Removed the fallback to 'Maintenance' as it was causing issues
     }
   }, [userRole, setCurrentSection]);
 

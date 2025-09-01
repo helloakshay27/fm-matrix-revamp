@@ -216,6 +216,7 @@ export const API_CONFIG = {
     EDIT_MOVE_IN_OUT_PURPOSE: '/pms/society_mimo_purposes',
     CREATE_WORK_TYPE: '/pms/society_staff_types.json',
     EDIT_WORK_TYPE: '/pms/society_staff_types', // Base path, will append /{id}.json
+    CREATE_SOCIETY_STAFF: '/pms/admin/society_staffs.json',
     CREATE_VISITOR_COMMENT: '/visitor_comments.json',
     EDIT_VISITOR_COMMENT: '/visitor_comments',
     PARKING_CONFIGURATIONS_SEARCH: '/pms/admin/parking_configurations.json',
