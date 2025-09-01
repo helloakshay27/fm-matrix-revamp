@@ -269,7 +269,7 @@ export const Header = () => {
               )}
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
               {companies.map((company) => (
                 <DropdownMenuItem
                   key={company.id}
@@ -299,7 +299,7 @@ export const Header = () => {
               )}
               <ChevronDown className="w-3 h-3" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg">
+            <DropdownMenuContent className="w-48 bg-white border border-[#D5DbDB] shadow-lg max-h-[60vh] overflow-y-auto">
               {sites.length > 0 ? (
                 sites.map((site) => (
                   <DropdownMenuItem
