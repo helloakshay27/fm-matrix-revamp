@@ -225,7 +225,7 @@ export const MultipleUserDeletePage = () => {
                             onClick={handleAddField}
                             className="text-[#C72030] border-[#C72030] bg-[#f6f4ee] hover:bg-[#f6f4ee]/80"
                         >
-                            Add Field
+                            Add User
                         </Button>
                     </div>
                 </CardContent>

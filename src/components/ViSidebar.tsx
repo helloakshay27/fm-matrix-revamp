@@ -17,7 +17,7 @@ const modulesByPackage = {
                 { name: 'SMT', href: '/maintenance/m-safe/smt', color: 'text-[#1a1a1a]' },
                 { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list', color: 'text-[#1a1a1a]' },
                 { name: 'Training List', href: '/maintenance/m-safe/training-list', color: 'text-[#1a1a1a]' },
-                { name: 'Reportees Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
+                { name: 'External Reportee Reassign', href: '/maintenance/m-safe/reportees-reassign', color: 'text-[#1a1a1a]' },
             ],
         },
         // {
