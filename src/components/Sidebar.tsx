@@ -1308,18 +1308,184 @@ export const Sidebar = () => {
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
 
+  // Smart dynamic permission check using actual API response
+  const checkPermission = React.useCallback((checkItem: any) => {
+    // If no user role data, show all items
+    if (!userRole) {
+      return true;
+    }
+
+    // Extract active functions from the API response
+    const activeFunctions = [];
+    
+    // Check if we have the new flat structure (activeFunctions)
+    if (userRole.activeFunctions && Array.isArray(userRole.activeFunctions)) {
+      activeFunctions.push(...userRole.activeFunctions);
+    }
+    
+    // Also check the old lock_modules structure as fallback
+    if (userRole.lock_modules && Array.isArray(userRole.lock_modules)) {
+      userRole.lock_modules.forEach(module => {
+        if (module.module_active && module.lock_functions) {
+          module.lock_functions.forEach(func => {
+            if (func.function_active) {
+              activeFunctions.push({
+                functionName: func.function_name,
+                actionName: func.function_name.toLowerCase().replace(/\s+/g, '_')
+              });
+            }
+          });
+        }
+      });
+    }
+
+    // If no active functions found, show all items
+    if (activeFunctions.length === 0) {
+      return true;
+    }
+
+    // Function to create search variants for matching
+    const createSearchVariants = (name: string): string[] => {
+      const variants = new Set([name]);
+      const normalized = name.toLowerCase();
+      
+      variants.add(normalized);
+      variants.add(normalized.replace(/\s+/g, '_'));
+      variants.add(normalized.replace(/\s+/g, '-'));
+      variants.add(normalized.replace(/\s+/g, ''));
+      variants.add(normalized.replace(/_/g, ' '));
+      variants.add(normalized.replace(/_/g, '-'));
+      variants.add(normalized.replace(/-/g, ' '));
+      variants.add(normalized.replace(/-/g, '_'));
+      
+      return Array.from(variants);
+    };
+
+    // Create mapping of sidebar item names to their potential function matches
+    const sidebarMappings = {
+      'ticket': ['tickets', 'ticket', 'pms_complaints', 'pms_helpdesk_categories'],
+      'assets': ['asset', 'assets', 'pms_assets'],
+      'services': ['service', 'services', 'pms_services'],
+      'tasks': ['task', 'tasks', 'pms_tasks'],
+      'schedule': ['schedule', 'pms_schedule'],
+      'amc': ['amc', 'pms_asset_amcs'],
+      'inventory': ['inventory', 'pms_inventories'],
+      'attendance': ['attendance', 'pms_attendances'],
+      'broadcast': ['broadcast', 'pms_notices'],
+      'vendor': ['supplier', 'pms_supplier', 'vendor audit', 'vendor_audit'],
+      'user master': ['user & roles', 'pms_user_roles', 'occupant users', 'pms_occupant_users'],
+      'fm user': ['user & roles', 'pms_user_roles'],
+      'occupant users': ['occupant users', 'pms_occupant_users'],
+      'm-safe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
+      'internal user (fte)': ['msafe', 'pms_msafe'],
+      'external user (non fte)': ['non fte users', 'non_fte_users'],
+      'lmc': ['line manager check', 'line_manager_check'],
+      'smt': ['senior management tour', 'senior_management_tour'],
+      'krcc list': ['krcc list', 'krcc_list', 'krcc'],
+      'training list': ['training', 'training_list', 'pms_training'],
+      'msafe report': ['download msafe report', 'download_msafe_report'],
+      'msafe detail report': ['download msafe detailed report', 'download_msafe_detailed_report'],
+      'vi miles': ['vi miles', 'vi_miles'],
+      'energy': ['meters', 'pms_energy'],
+      'water': ['water', 'pms_water'],
+      'stp': ['stp', 'pms_stp'],
+      'daily readings': ['daily readings', 'daily_readings'],
+      'utility consumption': ['utility consumption', 'utility_consumption'],
+      'utility request': ['utility request', 'utility_request'],
+      'ev consumption': ['ev consumption', 'ev_consumption'],
+      'solar generator': ['solar generator', 'solar_generators'],
+      'visitor': ['visitors', 'pms_visitors'],
+      'staff': ['staffs', 'pms_staffs'],
+      'r vehicles': ['r vehicles', 'pms_rvehicles'],
+      'g vehicles': ['g vehicles', 'pms_gvehicles'],
+      'patrolling': ['patrolling', 'pms_patrolling'],
+      'incident': ['pms incidents', 'pms_incidents'],
+      'permit': ['permits', 'cus_permits'],
+      'procurement': ['po', 'pms_purchase_orders', 'wo', 'pms_work_orders'],
+      'po': ['po', 'pms_purchase_orders'],
+      'wo': ['wo', 'pms_work_orders'],
+      'grn/ srn': ['grn', 'pms_grns', 'srns', 'pms_srns'],
+      'invoices': ['wo invoices', 'pms_work_order_invoices'],
+      'bill booking': ['bill', 'pms_bills'],
+      'parking': ['parking', 'cus_parkings'],
+      'waste generation': ['waste generation', 'waste_generation'],
+      'operational': ['operational audit', 'operational_audits'],
+      'account': ['account', 'accounts', 'pms_accounts', 'pms_setup'],
+      'events': ['events', 'pms_events'],
+      'customers': ['customers'],
+      'space management': ['space'],
+      'dashboard': ['dashboard', 'pms_dashboard', 'ceo dashboard', 'pms_ceo_dashboard'],
+    };
+
+    // Get the item name for checking
+    const itemNameLower = checkItem.name.toLowerCase();
+    
+    // Find potential matches for this sidebar item
+    let potentialMatches = sidebarMappings[itemNameLower] || [];
+    
+    // Also add the item name itself as a potential match
+    potentialMatches.push(...createSearchVariants(checkItem.name));
+
+    // Check if any active function matches this sidebar item
+    const hasPermission = activeFunctions.some(activeFunc => {
+      const funcVariants = createSearchVariants(activeFunc.functionName);
+      const actionVariants = createSearchVariants(activeFunc.actionName);
+      
+      return potentialMatches.some(match => {
+        const matchVariants = createSearchVariants(match);
+        return (
+          funcVariants.some(fv => matchVariants.some(mv => 
+            fv.includes(mv) || mv.includes(fv) || fv === mv
+          )) ||
+          actionVariants.some(av => matchVariants.some(mv => 
+            av.includes(mv) || mv.includes(av) || av === mv
+          ))
+        );
+      });
+    });
+
+    // If item has no specific mapping and no href, show it (likely a parent category)
+    if (!checkItem.href && potentialMatches.length <= createSearchVariants(checkItem.name).length) {
+      return true;
+    }
+
+    return hasPermission;
+  }, [userRole]);
+
   // Filter modules based on user permissions
   const filteredModulesByPackage = React.useMemo(() => {
-    const filtered = sidebarPermissionFilter.filterModulesByPackage(
-      modulesByPackage,
-      userRole
-    );
+    if (!userRole) {
+      console.log("📊 Available sidebar sections: ALL (no user role)");
+      return modulesByPackage;
+    }
     
-    // Simple debug log to show what sections are available
-    console.log("📊 Available sidebar sections:", Object.keys(filtered));
+    // Convert object to format that can be filtered
+    const filtered = {};
+    
+    Object.entries(modulesByPackage).forEach(([sectionName, items]) => {
+      const filteredItems = items
+        .map((item) => ({
+          ...item,
+          subItems: item.subItems ? item.subItems.filter(checkPermission) : [],
+        }))
+        .filter(checkPermission);
+        
+      if (filteredItems.length > 0) {
+        filtered[sectionName] = filteredItems;
+      }
+    });
+    
+    // Debug output for filtered results
+    console.log("🎯 Sidebar Filtering Results:");
+    Object.entries(filtered).forEach(([sectionName, items]: [string, any[]]) => {
+      console.log(`📦 ${sectionName}: ${items.length} items`);
+      items.forEach(item => {
+        console.log(`  ✅ ${item.name}${item.subItems && item.subItems.length > 0 ? ` (${item.subItems.length} sub-items)` : ''}`);
+      });
+    });
     
     return filtered;
-  }, [userRole]);
+  }, [modulesByPackage, userRole, checkPermission]);
 
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
@@ -1439,6 +1605,34 @@ export const Sidebar = () => {
       setExpandedItems(itemsToExpand);
     }
     
+    // Debug logging for API response structure
+    if (userRole) {
+      console.log("🔍 User Role API Response Structure:");
+      
+      // Check for new flat structure
+      if (userRole.activeFunctions) {
+        console.log("📋 Active Functions (new structure):", userRole.activeFunctions.slice(0, 5), userRole.activeFunctions.length > 5 ? `... and ${userRole.activeFunctions.length - 5} more` : '');
+      }
+      
+      // Check for old lock_modules structure
+      if (userRole.lock_modules) {
+        console.log("📦 Lock Modules (old structure):");
+        userRole.lock_modules.forEach((module, idx) => {
+          if (idx < 3) { // Show first 3 modules
+            console.log(`  - ${module.module_name} (active: ${module.module_active})`);
+            if (module.lock_functions && module.lock_functions.length > 0) {
+              module.lock_functions.slice(0, 2).forEach(func => {
+                console.log(`    - ${func.function_name} (active: ${func.function_active})`);
+              });
+            }
+          }
+        });
+        if (userRole.lock_modules.length > 3) {
+          console.log(`  ... and ${userRole.lock_modules.length - 3} more modules`);
+        }
+      }
+    }
+    
     // Debug logs (commented out to reduce console noise)
     // console.log("currentSection:", JSON.stringify({ currentSection }, null, 2));
     // console.log("itemsToExpand:", JSON.stringify({ itemsToExpand }, null, 2));
@@ -1460,339 +1654,6 @@ export const Sidebar = () => {
     const showDropdowns =
       item.hasDropdowns && item.href && location.pathname === item.href;
     const isActive = item.href ? isActiveRoute(item.href) : false;
-
-    // Dynamic permission check with actual API structure
-    const checkPermission = (checkItem: any) => {
-      if (!userRole || !userRole.lock_modules) {
-        // console.log(`🔄 Permission check for "${checkItem.name}": No user role data available, showing item`);
-        return true; // Show all items when no role data
-      }
-
-      let hasPermission = true;
-      let permissionPath = [];
-
-      // Function to normalize function names and handle special mappings
-      const normalizeFunctionName = (functionName: string): string[] => {
-        const normalized = functionName.toLowerCase();
-        const variants = [functionName, normalized];
-
-        // Generate variations with different separators (space, underscore, hyphen)
-        const generateSeparatorVariants = (name: string): string[] => {
-          const variants = [name];
-          // Replace spaces with underscores and hyphens
-          if (name.includes(" ")) {
-            variants.push(name.replace(/ /g, "_"));
-            variants.push(name.replace(/ /g, "-"));
-            variants.push(name.replace(/ /g, "")); // Remove spaces entirely
-          }
-          // Replace underscores with spaces and hyphens
-          if (name.includes("_")) {
-            variants.push(name.replace(/_/g, " "));
-            variants.push(name.replace(/_/g, "-"));
-            variants.push(name.replace(/_/g, "")); // Remove underscores entirely
-          }
-          // Replace hyphens with spaces and underscores
-          if (name.includes("-")) {
-            variants.push(name.replace(/-/g, " "));
-            variants.push(name.replace(/-/g, "_"));
-            variants.push(name.replace(/-/g, "")); // Remove hyphens entirely
-          }
-          return variants;
-        };
-
-        // Add separator variants for the original and normalized names
-        variants.push(...generateSeparatorVariants(functionName));
-        variants.push(...generateSeparatorVariants(normalized));
-
-        // Special mappings with separator variations
-        if (normalized === "assets" || normalized === "asset") {
-          const assetVariants = [
-            "pms_assets",
-            "assets",
-            "asset",
-            "pms-assets",
-            "pms assets",
-          ];
-          variants.push(...assetVariants);
-          assetVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized === "tickets" || normalized === "ticket") {
-          const ticketVariants = [
-            "pms_complaints",
-            "tickets",
-            "ticket",
-            "pms-complaints",
-            "pms complaints",
-          ];
-          variants.push(...ticketVariants);
-          ticketVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized === "services" || normalized === "service") {
-          const serviceVariants = [
-            "pms_services",
-            "services",
-            "service",
-            "pms-services",
-            "pms services",
-          ];
-          variants.push(...serviceVariants);
-          serviceVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized === "tasks" || normalized === "task") {
-          const taskVariants = [
-            "pms_tasks",
-            "tasks",
-            "task",
-            "pms-tasks",
-            "pms tasks",
-          ];
-          variants.push(...taskVariants);
-          taskVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized === "broadcast") {
-          const broadcastVariants = [
-            "pms_notices",
-            "broadcast",
-            "pms-notices",
-            "pms notices",
-          ];
-          variants.push(...broadcastVariants);
-          broadcastVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-
-        // M-Safe related mappings with separator variations
-        if (
-          normalized === "msafe" ||
-          normalized === "m-safe" ||
-          normalized === "m safe" ||
-          normalized === "m_safe"
-        ) {
-          const msafeVariants = [
-            "msafe",
-            "m-safe",
-            "m safe",
-            "m_safe",
-            "pms_msafe",
-            "pms-msafe",
-            "pms msafe",
-            "pms_m_safe",
-            "pms-m-safe",
-            "pms m safe",
-          ];
-          variants.push(...msafeVariants);
-          msafeVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (
-          normalized.includes("non") &&
-          (normalized.includes("fte") || normalized.includes("user"))
-        ) {
-          const nonFteVariants = [
-            "non fte users",
-            "non_fte_users",
-            "non-fte-users",
-            "nonfte users",
-            "nonfteusers",
-            "non fte",
-            "pms_non_fte_users",
-            "pms-non-fte-users",
-            "pms non fte users",
-          ];
-          variants.push(...nonFteVariants);
-          nonFteVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized.includes("line") && normalized.includes("manager")) {
-          const lmcVariants = [
-            "line manager check",
-            "line_manager_check",
-            "line-manager-check",
-            "linemanagercheck",
-            "lmc",
-            "pms_line_manager_check",
-            "pms-line-manager-check",
-            "pms line manager check",
-          ];
-          variants.push(...lmcVariants);
-          lmcVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (
-          normalized.includes("senior") &&
-          normalized.includes("management")
-        ) {
-          const smtVariants = [
-            "senior management tour",
-            "senior_management_tour",
-            "senior-management-tour",
-            "seniormanagementtour",
-            "smt",
-            "pms_senior_management_tour",
-            "pms-senior-management-tour",
-            "pms senior management tour",
-          ];
-          variants.push(...smtVariants);
-          smtVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized.includes("krcc")) {
-          const krccVariants = [
-            "krcc list",
-            "krcc_list",
-            "krcc-list",
-            "krcclist",
-            "krcc",
-            "pms_krcc_list",
-            "pms-krcc-list",
-            "pms krcc list",
-          ];
-          variants.push(...krccVariants);
-          krccVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-        if (normalized.includes("training")) {
-          const trainingVariants = [
-            "training_list",
-            "training list",
-            "training-list",
-            "traininglist",
-            "training",
-            "pms_training_list",
-            "pms-training-list",
-            "pms training list",
-            "pms_training",
-            "pms-training",
-            "pms training",
-          ];
-          variants.push(...trainingVariants);
-          trainingVariants.forEach((variant) =>
-            variants.push(...generateSeparatorVariants(variant))
-          );
-        }
-
-        // Remove duplicates and return unique variants
-        return [...new Set(variants)];
-      };
-
-      // Check based on the actual API structure: lock_modules -> module_name -> lock_functions -> function_name/action_name
-      if (checkItem.moduleName) {
-        // Find the module in lock_modules by module_name
-        const module = userRole.lock_modules.find(
-          (m) =>
-            m.module_name.toLowerCase() ===
-              checkItem.moduleName.toLowerCase() ||
-            m.module_name.toLowerCase() === "pms" // PMS module covers most functionality
-        );
-
-        if (!module || !module.module_active) {
-          // console.log(`❌ Permission check for "${checkItem.name}": Module "${checkItem.moduleName}" not found or not active`);
-          return false;
-        }
-
-        permissionPath.push(
-          `module:${module.module_name}=${
-            module.module_active ? "active" : "inactive"
-          }`
-        );
-
-        if (checkItem.functionName) {
-          const functionVariants = normalizeFunctionName(
-            checkItem.functionName
-          );
-
-          // Find the function in lock_functions by function_name or action_name
-          const func = module.lock_functions.find((f) => {
-            const functionNameMatch = functionVariants.some(
-              (variant) =>
-                f.function_name.toLowerCase() === variant.toLowerCase() ||
-                f.function_name.toLowerCase().includes(variant.toLowerCase()) ||
-                variant.toLowerCase().includes(f.function_name.toLowerCase())
-            );
-
-            // Also check action_name if it exists
-            const actionNameMatch =
-              (f as any).action_name &&
-              functionVariants.some(
-                (variant) =>
-                  (f as any).action_name.toLowerCase() ===
-                    variant.toLowerCase() ||
-                  (f as any).action_name
-                    .toLowerCase()
-                    .includes(variant.toLowerCase()) ||
-                  variant
-                    .toLowerCase()
-                    .includes((f as any).action_name.toLowerCase())
-              );
-
-            return functionNameMatch || actionNameMatch;
-          });
-
-          if (!func || !func.function_active) {
-            // console.log(`❌ Permission check for "${checkItem.name}": Function "${checkItem.functionName}" (variants: ${functionVariants.join(", ")}) not found or not active in module "${module.module_name}"`);
-            return false;
-          }
-
-          permissionPath.push(
-            `function:${func.function_name}=${
-              func.function_active ? "active" : "inactive"
-            }`
-          );
-
-          if (checkItem.subFunctionName) {
-            // Find the sub-function in sub_functions by sub_function_name
-            const subFunc = func.sub_functions.find(
-              (sf) =>
-                sf.sub_function_name === checkItem.subFunctionName ||
-                sf.sub_function_name.toLowerCase() ===
-                  checkItem.subFunctionName.toLowerCase()
-            );
-
-            if (!subFunc || !subFunc.enabled || !subFunc.sub_function_active) {
-              // console.log(`❌ Permission check for "${checkItem.name}": Sub-function "${checkItem.subFunctionName}" not found, not enabled, or not active`);
-              return false;
-            }
-
-            permissionPath.push(
-              `subFunction:${subFunc.sub_function_name}=${
-                subFunc.enabled ? "enabled" : "disabled"
-              }`
-            );
-          }
-        }
-      } else if (checkItem.href) {
-        // For items without specific module/function, check if any related module is active
-        // This is a fallback for items that don't have explicit permission metadata
-        const hasAnyActiveModule = userRole.lock_modules.some(
-          (m) => m.module_active
-        );
-        if (!hasAnyActiveModule) {
-          // console.log(`❌ Permission check for "${checkItem.name}": No active modules found`);
-          return false;
-        }
-        permissionPath.push(`fallback:anyActiveModule=true`);
-      } else {
-        // Items without href or module metadata are considered accessible
-        permissionPath.push(`unrestricted=true`);
-      }
-
-      // console.log(`✅ Permission check for "${checkItem.name}": ${permissionPath.join(", ")}`);
-      return hasPermission;
-    };
 
     // Check permission for current item
     if (!checkPermission(item)) {

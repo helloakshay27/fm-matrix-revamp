@@ -24,13 +24,19 @@ export interface LockModule {
   lock_functions: LockFunction[];
 }
 
+export interface ActiveFunction {
+  functionName: string;
+  actionName: string;
+}
+
 export interface UserRoleResponse {
   success: boolean;
   role_name: string;
   role_id: number;
   display_name: string;
   active: number;
-  lock_modules: LockModule[];
+  lock_modules?: LockModule[];
+  activeFunctions?: ActiveFunction[]; // Add support for the actual API response
 }
 
 export const permissionService = {
