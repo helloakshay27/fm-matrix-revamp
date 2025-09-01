@@ -669,14 +669,22 @@ export const InventoryDashboard = () => {
       return onlyDate;
     }
     if (columnKey === "criticality") {
+      const raw = item.criticality;
+      let label = '-';
+      if (typeof raw === 'number') {
+        label = raw === 1 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
+      } else if (typeof raw === 'string') {
+        const v = raw.trim().toLowerCase();
+        if (v === '1' || v === 'critical') label = 'Critical';
+        else if (v === '2' || v === 'non-critical' || v === 'non_critical') label = 'Non-Critical';
+        else label = raw || '-';
+      }
+      const isCritical = label === 'Critical';
       return (
         <span
-          className={`px-2 py-1 rounded text-xs ${item.criticality === "Critical"
-            ? "bg-red-100 text-red-700"
-            : "bg-gray-100 text-gray-700"
-            }`}
+          className={`px-2 py-1 rounded text-xs ${isCritical ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}
         >
-          {item.criticality}
+          {label}
         </span>
       );
     }
