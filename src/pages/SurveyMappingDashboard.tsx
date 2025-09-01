@@ -164,7 +164,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
     { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
     { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'status', label: 'Status', sortable: false, draggable: true, defaultVisible: true },
+    // { key: 'status', label: 'Status', sortable: false, draggable: true, defaultVisible: true },
     { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true },
     { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true }
   ];
