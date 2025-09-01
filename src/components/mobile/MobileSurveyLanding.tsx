@@ -43,6 +43,8 @@ export const MobileSurveyLanding: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [surveyData, setSurveyData] = useState<SurveyMapping | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<SurveyQuestion | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [answers, setAnswers] = useState<Record<number, SurveyOption>>({});
 
   useEffect(() => {
     const fetchSurveyData = async () => {
@@ -54,11 +56,10 @@ export const MobileSurveyLanding: React.FC = () => {
         const data = response.data;
         setSurveyData(data);
         
-        // Set the first smiley question as current question
-        const smileyQuestion = data.snag_checklist.snag_questions.find(
-          (q: SurveyQuestion) => q.qtype === 'smiley'
-        );
-        setCurrentQuestion(smileyQuestion || null);
+        // Set the first question as current question (support all question types)
+        const firstQuestion = data.snag_checklist.snag_questions[0];
+        setCurrentQuestion(firstQuestion || null);
+        setCurrentQuestionIndex(0);
       } catch (error) {
         console.error('Failed to fetch survey data:', error);
       } finally {
@@ -68,68 +69,107 @@ export const MobileSurveyLanding: React.FC = () => {
 
     fetchSurveyData();
   }, [mappingId]);
-  // Function to get emoji and label for rating
-  const getEmojiForRating = (rating: string) => {
-    const ratingNum = parseInt(rating);
-    switch (ratingNum) {
-      case 5: return { emoji: "😄", label: "Amazing" };
-      case 4: return { emoji: "😊", label: "Good" };
-      case 3: return { emoji: "😐", label: "Okay" };
-      case 2: return { emoji: "😞", label: "Bad" };
-      case 1: return { emoji: "😠", label: "Terrible" };
-      default: return { emoji: "😐", label: "Okay" };
+  // Function to get emoji and label for different option types
+  const getEmojiForOption = (option: SurveyOption, qtype: string) => {
+    if (qtype === 'smiley') {
+      const ratingNum = parseInt(option.qname);
+      switch (ratingNum) {
+        case 5: return { emoji: "😄", label: "Amazing" };
+        case 4: return { emoji: "😊", label: "Good" };
+        case 3: return { emoji: "😐", label: "Okay" };
+        case 2: return { emoji: "😞", label: "Bad" };
+        case 1: return { emoji: "😠", label: "Terrible" };
+        default: return { emoji: "😐", label: "Okay" };
+      }
+    } else if (qtype === 'multiple') {
+      // Handle Yes/No and other multiple choice options
+      if (option.qname.toLowerCase() === 'yes') {
+        return { emoji: "✅", label: "Yes" };
+      } else if (option.qname.toLowerCase() === 'no') {
+        return { emoji: "❌", label: "No" };
+      } else if (option.option_type === 'p') {
+        return { emoji: "👍", label: option.qname };
+      } else if (option.option_type === 'n') {
+        return { emoji: "👎", label: option.qname };
+      } else {
+        return { emoji: "◯", label: option.qname };
+      }
     }
+    
+    // Default fallback
+    return { emoji: "◯", label: option.qname };
   };
 
-  const handleRatingClick = async (optionId: number, rating: string) => {
-    const emojiData = getEmojiForRating(rating);
-    const ratingState = {
-      optionId,
-      rating: parseInt(rating),
+  const handleOptionClick = async (option: SurveyOption) => {
+    const emojiData = getEmojiForOption(option, currentQuestion?.qtype || 'multiple');
+    
+    // Store the answer
+    const newAnswers = {
+      ...answers,
+      [currentQuestion!.id]: option
+    };
+    setAnswers(newAnswers);
+
+    const optionState = {
+      optionId: option.id,
+      option: option,
       emoji: emojiData.emoji,
       label: emojiData.label,
     };
 
-    // If rating is 4 or 5 (positive), submit directly and go to thank you
-    if (parseInt(rating) >= 3) {
+    // Check if this is the last question
+    const isLastQuestion = currentQuestionIndex === surveyData!.snag_checklist.snag_questions.length - 1;
+    
+    if (isLastQuestion) {
+      // If it's the last question, submit all answers
       setIsSubmitting(true);
       try {
+        // Submit survey response with all answers
         await surveyApi.submitSurveyResponse({
           survey_response: {
             mapping_id: mappingId!,
-            rating: parseInt(rating),
+            rating: option.option_type === 'p' ? 5 : (option.qname.toLowerCase() === 'yes' ? 5 : 3),
             emoji: emojiData.emoji,
             label: emojiData.label,
             issues: [],
             description: undefined,
-            option_id: optionId,
+            option_id: option.id,
             question_id: currentQuestion?.id
           },
         });
 
         navigate(`/mobile/survey/${mappingId}/thank-you`, {
           state: {
-            ...ratingState,
+            ...optionState,
             submittedFeedback: true,
+            totalQuestions: surveyData!.snag_checklist.snag_questions.length
           },
         });
       } catch (error) {
-        console.error("Failed to submit rating:", error);
-        // Still navigate to thank you page even if API fails
+        console.error("Failed to submit survey:", error);
         navigate(`/mobile/survey/${mappingId}/thank-you`, {
           state: {
-            ...ratingState,
+            ...optionState,
             submittedFeedback: false,
+            totalQuestions: surveyData!.snag_checklist.snag_questions.length
           },
         });
       } finally {
         setIsSubmitting(false);
       }
     } else {
-      // For negative ratings (1-2), go to feedback page
-      navigate(`/mobile/survey/${mappingId}/feedback`, {
-        state: ratingState,
-      });
+      // Move to next question
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestionIndex(nextIndex);
+      setCurrentQuestion(surveyData!.snag_checklist.snag_questions[nextIndex]);
+    }
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      const prevIndex = currentQuestionIndex - 1;
+      setCurrentQuestionIndex(prevIndex);
+      setCurrentQuestion(surveyData!.snag_checklist.snag_questions[prevIndex]);
     }
   };
 
@@ -145,12 +185,11 @@ export const MobileSurveyLanding: React.FC = () => {
   }
 
   if (!surveyData || !currentQuestion) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-600">Survey not found or no questions available.</p>
-        </div>
+    return (    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-gray-600">Survey not found or no questions available.</p>
       </div>
+    </div>
     );
   }
 
@@ -212,12 +251,35 @@ export const MobileSurveyLanding: React.FC = () => {
         </div>
         <div>{surveyData.survey_title}</div>
 
+        {/* Progress Indicator */}
+        <div className="w-full max-w-sm mx-auto mb-6">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-gray-600">
+              Question {currentQuestionIndex + 1} of {surveyData.snag_checklist.snag_questions.length}
+            </span>
+            <span className="text-sm text-gray-600">
+              {Math.round(((currentQuestionIndex + 1) / surveyData.snag_checklist.snag_questions.length) * 100)}%
+            </span>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{
+                width: `${((currentQuestionIndex + 1) / surveyData.snag_checklist.snag_questions.length) * 100}%`
+              }}
+            ></div>
+          </div>
+        </div>
+
 
         {/* Rating Question */}
         <div className="text-center mb-8">
           <h3 className="text-lg font-semibold text-black mb-2">
             {currentQuestion.descr}
           </h3>
+          {currentQuestion.quest_mandatory && (
+            <p className="text-sm text-red-500">* Required</p>
+          )}
         </div>
 
         {isSubmitting && (
@@ -227,27 +289,88 @@ export const MobileSurveyLanding: React.FC = () => {
           </div>
         )}
 
-        {/* Rating Options */}
+        {/* Options */}
         <div className="w-full max-w-sm mt-2">
-          <div className="grid grid-cols-5 gap-4 px-4">
-            {currentQuestion.snag_quest_options
-              .sort((a, b) => parseInt(b.qname) - parseInt(a.qname)) // Sort in descending order (5 to 1)
-              .map((option) => {
-                const emojiData = getEmojiForRating(option.qname);
+          {currentQuestion.qtype === 'smiley' ? (
+            <div className="grid grid-cols-5 gap-4 px-4">
+              {currentQuestion.snag_quest_options
+                .sort((a, b) => parseInt(b.qname) - parseInt(a.qname)) // Sort in descending order (5 to 1)
+                .map((option) => {
+                  const emojiData = getEmojiForOption(option, currentQuestion.qtype);
+                  const isSelected = answers[currentQuestion.id]?.id === option.id;
+                  return (
+                    <button
+                      key={option.id}
+                      className={`flex flex-col items-center p-4 rounded-xl border-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isSelected 
+                          ? 'border-blue-600 bg-blue-100' 
+                          : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+                      }`}
+                      onClick={() => handleOptionClick(option)}
+                      disabled={isSubmitting}
+                    >
+                      <div className="text-4xl mb-2">{emojiData.emoji}</div>
+                      <div className="text-xs text-gray-600 text-center leading-tight">
+                        {emojiData.label}
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+          ) : (
+            <div className="space-y-3 px-4">
+              {currentQuestion.snag_quest_options.map((option) => {
+                const emojiData = getEmojiForOption(option, currentQuestion.qtype);
+                const isSelected = answers[currentQuestion.id]?.id === option.id;
                 return (
                   <button
                     key={option.id}
-                    className="flex flex-col items-center p-4 rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    onClick={() => handleRatingClick(option.id, option.qname)}
+                    className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed ${
+                      isSelected 
+                        ? 'border-blue-600 bg-blue-100' 
+                        : 'border-gray-200 hover:border-blue-400 hover:bg-blue-50'
+                    }`}
+                    onClick={() => handleOptionClick(option)}
                     disabled={isSubmitting}
                   >
-                    <div className="text-4xl mb-2">{emojiData.emoji}</div>
-                    <div className="text-xs text-gray-600 text-center leading-tight">
-                      {emojiData.label}
+                    <div className="flex items-center space-x-3">
+                      <div className="text-2xl">{emojiData.emoji}</div>
+                      <div className="text-lg font-medium text-gray-800">
+                        {emojiData.label}
+                      </div>
                     </div>
+                    {isSelected && (
+                      <div className="text-blue-600">
+                        <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
                   </button>
                 );
               })}
+            </div>
+          )}
+        </div>
+
+        {/* Navigation Controls */}
+        <div className="flex justify-between items-center w-full max-w-sm mt-8 px-4">
+          <button
+            onClick={handlePreviousQuestion}
+            disabled={currentQuestionIndex === 0 || isSubmitting}
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous</span>
+          </button>
+          
+          <div className="text-sm text-gray-500">
+            {currentQuestionIndex === surveyData.snag_checklist.snag_questions.length - 1 ? 
+              'Last Question' : 
+              `${surveyData.snag_checklist.snag_questions.length - currentQuestionIndex - 1} remaining`
+            }
           </div>
         </div>
       </div>
