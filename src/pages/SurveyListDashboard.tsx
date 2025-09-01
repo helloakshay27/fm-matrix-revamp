@@ -7,7 +7,6 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { SurveyListFilterModal } from '@/components/SurveyListFilterModal';
-import { SurveySelectionPanel } from '@/components/SurveyActionModal';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -53,7 +52,6 @@ export const SurveyListDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
-  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [surveys, setSurveys] = useState<SurveyItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
@@ -136,26 +134,6 @@ export const SurveyListDashboard = () => {
     });
     // Fetch all data without filters
     fetchSurveyData();
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedItems(filteredSurveys.map(survey => survey.id.toString()));
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  const handleSelectItem = (itemId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedItems(prev => [...prev, itemId]);
-    } else {
-      setSelectedItems(prev => prev.filter(id => id !== itemId));
-    }
-  };
-
-  const handleClearSelection = () => {
-    setSelectedItems([]);
   };
 
   const handleAction = (action: string, item: SurveyItem) => {
@@ -302,11 +280,6 @@ export const SurveyListDashboard = () => {
     return matchesSearch;
   });
 
-  // Get selected survey objects for the panel
-  const selectedSurveyObjects = filteredSurveys.filter(survey => 
-    selectedItems.includes(survey.id.toString())
-  );
-
   // Debug logs
   console.log('Filtered surveys:', filteredSurveys);
   console.log('Columns:', columns);
@@ -331,23 +304,21 @@ export const SurveyListDashboard = () => {
       </div>
       
       {/* Enhanced Survey List Table */}
-      <div>          <EnhancedTable
-            data={filteredSurveys}
-            columns={columns}
-            selectable={true}
-            selectedItems={selectedItems}
-            onSelectAll={handleSelectAll}
-            onSelectItem={handleSelectItem}
-            getItemId={(item) => item.id.toString()}
-            renderCell={renderCell}
-            storageKey="survey-list-table-v2"
-            enableExport={true}
-            exportFileName="survey-list-data"
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            searchPlaceholder="Search surveys..."
-            pagination={true}
-            pageSize={10}
+      <div>
+        <EnhancedTable
+          data={filteredSurveys}
+          columns={columns}
+          selectable={false}
+          getItemId={(item) => item.id.toString()}
+          renderCell={renderCell}
+          storageKey="survey-list-table-v2"
+          enableExport={true}
+          exportFileName="survey-list-data"
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search surveys..."
+          pagination={true}
+          pageSize={10}
           leftActions={
             <div className="flex flex-wrap items-center gap-2 md:gap-4">
               <Button 
@@ -369,13 +340,6 @@ export const SurveyListDashboard = () => {
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
-      />
-
-      {/* Survey Selection Panel */}
-      <SurveySelectionPanel
-        selectedSurveys={selectedItems}
-        selectedSurveyObjects={selectedSurveyObjects}
-        onClearSelection={handleClearSelection}
       />
     </div>
   );
