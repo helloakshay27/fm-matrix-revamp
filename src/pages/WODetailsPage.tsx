@@ -232,8 +232,8 @@ export const WODetailsPage = () => {
         pan_number: "",
       },
       work_category: "",
+      payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
     },
-    payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
     inventories: [],
     totals: { net_amount: "", total_taxable: "", taxes: "", total_value: "" },
     pms_po_inventories: [],
@@ -477,7 +477,7 @@ export const WODetailsPage = () => {
                 </Button>
               )
             }
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
@@ -624,7 +624,7 @@ export const WODetailsPage = () => {
                 Payment Tenure(In Days)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.payment_tenure || "-"}
+                : {workOrder.work_order.payment_terms?.payment_tenure || "-"}
               </span>
             </div>
             <div className="flex">
@@ -632,7 +632,7 @@ export const WODetailsPage = () => {
                 Retention(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.retention || "-"}
+                : {workOrder.work_order.payment_terms?.retention || "-"}
               </span>
             </div>
             <div className="flex">
@@ -640,7 +640,7 @@ export const WODetailsPage = () => {
                 TDS(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.tds || "-"}
+                : {workOrder.work_order.payment_terms?.tds || "-"}
               </span>
             </div>
             <div className="flex">
@@ -648,7 +648,7 @@ export const WODetailsPage = () => {
                 QC(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.qc || "-"}
+                : {workOrder.work_order.payment_terms?.qc || "-"}
               </span>
             </div>
             <div className="flex">
