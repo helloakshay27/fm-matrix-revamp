@@ -31,6 +31,7 @@ const MsafeDetailReportDownload: React.FC = () => {
     try {
       const baseUrl = getBaseUrl();
       const companyId = localStorage.getItem('selectedCompanyId');
+      const token = localStorage.getItem('token');
 
       if (!companyId) {
         toast.error('Company ID not found. Please select a company.');
@@ -38,7 +39,17 @@ const MsafeDetailReportDownload: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=145`);
+      if (!token) {
+        toast.error('Authentication token not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (response.data.status === 'completed') {
         const downloadUrl = response.data.download_url;
