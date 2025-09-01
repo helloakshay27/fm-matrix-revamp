@@ -49,11 +49,8 @@ export const sidebarPermissionFilter = {
       }
     }
 
-    // Check path-based permissions if no specific module/function is defined
-    if (!item.moduleName && item.href) {
-      const hasPathAccess = permissionService.hasPermissionForPath(userRole, item.href);
-      if (!hasPathAccess) return null;
-    }
+    // For items without moduleName, show them by default (no permission check needed)
+    // Only apply path-based permissions if specifically configured
 
     // Filter sub-items recursively
     const filteredItem = { ...item };

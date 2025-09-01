@@ -24,6 +24,7 @@ import {
   UserOption,
 } from "@/services/ticketManagementAPI";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { toast } from 'sonner';
 
 interface Building {
   id: number;
@@ -57,6 +58,12 @@ export const VisitorFormPage = () => {
     },
     "& .MuiInputLabel-root": {
       "&.Mui-focused": { color: "#C72030" },
+      "& .MuiInputLabel-asterisk": {
+        color: "#C72030 !important",
+      },
+    },
+    "& .MuiFormLabel-asterisk": {
+      color: "#C72030 !important",
     },
   };
 
@@ -231,11 +238,11 @@ export const VisitorFormPage = () => {
         setSelectedCamera(defaultCamera);
         await startCamera(defaultCamera);
       } else {
-        alert("No camera devices found. Please connect a camera and try again.");
+        toast.error("No camera devices found. Please connect a camera and try again.");
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
-      alert("Camera permission denied or no camera available. Please allow camera access and try again.");
+      toast.error("Camera permission denied or no camera available. Please allow camera access and try again.");
     }
   };
 
@@ -265,7 +272,7 @@ export const VisitorFormPage = () => {
       }
     } catch (error) {
       console.error("Error starting camera:", error);
-      alert("Failed to access camera. Please check permissions and try again.");
+      toast.error("Failed to access camera. Please check permissions and try again.");
     }
   };
 
@@ -310,6 +317,87 @@ export const VisitorFormPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+     if (!formData.host) {
+      toast.error('Please select a host');
+      return;
+    }
+
+    
+    if (formData.host && !formData.tower) {
+      toast.error('Please select a tower');
+      return;
+    }
+
+    // Field-by-field validation with toast messages
+    if (!formData.visitorName.trim()) {
+      toast.error('Please enter visitor name');
+      return;
+    }
+
+    if (!formData.mobileNumber.trim()) {
+      toast.error('Please enter mobile number');
+      return;
+    }
+
+    if (formData.mobileNumber.length !== 10) {
+      toast.error('Mobile number must be 10 digits');
+      return;
+    }
+
+   
+
+
+    if (formData.visitorType === 'support' && !formData.supportCategory) {
+      toast.error('Please select support category');
+      return;
+    }
+
+    if (formData.visitorType === 'guest' && !formData.visitPurpose) {
+      toast.error('Please select visit purpose');
+      return;
+    }
+
+    if (formData.frequency === 'frequently') {
+      if (!formData.passValidFrom) {
+        toast.error('Please select pass valid from date');
+        return;
+      }
+      if (!formData.passValidTo) {
+        toast.error('Please select pass valid to date');
+        return;
+      }
+      const hasSelectedDay = Object.values(formData.daysPermitted).some(day => day);
+      if (!hasSelectedDay) {
+        toast.error('Please select at least one day for frequent visits');
+        return;
+      }
+    }
+
+    if (formData.goodsInwards && showGoodsForm) {
+      if (!goodsData.selectType) {
+        toast.error('Please select movement type for goods');
+        return;
+      }
+      if (!goodsData.category) {
+        toast.error('Please select category for goods');
+        return;
+      }
+      const hasValidItem = items.some(item => item.selectItem && item.quantity);
+      if (!hasValidItem) {
+        toast.error('Please add at least one item with quantity');
+        return;
+      }
+    }
+
+    // Check additional visitors validation
+    const invalidAdditionalVisitor = additionalVisitors.find(visitor => 
+      (visitor.name && !visitor.mobile) || (!visitor.name && visitor.mobile)
+    );
+    if (invalidAdditionalVisitor) {
+      toast.error('Please complete all additional visitor details or remove incomplete entries');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const visitorApiData = {
@@ -325,11 +413,11 @@ export const VisitorFormPage = () => {
       };
       console.log("📤 Sending visitor data:", visitorApiData);
       await ticketManagementAPI.createVisitor(visitorApiData);
-      alert("Visitor created successfully!");
+      toast.success('Visitor created successfully!');
       navigate("/security/visitor");
     } catch (error) {
       console.error("❌ Error creating visitor:", error);
-      alert("Failed to create visitor. Please try again.");
+      toast.error('Failed to create visitor. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -512,17 +600,12 @@ export const VisitorFormPage = () => {
             </div>
           </div>
 
-          {/* Capture Image Label */}
-          <div className="text-center mb-4 p-2 bg-blue-50 border border-blue-200 rounded">
-            <span className="text-lg text-blue-800 font-bold">Capture Image</span>
-          </div>
-
           {/* Camera Selection Dropdown */}
           <div className="mb-4">
             <FormControl
               fullWidth
               variant="outlined"
-              sx={{ '& .MuiInputBase-root': fieldStyles }}
+              sx={fieldStyles}
             >
               <InputLabel shrink>Select Camera</InputLabel>
               <MuiSelect
@@ -576,7 +659,10 @@ export const VisitorFormPage = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+        <div className="text-center mb-4">
+          <h3 className="text-lg font-semibold text-gray-800">Capture Image</h3>
+        </div>
         <div className="flex justify-center mb-6">
           {!capturedPhoto ? (
             <button
@@ -692,7 +778,7 @@ export const VisitorFormPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ "& .MuiInputBase-root": fieldStyles }}
+                sx={fieldStyles}
               >
                 <InputLabel shrink>Host </InputLabel>
                 <MuiSelect
@@ -718,7 +804,7 @@ export const VisitorFormPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  sx={fieldStyles}
                 >
                   <InputLabel shrink>Tower</InputLabel>
                   <MuiSelect
@@ -750,7 +836,7 @@ export const VisitorFormPage = () => {
                 required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
 
               {formData.visitorType === "support" ? (
@@ -758,7 +844,7 @@ export const VisitorFormPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  sx={fieldStyles}
                 >
                   <InputLabel shrink>Support Category</InputLabel>
                   <MuiSelect
@@ -787,7 +873,7 @@ export const VisitorFormPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  sx={fieldStyles}
                 >
                   <InputLabel shrink>Visit Purpose</InputLabel>
                   <MuiSelect
@@ -820,7 +906,7 @@ export const VisitorFormPage = () => {
                 required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
                 inputProps={{
                   inputMode: "numeric", // shows numeric keyboard on mobile
                   pattern: "[0-9]{10}", // regex for 10 digits
@@ -836,7 +922,7 @@ export const VisitorFormPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
               <TextField
                 label="Coming From"
@@ -847,7 +933,7 @@ export const VisitorFormPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
               <TextField
                 label="Vehicle Number"
@@ -858,7 +944,7 @@ export const VisitorFormPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
               <TextField
                 label="Remarks"
@@ -867,7 +953,7 @@ export const VisitorFormPage = () => {
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                sx={fieldStyles}
               />
             </div>
             <div className="flex items-center space-x-8 pt-4">
@@ -920,7 +1006,8 @@ export const VisitorFormPage = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                      required
+                      sx={fieldStyles}
                     >
                       <InputLabel shrink>Movement Type</InputLabel>
                       <MuiSelect
@@ -947,7 +1034,8 @@ export const VisitorFormPage = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                      required
+                      sx={fieldStyles}
                     >
                       <InputLabel shrink>Category</InputLabel>
                       <MuiSelect
@@ -970,7 +1058,7 @@ export const VisitorFormPage = () => {
                     <FormControl
                       fullWidth
                       variant="outlined"
-                      sx={{ "& .MuiInputBase-root": fieldStyles }}
+                      sx={fieldStyles}
                     >
                       <InputLabel shrink>Mode of Transport</InputLabel>
                       <MuiSelect
@@ -999,7 +1087,7 @@ export const VisitorFormPage = () => {
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+                      sx={fieldStyles}
                     />
                     <TextField
                       label="Trip ID"
@@ -1010,7 +1098,7 @@ export const VisitorFormPage = () => {
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+                      sx={fieldStyles}
                     />
                   </div>
                   <div className="space-y-4 pt-4 border-t">
@@ -1024,7 +1112,7 @@ export const VisitorFormPage = () => {
                           fullWidth
                           variant="outlined"
                           required
-                          sx={{ "& .MuiInputBase-root": fieldStyles }}
+                          sx={fieldStyles}
                         >
                           <InputLabel shrink>Item</InputLabel>
                           <MuiSelect
@@ -1055,7 +1143,7 @@ export const VisitorFormPage = () => {
                           fullWidth
                           variant="outlined"
                           InputLabelProps={{ shrink: true }}
-                          InputProps={{ sx: fieldStyles }}
+                          sx={fieldStyles}
                         />
                         <div className="flex items-center space-x-2">
                           <TextField
@@ -1068,7 +1156,7 @@ export const VisitorFormPage = () => {
                             required
                             variant="outlined"
                             InputLabelProps={{ shrink: true }}
-                            InputProps={{ sx: fieldStyles }}
+                            sx={fieldStyles}
                           />
                           {items.length > 1 && (
                             <Button
@@ -1123,7 +1211,7 @@ export const VisitorFormPage = () => {
                   required
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  sx={fieldStyles}
                 />
                 <TextField
                   label="Pass Valid To"
@@ -1136,7 +1224,7 @@ export const VisitorFormPage = () => {
                   required
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
+                  sx={fieldStyles}
                 />
               </div>
               <div>
@@ -1197,7 +1285,7 @@ export const VisitorFormPage = () => {
                     required
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
+                    sx={fieldStyles}
                   />
                   <div className="flex items-center space-x-2 md:col-span-2">
                     <TextField
@@ -1213,7 +1301,7 @@ export const VisitorFormPage = () => {
                       required
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
+                      sx={fieldStyles}
                       inputProps={{
                         inputMode: "numeric", // shows numeric keyboard on mobile
                         pattern: "[0-9]{10}", // regex for 10 digits
