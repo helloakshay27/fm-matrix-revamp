@@ -102,13 +102,9 @@ export const CreateModuleDialog = ({
 
       const response = await moduleService.createModule(payload);
       
-      if (response.success) {
         toast.success('Module created successfully');
         onModuleCreated?.();
         handleClose();
-      } else {
-        toast.error(response.message || 'Failed to create module');
-      }
     } catch (error) {
       console.error('Error creating module:', error);
       toast.error('Failed to create module');
@@ -199,145 +195,7 @@ export const CreateModuleDialog = ({
               />
             </div>
 
-            {/* Module Configuration */}
-            <div className="space-y-2">
-              <Label htmlFor="module_type">Module Type</Label>
-              <Select 
-                value={formData.module_type} 
-                onValueChange={(value) => handleInputChange('module_type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select module type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {moduleTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="charged_per">Charged Per</Label>
-              <Select 
-                value={formData.charged_per} 
-                onValueChange={(value) => handleInputChange('charged_per', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select charging basis" />
-                </SelectTrigger>
-                <SelectContent>
-                  {chargedPerOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Licensing */}
-            <div className="space-y-2">
-              <Label htmlFor="no_of_licences">Number of Licenses</Label>
-              <Input
-                id="no_of_licences"
-                type="number"
-                value={formData.no_of_licences}
-                onChange={(e) => handleInputChange('no_of_licences', parseInt(e.target.value) || 0)}
-                min="1"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phase_id">Phase ID</Label>
-              <Input
-                id="phase_id"
-                type="number"
-                value={formData.phase_id}
-                onChange={(e) => handleInputChange('phase_id', parseInt(e.target.value) || 1)}
-                min="1"
-              />
-            </div>
-
-            {/* Billing */}
-            <div className="space-y-2">
-              <Label htmlFor="rate">Rate</Label>
-              <Input
-                id="rate"
-                type="number"
-                value={formData.rate}
-                onChange={(e) => handleInputChange('rate', parseFloat(e.target.value) || 0)}
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="rate_type">Rate Type</Label>
-              <Select 
-                value={formData.rate_type} 
-                onValueChange={(value) => handleInputChange('rate_type', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select rate type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rateTypeOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="min_billing">Minimum Billing</Label>
-              <Input
-                id="min_billing"
-                type="number"
-                value={formData.min_billing}
-                onChange={(e) => handleInputChange('min_billing', parseFloat(e.target.value) || 0)}
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="max_billing">Maximum Billing</Label>
-              <Input
-                id="max_billing"
-                type="number"
-                value={formData.max_billing}
-                onChange={(e) => handleInputChange('max_billing', parseFloat(e.target.value) || 0)}
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="total_billing">Total Billing</Label>
-              <Input
-                id="total_billing"
-                type="number"
-                value={formData.total_billing}
-                onChange={(e) => handleInputChange('total_billing', parseFloat(e.target.value) || 0)}
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            {/* Status */}
-            <div className="flex items-center space-x-2 md:col-span-2">
-              <Checkbox
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => handleInputChange('active', checked)}
-              />
-              <Label htmlFor="active">Active</Label>
-            </div>
+       
           </div>
 
           <div className="flex justify-end space-x-2 pt-4 border-t">

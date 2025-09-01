@@ -119,7 +119,7 @@ export const moduleService = {
       const response = await apiClient.post<ApiResponse<LockModule>>(ENDPOINTS.CREATE_MODULE, payload)
       return response.data
     } catch (error) {
-      console.error('Error creating module:', error)
+      // console.error('Error creating module:', error)
       throw error
     }
   },
@@ -129,7 +129,7 @@ export const moduleService = {
       const response = await apiClient.put<ApiResponse<LockModule>>(`${ENDPOINTS.UPDATE_MODULE}/${id}.json`, payload)
       return response.data
     } catch (error) {
-      console.error('Error updating module:', error)
+      // console.error('Error updating module:', error)
       throw error
     }
   },

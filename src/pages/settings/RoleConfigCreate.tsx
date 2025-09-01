@@ -301,7 +301,7 @@ export const RoleConfigCreate: React.FC = () => {
 
       // Make API call (replace with actual endpoint)
       const response = await fetch(
-        `${API_CONFIG.BASE_URL}/admin/role_configs.json`,
+        `${API_CONFIG.BASE_URL}/admin/lock_modules.json`,
         {
           method: 'POST',
           headers: {

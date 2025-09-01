@@ -27,21 +27,11 @@ interface LockFunction {
 export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunctionCreated }: CreateLockSubFunctionDialogProps) => {
   const { toast } = useToast();
   const [subFunctionName, setSubFunctionName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
   const [parentFunctionId, setParentFunctionId] = useState<string>("");
-  const [priority, setPriority] = useState<string>("MEDIUM");
-  const [conditions, setConditions] = useState<string>("");
   const [lockFunctions, setLockFunctions] = useState<LockFunction[]>([]);
   const [active, setActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingFunctions, setIsLoadingFunctions] = useState(true);
-
-  const priorityOptions = [
-    { value: 'CRITICAL', label: 'Critical' },
-    { value: 'HIGH', label: 'High' },
-    { value: 'MEDIUM', label: 'Medium' },
-    { value: 'LOW', label: 'Low' }
-  ];
 
   // Fetch lock functions for parent selection
   useEffect(() => {
@@ -51,11 +41,13 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
       setIsLoadingFunctions(true);
       try {
         const data = await lockFunctionService.fetchLockFunctions();
+        console.log('Fetched lock functions:', data); // Debug log
         const functions = data.map(func => ({
           id: func.id,
-          name: func.functionName,
-          function_name: func.functionName
+          name: func.name, // Use 'name' field from API
+          function_name: func.action_name || func.name // Fallback to action_name or name
         }));
+        console.log('Mapped functions:', functions); // Debug log
         setLockFunctions(functions);
       } catch (error: any) {
         console.error('Error fetching lock functions:', error);
@@ -87,24 +79,12 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
       return false;
     }
 
-    if (!priority) {
-      toast({
-        title: "Validation Error",
-        description: "Please select a priority level",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     return true;
   };
 
   const resetForm = () => {
     setSubFunctionName("");
-    setDescription("");
     setParentFunctionId("");
-    setPriority("MEDIUM");
-    setConditions("");
     setActive(true);
   };
 
@@ -115,11 +95,9 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
 
     const payload: CreateLockSubFunctionPayload = {
       lock_sub_function: {
-        sub_function_name: subFunctionName,
-        description: description,
-        parent_function_id: parseInt(parentFunctionId),
-        priority: priority,
-        conditions: conditions ? conditions.split(',').map(c => c.trim()) : [],
+        lock_function_id: parseInt(parentFunctionId),
+        name: subFunctionName,
+        sub_function_name: subFunctionName, // Using same value for both name and sub_function_name
         active: active
       }
     };
@@ -201,80 +179,40 @@ export const CreateLockSubFunctionDialog = ({ open, onOpenChange, onLockSubFunct
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span className="text-sm text-gray-500">Loading functions...</span>
               </div>
+            ) : lockFunctions.length === 0 ? (
+              <div className="p-2 border rounded-md text-center text-gray-500">
+                No functions available
+              </div>
             ) : (
               <Select value={parentFunctionId} onValueChange={setParentFunctionId}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a parent function" />
                 </SelectTrigger>
                 <SelectContent>
-                  {lockFunctions.map((func) => (
-                    <SelectItem key={func.id} value={func.id.toString()}>
-                      {func.function_name || func.name}
+                  {lockFunctions.length === 0 ? (
+                    <SelectItem value="" disabled>
+                      No functions available
                     </SelectItem>
-                  ))}
+                  ) : (
+                    lockFunctions.map((func) => (
+                      <SelectItem key={func.id} value={func.id.toString()}>
+                        {func.name}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             )}
           </div>
 
-          {/* Priority */}
-          <div className="space-y-2">
-            <Label htmlFor="priority" className="text-sm font-medium">
-              Priority *
-            </Label>
-            <Select value={priority} onValueChange={setPriority}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select priority level" />
-              </SelectTrigger>
-              <SelectContent>
-                {priorityOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter a brief description of the sub function"
-              className="w-full min-h-[80px]"
-            />
-          </div>
-
-          {/* Conditions */}
-          <div className="space-y-2">
-            <Label htmlFor="conditions" className="text-sm font-medium">
-              Conditions
-            </Label>
-            <Textarea
-              id="conditions"
-              value={conditions}
-              onChange={(e) => setConditions(e.target.value)}
-              placeholder="Enter conditions separated by commas (optional)"
-              className="w-full min-h-[60px]"
-            />
-            <p className="text-xs text-gray-500">
-              Separate multiple conditions with commas
-            </p>
-          </div>
-
           {/* Active Status */}
           <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="active" 
+            <Checkbox
+              id="active"
               checked={active}
-              onCheckedChange={(checked) => setActive(checked as boolean)}
+              onCheckedChange={(checked) => setActive(checked === true)}
             />
-            <Label htmlFor="active" className="text-sm font-medium cursor-pointer">
+            <Label htmlFor="active" className="text-sm font-medium">
               Active
             </Label>
           </div>

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Upload, X } from 'lucide-react';
+import { Plus, Upload, X, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, TextField, FormControl, InputLabel, Select, MenuItem, IconButton } from '@mui/material';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
+import { SelectionPanel } from './water-asset-details/PannelTab';
 
 interface Group {
   id: number;
@@ -28,6 +29,8 @@ interface GroupsPageTemplateProps {
   apiEndpoint: string;
   subGroupApiEndpoint: string;
   groupType: string;
+  importApiEndpoint?: string;
+  downloadSampleUrl?: string;
 }
 
 export const GroupsPageTemplate = ({ 
@@ -35,7 +38,9 @@ export const GroupsPageTemplate = ({
   breadcrumb, 
   apiEndpoint, 
   subGroupApiEndpoint, 
-  groupType 
+  groupType,
+  importApiEndpoint,
+  downloadSampleUrl,
 }: GroupsPageTemplateProps) => {
   const [groups, setGroups] = useState<Group[]>([]);
   const [subGroups, setSubGroups] = useState<SubGroup[]>([]);
@@ -56,6 +61,7 @@ export const GroupsPageTemplate = ({
   const [groupLoading, setGroupLoading] = useState(false);
   const [subGroupLoading, setSubGroupLoading] = useState(false);
   const [bulkUploadLoading, setBulkUploadLoading] = useState(false);
+  const [showActionPanel, setShowActionPanel] = useState(false);
   
   // MUI theme
   const theme = createTheme({
@@ -200,18 +206,46 @@ export const GroupsPageTemplate = ({
     }
   };
 
+  const handleDownloadSample = async () => {
+    if (!downloadSampleUrl) {
+      toast.error("Download URL is not configured.");
+      return;
+    }
+    try {
+      const response = await apiClient.get(downloadSampleUrl, {
+        responseType: 'blob'
+      });
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = downloadSampleUrl.split('/').pop() || 'sample.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success('Sample format downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading sample file:', error);
+      toast.error('Failed to download sample file.');
+    }
+  };
+
   const handleBulkUpload = async () => {
     if (!selectedFile) {
       toast.error('Please select a file to upload');
       return;
     }
 
+    const endpoint = importApiEndpoint || '/pms/assets/subgroup_import.json';
+    const fileKey = importApiEndpoint ? 'file' : 'asset_group_file';
+
     setBulkUploadLoading(true);
     try {
       const uploadFile = new FormData();
-      uploadFile.append('asset_group_file', selectedFile);
+      uploadFile.append(fileKey, selectedFile);
 
-      const response = await apiClient.post('/pms/assets/subgroup_import.json', uploadFile, {
+      const response = await apiClient.post(endpoint, uploadFile, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -231,6 +265,19 @@ export const GroupsPageTemplate = ({
     }
   };
 
+  const selectionActions = [
+    {
+      label: 'Add Subgroup',
+      icon: Plus,
+      onClick: () => setAddSubGroupOpen(true),
+    },
+    ...(downloadSampleUrl ? [{
+      label: 'Download Sample',
+      icon: Download,
+      onClick: handleDownloadSample,
+    }] : []),
+  ];
+
   return (
     <div className="min-h-screen bg-transparent p-3 sm:p-4 md:p-6">
       <div className="mx-auto space-y-4 sm:space-y-6">
@@ -239,32 +286,23 @@ export const GroupsPageTemplate = ({
             <h1 className="text-xl sm:text-2xl font-bold text-[#1a1a1a]">{title}</h1>
             <p className="text-xs sm:text-sm text-gray-600 mt-1">{breadcrumb}</p>
           </div>
+          <Button
+            onClick={() => setShowActionPanel(true)}
+            className="bg-purple-700 hover:bg-purple-800 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Action
+          </Button>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-          <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[120px] text-sm px-3 py-2"
-            onClick={() => setAddGroupOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Add Group</span>
-          </Button>
-          <Button 
-            className="bg-purple-700 hover:bg-purple-800 text-white w-full sm:w-auto min-w-0 sm:min-w-[140px] text-sm px-3 py-2"
-            onClick={() => setAddSubGroupOpen(true)}
-          >
-            <Plus className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Add Subgroup</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="border-purple-700 text-purple-700 hover:bg-purple-50 w-full sm:w-auto min-w-0 sm:min-w-[130px] text-sm px-3 py-2"
-            onClick={() => setBulkUploadOpen(true)}
-          >
-            <Upload className="w-4 h-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Bulk Upload</span>
-          </Button>
-        </div>
+        {showActionPanel && (
+          <SelectionPanel
+            onAdd={() => setAddGroupOpen(true)}
+            onImport={() => setBulkUploadOpen(true)}
+            actions={selectionActions}
+            onClearSelection={() => setShowActionPanel(false)}
+          />
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
           {/* Groups Table */}
@@ -458,7 +496,7 @@ export const GroupsPageTemplate = ({
             fullWidth
           >
             <div className="flex items-center justify-between p-6 border-b">
-              <DialogTitle className="text-xl font-bold p-0">ADD Sub Group</DialogTitle>
+              <DialogTitle className="text-xl font-bold p-0">Bulk Upload</DialogTitle>
               <IconButton onClick={() => setBulkUploadOpen(false)}>
                 <X className="w-5 h-5" />
               </IconButton>

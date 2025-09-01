@@ -3,6 +3,8 @@ import { Button } from '@/components/ui/button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormGroup from '@mui/material/FormGroup';
+import axios from 'axios';
+import { toast } from 'sonner';
 
 const MsafeDetailReportDownload: React.FC = () => {
   const [reports, setReports] = useState({
@@ -12,17 +14,60 @@ const MsafeDetailReportDownload: React.FC = () => {
     lmc: false,
     training: false,
   });
+  const [loading, setLoading] = useState(false);
 
   const anySelected = Object.values(reports).some(Boolean);
 
   const toggle = (key: keyof typeof reports) =>
     setReports((prev) => ({ ...prev, [key]: !prev[key] }));
 
-  const handleGenerate = () => {
-    // Placeholder: wire to your export endpoints as needed
-    // Example: call different APIs based on selected checkboxes
-    // For now, just log selection
-    console.log('Generate reports for:', reports);
+  const getBaseUrl = () => {
+    const fromLS = localStorage.getItem('baseUrl');
+    return fromLS ? `https://${fromLS}` : 'https://live-api.gophygital.work';
+  };
+
+  const handleGenerate = async () => {
+    setLoading(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const companyId = localStorage.getItem('selectedCompanyId');
+      const token = localStorage.getItem('token');
+
+      if (!companyId) {
+        toast.error('Company ID not found. Please select a company.');
+        setLoading(false);
+        return;
+      }
+
+      if (!token) {
+        toast.error('Authentication token not found. Please log in again.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.data.status === 'completed') {
+        const downloadUrl = response.data.download_url;
+        if (downloadUrl) {
+          window.open(downloadUrl, '_blank');
+          toast.success('Report download started successfully.');
+        } else {
+          toast.error('Download URL not found in the response.');
+        }
+      } else {
+        toast.info('Report generation is not yet complete. Please try again later.');
+      }
+    } catch (error) {
+      console.error('Error fetching report status:', error);
+      toast.error('Failed to fetch report status. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const checkboxSx = {
@@ -36,9 +81,12 @@ const MsafeDetailReportDownload: React.FC = () => {
 
   return (
     <div className="p-6 md:p-10">
-      <h1 className="text-4xl md:text-4xl font-bold mb-8">Generate Excel Report</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">MSafe Detail Report Download</h1>
+      <p className="text-gray-600 mb-6">
+  This report contains downloadable files, including the Master Report SSO, Master Report Sign-in, SMT Report, LMC Report, and Training Report.
+</p>
 
-      <FormGroup className="space-y-6 mb-8">
+      {/* <FormGroup className="space-y-6 mb-8">
         <FormControlLabel
           control={<Checkbox sx={checkboxSx} checked={reports.masterSSO} onChange={() => toggle('masterSSO')} />}
           label={<span className="text-base md:text-lg">Master Report SSO</span>}
@@ -59,15 +107,16 @@ const MsafeDetailReportDownload: React.FC = () => {
           control={<Checkbox sx={checkboxSx} checked={reports.training} onChange={() => toggle('training')} />}
           label={<span className="text-base md:text-lg">Training Report</span>}
         />
-      </FormGroup>
+      </FormGroup> */}
 
       <Button
         onClick={handleGenerate}
-        disabled={!anySelected}
-        className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-5 text-base md:text-lg rounded-md"
+        disabled={loading}
+        className="bg-primary text-primary-foreground hover:bg-primary/90 px-5 py-5 text-base md:text-[16px] rounded-md"
       >
-        Generate Report
+        {loading ? 'Generating...' : 'Download Latest Report'}
       </Button>
+      <p></p>
     </div>
   );
 };

@@ -58,11 +58,11 @@ export const API_CONFIG = {
     UPDATE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
     DELETE_SUB_FUNCTION: '/lock_sub_functions', // Base path, will append /:id.json
     // Role Config endpoints
-    ROLE_CONFIGS: '/admin/role_configs.json',
-    ROLE_CONFIG_DETAILS: '/admin/role_configs', // Base path, will append /:id.json
-    CREATE_ROLE_CONFIG: '/admin/role_configs.json',
-    UPDATE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
-    DELETE_ROLE_CONFIG: '/admin/role_configs', // Base path, will append /:id.json
+    ROLE_CONFIGS: '/lock_roles.json',
+    ROLE_CONFIG_DETAILS: '/lock_roles', // Base path, will append /:id.json
+    CREATE_ROLE_CONFIG: '/lock_roles.json',
+    UPDATE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
+    DELETE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
     EMAIL_RULES: '/pms/email_rule_setups.json',
     FM_USERS: '/pms/account_setups/fm_users.json',
     ALLOWED_COMPANIES: '/allowed_companies.json',
@@ -91,6 +91,11 @@ export const API_CONFIG = {
     STATUSES_LIST: '/pms/admin/complaint_statuses.json',
     STATUSES_UPDATE: '/pms/admin/modify_complaint_status.json',
     MODIFY_COMPLAINT_STATUS: '/pms/admin/modify_complaint_status.json',
+    // Holiday Calendar endpoints
+    HOLIDAY_CALENDARS: '/pms/admin/holiday_calendars.json',
+    CREATE_HOLIDAY: '/pms/admin/holiday_calendars.json',
+    GET_HOLIDAY: '/pms/admin/holiday_calendars', // Base path, will append /:id.json
+    UPDATE_HOLIDAY: '/pms/admin/holiday_calendars', // Base path, will append /:id.json
     // New endpoints for ticket creation
     CREATE_TICKET: '/pms/admin/complaints.json',
     GET_SUBCATEGORIES: '/pms/admin/get_sub_categories',

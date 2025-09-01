@@ -8,7 +8,10 @@ import {
   CheckSquare, 
   MapPinHouse, 
   Package, 
-  FileText 
+  FileText,
+  DoorOpen,
+  PackagePlus,
+  Ticket
 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -55,7 +58,7 @@ const masterItems = [
     name: 'Material Master -> EBom',
     icon: FileText,
     href: '/master/material-ebom'
-  }
+  },
 ];
 
 export const MasterSidebar = () => {

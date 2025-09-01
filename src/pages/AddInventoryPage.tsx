@@ -59,7 +59,12 @@ export const AddInventoryPage = () => {
   const { assets = [], loading = false } = inventoryAssetsState || {};
 
   const suppliersState = useSelector((state: RootState) => state.suppliers);
-  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersData = suppliersState?.data as any;
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : Array.isArray(suppliersData?.pms_suppliers)
+      ? suppliersData.pms_suppliers
+      : [];
   const suppliersLoading = suppliersState?.loading || false;
 
   const [inventoryType, setInventoryType] = useState('spares');
@@ -714,7 +719,28 @@ export const AddInventoryPage = () => {
                     label="Cost"
                     placeholder="Cost"
                     value={formData.cost}
-                    onChange={(e) => handleInputChange('cost', e.target.value)}
+                    onChange={(e) => {
+                      // Allow only digits and a single decimal point
+                      let v = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = v.split('.');
+                      if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+                      handleInputChange('cost', v);
+                    }}
+                    onPaste={(e) => {
+                      const text = (e.clipboardData || (window as any).clipboardData).getData('text');
+                      const sanitized = text.replace(/[^0-9.]/g, '');
+                      const parts = sanitized.split('.');
+                      const finalVal = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitized;
+                      e.preventDefault();
+                      handleInputChange('cost', finalVal);
+                    }}
+                    onKeyDown={(e) => {
+                      // Block invalid characters like e, E, +, - and multiple dots
+                      const invalid = ['e', 'E', '+', '-'];
+                      if (invalid.includes(e.key)) e.preventDefault();
+                      if (e.key === '.' && (formData.cost || '').includes('.')) e.preventDefault();
+                    }}
+                    inputProps={{ inputMode: 'decimal' }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -828,7 +854,7 @@ export const AddInventoryPage = () => {
                         {suppliersLoading ? 'Loading...' : 'Select Vendor'}
                       </MenuItem>
                       {suppliers.map((supplier: any) => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
+                        <MenuItem key={supplier.id} value={String(supplier.id)}>
                           {supplier.company_name}
                         </MenuItem>
                       ))}

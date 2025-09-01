@@ -89,8 +89,8 @@ export const editServicePR = createAsyncThunk(
             })
             return response.data
         } catch (error) {
-            const message = error.response?.data?.error || error.error || 'Failed to create material PR'
-            return rejectWithValue(message)
+            // const message = error.response?.data?.error || error.error || 'Failed to create material PR'
+            return rejectWithValue(error)
         }
     }
 )

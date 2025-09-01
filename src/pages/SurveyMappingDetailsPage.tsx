@@ -1,0 +1,779 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/utils/apiClient';
+
+interface SurveyMappingDetail {
+  id: number;
+  survey_id: number;
+  created_by_id: number;
+  site_id: number;
+  building_id: number;
+  wing_id: number | null;
+  floor_id: number | null;
+  area_id: number | null;
+  room_id: number | null;
+  qr_code: {
+    id: number;
+    document_file_name: string;
+    document_content_type: string;
+    document_file_size: number;
+    document_updated_at: string;
+    relation: string;
+    relation_id: number;
+    active: boolean | null;
+    created_at: string;
+    updated_at: string;
+    changed_by: string | null;
+    added_from: string | null;
+    comments: string | null;
+  };
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  survey_title: string;
+  site_name: string;
+  building_name: string;
+  wing_name: string | null;
+  floor_name: string | null;
+  area_name: string | null;
+  room_name: string | null;
+  qr_code_url: string;
+  snag_checklist: {
+    id: number;
+    name: string;
+    snag_audit_category_id: number | null;
+    snag_audit_sub_category_id: number | null;
+    active: number;
+    project_id: number | null;
+    company_id: number;
+    created_at: string;
+    updated_at: string;
+    check_type: string;
+    user_id: number | null;
+    resource_id: number;
+    resource_type: string;
+    snag_audit_category: string | null;
+    snag_audit_sub_category: string | null;
+    questions_count: number;
+    snag_questions: Array<{
+      id: number;
+      qtype: string;
+      descr: string;
+      checklist_id: number;
+      img_mandatory: boolean;
+      quest_mandatory: boolean;
+      generic_tags: Array<{
+        id: number;
+        category_name: string;
+        category_type: string;
+        tag_type: string;
+        active: boolean;
+        created_at: string;
+        updated_at: string;
+        icons: any[];
+      }>;
+      snag_quest_options: Array<{
+        id: number;
+        qname: string;
+        option_type: string;
+      }>;
+      no_of_associations: number;
+      ticket_configs: {
+        category: string | null;
+        category_id: number | null;
+        assigned_to: string | null;
+        assigned_to_id: number | null;
+        tag_type: string | null;
+        active: boolean | null;
+      };
+    }>;
+  };
+}
+
+export const SurveyMappingDetailsPage = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [mapping, setMapping] = useState<SurveyMappingDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("survey-information");
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      fetchSurveyMappingDetails();
+    }
+  }, [id]);
+
+  const fetchSurveyMappingDetails = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/survey_mappings.json?q[id_eq]=${id}`);
+      console.log('Survey mapping details response:', response.data);
+      
+      // The API returns an array, so we need to get the first item
+      const mappingArray = response.data || [];
+      if (mappingArray.length > 0) {
+        setMapping(mappingArray[0]);
+      } else {
+        setMapping(null);
+      }
+    } catch (error: any) {
+      console.error('Error fetching survey mapping details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch survey mapping details",
+        variant: "destructive"
+      });
+      setMapping(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBack = () => {
+    navigate('/maintenance/survey/mapping');
+  };
+
+  const handleEdit = () => {
+    navigate(`/maintenance/survey/mapping/edit/${id}`);
+  };
+
+  const handleDelete = () => {
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleQRCodeClick = () => {
+    if (mapping?.qr_code_url) {
+      window.open(mapping.qr_code_url, '_blank');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    if (!dateString) return "—";
+    try {
+      return new Date(dateString).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+    } catch {
+      return "—";
+    }
+  };
+
+  const formatDateTime = (dateString: string) => {
+    if (!dateString) return "—";
+    try {
+      return new Date(dateString).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return "—";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-[#C72030]" />
+          <span className="ml-2 text-gray-600">
+            Loading survey mapping details...
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!mapping) {
+    return (
+      <div className="p-6">
+        <div className="text-center py-12">
+          <h2 className="text-xl font-semibold text-gray-900">
+            Survey Mapping not found
+          </h2>
+          <p className="text-gray-600 mt-2">
+            The requested survey mapping could not be found.
+          </p>
+          <Button
+            onClick={() => navigate("/maintenance/survey/mapping")}
+            className="mt-4"
+          >
+            Back to Survey Mapping List
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="mb-6">
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Survey Mapping List
+        </Button>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">
+            Survey Mapping Details - {mapping.survey_title}
+          </h1>
+          <div className="flex gap-2">
+            <Badge
+              variant={mapping.active ? "default" : "secondary"}
+              className="mr-2"
+            >
+              {mapping.active ? (
+                <>
+                  <CheckCircle className="w-3 h-3 mr-1" />
+                  Active
+                </>
+              ) : (
+                <>
+                  <XCircle className="w-3 h-3 mr-1" />
+                  Inactive
+                </>
+              )}
+            </Badge>
+            {/* <Button
+              onClick={handleEdit}
+              variant="outline"
+              className="border-[#C72030] text-[#C72030]"
+            >
+              <Edit className="w-4 h-4 mr-2" />
+              Edit
+            </Button> */}
+            {/* <Button
+              onClick={handleDelete}
+              variant="destructive"
+              style={{ backgroundColor: "#C72030" }}
+              className="text-white hover:bg-[#C72030]/90"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete
+            </Button> */}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+            {[
+              { label: "Survey Information", value: "survey-information" },
+              { label: "Questions", value: "questions" },
+              { label: "Location Details", value: "location-details" },
+              { label: "QR Code", value: "qr-code" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          {/* Survey Information */}
+          <TabsContent value="survey-information" className="p-3 sm:p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-8 h-8 text-gray-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Questions</p>
+                      <p className="text-xl font-semibold">
+                        {mapping.snag_checklist?.questions_count || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <List className="w-8 h-8 text-gray-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Check Type</p>
+                      <p className="text-xl font-semibold capitalize">
+                        {mapping.snag_checklist?.check_type || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-8 h-8 text-gray-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Created By</p>
+                      <p className="text-xl font-semibold">
+                        {mapping.created_by}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Shield className="h-4 w-4" />
+                  </div>
+                  SURVEY MAPPING INFORMATION
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <strong>Survey Title:</strong> {mapping.survey_title}
+                  </div>
+                  <div>
+                    <strong>Survey ID:</strong> #{mapping.survey_id}
+                  </div>
+                  <div>
+                    <strong>Mapping ID:</strong> #{mapping.id}
+                  </div>
+                  <div>
+                    <strong>Status:</strong>
+                    <Badge
+                      variant={mapping.active ? "default" : "secondary"}
+                      className="ml-2"
+                    >
+                      {mapping.active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+                  <div>
+                    <strong>Created on:</strong>{" "}
+                    {formatDateTime(mapping.created_at)}
+                  </div>
+                  <div>
+                    <strong>Last Updated:</strong>{" "}
+                    {formatDateTime(mapping.updated_at)}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Checklist Information */}
+            {mapping.snag_checklist && (
+              <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+                <CardHeader className="bg-[#F6F4EE] mb-6">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                      <List className="h-4 w-4" />
+                    </div>
+                    SURVEY CHECKLIST INFORMATION
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <strong>Checklist Name:</strong>{" "}
+                      {mapping.snag_checklist.name}
+                    </div>
+                    <div>
+                      <strong>Check Type:</strong>{" "}
+                      <Badge variant="outline" className="capitalize ml-2">
+                        {mapping.snag_checklist.check_type}
+                      </Badge>
+                    </div>
+                    <div>
+                      <strong>Questions Count:</strong>{" "}
+                      {mapping.snag_checklist.questions_count || 0}
+                    </div>
+                    <div>
+                      <strong>Status:</strong>
+                      <Badge
+                        variant={
+                          mapping.snag_checklist.active ? "default" : "secondary"
+                        }
+                        className="ml-2"
+                      >
+                        {mapping.snag_checklist.active ? "Active" : "Inactive"}
+                      </Badge>
+                    </div>
+                    {mapping.snag_checklist.snag_audit_category && (
+                      <div>
+                        <strong>Category:</strong>{" "}
+                        {mapping.snag_checklist.snag_audit_category}
+                      </div>
+                    )}
+                    {mapping.snag_checklist.snag_audit_sub_category && (
+                      <div>
+                        <strong>Sub Category:</strong>{" "}
+                        {mapping.snag_checklist.snag_audit_sub_category}
+                      </div>
+                    )}
+                    <div>
+                      <strong>Created on:</strong>{" "}
+                      {formatDateTime(mapping.snag_checklist.created_at)}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          {/* Questions */}
+          <TabsContent value="questions" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <List className="h-4 w-4" />
+                  </div>
+                  SURVEY QUESTIONS ({mapping.snag_checklist?.snag_questions?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Q#</TableHead>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Question</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Image Required</TableHead>
+                        <TableHead>Mandatory</TableHead>
+                        <TableHead>Associations</TableHead>
+                        <TableHead>Generic Tags</TableHead>
+                        <TableHead>Options</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="bg-white">
+                      {mapping.snag_checklist?.snag_questions && mapping.snag_checklist.snag_questions.length > 0 ? (
+                        mapping.snag_checklist.snag_questions.map((question, index) => (
+                          <TableRow key={question.id}>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs">
+                                Q{index + 1}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{question.id}</TableCell>
+                            <TableCell className="max-w-xs">
+                              <div className="truncate" title={question.descr}>
+                                {question.descr}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {question.qtype}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {question.img_mandatory ? (
+                                <Badge variant="destructive" className="text-xs">
+                                  Required
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Optional
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {question.quest_mandatory ? (
+                                <Badge variant="destructive" className="text-xs">
+                                  Required
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  Optional
+                                </Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{question.no_of_associations}</TableCell>
+                            <TableCell>
+                              {question.generic_tags && question.generic_tags.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {question.generic_tags.map((tag, tagIndex) => (
+                                    <span
+                                      key={tagIndex}
+                                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                                      title={`${tag.category_type} - ${tag.tag_type}`}
+                                    >
+                                      {tag.category_name}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {question.snag_quest_options && question.snag_quest_options.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {question.snag_quest_options.map((option, optIndex) => (
+                                    <span
+                                      key={optIndex}
+                                      className={`text-xs px-2 py-1 rounded ${
+                                        option.option_type === 'p' 
+                                          ? 'bg-green-100 text-green-800' 
+                                          : option.option_type === 'n'
+                                          ? 'bg-red-100 text-red-800'
+                                          : 'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      {option.qname} ({option.option_type})
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                "—"
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={9}
+                            className="text-center text-gray-600"
+                          >
+                            No questions available.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Location Details */}
+          <TabsContent value="location-details" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  LOCATION DETAILS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Site Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Site Name:</strong> {mapping.site_name}
+                        </div>
+                        <div>
+                          <strong>Site ID:</strong> #{mapping.site_id}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Building Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Building Name:</strong> {mapping.building_name}
+                        </div>
+                     
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {mapping.wing_name && (
+                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">Wing Information</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Wing Name:</strong> {mapping.wing_name}
+                          </div>
+                        
+                        </div>
+                      </div>
+                    )}
+                    
+                    {mapping.floor_name && (
+                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">Floor Information</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Floor Name:</strong> {mapping.floor_name}
+                          </div>
+                         
+                        </div>
+                      </div>
+                    )}
+                    
+                    {mapping.area_name && (
+                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">Area Information</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Area Name:</strong> {mapping.area_name}
+                          </div>
+                        
+                        </div>
+                      </div>
+                    )}
+                    
+                    {mapping.room_name && (
+                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">Room Information</h4>
+                        <div className="space-y-2">
+                          <div>
+                            <strong>Room Name:</strong> {mapping.room_name}
+                          </div>
+                     
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Location Summary */}
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MapPin className="w-5 h-5 text-gray-600" />
+                    <p className="text-sm font-medium text-gray-800">
+                      Complete Location Path
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-700">
+                    {mapping.site_name} → {mapping.building_name}
+                    {mapping.wing_name && ` → ${mapping.wing_name}`}
+                    {mapping.floor_name && ` → ${mapping.floor_name}`}
+                    {mapping.area_name && ` → ${mapping.area_name}`}
+                    {mapping.room_name && ` → ${mapping.room_name}`}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* QR Code */}
+          <TabsContent value="qr-code" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <QrCode className="h-4 w-4" />
+                  </div>
+                  QR CODE INFORMATION
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {mapping.qr_code_url ? (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* QR Code Display */}
+                    <div className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-lg">
+                      <div className="mb-4">
+                        <img 
+                          src={mapping.qr_code_url}
+                          alt="Survey Mapping QR Code"
+                          className="w-48 h-48 object-contain border border-gray-200 rounded-lg shadow-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={handleQRCodeClick}
+                          className="flex items-center gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Full Size
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* QR Code Details */}
+                    {/* <div className="space-y-4">
+                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                        <h4 className="font-semibold text-gray-900 mb-3">QR Code Details</h4>
+                        {mapping.qr_code && (
+                          <div className="space-y-2 text-sm">
+                            <div>
+                              <strong>File Name:</strong>
+                              <p className="text-gray-600">{mapping.qr_code.document_file_name}</p>
+                            </div>
+                            <div>
+                              <strong>File Size:</strong>
+                              <p className="text-gray-600">{mapping.qr_code.document_file_size} bytes</p>
+                            </div>
+                            <div>
+                              <strong>Content Type:</strong>
+                              <p className="text-gray-600">{mapping.qr_code.document_content_type}</p>
+                            </div>
+                            <div>
+                              <strong>Created:</strong>
+                              <p className="text-gray-600">{formatDateTime(mapping.qr_code.created_at)}</p>
+                            </div>
+                            <div>
+                              <strong>Last Updated:</strong>
+                              <p className="text-gray-600">{formatDateTime(mapping.qr_code.updated_at)}</p>
+                            </div>
+                            <div>
+                              <strong>QR Code ID:</strong>
+                              <p className="text-gray-600">#{mapping.qr_code.id}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Info className="w-5 h-5 text-blue-600" />
+                          <p className="text-sm font-medium text-blue-800">
+                            QR Code Usage
+                          </p>
+                        </div>
+                        <p className="text-xs text-blue-700">
+                          This QR code can be scanned to quickly access the survey for this specific location. 
+                          Place the QR code at the mapped location for easy access by survey respondents.
+                        </p>
+                      </div>
+                    </div> */}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
+                    <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No QR Code Available
+                    </h3>
+                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                      No QR code has been generated for this survey mapping yet.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+};

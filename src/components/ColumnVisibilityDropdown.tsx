@@ -71,11 +71,11 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
                 className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <div className="flex items-center gap-2 flex-1">
-                {isVisible ? (
+                {/* {isVisible ? (
                   <Eye className="w-4 h-4 text-green-600" />
                 ) : (
                   <EyeOff className="w-4 h-4 text-gray-400" />
-                )}
+                )} */}
                 <span className={isLastVisible ? "text-gray-400" : ""}>
                   {column.label}
                 </span>

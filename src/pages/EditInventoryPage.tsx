@@ -21,7 +21,12 @@ export const EditInventoryPage = () => {
   const { assets = [], loading = false } = inventoryAssetsState || {};
 
   const suppliersState = useSelector((state: RootState) => state.suppliers);
-  const suppliers = Array.isArray(suppliersState?.data) ? suppliersState.data : [];
+  const suppliersData = suppliersState?.data as any;
+  const suppliers = Array.isArray(suppliersData)
+    ? suppliersData
+    : Array.isArray(suppliersData?.pms_suppliers)
+      ? suppliersData.pms_suppliers
+      : [];
   const suppliersLoading = suppliersState?.loading || false;
 
   const { loading: editLoading, error, fetchedInventory, updatedInventory } = useSelector((state: RootState) => state.inventoryEdit);
@@ -53,6 +58,12 @@ export const EditInventoryPage = () => {
     cgstRate: '',
     igstRate: ''
   });
+  // Validation errors state for required fields
+  const [errors, setErrors] = useState<{
+    inventoryName?: string;
+    inventoryCode?: string;
+    minStockLevel?: string;
+  }>({});
   // Inventory name suggestion state
   const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
   const [nameSuggestLoading, setNameSuggestLoading] = useState(false);
@@ -83,6 +94,7 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     fetchSAC();
   }, []);
+
 
   // Fetch inventory name suggestions (Edit page)
   const fetchNameSuggestions = async (query: string) => {
@@ -194,7 +206,7 @@ export const EditInventoryPage = () => {
         minStockLevel: fetchedInventory.min_stock_level?.toString() || '',
         minOrderLevel: fetchedInventory.min_order_level?.toString() || '',
         // Prefer hsn_id (numeric) for dropdown value; fallback to hsc_hsn_code if API only returns code
-        sacHsnCode: ( (fetchedInventory as any)?.hsn_id != null
+        sacHsnCode: ((fetchedInventory as any)?.hsn_id != null
           ? String((fetchedInventory as any).hsn_id)
           : ((fetchedInventory as any).hsc_hsn_code ? String((fetchedInventory as any).hsc_hsn_code) : '')
         ),
@@ -215,7 +227,8 @@ export const EditInventoryPage = () => {
       setInventoryType(inventoryTypeValue);
       setCriticality(criticalityValue);
       setTaxApplicable(fetchedInventory.tax_applicable || false);
-      setEcoFriendly(fetchedInventory.eco_friendly || false);
+      // Support both boolean eco_friendly and numeric green_product
+      setEcoFriendly(Boolean((fetchedInventory as any)?.eco_friendly || (fetchedInventory as any)?.green_product));
     }
   }, [fetchedInventory]);
 
@@ -247,15 +260,55 @@ export const EditInventoryPage = () => {
   }, [updatedInventory, navigate]);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    // Basic sanitization for specific fields
+    let nextVal = value;
+    if (field === 'minStockLevel') {
+      // Only digits allowed for Min. Stock Level
+      nextVal = value.replace(/\D/g, '');
+    }
+
+    setFormData(prev => ({ ...prev, [field]: nextVal }));
+
+    // Inline validate required fields
+    if (field === 'inventoryName') {
+      const msg = nextVal.trim() ? '' : 'Inventory Name is required.';
+      setErrors(prev => ({ ...prev, inventoryName: msg }));
+    }
+    if (field === 'inventoryCode') {
+      const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
+      setErrors(prev => ({ ...prev, inventoryCode: msg }));
+    }
+    if (field === 'minStockLevel') {
+      let msg = '';
+      if (!nextVal.trim()) msg = 'Min. Stock Level is required.';
+      else if (!/^\d+$/.test(nextVal)) msg = 'Enter a valid number.';
+      setErrors(prev => ({ ...prev, minStockLevel: msg }));
+    }
   };
 
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {
     setFormData(prev => ({ ...prev, [field]: event.target.value }));
   };
 
+  // Validate full form for required fields
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+    if (!formData.inventoryName.trim()) newErrors.inventoryName = 'Inventory Name is required.';
+    if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
+    if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
+    else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = () => {
     if (!id) return;
+
+    // Block submit if required fields invalid
+    if (!validateForm()) {
+      toast.error('Please correct the highlighted fields.');
+      return;
+    }
 
     // Format expiry date without unintended timezone shifts: input already YYYY-MM-DD
     const formatExpiryDate = (dateString: string) => {
@@ -270,15 +323,16 @@ export const EditInventoryPage = () => {
 
     const inventoryData: any = {
       asset_id: formData.assetName ? parseInt(formData.assetName) : null,
-      name: formData.inventoryName || "",
-      code: formData.inventoryCode || "",
+      name: formData.inventoryName.trim() || "",
+      code: formData.inventoryCode.trim() || "",
       serial_number: formData.serialNumber || "",
       quantity: parseFloat(formData.quantity) || 0,
       active: true,
       inventory_type: inventoryTypeNumeric,
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
-      min_stock_level: formData.minStockLevel || "0",
+      min_stock_level: parseInt(formData.minStockLevel) || 0,
       min_order_level: formData.minOrderLevel || "0",
+      green_product: ecoFriendly ? 1 : 0,
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
       // Map vendor name back to id
       rate_contract_vendor_code: (() => {
@@ -448,6 +502,18 @@ export const EditInventoryPage = () => {
                 </RadioGroup>
               </div>
 
+              {/* Eco-friendly toggle (parity with Add page) */}
+              <div className="flex items-center space-x-2">
+                <label htmlFor="eco-friendly" className="text-sm font-medium text-black">
+                  Eco-friendly Inventory
+                </label>
+                <Checkbox
+                  id="eco-friendly"
+                  checked={ecoFriendly}
+                  onCheckedChange={(checked) => setEcoFriendly(checked === true)}
+                />
+              </div>
+
 
               {/* Form Grid - First Row */}
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -501,14 +567,16 @@ export const EditInventoryPage = () => {
                       fullWidth
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
+                      error={Boolean(errors.inventoryName)}
+                      helperText={errors.inventoryName || ''}
                       sx={fieldStyles}
                     />
-          {showNameSuggestions && (
+                    {showNameSuggestions && (
                       <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-56 overflow-auto text-sm">
                         {nameSuggestLoading && (
                           <div className="px-3 py-2 text-gray-500">Loading...</div>
                         )}
-            {!nameSuggestLoading && filteredNameSuggestions.map(s => (
+                        {!nameSuggestLoading && filteredNameSuggestions.map(s => (
                           <button
                             type="button"
                             key={s.id}
@@ -535,6 +603,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={Boolean(errors.inventoryCode)}
+                    helperText={errors.inventoryCode || ''}
                     sx={fieldStyles}
                   />
                 </div>
@@ -557,7 +627,20 @@ export const EditInventoryPage = () => {
                     label="Quantity"
                     placeholder="Qty"
                     value={formData.quantity}
-                    onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    onChange={(e) => handleInputChange('quantity', e.target.value.replace(/[^0-9.]/g, ''))}
+                    onKeyDown={(e) => {
+                      const invalid = ['e', 'E', '+', '-'];
+                      if (invalid.includes(e.key)) e.preventDefault();
+                      if (e.key === '.' && (formData.quantity || '').includes('.')) e.preventDefault();
+                    }}
+                    onPaste={(e) => {
+                      const text = (e.clipboardData || (window as any).clipboardData).getData('text');
+                      const sanitized = text.replace(/[^0-9.]/g, '');
+                      const parts = sanitized.split('.');
+                      const finalVal = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitized;
+                      e.preventDefault();
+                      handleInputChange('quantity', finalVal);
+                    }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -573,7 +656,26 @@ export const EditInventoryPage = () => {
                     label="Cost"
                     placeholder="Cost"
                     value={formData.cost}
-                    onChange={(e) => handleInputChange('cost', e.target.value)}
+                    onChange={(e) => {
+                      let v = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = v.split('.');
+                      if (parts.length > 2) v = parts[0] + '.' + parts.slice(1).join('');
+                      handleInputChange('cost', v);
+                    }}
+                    onPaste={(e) => {
+                      const text = (e.clipboardData || (window as any).clipboardData).getData('text');
+                      const sanitized = text.replace(/[^0-9.]/g, '');
+                      const parts = sanitized.split('.');
+                      const finalVal = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : sanitized;
+                      e.preventDefault();
+                      handleInputChange('cost', finalVal);
+                    }}
+                    onKeyDown={(e) => {
+                      const invalid = ['e', 'E', '+', '-'];
+                      if (invalid.includes(e.key)) e.preventDefault();
+                      if (e.key === '.' && (formData.cost || '').includes('.')) e.preventDefault();
+                    }}
+                    inputProps={{ inputMode: 'decimal' }}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -696,7 +798,7 @@ export const EditInventoryPage = () => {
                     label="Max.Stock Level"
                     placeholder="Max Stock"
                     value={formData.maxStockLevel}
-                    onChange={(e) => handleInputChange('maxStockLevel', e.target.value)}
+                    onChange={(e) => handleInputChange('maxStockLevel', e.target.value.replace(/\D/g, ''))}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -713,6 +815,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={Boolean(errors.minStockLevel)}
+                    helperText={errors.minStockLevel || ''}
                     sx={fieldStyles}
                   />
                 </div>
@@ -722,7 +826,7 @@ export const EditInventoryPage = () => {
                     label="Min.Order Level"
                     placeholder="Min order"
                     value={formData.minOrderLevel}
-                    onChange={(e) => handleInputChange('minOrderLevel', e.target.value)}
+                    onChange={(e) => handleInputChange('minOrderLevel', e.target.value.replace(/\D/g, ''))}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
+import { usePermissions } from '../contexts/PermissionsContext';
+import { sidebarPermissionFilter } from '../utils/sidebarPermissionFilter';
+import { permissionService } from '../services/permissionService';
 import {
   Users, Settings, FileText, Building, Car, Shield, DollarSign,
   Clipboard, AlertTriangle, Bell, Package, Wrench, BarChart3,
@@ -15,7 +18,10 @@ import {
   Currency,
   User,
   BarChart,
-  UserRoundPen
+  UserRoundPen,
+  DoorOpen,
+    PackagePlus,
+    Ticket
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -36,6 +42,7 @@ const navigationStructure = {
           { name: 'Shift', href: '/settings/account/shift' },
           { name: 'Roster', href: '/settings/account/roster' },
           { name: 'Role Config', href: '/settings/account/role-config' },
+          { name: 'Lock Module', href: '/settings/account/lock-module' },
           { name: 'Lock Function', href: '/settings/account/lock-function' },
           { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
         ]
@@ -209,7 +216,14 @@ const modulesByPackage = {
       icon: Users,
       href: '/master/user',
       subItems: [
-        { name: 'FM User', href: '/master/user/fm-users', color: 'text-[#1a1a1a]' },
+        { 
+          name: 'FM User', 
+          href: '/master/user/fm-users', 
+          color: 'text-[#1a1a1a]',
+          moduleName: 'Master',
+          functionName: 'fm user',
+          actionName: 'view'
+        },
         { name: 'OCCUPANT USERS', href: '/master/user/occupant-users', color: 'text-[#1a1a1a]' }
       ]
     },
@@ -233,6 +247,26 @@ const modulesByPackage = {
       icon: FileText,
       href: '/master/material-ebom'
     },
+    {
+        name: 'Gate Number',
+        icon: DoorOpen,
+        href: '/master/gate-number'
+      }
+      // {
+      //   name: 'Inventory Type',
+      //   icon: Package,
+      //   href: '/master/inventory-type'
+      // },
+      // {
+      //   name: 'Inventory Sub Type',
+      //   icon: PackagePlus,
+      //   href: '/master/inventory-sub-type'
+      // },
+      // {
+      //   name: 'Gate Pass Type',
+      //   icon: Ticket,
+      //   href: '/master/gate-pass-type'
+      // }
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },
@@ -259,51 +293,61 @@ const modulesByPackage = {
     }
   ],
   'Maintenance': [
-    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket' },
-    { name: 'Task', icon: CheckSquare, href: '/maintenance/task' },
-    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule' },
-    { name: 'Services', icon: Wrench, href: '/maintenance/service' },
-    { name: 'Assets', icon: Building, href: '/maintenance/asset' },
+    { name: 'Ticket', icon: FileText, href: '/maintenance/ticket', moduleName: 'PMS', functionName: 'Ticket' },
+    { name: 'Task', icon: CheckSquare, href: '/maintenance/task', moduleName: 'PMS', functionName: 'Tasks' },
+    { name: 'Schedule', icon: Calendar, href: '/maintenance/schedule', moduleName: 'PMS', functionName: 'Schedule' },
+    { name: 'Services', icon: Wrench, href: '/maintenance/service', moduleName: 'PMS', functionName: 'Service' },
+    { name: 'Assets', icon: Building, href: '/maintenance/asset', moduleName: 'PMS', functionName: 'assets' },
 
     {
       name: 'Inventory',
       icon: Package,
       href: '/maintenance/inventory',
+      moduleName: 'PMS',
+      functionName: 'Inventory',
       subItems: [
-        { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]' },
-        { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]' },
+        { name: 'Inventory Master', href: '/maintenance/inventory', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Inventory', subFunctionName: 'inventory_all' },
+        { name: 'Inventory Consumption', href: '/maintenance/inventory-consumption', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Consumption', subFunctionName: 'consumption_all' },
         // { name: 'Eco-Friendly List', href: '/maintenance/eco-friendly-list', color: 'text-[#1a1a1a]' }
       ]
     },
-    { name: 'AMC', icon: FileText, href: '/maintenance/amc' },
-    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance' },
+    { name: 'AMC', icon: FileText, href: '/maintenance/amc', moduleName: 'PMS', functionName: 'AMC' },
+    { name: 'Attendance', icon: Clock, href: '/maintenance/attendance', moduleName: 'PMS', functionName: 'Attendance' },
 
 
     {
       name: 'Audit',
       icon: Clipboard,
       href: '/maintenance/audit',
+      moduleName: 'PMS',
+      functionName: 'Operational Audit',
       subItems: [
         {
           name: 'Operational',
           href: '/maintenance/audit/operational',
           color: 'text-[#1a1a1a]',
+          moduleName: 'PMS',
+          functionName: 'Operational Audit',
+          subFunctionName: 'operational_audit_all',
           subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]' },
-            { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]' }
+            { name: 'Scheduled', href: '/maintenance/audit/operational/scheduled', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Operational Audit', subFunctionName: 'operational_audit_all' },
+            { name: 'Conducted', href: '/maintenance/audit/operational/conducted', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Operational Audit', subFunctionName: 'operational_audit_show' },
+            { name: 'Master Checklists', href: '/maintenance/audit/operational/master-checklists', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Master Checklist', subFunctionName: 'master_checklist_all' }
           ]
         },
         {
           name: 'Vendor',
           href: '/maintenance/audit/vendor',
           color: 'text-[#1a1a1a]',
+          moduleName: 'PMS',
+          functionName: 'Vendor Audit',
+          subFunctionName: 'vendor_audit_all',
           subItems: [
-            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]' },
-            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]' }
+            { name: 'Scheduled', href: '/maintenance/audit/vendor/scheduled', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Vendor Audit', subFunctionName: 'vendor_audit_all' },
+            { name: 'Conducted', href: '/maintenance/audit/vendor/conducted', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Vendor Audit', subFunctionName: 'vendor_audit_show' }
           ]
         },
-        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]' }
+        { name: 'Assets', href: '/maintenance/audit/assets', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Asset', subFunctionName: 'asset_all' }
       ]
     },
     {
@@ -320,7 +364,7 @@ const modulesByPackage = {
       href: '/maintenance/survey',
       subItems: [
         { name: 'Survey List', href: '/maintenance/survey/list', color: 'text-[#1a1a1a]' },
-        // { name: 'Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
+        { name: 'Survey Mapping', href: '/maintenance/survey/mapping', color: 'text-[#1a1a1a]' },
         { name: 'Response', href: '/maintenance/survey/response', color: 'text-[#1a1a1a]' }
       ]
     },
@@ -333,14 +377,16 @@ const modulesByPackage = {
       name: 'M-Safe',
       icon: User,
       href: '/maintenance/m-safe',
+      moduleName: 'PMS',
+      functionName: 'Msafe',
       subItems: [
-        { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]' },
-        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]' },
-        { name: 'LMC', href: '/maintenance/m-safe/lmc' },
-        { name: 'SMT', href: '/maintenance/m-safe/smt' },
-        { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list' },
-        { name: 'Training List', href: '/maintenance/m-safe/training-list' },
-        { name: 'Reportees Reassign', href: '/maintenance/m-safe/reportees-reassign' },
+        { name: 'Internal User (FTE)', href: '/maintenance/m-safe/internal', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Msafe', subFunctionName: 'msafe_all' },
+        { name: 'External User (NON FTE)', href: '/maintenance/m-safe/external', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Non Fte Users', subFunctionName: 'non_fte_users_all' },
+        { name: 'LMC', href: '/maintenance/m-safe/lmc', moduleName: 'PMS', functionName: 'Line Manager Check', subFunctionName: 'line_manager_check_all' },
+        { name: 'SMT', href: '/maintenance/m-safe/smt', moduleName: 'PMS', functionName: 'Senior Management Tour', subFunctionName: 'senior_management_tour_all' },
+        { name: 'Krcc List', href: '/maintenance/m-safe/krcc-list', moduleName: 'PMS', functionName: 'Krcc List', subFunctionName: 'krcc_list_all' },
+        { name: 'Training List', href: '/maintenance/m-safe/training-list', moduleName: 'PMS', functionName: 'training_list', subFunctionName: 'training_list_all' },
+        { name: 'Reportees Reassign', href: '/maintenance/m-safe/reportees-reassign', moduleName: 'PMS', functionName: 'Msafe' },
 
       ]
     },
@@ -348,9 +394,11 @@ const modulesByPackage = {
       name: 'Vi Miles',
       icon: User,
       href: '/maintenance/vi-miles',
+      moduleName: 'PMS',
+      functionName: 'Vi Miles',
       subItems: [
-        { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]' },
-        { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
+        { name: 'Vehicle Details', href: '/maintenance/vi-miles/vehicle-details', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Vi Miles', subFunctionName: 'vi_miles_all' },
+        { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Vi Miles', subFunctionName: 'vi_miles_show' }
       ]
     },
     {
@@ -369,117 +417,139 @@ const modulesByPackage = {
     // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
   ],
   'Safety': [
-    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident' },
+    { name: 'Incident', icon: AlertTriangle, href: '/safety/incident', moduleName: 'PMS', functionName: 'Pms Incidents' },
     {
       name: 'Permit',
       icon: FileText,
       href: '/safety/permit',
+      moduleName: 'PMS',
+      functionName: 'Permits',
       subItems: [
-        { name: 'Permit ', href: '/safety/permit', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]' }
+        { name: 'Permit ', href: '/safety/permit', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Permits', subFunctionName: 'permits_all' },
+        { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Pending Approvals', subFunctionName: 'pending_approvals_all' }
       ]
     },
-    { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
-    { name: 'Training List', icon: BookOpen, href: '/safety/training-list' }
+    { name: 'M Safe', icon: Shield, href: '/safety/m-safe', moduleName: 'PMS', functionName: 'Msafe' },
+    { name: 'Training List', icon: BookOpen, href: '/safety/training-list', moduleName: 'PMS', functionName: 'Training', subFunctionName: 'training_all' }
   ],
   'Finance': [
     {
       name: 'Procurement',
       icon: Briefcase,
       href: '/finance/procurement',
+      moduleName: 'finance',
+      functionName: 'procurement',
       subItems: [
         {
           name: 'PR/ SR',
           href: '/finance/pr-sr',
           color: 'text-[#1a1a1a]',
+          moduleName: 'finance',
+          functionName: 'procurement',
+          subFunctionName: 'pr_sr',
           subItems: [
-            { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]' },
-            { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]' }
+            { name: 'Material PR', href: '/finance/material-pr', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'material_pr' },
+            { name: 'Service PR', href: '/finance/service-pr', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'service_pr' }
           ]
         },
         {
           name: 'PO/WO',
           href: '/finance/po-wo',
           color: 'text-[#1a1a1a]',
+          moduleName: 'finance',
+          functionName: 'procurement',
+          subFunctionName: 'po_wo',
           subItems: [
-            { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]' },
-            { name: 'WO', href: '/finance/wo', color: 'text-[#1a1a1a]' }
+            { name: 'PO', href: '/finance/po', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'po' },
+            { name: 'WO', href: '/finance/wo', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'wo' }
           ]
         },
-        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]' },
-        { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]' }
+        { name: 'GRN/ SRN', href: '/finance/grn-srn', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'grn_srn' },
+        { name: 'Auto Saved PR', href: '/finance/auto-saved-pr', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'auto_saved_pr' },
+        { name: 'Pending Approvals', href: '/finance/pending-approvals', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'procurement', subFunctionName: 'pending_approvals' }
       ]
     },
-    { name: 'Invoices', icon: Receipt, href: '/finance/invoices' },
-    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking' },
+    { name: 'Invoices', icon: Receipt, href: '/finance/invoices', moduleName: 'finance', functionName: 'invoices' },
+    { name: 'Bill Booking', icon: Receipt, href: '/finance/bill-booking', moduleName: 'finance', functionName: 'bill_booking' },
     {
       name: 'Accounting',
       icon: Calculator,
       href: '/finance/accounting',
+      moduleName: 'finance',
+      functionName: 'accounting',
       subItems: [
-        { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]' },
-        { name: 'Budgeting', href: '/finance/budgeting', color: 'text-[#1a1a1a]' },
+        { name: 'Cost Center', href: '/finance/cost-center', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'accounting', subFunctionName: 'cost_center' },
+        { name: 'Budgeting', href: '/finance/budgeting', color: 'text-[#1a1a1a]', moduleName: 'finance', functionName: 'accounting', subFunctionName: 'budgeting' },
       ]
     },
-    { name: 'WBS', icon: BarChart3, href: '/finance/wbs' }
+    { name: 'WBS', icon: BarChart3, href: '/finance/wbs', moduleName: 'finance', functionName: 'wbs' }
   ],
   'CRM': [
-    { name: 'Lead', icon: Target, href: '/crm/lead' },
-    { name: 'Opportunity', icon: Star, href: '/crm/opportunity' },
+    { name: 'Lead', icon: Target, href: '/crm/lead', moduleName: 'crm', functionName: 'lead' },
+    { name: 'Opportunity', icon: Star, href: '/crm/opportunity', moduleName: 'crm', functionName: 'opportunity' },
     {
-      name: 'CRM', icon: Users, subItems: [
-        { name: 'Customers', href: '/crm/customers' },
-        { name: 'FM Users', href: '/crm/fm-users' },
-        { name: 'Occupant Users', href: '/crm/occupant-users' }
+      name: 'CRM', 
+      icon: Users, 
+      moduleName: 'crm',
+      functionName: 'customer_management',
+      subItems: [
+        { name: 'Customers', href: '/crm/customers', moduleName: 'crm', functionName: 'customer_management', subFunctionName: 'customers' },
+        { name: 'FM Users', href: '/crm/fm-users', moduleName: 'crm', functionName: 'customer_management', subFunctionName: 'fm_users' },
+        { name: 'Occupant Users', href: '/crm/occupant-users', moduleName: 'crm', functionName: 'customer_management', subFunctionName: 'occupant_users' }
       ]
     },
-    { name: 'Events', icon: Calendar, href: '/crm/events' },
-    { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
-    { name: 'Groups', icon: Users, href: '/crm/groups' },
-    { name: 'Polls', icon: BarChart3, href: '/crm/polls' },
-    { name: 'Campaign', icon: Target, href: '/crm/campaign' }
+    { name: 'Events', icon: Calendar, href: '/crm/events', moduleName: 'crm', functionName: 'events' },
+    { name: 'Broadcast', icon: Bell, href: '/crm/broadcast', moduleName: 'crm', functionName: 'broadcast' },
+    { name: 'Groups', icon: Users, href: '/crm/groups', moduleName: 'crm', functionName: 'groups' },
+    { name: 'Polls', icon: BarChart3, href: '/crm/polls', moduleName: 'crm', functionName: 'polls' },
+    { name: 'Campaign', icon: Target, href: '/crm/campaign', moduleName: 'crm', functionName: 'campaign' }
   ],
   'Utility': [
-    { name: 'Energy', icon: Zap, href: '/utility/energy' },
-    { name: 'Water', icon: Droplets, href: '/utility/water' },
-    { name: 'STP', icon: Database, href: '/utility/stp' },
-    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
-    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
-    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
-    { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
-    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
+    { name: 'Energy', icon: Zap, href: '/utility/energy', moduleName: 'PMS', functionName: 'Dashboard' },
+    { name: 'Water', icon: Droplets, href: '/utility/water', moduleName: 'PMS', functionName: 'Water' },
+    { name: 'STP', icon: Database, href: '/utility/stp', moduleName: 'PMS', functionName: 'STP' },
+    { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings', moduleName: 'PMS', functionName: 'Daily Readings' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request', moduleName: 'PMS', functionName: 'Utility Request' },
+    { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption', moduleName: 'PMS', functionName: 'Utility Consumption' },
+    { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption', moduleName: 'PMS', functionName: 'EV Consumption' },
+    { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator', moduleName: 'PMS', functionName: 'Solar Generator' }
   ],
   'Security': [
     {
       name: 'Gate Pass',
       icon: Shield,
       href: '/security/gate-pass',
+      moduleName: 'PMS',
+      functionName: 'Goods In Out',
       subItems: [
-        { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]' },
-        { name: 'Outwards', href: '/security/gate-pass/outwards', color: 'text-[#1a1a1a]' }
+        { name: 'Inwards', href: '/security/gate-pass/inwards', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Goods In Out', subFunctionName: 'goods_in_out_all' },
+        { name: 'Outwards', href: '/security/gate-pass/outwards', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'Goods In Out', subFunctionName: 'goods_in_out_show' }
       ]
     },
-    { name: 'Visitor', icon: Users, href: '/security/visitor' },
-    { name: 'Staff', icon: Users, href: '/security/staff' },
+    { name: 'Visitor', icon: Users, href: '/security/visitor', moduleName: 'PMS', functionName: 'Visitors' },
+    { name: 'Staff', icon: Users, href: '/security/staff', moduleName: 'PMS', functionName: 'Staffs' },
     {
       name: 'Vehicle',
       icon: Car,
       href: '/security/vehicle',
+      moduleName: 'PMS',
+      functionName: 'R Vehicles',
       subItems: [
         {
           name: 'R Vehicles',
           href: '/security/vehicle/r-vehicles',
           color: 'text-[#1a1a1a]',
+          moduleName: 'PMS',
+          functionName: 'R Vehicles',
           subItems: [
-            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]' },
-            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]' }
+            { name: 'All', href: '/security/vehicle/r-vehicles', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'R Vehicles', subFunctionName: 'r_vehicles_all' },
+            { name: 'History', href: '/security/vehicle/r-vehicles/history', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'R Vehicles', subFunctionName: 'r_vehicles_show' }
           ]
         },
-        { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]' }
+        { name: 'G Vehicles', href: '/security/vehicle/g-vehicles', color: 'text-[#1a1a1a]', moduleName: 'PMS', functionName: 'G Vehicles', subFunctionName: 'g_vehicles_all' }
       ]
     },
-    { name: 'Patrolling', icon: Shield, href: '/security/patrolling' }
+    { name: 'Patrolling', icon: Shield, href: '/security/patrolling', moduleName: 'PMS', functionName: 'Patrolling' }
   ],
   'Value Added Services': [
     { name: 'F&B', icon: Coffee, href: '/vas/fnb' },
@@ -539,10 +609,11 @@ const modulesByPackage = {
         { name: 'Report Setup', href: '/settings/account/report-setup' },
         { name: 'Notification Setup', href: '/settings/account/notification-setup' },
         { name: 'Shift', href: '/settings/account/shift' },
-                  { name: 'Roster', href: '/settings/account/roster' },
-                      { name: 'Role Config', href: '/settings/account/lock-module' },
-          { name: 'Lock Function', href: '/settings/account/lock-function' },
-          { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
+        { name: 'Roster', href: '/settings/account/roster' },
+        { name: 'Role Config', href: '/settings/account/role-config' },
+        { name: 'Lock Module', href: '/settings/account/lock-module' },
+        { name: 'Lock Function', href: '/settings/account/lock-function' },
+        { name: 'Lock Sub Function', href: '/settings/account/lock-sub-function' }
 
 
       ]
@@ -708,9 +779,15 @@ export const Sidebar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { currentSection, setCurrentSection, isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
+  const { userRole, loading: permissionsLoading, hasPermissionForPath } = usePermissions();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [selectedDepartment, setSelectedRole] = useState('');
   const [selectedRole, setSelectedDepartment] = useState('');
+
+  // Filter modules based on user permissions
+  const filteredModulesByPackage = React.useMemo(() => {
+    return sidebarPermissionFilter.filterModulesByPackage(modulesByPackage, userRole);
+  }, [userRole]);
 
   // Reset expanded items on page load/refresh
   React.useEffect(() => {
@@ -766,7 +843,7 @@ export const Sidebar = () => {
     }
   }, [location.pathname, setCurrentSection]);
 
-  const currentModules = modulesByPackage[currentSection] || [];
+  const currentModules = filteredModulesByPackage[currentSection] || [];
 
   const isActiveRoute = (href: string) => {
     const currentPath = location.pathname;
@@ -790,7 +867,7 @@ export const Sidebar = () => {
   React.useEffect(() => {
     // Determine which items to expand based on current route
     const path = location.pathname;
-    const currentSectionItems = modulesByPackage[currentSection];
+    const currentSectionItems = filteredModulesByPackage[currentSection];
     const itemsToExpand = [];
 
     if (currentSectionItems) {
@@ -837,6 +914,193 @@ export const Sidebar = () => {
     const showDropdowns = item.hasDropdowns && item.href && location.pathname === item.href;
     const isActive = item.href ? isActiveRoute(item.href) : false;
 
+    // Dynamic permission check with actual API structure
+    const checkPermission = (checkItem: any) => {
+      if (!userRole || !userRole.lock_modules) {
+        console.log(`🔄 Permission check for "${checkItem.name}": No user role data available, showing item`);
+        return true; // Show all items when no role data
+      }
+
+      let hasPermission = true;
+      let permissionPath = [];
+
+      // Function to normalize function names and handle special mappings
+      const normalizeFunctionName = (functionName: string): string[] => {
+        const normalized = functionName.toLowerCase();
+        const variants = [functionName, normalized];
+        
+        // Generate variations with different separators (space, underscore, hyphen)
+        const generateSeparatorVariants = (name: string): string[] => {
+          const variants = [name];
+          // Replace spaces with underscores and hyphens
+          if (name.includes(' ')) {
+            variants.push(name.replace(/ /g, '_'));
+            variants.push(name.replace(/ /g, '-'));
+            variants.push(name.replace(/ /g, ''));  // Remove spaces entirely
+          }
+          // Replace underscores with spaces and hyphens
+          if (name.includes('_')) {
+            variants.push(name.replace(/_/g, ' '));
+            variants.push(name.replace(/_/g, '-'));
+            variants.push(name.replace(/_/g, ''));   // Remove underscores entirely
+          }
+          // Replace hyphens with spaces and underscores
+          if (name.includes('-')) {
+            variants.push(name.replace(/-/g, ' '));
+            variants.push(name.replace(/-/g, '_'));
+            variants.push(name.replace(/-/g, ''));   // Remove hyphens entirely
+          }
+          return variants;
+        };
+
+        // Add separator variants for the original and normalized names
+        variants.push(...generateSeparatorVariants(functionName));
+        variants.push(...generateSeparatorVariants(normalized));
+        
+        // Special mappings with separator variations
+        if (normalized === 'assets' || normalized === 'asset') {
+          const assetVariants = ['pms_assets', 'assets', 'asset', 'pms-assets', 'pms assets'];
+          variants.push(...assetVariants);
+          assetVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized === 'tickets' || normalized === 'ticket') {
+          const ticketVariants = ['pms_complaints', 'tickets', 'ticket', 'pms-complaints', 'pms complaints'];
+          variants.push(...ticketVariants);
+          ticketVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized === 'services' || normalized === 'service') {
+          const serviceVariants = ['pms_services', 'services', 'service', 'pms-services', 'pms services'];
+          variants.push(...serviceVariants);
+          serviceVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized === 'tasks' || normalized === 'task') {
+          const taskVariants = ['pms_tasks', 'tasks', 'task', 'pms-tasks', 'pms tasks'];
+          variants.push(...taskVariants);
+          taskVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized === 'broadcast') {
+          const broadcastVariants = ['pms_notices', 'broadcast', 'pms-notices', 'pms notices'];
+          variants.push(...broadcastVariants);
+          broadcastVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        
+        // M-Safe related mappings with separator variations
+        if (normalized === 'msafe' || normalized === 'm-safe' || normalized === 'm safe' || normalized === 'm_safe') {
+          const msafeVariants = ['msafe', 'm-safe', 'm safe', 'm_safe', 'pms_msafe', 'pms-msafe', 'pms msafe', 'pms_m_safe', 'pms-m-safe', 'pms m safe'];
+          variants.push(...msafeVariants);
+          msafeVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized.includes('non') && (normalized.includes('fte') || normalized.includes('user'))) {
+          const nonFteVariants = ['non fte users', 'non_fte_users', 'non-fte-users', 'nonfte users', 'nonfteusers', 'non fte', 'pms_non_fte_users', 'pms-non-fte-users', 'pms non fte users'];
+          variants.push(...nonFteVariants);
+          nonFteVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized.includes('line') && normalized.includes('manager')) {
+          const lmcVariants = ['line manager check', 'line_manager_check', 'line-manager-check', 'linemanagercheck', 'lmc', 'pms_line_manager_check', 'pms-line-manager-check', 'pms line manager check'];
+          variants.push(...lmcVariants);
+          lmcVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized.includes('senior') && normalized.includes('management')) {
+          const smtVariants = ['senior management tour', 'senior_management_tour', 'senior-management-tour', 'seniormanagementtour', 'smt', 'pms_senior_management_tour', 'pms-senior-management-tour', 'pms senior management tour'];
+          variants.push(...smtVariants);
+          smtVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized.includes('krcc')) {
+          const krccVariants = ['krcc list', 'krcc_list', 'krcc-list', 'krcclist', 'krcc', 'pms_krcc_list', 'pms-krcc-list', 'pms krcc list'];
+          variants.push(...krccVariants);
+          krccVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        if (normalized.includes('training')) {
+          const trainingVariants = ['training_list', 'training list', 'training-list', 'traininglist', 'training', 'pms_training_list', 'pms-training-list', 'pms training list', 'pms_training', 'pms-training', 'pms training'];
+          variants.push(...trainingVariants);
+          trainingVariants.forEach(variant => variants.push(...generateSeparatorVariants(variant)));
+        }
+        
+        // Remove duplicates and return unique variants
+        return [...new Set(variants)];
+      };
+
+      // Check based on the actual API structure: lock_modules -> module_name -> lock_functions -> function_name/action_name
+      if (checkItem.moduleName) {
+        // Find the module in lock_modules by module_name
+        const module = userRole.lock_modules.find(m => 
+          m.module_name.toLowerCase() === checkItem.moduleName.toLowerCase() ||
+          m.module_name.toLowerCase() === 'pms' // PMS module covers most functionality
+        );
+        
+        if (!module || !module.module_active) {
+          console.log(`❌ Permission check for "${checkItem.name}": Module "${checkItem.moduleName}" not found or not active`);
+          return false;
+        }
+
+        permissionPath.push(`module:${module.module_name}=${module.module_active ? 'active' : 'inactive'}`);
+
+        if (checkItem.functionName) {
+          const functionVariants = normalizeFunctionName(checkItem.functionName);
+          
+          // Find the function in lock_functions by function_name or action_name
+          const func = module.lock_functions.find(f => {
+            const functionNameMatch = functionVariants.some(variant => 
+              f.function_name.toLowerCase() === variant.toLowerCase() ||
+              f.function_name.toLowerCase().includes(variant.toLowerCase()) ||
+              variant.toLowerCase().includes(f.function_name.toLowerCase())
+            );
+            
+            // Also check action_name if it exists
+            const actionNameMatch = (f as any).action_name && functionVariants.some(variant =>
+              (f as any).action_name.toLowerCase() === variant.toLowerCase() ||
+              (f as any).action_name.toLowerCase().includes(variant.toLowerCase()) ||
+              variant.toLowerCase().includes((f as any).action_name.toLowerCase())
+            );
+            
+            return functionNameMatch || actionNameMatch;
+          });
+          
+          if (!func || !func.function_active) {
+            console.log(`❌ Permission check for "${checkItem.name}": Function "${checkItem.functionName}" (variants: ${functionVariants.join(', ')}) not found or not active in module "${module.module_name}"`);
+            return false;
+          }
+
+          permissionPath.push(`function:${func.function_name}=${func.function_active ? 'active' : 'inactive'}`);
+
+          if (checkItem.subFunctionName) {
+            // Find the sub-function in sub_functions by sub_function_name
+            const subFunc = func.sub_functions.find(sf => 
+              sf.sub_function_name === checkItem.subFunctionName ||
+              sf.sub_function_name.toLowerCase() === checkItem.subFunctionName.toLowerCase()
+            );
+            
+            if (!subFunc || !subFunc.enabled || !subFunc.sub_function_active) {
+              console.log(`❌ Permission check for "${checkItem.name}": Sub-function "${checkItem.subFunctionName}" not found, not enabled, or not active`);
+              return false;
+            }
+
+            permissionPath.push(`subFunction:${subFunc.sub_function_name}=${subFunc.enabled ? 'enabled' : 'disabled'}`);
+          }
+        }
+      } else if (checkItem.href) {
+        // For items without specific module/function, check if any related module is active
+        // This is a fallback for items that don't have explicit permission metadata
+        const hasAnyActiveModule = userRole.lock_modules.some(m => m.module_active);
+        if (!hasAnyActiveModule) {
+          console.log(`❌ Permission check for "${checkItem.name}": No active modules found`);
+          return false;
+        }
+        permissionPath.push(`fallback:anyActiveModule=true`);
+      } else {
+        // Items without href or module metadata are considered accessible
+        permissionPath.push(`unrestricted=true`);
+      }
+
+      console.log(`✅ Permission check for "${checkItem.name}": ${permissionPath.join(', ')}`);
+      return hasPermission;
+    };
+
+    // Check permission for current item
+    if (!checkPermission(item)) {
+      return null; // Don't render if no permission
+    }
+
     if (hasSubItems) {
       return (
         <div key={item.name}>
@@ -860,49 +1124,63 @@ export const Sidebar = () => {
           </button>
           {isExpanded && (
             <div className="space-y-1">
-              {item.subItems.map((subItem: any) => (
-                <div key={subItem.name} className={level === 0 ? "ml-8" : "ml-4"}>
-                  {subItem.subItems ? (
-                    <div>
+              {item.subItems.map((subItem: any) => {
+                // Check permission for sub-item
+                if (!checkPermission(subItem)) {
+                  return null; // Don't render if no permission
+                }
+                
+                return (
+                  <div key={subItem.name} className={level === 0 ? "ml-8" : "ml-4"}>
+                    {subItem.subItems ? (
+                      <div>
+                        <button
+                          onClick={() => toggleExpanded(subItem.name)}
+                          className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        >
+                          {subItem.href && isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                          <span>{subItem.name}</span>
+                          {expandedItems.includes(subItem.name) ?
+                            <ChevronDown className="w-4 h-4" /> :
+                            <ChevronRight className="w-4 h-4" />
+                          }
+                        </button>
+                        {expandedItems.includes(subItem.name) && (
+                          <div className="ml-4 mt-1 space-y-1">
+                            {subItem.subItems.map((nestedItem: any) => {
+                              // Check permission for nested item
+                              if (!checkPermission(nestedItem)) {
+                                return null; // Don't render if no permission
+                              }
+                              
+                              return (
+                                <button
+                                  key={nestedItem.name}
+                                  onClick={() => handleNavigation(nestedItem.href)}
+                                  className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
+                                    }`}
+                                >
+                                  {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                                  {nestedItem.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => toggleExpanded(subItem.name)}
-                        className="flex items-center justify-between !w-full gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors text-[#1a1a1a] hover:bg-[#DBC2A9] hover:text-[#1a1a1a] relative"
+                        onClick={() => handleNavigation(subItem.href, currentSection)}
+                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || 'text-[#1a1a1a]'
+                          }`}
                       >
-                        {subItem.href && isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                        <span>{subItem.name}</span>
-                        {expandedItems.includes(subItem.name) ?
-                          <ChevronDown className="w-4 h-4" /> :
-                          <ChevronRight className="w-4 h-4" />
-                        }
+                        {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
+                        {subItem.name}
                       </button>
-                      {expandedItems.includes(subItem.name) && (
-                        <div className="ml-4 mt-1 space-y-1">
-                          {subItem.subItems.map((nestedItem: any) => (
-                            <button
-                              key={nestedItem.name}
-                              onClick={() => handleNavigation(nestedItem.href)}
-                              className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm transition-colors hover:bg-[#DBC2A9] relative ${nestedItem.color || 'text-[#1a1a1a]'
-                                }`}
-                            >
-                              {isActiveRoute(nestedItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                              {nestedItem.name}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => handleNavigation(subItem.href, currentSection)}
-                      className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${subItem.color || 'text-[#1a1a1a]'
-                        }`}
-                    >
-                      {isActiveRoute(subItem.href) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>}
-                      {subItem.name}
-                    </button>
-                  )}
-                </div>
-              ))}
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1030,7 +1308,11 @@ export const Sidebar = () => {
         )}
 
         <nav className="space-y-2">
-          {currentSection === 'Settings' ? (
+          {permissionsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-sm text-[#1a1a1a] opacity-70">Loading permissions...</div>
+            </div>
+          ) : currentSection === 'Settings' ? (
             isSidebarCollapsed ? (
               <div className="flex flex-col items-center space-y-3 pt-4">
                 {currentModules.map(module => (

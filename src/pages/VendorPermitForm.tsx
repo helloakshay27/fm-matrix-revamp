@@ -362,6 +362,7 @@ export const VendorPermitForm = () => {
                 body: formData
             });
 
+
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
@@ -371,8 +372,7 @@ export const VendorPermitForm = () => {
             console.log('Form submitted successfully:', result);
 
             toast.success('permit form submitted successfully!');
-            // Navigate to permit details page where the details API will be called automatically
-            navigate(`/permits/${id}`);
+            // navigate(`/permits/${id}`);
         } catch (error) {
             console.error('Error submitting form:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to submit permit form');
