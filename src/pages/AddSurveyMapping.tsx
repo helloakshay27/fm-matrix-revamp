@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { X, Plus, Type, MapPin, List, Loader2, Search } from 'lucide-react';
-import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, CircularProgress } from '@mui/material';
+import { X, Plus, Type, MapPin, List, Loader2, Search, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { CircularProgress } from '@mui/material';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
@@ -24,7 +24,7 @@ interface LocationItem {
 
 interface SurveyMapping {
   id: string;
-  surveyId: number | null;
+  surveyIds: number[];
   buildingIds: number[];
   wingIds: number[];
   floorIds: number[];
@@ -52,7 +52,7 @@ export const AddSurveyMapping = () => {
   // Form state
   const [surveyMappings, setSurveyMappings] = useState<SurveyMapping[]>([{
     id: `sm-${Date.now()}`,
-    surveyId: null,
+    surveyIds: [],
     buildingIds: [],
     wingIds: [],
     floorIds: [],
@@ -79,12 +79,8 @@ export const AddSurveyMapping = () => {
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-  };
+  // Dropdown state for each mapping and location type
+  const [dropdownStates, setDropdownStates] = useState<Record<string, Record<string, boolean>>>({});
 
   // Fetch surveys and locations on component mount
   useEffect(() => {
@@ -272,7 +268,7 @@ export const AddSurveyMapping = () => {
 
   const addSurveyMapping = () => setSurveyMappings(prev => [...prev, {
     id: `sm-${Date.now()}`,
-    surveyId: null,
+    surveyIds: [],
     buildingIds: [],
     wingIds: [],
     floorIds: [],
@@ -281,6 +277,33 @@ export const AddSurveyMapping = () => {
   }]);
 
   const removeSurveyMapping = (idx: number) => setSurveyMappings(prev => prev.filter((_, i) => i !== idx));
+
+  const toggleDropdown = (mappingId: string, locationType: string) => {
+    setDropdownStates(prev => ({
+      ...prev,
+      [mappingId]: {
+        ...prev[mappingId],
+        [locationType]: !prev[mappingId]?.[locationType]
+      }
+    }));
+  };
+
+  const isDropdownOpen = (mappingId: string, locationType: string) => {
+    return dropdownStates[mappingId]?.[locationType] || false;
+  };
+
+  const handleSurveyToggle = (mappingIndex: number, surveyId: number) => {
+    setSurveyMappings(prev => prev.map((mapping, index) => {
+      if (index === mappingIndex) {
+        const currentIds = mapping.surveyIds;
+        const updatedIds = currentIds.includes(surveyId)
+          ? currentIds.filter(id => id !== surveyId)
+          : [...currentIds, surveyId];
+        return { ...mapping, surveyIds: updatedIds };
+      }
+      return mapping;
+    }));
+  };
 
   const handleLocationToggle = (mappingIndex: number, locationType: 'buildingIds' | 'wingIds' | 'floorIds' | 'areaIds' | 'roomIds', locationId: number) => {
     setSurveyMappings(prev => prev.map((mapping, index) => {
@@ -301,7 +324,7 @@ export const AddSurveyMapping = () => {
 
     // Validation
     const validMappings = surveyMappings.filter(mapping => 
-      mapping.surveyId && 
+      mapping.surveyIds.length > 0 && 
       (mapping.buildingIds.length > 0 || mapping.wingIds.length > 0 || 
        mapping.floorIds.length > 0 || mapping.areaIds.length > 0 || 
        mapping.roomIds.length > 0)
@@ -320,37 +343,41 @@ export const AddSurveyMapping = () => {
       const results = [];
       
       for (const mapping of validMappings) {
-        const requestData = {
-          survey_id: mapping.surveyId,
-          building_ids: mapping.buildingIds,
-          wing_ids: mapping.wingIds,
-          floor_ids: mapping.floorIds,
-          area_ids: mapping.areaIds,
-          room_ids: mapping.roomIds
-        };
+        // Create a separate mapping for each selected survey
+        for (const surveyId of mapping.surveyIds) {
+          const requestData = {
+            survey_id: surveyId,
+            building_ids: mapping.buildingIds,
+            wing_ids: mapping.wingIds,
+            floor_ids: mapping.floorIds,
+            area_ids: mapping.areaIds,
+            room_ids: mapping.roomIds
+          };
 
-        console.log('Submitting survey mapping:', requestData);
+          console.log('Submitting survey mapping:', requestData);
 
-        const response = await fetch(getFullUrl('/survey_mappings.json'), {
-          method: 'POST',
-          headers: {
-            'Authorization': getAuthHeader(),
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(requestData)
-        });
+          const response = await fetch(getFullUrl('/survey_mappings.json'), {
+            method: 'POST',
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestData)
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to create survey mapping');
+          if (!response.ok) {
+            throw new Error('Failed to create survey mapping');
+          }
+
+          const result = await response.json();
+          results.push(result);
         }
-
-        const result = await response.json();
-        results.push(result);
       }
 
       console.log('Survey mappings created successfully:', results);
 
-      toast.success(`${validMappings.length} survey mapping(s) created successfully!`, {
+      const totalMappings = validMappings.reduce((sum, mapping) => sum + mapping.surveyIds.length, 0);
+      toast.success(`${totalMappings} survey mapping(s) created successfully!`, {
         duration: 3000,
       });
 
@@ -377,7 +404,18 @@ export const AddSurveyMapping = () => {
       )}
       
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold tracking-wide uppercase">Survey Mapping</h1>
+        <div className="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-xl font-bold tracking-wide uppercase">Survey Mapping</h1>
+        </div>
       </header>
 
       <Section title="Survey Selection" icon={<List className="w-3.5 h-3.5" />}>
@@ -402,31 +440,89 @@ export const AddSurveyMapping = () => {
                 {/* Survey Selection */}
                 <div className="grid grid-cols-1 gap-6">
                   <div>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Survey<span className="text-red-500">*</span></InputLabel>
-                      <MuiSelect
-                        value={mapping.surveyId || ''}
-                        onChange={(e) => updateSurveyMapping(idx, 'surveyId', Number(e.target.value))}
-                        label="Survey*"
-                        notched
-                        displayEmpty
-                        disabled={isSubmitting || loadingSurveys}
-                      >
-                        <MenuItem value="">Select Survey</MenuItem>
+                    <div 
+                      className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => toggleDropdown(mapping.id, 'surveys')}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Label className="text-sm font-medium cursor-pointer">Surveys<span className="text-red-500">*</span></Label>
+                        <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                          {mapping.surveyIds.length} selected
+                        </span>
+                      </div>
+                      {isDropdownOpen(mapping.id, 'surveys') ? (
+                        <ChevronUp className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-400" />
+                      )}
+                    </div>
+                    
+                    {isDropdownOpen(mapping.id, 'surveys') && (
+                      <div className="mt-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
                         {loadingSurveys ? (
-                          <MenuItem disabled>
-                            <CircularProgress size={20} sx={{ mr: 1 }} />
-                            Loading surveys...
-                          </MenuItem>
+                          <div className="flex items-center justify-center p-6">
+                            <CircularProgress size={20} />
+                            <span className="ml-2 text-sm text-gray-600">Loading surveys...</span>
+                          </div>
+                        ) : surveys.length === 0 ? (
+                          <div className="text-center p-6">
+                            <p className="text-sm text-gray-500">No surveys available</p>
+                          </div>
                         ) : (
-                          surveys.map((survey) => (
-                            <MenuItem key={survey.id} value={survey.id}>
-                              {survey.name} ({survey.questions_count} questions)
-                            </MenuItem>
-                          ))
+                          <div className="space-y-2">
+                            {surveys.map((survey) => (
+                              <div 
+                                key={survey.id} 
+                                className={`flex items-start space-x-3 p-3 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                  mapping.surveyIds.includes(survey.id) 
+                                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                    : 'bg-white border-gray-200 hover:border-gray-300'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  id={`survey-${idx}-${survey.id}`}
+                                  checked={mapping.surveyIds.includes(survey.id)}
+                                  onChange={() => handleSurveyToggle(idx, survey.id)}
+                                  className="w-4 h-4 mt-0.5 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                  disabled={isSubmitting}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <label 
+                                    htmlFor={`survey-${idx}-${survey.id}`}
+                                    className="block text-sm font-medium text-gray-900 cursor-pointer leading-tight"
+                                  >
+                                    {survey.name}
+                                  </label>
+                                  <div className="flex items-center gap-4 mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {survey.questions_count} questions
+                                    </span>
+                                    {survey.snag_audit_category && (
+                                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                        {survey.snag_audit_category}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         )}
-                      </MuiSelect>
-                    </FormControl>
+                        {mapping.surveyIds.length > 0 && (
+                          <div className="mt-3 pt-3 border-t">
+                            <button
+                              type="button"
+                              onClick={() => updateSurveyMapping(idx, 'surveyIds', [])}
+                              className="text-xs text-red-600 hover:text-red-800 underline"
+                              disabled={isSubmitting}
+                            >
+                              Clear all selections
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -447,9 +543,9 @@ export const AddSurveyMapping = () => {
             <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
               <p className="mb-4 text-sm font-medium text-muted-foreground">
                 Locations for Survey Mapping {mappingIdx + 1}
-                {mapping.surveyId && (
+                {mapping.surveyIds.length > 0 && (
                   <span className="ml-2 text-blue-600">
-                    ({surveys.find(s => s.id === mapping.surveyId)?.name})
+                    ({mapping.surveyIds.length} survey{mapping.surveyIds.length > 1 ? 's' : ''} selected)
                   </span>
                 )}
               </p>
@@ -457,201 +553,382 @@ export const AddSurveyMapping = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Buildings */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Buildings</Label>
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
-                    {loadingBuildings ? (
-                      <div className="flex items-center justify-center p-4">
-                        <CircularProgress size={20} />
-                        <span className="ml-2 text-sm">Loading...</span>
-                      </div>
-                    ) : buildings.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center p-2">No buildings available</p>
+                  <div 
+                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleDropdown(mapping.id, 'buildings')}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-sm font-medium cursor-pointer">Buildings</Label>
+                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                        {mapping.buildingIds.length} selected
+                      </span>
+                    </div>
+                    {isDropdownOpen(mapping.id, 'buildings') ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
                     ) : (
-                      buildings.map((building) => (
-                        <div key={building.id} className="flex items-center space-x-2 p-1">
-                          <input
-                            type="checkbox"
-                            id={`building-${mappingIdx}-${building.id}`}
-                            checked={mapping.buildingIds.includes(building.id)}
-                            onChange={() => handleLocationToggle(mappingIdx, 'buildingIds', building.id)}
-                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
-                            disabled={isSubmitting}
-                          />
-                          <label 
-                            htmlFor={`building-${mappingIdx}-${building.id}`}
-                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                          >
-                            {building.name}
-                          </label>
-                        </div>
-                      ))
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {mapping.buildingIds.length} selected
-                  </p>
+                  
+                  {isDropdownOpen(mapping.id, 'buildings') && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
+                      {loadingBuildings ? (
+                        <div className="flex items-center justify-center p-4">
+                          <CircularProgress size={20} />
+                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
+                        </div>
+                      ) : buildings.length === 0 ? (
+                        <div className="text-center p-4">
+                          <p className="text-sm text-gray-500">No buildings available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {buildings.map((building) => (
+                            <div 
+                              key={building.id} 
+                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                mapping.buildingIds.includes(building.id) 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`building-${mappingIdx}-${building.id}`}
+                                checked={mapping.buildingIds.includes(building.id)}
+                                onChange={() => handleLocationToggle(mappingIdx, 'buildingIds', building.id)}
+                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                disabled={isSubmitting}
+                              />
+                              <label 
+                                htmlFor={`building-${mappingIdx}-${building.id}`}
+                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
+                              >
+                                {building.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {mapping.buildingIds.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <button
+                            type="button"
+                            onClick={() => updateSurveyMapping(mappingIdx, 'buildingIds', [])}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                            disabled={isSubmitting}
+                          >
+                            Clear selections
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Wings */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Wings</Label>
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
-                    {loadingWings ? (
-                      <div className="flex items-center justify-center p-4">
-                        <CircularProgress size={20} />
-                        <span className="ml-2 text-sm">Loading...</span>
-                      </div>
-                    ) : wings.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center p-2">No wings available</p>
+                  <div 
+                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleDropdown(mapping.id, 'wings')}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-sm font-medium cursor-pointer">Wings</Label>
+                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                        {mapping.wingIds.length} selected
+                      </span>
+                    </div>
+                    {isDropdownOpen(mapping.id, 'wings') ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
                     ) : (
-                      wings.map((wing) => (
-                        <div key={wing.id} className="flex items-center space-x-2 p-1">
-                          <input
-                            type="checkbox"
-                            id={`wing-${mappingIdx}-${wing.id}`}
-                            checked={mapping.wingIds.includes(wing.id)}
-                            onChange={() => handleLocationToggle(mappingIdx, 'wingIds', wing.id)}
-                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
-                            disabled={isSubmitting}
-                          />
-                          <label 
-                            htmlFor={`wing-${mappingIdx}-${wing.id}`}
-                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                          >
-                            {wing.name}
-                          </label>
-                        </div>
-                      ))
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {mapping.wingIds.length} selected
-                  </p>
+                  
+                  {isDropdownOpen(mapping.id, 'wings') && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
+                      {loadingWings ? (
+                        <div className="flex items-center justify-center p-4">
+                          <CircularProgress size={20} />
+                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
+                        </div>
+                      ) : wings.length === 0 ? (
+                        <div className="text-center p-4">
+                          <p className="text-sm text-gray-500">No wings available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {wings.map((wing) => (
+                            <div 
+                              key={wing.id} 
+                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                mapping.wingIds.includes(wing.id) 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`wing-${mappingIdx}-${wing.id}`}
+                                checked={mapping.wingIds.includes(wing.id)}
+                                onChange={() => handleLocationToggle(mappingIdx, 'wingIds', wing.id)}
+                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                disabled={isSubmitting}
+                              />
+                              <label 
+                                htmlFor={`wing-${mappingIdx}-${wing.id}`}
+                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
+                              >
+                                {wing.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {mapping.wingIds.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <button
+                            type="button"
+                            onClick={() => updateSurveyMapping(mappingIdx, 'wingIds', [])}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                            disabled={isSubmitting}
+                          >
+                            Clear selections
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Floors */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Floors</Label>
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
-                    {loadingFloors ? (
-                      <div className="flex items-center justify-center p-4">
-                        <CircularProgress size={20} />
-                        <span className="ml-2 text-sm">Loading...</span>
-                      </div>
-                    ) : floors.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center p-2">No floors available</p>
+                  <div 
+                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleDropdown(mapping.id, 'floors')}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-sm font-medium cursor-pointer">Floors</Label>
+                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                        {mapping.floorIds.length} selected
+                      </span>
+                    </div>
+                    {isDropdownOpen(mapping.id, 'floors') ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
                     ) : (
-                      floors.map((floor) => (
-                        <div key={floor.id} className="flex items-center space-x-2 p-1">
-                          <input
-                            type="checkbox"
-                            id={`floor-${mappingIdx}-${floor.id}`}
-                            checked={mapping.floorIds.includes(floor.id)}
-                            onChange={() => handleLocationToggle(mappingIdx, 'floorIds', floor.id)}
-                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
-                            disabled={isSubmitting}
-                          />
-                          <label 
-                            htmlFor={`floor-${mappingIdx}-${floor.id}`}
-                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                          >
-                            {floor.name}
-                          </label>
-                        </div>
-                      ))
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {mapping.floorIds.length} selected
-                  </p>
+                  
+                  {isDropdownOpen(mapping.id, 'floors') && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
+                      {loadingFloors ? (
+                        <div className="flex items-center justify-center p-4">
+                          <CircularProgress size={20} />
+                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
+                        </div>
+                      ) : floors.length === 0 ? (
+                        <div className="text-center p-4">
+                          <p className="text-sm text-gray-500">No floors available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {floors.map((floor) => (
+                            <div 
+                              key={floor.id} 
+                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                mapping.floorIds.includes(floor.id) 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`floor-${mappingIdx}-${floor.id}`}
+                                checked={mapping.floorIds.includes(floor.id)}
+                                onChange={() => handleLocationToggle(mappingIdx, 'floorIds', floor.id)}
+                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                disabled={isSubmitting}
+                              />
+                              <label 
+                                htmlFor={`floor-${mappingIdx}-${floor.id}`}
+                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
+                              >
+                                {floor.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {mapping.floorIds.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <button
+                            type="button"
+                            onClick={() => updateSurveyMapping(mappingIdx, 'floorIds', [])}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                            disabled={isSubmitting}
+                          >
+                            Clear selections
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Areas */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Areas</Label>
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
-                    {loadingAreas ? (
-                      <div className="flex items-center justify-center p-4">
-                        <CircularProgress size={20} />
-                        <span className="ml-2 text-sm">Loading...</span>
-                      </div>
-                    ) : areas.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center p-2">No areas available</p>
+                  <div 
+                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleDropdown(mapping.id, 'areas')}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-sm font-medium cursor-pointer">Areas</Label>
+                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                        {mapping.areaIds.length} selected
+                      </span>
+                    </div>
+                    {isDropdownOpen(mapping.id, 'areas') ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
                     ) : (
-                      areas.map((area) => (
-                        <div key={area.id} className="flex items-center space-x-2 p-1">
-                          <input
-                            type="checkbox"
-                            id={`area-${mappingIdx}-${area.id}`}
-                            checked={mapping.areaIds.includes(area.id)}
-                            onChange={() => handleLocationToggle(mappingIdx, 'areaIds', area.id)}
-                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
-                            disabled={isSubmitting}
-                          />
-                          <label 
-                            htmlFor={`area-${mappingIdx}-${area.id}`}
-                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                          >
-                            {area.name}
-                          </label>
-                        </div>
-                      ))
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {mapping.areaIds.length} selected
-                  </p>
+                  
+                  {isDropdownOpen(mapping.id, 'areas') && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
+                      {loadingAreas ? (
+                        <div className="flex items-center justify-center p-4">
+                          <CircularProgress size={20} />
+                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
+                        </div>
+                      ) : areas.length === 0 ? (
+                        <div className="text-center p-4">
+                          <p className="text-sm text-gray-500">No areas available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {areas.map((area) => (
+                            <div 
+                              key={area.id} 
+                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                mapping.areaIds.includes(area.id) 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`area-${mappingIdx}-${area.id}`}
+                                checked={mapping.areaIds.includes(area.id)}
+                                onChange={() => handleLocationToggle(mappingIdx, 'areaIds', area.id)}
+                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                disabled={isSubmitting}
+                              />
+                              <label 
+                                htmlFor={`area-${mappingIdx}-${area.id}`}
+                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
+                              >
+                                {area.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {mapping.areaIds.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <button
+                            type="button"
+                            onClick={() => updateSurveyMapping(mappingIdx, 'areaIds', [])}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                            disabled={isSubmitting}
+                          >
+                            Clear selections
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Rooms */}
                 <div>
-                  <Label className="text-sm font-medium mb-2 block">Rooms</Label>
-                  <div className="max-h-40 overflow-y-auto border rounded-md p-2 bg-white">
-                    {loadingRooms ? (
-                      <div className="flex items-center justify-center p-4">
-                        <CircularProgress size={20} />
-                        <span className="ml-2 text-sm">Loading...</span>
-                      </div>
-                    ) : rooms.length === 0 ? (
-                      <p className="text-sm text-gray-500 text-center p-2">No rooms available</p>
+                  <div 
+                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
+                    onClick={() => toggleDropdown(mapping.id, 'rooms')}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Label className="text-sm font-medium cursor-pointer">Rooms</Label>
+                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
+                        {mapping.roomIds.length} selected
+                      </span>
+                    </div>
+                    {isDropdownOpen(mapping.id, 'rooms') ? (
+                      <ChevronUp className="w-4 h-4 text-gray-400" />
                     ) : (
-                      rooms.map((room) => (
-                        <div key={room.id} className="flex items-center space-x-2 p-1">
-                          <input
-                            type="checkbox"
-                            id={`room-${mappingIdx}-${room.id}`}
-                            checked={mapping.roomIds.includes(room.id)}
-                            onChange={() => handleLocationToggle(mappingIdx, 'roomIds', room.id)}
-                            className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2"
-                            disabled={isSubmitting}
-                          />
-                          <label 
-                            htmlFor={`room-${mappingIdx}-${room.id}`}
-                            className="text-sm text-gray-700 cursor-pointer select-none flex-1"
-                          >
-                            {room.name}
-                          </label>
-                        </div>
-                      ))
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {mapping.roomIds.length} selected
-                  </p>
+                  
+                  {isDropdownOpen(mapping.id, 'rooms') && (
+                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
+                      {loadingRooms ? (
+                        <div className="flex items-center justify-center p-4">
+                          <CircularProgress size={20} />
+                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
+                        </div>
+                      ) : rooms.length === 0 ? (
+                        <div className="text-center p-4">
+                          <p className="text-sm text-gray-500">No rooms available</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {rooms.map((room) => (
+                            <div 
+                              key={room.id} 
+                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
+                                mapping.roomIds.includes(room.id) 
+                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
+                                  : 'bg-white border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                id={`room-${mappingIdx}-${room.id}`}
+                                checked={mapping.roomIds.includes(room.id)}
+                                onChange={() => handleLocationToggle(mappingIdx, 'roomIds', room.id)}
+                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
+                                disabled={isSubmitting}
+                              />
+                              <label 
+                                htmlFor={`room-${mappingIdx}-${room.id}`}
+                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
+                              >
+                                {room.name}
+                              </label>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      {mapping.roomIds.length > 0 && (
+                        <div className="mt-3 pt-3 border-t">
+                          <button
+                            type="button"
+                            onClick={() => updateSurveyMapping(mappingIdx, 'roomIds', [])}
+                            className="text-xs text-red-600 hover:text-red-800 underline"
+                            disabled={isSubmitting}
+                          >
+                            Clear selections
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* Location Summary */}
-              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-800 mb-2">Selection Summary:</p>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
-                  <div><span className="font-medium">Buildings:</span> {mapping.buildingIds.length}</div>
-                  <div><span className="font-medium">Wings:</span> {mapping.wingIds.length}</div>
-                  <div><span className="font-medium">Floors:</span> {mapping.floorIds.length}</div>
-                  <div><span className="font-medium">Areas:</span> {mapping.areaIds.length}</div>
-                  <div><span className="font-medium">Rooms:</span> {mapping.roomIds.length}</div>
-                </div>
-              </div>
+           
             </div>
           ))}
         </div>
