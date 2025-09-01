@@ -81,7 +81,7 @@ const MsafeDetailReportDownload: React.FC = () => {
 
   return (
     <div className="p-6 md:p-10">
-      <h1 className="text-4xl md:text-4xl font-bold mb-4">MSafe Detail Report Download</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">MSafe Detail Report Download</h1>
       <p className="text-gray-600 mb-6">
   This report contains downloadable files, including the Master Report SSO, Master Report Sign-in, SMT Report, LMC Report, and Training Report.
 </p>
