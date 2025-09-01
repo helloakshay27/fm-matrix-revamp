@@ -167,7 +167,7 @@ export const MultipleUserDeletePage = () => {
             <div className="mb-6">
                 <h1 className="text-2xl font-bold text-[#1a1a1a]">MULTIPLE USER DELETION</h1>
                 <p className="text-sm text-gray-600 mt-1">
-                    Enter one or more Email addresses or Mobile numbers. Click "Add Field" to add more.
+                    Enter one or more Email addresses or Mobile numbers. Click "Add User" to add more.
                 </p>
             </div>
             <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
