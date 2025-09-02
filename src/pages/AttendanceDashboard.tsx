@@ -93,7 +93,7 @@ export const AttendanceDashboard = () => {
   const dispatch = useAppDispatch();
 
   // Redux state
-  const { data: attendance, loading, error } = useAppSelector(state => state.attendance);
+  const { data: attendanceState, loading, error } = useAppSelector(state => state.attendance);
 
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -121,12 +121,13 @@ export const AttendanceDashboard = () => {
   );
 
   // Fetch attendance on mount and when search changes (department filter will dispatch on Apply)
+  const perPage = 10;
   useEffect(() => {
-    const value = debouncedSearchQuery && debouncedSearchQuery.trim()
+    const departmentFilter = debouncedSearchQuery && debouncedSearchQuery.trim()
       ? debouncedSearchQuery.trim()
       : '';
-    dispatch(fetchAttendanceData(value));
-  }, [dispatch, debouncedSearchQuery]);
+    dispatch(fetchAttendanceData({ departmentFilter, page: currentPage, perPage }));
+  }, [dispatch, debouncedSearchQuery, currentPage]);
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -134,12 +135,12 @@ export const AttendanceDashboard = () => {
 
 
   // Memoized filtered data (no longer needed since filtering is done via API)
-  const filteredAttendance = useMemo(() => attendance, [attendance]);
+  const filteredAttendance = useMemo(() => attendanceState?.items || [], [attendanceState]);
 
   // Memoized pagination
-  const totalPages = useMemo(() => Math.ceil(filteredAttendance.length / pageSize), [filteredAttendance.length, pageSize]);
+  const totalPages = useMemo(() => attendanceState?.pagination?.total_pages || 1, [attendanceState]);
   const startIndex = useMemo(() => (currentPage - 1) * pageSize, [currentPage, pageSize]);
-  const paginatedData = useMemo(() => filteredAttendance.slice(startIndex, startIndex + pageSize), [filteredAttendance, startIndex, pageSize]);
+  const paginatedData = useMemo(() => filteredAttendance, [filteredAttendance]);
 
   const handleViewDetails = (row: any) => {
     const id = row.user_id;
@@ -198,7 +199,7 @@ export const AttendanceDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(attendance.map(item => String(item.id)));
+      setSelectedItems(filteredAttendance.map(item => String(item.id)));
     } else {
       setSelectedItems([]);
     }
@@ -526,7 +527,7 @@ export const AttendanceDashboard = () => {
     setFilterModalOpen(false);
     setCurrentPage(1);
     const value = departmentFilter.trim();
-    dispatch(fetchAttendanceData(value));
+    dispatch(fetchAttendanceData({ departmentFilter: value, page: 1, perPage }));
   };
 
   const handleResetFilter = () => {
@@ -536,12 +537,12 @@ export const AttendanceDashboard = () => {
     const value = debouncedSearchQuery && debouncedSearchQuery.trim()
       ? debouncedSearchQuery.trim()
       : '';
-    dispatch(fetchAttendanceData(value));
+    dispatch(fetchAttendanceData({ departmentFilter: value, page: 1, perPage }));
   };
 
   const departmentList = useMemo(
-    () => Array.from(new Set(attendance.map(item => item.department).filter(Boolean))),
-    [attendance]
+    () => Array.from(new Set((attendanceState?.items || []).map((item: any) => item.department).filter(Boolean))),
+    [attendanceState]
   );
 
   const handleAttendanceStatusExport = () =>
@@ -898,7 +899,7 @@ export const AttendanceDashboard = () => {
               selectedItems={selectedItems}
               onSelectAll={handleSelectAll}
               onSelectItem={handleSelectItem}
-              getItemId={item => String(item.id || item.user_id)}
+              getItemId={item => String((item as any).id || (item as any).user_id)}
               storageKey="attendance-dashboard-table"
               emptyMessage="No attendance records found"
               searchPlaceholder="Search..."
