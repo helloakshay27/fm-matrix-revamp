@@ -130,9 +130,9 @@ export const SlotConfigurationPage = () => {
   };
 
   const filteredData = slotConfigurationData.filter(item =>
-    item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.floor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.toString().includes(searchTerm)
+    (item.location && item.location.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (item.floor && item.floor.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (item.id && item.id.toString().includes(searchTerm))
   );
 
   const handleEdit = (item: SlotConfigurationData) => {

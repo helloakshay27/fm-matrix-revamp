@@ -244,13 +244,15 @@ export const Header = () => {
           )}
 
           {/* Dashboard Button */}
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            Dashboard
-          </button>
+          {!isViSite && (
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] hover:text-[#C72030] hover:bg-[#f6f4ee] rounded-lg transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Dashboard
+            </button>
+          )}
 
           {/* Project Dropdown */}
         </div>

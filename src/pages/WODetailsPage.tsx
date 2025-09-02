@@ -232,8 +232,9 @@ export const WODetailsPage = () => {
         pan_number: "",
       },
       work_category: "",
+      payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
+      term_condition: "",
     },
-    payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
     inventories: [],
     totals: { net_amount: "", total_taxable: "", taxes: "", total_value: "" },
     pms_po_inventories: [],
@@ -400,6 +401,32 @@ export const WODetailsPage = () => {
     }
   };
 
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'work_order.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button
@@ -477,7 +504,7 @@ export const WODetailsPage = () => {
                 </Button>
               )
             }
-            <Button size="sm" variant="outline" className="border-gray-300">
+            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
@@ -494,6 +521,7 @@ export const WODetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handlePrint}
             >
               <Printer className="w-4 h-4 mr-1" />
               Print
@@ -624,7 +652,7 @@ export const WODetailsPage = () => {
                 Payment Tenure(In Days)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.payment_tenure || "-"}
+                : {workOrder.work_order.payment_terms?.payment_tenure || "-"}
               </span>
             </div>
             <div className="flex">
@@ -632,7 +660,7 @@ export const WODetailsPage = () => {
                 Retention(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.retention || "-"}
+                : {workOrder.work_order.payment_terms?.retention || "-"}
               </span>
             </div>
             <div className="flex">
@@ -640,7 +668,7 @@ export const WODetailsPage = () => {
                 TDS(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.tds || "-"}
+                : {workOrder.work_order.payment_terms?.tds || "-"}
               </span>
             </div>
             <div className="flex">
@@ -648,7 +676,7 @@ export const WODetailsPage = () => {
                 QC(%)
               </span>
               <span className="text-sm">
-                : {workOrder.payment_terms?.qc || "-"}
+                : {workOrder.work_order.payment_terms?.qc || "-"}
               </span>
             </div>
             <div className="flex">
@@ -807,7 +835,7 @@ export const WODetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Terms & Conditions :
         </h3>
-        <p className="text-gray-700">NA</p>
+        <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
         <div className="mt-6">
           <p className="text-gray-900 font-medium">
