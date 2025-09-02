@@ -835,7 +835,7 @@ export const InventoryDashboard = () => {
         return;
       }
 
-      let url = `https://${baseUrl}/pms/inventories/export.xlsx?site_id=${siteId}`;
+      let url = `https://${baseUrl}/pms/inventories.xlsx`;
       if (selectedItems.length > 0) {
         const ids = selectedItems.join(',');
         url += `&ids=${ids}`;
