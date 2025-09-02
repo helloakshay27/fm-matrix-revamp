@@ -571,13 +571,27 @@ const AllContent = () => {
 
     // Inventory Overstock Report – Overview Summary derivation
     const overstockSummary = useMemo(() => {
-        const src = inventoryOverstockReportData?.data?.summary
+        const src = inventoryOverstockReportData?.data?.overview_summary
             ?? inventoryOverstockReportData?.summary
             ?? null;
         return src && typeof src === 'object' ? src : null;
     }, [inventoryOverstockReportData]);
 
-    const formatINR = (n: any) => `₹ ${Number(n || 0).toLocaleString('en-IN')}`;
+    const formatINR = (n: any) => {
+        if (n === null || n === undefined) return '₹ 0';
+        if (typeof n === 'string') {
+            const s = n.trim();
+            // If already formatted with a rupee symbol, normalize spacing and return
+            if (s.startsWith('₹')) {
+                return `₹ ${s.replace(/^₹\s*/, '').trim()}`;
+            }
+            const parsed = parseFloat(s.replace(/[^0-9.\-]/g, ''));
+            if (!Number.isNaN(parsed)) return `₹ ${parsed.toLocaleString('en-IN')}`;
+            return '₹ 0';
+        }
+        const num = Number(n);
+        return Number.isNaN(num) ? '₹ 0' : `₹ ${num.toLocaleString('en-IN')}`;
+    };
 
     // Format numeric values to "k" as per requirement (e.g., 932813.75 -> 93.2k)
     const formatToK = (n: any) => {
@@ -587,19 +601,41 @@ const AllContent = () => {
         return `${scaled.toFixed(1)}k`;
     };
 
+    // Helpers for Overstock Top 10 mapping (new API shape)
+    const normalizeSiteKey = (name: string) => {
+        if (!name) return '';
+        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    };
+
+    const parseCapitalBook = (val: any): number => {
+        if (val === null || val === undefined) return 0;
+        const s = String(val).trim().toLowerCase();
+        const num = parseFloat(s.replace(/[^0-9.\-]/g, ''));
+        if (Number.isNaN(num)) return 0;
+        if (s.includes('l')) return num * 100000; // Lakh
+        if (s.includes('k')) return num * 1000;   // Thousand
+        return num; // already in units (assume INR)
+    };
+
+    const parsePercentSimple = (val: any): number => {
+        if (val === null || val === undefined) return 0;
+        const n = parseFloat(String(val).replace(/[^0-9.\-]/g, ''));
+        return Number.isFinite(n) ? n : 0;
+    };
+
     const inventoryOverviewCards = useMemo(() => {
         const s: any = overstockSummary ?? {};
         return [
             { label: 'Over Stock Items', value: String(s.over_stock_items ?? 0) },
             { label: 'Under Stock Items', value: String(s.under_stock_items ?? 0) },
-            { label: 'Total Value Of Inventory', value: formatINR(s.total_value_inventory) },
-            { label: 'Capital Blocked In Overstocking', value: formatINR(s.capital_blocked) },
-            { label: 'Total Value Of Spares', value: formatINR(s.total_value_spares) },
-            { label: 'Total Value Of Consumables', value: formatINR(s.total_value_consumables) },
+            { label: 'Total Value Of Inventory', value: formatINR(s.total_value_of_inventory) },
+            { label: 'Capital Blocked In Overstocking', value: formatINR(s.capital_blocked_in_overstock) },
+            { label: 'Total Value Of Spares', value: formatINR(s.total_value_of_spares) },
+            { label: 'Total Value Of Consumables', value: formatINR(s.total_value_of_consumables) },
         ];
     }, [overstockSummary]);
 
-    // Inventory Overstock – Top 10 Items grid derived from API
+    // Inventory Overstock – Top 10 Items grid derived from API (supports new and legacy shapes)
     const overstockTopItems = useMemo(() => {
         const root = inventoryOverstockReportData?.data?.overstock_top_items_by_site
             ?? inventoryOverstockReportData?.overstock_top_items_by_site
@@ -640,9 +676,57 @@ const AllContent = () => {
     }, [consumableMaxRaw]);
 
     const overstockTopGrid = useMemo(() => {
+        // New shape: inventory_overstock_report { sites: string[], matrix_data: [...] }
+        const inv = inventoryOverstockReportData?.data?.inventory_overstock_report
+            ?? inventoryOverstockReportData?.inventory_overstock_report
+            ?? null;
+        if (inv) {
+            const matrix = Array.isArray(inv.matrix_data) ? inv.matrix_data : [];
+            // Prefer sites from API; if absent/empty, derive from matrix row keys
+            let sites: string[] = Array.isArray(inv.sites) ? inv.sites.slice() : [];
+            let siteKeys: string[] = [];
+
+            if (sites.length > 0) {
+                siteKeys = sites.map(normalizeSiteKey);
+            } else if (matrix.length > 0) {
+                const first = matrix[0] || {};
+                // Derive keys where value is an object with capital_book/current_stock
+                siteKeys = Object.keys(first).filter((k) => {
+                    if (k === 'item_name') return false;
+                    const v = (first as any)[k];
+                    return v && typeof v === 'object' && ('capital_book' in v || 'current_stock' in v);
+                });
+                // Create human-readable site names from derived keys
+                sites = siteKeys.map((k) => k.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+            }
+
+            if (sites.length > 0 && matrix.length > 0) {
+                const items = matrix.map((row: any) => {
+                    const capital = siteKeys.map((k) => Math.round(parseCapitalBook(row?.[k]?.capital_book ?? 0) / 1000));
+                    const capitalText = siteKeys.map((k) => {
+                        const raw = row?.[k]?.capital_book ?? '';
+                        if (typeof raw === 'string' && /[lk]/i.test(raw)) {
+                            // Preserve API-provided units (L/k). Normalize 'l'->'L'.
+                            return String(raw).trim().replace(/l/g, 'L').replace(/L(?=\w)/g, 'L');
+                        }
+                        const n = parseCapitalBook(raw);
+                        if (!n) return '0';
+                        const kVal = Math.round(n / 1000);
+                        return `${kVal}k`;
+                    });
+                    const stock = siteKeys.map((k) => Math.round(parsePercentSimple(row?.[k]?.current_stock ?? 0)));
+                    return { name: row?.item_name ?? '-', capital, capitalText, stock };
+                });
+                try {
+                    console.log('overstockTopGrid (new) -> sites:', sites.length, 'items:', items.length);
+                } catch {}
+                return { sites, items };
+            }
+        }
+
+        // Legacy shape fallback: overstock_top_items_by_site
         const sites: string[] = overstockTopItems.map((s: any) => s?.site_name).filter(Boolean);
         if (!sites.length) return { sites: [] as string[], items: [] as any[] };
-        // Rank items by total blocked_value across all sites and pick top 10
         const totals = new Map<string, number>();
         overstockTopItems.forEach((site: any) => {
             const items = Array.isArray(site?.items) ? site.items : [];
@@ -657,7 +741,7 @@ const AllContent = () => {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10)
             .map(([name]) => name);
-        const items = itemNames.map((name) => {
+    const items = itemNames.map((name) => {
             const capitalsRaw = sites.map((siteName) => {
                 const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
                 const it = (site?.items || []).find((x: any) => x?.item_name === name);
@@ -668,17 +752,20 @@ const AllContent = () => {
                 const it = (site?.items || []).find((x: any) => x?.item_name === name);
                 return Number(it?.current_stock ?? 0);
             });
-            const capital = capitalsRaw.map((v) => Math.round(v / 1000)); // display in k
+            const capital = capitalsRaw.map((v) => Math.round(v / 1000));
+            const capitalText = capitalsRaw.map((v) => `${Math.round((Number(v) || 0) / 1000)}k`);
             const stock = stocksRaw.map((v) => {
                 const n = Number(v) || 0;
-                // If value looks like a ratio (0-1), convert to %; else treat as already a count/percentage
                 if (n > 0 && n <= 1) return Math.round(n * 100);
                 return Math.round(n);
-            }); // display %
-            return { name, capital, stock };
+            });
+            return { name, capital, capitalText, stock };
         });
+        try {
+            console.log('overstockTopGrid (legacy) -> sites:', sites.length, 'items:', items.length);
+        } catch {}
         return { sites, items };
-    }, [overstockTopItems]);
+    }, [inventoryOverstockReportData, overstockTopItems]);
 
     // Top 10 Overdue Checklists – normalize shape from site_wise_checklist
     const top10Overdue = useMemo(() => {
@@ -976,7 +1063,7 @@ const AllContent = () => {
 
     const itemss = useMemo(() => overstockTopGrid.items, [overstockTopGrid]);
 
-    const Block = ({ capital, stock }) => (
+    const Block = ({ capital, capitalText, stock }) => (
         <td className="border border-black w-20 h-14 p-1">
             <div className="relative w-full h-full bg-white">
                 <svg
@@ -988,8 +1075,8 @@ const AllContent = () => {
                     <polygon points="0,0 100,0 100,100" style={{ fill: '#C4B89D' }} />
                 </svg>
 
-                <div className="absolute top-[2px] right-[4px] text-white font-semibold text-xs print:text-white">
-                    {capital}k
+                <div className="absolute top-[2px] right-[4px] text-white font-semibold text-xs print:text-black">
+                    {capitalText ?? `${capital}k`}
                 </div>
                 <div className="absolute bottom-[2px] left-[4px] text-black text-xs print:text-black">
                     {stock}%
@@ -3156,10 +3243,11 @@ const AllContent = () => {
                                                     >
                                                         {item.name}
                                                     </td>
-                                                    {item.capital.map((cap, colIdx) => (
+                            {item.capital.map((cap, colIdx) => (
                                                         <Block
                                                             key={colIdx}
-                                                            capital={cap}
+                                capital={cap}
+                                capitalText={item.capitalText ? item.capitalText[colIdx] : undefined}
                                                             stock={item.stock[colIdx]}
                                                         />
                                                     ))}
