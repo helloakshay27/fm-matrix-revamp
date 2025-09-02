@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, X, Star, ClipboardList, HelpCircle } from "lucide-react";
+import { Plus, X, Star, ClipboardList, HelpCircle, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
 import { apiClient } from "@/utils/apiClient";
 import {
   ticketManagementAPI,
@@ -409,22 +410,34 @@ export const AddSurveyPage = () => {
   const handleCreateSurvey = async () => {
     // Validation
     if (!title.trim()) {
-      alert("Please enter a title");
+      toast.error("Validation Error", {
+        description: "Please enter a title for the survey",
+        duration: 3000,
+      });
       return;
     }
     if (!checkType) {
-      alert("Please select a check type");
+      toast.error("Validation Error", {
+        description: "Please select a check type",
+        duration: 3000,
+      });
       return;
     }
 
     // Validate ticket fields if create ticket is checked
     if (createTicket) {
       if (!ticketCategory) {
-        alert("Please select a ticket category");
+        toast.error("Validation Error", {
+          description: "Please select a ticket category",
+          duration: 3000,
+        });
         return;
       }
       if (!assignTo) {
-        alert("Please select assign to");
+        toast.error("Validation Error", {
+          description: "Please select who to assign the ticket to",
+          duration: 3000,
+        });
         return;
       }
     }
@@ -440,86 +453,173 @@ export const AddSurveyPage = () => {
 
     try {
       setLoading(true);
+      setIsSubmitting(true);
 
-      const requestData = {
-        ...(createTicket && {
-          create_ticket: true,
-          category_name: parseInt(ticketCategory),
-          category_type: parseInt(assignTo),
-        }),
-        snag_checklist: {
-          name: title,
-          snag_audit_category_id: parseInt(category) || null,
-          check_type: checkType,
-          project_id: 1,
-          snag_audit_sub_category_id: 1,
-          // Add ticket creation fields if create ticket is checked
-        },
-        question: questions.map((question) => ({
-          descr: question.text,
-          qtype:
-            question.answerType === "multiple-choice"
-              ? "multiple"
-              : question.answerType === "input-box"
-              ? "input"
-              : question.answerType === "rating"
-              ? "rating"
-              : question.answerType === "emojis"
-              ? "emoji"
-              : "description",
-          quest_mandatory: question.mandatory,
-          image_mandatory: false,
-          ...(question.answerType === "multiple-choice" &&
-          question.answerOptions
-            ? {
-                quest_options: question.answerOptions.map((option) => ({
-                  option_name: option.text,
-                  option_type: option.type.toLowerCase(),
-                })),
-              }
-            : {}),
-          ...(question.answerType === "rating"
-            ? { rating: question.rating }
-            : {}),
-          ...(question.answerType === "emojis"
-            ? { emoji: question.selectedEmoji }
-            : {}),
-          ...(question.additionalFieldOnNegative &&
+      // Create FormData for multipart/form-data request matching server expectations
+      const formData = new FormData();
+      
+      // Add basic survey data as individual form fields (matching cURL structure)
+      formData.append('snag_checklist[name]', title);
+      formData.append('snag_checklist[check_type]', checkType);
+    
+     
+      
+      // Add ticket creation fields if enabled
+      if (createTicket) {
+        formData.append('create_ticket', 'true');
+        formData.append('category_name', ticketCategory);
+        formData.append('category_type', assignTo);
+      }
+
+      // Process questions with proper FormData structure
+      let fileCounter = 0;
+
+      questions.forEach((question, questionIndex) => {
+        // Add question basic fields
+        formData.append(`question[][descr]`, question.text);
+        
+        const qtype = question.answerType === "multiple-choice"
+          ? "multiple"
+          : question.answerType === "input-box"
+          ? "input"
+          : question.answerType === "rating"
+          ? "rating"
+          : question.answerType === "emojis"
+          ? "emoji"
+          : "description";
+        
+        formData.append(`question[][qtype]`, qtype);
+        formData.append(`question[][quest_mandatory]`, question.mandatory.toString());
+        formData.append(`question[][image_mandatory]`, 'false');
+
+        // Add multiple choice options
+        if (question.answerType === "multiple-choice" && question.answerOptions) {
+          question.answerOptions.forEach((option, optionIndex) => {
+            formData.append(`question[][quest_options][][option_name]`, option.text);
+            formData.append(`question[][quest_options][][option_type]`, option.type.toLowerCase());
+          });
+        }
+
+        // Add rating
+        if (question.answerType === "rating" && question.rating) {
+          formData.append(`question[][rating]`, question.rating.toString());
+        }
+
+        // Add emoji
+        if (question.answerType === "emojis" && question.selectedEmoji) {
+          formData.append(`question[][emoji]`, question.selectedEmoji);
+        }
+
+        // Handle additional fields with files (generic_tags)
+        if (question.additionalFieldOnNegative &&
           question.additionalFields &&
-          question.additionalFields.length > 0
-            ? {
-                generic_tags: question.additionalFields.map((field) => ({
-                  category_name: field.title,
-                  category_type: "questionss",
-                  tag_type: "not generic",
-                  active: true,
-                  icons:
-                    field.files.length > 0
-                      ? field.files.map((file) => ({
-                          name: file.name,
-                          type: file.type,
-                          size: file.size,
-                        }))
-                      : [],
-                })),
-              }
-            : {}),
-        })),
-      };
+          question.additionalFields.length > 0) {
+          
+          question.additionalFields.forEach((field, fieldIndex) => {
+            // Add generic tag metadata
+            formData.append(`question[][generic_tags][][category_name]`, field.title);
+            formData.append(`question[][generic_tags][][category_type]`, 'questions');
+            formData.append(`question[][generic_tags][][tag_type]`, 'not generic');
+            formData.append(`question[][generic_tags][][active]`, 'true');
+            
+            // Add files as icons array
+            if (field.files && field.files.length > 0) {
+              field.files.forEach((file, fileIndex) => {
+                // Add the actual file with proper array notation
+                formData.append(`question[][generic_tags][][icons][]`, file);
+                fileCounter++;
+              });
+            }
+          });
+        }
+      });
+
+      // Add file count for server reference
+      formData.append('total_files', fileCounter.toString());
+
+      // Debug logging to understand the FormData structure
+      console.log('\n=== FORMDATA STRUCTURE DEBUG ===');
+      console.log('1. Survey Basic Fields:');
+      console.log('   snag_checklist[name]:', title);
+      console.log('   snag_checklist[check_type]:', checkType);
+      console.log('   create_ticket:', createTicket ? 'true' : 'false');
+      if (createTicket) {
+        console.log('   category_name:', ticketCategory);
+        console.log('   category_type:', assignTo);
+      }
+      
+      console.log('\n2. Questions Structure:');
+      questions.forEach((question, qIndex) => {
+        console.log(`   Question ${qIndex + 1}:`);
+        console.log(`   question[][descr]: "${question.text}"`);
+        console.log(`   question[][qtype]: ${question.answerType === "multiple-choice" ? "multiple" : question.answerType === "input-box" ? "input" : question.answerType === "rating" ? "rating" : question.answerType === "emojis" ? "emoji" : "description"}`);
+        console.log(`   question[][quest_mandatory]: ${question.mandatory}`);
+        
+        if (question.answerType === "multiple-choice" && question.answerOptions) {
+          question.answerOptions.forEach((option, optIndex) => {
+            console.log(`   question[][quest_options][][option_name]: "${option.text}"`);
+            console.log(`   question[][quest_options][][option_type]: ${option.type.toLowerCase()}`);
+          });
+        }
+        
+        if (question.additionalFieldOnNegative && question.additionalFields) {
+          question.additionalFields.forEach((field, fIndex) => {
+            console.log(`   question[][generic_tags][][category_name]: "${field.title}"`);
+            console.log(`   question[][generic_tags][][category_type]: questions`);
+            console.log(`   question[][generic_tags][][tag_type]: not generic`);
+            if (field.files && field.files.length > 0) {
+              console.log(`   question[][generic_tags][][icons][]: ${field.files.length} files`);
+              field.files.forEach((file, fileIndex) => {
+                console.log(`     - File ${fileIndex}: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+              });
+            }
+          });
+        }
+      });
+      
+      // Show all FormData keys for verification
+      console.log('\n3. All FormData Keys:');
+      const allKeys = Array.from(formData.keys()).sort();
+      allKeys.forEach(key => {
+        if (key.includes('[icons][]')) {
+          console.log(`   ${key}: [File Object]`);
+        } else {
+          console.log(`   ${key}: ${formData.get(key)}`);
+        }
+      });
+      
+      console.log(`\n4. Summary:`);
+      console.log(`   Total FormData fields: ${allKeys.length}`);
+      console.log(`   Total files: ${fileCounter}`);
+      console.log(`   File keys: ${allKeys.filter(key => key.includes('[icons][]')).length}`);
 
       console.log(
-        "Question request data:",
-        JSON.stringify(requestData, null, 2)
+        "\n5. FormData Request Summary:",
+        {
+          total_fields: Array.from(formData.keys()).length,
+          total_files: fileCounter,
+          file_fields: Array.from(formData.keys()).filter(key => key.includes('[icons][]')).length
+        }
       );
 
       const response = await apiClient.post(
         "/pms/admin/snag_checklists.json",
-        requestData
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
       );
       console.log("Question created successfully:", response.data);
 
-      // Show success message
-      alert("Question created successfully!");
+      // Show success toast
+      toast.success("Question Created Successfully!", {
+        description: "Your Question has been created and is now available.",
+        icon: <CheckCircle className="w-4 h-4" />,
+        duration: 4000,
+      });
+
       navigate("/master/survey/list");
     } catch (error) {
       console.error("Error creating survey:", error);
@@ -528,18 +628,24 @@ export const AddSurveyPage = () => {
       if (error.response) {
         console.error("Response data:", error.response.data);
         console.error("Response status:", error.response.status);
-        alert(
-          `Failed to create survey: ${
-            error.response.data?.message || error.response.statusText
-          }`
-        );
+        toast.error("Failed to Create Survey", {
+          description: error.response.data?.message || error.response.statusText || "Unknown error occurred",
+          duration: 5000,
+        });
       } else if (error.request) {
-        alert("Network error: Unable to connect to server");
+        toast.error("Network Error", {
+          description: "Unable to connect to server. Please check your connection.",
+          duration: 5000,
+        });
       } else {
-        alert(`Error: ${error.message}`);
+        toast.error("Error", {
+          description: error.message || "An unexpected error occurred",
+          duration: 5000,
+        });
       }
     } finally {
       setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -991,9 +1097,7 @@ export const AddSurveyPage = () => {
                                     label="Upload File"
                                     value={
                                       field.files.length > 0
-                                        ? field.files
-                                            .map((file) => file.name)
-                                            .join(", ")
+                                        ? `${field.files.length} file(s) selected`
                                         : "Choose File: No file chosen"
                                     }
                                     fullWidth
@@ -1019,13 +1123,13 @@ export const AddSurveyPage = () => {
                                       readOnly: true,
                                     }}
                                     onClick={() =>
-                                      document
+                                      !isSubmitting && document
                                         .getElementById(
                                           `additional-file-${question.id}-${fieldIndex}`
                                         )
                                         ?.click()
                                     }
-                                    style={{ cursor: "pointer" }}
+                                    style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
                                   />
                                   <input
                                     type="file"
@@ -1033,7 +1137,7 @@ export const AddSurveyPage = () => {
                                     className="hidden"
                                     id={`additional-file-${question.id}-${fieldIndex}`}
                                     onChange={(e) => {
-                                      if (e.target.files) {
+                                      if (e.target.files && !isSubmitting) {
                                         handleAdditionalFieldFilesChange(
                                           question.id,
                                           fieldIndex,
@@ -1042,6 +1146,7 @@ export const AddSurveyPage = () => {
                                       }
                                     }}
                                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+                                    disabled={isSubmitting}
                                   />
                                 </div>
 
@@ -1070,25 +1175,29 @@ export const AddSurveyPage = () => {
                                 )}
 
                                 {/* File names list with remove option */}
-                                {/* {field.files.length > 0 && (
-                                <div className="col-span-full space-y-1 mt-2">
-                                  {field.files.map((file, fileIndex) => (
-                                    <div
-                                      key={`${file.name}-${file.lastModified}`}
-                                      className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs"
-                                    >
-                                      <span className="truncate">{file.name}</span>
-                                      <button
-                                        type="button"
-                                        className="text-gray-600 hover:text-red-600 ml-2"
-                                        onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                {field.files.length > 0 && (
+                                  <div className="col-span-full space-y-1 mt-2">
+                                    {field.files.map((file, fileIndex) => (
+                                      <div
+                                        key={`${file.name}-${file.lastModified}`}
+                                        className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs"
                                       >
-                                        <X className="w-3 h-3" />
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
-                              )} */}
+                                        <span className="truncate flex-1 mr-2">{file.name}</span>
+                                        <span className="text-gray-500 mr-2">
+                                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                                        </span>
+                                        <button
+                                          type="button"
+                                          className="text-gray-600 hover:text-red-600"
+                                          onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                          disabled={isSubmitting}
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             );
                           }
@@ -1233,16 +1342,17 @@ export const AddSurveyPage = () => {
         <div className="flex gap-4 justify-center pt-6">
           <Button
             onClick={handleCreateSurvey}
-            disabled={loading}
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto"
+            disabled={loading || isSubmitting}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 h-auto disabled:opacity-50"
           >
-            {loading ? "Creating..." : "Create Survey"}
+            {(loading || isSubmitting) ? "Creating..." : "Create Survey"}
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => navigate(-1)}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto"
+            disabled={loading || isSubmitting}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 h-auto disabled:opacity-50"
           >
             Cancel
           </Button>

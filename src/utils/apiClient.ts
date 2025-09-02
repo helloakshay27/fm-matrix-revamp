@@ -34,10 +34,21 @@ apiClient.interceptors.response.use(
 export const apiClientUtil = {
   put: async <T>(endpoint: string, data: any): Promise<T> => {
     const baseUrl = API_CONFIG.BASE_URL;
-    if (!baseUrl || baseUrl === 'https://api.example.com') {
+    if (!baseUrl || baseUrl === 'https://fm-uat-api.lockated.com/') {
       throw new Error('API base URL is not configured. Please set VITE_API_BASE_URL in your .env file or ensure it is set in localStorage.');
     }
-    const url = getFullUrl(endpoint);
+    
+    // Determine backend URL based on base URL
+    let backendUrl: string;
+    if (baseUrl === 'https://fm-matrix.lockated.com/') {
+      backendUrl = 'https://fm-matrix.lockated.com/';
+    } else if (baseUrl === 'https://oig.gophygital.work/') {
+      backendUrl = 'https://oig.gophygital.work/';
+    } else {
+      backendUrl = baseUrl; // fallback to original base URL
+    }
+    
+    const url = `${backendUrl}${endpoint.startsWith('/') ? endpoint.slice(1) : endpoint}`;
     const response = await fetch(url, {
       method: 'PUT',
       headers: {

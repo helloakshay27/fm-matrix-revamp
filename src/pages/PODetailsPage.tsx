@@ -264,9 +264,32 @@ export const PODetailsPage = () => {
     fetchData();
   }, []);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'purchase_order.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message);
+    }
   };
+
   const handleFeeds = () => {
     navigate(`/finance/po/feeds/${id}`);
   };

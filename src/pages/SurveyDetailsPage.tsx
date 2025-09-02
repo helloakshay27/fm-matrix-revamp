@@ -2,17 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, ChevronDown } from 'lucide-react';
+import { ArrowLeft, X, Plus, ChevronDown, CheckCircle } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   // State for API data
   const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(null);
@@ -276,10 +275,9 @@ export const SurveyDetailsPage = () => {
       setSurveyMappings(surveyMappingsArray);
     } catch (error) {
       console.error('Error fetching survey mappings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load survey mappings",
-        variant: "destructive"
+      toast.error('Failed to Load Survey Mappings', {
+        description: 'Unable to fetch survey mapping data',
+        duration: 4000,
       });
     } finally {
       setLoadingSurveyMappings(false);
@@ -313,10 +311,9 @@ export const SurveyDetailsPage = () => {
       return surveyMappingsArray.length > 0 ? surveyMappingsArray[0] : null;
     } catch (error) {
       console.error('Error fetching survey mapping by ID:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load survey mapping",
-        variant: "destructive"
+      toast.error('Failed to Load Survey Mapping', {
+        description: 'Unable to fetch specific survey mapping data',
+        duration: 4000,
       });
       return null;
     }
@@ -337,10 +334,9 @@ export const SurveyDetailsPage = () => {
         setSnagChecklist(checklistData);
         setCategories(categoriesData);
       } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to load survey data",
-          variant: "destructive"
+        toast.error('Failed to Load Survey Data', {
+          description: 'Unable to fetch survey details',
+          duration: 4000,
         });
       } finally {
         setLoading(false);
@@ -354,7 +350,7 @@ export const SurveyDetailsPage = () => {
     fetchZones();
     fetchRooms();
     fetchSurveyMappings();
-  }, [id, toast]);
+  }, [id]);
 
   // Get category name by ID
   const getCategoryName = (categoryId: number) => {
@@ -368,15 +364,19 @@ export const SurveyDetailsPage = () => {
 
   const handleSubmitLocation = async () => {
     try {
-      // Validate that we have room IDs selected
-      // if (locationConfig.selectedRoomIds.length === 0) {
-      //   toast({
-      //     title: "Error",
-      //     description: "Please select at least one room",
-      //     variant: "destructive"
-      //   });
-      //   return;
-      // }
+      // Validate that we have some location selected
+      const hasSelection = locationConfig.selectedBuildingIds.length > 0 || 
+                          locationConfig.selectedWingIds.length > 0 || 
+                          locationConfig.selectedFloorIds.length > 0 || 
+                          locationConfig.selectedRoomIds.length > 0;
+
+      if (!hasSelection) {
+        toast.error('Validation Error', {
+          description: 'Please select at least one location (building, wing, floor, or room)',
+          duration: 4000,
+        });
+        return;
+      }
 
       // Prepare the API request
       const requestData = {
@@ -406,10 +406,11 @@ export const SurveyDetailsPage = () => {
       const result = await response.json();
       console.log('Survey mapping created successfully:', result);
 
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Survey mapping created successfully",
+      // Show success toast
+      toast.success('Survey Mapping Created Successfully!', {
+        description: 'The location mapping has been added to the survey.',
+        icon: <CheckCircle className="w-4 h-4" />,
+        duration: 4000,
       });
 
       // Immediately refresh survey mappings data to show the new entry
@@ -432,10 +433,9 @@ export const SurveyDetailsPage = () => {
       });
     } catch (error) {
       console.error('Error creating survey mapping:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create survey mapping",
-        variant: "destructive"
+      toast.error('Failed to Create Survey Mapping', {
+        description: error.message || 'An error occurred while creating the mapping',
+        duration: 5000,
       });
     }
   };
@@ -512,19 +512,18 @@ export const SurveyDetailsPage = () => {
           {/* Questions Grid */}
           {!loading && snagChecklist && (
             <div className="grid grid-cols-1 gap-6">
-              {snagChecklist.snag_questions?.map((question, index) => (
+              {snagChecklist.snag_questions?.map((question: any, index) => (
                 <Card key={question.id} className="border border-gray-200 bg-gray-100">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
                     <CardTitle className="text-base font-medium">
-                      Question
+                      Question {index + 1}
                     </CardTitle>
-                    <X className="w-4 h-4 text-gray-400" />
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Question
+                          Question Text
                         </label>
                         <input 
                           type="text"
@@ -538,34 +537,36 @@ export const SurveyDetailsPage = () => {
                       
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Select Answer Type
+                          Answer Type
                         </label>
-                        <Select value="Multiple Choice" disabled>
+                        <Select value={question.qtype === 'multiple' ? 'Multiple Choice' : question.qtype === 'input' ? 'Input Box' : question.qtype === 'rating' ? 'Rating' : question.qtype === 'emoji' ? 'Emojis' : 'Description Box'} disabled>
                           <SelectTrigger className="w-full h-10 bg-gray-50">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                            <SelectItem value="Text Area">Text Area</SelectItem>
-                            <SelectItem value="Short Answer">Short Answer</SelectItem>
+                            <SelectItem value="Input Box">Input Box</SelectItem>
+                            <SelectItem value="Description Box">Description Box</SelectItem>
+                            <SelectItem value="Rating">Rating</SelectItem>
+                            <SelectItem value="Emojis">Emojis</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
 
-
+                    {/* Answer Options for Multiple Choice */}
                     {question.snag_quest_options && question.snag_quest_options.length > 0 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-3">
                           Answer Options
                         </label>
                         <div className="space-y-3">
-                          {question.snag_quest_options?.map((option) => (
+                          {question.snag_quest_options.map((option: any) => (
                             <div key={option.id} className="flex items-center gap-3">
                               <input 
                                 type="text"
                                 placeholder="Answer Option"
-                                className="flex-1 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                className="flex-1 h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
                                 value={option.qname}
                                 disabled
                                 readOnly
@@ -579,15 +580,115 @@ export const SurveyDetailsPage = () => {
                                   <SelectItem value="N">N</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <X className="w-4 h-4 text-gray-400" />
                             </div>
-                          )) || []}
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Additional Fields (Generic Tags with Files) */}
+                    {question.generic_tags && question.generic_tags.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Additional Fields for Negative Selection
+                        </label>
+                        <div className="space-y-4">
+                          {question.generic_tags.map((tag: any, tagIndex: number) => (
+                            <div key={tag.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Title
+                                  </label>
+                                  <input 
+                                    type="text"
+                                    className="w-full h-9 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                    value={tag.category_name}
+                                    disabled
+                                    readOnly
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Files Uploaded
+                                  </label>
+                                  <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-md border">
+                                    {tag.icons && tag.icons.length > 0 ? `${tag.icons.length} file(s) uploaded` : 'No files'}
+                                  </div>
+                                </div>
+                              </div>
+                              
+                              {/* Display uploaded files */}
+                              {tag.icons && tag.icons.length > 0 && (
+                                <div className="mt-4">
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Uploaded Files
+                                  </label>
+                                  <div className="space-y-2">
+                                    {tag.icons.map((icon: any) => (
+                                      <div key={icon.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
+                                        <div className="flex items-center gap-3">
+                                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                          </div>
+                                          <div>
+                                            <div className="text-sm font-medium text-gray-900">{icon.file_name}</div>
+                                            <div className="text-xs text-gray-500">{(icon.file_size / 1024).toFixed(2)} KB</div>
+                                          </div>
+                                        </div>
+                                        {icon.url && (
+                                          <a 
+                                            href={icon.url} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                          >
+                                            View
+                                          </a>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Ticket Configuration */}
+                    {question.ticket_configs && (
+                      <div className="border-t border-gray-200 pt-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Ticket Configuration
+                        </label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Category</label>
+                            <div className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded border">
+                              {question.ticket_configs.category}
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 mb-1">Assigned To</label>
+                            <div className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded border">
+                              {question.ticket_configs.assigned_to}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     )}
 
                     <div className="flex items-center space-x-2">
-                      <Checkbox id={`mandatory-${question.id}`} defaultChecked disabled className="data-[state=checked]:bg-gray-400" />
+                      <Checkbox 
+                        id={`mandatory-${question.id}`} 
+                        checked={question.quest_mandatory} 
+                        disabled 
+                        className="data-[state=checked]:bg-gray-400"
+                      />
                       <label htmlFor={`mandatory-${question.id}`} className="text-sm text-gray-700">
                         Mandatory
                       </label>
@@ -600,8 +701,7 @@ export const SurveyDetailsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Survey Mapping List Table */}
-      <Card className="border border-gray-200 bg-gray-50">
+      {/* <Card className="border border-gray-200 bg-gray-50">
         <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
@@ -629,17 +729,13 @@ export const SurveyDetailsPage = () => {
               </DialogHeader>
               
               <div className="space-y-6">
-                {/* Direct Dropdowns Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Buildings Dropdown */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-900">Buildings</h4>
                      <Select onValueChange={(value) => {
-                       // value contains the building ID, find the building name for display
                        const selectedBuilding = buildings.find(b => b.id.toString() === value)
                        if (selectedBuilding && !locationConfig.selectedBuildings.includes(selectedBuilding.name)) {
                          addSelectedItem('building', selectedBuilding.name);
-                         // Also store the building ID for the API call
                          setLocationConfig(prev => ({
                            ...prev,
                            selectedBuildingIds: [...prev.selectedBuildingIds, selectedBuilding.id]
@@ -662,7 +758,6 @@ export const SurveyDetailsPage = () => {
                         )}
                       </SelectContent>
                     </Select>
-                     {/* Selected buildings */}
                     {locationConfig.selectedBuildings.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {locationConfig.selectedBuildings.map((building) => (
@@ -680,15 +775,12 @@ export const SurveyDetailsPage = () => {
                     )}
                   </div>
 
-                  {/* Wings Dropdown */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-900">Wings</h4>
                      <Select onValueChange={(value) => {
-                       // value contains the wing ID, find the wing name for display
                        const selectedWing = wings.find(w => w.id.toString() === value);
                        if (selectedWing && !locationConfig.selectedWings.includes(selectedWing.name)) {
                          addSelectedItem('wing', selectedWing.name);
-                         // Also store the wing ID for the API call
                          setLocationConfig(prev => ({
                            ...prev,
                            selectedWingIds: [...prev.selectedWingIds, selectedWing.id]
@@ -711,7 +803,6 @@ export const SurveyDetailsPage = () => {
                         )}
                       </SelectContent>
                     </Select>
-                    {/* Selected wings */}
                     {locationConfig.selectedWings.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {locationConfig.selectedWings.map((wing) => (
@@ -729,15 +820,12 @@ export const SurveyDetailsPage = () => {
                     )}
                   </div>
 
-                  {/* Floors Dropdown */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-900">Floors</h4>
                       <Select onValueChange={(value) => {
-                        // value contains the floor ID, find the floor name for display
                         const selectedFloor = floors.find(f => f.id.toString() === value);
                         if (selectedFloor && !locationConfig.selectedFloors.includes(selectedFloor.name)) {
                           addSelectedItem('floor', selectedFloor.name);
-                          // Also store the floor ID for the API call
                           setLocationConfig(prev => ({
                             ...prev,
                             selectedFloorIds: [...prev.selectedFloorIds, selectedFloor.id]
@@ -760,7 +848,6 @@ export const SurveyDetailsPage = () => {
                          )}
                        </SelectContent>
                      </Select>
-                    {/* Selected floors */}
                     {locationConfig.selectedFloors.length > 0 && (
                       <div className="flex flex-wrap gap-2">
                         {locationConfig.selectedFloors.map((floor) => (
@@ -778,7 +865,6 @@ export const SurveyDetailsPage = () => {
                     )}
                   </div>
 
-                  {/* Rooms Dropdown */}
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium text-gray-900">Rooms</h4>
                      <Select onValueChange={(value) => {
@@ -836,59 +922,139 @@ export const SurveyDetailsPage = () => {
           </Dialog>
         </div>
         
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-5 bg-gray-100">
-            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+        <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div className="grid grid-cols-6 bg-gray-50">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200 text-sm">
               Building
             </div>
-            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200 text-sm">
               Wing
             </div>
-            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200 text-sm">
               Floor
             </div>
-            {/* <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
-              Zone
-            </div> */}
-            <div className="p-4 font-medium text-gray-700 border-r border-gray-200">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200 text-sm">
               Room
             </div>
-            <div className="p-4 font-medium text-gray-700">
+            <div className="p-4 font-medium text-gray-700 border-r border-gray-200 text-sm">
               QR Code
+            </div>
+            <div className="p-4 font-medium text-gray-700 text-sm">
+              Actions
             </div>
           </div>
           
-          {/* Table Body */}
           {loadingSurveyMappings ? (
             <div className="p-8 text-center text-gray-500">
-              Loading survey mappings...
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
+                <span>Loading survey mappings...</span>
+              </div>
             </div>
           ) : surveyMappings.length > 0 ? (
-            surveyMappings.map((mapping) => (
-                <div key={mapping.id} className="grid grid-cols-5 border-b border-gray-200 last:border-b-0">
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.building_name || mapping.building_id || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.wing_name || mapping.wing_id || '-'}</div>
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.floor_name || mapping.floor_id || '-'}</div>
-                  {/* <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.area_name || mapping.area_id || '-'}</div> */}
-                  <div className="p-4 text-gray-700 border-r border-gray-200">{mapping.room_name || mapping.room_id || '-'}</div>
-                  <div className="p-4 text-gray-700">
-                    {mapping.qr_code 
-                      ? (typeof mapping.qr_code === 'object' 
-                          ? mapping.qr_code.document_file_name || 'QR Code Available' 
-                          : mapping.qr_code)
-                      : '-'
-                    }
+            surveyMappings.map((mapping, index) => (
+                <div key={mapping.id || index} className="grid grid-cols-6 border-b border-gray-200 last:border-b-0 hover:bg-gray-50">
+                  <div className="p-4 text-gray-700 border-r border-gray-200 text-sm">
+                    {mapping.building_name || buildings.find(b => b.id === mapping.building_id)?.name || mapping.building_id || '-'}
+                  </div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200 text-sm">
+                    {mapping.wing_name || wings.find(w => w.id === mapping.wing_id)?.name || mapping.wing_id || '-'}
+                  </div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200 text-sm">
+                    {mapping.floor_name || floors.find(f => f.id === mapping.floor_id)?.name || mapping.floor_id || '-'}
+                  </div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200 text-sm">
+                    {mapping.room_name || rooms.find(r => r.id === mapping.room_id)?.name || mapping.room_id || '-'}
+                  </div>
+                  <div className="p-4 text-gray-700 border-r border-gray-200 text-sm">
+                    {mapping.qr_code ? (
+                      typeof mapping.qr_code === 'object' ? (
+                        mapping.qr_code.document_file_name ? (
+                          <div className="flex items-center space-x-2">
+                            <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                              <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <span className="text-green-700 font-medium">Available</span>
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">-</span>
+                        )
+                      ) : (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+                            <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <span className="text-green-700 font-medium">Available</span>
+                        </div>
+                      )
+                    ) : (
+                      <div className="flex items-center space-x-2">
+                        <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
+                          <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </div>
+                        <span className="text-gray-500">Not Available</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4 text-gray-700 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                        onClick={() => {
+                          console.log('View mapping:', mapping);
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                      </Button>
+                      {mapping.qr_code && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2 text-green-600 hover:text-green-800 hover:bg-green-50"
+                          onClick={() => {
+                            const qrUrl = typeof mapping.qr_code === 'object' ? mapping.qr_code.url : mapping.qr_code;
+                            if (qrUrl) {
+                              window.open(qrUrl, '_blank');
+                            }
+                          }}
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
             ))
           ) : (
-            <div className="p-8 text-center text-gray-500">
-              No survey mappings found
+            <div className="p-8 text-center">
+              <div className="flex flex-col items-center space-y-3">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-gray-500 font-medium">No survey mappings found</p>
+                  <p className="text-sm text-gray-400 mt-1">Click "Add" to create a new mapping</p>
+                </div>
+              </div>
             </div>
            )}
          </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>;
 };

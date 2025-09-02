@@ -307,9 +307,30 @@ export const MaterialPRDetailsPage = () => {
     }
   };
 
-  const handlePrint = () => {
-    // TODO: Implement print functionality
-    toast.info('Print functionality not implemented yet');
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'material_pr.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message);
+    }
   };
 
   // Transform pr.pms_pr_inventories to match column keys
