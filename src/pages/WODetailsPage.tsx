@@ -233,6 +233,7 @@ export const WODetailsPage = () => {
       },
       work_category: "",
       payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
+      term_condition: "",
     },
     inventories: [],
     totals: { net_amount: "", total_taxable: "", taxes: "", total_value: "" },
@@ -400,6 +401,32 @@ export const WODetailsPage = () => {
     }
   };
 
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'work_order.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log(error)
+      toast.error(error.message);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
       <Button
@@ -494,6 +521,7 @@ export const WODetailsPage = () => {
               size="sm"
               variant="outline"
               className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handlePrint}
             >
               <Printer className="w-4 h-4 mr-1" />
               Print
@@ -807,7 +835,7 @@ export const WODetailsPage = () => {
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
           Terms & Conditions :
         </h3>
-        <p className="text-gray-700">NA</p>
+        <p className="text-gray-700">{workOrder.work_order?.term_condition}</p>
 
         <div className="mt-6">
           <p className="text-gray-900 font-medium">

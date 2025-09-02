@@ -325,12 +325,6 @@ export const WODashboard = () => {
             {item?.all_level_approved ? "Approved" : item?.all_level_approved === false ? "Rejected" : "Pending"}
           </span>
         );
-      case "reference_number":
-        return (
-          <span className="text-blue-600 hover:underline cursor-pointer">
-            {value || "N/A"}
-          </span>
-        );
       case "active":
         return (
           <input
