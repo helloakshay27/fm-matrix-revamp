@@ -120,17 +120,13 @@ export const AttendanceDashboard = () => {
     })
   );
 
-  // Fetch attendance on mount and when filters/search change
+  // Fetch attendance on mount and when search changes (department filter will dispatch on Apply)
   useEffect(() => {
-    let paramString = '';
-    if (debouncedSearchQuery && debouncedSearchQuery.trim()) {
-      // Only encode the value, not the param name
-      paramString = `${encodeURIComponent(debouncedSearchQuery.trim())}`;
-    } else if (departmentFilter && departmentFilter.trim()) {
-      paramString = `${encodeURIComponent(departmentFilter.trim())}`;
-    }
-    dispatch(fetchAttendanceData(paramString));
-  }, [dispatch, debouncedSearchQuery, departmentFilter]);
+    const value = debouncedSearchQuery && debouncedSearchQuery.trim()
+      ? debouncedSearchQuery.trim()
+      : '';
+    dispatch(fetchAttendanceData(value));
+  }, [dispatch, debouncedSearchQuery]);
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -529,14 +525,18 @@ export const AttendanceDashboard = () => {
   const handleApplyFilter = () => {
     setFilterModalOpen(false);
     setCurrentPage(1);
-    // No need to dispatch here, useEffect will handle it
+    const value = departmentFilter.trim();
+    dispatch(fetchAttendanceData(value));
   };
 
   const handleResetFilter = () => {
     setDepartmentFilter('');
     setFilterModalOpen(false);
     setCurrentPage(1);
-    // No need to dispatch here, useEffect will handle it
+    const value = debouncedSearchQuery && debouncedSearchQuery.trim()
+      ? debouncedSearchQuery.trim()
+      : '';
+    dispatch(fetchAttendanceData(value));
   };
 
   const departmentList = useMemo(
