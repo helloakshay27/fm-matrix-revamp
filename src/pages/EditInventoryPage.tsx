@@ -220,9 +220,23 @@ export const EditInventoryPage = () => {
         (typeof fetchedInventory.inventory_type === 'number' && fetchedInventory.inventory_type === 1) ? 'spares' :
           (typeof fetchedInventory.inventory_type === 'string') ? fetchedInventory.inventory_type : 'spares';
 
-      const criticalityValue = (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 2) ? 'non-critical' :
-        (typeof fetchedInventory.criticality === 'number' && fetchedInventory.criticality === 1) ? 'critical' :
-          (typeof fetchedInventory.criticality === 'string') ? fetchedInventory.criticality : 'critical';
+      // Normalize criticality from API:
+      // Numeric: 0 => non-critical, 1 => critical, (legacy: 2 => non-critical)
+      // String: matches 'non' => non-critical, 'crit' => critical
+      const criticalityValue = (() => {
+        const c = (fetchedInventory as any)?.criticality;
+        if (typeof c === 'number') {
+          if (c === 0) return 'non-critical';
+          if (c === 1) return 'critical';
+          if (c === 2) return 'non-critical'; // legacy handling
+        }
+        if (typeof c === 'string') {
+          const s = c.toLowerCase();
+          if (s.includes('non')) return 'non-critical';
+          if (s.includes('crit')) return 'critical';
+        }
+        return 'critical';
+      })();
 
       setInventoryType(inventoryTypeValue);
       setCriticality(criticalityValue);
