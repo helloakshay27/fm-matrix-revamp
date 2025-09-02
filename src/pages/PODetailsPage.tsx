@@ -27,7 +27,7 @@ interface ApprovalLevel {
 
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
-  { key: "sacHsnCode", label: "SAC/HSN Code", sortable: true, draggable: true },
+  { key: "sac_hsn_code", label: "SAC/HSN Code", sortable: true, draggable: true },
   {
     key: "expected_date",
     label: "Expected Date",
@@ -267,7 +267,7 @@ export const PODetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -19,7 +19,7 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "external_id",
+    key: "wo_no",
     label: "PR No.",
     sortable: true,
     draggable: true,
@@ -68,7 +68,7 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "total_amount",
+    key: "total_value",
     label: "PR Amount",
     sortable: true,
     draggable: true,
