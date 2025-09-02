@@ -282,7 +282,7 @@ export const MobileSurveyLanding: React.FC = () => {
         </div>
         
         <div className="text-center mb-6">
-          <h3 className="text-lg font-medium text-black">{surveyData.survey_title}</h3>
+          <h1 className="text-2xl font-medium text-black">{surveyData.survey_title}</h1>
         </div>
 
         {/* Show emoji rating or generic tags based on state */}
@@ -506,7 +506,7 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Footer */}
       <div className="text-center py-4 text-gray-500 text-sm space-y-1">
         <div>{surveyData.site_name} - {surveyData.area_name}</div>
-        <div>Survey ID: {mappingId}</div>
+        {/* <div>Survey ID: {mappingId}</div> */}
       </div>
     </div>
   );
