@@ -30,6 +30,8 @@ export const MobileSurveyFeedback: React.FC = () => {
     { id: 'Toilet Paper Missing', icon: '🧻', label: 'Toilet Paper Missing' }
   ];
 
+ 
+
   const handleIssueToggle = (issueId: string) => {
     setSelectedIssues(prev => 
       prev.includes(issueId) 
