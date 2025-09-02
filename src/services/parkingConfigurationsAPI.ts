@@ -81,6 +81,117 @@ export interface Floor {
   active?: boolean;
 }
 
+export interface ParkingBookingSummary {
+  total_slots: number;
+  vacant_two_wheeler: number;
+  vacant_four_wheeler: number;
+  alloted_slots: number;
+  vacant_slots: number;
+  two_wheeler_allotted: number;
+  four_wheeler_allotted: number;
+}
+
+export interface ParkingBookingClient {
+  id: number;
+  name: string;
+  two_wheeler_count: number;
+  four_wheeler_count: number;
+  free_parking: number;
+  paid_parking: number;
+  available_parking_slots: number;
+}
+
+export interface ParkingBookingsResponse {
+  summary: ParkingBookingSummary;
+  clients: ParkingBookingClient[];
+}
+
+export interface ParkingEntity {
+  id: number;
+  name: string;
+  color_code: string;
+}
+
+export interface ParkingSummary {
+  two_wheeler_count: number;
+  four_wheeler_count: number;
+}
+
+export interface LeasePeriod {
+  start_date: string;
+  end_date: string;
+  expired: boolean;
+}
+
+export interface ParkingLease {
+  id: number;
+  lease_period: LeasePeriod;
+  parking_bookings: unknown[]; // Can be expanded based on actual booking structure
+}
+
+export interface ParkingDetailsResponse {
+  entity: ParkingEntity;
+  parking_summary: ParkingSummary;
+  leases: ParkingLease[];
+}
+
+// Types for parking slots with status API
+export interface ParkingSlot {
+  id: number;
+  name: string;
+  stacked: boolean;
+  reserved: boolean;
+  parking_type: number;
+  status: string;
+  booking_details: unknown;
+}
+
+export interface ParkingCategory {
+  parking_category: string;
+  floor_name: string;
+  total_slots: number;
+  booked_slots: number;
+  vacant_slots: number;
+  reserved_slots: number;
+  parking_slots: ParkingSlot[];
+}
+
+export interface ParkingSlotsWithStatusResponse {
+  filters: {
+    building_id: string;
+    floor_id: string;
+    slot_type_id: string;
+  };
+  parking_categories: ParkingCategory[];
+}
+
+// Types for entities API (Client Name dropdown)
+export interface CustomerLease {
+  id: number;
+  lease_start_date: string;
+  lease_end_date: string;
+  free_parking: number;
+  paid_parking: number;
+}
+
+export interface Entity {
+  id: number;
+  name: string;
+  mobile: string;
+  email: string;
+  ext_project_code: string | null;
+  company_code: string | null;
+  ext_customer_code: string | null;
+  color_code: string;
+  created_at: string | null;
+  updated_at: string | null;
+  customer_leases: CustomerLease[];
+}
+
+export interface EntitiesResponse {
+  entities: Entity[];
+}
+
 export const fetchParkingConfigurations = async (): Promise<ParkingConfigurationsResponse> => {
   try {
     const url = getFullUrl(API_CONFIG.ENDPOINTS.PARKING_CONFIGURATIONS);
@@ -231,6 +342,122 @@ export const fetchFloors = async (buildingId?: string): Promise<Floor[]> => {
     return floors;
   } catch (error) {
     console.error('Error fetching floors:', error);
+    throw error;
+  }
+};
+
+export const fetchParkingBookings = async (): Promise<ParkingBookingsResponse> => {
+  try {
+    const url = getFullUrl(API_CONFIG.ENDPOINTS.PARKING_BOOKINGS);
+    const options = getAuthenticatedFetchOptions('GET');
+
+    console.log('Fetching parking bookings from:', url);
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Parking bookings API response:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching parking bookings:', error);
+    throw error;
+  }
+};
+
+export const fetchParkingDetails = async (clientId: string): Promise<ParkingDetailsResponse> => {
+  try {
+    const url = getFullUrl(`${API_CONFIG.ENDPOINTS.PARKING_BOOKING_DETAILS}/${clientId}/customer_booking_show.json`);
+    const options = getAuthenticatedFetchOptions('GET');
+
+    console.log('Fetching parking details from:', url);
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Parking details API response:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching parking details:', error);
+    throw error;
+  }
+};
+
+export const fetchParkingSlotsWithStatus = async (
+  buildingId: string, 
+  floorId: string, 
+  slotTypeId: string
+): Promise<ParkingSlotsWithStatusResponse> => {
+  try {
+    const url = getFullUrl(`/pms/admin/parking_bookings/parking_slots_with_status?building_id=${buildingId}&floor_id=${floorId}&slot_type_id=${slotTypeId}`);
+    const options = getAuthenticatedFetchOptions('GET');
+
+    console.log('Fetching parking slots with status from:', url);
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Parking slots with status API response:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error fetching parking slots with status:', error);
+    throw error;
+  }
+};
+
+export const fetchEntities = async (): Promise<Entity[]> => {
+  try {
+    const url = getFullUrl(API_CONFIG.ENDPOINTS.ENTITIES);
+    const options = getAuthenticatedFetchOptions('GET');
+
+    console.log('Fetching entities from:', url);
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Entities API response:', data);
+    
+    // The API returns { entities: [...] } 
+    return data.entities || [];
+  } catch (error) {
+    console.error('Error fetching entities:', error);
+    throw error;
+  }
+};
+
+export const fetchCustomerLeases = async (entityId: number): Promise<CustomerLease[]> => {
+  try {
+    const url = getFullUrl(`/entities/${entityId}/customer_leases.json`);
+    const options = getAuthenticatedFetchOptions('GET');
+
+    console.log('Fetching customer leases from:', url);
+    const response = await fetch(url, options);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Customer leases API response:', data);
+    
+    // The API returns an array directly
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching customer leases:', error);
     throw error;
   }
 };

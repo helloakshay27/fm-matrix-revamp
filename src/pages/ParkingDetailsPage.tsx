@@ -1,131 +1,224 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Edit } from "lucide-react";
+import { toast } from 'sonner';
+import { fetchParkingDetails, ParkingDetailsResponse } from '@/services/parkingConfigurationsAPI';
+
 const ParkingDetailsPage = () => {
-  const {
-    clientId
-  } = useParams();
+  const { clientId } = useParams();
   const navigate = useNavigate();
 
-  // Sample data - in a real app, this would come from an API or state management
-  const parkingData = {
-    "HSBC": {
-      clientName: "HSBC",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 10,
-      paidParking: 20,
-      availableSlots: 30,
-      leasePeriod: "01/07/2024 - 29/09/2024"
-    },
-    "localized": {
-      clientName: "localized",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 20,
-      paidParking: 40,
-      availableSlots: 40,
-      leasePeriod: "01/06/2024 - 30/08/2024"
-    },
-    "demo": {
-      clientName: "demo",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 2,
-      paidParking: 5,
-      availableSlots: 7,
-      leasePeriod: "15/05/2024 - 15/07/2024"
-    },
-    "Sohail Ansari": {
-      clientName: "Sohail Ansari",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 5,
-      paidParking: 5,
-      availableSlots: 10,
-      leasePeriod: "01/04/2024 - 30/06/2024"
-    },
-    "Deepak Jain": {
-      clientName: "Deepak Jain",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 5,
-      paidParking: 2,
-      availableSlots: 7,
-      leasePeriod: "10/03/2024 - 10/05/2024"
-    },
-    "Mahendra Lungare": {
-      clientName: "Mahendra Lungare",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 2,
-      paidParking: 1,
-      availableSlots: 3,
-      leasePeriod: "01/02/2024 - 31/03/2024"
-    },
-    "Rajnish Patil": {
-      clientName: "Rajnish Patil",
-      twoWheeler: 0,
-      fourWheeler: 0,
-      freeParking: 5,
-      paidParking: 2,
-      availableSlots: 7,
-      leasePeriod: "15/01/2024 - 15/03/2024"
-    }
+  // API state
+  const [parkingDetails, setParkingDetails] = useState<ParkingDetailsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch parking details on component mount
+  useEffect(() => {
+    const loadParkingDetails = async () => {
+      if (!clientId) {
+        setError('Client ID is required');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetchParkingDetails(clientId);
+        setParkingDetails(response);
+      } catch (error) {
+        console.error('Error loading parking details:', error);
+        setError('Failed to load parking details');
+        toast.error('Failed to load parking details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadParkingDetails();
+  }, [clientId]);
+
+  const handleBack = () => {
+    navigate('/vas/parking');
   };
-  const clientData = parkingData[clientId as keyof typeof parkingData];
-  if (!clientData) {
-    return <div className="p-6 bg-[#f6f4ee] min-h-screen">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Client Not Found</h1>
-          <Button onClick={() => navigate('/vas/parking')} className="bg-[#8B4A9C] hover:bg-[#7A4089] text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Parking Dashboard
+
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 min-h-screen bg-gray-50">
+        <div className="flex items-center mb-6">
+          <Button 
+            onClick={handleBack}
+            variant="ghost" 
+            className="mr-4 p-2 hover:bg-[#C72030]/10"
+          >
+            <ArrowLeft className="w-5 h-5" />
           </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-[#C72030]">Loading...</h1>
+          </div>
         </div>
-      </div>;
+        
+        <Card className="max-w-6xl mx-auto bg-white shadow-sm">
+          <CardContent className="p-8 text-center">
+            <div className="animate-pulse space-y-4">
+              <div className="h-6 bg-gray-300 rounded w-1/3 mx-auto"></div>
+              <div className="h-4 bg-gray-300 rounded w-1/2 mx-auto"></div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
-  return <div className="p-6 min-h-screen bg-white">
+
+  if (error || !parkingDetails) {
+    return (
+      <div className="p-6 space-y-6 min-h-screen bg-gray-50">
+        <div className="flex items-center mb-6">
+          <Button 
+            onClick={handleBack}
+            variant="ghost" 
+            className="mr-4 p-2 hover:bg-[#C72030]/10"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-[#C72030]">Error Loading Data</h1>
+          </div>
+        </div>
+        
+        <Card className="max-w-6xl mx-auto bg-white shadow-sm">
+          <CardContent className="p-8 text-center">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
+              {error || 'Client data could not be loaded'}
+            </h2>
+            <p className="text-gray-600 mb-6">Please try again or contact support if the problem persists.</p>
+            <Button 
+              onClick={handleBack}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Parking Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-6 min-h-screen bg-gray-50">
+      {/* Header */}
       <div className="flex items-center mb-6">
-        <Button onClick={() => navigate('/vas/parking')} variant="ghost" className="mr-4 p-2">
+        <Button 
+          onClick={handleBack}
+          variant="ghost" 
+          className="mr-4 p-2 hover:bg-[#C72030]/10"
+        >
           <ArrowLeft className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">Parking</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-[#C72030]">Client Parking Details</h1>
+        </div>
       </div>
 
-      <Card className="max-w-4xl mx-auto">
-        <CardContent className="p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Client Parking details</h2>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-700">Client Name</span>
-                <span className="font-medium">: {clientData.clientName}</span>
-              </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-700">No. of 2 Wheeler</span>
-                <span className="font-medium">: {clientData.twoWheeler}</span>
-              </div>
+      {/* Main Content Card */}
+      <Card className="max-w-6xl mx-auto bg-white shadow-sm">
+        <CardContent className="p-8">
+          <div className="space-y-8">
+            {/* Client Information Header */}
+            <div className="border-b border-gray-200 pb-4 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">
+                {parkingDetails.entity.name} - Parking Information
+              </h2>
+              <button
+                onClick={() => {
+                  navigate(`/vas/parking/edit`);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Edit Parking Details"
+              >
+                <Edit className="w-5 h-5 text-gray-600 hover:text-[#C72030]" />
+              </button>
             </div>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="text-gray-700">No. of 4 Wheeler</span>
-                <span className="font-medium">: {clientData.fourWheeler}</span>
-              </div>
-            </div>
-          </div>
 
-          <div className="mb-6">
-            <div className="bg-red-500 text-white px-4 py-2 rounded inline-block">
-              <span className="font-medium">Lease Period: {clientData.leasePeriod}</span>
+            {/* Client Color Code */}
+            <div>
+              <Label className="text-sm font-medium text-gray-700">Client</Label>
+              <div className="mt-1 p-3 bg-gray-50 rounded-lg flex items-center gap-3">
+                <div 
+                  className="w-4 h-4 rounded-full" 
+                  style={{ backgroundColor: parkingDetails.entity.color_code }}
+                ></div>
+                <span className="text-gray-900 font-medium">{parkingDetails.entity.name}</span>
+              </div>
+            </div>
+
+            {/* Parking Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Number of 2 Wheeler Slots</Label>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-900 font-medium">{parkingDetails.parking_summary.two_wheeler_count}</span>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Number of 4 Wheeler Slots</Label>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-gray-900 font-medium">{parkingDetails.parking_summary.four_wheeler_count}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Lease Information */}
+            {parkingDetails.leases && parkingDetails.leases.length > 0 && (
+              <div className="space-y-4">
+                <Label className="text-sm font-medium text-gray-700">Lease Information</Label>
+                {parkingDetails.leases.map((lease) => (
+                  <div key={lease.id} className="bg-red-50 border border-red-200 rounded-lg p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-sm font-medium text-gray-700">Lease Period</span>
+                      {lease.lease_period.expired && (
+                        <span className="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                          Expired
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="inline-block bg-[#C72030] text-white px-4 py-2 rounded font-medium">
+                        {lease.lease_period.start_date} - {lease.lease_period.end_date}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex justify-center gap-4 pt-6">
+              <Button 
+                onClick={handleBack}
+                variant="outline"
+                className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Back to Dashboard
+              </Button>
+              <Button 
+                onClick={() => navigate('/vas/parking/create')}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+              >
+                Create New Booking
+              </Button>
             </div>
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default ParkingDetailsPage;
