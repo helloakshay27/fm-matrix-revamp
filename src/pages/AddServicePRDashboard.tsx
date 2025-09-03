@@ -456,10 +456,11 @@ export const AddServicePRDashboard = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
-          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
         })),
       },
       attachments: attachedFiles,
+      apply_wbs: wbsSelection === "overall" ? "overall" : "individual",
     };
 
     try {
