@@ -408,6 +408,18 @@ export const GatePassInwardsDetailPage = () => {
                 className="w-full"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
+                Received Date
+              </Label>
+              <Input
+                type="date"
+                id="received-date"
+                placeholder="Enter received date"
+                className="w-full"
+              />
+            </div>
+          
 
             <div className="space-y-2">
               <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">

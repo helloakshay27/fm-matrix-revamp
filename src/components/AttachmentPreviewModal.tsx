@@ -10,7 +10,8 @@ interface AttachmentPreviewModalProps {
   onClose: () => void;
   attachment: {
     id: number;
-    document_file_name: string;
+    document_file_name?: string;
+    filename?: string;
     url: string;
   } | null;
 }
@@ -22,7 +23,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
 }) => {
   if (!attachment) return null;
 
-  const fileName = attachment.document_file_name;
+  const fileName = attachment.document_file_name || attachment.filename;
   const ext = fileName.split(".").pop()?.toLowerCase();
 
   // derive pseudo type

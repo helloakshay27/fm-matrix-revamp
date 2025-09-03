@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LabelList, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { Download } from 'lucide-react';
+import { Download, Loader2 } from 'lucide-react';
 import { inventoryAnalyticsDownloadAPI } from '@/services/inventoryAnalyticsDownloadAPI';
 import { toast } from 'sonner';
 
@@ -34,12 +34,19 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
     return date.toISOString().slice(0, 10);
   };
 
-  const handleDownload = async () => {
+  const handleDownload = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     if (!dateRange) {
       toast.error('Date range is required for download');
       return;
     }
 
+    if (downloadLoading) return;
+    
     setDownloadLoading(true);
     try {
       switch (type) {
@@ -96,23 +103,39 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   if (!data) {
     const showDownload = !['itemsStatus', 'categoryWise'].includes(type);
     return (
-      <div className={`bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
+      <div className={`relative bg-white rounded-lg border border-gray-200 p-6 shadow-sm ${className}`}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
           {showDownload && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownload}
-              disabled={downloadLoading || !dateRange}
+            <div
+              className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleDownload(e);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
             >
-              <Download className="w-4 h-4" />
-            </Button>
+              {downloadLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+              ) : (
+                <Download className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+              )}
+            </div>
           )}
         </div>
         <div className="flex items-center justify-center h-32 text-gray-500">
           No data available
         </div>
+        {downloadLoading && (
+          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+            <div className="flex flex-col items-center gap-3 text-white">
+              <Loader2 className="w-8 h-8 animate-spin" />
+              <span className="text-sm font-medium">Exporting...</span>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -581,18 +604,26 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
   };
 
   return (
-  <div className={`bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
+  <div className={`relative bg-white rounded-lg border border-gray-200 p-4 shadow-sm h-[420px] flex flex-col ${className}`}>
       <div className="flex items-center justify-between mb-4 shrink-0">
         <h3 className="text-lg font-bold text-[#C72030]">{title}</h3>
-    {!['itemsStatus', 'categoryWise'].includes(type) && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            disabled={downloadLoading || !dateRange}
+        {!['itemsStatus', 'categoryWise'].includes(type) && (
+          <div
+            className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDownload(e);
+            }}
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
           >
-            <Download className="w-4 h-4" />
-          </Button>
+            {downloadLoading ? (
+              <Loader2 className="w-4 h-4 animate-spin text-gray-600" />
+            ) : (
+              <Download className="w-4 h-4 text-gray-600 hover:text-blue-600" />
+            )}
+          </div>
         )}
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
@@ -600,6 +631,14 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
           {renderContent()}
         </div>
       </div>
+      {downloadLoading && (
+        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+          <div className="flex flex-col items-center gap-3 text-white">
+            <Loader2 className="w-8 h-8 animate-spin" />
+            <span className="text-sm font-medium">Exporting...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

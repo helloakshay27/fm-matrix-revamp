@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
     ArrowLeft,
     Download,
@@ -134,6 +136,16 @@ interface PermitDetailsResponse {
     comment_logs: CommentLog[];
     safety_check_audits: any[];
     qr_code: QRCode;
+    show_edit_button: boolean;
+    show_send_mail_button: boolean;
+    show_print_form_button: boolean;
+    show_print_jsa_button: boolean;
+    show_fill_jsa_button: boolean;
+    show_complete_form_button: boolean;
+    show_extend_button: boolean;
+    show_resume_button: boolean;
+    show_upload_jsa_button: boolean;
+    show_complete_button: boolean;
 }
 
 // API function to fetch permit details
@@ -179,12 +191,30 @@ const addPermitComment = async (permitId: string, comment: string): Promise<void
 export const PermitDetails = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const [searchParams] = useSearchParams();
     const [permitData, setPermitData] = useState<PermitDetailsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [activeSection, setActiveSection] = useState("details");
     const [commentModalOpen, setCommentModalOpen] = useState(false);
     const [isAddingComment, setIsAddingComment] = useState(false);
+    const [isApproving, setIsApproving] = useState(false);
+    const [isRejecting, setIsRejecting] = useState(false);
+    const [openRejectDialog, setOpenRejectDialog] = useState(false);
+    const [rejectComment, setRejectComment] = useState("");
+
+    // Extend permit form states
+    const [isExtending, setIsExtending] = useState(false);
+    const [extendReason, setExtendReason] = useState("");
+    const [extendDate, setExtendDate] = useState("");
+    const [extendAttachments, setExtendAttachments] = useState<FileList | null>(null);
+
+    // Check if we came from pending approvals page
+    const levelId = searchParams.get('level_id');
+    const userId = searchParams.get('user_id');
+    const invoiceApprovalHistoryId = searchParams.get('invoice_approval_history_id');
+    const isApprovalPage = searchParams.get('type') === 'approval';
+    const showApprovalButtons = levelId && userId && isApprovalPage;
 
     // Handle adding comment
     const handleAddComment = async (comment: string) => {
@@ -207,6 +237,208 @@ export const PermitDetails = () => {
             toast.error('Failed to add comment. Please try again.');
         } finally {
             setIsAddingComment(false);
+        }
+    };
+
+    // Handle approve permit
+    const handleApprove = async () => {
+        if (!id) {
+            toast.error('Permit ID is required for approval');
+            return;
+        }
+
+        if (!levelId) {
+            toast.error('Level ID is required for approval');
+            return;
+        }
+
+        setIsApproving(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permits/${id}/status_confirmation?approve=true&user_id=${userId}&level_id=${levelId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to approve permit: ${response.statusText}`);
+            }
+
+            toast.success('Permit approved successfully');
+
+            // Navigate back to pending approvals after successful approval
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error approving permit:', error);
+            toast.error('Failed to approve permit. Please try again.');
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
+    // Handle reject permit - opens dialog
+    const handleReject = () => {
+        setOpenRejectDialog(true);
+    };
+
+    // Handle reject dialog cancel
+    const handleRejectCancel = () => {
+        setOpenRejectDialog(false);
+        setRejectComment("");
+    };
+
+    // Handle reject dialog confirm
+    const handleRejectConfirm = async () => {
+        if (!rejectComment.trim()) {
+            toast.error('Please provide a reason for rejection');
+            return;
+        }
+
+        if (!id) {
+            toast.error('Permit ID is required for rejection');
+            return;
+        }
+
+        if (!invoiceApprovalHistoryId) {
+            toast.error('Invoice approval history ID is required for rejection');
+            return;
+        }
+
+        setIsRejecting(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            // Create form data for URL encoded content
+            const formData = new URLSearchParams();
+            formData.append('rejection_reason', rejectComment.trim());
+
+            const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?invoice_approval_history_id=${invoiceApprovalHistoryId}&user_id=${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to reject permit: ${response.statusText}`);
+            }
+
+            toast.success('Permit rejected successfully');
+            setOpenRejectDialog(false);
+            setRejectComment("");
+
+            // Navigate back to pending approvals after successful rejection
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error rejecting permit:', error);
+            toast.error('Failed to reject permit. Please try again.');
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
+    // Handle extend permit form submission
+    const handleExtendPermit = async () => {
+        if (!id) {
+            toast.error('Permit ID is required for extension');
+            return;
+        }
+
+        if (!extendReason.trim()) {
+            toast.error('Please provide a reason for extension');
+            return;
+        }
+
+        if (!extendDate) {
+            toast.error('Please select an extension date');
+            return;
+        }
+
+        setIsExtending(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            if (!baseUrl || !token) {
+                throw new Error("Base URL or token not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            // Create FormData for multipart/form-data
+            const formData = new FormData();
+            formData.append('pms_permit_extend[permit_id]', id);
+            formData.append('pms_permit_extend[reason_for_extension]', extendReason.trim());
+            formData.append('pms_permit_extend[extension_date]', extendDate);
+
+            // Add attachments if any
+            if (extendAttachments && extendAttachments.length > 0) {
+                for (let i = 0; i < extendAttachments.length; i++) {
+                    formData.append('extend_attachments[]', extendAttachments[i]);
+                }
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_extends`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to extend permit: ${response.statusText}`);
+            }
+
+            toast.success('Permit extension request submitted successfully');
+
+            // Clear form data
+            setExtendReason("");
+            setExtendDate("");
+            setExtendAttachments(null);
+
+            // Refresh permit details to show updated information
+            const updatedData = await fetchPermitDetails(id);
+            setPermitData(updatedData);
+
+        } catch (error) {
+            console.error('Error extending permit:', error);
+            toast.error('Failed to submit permit extension. Please try again.');
+        } finally {
+            setIsExtending(false);
         }
     };
 
@@ -455,6 +687,17 @@ export const PermitDetails = () => {
                     <span className="text-sm">Back</span>
                 </button>
                 <div className="flex items-center gap-4">
+                    {permitData.show_edit_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/permit/edit/${id}`)}
+                            className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            Edit
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -464,33 +707,83 @@ export const PermitDetails = () => {
                         <FileText className="w-4 h-4 mr-2" />
                         Vendor Form
                     </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                    >
-                        <Clipboard className="w-4 h-4 mr-2" />
-                        Fill Form
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/safety/permit/fill-jsa-form/${id}`)}
-                        className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
-                    >
-                        <Clipboard className="w-4 h-4 mr-2" />
-                        Fill JSA Form
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handlePrintForm}
-                        className="bg-green-600 hover:bg-green-700 text-white border-green-600"
-                    >
-                        <FileText className="w-4 h-4 mr-2" />
-                        PRINT Form
-                    </Button>
+                    {permitData.show_complete_form_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
+                            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                        >
+                            <Clipboard className="w-4 h-4 mr-2" />
+                            Fill Form
+                        </Button>
+                    )}
+                    {permitData.show_fill_jsa_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/permit/fill-jsa-form/${id}`)}
+                            className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
+                        >
+                            <Clipboard className="w-4 h-4 mr-2" />
+                            Fill JSA Form
+                        </Button>
+                    )}
+                    {permitData.show_upload_jsa_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/safety/permit/upload-jsa/${id}`)}
+                            className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload JSA
+                        </Button>
+                    )}
+                    {permitData.show_print_form_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handlePrintForm}
+                            className="bg-green-600 hover:bg-green-700 text-white border-green-600"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            PRINT Form
+                        </Button>
+                    )}
+                    {permitData.show_print_jsa_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* Add print JSA functionality */ }}
+                            className="bg-green-700 hover:bg-green-800 text-white border-green-700"
+                        >
+                            <FileText className="w-4 h-4 mr-2" />
+                            PRINT JSA
+                        </Button>
+                    )}
+                    {permitData.show_send_mail_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* Add send mail functionality */ }}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600"
+                        >
+                            <Mail className="w-4 h-4 mr-2" />
+                            Send Mail
+                        </Button>
+                    )}
+                    {permitData.show_complete_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {/* Add complete functionality */ }}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                        >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Complete
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -824,6 +1117,8 @@ export const PermitDetails = () => {
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent resize-none"
                                         rows={3}
                                         placeholder="Enter Reason Here"
+                                        value={extendReason}
+                                        onChange={(e) => setExtendReason(e.target.value)}
                                     />
                                 </div>
 
@@ -836,6 +1131,8 @@ export const PermitDetails = () => {
                                         type="datetime-local"
                                         className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
                                         placeholder="dd/mm/yyyy, --:--"
+                                        value={extendDate}
+                                        onChange={(e) => setExtendDate(e.target.value)}
                                     />
                                 </div>
                             </div>
@@ -861,10 +1158,30 @@ export const PermitDetails = () => {
                                         <label className="flex items-center gap-2 px-4 py-2 border border-orange-400 text-orange-600 rounded cursor-pointer hover:bg-orange-50 transition-colors">
                                             <Upload className="w-4 h-4" />
                                             Choose files
-                                            <input type="file" className="hidden" multiple />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                multiple
+                                                onChange={(e) => setExtendAttachments(e.target.files)}
+                                            />
                                         </label>
-                                        <span className="text-sm text-gray-500">No file chosen</span>
+                                        <span className="text-sm text-gray-500">
+                                            {extendAttachments && extendAttachments.length > 0
+                                                ? `${extendAttachments.length} file(s) selected`
+                                                : "No file chosen"
+                                            }
+                                        </span>
                                     </div>
+                                    {/* Show selected files */}
+                                    {extendAttachments && extendAttachments.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                            {Array.from(extendAttachments).map((file, index) => (
+                                                <div key={index} className="text-xs text-gray-600">
+                                                    {file.name} ({Math.round(file.size / 1024)} KB)
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -884,19 +1201,103 @@ export const PermitDetails = () => {
                         </div>
 
                         {/* Extend Permit Button */}
-                        <div className="flex justify-center pt-4">
-                            <Button
-                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
-                                onClick={() => {
-                                    // Handle extend permit functionality here
-                                    toast.success('Permit extension request submitted');
-                                }}
-                            >
-                                Extend Permit
-                            </Button>
-                        </div>
+                        {permitData.show_extend_button && (
+                            <div className="flex justify-center pt-4">
+                                <Button
+                                    className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                    onClick={handleExtendPermit}
+                                    disabled={isExtending}
+                                >
+                                    {isExtending ? (
+                                        <>
+                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                            Submitting...
+                                        </>
+                                    ) : (
+                                        'Extend Permit'
+                                    )}
+                                </Button>
+                            </div>
+                        )}
                     </div>
                 </Section>
+
+                {/* Resume Permit Section */}
+                {permitData.show_resume_button && (
+                    <Section title="RESUME PERMIT" icon={<RefreshCw />} sectionKey="resume-permit">
+                        <div className="space-y-6">
+                            {/* Resume Form Fields */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="space-y-4">
+                                    {/* Reason for Resume */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Reason for Resume<span className="text-red-500">*</span>
+                                        </label>
+                                        <textarea
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent resize-none"
+                                            rows={3}
+                                            placeholder="Enter Reason Here"
+                                        />
+                                    </div>
+
+                                    {/* Resume Date & Time */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Resume Date&Time<span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="datetime-local"
+                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
+                                            placeholder="dd/mm/yyyy, --:--"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    {/* Assignees */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Assignees<span className="text-red-500">*</span>
+                                        </label>
+                                        <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent bg-white">
+                                            <option value="">Select Here</option>
+                                            {/* Add options dynamically here */}
+                                        </select>
+                                    </div>
+
+                                    {/* Attachment */}
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                            Attachment
+                                        </label>
+                                        <div className="flex items-center gap-3">
+                                            <label className="flex items-center gap-2 px-4 py-2 border border-orange-400 text-orange-600 rounded cursor-pointer hover:bg-orange-50 transition-colors">
+                                                <Upload className="w-4 h-4" />
+                                                Choose files
+                                                <input type="file" className="hidden" multiple />
+                                            </label>
+                                            <span className="text-sm text-gray-500">No file chosen</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Resume Permit Button */}
+                            <div className="flex justify-center pt-4">
+                                <Button
+                                    className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                    onClick={() => {
+                                        // Handle resume permit functionality here
+                                        toast.success('Permit resume request submitted');
+                                    }}
+                                >
+                                    Resume Permit
+                                </Button>
+                            </div>
+                        </div>
+                    </Section>
+                )}
 
                 {/* Permit Closure Details Section */}
                 {permitData.permit_closure && (
@@ -1062,6 +1463,49 @@ export const PermitDetails = () => {
                 )}
             </div>
 
+            {/* Approve/Reject Buttons - Only show when coming from pending approvals */}
+            {showApprovalButtons && (
+                <div className="mt-8 p-6 bg-gray-50 rounded-lg border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Approval Actions</h3>
+                    <div className="flex items-center gap-4 justify-center">
+                        <Button
+                            onClick={handleApprove}
+                            disabled={isApproving || isRejecting}
+                            className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                        >
+                            {isApproving ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Approving...
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Approve Permit
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            onClick={handleReject}
+                            disabled={isApproving || isRejecting}
+                            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                        >
+                            {isRejecting ? (
+                                <>
+                                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                    Rejecting...
+                                </>
+                            ) : (
+                                <>
+                                    <AlertTriangle className="w-4 h-4 mr-2" />
+                                    Reject Permit
+                                </>
+                            )}
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Add Comment Modal */}
             <AddPermitCommentModal
                 open={commentModalOpen}
@@ -1070,6 +1514,40 @@ export const PermitDetails = () => {
                 title={`Add Comment to Permit ${permitData?.permit.reference_number || permitData?.permit.id}`}
                 isSubmitting={isAddingComment}
             />
+
+            {/* Reject Permit Dialog */}
+            <Dialog open={openRejectDialog} onOpenChange={setOpenRejectDialog}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Reject Permit</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="Reason for Rejection"
+                            value={rejectComment}
+                            onChange={(e) => setRejectComment(e.target.value)}
+                            rows={4}
+                            className="w-full"
+                        />
+                    </div>
+                    <DialogFooter className="flex flex-row justify-end gap-3">
+                        <Button
+                            variant="outline"
+                            onClick={handleRejectCancel}
+                            disabled={isRejecting}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleRejectConfirm}
+                            disabled={isRejecting}
+                            className="bg-[#C72030] hover:bg-[#a61b27] text-white"
+                        >
+                            {isRejecting ? 'Rejecting...' : 'Reject'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

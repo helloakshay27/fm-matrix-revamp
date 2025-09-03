@@ -536,10 +536,6 @@ export const MaterialPRDetailsPage = () => {
                   <span className="text-muted-foreground w-40">Email</span>
                   <span className="font-medium">: {pr.supplier?.email ?? '-'}</span>
                 </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Admin Approval</span>
-                  <span className="font-medium">: {pr.adminApproval ?? '-'}</span>
-                </div>
               </div>
             </div>
           </CardContent>
