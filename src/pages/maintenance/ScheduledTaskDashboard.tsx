@@ -707,7 +707,7 @@ export const ScheduledTaskDashboard = () => {
                 <div
                   key={index}
                   className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${selectedStatus === card.status
-                    ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                    ? 'bg-[#e6e2da] hover:bg-[#e6e2da]'
                     : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                     }`}
                   onClick={() => handleStatusCardClick(card.status)}
