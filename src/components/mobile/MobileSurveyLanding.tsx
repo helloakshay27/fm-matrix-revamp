@@ -376,6 +376,73 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
+  // Handle single question submission with negative data (includes original question data + tags)
+  const handleSingleQuestionSubmitWithNegativeData = async (answerData: SurveyAnswers[number]) => {
+    if (!surveyData) return;
+
+    setIsSubmitting(true);
+    try {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
+
+      console.log('Submitting single question with negative data:', answerData);
+
+      // Build issues array from selected tags
+      const issues = answerData.selectedTags?.map(tag => tag.category_name) || [];
+
+      // Create the base survey response payload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const surveyResponse: any = {
+        mapping_id: mappingId || '',
+        qtype: currentQuestion.qtype,
+        issues: issues,
+        description: answerData.description || finalDescription || undefined,
+        question_id: currentQuestion.id
+      };
+
+      // Add question-specific fields based on type
+      if (currentQuestion.qtype === 'multiple') {
+        // Include the original multiple choice selection
+        surveyResponse.selectedOptions = answerData.selectedOptions;
+        surveyResponse.value = answerData.selectedOptions?.map(opt => opt.qname).join(', ') || 'no';
+        surveyResponse.option_id = answerData.selectedOptions?.[0]?.id;
+        // Set negative rating since this is a negative response
+        surveyResponse.rating = 2;
+      } else if (currentQuestion.qtype === 'emoji') {
+        // Include the original emoji selection
+        surveyResponse.rating = answerData.rating || 2;
+        surveyResponse.emoji = answerData.emoji || "😞";
+        surveyResponse.label = answerData.label || "Bad";
+        surveyResponse.value = answerData.value || `${answerData.emoji} ${answerData.label}`;
+      } else if (currentQuestion.qtype === 'rating') {
+        // Include the original rating selection
+        surveyResponse.rating = answerData.rating || 2;
+        surveyResponse.value = answerData.rating || 2;
+      }
+      
+      console.log('Submitting single question survey with negative response:', surveyResponse);
+      
+      await surveyApi.submitSurveyResponse({
+        survey_response: surveyResponse,
+      });
+      
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: true
+        },
+      });
+    } catch (error) {
+      console.error("Failed to submit survey:", error);
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: false
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle next question
   const handleNextQuestion = () => {
     const currentQuestion = getCurrentQuestion();
@@ -409,7 +476,7 @@ export const MobileSurveyLanding: React.FC = () => {
       console.log('=== MULTI-QUESTION SURVEY SUBMISSION ===');
       console.log('All answers before processing:', answers);
       
-      // For multi-question surveys, we need to aggregate the responses
+      // For multi-question surveys, we need to create answers array for each question
       const allAnswers = Object.values(answers);
       console.log('Processed all answers:', allAnswers);
       
@@ -418,6 +485,51 @@ export const MobileSurveyLanding: React.FC = () => {
         throw new Error('No answers found');
       }
       
+      // Build the answers array with proper structure for each question
+      const answersArray = surveyData.snag_checklist.snag_questions.map((question, index) => {
+        const answer = Object.values(answers).find(ans => 
+          Object.keys(answers).find(key => parseInt(key) === question.id && answers[parseInt(key)] === ans)
+        );
+        
+        if (!answer) {
+          console.warn(`No answer found for question ${question.id}`);
+          return {
+            description: "as",
+            question_id: question.id,
+            type: question.qtype
+          };
+        }
+        
+        const issues = answer.selectedTags?.map(tag => tag.category_name) || [];
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const answerPayload: any = {
+          description: answer.description || "as",
+          question_id: question.id,
+          type: answer.qtype
+        };
+
+        // Add question-specific fields based on question type
+        if (answer.qtype === 'multiple' && answer.selectedOptions) {
+          answerPayload.option_id = answer.selectedOptions[0]?.id;
+          answerPayload.selectedOptions = answer.selectedOptions;
+          answerPayload.value = answer.selectedOptions.map(opt => opt.qname).join(', ');
+        } else if (answer.qtype === 'rating') {
+          answerPayload.rating = answer.rating || 5;
+        } else if (answer.qtype === 'emoji') {
+          answerPayload.rating = answer.rating || 5;
+          answerPayload.emoji = answer.emoji || '';
+          answerPayload.label = answer.label || '';
+        }
+
+        // Add issues if any
+        if (issues.length > 0) {
+          answerPayload.issues = issues;
+        }
+
+        return answerPayload;
+      });
+
       // Calculate overall rating (average of all ratings, default to 5 if no ratings)
       const ratings = allAnswers
         .filter(answer => answer.rating !== undefined && answer.rating !== null)
@@ -427,13 +539,6 @@ export const MobileSurveyLanding: React.FC = () => {
         : 5;
       
       console.log('Calculated overall rating:', overallRating, 'from ratings:', ratings);
-
-      // Get the most recent emoji/label or default
-      const emojiAnswer = allAnswers.find(answer => answer.emoji);
-      const emoji = emojiAnswer?.emoji || "😄";
-      const label = emojiAnswer?.label || "Good";
-      
-      console.log('Selected emoji/label:', { emoji, label, emojiAnswer });
 
       // Aggregate all issues/tags
       const allIssues: string[] = [];
@@ -449,23 +554,13 @@ export const MobileSurveyLanding: React.FC = () => {
       
       console.log('Aggregated issues:', allIssues);
 
-      // Get the last question/option IDs for reference
-      const lastAnswer = allAnswers[allAnswers.length - 1];
-      const lastQuestion = surveyData.snag_checklist.snag_questions[surveyData.snag_checklist.snag_questions.length - 1];
-      
-      console.log('Last answer:', lastAnswer);
-      console.log('Last question:', lastQuestion);
-
       // Create the survey response payload matching the API structure
       const surveyResponse = {
         mapping_id: mappingId || '',
-        rating: overallRating,
-        emoji: emoji,
-        label: label,
-        issues: allIssues,
-        description: finalDescription || undefined,
-        option_id: lastAnswer?.selectedOptions?.[0]?.id,
-        question_id: lastQuestion?.id
+        description: finalDescription || "as",
+        questions_count: surveyData.snag_checklist.questions_count,
+        answers: answersArray,
+        issues: allIssues
       };
       
       console.log('Final survey response payload for multi-question:', surveyResponse);
@@ -888,10 +983,9 @@ export const MobileSurveyLanding: React.FC = () => {
                     setPendingNegativeType(null);
                     setPendingNegativeAnswer(null);
                     
-                    // Proceed immediately
-                    if (isSingleQuestion) {
-                      // For single question surveys, submit immediately
-                      handleSingleQuestionSubmit(answerData);
+                    // For single question negative responses, submit with complete data
+                    if (isSingleQuestion && answerData) {
+                      handleSingleQuestionSubmitWithNegativeData(answerData);
                     } else {
                       // For multi-question surveys, proceed to next question
                       handleNextQuestion();

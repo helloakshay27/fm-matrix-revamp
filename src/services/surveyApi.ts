@@ -62,6 +62,15 @@ export interface SurveySubmissionRequest {
     }>;
     option_id?: number;
     question_id?: number;
+    questions_count?: number;
+    answers?: Array<{
+      description: string;
+      question_id: number;
+      type: string;
+      option_id?: number;
+      rating?: number;
+      issues?: string[];
+    }>;
   };
 }
 
