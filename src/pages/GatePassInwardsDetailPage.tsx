@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,122 +8,85 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload, FileText, QrCode, Box, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { API_CONFIG } from '@/config/apiConfig';
 
 export const GatePassInwardsDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [gatePassData, setGatePassData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [handoverTo, setHandoverTo] = useState('');
+  const [receivedDate, setReceivedDate] = useState('');
+  const [remarks, setRemarks] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sample data - in real app, this would be fetched based on the ID
-  const inwardData = [
-    {
-      id: "4102",
-      type: "",
-      category: "Visitor",
-      personName: "Aniket",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10027",
-      itemDetails: "- Drill machine serials 1244 -"
-    },
-    {
-      id: "1083",
-      type: "Faulty",
-      category: "Vendor",
-      personName: "Haven infoline",
-      profileImage: "/placeholder.svg",
-      passNo: "143",
-      modeOfTransport: "By Hand",
-      lrNo: "Bbvbb",
-      tripId: "0",
-      gateEntry: "7-10026",
-      itemDetails: "RAN - 1 - MW - -"
-    },
-    {
-      id: "864",
-      type: "SRN",
-      category: "Visitor",
-      personName: "Yash",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10025",
-      itemDetails: "Transmission - - MW - -"
-    },
-    {
-      id: "863",
-      type: "SRN",
-      category: "Staff",
-      personName: "demo demo",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10024",
-      itemDetails: "Transmission - - 5 Transmission - -"
-    },
-    {
-      id: "862",
-      type: "Fresh",
-      category: "Visitor",
-      personName: "Prashant",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10023",
-      itemDetails: "Transmission - - Transmission - - Transmission - -"
-    },
-    {
-      id: "861",
-      type: "SRN",
-      category: "Visitor",
-      personName: "bilal",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10022",
-      itemDetails: "MW - - Transmission - - Transmission - -"
-    },
-    {
-      id: "860",
-      type: "Faulty",
-      category: "Visitor",
-      personName: "Saurabh",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand",
-      lrNo: "",
-      tripId: "",
-      gateEntry: "7-10021",
-      itemDetails: "MW - - Transmission - -"
-    }
-  ];
+  useEffect(() => {
+    if (!id) return;
+    fetch(`${API_CONFIG.BASE_URL}/gate_passes/${id}.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setGatePassData(data.gate_pass || data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id]);
 
   const handleReceiveClick = (itemIndex: number) => {
     setSelectedItemIndex(itemIndex);
     setIsReceiveModalOpen(true);
   };
 
-  const handleSubmitReceive = () => {
-    // Handle submit logic here
-    setIsReceiveModalOpen(false);
-    setSelectedItemIndex(null);
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
   };
 
-  const selectedEntry = inwardData.find(entry => entry.id === id);
+  const handleSubmitReceive = async () => {
+    if (selectedItemIndex === null || !gatePassData) return;
+    const material = gatePassData.gate_pass_materials[selectedItemIndex];
+    if (!material) return;
+    const formData = new FormData();
+    formData.append('gate_pass_material[remarks]', remarks);
+    formData.append('gate_pass_material[handover_to]', handoverTo);
+    formData.append('gate_pass_material[recieved_date]', receivedDate);
+    attachments.forEach(file => {
+      formData.append('gate_pass_material[attachments][]', file);
+    });
+    try {
+      await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}/gate_pass_materials/${material.id}/update_material`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        },
+        body: formData,
+      });
+      setIsReceiveModalOpen(false);
+      setSelectedItemIndex(null);
+      setHandoverTo('');
+      setReceivedDate('');
+      setRemarks('');
+      setAttachments([]);
+      // Optionally, refresh data here
+    } catch (err) {
+      // Handle error
+    }
+  };
 
-  if (!selectedEntry) {
+  // Replace sample data with API data
+  if (loading) {
+    return <div className="p-6 text-center text-gray-500">Loading...</div>;
+  }
+
+  if (!gatePassData) {
     return (
       <div className="p-6">
         <div className="text-center">
@@ -137,53 +100,33 @@ export const GatePassInwardsDetailPage = () => {
     );
   }
 
-  // Sample item data based on the selected entry
-  const itemsData = [
-    {
-      sNo: "01",
-      itemName: selectedEntry.type || "Faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Credit",
-      unit: "10",
-      quantity: "120kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "02",
-      itemName: selectedEntry.type || "faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Debit",
-      unit: "12",
-      quantity: "180kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "03",
-      itemName: selectedEntry.type || "faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Debit",
-      unit: "4",
-      quantity: "600kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    },
-    {
-      sNo: "04",
-      itemName: selectedEntry.type || "faulty",
-      itemCategory: "Materials",
-      itemNameDetail: "Debit",
-      unit: "7",
-      quantity: "8kg",
-      description: "---",
-      attachment: "📎",
-      updates: "Receive"
-    }
-  ];
+  // Use gatePassData for details/profile
+  const selectedEntry = gatePassData;
+
+  // Defensive fallback for missing fields
+  const personName = selectedEntry.created_by_name || selectedEntry.contact_person || '--';
+  const category = selectedEntry.gate_pass_type_name || selectedEntry.gate_pass_category || '--';
+  const companyName = (selectedEntry.company && selectedEntry.company.name) || '--';
+  const siteName = (selectedEntry.site && selectedEntry.site.name) || '--';
+  const buildingName = (selectedEntry.building && selectedEntry.building.name) || '--';
+  const vehicleNo = selectedEntry.vehicle_no || '--';
+  const status = selectedEntry.status || '--';
+  const expectedReturnDate = selectedEntry.expected_return_date || '--';
+  const gatePassNo = selectedEntry.gate_pass_no || selectedEntry.id;
+  const passDate = selectedEntry.gate_pass_date ? new Date(selectedEntry.gate_pass_date).toLocaleString() : '--';
+
+  // Prepare itemsData from gatePassData.gate_pass_materials
+  const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
+    sNo: String(idx + 1).padStart(2, '0'),
+    itemName: mat.material_type || '--',
+    itemCategory: mat.material_sub_type || '--',
+    itemNameDetail: mat.material || mat.other_material_name || '--',
+    unit: mat.uom || '--',
+    quantity: mat.gate_pass_qty ?? '--',
+    description: mat.other_material_description || mat.remarks || '--',
+    attachment: mat.attachment ? '📎' : '',
+    updates: 'Receive',
+  }));
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -231,10 +174,10 @@ export const GatePassInwardsDetailPage = () => {
                 {/* Profile Section */}
                 <div className="text-center mb-6">
                   <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <span className="text-yellow-600 font-bold text-xl">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
+                    <span className="text-yellow-600 font-bold text-xl">{personName && typeof personName === 'string' ? personName.charAt(0).toUpperCase() : '-'}</span>
                   </div>
-                  <h2 className="text-lg font-semibold text-gray-900">{selectedEntry.personName}</h2>
-                  <p className="text-sm text-gray-600">{selectedEntry.category}</p>
+                  <h2 className="text-lg font-semibold text-gray-900">{personName}</h2>
+                  <p className="text-sm text-gray-600">{category}</p>
                 </div>
 
                 {/* Details */}
@@ -243,49 +186,49 @@ export const GatePassInwardsDetailPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Employee/Visitor Name:
                     </label>
-                    <p className="text-sm text-gray-900">{selectedEntry.personName}</p>
+                    <p className="text-sm text-gray-900">{personName}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Visitor Mobile No.:
                     </label>
-                    <p className="text-sm text-gray-900">086907860</p>
+                    <p className="text-sm text-gray-900">{selectedEntry.contact_person_no || '--'}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Department:
                     </label>
-                    <p className="text-sm text-gray-900">UI/UX Designer</p>
+                    <p className="text-sm text-gray-900">{selectedEntry.department || '--'}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Company Name:
                     </label>
-                    <p className="text-sm text-gray-900">Lovated</p>
+                    <p className="text-sm text-gray-900">{companyName}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Date/Time:
                     </label>
-                    <p className="text-sm text-gray-900">2 July 2025 12:45 Pm</p>
+                    <p className="text-sm text-gray-900">{passDate}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Mode Of Transport:
                     </label>
-                    <p className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</p>
+                    <p className="text-sm text-gray-900">{vehicleNo}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Expected Date:
                     </label>
-                    <p className="text-sm text-gray-900">-</p>
+                    <p className="text-sm text-gray-900">{expectedReturnDate}</p>
                   </div>
                 </div>
               </div>
@@ -406,6 +349,8 @@ export const GatePassInwardsDetailPage = () => {
                 id="handover"
                 placeholder="Enter handover details"
                 className="w-full"
+                value={handoverTo}
+                onChange={e => setHandoverTo(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -417,10 +362,10 @@ export const GatePassInwardsDetailPage = () => {
                 id="received-date"
                 placeholder="Enter received date"
                 className="w-full"
+                value={receivedDate}
+                onChange={e => setReceivedDate(e.target.value)}
               />
             </div>
-          
-
             <div className="space-y-2">
               <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
                 Remarks
@@ -429,9 +374,10 @@ export const GatePassInwardsDetailPage = () => {
                 id="remarks"
                 placeholder="Enter remarks"
                 className="w-full min-h-[80px]"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
                 Attachment
@@ -441,8 +387,11 @@ export const GatePassInwardsDetailPage = () => {
                   id="attachment"
                   type="file"
                   className="w-full"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleAttachmentChange}
                 />
-                <Button size="sm" variant="outline">
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <Upload className="w-4 h-4" />
                 </Button>
               </div>
