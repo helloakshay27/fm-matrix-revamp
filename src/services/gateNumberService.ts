@@ -73,6 +73,23 @@ export const gateNumberService = {
     }
   },
 
+  async getGateNumberById(id: number) {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers/${id}.json`, {
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to fetch gate number details');
+      const data = await response.json();
+      return data.gate_number;
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred while fetching gate number details.');
+      throw error;
+    }
+  },
+
   async createGateNumber(gateNumberData: any) {
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json`, {
@@ -92,6 +109,29 @@ export const gateNumberService = {
       return data;
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while creating the gate number.');
+      throw error;
+    }
+  },
+
+  async updateGateNumber(id: number, gateNumberData: any) {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers/${id}.json`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(gateNumberData),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMessage = errorData.errors ? Object.values(errorData.errors).flat().join(', ') : 'Failed to update gate number';
+        throw new Error(errorMessage);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error: any) {
+      toast.error(error.message || 'An error occurred while updating the gate number.');
       throw error;
     }
   },

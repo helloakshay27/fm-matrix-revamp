@@ -12,8 +12,7 @@ interface AttachmentPreviewModalProps {
     id: number;
     document_file_name?: string;
     filename?: string;
-    url?: string;
-    document_url?: string;
+    url: string;
   } | null;
 }
 
@@ -77,7 +76,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
       return (
         <div className="flex justify-center">
           <img
-            src={attachment.url || attachment.document_url}
+            src={attachment.url}
             alt={fileName}
             className="max-w-full max-h-96 object-contain rounded-lg"
           />

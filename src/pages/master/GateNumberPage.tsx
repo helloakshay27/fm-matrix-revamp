@@ -83,9 +83,9 @@ const GateNumberPage = () => {
             <TableRow>
               <TableHead>Gate Number</TableHead>
               <TableHead>Company</TableHead>
-              <TableHead>PMS Site</TableHead>
-              <TableHead>Project</TableHead>
               {/* <TableHead>Status</TableHead> */}
+              <TableHead>Project</TableHead>
+              <TableHead>Building</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>

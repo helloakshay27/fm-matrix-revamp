@@ -453,7 +453,7 @@ export const AddServicePRDashboard = () => {
           igst_amount: item.igstAmt,
           tcs_rate: item.tcsRate,
           tcs_amount: item.tcsAmt,
-          tax_amount: item.taxAmount,
+          taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
