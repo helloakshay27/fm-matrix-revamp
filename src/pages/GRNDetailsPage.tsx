@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Printer, Rss } from "lucide-react";
+import { ArrowLeft, File, FileText, Image, Printer, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchSingleGRN, approveGRN, rejectGrn } from "@/store/slices/grnSlice";
@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Define the interface for Approval
 interface Approval {
@@ -120,6 +122,8 @@ export const GRNDetailsPage = () => {
   const [rejectComment, setRejectComment] = useState("");
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [sendToSap, setSendToSap] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -493,37 +497,51 @@ export const GRNDetailsPage = () => {
         </div>
       </div>
 
-      {/* Attachments Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
-        <div className="flex flex-col gap-2 text-blue-600">
-          {grnDetails.attachments?.general_attachments?.map((att: any) => (
-            <div key={att.id} className="flex items-center gap-2">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                />
-              </svg>
-              <a
-                href={decodeURIComponent(att.document_url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cursor-pointer hover:underline"
-              >
-                {att.filename}
-              </a>
+      <Card className="shadow-sm border border-border mb-6">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {Array.isArray(grnDetails.attachments?.general_attachments) && grnDetails.attachments.general_attachments.length > 0 ? (
+            <div className="space-y-3">
+              {grnDetails.attachments.general_attachments.map((attachment: any) => {
+                const getFileIcon = (fileName: string) => {
+                  const ext = fileName.split(".").pop()?.toLowerCase();
+                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
+                    return <Image className="w-5 h-5 text-blue-600" />;
+                  }
+                  if (ext === "pdf") {
+                    return <FileText className="w-5 h-5 text-red-600" />;
+                  }
+                  return <File className="w-5 h-5 text-gray-600" />;
+                };
+
+                return (
+                  <div
+                    key={attachment.id}
+                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                    onClick={() => {
+                      setSelectedAttachment(attachment);
+                      setIsPreviewModalOpen(true);
+                    }}
+                  >
+                    {getFileIcon(attachment.filename)}
+                    <div className="flex-1">
+                      <p className="font-medium text-sm">
+                        {attachment.filename}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
-      </div>
+          ) : (
+            <p className='text-muted-foreground'>
+              No attachments
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Debit Note Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
@@ -703,6 +721,15 @@ export const GRNDetailsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <AttachmentPreviewModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => {
+          setIsPreviewModalOpen(false);
+          setSelectedAttachment(null);
+        }}
+        attachment={selectedAttachment}
+      />
     </div>
   );
 };

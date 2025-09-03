@@ -230,6 +230,8 @@ import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+import ParkingCreatePage from './pages/ParkingCreatePage';
+import ParkingEditPage from './pages/ParkingEditPage';
 import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
 import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
@@ -1748,6 +1750,14 @@ function App() {
                   <Route
                     path="/vas/parking/bookings"
                     element={<ParkingBookingsDashboard />}
+                  />
+                  <Route
+                    path="/vas/parking/create"
+                    element={<ParkingCreatePage />}
+                  />
+                  <Route
+                    path="/vas/parking/edit"
+                    element={<ParkingEditPage />}
                   />
                   <Route path="/vas/osr" element={<OSRDashboard />} />
                   <Route

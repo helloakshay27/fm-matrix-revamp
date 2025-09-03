@@ -1374,7 +1374,7 @@ export const Sidebar = () => {
       'broadcast': ['broadcast', 'pms_notices'],
       'vendor': ['supplier', 'pms_supplier', 'vendor audit', 'vendor_audit'],
       'user master': ['user & roles', 'pms_user_roles', 'occupant users', 'pms_occupant_users'],
-      'fm user': ['user & roles', 'pms_user_roles'],
+      // 'fm user': ['user & roles', 'pms_user_roles'],
       'occupant users': ['occupant users', 'pms_occupant_users'],
       'm-safe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
       'internal user (fte)': ['msafe', 'pms_msafe'],
