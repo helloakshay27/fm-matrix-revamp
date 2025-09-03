@@ -1216,7 +1216,7 @@ export const InventoryDashboard = () => {
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${Object.keys(activeFilters || {}).length === 0 ? 'border-2 border-[#C72030]' : ''}`}
                   onClick={() => {
                     setActiveFilters({});
                     setLocalCurrentPage(1);
@@ -1238,7 +1238,7 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[active_eq]']) === 'true' ? 'border-2 border-[#C72030]' : ''}`}
                   onClick={() => {
                     const nf = { 'q[active_eq]': true as any } as Record<string, string>;
                     setActiveFilters(nf);
@@ -1261,7 +1261,7 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[active_eq]']) === 'false' ? 'border-2 border-[#C72030]' : ''}`}
                   onClick={() => {
                     const nf = { 'q[active_eq]': false as any } as Record<string, string>;
                     setActiveFilters(nf);
@@ -1284,7 +1284,7 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[green_product_eq]']) === 'true' ? 'border-2 border-[#C72030]' : ''}`}
                   onClick={() => {
                     const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
                     setActiveFilters(nf);
