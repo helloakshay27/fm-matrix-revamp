@@ -566,7 +566,7 @@ export const GatePassOutwardsAddPage = () => {
               );
             })}
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <MuiButton
               variant="outlined"
               onClick={() => fileInputRef.current?.click()}
@@ -593,7 +593,7 @@ export const GatePassOutwardsAddPage = () => {
               onChange={handleFileChange}
               className="hidden"
             />
-          </Box>
+          </Box> */}
         </div>
 
         {/* Footer */}
