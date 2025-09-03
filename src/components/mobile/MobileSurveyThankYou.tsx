@@ -82,7 +82,7 @@ export const MobileSurveyThankYou: React.FC = () => {
           <div className="bg-white rounded-lg p-4 mb-6">
             <div className="flex items-center justify-center">
               <span className="text-2xl mr-2">{state.emoji}</span>
-              <span className="font-medium text-gray-700">{state.label}</span>
+              <span className="font-medium text-gray-700">{state.label || "☺️"}</span>
             </div>
             <div className="text-xs text-gray-500 mt-1">Your Rating</div>
           </div>
