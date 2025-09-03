@@ -90,7 +90,7 @@ const mapInventoryData = (apiData: any[]) => {
       subGroup: item.sub_group || "",
       category: item.category || "",
       manufacturer: item.manufacturer || "",
-      criticality: item.criticality || "",
+      criticality: item.criticality !== undefined && item.criticality !== null ? item.criticality : "",
       quantity: item.quantity?.toString() || "0",
       expiryDate: (item as any).expiry_date || (item as any).expiration_date || "",
       active: item.active ? "Active" : "Inactive",
@@ -456,8 +456,14 @@ export const InventoryDashboard = () => {
     const newFilters: Record<string, string> = {};
     if (name) newFilters['q[name_cont]'] = name;
     if (code) newFilters['q[code_cont]'] = code;
-    if (category) newFilters['q[category_cont]'] = category;
-    if (criticality) newFilters['q[criticality_eq]'] = criticality;
+    if (category) newFilters['q[category_eq]'] = category;
+    if (criticality) {
+      if (criticality === "1") {
+        newFilters['q[criticality_eq]'] = "0";  // Critical items have value 0
+      } else {
+        newFilters['q[criticality_eq]'] = "2";  // Non-Critical items have value 2
+      }
+    }
     if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
@@ -672,12 +678,18 @@ export const InventoryDashboard = () => {
       const raw = item.criticality;
       let label = '-';
       if (typeof raw === 'number') {
-        label = raw === 1 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
+        label = raw === 0 ? 'Critical' : raw === 2 ? 'Non-Critical' : '-';
       } else if (typeof raw === 'string') {
         const v = raw.trim().toLowerCase();
-        if (v === '1' || v === 'critical') label = 'Critical';
+        if (v === '0' || v === 'critical') label = 'Critical';
         else if (v === '2' || v === 'non-critical' || v === 'non_critical') label = 'Non-Critical';
-        else label = raw || '-';
+        else if (v !== '') label = raw || '-'; // Only show raw value if it's not empty
+      }
+      // Handle the case where raw is exactly the API values
+      if (raw === 0 || raw === '0') {
+        label = 'Critical';
+      } else if (raw === 2 || raw === '2') {
+        label = 'Non-Critical';
       }
       const isCritical = label === 'Critical';
       return (
@@ -836,9 +848,28 @@ export const InventoryDashboard = () => {
       }
 
       let url = `https://${baseUrl}/pms/inventories.xlsx`;
+      const queryParams = new URLSearchParams();
+
+      // Add site_id parameter
+      queryParams.append('site_id', siteId);
+
+      // Add active filter parameters to export
+      if (activeFilters && Object.keys(activeFilters).length > 0) {
+        Object.entries(activeFilters).forEach(([key, value]) => {
+          if (value) {
+            queryParams.append(key, value);
+          }
+        });
+      }
+
+      // Add selected items if any
       if (selectedItems.length > 0) {
-        const ids = selectedItems.join(',');
-        url += `&ids=${ids}`;
+        queryParams.append('ids', selectedItems.join(','));
+      }
+
+      // Append query parameters to URL
+      if (queryParams.toString()) {
+        url += `?${queryParams.toString()}`;
       }
 
       const response = await axios.get(url, {
@@ -860,12 +891,27 @@ export const InventoryDashboard = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = downloadUrl;
-      link.download = 'inventories.xlsx';
+      
+      // Create descriptive filename based on filters
+      let filename = 'inventories';
+      if (Object.keys(activeFilters).length > 0) {
+        filename += '_filtered';
+      }
+      if (selectedItems.length > 0) {
+        filename += '_selected';
+      }
+      filename += '.xlsx';
+      
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-      toast.success('Inventory data exported successfully');
+      
+      const message = Object.keys(activeFilters).length > 0 
+        ? 'Filtered inventory data exported successfully'
+        : 'Inventory data exported successfully';
+      toast.success(message);
     } catch (error) {
       console.error('Export failed:', error);
       toast.error('Failed to export inventory data');
