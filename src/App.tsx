@@ -677,6 +677,13 @@ import GatePassTypePage from "./pages/master/GatePassTypePage";
 import InventoryTypePage from "./pages/master/InventoryTypePage";
 import InventorySubTypePage from "./pages/master/InventorySubTypePage";
 import AddGateNumberPage from "./pages/master/AddGateNumberPage";
+import AddGatePassTypePage from "./pages/master/AddGatePassTypePage";
+import EditGateNumberPage from "./pages/master/EditGateNumberPage";
+import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
+import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
+import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
+import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
+import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 
 
 const queryClient = new QueryClient();
@@ -1964,6 +1971,7 @@ function App() {
                     element={<LoyaltyRuleEngineDetailPage />}
                   />
                   <Route
+
                     path="/market-place/cloud-telephony"
                     element={<CloudTelephonyDetailPage />}
                   />
@@ -2042,16 +2050,44 @@ function App() {
                     element={<AddGateNumberPage />}
                   />
                   <Route
+                    path="/master/gate-number/edit/:id"
+                    element={<EditGateNumberPage />}
+                  />
+                  <Route
                     path="/master/gate-pass-type"
                     element={<GatePassTypePage />}
+                  />
+                  <Route
+                    path="/master/gate-pass-type/add"
+                    element={<AddGatePassTypePage />}
+                  />
+                  <Route
+                    path="/master/gate-pass-type/edit/:id"
+                    element={<EditGatePassTypePage />}
                   />
                   <Route
                     path="/master/inventory-type"
                     element={<InventoryTypePage />}
                   />
                   <Route
+                    path="/master/inventory-type/add"
+                    element={<AddInventoryTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-type/edit/:id"
+                    element={<EditInventoryTypePage />}
+                  />
+                  <Route
                     path="/master/inventory-sub-type"
                     element={<InventorySubTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-sub-type/add"
+                    element={<AddInventorySubTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-sub-type/edit/:id"
+                    element={<EditInventorySubTypePage />}
                   />
 
                   <Route

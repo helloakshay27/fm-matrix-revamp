@@ -15,7 +15,8 @@ import {
   Currency,
   User,
   BarChart,
-  UserRoundPen, DoorOpen
+  UserRoundPen, DoorOpen,
+  Ticket, PackagePlus
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -218,11 +219,11 @@ const modulesByPackage = {
       icon: CheckSquare,
       href: '/master/checklist'
     },
-     {
+    {
       name: 'Question Bank',
       icon: FileSpreadsheet,
       href: '/master/survey/list',
-     
+
     },
     {
       name: 'Address Master',
@@ -243,7 +244,23 @@ const modulesByPackage = {
       name: 'Gate Number',
       icon: DoorOpen,
       href: '/master/gate-number'
-    }
+    },
+    {
+      name: 'Gate Pass Type',
+      icon: Ticket,
+      href: '/master/gate-pass-type'
+    },
+    {
+      name: 'Inventory Type',
+      icon: Package,
+      href: '/master/inventory-type'
+    },
+    {
+      name: 'Inventory Sub Type',
+      icon: PackagePlus,
+      href: '/master/inventory-sub-type'
+    },
+
   ],
   'Transitioning': [
     { name: 'HOTO', icon: FileText, href: '/transitioning/hoto' },

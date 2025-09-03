@@ -381,25 +381,25 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-      name: "Gate Number",
-      icon: DoorOpen,
-      href: "/master/gate-number",
-    },
-    // {
-    //   name: 'Inventory Type',
-    //   icon: Package,
-    //   href: '/master/inventory-type'
-    // },
-    // {
-    //   name: 'Inventory Sub Type',
-    //   icon: PackagePlus,
-    //   href: '/master/inventory-sub-type'
-    // },
-    // {
-    //   name: 'Gate Pass Type',
-    //   icon: Ticket,
-    //   href: '/master/gate-pass-type'
-    // }
+        name: 'Gate Number',
+        icon: DoorOpen,
+        href: '/master/gate-number'
+      },
+      // {
+      //   name: 'Gate Pass Type',
+      //   icon: Ticket,
+      //   href: '/master/gate-pass-type'
+      // }
+      // {
+      //   name: 'Inventory Type',
+      //   icon: Package,
+      //   href: '/master/inventory-type'
+      // },
+      // {
+      //   name: 'Inventory Sub Type',
+      //   icon: PackagePlus,
+      //   href: '/master/inventory-sub-type'
+      // },
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },

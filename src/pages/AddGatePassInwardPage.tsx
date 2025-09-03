@@ -1,10 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Typography, IconButton, Button as MuiButton } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Typography, IconButton, Button as MuiButton, Autocomplete } from '@mui/material';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import { AttachFile, Close } from '@mui/icons-material';
 import { useToast } from '@/hooks/use-toast';
+import { gateNumberService } from '@/services/gateNumberService';
+import { gatePassInwardService } from '@/services/gatePassInwardService';
+import { gatePassTypeService } from '@/services/gatePassTypeService';
 
 interface AttachmentFile {
   id: string;
@@ -13,14 +16,21 @@ interface AttachmentFile {
   url: string;
 }
 
+interface DropdownOption {
+  id: number;
+  name: string;
+  quantity?: number;
+}
+
 interface MaterialRow {
   id: number;
-  itemType: string;
-  itemCategory: string;
-  itemName: string;
+  itemTypeId: number | null;
+  itemCategoryId: number | null;
+  itemNameId: number | null;
   quantity: string;
   unit: string;
   description: string;
+  maxQuantity: number | null;
 }
 
 export const AddGatePassInwardPage = () => {
@@ -30,33 +40,113 @@ export const AddGatePassInwardPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([
-    { id: 1, itemType: '', itemCategory: '', itemName: '', quantity: '', unit: '', description: '' }
+    { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }
   ]);
 
   const [visitorDetails, setVisitorDetails] = useState({
     visitorName: '',
     mobileNo: '',
-    companyName: '',
+    companyId: null as number | null,
     vehicleNo: '',
     reportingTime: '',
     modeOfTransport: ''
   });
 
-  const handleVisitorChange = (field: keyof typeof visitorDetails, value: string) => {
+  const [gatePassDetails, setGatePassDetails] = useState({
+    gatePassTypeId: null as number | null,
+    gatePassDate: '',
+    siteId: null as number | null,
+    buildingId: null as number | null,
+    remarks: '',
+  });
+
+  const [companies, setCompanies] = useState<DropdownOption[]>([]);
+  const [gatePassTypes, setGatePassTypes] = useState<DropdownOption[]>([]);
+  const [sites, setSites] = useState<DropdownOption[]>([]);
+  const [buildings, setBuildings] = useState<DropdownOption[]>([]);
+  const [itemTypeOptions, setItemTypeOptions] = useState<DropdownOption[]>([]);
+  const [itemCategoryOptions, setItemCategoryOptions] = useState<{ [key: number]: DropdownOption[] }>({});
+  const [itemNameOptions, setItemNameOptions] = useState<{ [key: number]: DropdownOption[] }>({});
+
+  useEffect(() => {
+    gateNumberService.getCompanies().then(setCompanies);
+    gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
+    gatePassTypeService.getGatePassTypes().then(data => setGatePassTypes(data.map(d => ({ id: d.id, name: d.name }))));
+    gateNumberService.getSites().then(setSites);
+  }, []);
+
+  useEffect(() => {
+    if (gatePassDetails.siteId) {
+      gateNumberService.getProjectsBySite(gatePassDetails.siteId).then(setBuildings);
+    } else {
+      setBuildings([]);
+    }
+  }, [gatePassDetails.siteId]);
+
+  const handleVisitorChange = (field: keyof typeof visitorDetails, value: any) => {
     setVisitorDetails(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleGatePassChange = (field: keyof typeof gatePassDetails, value: any) => {
+    if (field === 'siteId') {
+      setGatePassDetails(prev => ({ ...prev, siteId: value, buildingId: null }));
+    } else {
+      setGatePassDetails(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   const handleAddRow = () => {
     const newId = materialRows.length > 0 ? Math.max(...materialRows.map(r => r.id)) + 1 : 1;
-    setMaterialRows([...materialRows, { id: newId, itemType: '', itemCategory: '', itemName: '', quantity: '', unit: '', description: '' }]);
+    setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }]);
   };
 
   const handleDeleteRow = (id: number) => {
     setMaterialRows(materialRows.filter(row => row.id !== id));
   };
 
-  const handleRowChange = (id: number, field: keyof Omit<MaterialRow, 'id'>, value: string) => {
-    setMaterialRows(materialRows.map(row => row.id === id ? { ...row, [field]: value } : row));
+  const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
+    const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
+    
+    if (field === 'itemTypeId') {
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '' } : row);
+      setMaterialRows(updatedRows);
+      setItemNameOptions(prev => ({ ...prev, [id]: [] }));
+
+      if (value) {
+        const subTypes = await gatePassInwardService.getInventorySubTypes(value);
+        setItemCategoryOptions(prev => ({ ...prev, [id]: subTypes }));
+      } else {
+        setItemCategoryOptions(prev => ({ ...prev, [id]: [] }));
+      }
+    } else if (field === 'itemCategoryId') {
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '' } : row);
+      setMaterialRows(updatedRows);
+      
+      const currentItemTypeId = newRows.find(row => row.id === id)?.itemTypeId;
+      if (value && currentItemTypeId) {
+        const inventories = await gatePassInwardService.getInventories(currentItemTypeId, value);
+        setItemNameOptions(prev => ({ ...prev, [id]: inventories }));
+      } else {
+        setItemNameOptions(prev => ({ ...prev, [id]: [] }));
+      }
+    } else if (field === 'itemNameId') {
+        const selectedItem = (itemNameOptions[id] || []).find(item => item.id === value);
+        const updatedRows = newRows.map(row => row.id === id ? { ...row, maxQuantity: selectedItem?.quantity ?? null, quantity: '' } : row);
+        setMaterialRows(updatedRows);
+    } else if (field === 'quantity') {
+        const currentRow = newRows.find(row => row.id === id);
+        if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
+            toast({
+                title: "Validation Error",
+                description: `Quantity cannot be greater than ${currentRow.maxQuantity}.`,
+                variant: "destructive"
+            });
+            return;
+        }
+        setMaterialRows(newRows);
+    } else {
+      setMaterialRows(newRows);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -112,10 +202,37 @@ export const AddGatePassInwardPage = () => {
       return;
     }
 
+    const formData = new FormData();
+
+    // Append gate pass details
+    formData.append('gate_pass[gate_pass_category]', 'inward');
+    if (gatePassDetails.gatePassTypeId) formData.append('gate_pass[gate_pass_type_id]', gatePassDetails.gatePassTypeId.toString());
+    if (gatePassDetails.gatePassDate) formData.append('gate_pass[gate_pass_date]', gatePassDetails.gatePassDate);
+    formData.append('gate_pass[status]', 'pending');
+    if (gatePassDetails.siteId) formData.append('gate_pass[site_id]', gatePassDetails.siteId.toString());
+    if (visitorDetails.companyId) formData.append('gate_pass[company_id]', visitorDetails.companyId.toString());
+    if (visitorDetails.vehicleNo) formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo);
+    if (gatePassDetails.remarks) formData.append('gate_pass[remarks]', gatePassDetails.remarks);
+    if (gatePassDetails.buildingId) formData.append('gate_pass[building_id]', gatePassDetails.buildingId.toString());
+
+    // Append material details
+    materialRows.forEach((row, index) => {
+      if (row.itemNameId) {
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
+        if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
+        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_sub_type_id]`, row.itemCategoryId.toString());
+        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, row.quantity);
+        if (row.description) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description);
+      }
+    });
+
+    // Append attachments
+    attachments.forEach(attachment => {
+      formData.append('gate_pass[attachments][]', attachment.file);
+    });
+
     try {
-      console.log('Visitor Details:', visitorDetails);
-      console.log('Material Rows:', materialRows);
-      console.log('Attachments:', attachments);
+      await gatePassInwardService.createGatePassInward(formData);
       
       toast({
         title: "Success",
@@ -157,7 +274,13 @@ export const AddGatePassInwardPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <TextField label="Visitor Name" placeholder="Enter Name" fullWidth variant="outlined" required value={visitorDetails.visitorName} onChange={(e) => handleVisitorChange('visitorName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Mobile No." placeholder="+91" fullWidth variant="outlined" required value={visitorDetails.mobileNo} onChange={(e) => handleVisitorChange('mobileNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Company Name" placeholder="Lockated" fullWidth variant="outlined" value={visitorDetails.companyName} onChange={(e) => handleVisitorChange('companyName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <Autocomplete
+              options={companies}
+              getOptionLabel={(option) => option.name}
+              value={companies.find(c => c.id === visitorDetails.companyId) || null}
+              onChange={(_, newValue) => handleVisitorChange('companyId', newValue ? newValue.id : null)}
+              renderInput={(params) => <TextField {...params} label="Company Name" placeholder="Select Company" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
             <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
               <InputLabel shrink>Mode Of Transport *</InputLabel>
               <MuiSelect label="Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
@@ -171,6 +294,39 @@ export const AddGatePassInwardPage = () => {
             </FormControl>
             <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Reporting Time" type="time" fullWidth variant="outlined" required value={visitorDetails.reportingTime} onChange={(e) => handleVisitorChange('reportingTime', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          </div>
+        </div>
+
+        {/* Gate Pass Details Section */}
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Autocomplete
+              options={gatePassTypes}
+              getOptionLabel={(option) => option.name}
+              value={gatePassTypes.find(c => c.id === gatePassDetails.gatePassTypeId) || null}
+              onChange={(_, newValue) => handleGatePassChange('gatePassTypeId', newValue ? newValue.id : null)}
+              renderInput={(params) => <TextField {...params} label="Gate Pass Type" placeholder="Select Type" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
+            <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <Autocomplete
+              options={sites}
+              getOptionLabel={(option) => option.name}
+              value={sites.find(c => c.id === gatePassDetails.siteId) || null}
+              onChange={(_, newValue) => handleGatePassChange('siteId', newValue ? newValue.id : null)}
+              renderInput={(params) => <TextField {...params} label="Site" placeholder="Select Site" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
+            <Autocomplete
+              options={buildings}
+              getOptionLabel={(option) => option.name}
+              value={buildings.find(c => c.id === gatePassDetails.buildingId) || null}
+              onChange={(_, newValue) => handleGatePassChange('buildingId', newValue ? newValue.id : null)}
+              disabled={!gatePassDetails.siteId}
+              renderInput={(params) => <TextField {...params} label="Building" placeholder="Select Building" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
+            <div className="lg:col-span-3">
+              <TextField label="Remarks" placeholder="Enter remarks" fullWidth variant="outlined" value={gatePassDetails.remarks} onChange={(e) => handleGatePassChange('remarks', e.target.value)} InputLabelProps={{ shrink: true }} multiline rows={2} />
+            </div>
           </div>
         </div>
 
@@ -198,34 +354,46 @@ export const AddGatePassInwardPage = () => {
                 {materialRows.map((row, index) => (
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2">
-                      <FormControl fullWidth variant="outlined" size="small">
-                        <MuiSelect displayEmpty value={row.itemType} onChange={(e) => handleRowChange(row.id, 'itemType', e.target.value)}>
-                          <MenuItem value="">Select</MenuItem>
-                          <MenuItem value="equipment">Equipment</MenuItem>
-                          <MenuItem value="material">Material</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
+                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                      <Autocomplete
+                        options={itemTypeOptions}
+                        getOptionLabel={(option) => option.name}
+                        value={itemTypeOptions.find(o => o.id === row.itemTypeId) || null}
+                        onChange={(_, newValue) => handleRowChange(row.id, 'itemTypeId', newValue ? newValue.id : null)}
+                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Type" />}
+                      />
+                    </td>
+                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                      <Autocomplete
+                        options={itemCategoryOptions[row.id] || []}
+                        getOptionLabel={(option) => option.name}
+                        value={(itemCategoryOptions[row.id] || []).find(o => o.id === row.itemCategoryId) || null}
+                        onChange={(_, newValue) => handleRowChange(row.id, 'itemCategoryId', newValue ? newValue.id : null)}
+                        disabled={!row.itemTypeId}
+                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Category" />}
+                      />
+                    </td>
+                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                      <Autocomplete
+                        options={itemNameOptions[row.id] || []}
+                        getOptionLabel={(option) => option.name}
+                        value={(itemNameOptions[row.id] || []).find(o => o.id === row.itemNameId) || null}
+                        onChange={(_, newValue) => handleRowChange(row.id, 'itemNameId', newValue ? newValue.id : null)}
+                        disabled={!row.itemCategoryId}
+                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Item" />}
+                      />
                     </td>
                     <td className="px-4 py-2">
-                      <FormControl fullWidth variant="outlined" size="small">
-                        <MuiSelect displayEmpty value={row.itemCategory} onChange={(e) => handleRowChange(row.id, 'itemCategory', e.target.value)}>
-                          <MenuItem value="">Select</MenuItem>
-                          <MenuItem value="electronics">Electronics</MenuItem>
-                          <MenuItem value="tools">Tools</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        type="number"
+                        value={row.maxQuantity !== null ? row.maxQuantity : ''} 
+                        onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)} 
+                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0 }}
+                        // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
+                      />
                     </td>
-                    <td className="px-4 py-2">
-                      <FormControl fullWidth variant="outlined" size="small">
-                        <MuiSelect displayEmpty value={row.itemName} onChange={(e) => handleRowChange(row.id, 'itemName', e.target.value)}>
-                          <MenuItem value="">Select</MenuItem>
-                          <MenuItem value="laptop">Laptop</MenuItem>
-                          <MenuItem value="keyboard">Keyboard</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                    </td>
-                    <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.quantity} onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)} /></td>
                     <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
                     <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-2">
@@ -290,7 +458,7 @@ export const AddGatePassInwardPage = () => {
               );
             })}
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <MuiButton
               variant="outlined"
               onClick={() => fileInputRef.current?.click()}
@@ -303,7 +471,7 @@ export const AddGatePassInwardPage = () => {
               Add Attachment
             </MuiButton>
             <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="hidden" />
-          </Box>
+          </Box> */}
         </div>
 
         {/* Footer */}
