@@ -404,7 +404,9 @@ const modulesByPackage = {
       href: '/safety/permit',
       subItems: [
         { name: 'Permit ', href: '/safety/permit', color: 'text-[#1a1a1a]' },
-        { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]' }
+        { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]' },
+        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+
       ]
     },
     { name: 'M Safe', icon: Shield, href: '/safety/m-safe' },
