@@ -185,10 +185,18 @@ export const taskService = {
     }
   },
 
-  async exportTasks(): Promise<Blob> {
+  async exportTasks(params?: { status?: string }): Promise<Blob> {
     try {
+      const queryParams: any = {};
+
+      // Handle status filtering
+      if (params?.status) {
+        queryParams['task_status_eq'] = params.status;
+      }
+
       const response = await apiClient.get('/pms/users/scheduled_tasks.xlsx', {
-        responseType: 'blob'
+        responseType: 'blob',
+        params: queryParams
       });
       return response.data;
     } catch (error) {
@@ -197,13 +205,14 @@ export const taskService = {
     }
   },
 
-  async downloadTaskExport(): Promise<void> {
+  async downloadTaskExport(params?: { status?: string }): Promise<void> {
     try {
-      const blob = await this.exportTasks();
+      const blob = await this.exportTasks(params);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `tasks_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const statusSuffix = params?.status ? `_${params.status.toLowerCase().replace(/\s+/g, '_')}` : '';
+      a.download = `tasks_export${statusSuffix}_${new Date().toISOString().split('T')[0]}.xlsx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
