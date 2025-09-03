@@ -433,8 +433,6 @@ export const MaterialPRDashboard = () => {
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search..."
-        enableExport={true}
-        exportFileName="material-prs"
         enableSearch={true}
         enableSelection={true}
         leftActions={leftActions}

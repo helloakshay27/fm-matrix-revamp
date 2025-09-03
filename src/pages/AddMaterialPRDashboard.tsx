@@ -68,6 +68,7 @@ export const AddMaterialPRDashboard = () => {
       id: 1,
       itemDetails: "",
       sacHsnCode: "",
+      sacHsnCodeId: "",
       productDescription: "",
       each: "",
       quantity: "",
@@ -276,6 +277,7 @@ export const AddMaterialPRDashboard = () => {
         id: items.length + 1,
         itemDetails: "",
         sacHsnCode: "",
+        sacHsnCodeId: "",
         productDescription: "",
         each: "",
         quantity: "",
@@ -306,7 +308,8 @@ export const AddMaterialPRDashboard = () => {
           item.id === itemId
             ? {
               ...item,
-              sacHsnCode: response.data.hsn?.id || "",
+              sacHsnCode: response.data.hsn?.code || "",
+              sacHsnCodeId: response.data.hsn?.id || "",
               each: response.data.rate || "",
               amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
             }
@@ -412,7 +415,7 @@ export const AddMaterialPRDashboard = () => {
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
-          sac_hsn_code: item.sacHsnCode,
+          sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         }))

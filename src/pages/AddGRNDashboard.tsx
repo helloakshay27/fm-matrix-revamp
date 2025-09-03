@@ -246,10 +246,10 @@ export const AddGRNDashboard = () => {
           totalTaxes: "",
           amount: "",
           totalAmount: "",
-          expectedQuantity: item.expected_quantity || "",
-          receivedQuantity: item.received_quantity || "",
-          approvedQuantity: item.approved_quantity || "",
-          rejectedQuantity: item.rejected_quantity || "",
+          expectedQuantity: item.quantity || "",
+          receivedQuantity: "",
+          approvedQuantity: "",
+          rejectedQuantity: "",
           batch: item.batch || [],
         };
         return calculateInventoryTaxes(inventoryItem);
@@ -276,6 +276,15 @@ export const AddGRNDashboard = () => {
         newDetails[index] = { ...newDetails[index], batch: newBatch };
       } else {
         newDetails[index] = { ...newDetails[index], [field]: value };
+        if (field === "receivedQuantity") {
+          // Set approvedQuantity to match receivedQuantity
+          newDetails[index].approvedQuantity = value;
+          // Calculate rejectedQuantity as expectedQuantity - approvedQuantity
+          const expected = parseFloat(newDetails[index].expectedQuantity) || 0;
+          const approved = parseFloat(value) || 0;
+          const rejected = expected - approved;
+          newDetails[index].rejectedQuantity = rejected >= 0 ? rejected.toFixed(0) : "0";
+        }
         newDetails[index] = calculateInventoryTaxes(newDetails[index]);
       }
       return newDetails;
@@ -442,7 +451,7 @@ export const AddGRNDashboard = () => {
         invoice_no: grnDetails.invoiceNumber,
         related_to: grnDetails.relatedTo,
         invoice_amount: grnDetails.invoiceAmount,
-        payment_mode: grnDetails.paymentMode,
+        payment_mod: grnDetails.paymentMode,
         bill_date: grnDetails.invoiceDate,
         posting_date: grnDetails.postingDate,
         other_expenses: grnDetails.otherExpense,
@@ -824,12 +833,13 @@ export const AddGRNDashboard = () => {
                     index,
                     "rejectedQuantity",
                     e.target.value
-                  )
-                }
+                  )}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: { ...fieldStyles },
+                }}
                 sx={{ mt: 1 }}
               />
 
