@@ -1103,7 +1103,7 @@ function App() {
                     path="/safety/permit/pending-approvals"
                     element={<PermitPendingApprovalsDashboard />}
                   />
-                  <Route path="/safety/m-safe" element={<MSafeDashboard />} />
+                  {/* <Route path="/safety/m-safe" element={<MSafeDashboard />} /> */}
                   <Route
                     path="/safety/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
@@ -1924,10 +1924,7 @@ function App() {
                   />
 
                   {/* M Safe Routes */}
-                  <Route
-                    path="/maintenance/m-safe"
-                    element={<MSafeDashboard />}
-                  />
+    
                   <Route
                     path="/maintenance/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
@@ -1936,7 +1933,6 @@ function App() {
                     path="/maintenance/m-safe/krcc-form-list"
                     element={<KRCCFormListDashboard />}
                   />
-                  <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
                   <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
                   <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
                   <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
