@@ -1173,7 +1173,7 @@ default:
                       storageKey="unexpected-visitors-table"
                       emptyMessage="No unexpected visitors available"
                       exportFileName="unexpected-visitors"
-                      searchPlaceholder="Search by visitor name, host, or purpose"
+                      searchPlaceholder="Search..."
                       hideTableExport={false}
                       hideColumnsButton={false}
                       onFilterClick={handleFilterOpen}
@@ -1201,7 +1201,7 @@ default:
                       storageKey="expected-visitors-table"
                       emptyMessage="No expected visitors available"
                       exportFileName="expected-visitors"
-                      searchPlaceholder="Search by visitor name, details, or purpose"
+                      searchPlaceholder="Search..."
                       hideTableExport={false}
                       hideColumnsButton={false}
                       onFilterClick={handleFilterOpen}
@@ -1236,7 +1236,7 @@ default:
                   storageKey="visitor-out-table"
                   emptyMessage="No visitors to check out"
                   exportFileName="visitor-out"
-                  searchPlaceholder="Search by visitor name, host, or purpose"
+                  searchPlaceholder="Search..."
                   hideTableExport={false}
                   hideColumnsButton={false}
                   // onFilterClick={handleFilterOpen}
@@ -1270,7 +1270,7 @@ default:
                   storageKey="visitor-history-table"
                   emptyMessage="No visitor history available"
                   exportFileName="visitor-history"
-                  searchPlaceholder="Search by visitor name, host, or pass number"
+                  searchPlaceholder="Search..."
                   hideTableExport={false}
                   hideColumnsButton={false}
                   // onFilterClick={handleFilterOpen}

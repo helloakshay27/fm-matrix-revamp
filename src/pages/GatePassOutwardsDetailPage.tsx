@@ -8,83 +8,96 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload, FileText, QrCode, Box, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { API_CONFIG } from '@/config/apiConfig';
+
 export const GatePassOutwardsDetailPage = () => {
-  const {
-    id
-  } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [selectedItemIndex, setSelectedItemIndex] = useState<number | null>(null);
+  const [gatePassData, setGatePassData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [handoverTo, setHandoverTo] = useState('');
+  const [receivedDate, setReceivedDate] = useState('');
+  const [remarks, setRemarks] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  // Sample data - in real app, this would be fetched based on the ID
-  const outwardData = [{
-    id: "850",
-    type: "Fresh",
-    returnableNonReturnable: "Non Returnable",
-    expectedReturnDate: "",
-    category: "Visitor",
-    personName: "Suraj",
-    profileImage: "/placeholder.svg",
-    passNo: "",
-    modeOfTransport: "By Hand,By Vehicle",
-    lrNo: "",
-    tripId: "7-10013",
-    gateEntry: "",
-    itemDetails: "Transmission - - MW - -"
-  }, {
-    id: "845",
-    type: "SRN",
-    returnableNonReturnable: "Returnable",
-    expectedReturnDate: "20/02/2023",
-    category: "Visitor",
-    personName: "Kshitij R",
-    profileImage: "/placeholder.svg",
-    passNo: "",
-    modeOfTransport: "By Courier,By Vehicle",
-    lrNo: "12",
-    tripId: "7-10008",
-    gateEntry: "55",
-    itemDetails: "MW - 4 - 2 Transmission - 8 - 2"
-  }, {
-    id: "844",
-    type: "SRN",
-    returnableNonReturnable: "Returnable",
-    expectedReturnDate: "20/02/2023",
-    category: "Visitor",
-    personName: "Sagar Singh",
-    profileImage: "/placeholder.svg",
-    passNo: "",
-    modeOfTransport: "By Hand,By Courier",
-    lrNo: "123",
-    tripId: "7-10007",
-    gateEntry: "55",
-    itemDetails: "Transmission - 12 - 55 MW - 4 - 3"
-  }, {
-    id: "840",
-    type: "",
-    returnableNonReturnable: "Non Returnable",
-    expectedReturnDate: "",
-    category: "Staff",
-    personName: "demo demo",
-    profileImage: "/placeholder.svg",
-    passNo: "",
-    modeOfTransport: "",
-    lrNo: "",
-    tripId: "7-10003",
-    gateEntry: "",
-    itemDetails: "Transmission - 45 - 1 MW - 23 - 5"
-  }];
+  React.useEffect(() => {
+    if (!id) return;
+    fetch(`${API_CONFIG.BASE_URL}/gate_passes/${id}.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        setGatePassData(data.gate_pass || data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id]);
+
   const handleReceiveClick = (itemIndex: number) => {
     setSelectedItemIndex(itemIndex);
     setIsReceiveModalOpen(true);
+    setHandoverTo('');
+    setReceivedDate('');
+    setRemarks('');
+    setAttachments([]);
   };
-  const handleSubmitReceive = () => {
-    // Handle submit logic here
-    setIsReceiveModalOpen(false);
-    setSelectedItemIndex(null);
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setAttachments(Array.from(e.target.files));
+    }
   };
-  const selectedEntry = outwardData.find(entry => entry.id === id);
-  if (!selectedEntry) {
+
+  const handleSubmitReceive = async () => {
+    if (selectedItemIndex === null || !gatePassData) return;
+    const material = gatePassData.gate_pass_materials[selectedItemIndex];
+    if (!material) return;
+    const formData = new FormData();
+    formData.append('gate_pass_material[remarks]', remarks);
+    formData.append('gate_pass_material[handover_to]', handoverTo);
+    formData.append('gate_pass_material[recieved_date]', receivedDate);
+    attachments.forEach(file => {
+      formData.append('gate_pass_material[attachments][]', file);
+    });
+    try {
+      const res = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}/gate_pass_materials/${material.id}/update_material`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`
+        },
+        body: formData
+      });
+      if (res.ok) {
+        // Optionally refresh data
+        setIsReceiveModalOpen(false);
+        setSelectedItemIndex(null);
+        setHandoverTo('');
+        setReceivedDate('');
+        setRemarks('');
+        setAttachments([]);
+        // Optionally show toast
+        // Optionally reload gatePassData
+        // You can add a toast here
+      } else {
+        // Handle error
+        // Optionally show error toast
+      }
+    } catch (err) {
+      // Handle error
+    }
+  };
+
+  if (loading) {
+    return <div className="p-6 text-center text-gray-500">Loading...</div>;
+  }
+
+  if (!gatePassData) {
     return <div className="p-6">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Entry Not Found</h1>
@@ -95,50 +108,32 @@ export const GatePassOutwardsDetailPage = () => {
         </div>
       </div>;
   }
-  ;
 
-  // Sample item data based on the selected entry
-  const itemsData = [{
-    sNo: "01",
-    itemName: "Faulty",
-    itemCategory: "Materials",
-    itemNameDetail: "Credit",
-    unit: "10",
-    quantity: "120kg",
-    description: "---",
-    attachment: "📎",
-    updates: "Receive"
-  }, {
-    sNo: "02",
-    itemName: "faulty",
-    itemCategory: "Materials",
-    itemNameDetail: "Debit",
-    unit: "12",
-    quantity: "180kg",
-    description: "---",
-    attachment: "📎",
-    updates: "Receive"
-  }, {
-    sNo: "03",
-    itemName: "faulty",
-    itemCategory: "Materials",
-    itemNameDetail: "Debit",
-    unit: "4",
-    quantity: "610kg",
-    description: "---",
-    attachment: "📎",
-    updates: "Receive"
-  }, {
-    sNo: "04",
-    itemName: "faulty",
-    itemCategory: "Materials",
-    itemNameDetail: "Debit",
-    unit: "7",
-    quantity: "8kg",
-    description: "---",
-    attachment: "📎",
-    updates: "Receive"
-  }];
+  // Defensive fallback for missing fields
+  const personName = gatePassData.created_by_name || gatePassData.contact_person || '--';
+  const returnableNonReturnable = gatePassData.returnable ? 'Returnable' : 'Non Returnable';
+  const expectedReturnDate = gatePassData.expected_return_date || '-';
+  const category = gatePassData.gate_pass_type_name || gatePassData.gate_pass_category || '--';
+  const companyName = (gatePassData.company && gatePassData.company.name) || '--';
+  const siteName = (gatePassData.site && gatePassData.site.name) || '--';
+  const buildingName = (gatePassData.building && gatePassData.building.name) || '--';
+  const vehicleNo = gatePassData.vehicle_no || '--';
+  const passDate = gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleString() : '--';
+  const modeOfTransport = gatePassData.mode_of_transport || vehicleNo;
+
+  // Prepare itemsData from gatePassData.gate_pass_materials
+  const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
+    sNo: String(idx + 1).padStart(2, '0'),
+    itemName: mat.material_type || '--',
+    itemCategory: mat.material_sub_type || '--',
+    itemNameDetail: mat.material || mat.other_material_name || '--',
+    unit: mat.uom || '--',
+    quantity: mat.gate_pass_qty ?? '--',
+    description: mat.other_material_description || mat.remarks || '--',
+    attachment: mat.attachment ? '📎' : '',
+    updates: 'Receive',
+  }));
+
   return <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="mb-6">
@@ -185,17 +180,17 @@ export const GatePassOutwardsDetailPage = () => {
                     {/* Profile Section */}
                     <div className="text-center mb-4">
                     <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                        <span className="text-yellow-600 font-bold text-lg">{selectedEntry.personName.charAt(0).toUpperCase()}</span>
+                        <span className="text-yellow-600 font-bold text-lg">{personName.charAt(0).toUpperCase()}</span>
                     </div>
-                    <h2 className="text-sm font-semibold text-gray-900">{selectedEntry.personName}</h2>
-                    <p className="text-xs text-gray-600">{selectedEntry.returnableNonReturnable}</p>
+                    <h2 className="text-sm font-semibold text-gray-900">{personName}</h2>
+                    <p className="text-xs text-gray-600">{returnableNonReturnable}</p>
                     </div>
 
                     {/* Details */}
                     <div className="space-y-3">
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
-                        <span className="text-sm text-gray-900">{selectedEntry.personName}</span>
+                        <span className="text-sm text-gray-900">{personName}</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
@@ -210,22 +205,22 @@ export const GatePassOutwardsDetailPage = () => {
                     
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                        <span className="text-sm text-gray-900">Lockated</span>
+                        <span className="text-sm text-gray-900">{companyName}</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Date/Time:</span>
-                        <span className="text-sm text-gray-900">2 July 2025 12:45 Pm</span>
+                        <span className="text-sm text-gray-900">{passDate}</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
-                        <span className="text-sm text-gray-900">{selectedEntry.modeOfTransport || "By Hand"}</span>
+                        <span className="text-sm text-gray-900">{modeOfTransport || "By Hand"}</span>
                     </div>
                     
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Expected Date:</span>
-                        <span className="text-sm text-gray-900">{selectedEntry.expectedReturnDate || "-"}</span>
+                        <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
                     </div>
                     </div>
                 </div>
@@ -331,47 +326,63 @@ export const GatePassOutwardsDetailPage = () => {
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-900">Return Process</DialogTitle>
           </DialogHeader>
-          
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
                 Handover To
               </Label>
-              <Input id="handover" placeholder="Enter handover details" className="w-full" />
+              <Input
+                id="handover"
+                placeholder="Enter handover details"
+                className="w-full"
+                value={handoverTo}
+                onChange={e => setHandoverTo(e.target.value)}
+              />
             </div>
-
             <div className="space-y-2">
-                          <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
-                            Received Date
-                          </Label>
-                          <Input
-                            type="date"
-                            id="received-date"
-                            placeholder="Enter received date"
-                            className="w-full"
-                          />
-                        </div>
-            
+              <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
+                Received Date
+              </Label>
+              <Input
+                type="date"
+                id="received-date"
+                placeholder="Enter received date"
+                className="w-full"
+                value={receivedDate}
+                onChange={e => setReceivedDate(e.target.value)}
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
                 Remarks
               </Label>
-              <Textarea id="remarks" placeholder="Enter remarks" className="w-full min-h-[80px]" />
+              <Textarea
+                id="remarks"
+                placeholder="Enter remarks"
+                className="w-full min-h-[80px]"
+                value={remarks}
+                onChange={e => setRemarks(e.target.value)}
+              />
             </div>
-            
             <div className="space-y-2">
               <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
                 Attachment
               </Label>
               <div className="flex items-center gap-2">
-                <Input id="attachment" type="file" className="w-full" />
-                <Button size="sm" variant="outline">
+                <Input
+                  id="attachment"
+                  type="file"
+                  className="w-full"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={handleAttachmentChange}
+                />
+                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
                   <Upload className="w-4 h-4" />
                 </Button>
               </div>
             </div>
           </div>
-          
           <div className="flex justify-center pt-4">
             <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
               Submit

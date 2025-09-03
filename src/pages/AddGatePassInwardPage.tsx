@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { gateNumberService } from '@/services/gateNumberService';
 import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
+import { API_CONFIG } from '@/config/apiConfig';
 
 interface AttachmentFile {
   id: string;
@@ -49,7 +50,12 @@ export const AddGatePassInwardPage = () => {
     companyId: null as number | null,
     vehicleNo: '',
     reportingTime: '',
-    modeOfTransport: ''
+    modeOfTransport: '',
+    driverName: '',
+    driverContactNo: '',
+    contactPerson: '',
+    contactPersonNo: '',
+    gateNoId: null as number | null,
   });
 
   const [gatePassDetails, setGatePassDetails] = useState({
@@ -58,6 +64,7 @@ export const AddGatePassInwardPage = () => {
     siteId: null as number | null,
     buildingId: null as number | null,
     remarks: '',
+    gateNumberId: null as number | null,
   });
 
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
@@ -67,12 +74,23 @@ export const AddGatePassInwardPage = () => {
   const [itemTypeOptions, setItemTypeOptions] = useState<DropdownOption[]>([]);
   const [itemCategoryOptions, setItemCategoryOptions] = useState<{ [key: number]: DropdownOption[] }>({});
   const [itemNameOptions, setItemNameOptions] = useState<{ [key: number]: DropdownOption[] }>({});
+  const [gateNumbers, setGateNumbers] = useState<DropdownOption[]>([]);
 
   useEffect(() => {
     gateNumberService.getCompanies().then(setCompanies);
     gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
     gatePassTypeService.getGatePassTypes().then(data => setGatePassTypes(data.map(d => ({ id: d.id, name: d.name }))));
     gateNumberService.getSites().then(setSites);
+    // Fetch gate numbers for dropdown using API_CONFIG
+    fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => setGateNumbers(data.gate_numbers || data))
+      .catch(() => setGateNumbers([]));
   }, []);
 
   useEffect(() => {
@@ -193,14 +211,6 @@ export const AddGatePassInwardPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!visitorDetails.visitorName || !visitorDetails.mobileNo) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in visitor name and mobile number.",
-        variant: "destructive"
-      });
-      return;
-    }
 
     const formData = new FormData();
 
@@ -214,6 +224,12 @@ export const AddGatePassInwardPage = () => {
     if (visitorDetails.vehicleNo) formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo);
     if (gatePassDetails.remarks) formData.append('gate_pass[remarks]', gatePassDetails.remarks);
     if (gatePassDetails.buildingId) formData.append('gate_pass[building_id]', gatePassDetails.buildingId.toString());
+    if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
+    if (gatePassDetails.gateNumberId) formData.append('gate_pass[gate_number_id]', gatePassDetails.gateNumberId.toString());
+    // if (visitorDetails.driverName) formData.append('gate_pass[driver_name]', visitorDetails.driverName);
+    // if (visitorDetails.driverContactNo) formData.append('gate_pass[driver_contact_no]', visitorDetails.driverContactNo);
+    // if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
+    // if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
 
     // Append material details
     materialRows.forEach((row, index) => {
@@ -272,8 +288,8 @@ export const AddGatePassInwardPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <TextField label="Visitor Name" placeholder="Enter Name" fullWidth variant="outlined" required value={visitorDetails.visitorName} onChange={(e) => handleVisitorChange('visitorName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Mobile No." placeholder="+91" fullWidth variant="outlined" required value={visitorDetails.mobileNo} onChange={(e) => handleVisitorChange('mobileNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label="Visitor Name" placeholder="Enter Name" fullWidth variant="outlined" required value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label="Mobile No." placeholder="+91" fullWidth variant="outlined" required value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <Autocomplete
               options={companies}
               getOptionLabel={(option) => option.name}
@@ -294,6 +310,10 @@ export const AddGatePassInwardPage = () => {
             </FormControl>
             <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Reporting Time" type="time" fullWidth variant="outlined" required value={visitorDetails.reportingTime} onChange={(e) => handleVisitorChange('reportingTime', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label="Driver Contact No." placeholder="Enter Driver Contact No." fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label="Contact Person No." placeholder="Enter Contact Person No." fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} /> */}
           </div>
         </div>
 
@@ -307,6 +327,13 @@ export const AddGatePassInwardPage = () => {
               value={gatePassTypes.find(c => c.id === gatePassDetails.gatePassTypeId) || null}
               onChange={(_, newValue) => handleGatePassChange('gatePassTypeId', newValue ? newValue.id : null)}
               renderInput={(params) => <TextField {...params} label="Gate Pass Type" placeholder="Select Type" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
+            <Autocomplete
+              options={gateNumbers}
+              getOptionLabel={(option) => option.gate_number}
+              value={gateNumbers.find(g => g.id === gatePassDetails.gateNumberId) || null}
+              onChange={(_, newValue) => handleGatePassChange('gateNumberId', newValue ? newValue.id : null)}
+              renderInput={(params) => <TextField {...params} label="Gate Number" placeholder="Select Gate Number" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
             />
             <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <Autocomplete
