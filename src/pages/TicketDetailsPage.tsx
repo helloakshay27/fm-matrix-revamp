@@ -269,11 +269,16 @@ export const TicketDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{ticketData.created_by_name}</span>
               </div>
             )}
-            {(hasData(ticketData.created_date) || hasData(ticketData.created_time)) && (
+            {(hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.created_at)) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Created On</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1">{`${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()}</span>
+                <span className="text-gray-900 font-semibold flex-1">
+                  {ticketData.created_at 
+                    ? new Date(ticketData.created_at).toLocaleString()
+                    : `${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()
+                  }
+                </span>
               </div>
             )}
             {hasData(ticketData.category_type) && (
