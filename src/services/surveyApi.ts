@@ -48,29 +48,15 @@ export interface SurveyResponseData {
 export interface SurveySubmissionRequest {
   survey_response: {
     mapping_id: string;
-    rating?: number;
-    emoji?: string;
-    label?: string;
-    issues: string[];
-    description?: string;
-    qtype?: string;
-    value?: string | number;
-    selectedOptions?: Array<{
-      id: number;
-      qname: string;
-      option_type: string;
-    }>;
-    option_id?: number;
-    question_id?: number;
-    questions_count?: number;
-    answers?: Array<{
-      description: string;
-      question_id: number;
-      type: string;
-      option_id?: number;
-      rating?: number;
-      issues?: string[];
-    }>;
+    question_id: number;
+    option_id?: number; // For multiple choice questions
+    issues: string[]; // Array of issue category names
+    rating?: number; // For rating and emoji questions
+    emoji?: string; // For emoji questions
+    label?: string; // For emoji questions
+    response_text?: string; // For input/description questions
+    description?: string; // Additional description
+    final_description?: string; // Final survey description
   };
 }
 
