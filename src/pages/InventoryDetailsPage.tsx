@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import moment from 'moment';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, QrCode, Edit, Loader2, Box, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
@@ -117,26 +118,46 @@ export const InventoryDetailsPage = () => {
   const formatDateTime = (dateString) => {
     if (!dateString) return '—';
     try {
-      const date = new Date(dateString);
-      return date.toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      let s = String(dateString).trim();
+      s = s.replace(/\.\d{3,}/, '');
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+      const formats = [
+        'ddd, DD MMM YYYY HH:mm:ss ZZ',
+        'ddd DD MMM YYYY HH:mm:ss ZZ',
+        'YYYY-MM-DDTHH:mm:ssZ',
+        'YYYY-MM-DD HH:mm:ss',
+        'YYYY-MM-DD',
+      ];
+      let m = moment(s, formats, true);
+      if (!m.isValid()) m = moment(s);
+      if (!m.isValid()) return '—';
+      return m.format('DD/MM/YYYY HH:mm');
     } catch {
       return '—';
     }
   };
 
-  // Date only formatter (DD/MM/YYYY)
+  // Sanitize and parse Ruby-style or RFC-like datetimes, then return DD/MM/YYYY
   const formatDateOnly = (dateString) => {
     if (!dateString) return '—';
     try {
-      const d = new Date(dateString);
-      if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      let s = String(dateString).trim();
+      // Remove nanoseconds like .000000000
+      s = s.replace(/\.\d{3,}/, '');
+      // Remove timezone abbreviation tokens (e.g., IST) while keeping numeric offset
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+      // Accept common forms explicitly
+      const formats = [
+        'ddd, DD MMM YYYY HH:mm:ss ZZ',
+        'ddd DD MMM YYYY HH:mm:ss ZZ',
+        'YYYY-MM-DD',
+        'YYYY-MM-DDTHH:mm:ssZ',
+        'YYYY-MM-DD HH:mm:ss',
+      ];
+      let m = moment(s, formats, true);
+      if (!m.isValid()) m = moment(s); // best-effort fallback
+      if (!m.isValid()) return '—';
+      return m.format('DD/MM/YYYY');
     } catch {
       return '—';
     }
@@ -161,13 +182,121 @@ export const InventoryDetailsPage = () => {
           to = content.slice(idx + 1).trim();
         }
         // Clean potential surrounding quotes or nil
-        const clean = (v: string) => v.replace(/^"|"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
+        const clean = (v: string) => v.replace(/^\"|\"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
         result.push({ key, from: clean(from), to: clean(to) });
       }
     } catch (e) {
       console.warn('Failed to parse changed_attr', e);
     }
     return result;
+  };
+
+  // Human-friendly labels for keys
+  const LABELS: Record<string, string> = {
+    name: 'Name',
+    inventory_type: 'Type',
+    criticality: 'Criticality',
+    asset_id: 'Asset',
+    code: 'Code',
+    serial_number: 'Serial Number',
+    quantity: 'Quantity',
+    min_stock_level: 'Min Stock Level',
+    max_stock_level: 'Max Stock Level',
+    min_order_level: 'Min Order Level',
+    cgst_rate: 'CGST Rate',
+    sgst_rate: 'SGST Rate',
+    igst_rate: 'IGST Rate',
+    hsn_id: 'SAC/HSN',
+    expiry_date: 'Expiry Date',
+    unit: 'Unit',
+  category: 'Category',
+  category_id: 'Category',
+  category_name: 'Category',
+  inventory_category_id: 'Category',
+  pms_inventory_category_id: 'Category',
+  pms_inventory_category: 'Category',
+    cost: 'Cost',
+    rate_contract_vendor_code: 'Rate Contract Vendor',
+  };
+
+  const HIDDEN_KEYS = new Set<string>([
+    'id', 'created_at', 'updated_at', 'company_id', 'pms_site_id', 'user_id'
+  ]);
+
+  const startCase = (s: string) => s.replace(/_/g, ' ')?.replace(/\w\S*/g, (t) => t.charAt(0).toUpperCase() + t.slice(1));
+
+  const formatEnum = (key: string, val: string): string => {
+    const num = Number(val);
+    if (key === 'inventory_type') {
+      if (num === 1) return 'Spares';
+      if (num === 2) return 'Consumable';
+    }
+    if (key === 'criticality') {
+      if (num === 1) return 'Critical';
+      if (num === 0 || num === 2) return 'Non-Critical';
+    }
+    return val;
+  };
+
+  const formatMaybeDate = (key: string, val: string): string => {
+    if (!val || val === '—') return '—';
+    // Apply for expiry-like keys
+    if (key === 'expiry_date' || /expire|expiry|date/i.test(key)) {
+      let s = String(val).trim().replace(/^\"|\"$/g, '');
+      s = s.replace(/\.\d{3,}/, '');
+      s = s.replace(/\s[A-Z]{2,5}\s([+\-]\d{2}:?\d{2})/, ' $1');
+      const formats = [
+        'ddd, DD MMM YYYY HH:mm:ss ZZ',
+        'ddd DD MMM YYYY HH:mm:ss ZZ',
+        'YYYY-MM-DD',
+        'YYYY-MM-DDTHH:mm:ssZ',
+        'YYYY-MM-DD HH:mm:ss',
+      ];
+      let m = moment(s, formats, true);
+      if (!m.isValid()) m = moment(s);
+      if (m.isValid()) return m.format('DD/MM/YYYY');
+      return val;
+    }
+    return val;
+  };
+
+  const formatNumberLike = (key: string, val: string): string => {
+    if (!val || val === '—') return '—';
+    const n = Number(val);
+    if (!Number.isNaN(n)) {
+      // Preserve decimals if present, strip trailing .0
+      return n % 1 === 0 ? n.toLocaleString() : n.toLocaleString();
+    }
+    return val;
+  };
+
+  const formatValue = (key: string, val: string): string => {
+    if (!val || val === '—') return '—';
+    // Strip surrounding quotes
+    const v = val.replace(/^\"|\"$/g, '');
+    // Enumerations first
+    const enumd = formatEnum(key, v);
+    if (enumd !== v) return enumd;
+    // Dates
+    const dated = formatMaybeDate(key, enumd);
+    if (dated !== enumd) return dated;
+    // Category-like keys: show as-is (name) or numeric id when no mapping available
+    if (['category','category_id','category_name','inventory_category_id','pms_inventory_category_id','pms_inventory_category'].includes(key)) {
+      try {
+        // If it looks like a JSON object/string, try to parse out name
+        const trimmed = enumd.trim();
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+          const obj = JSON.parse(trimmed);
+          if (obj?.name) return String(obj.name);
+        }
+      } catch {/* ignore */}
+      return enumd;
+    }
+    // Numbers for common numeric fields
+    if (['quantity','min_stock_level','max_stock_level','min_order_level','cgst_rate','sgst_rate','igst_rate','cost'].includes(key)) {
+      return formatNumberLike(key, enumd);
+    }
+    return enumd;
   };
 
   const toggleRow = (rowId: number) => {
@@ -451,21 +580,23 @@ export const InventoryDetailsPage = () => {
                                   )}
                                   {changes.length > 0 && (
                                     <div className="flex flex-col gap-1">
-                                      {(expanded ? changes : changes.slice(0,3)).map(c => (
-                                        <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">
-                                          <span className="font-semibold text-gray-700">{c.key}</span>
-                                          <span className="text-gray-400 line-through">{c.from}</span>
-                                          <ArrowRight className="w-3 h-3 text-gray-400 mt-0.5" />
-                                          <span className="text-green-700 font-semibold">{c.to}</span>
-                                        </div>
-                                      ))}
-                                      {changes.length > 3 && (
+                                      {(expanded ? changes : changes.slice(0,3))
+                                        .filter(c => !HIDDEN_KEYS.has(c.key))
+                                        .map(c => (
+                                          <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">
+                                            <span className="font-semibold text-gray-700">{LABELS[c.key] || startCase(c.key)}</span>
+                                            <span className="text-gray-400 line-through">{formatValue(c.key, c.from)}</span>
+                                            <ArrowRight className="w-3 h-3 text-gray-400 mt-0.5" />
+                                            <span className="text-green-700 font-semibold">{formatValue(c.key, c.to)}</span>
+                                          </div>
+                                        ))}
+                                      {changes.filter(c => !HIDDEN_KEYS.has(c.key)).length > 3 && (
                                         <button
                                           onClick={() => toggleRow(feed.id)}
                                           className="flex items-center gap-1 self-start text-[11px] text-[#C72030] hover:underline mt-1"
                                         >
                                           {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                                          {expanded ? 'Show less' : `Show ${changes.length - 3} more`}
+                                          {expanded ? 'Show less' : `Show ${changes.filter(c => !HIDDEN_KEYS.has(c.key)).length - 3} more`}
                                         </button>
                                       )}
                                     </div>

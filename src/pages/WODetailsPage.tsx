@@ -322,6 +322,11 @@ export const WODetailsPage = () => {
         },
       });
       fetchWorkOrder();
+      setDebitCreditForm({
+        type: "",
+        amount: "",
+        description: "",
+      });
       toast.success("Debit note created successfully");
     } catch (error) {
       console.log(error);
