@@ -223,6 +223,10 @@ export const API_CONFIG = {
     PARKING_CONFIG_SAMPLE_FORMAT: '/assets/parking_configuration.xlsx',
     // Parking configuration bulk import
     PARKING_CONFIG_IMPORT: '/pms/admin/parking_configurations/import.json',
+    // Parking bookings list endpoint
+    PARKING_BOOKINGS: '/pms/admin/parking_bookings/parking_booking_list.json',
+    // Parking booking details endpoint (append /{id}/customer_booking_show.json)
+    PARKING_BOOKING_DETAILS: '/pms/admin/parking_bookings',
   },
 } as const
 

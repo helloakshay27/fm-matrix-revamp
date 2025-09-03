@@ -656,7 +656,7 @@ export const EditSlotConfigurationPage = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex justify-center items-center gap-4">
           <Button
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}

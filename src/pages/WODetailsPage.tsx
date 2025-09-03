@@ -57,7 +57,6 @@ const boqColumns: ColumnConfig[] = [
     draggable: true,
   },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
-  { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
   { key: "cgst_rate", label: "CGST Rate(%)", sortable: true, draggable: true },
   { key: "cgst_amount", label: "CGST Amount", sortable: true, draggable: true },
   { key: "sgst_rate", label: "SGST Rate(%)", sortable: true, draggable: true },
@@ -225,6 +224,9 @@ export const WODetailsPage = () => {
       id: "",
       contractor: "",
       contractorAddress: "",
+      supplier_address: {
+        address: "",
+      },
       supplier_details: {
         mobile1: "",
         email: "",
@@ -320,6 +322,11 @@ export const WODetailsPage = () => {
         },
       });
       fetchWorkOrder();
+      setDebitCreditForm({
+        type: "",
+        amount: "",
+        description: "",
+      });
       toast.success("Debit note created successfully");
     } catch (error) {
       console.log(error);
@@ -404,7 +411,7 @@ export const WODetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -723,7 +730,7 @@ export const WODetailsPage = () => {
                 Address
               </span>
               <span className="text-sm">
-                : {workOrder.work_order?.contractorAddress}
+                : {workOrder.work_order?.supplier_address?.address}
               </span>
             </div>
             <div className="flex">

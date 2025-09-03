@@ -22,18 +22,7 @@ interface Role {
 }
 
 export const RoleDashboard = () => {
-  const [roles, setRoles] = useState<Role[]>([
-    { id: 154, name: 'Admin', description: 'Administrator role', status: true },
-    { id: 155, name: 'Soft Skill Personal', description: 'Soft skills management', status: true },
-    { id: 156, name: 'Staff', description: 'General staff role', status: true },
-    { id: 293, name: 'Sales Manager', description: 'Sales management role', status: true },
-    { id: 338, name: 'Security', description: 'Security personnel', status: true },
-    { id: 381, name: 'Accountant', description: 'Accounting role', status: true },
-    { id: 419, name: 'Supervisor', description: 'Supervisor role', status: true },
-    { id: 458, name: 'Helpdesk Executive', description: 'Help desk support', status: true },
-    { id: 459, name: 'Operation Manager', description: 'Operations management', status: true },
-    { id: 461, name: 'Branch Manager', description: 'Branch management', status: true },
-  ]);
+  const [roles, setRoles] = useState<Role[]>([]);
 
   const toggleStatus = (id: number) => {
     setRoles(roles.map(role => 

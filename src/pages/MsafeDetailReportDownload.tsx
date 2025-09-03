@@ -45,11 +45,7 @@ const MsafeDetailReportDownload: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`);
 
       if (response.data.status === 'completed') {
         const downloadUrl = response.data.download_url;

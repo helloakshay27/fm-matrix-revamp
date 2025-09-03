@@ -381,25 +381,25 @@ const modulesByPackage = {
       href: "/master/material-ebom",
     },
     {
-      name: "Gate Number",
-      icon: DoorOpen,
-      href: "/master/gate-number",
-    },
-    // {
-    //   name: 'Inventory Type',
-    //   icon: Package,
-    //   href: '/master/inventory-type'
-    // },
-    // {
-    //   name: 'Inventory Sub Type',
-    //   icon: PackagePlus,
-    //   href: '/master/inventory-sub-type'
-    // },
-    // {
-    //   name: 'Gate Pass Type',
-    //   icon: Ticket,
-    //   href: '/master/gate-pass-type'
-    // }
+        name: 'Gate Number',
+        icon: DoorOpen,
+        href: '/master/gate-number'
+      },
+      // {
+      //   name: 'Gate Pass Type',
+      //   icon: Ticket,
+      //   href: '/master/gate-pass-type'
+      // }
+      // {
+      //   name: 'Inventory Type',
+      //   icon: Package,
+      //   href: '/master/inventory-type'
+      // },
+      // {
+      //   name: 'Inventory Sub Type',
+      //   icon: PackagePlus,
+      //   href: '/master/inventory-sub-type'
+      // },
   ],
   Transitioning: [
     { name: "HOTO", icon: FileText, href: "/transitioning/hoto" },
@@ -1374,7 +1374,7 @@ export const Sidebar = () => {
       'broadcast': ['broadcast', 'pms_notices'],
       'vendor': ['supplier', 'pms_supplier', 'vendor audit', 'vendor_audit'],
       'user master': ['user & roles', 'pms_user_roles', 'occupant users', 'pms_occupant_users'],
-      'fm user': ['user & roles', 'pms_user_roles'],
+      // 'fm user': ['user & roles', 'pms_user_roles'],
       'occupant users': ['occupant users', 'pms_occupant_users'],
       'm-safe': ['msafe', 'pms_msafe', 'pms_safety', 'pmssafety'],
       'internal user (fte)': ['msafe', 'pms_msafe'],

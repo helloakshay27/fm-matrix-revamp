@@ -92,6 +92,7 @@ export const AddPODashboard = () => {
       id: 1,
       itemDetails: "",
       sacHsnCode: "",
+      sacHsnCodeId: "",
       quantity: "",
       unit: "",
       expectedDate: "",
@@ -279,7 +280,7 @@ export const AddPODashboard = () => {
         advance_amount: formData.advanceAmount,
         pms_po_inventories_attributes: items.map((item) => ({
           pms_inventory_id: item.itemDetails,
-          sac_hsn_code: item.sacHsnCode,
+          sac_hsn_code: item.sacHsnCodeId,
           quantity: item.quantity,
           unit: item.unit,
           unit_type: "Each",
@@ -334,6 +335,7 @@ export const AddPODashboard = () => {
       id: items.length + 1,
       itemDetails: "",
       sacHsnCode: "",
+      sacHsnCodeId: "",
       quantity: "",
       unit: "",
       expectedDate: "",
@@ -435,6 +437,7 @@ export const AddPODashboard = () => {
             ? calculateItem({
               ...item,
               sacHsnCode: response.data.hsn?.code || "",
+              sacHsnCodeId: response.data.hsn?.id || "",
               rate: response.data.rate || "",
             })
             : item

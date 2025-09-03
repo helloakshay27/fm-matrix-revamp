@@ -131,7 +131,7 @@ export const AddInventoryPage = () => {
   }, [assetIdParam, assets, formData.assetName]);
 
   // Validation function
-  const validateField = (field: string, value: string) => {
+  const validateField = (field: string, value: string, currentFormData = formData) => {
     const newErrors: FormErrors = { ...errors };
 
     // Helper to check if a value is a valid positive number
@@ -163,17 +163,65 @@ export const AddInventoryPage = () => {
         newErrors.cost = value && !isValidPositiveNumber(value) ? 'Cost must be a valid number' : '';
         break;
       case 'minStockLevel':
-        newErrors.minStockLevel = !value
-          ? 'Min Stock Level is required'
-          : !isValidPositiveNumber(value)
-            ? 'Min Stock Level must be a valid number'
-            : '';
+        // Clear any existing error first
+        newErrors.minStockLevel = '';
+        
+        // Basic validation
+        if (!value) {
+          newErrors.minStockLevel = 'Min Stock Level is required';
+        } else if (!isValidPositiveNumber(value)) {
+          newErrors.minStockLevel = 'Min Stock Level must be a valid number';
+        }
+        // Cross-field validation: Min Stock Level should be <= Max Stock Level
+        else if (currentFormData.maxStockLevel && isValidPositiveNumber(currentFormData.maxStockLevel)) {
+          if (parseFloat(value) > parseFloat(currentFormData.maxStockLevel)) {
+            newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+          }
+        }
+        
+        // Clear maxStockLevel error if it exists and the relationship is now valid
+        if (value && currentFormData.maxStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.maxStockLevel)) {
+          if (parseFloat(value) <= parseFloat(currentFormData.maxStockLevel)) {
+            newErrors.maxStockLevel = '';
+          }
+        }
         break;
       case 'maxStockLevel':
-        newErrors.maxStockLevel = value && !isValidPositiveNumber(value) ? 'Max Stock Level must be a valid number' : '';
+        // Clear any existing error first
+        newErrors.maxStockLevel = '';
+        
+        // Basic validation
+        if (value && !isValidPositiveNumber(value)) {
+          newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+        }
+        // Cross-field validation: Max Stock Level should be >= Min Stock Level
+        else if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+          if (parseFloat(value) < parseFloat(currentFormData.minStockLevel)) {
+            newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
+          }
+        }
+        
+        // Clear minStockLevel error if it exists and the relationship is now valid
+        if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+          if (parseFloat(currentFormData.minStockLevel) <= parseFloat(value)) {
+            newErrors.minStockLevel = currentFormData.minStockLevel ? '' : 'Min Stock Level is required';
+          }
+        }
         break;
       case 'minOrderLevel':
-        newErrors.minOrderLevel = value && !isValidPositiveNumber(value) ? 'Min Order Level must be a valid number' : '';
+        // First, clear any existing error for this field
+        newErrors.minOrderLevel = '';
+        
+        // Basic validation
+        if (value && !isValidPositiveNumber(value)) {
+          newErrors.minOrderLevel = 'Min Order Level must be a valid number';
+        }
+        // Cross-field validation: Min Order Level should be <= Min Stock Level
+        else if (value && currentFormData.minStockLevel && isValidPositiveNumber(value) && isValidPositiveNumber(currentFormData.minStockLevel)) {
+          if (parseFloat(value) > parseFloat(currentFormData.minStockLevel)) {
+            newErrors.minOrderLevel = 'Min Order Level cannot be greater than Min Stock Level';
+          }
+        }
         break;
       case 'sacHsnCode':
         newErrors.sacHsnCode = taxApplicable && !value ? 'SAC/HSN Code is required when tax is applicable' : '';
@@ -219,6 +267,23 @@ export const AddInventoryPage = () => {
     newErrors.minOrderLevel = formData.minOrderLevel && (isNaN(parseFloat(formData.minOrderLevel)) || parseFloat(formData.minOrderLevel) < 0)
       ? 'Min Order Level must be a valid number'
       : '';
+
+    // Cross-field validations
+    if (formData.minStockLevel && formData.maxStockLevel) {
+      const minStock = parseFloat(formData.minStockLevel);
+      const maxStock = parseFloat(formData.maxStockLevel);
+      if (!isNaN(minStock) && !isNaN(maxStock) && minStock > maxStock) {
+        newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+      }
+    }
+
+    if (formData.minOrderLevel && formData.minStockLevel) {
+      const minOrder = parseFloat(formData.minOrderLevel);
+      const minStock = parseFloat(formData.minStockLevel);
+      if (!isNaN(minOrder) && !isNaN(minStock) && minOrder > minStock) {
+        newErrors.minOrderLevel = 'Min Order Level cannot be greater than Min Stock Level';
+      }
+    }
     newErrors.cost = formData.cost && (isNaN(parseFloat(formData.cost)) || parseFloat(formData.cost) < 0)
       ? 'Cost must be a valid number'
       : '';
@@ -244,8 +309,29 @@ export const AddInventoryPage = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    validateField(field, value);
+    const updatedFormData = { ...formData, [field]: value };
+    setFormData(updatedFormData);
+    
+    // Validate the current field with the new value and updated form data
+    validateField(field, value, updatedFormData);
+    
+    // Re-validate related fields for stock level cross-validations using updated data
+    if (field === 'minStockLevel') {
+      if (updatedFormData.maxStockLevel) {
+        validateField('maxStockLevel', updatedFormData.maxStockLevel, updatedFormData);
+      }
+      if (updatedFormData.minOrderLevel) {
+        validateField('minOrderLevel', updatedFormData.minOrderLevel, updatedFormData);
+      }
+    } else if (field === 'maxStockLevel') {
+      if (updatedFormData.minStockLevel) {
+        validateField('minStockLevel', updatedFormData.minStockLevel, updatedFormData);
+      }
+    } else if (field === 'minOrderLevel') {
+      if (updatedFormData.minStockLevel) {
+        validateField('minStockLevel', updatedFormData.minStockLevel, updatedFormData);
+      }
+    }
   };
 
   const handleSelectChange = (field: string) => (event: SelectChangeEvent<string>) => {

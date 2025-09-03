@@ -160,7 +160,7 @@ export const ServicePRDetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

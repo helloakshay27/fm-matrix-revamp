@@ -412,7 +412,7 @@ export const AddMaterialPRDashboard = () => {
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
-          hsn_code_name: item.sacHsnCode,
+          sac_hsn_code: item.sacHsnCode,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         }))

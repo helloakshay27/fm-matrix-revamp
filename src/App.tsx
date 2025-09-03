@@ -230,6 +230,8 @@ import { AddRestaurantPage } from './pages/AddRestaurantPage';
 import ParkingDashboard from './pages/ParkingDashboard';
 import ParkingDetailsPage from './pages/ParkingDetailsPage';
 import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
+import ParkingCreatePage from './pages/ParkingCreatePage';
+import ParkingEditPage from './pages/ParkingEditPage';
 import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
 import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
 import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
@@ -677,6 +679,13 @@ import GatePassTypePage from "./pages/master/GatePassTypePage";
 import InventoryTypePage from "./pages/master/InventoryTypePage";
 import InventorySubTypePage from "./pages/master/InventorySubTypePage";
 import AddGateNumberPage from "./pages/master/AddGateNumberPage";
+import AddGatePassTypePage from "./pages/master/AddGatePassTypePage";
+import EditGateNumberPage from "./pages/master/EditGateNumberPage";
+import EditGatePassTypePage from "./pages/master/EditGatePassTypePage";
+import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
+import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
+import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
+import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 
 
 const queryClient = new QueryClient();
@@ -1094,7 +1103,7 @@ function App() {
                     path="/safety/permit/pending-approvals"
                     element={<PermitPendingApprovalsDashboard />}
                   />
-                  <Route path="/safety/m-safe" element={<MSafeDashboard />} />
+                  {/* <Route path="/safety/m-safe" element={<MSafeDashboard />} /> */}
                   <Route
                     path="/safety/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
@@ -1742,6 +1751,14 @@ function App() {
                     path="/vas/parking/bookings"
                     element={<ParkingBookingsDashboard />}
                   />
+                  <Route
+                    path="/vas/parking/create"
+                    element={<ParkingCreatePage />}
+                  />
+                  <Route
+                    path="/vas/parking/edit"
+                    element={<ParkingEditPage />}
+                  />
                   <Route path="/vas/osr" element={<OSRDashboard />} />
                   <Route
                     path="/vas/osr/details/:id"
@@ -1907,10 +1924,7 @@ function App() {
                   />
 
                   {/* M Safe Routes */}
-                  <Route
-                    path="/maintenance/m-safe"
-                    element={<MSafeDashboard />}
-                  />
+    
                   <Route
                     path="/maintenance/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
@@ -1919,7 +1933,6 @@ function App() {
                     path="/maintenance/m-safe/krcc-form-list"
                     element={<KRCCFormListDashboard />}
                   />
-                  <Route path="/maintenance/m-safe" element={<MSafeDashboard />} />
                   <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
                   <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
                   <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
@@ -1964,6 +1977,7 @@ function App() {
                     element={<LoyaltyRuleEngineDetailPage />}
                   />
                   <Route
+
                     path="/market-place/cloud-telephony"
                     element={<CloudTelephonyDetailPage />}
                   />
@@ -2042,16 +2056,44 @@ function App() {
                     element={<AddGateNumberPage />}
                   />
                   <Route
+                    path="/master/gate-number/edit/:id"
+                    element={<EditGateNumberPage />}
+                  />
+                  <Route
                     path="/master/gate-pass-type"
                     element={<GatePassTypePage />}
+                  />
+                  <Route
+                    path="/master/gate-pass-type/add"
+                    element={<AddGatePassTypePage />}
+                  />
+                  <Route
+                    path="/master/gate-pass-type/edit/:id"
+                    element={<EditGatePassTypePage />}
                   />
                   <Route
                     path="/master/inventory-type"
                     element={<InventoryTypePage />}
                   />
                   <Route
+                    path="/master/inventory-type/add"
+                    element={<AddInventoryTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-type/edit/:id"
+                    element={<EditInventoryTypePage />}
+                  />
+                  <Route
                     path="/master/inventory-sub-type"
                     element={<InventorySubTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-sub-type/add"
+                    element={<AddInventorySubTypePage />}
+                  />
+                  <Route
+                    path="/master/inventory-sub-type/edit/:id"
+                    element={<EditInventorySubTypePage />}
                   />
 
                   <Route

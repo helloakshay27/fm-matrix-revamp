@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Eye, Loader2 } from "lucide-react";
@@ -10,6 +11,7 @@ interface PendingApproval {
   invoice_approval_level_id: number;
   created_at: string;
   level_name: string;
+  level_id: number;
   site_name: string;
 }
 
@@ -18,6 +20,7 @@ interface ApiResponse {
 }
 
 export const PermitPendingApprovalsDashboard = () => {
+  const navigate = useNavigate();
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -79,6 +82,20 @@ export const PermitPendingApprovalsDashboard = () => {
     return resourceType.split('::').pop() || resourceType;
   };
 
+  const handleViewPermit = (permitId: number, levelId: number, invoiceApprovalLevelId: number) => {
+    const userId = localStorage.getItem('user_id') || localStorage.getItem('userId') || '';
+
+    const queryParams = new URLSearchParams({
+      level_id: levelId.toString(),
+      user_id: userId,
+      invoice_approval_history_id: invoiceApprovalLevelId.toString(),
+      approve: 'true',
+      type: 'approval'
+    });
+
+    navigate(`/safety/permit/details/${permitId}?${queryParams.toString()}`);
+  };
+
   return (
     <div className="flex-1 p-6 bg-white min-h-screen">
       {/* Header */}
@@ -103,13 +120,14 @@ export const PermitPendingApprovalsDashboard = () => {
               <TableHead>Status</TableHead>
               <TableHead>Reference No</TableHead>
               <TableHead>Site Name</TableHead>
-              <TableHead>Level</TableHead>
+              <TableHead>Level ID</TableHead>
+              <TableHead>History ID</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8">
+                <TableCell colSpan={7} className="text-center py-8">
                   <div className="flex items-center justify-center">
                     <Loader2 className="h-6 w-6 animate-spin mr-2" />
                     Loading pending approvals...
@@ -118,7 +136,7 @@ export const PermitPendingApprovalsDashboard = () => {
               </TableRow>
             ) : pendingApprovals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
                   No pending approvals found
                 </TableCell>
               </TableRow>
@@ -126,7 +144,11 @@ export const PermitPendingApprovalsDashboard = () => {
               pendingApprovals.map((approval) => (
                 <TableRow key={`${approval.resource_type}-${approval.resource_id}`}>
                   <TableCell>
-                    <Button variant="outline" size="sm">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleViewPermit(approval.resource_id, approval.level_id, approval.invoice_approval_level_id)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -138,7 +160,8 @@ export const PermitPendingApprovalsDashboard = () => {
                   </TableCell>
                   <TableCell>{approval.resource_id}</TableCell>
                   <TableCell>{approval.site_name}</TableCell>
-                  <TableCell>{approval.level_name}</TableCell>
+                  <TableCell>{approval.level_id}</TableCell>
+                  <TableCell>{approval.invoice_approval_level_id}</TableCell>
                 </TableRow>
               ))
             )}

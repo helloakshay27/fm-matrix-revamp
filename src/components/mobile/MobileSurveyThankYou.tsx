@@ -112,7 +112,7 @@ export const MobileSurveyThankYou: React.FC = () => {
 
       {/* Survey Info */}
       <div className="mt-8 text-center">
-        <div className="text-xs text-gray-500">Survey ID: {mappingId}</div>
+        {/* <div className="text-xs text-gray-500">Survey ID: {mappingId}</div> */}
         {/* <div className="text-xs text-gray-400 mt-1">Powered by Lockated</div> */}
       </div>
     </div>

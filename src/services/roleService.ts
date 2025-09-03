@@ -624,53 +624,57 @@ export const roleService = {
   // Update role with modules
   async updateRoleWithModules(roleWithModules: RoleWithModules): Promise<void> {
     try {
-      // Build permissions_hash from enabled sub-functions
+      // Build permissions_hash from ALL functions and sub-functions (both enabled and disabled)
       const permissionsHash: Record<string, Record<string, string>> = {};
       
       roleWithModules.modules.forEach(module => {
-        if (module.enabled) {
-          module.functions.forEach(func => {
-            if (func.enabled) {
-              // Use function name as key (like "notices", "banners")
-              const functionKey = func.function_name.toLowerCase().replace(/\s+/g, '_');
-              permissionsHash[functionKey] = {};
-              
-              // Check which sub-functions are enabled
-              func.sub_functions.forEach(subFunc => {
-                if (subFunc.enabled) {
-                  // Map sub-function names to standard CRUD operations
-                  let actionKey = subFunc.sub_function_name.toLowerCase();
-                  
-                  // Normalize common action names
-                  if (actionKey.includes('all') || actionKey.includes('index')) {
-                    actionKey = 'all';
-                  } else if (actionKey.includes('create') || actionKey.includes('new')) {
-                    actionKey = 'create';
-                  } else if (actionKey.includes('show') || actionKey.includes('view') || actionKey.includes('read')) {
-                    actionKey = 'show';
-                  } else if (actionKey.includes('update') || actionKey.includes('edit')) {
-                    actionKey = 'update';
-                  } else if (actionKey.includes('destroy') || actionKey.includes('delete')) {
-                    actionKey = 'destroy';
-                  }
-                  
-                  permissionsHash[functionKey][actionKey] = "true";
-                }
-              });
-              
-              // If no sub-functions enabled but function is enabled, add default permissions
-              if (Object.keys(permissionsHash[functionKey]).length === 0) {
-                permissionsHash[functionKey] = {
-                  "all": "true",
-                  "create": "true",
-                  "show": "true", 
-                  "update": "true",
-                  "destroy": "true"
-                };
-              }
+        module.functions.forEach(func => {
+          // Use function name as key (like "notices", "banners")
+          const functionKey = func.function_name.toLowerCase().replace(/\s+/g, '_');
+          permissionsHash[functionKey] = {};
+          
+          // Process ALL sub-functions, both enabled and disabled
+          func.sub_functions.forEach(subFunc => {
+            // Map sub-function names to standard CRUD operations
+            let actionKey = subFunc.sub_function_name.toLowerCase();
+            
+            // Normalize common action names
+            if (actionKey.includes('all') || actionKey.includes('index')) {
+              actionKey = 'all';
+            } else if (actionKey.includes('create') || actionKey.includes('new')) {
+              actionKey = 'create';
+            } else if (actionKey.includes('show') || actionKey.includes('view') || actionKey.includes('read')) {
+              actionKey = 'show';
+            } else if (actionKey.includes('update') || actionKey.includes('edit')) {
+              actionKey = 'update';
+            } else if (actionKey.includes('destroy') || actionKey.includes('delete')) {
+              actionKey = 'destroy';
             }
+            
+            // Set "true" for enabled, "false" for disabled
+            permissionsHash[functionKey][actionKey] = subFunc.enabled ? "true" : "false";
           });
-        }
+          
+          // If no sub-functions exist but function is enabled, add default permissions
+          if (func.sub_functions.length === 0 && func.enabled) {
+            permissionsHash[functionKey] = {
+              "all": "true",
+              "create": "true",
+              "show": "true", 
+              "update": "true",
+              "destroy": "true"
+            };
+          } else if (func.sub_functions.length === 0 && !func.enabled) {
+            // If function is disabled and has no sub-functions, set all to false
+            permissionsHash[functionKey] = {
+              "all": "false",
+              "create": "false",
+              "show": "false", 
+              "update": "false",
+              "destroy": "false"
+            };
+          }
+        });
       });
 
       // Get enabled module IDs

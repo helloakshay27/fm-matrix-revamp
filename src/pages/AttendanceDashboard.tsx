@@ -1,10 +1,4 @@
-// Export Attendance Matrix chart as Excel
 
-// Export Department-wise Attendance chart as Excel
-
-// Export Regular vs Overtime chart as Excel
-
-// Export Attendance Status chart summary as Excel
 
 import { useDebounce } from '@/hooks/useDebounce';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -12,7 +6,7 @@ import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog'
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Eye, Trash2, BarChart3, Download } from 'lucide-react';
+import { Eye, Trash2, BarChart3, Download, Loader2 } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -93,7 +87,7 @@ export const AttendanceDashboard = () => {
   const dispatch = useAppDispatch();
 
   // Redux state
-  const { data: attendance, loading, error } = useAppSelector(state => state.attendance);
+  const { data: attendanceState, loading, error } = useAppSelector(state => state.attendance);
 
   // Local state
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -121,12 +115,13 @@ export const AttendanceDashboard = () => {
   );
 
   // Fetch attendance on mount and when search changes (department filter will dispatch on Apply)
+  const perPage = 10;
   useEffect(() => {
-    const value = debouncedSearchQuery && debouncedSearchQuery.trim()
+    const departmentFilter = debouncedSearchQuery && debouncedSearchQuery.trim()
       ? debouncedSearchQuery.trim()
       : '';
-    dispatch(fetchAttendanceData(value));
-  }, [dispatch, debouncedSearchQuery]);
+    dispatch(fetchAttendanceData({ departmentFilter, page: currentPage, perPage }));
+  }, [dispatch, debouncedSearchQuery, currentPage]);
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -134,12 +129,12 @@ export const AttendanceDashboard = () => {
 
 
   // Memoized filtered data (no longer needed since filtering is done via API)
-  const filteredAttendance = useMemo(() => attendance, [attendance]);
+  const filteredAttendance = useMemo(() => attendanceState?.items || [], [attendanceState]);
 
   // Memoized pagination
-  const totalPages = useMemo(() => Math.ceil(filteredAttendance.length / pageSize), [filteredAttendance.length, pageSize]);
+  const totalPages = useMemo(() => attendanceState?.pagination?.total_pages || 1, [attendanceState]);
   const startIndex = useMemo(() => (currentPage - 1) * pageSize, [currentPage, pageSize]);
-  const paginatedData = useMemo(() => filteredAttendance.slice(startIndex, startIndex + pageSize), [filteredAttendance, startIndex, pageSize]);
+  const paginatedData = useMemo(() => filteredAttendance, [filteredAttendance]);
 
   const handleViewDetails = (row: any) => {
     const id = row.user_id;
@@ -198,7 +193,7 @@ export const AttendanceDashboard = () => {
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedItems(attendance.map(item => String(item.id)));
+      setSelectedItems(filteredAttendance.map(item => String(item.id)));
     } else {
       setSelectedItems([]);
     }
@@ -295,6 +290,10 @@ export const AttendanceDashboard = () => {
   const [trendsChartData, setTrendsChartData] = useState<{ regular_count: number; overtime_count: number } | null>(null);
   const [chartsLoading, setChartsLoading] = useState(false);
   const [isChartFilterOpen, setIsChartFilterOpen] = useState(false);
+  const [statusExporting, setStatusExporting] = useState(false);
+  const [trendsExporting, setTrendsExporting] = useState(false);
+  const [departmentExporting, setDepartmentExporting] = useState(false);
+  const [matrixExporting, setMatrixExporting] = useState(false);
 
   const fetchChartsData = async (from: string, to: string) => {
     setChartsLoading(true);
@@ -526,7 +525,7 @@ export const AttendanceDashboard = () => {
     setFilterModalOpen(false);
     setCurrentPage(1);
     const value = departmentFilter.trim();
-    dispatch(fetchAttendanceData(value));
+    dispatch(fetchAttendanceData({ departmentFilter: value, page: 1, perPage }));
   };
 
   const handleResetFilter = () => {
@@ -536,53 +535,201 @@ export const AttendanceDashboard = () => {
     const value = debouncedSearchQuery && debouncedSearchQuery.trim()
       ? debouncedSearchQuery.trim()
       : '';
-    dispatch(fetchAttendanceData(value));
+    dispatch(fetchAttendanceData({ departmentFilter: value, page: 1, perPage }));
   };
 
   const departmentList = useMemo(
-    () => Array.from(new Set(attendance.map(item => item.department).filter(Boolean))),
-    [attendance]
+    () => Array.from(new Set((attendanceState?.items || []).map((item: any) => item.department).filter(Boolean))),
+    [attendanceState]
   );
 
-  const handleAttendanceStatusExport = () =>
-    handleChartExport({
-      endpoint: 'attendance_summary.json',
-      filename: 'attendance_summary.xlsx',
-      successMsg: 'Attendance summary exported successfully',
-      errorMsg: 'Failed to export attendance summary',
-      fromDate,
-      toDate,
-    });
+  const handleAttendanceStatusExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+      const url = `https://${baseUrl}/pms/attendances/attendance_summary.json?site_id=${siteId}&from_date=${formatDateForApi(fromDate)}&to_date=${formatDateForApi(toDate)}&export=true`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        toast.error('Failed to export attendance summary');
+        return;
+      }
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'attendance_summary.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Attendance summary exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export attendance summary');
+    }
+  };
 
-  const handleRegularOvertimeExport = () =>
-    handleChartExport({
-      endpoint: 'attendance_shifts.json',
-      filename: 'regular_vs_overtime.xlsx',
-      successMsg: 'Regular vs Overtime exported successfully',
-      errorMsg: 'Failed to export regular vs overtime',
-      fromDate,
-      toDate,
-    });
+  const handleAttendanceStatusCardClick = async () => {
+    if (statusExporting) return;
+    setStatusExporting(true);
+    try {
+      await handleAttendanceStatusExport();
+    } finally {
+      setStatusExporting(false);
+    }
+  };
 
-  const handleDepartmentWiseExport = () =>
-    handleChartExport({
-      endpoint: 'department_wise_attendance.json',
-      filename: 'department_wise_attendance.xlsx',
-      successMsg: 'Department-wise attendance exported successfully',
-      errorMsg: 'Failed to export department-wise attendance',
-      fromDate,
-      toDate,
-    });
+  const handleRegularOvertimeExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+      const url = `https://${baseUrl}/pms/attendances/attendance_shifts.json?site_id=${siteId}&from_date=${formatDateForApi(fromDate)}&to_date=${formatDateForApi(toDate)}&export=true`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        toast.error('Failed to export regular vs overtime');
+        return;
+      }
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'regular_vs_overtime.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Regular vs Overtime exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export regular vs overtime');
+    }
+  };
 
-  const handleAttendanceMatrixExport = () =>
-    handleChartExport({
-      endpoint: 'attendance_matrix.json',
-      filename: 'attendance_matrix.xlsx',
-      successMsg: 'Attendance matrix exported successfully',
-      errorMsg: 'Failed to export attendance matrix',
-      fromDate,
-      toDate,
-    });
+  const handleRegularOvertimeCardClick = async () => {
+    if (trendsExporting) return;
+    setTrendsExporting(true);
+    try {
+      await handleRegularOvertimeExport();
+    } finally {
+      setTrendsExporting(false);
+    }
+  };
+
+  const handleDepartmentWiseExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+      const url = `https://${baseUrl}/pms/attendances/department_wise_attendance.json?site_id=${siteId}&from_date=${formatDateForApi(fromDate)}&to_date=${formatDateForApi(toDate)}&export=true`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        toast.error('Failed to export department-wise attendance');
+        return;
+      }
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'department_wise_attendance.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Department-wise attendance exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export department-wise attendance');
+    }
+  };
+
+  const handleDepartmentWiseCardClick = async () => {
+    if (departmentExporting) return;
+    setDepartmentExporting(true);
+    try {
+      await handleDepartmentWiseExport();
+    } finally {
+      setDepartmentExporting(false);
+    }
+  };
+
+  const handleAttendanceMatrixExport = async () => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    const siteId = localStorage.getItem('selectedSiteId');
+    try {
+      if (!baseUrl || !token || !siteId) {
+        toast.error('Missing base URL, token, or site ID');
+        return;
+      }
+      const url = `https://${baseUrl}/pms/attendances/attendance_matrix.json?site_id=${siteId}&from_date=${formatDateForApi(fromDate)}&to_date=${formatDateForApi(toDate)}&export=true`;
+      const response = await fetch(url, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) {
+        toast.error('Failed to export attendance matrix');
+        return;
+      }
+      const blob = await response.blob();
+      if (!blob || blob.size === 0) {
+        toast.error('Empty file received from server');
+        return;
+      }
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = 'attendance_matrix.xlsx';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+      toast.success('Attendance matrix exported successfully');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Failed to export attendance matrix');
+    }
+  };
+
+  const handleAttendanceMatrixCardClick = async () => {
+    if (matrixExporting) return;
+    setMatrixExporting(true);
+    try {
+      await handleAttendanceMatrixExport();
+    } finally {
+      setMatrixExporting(false);
+    }
+  };
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {error && (
@@ -692,10 +839,25 @@ export const AttendanceDashboard = () => {
                           if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                             return (
                               <SortableChartItem key={chartId} id={chartId}>
-                                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col">
+                                <div 
+                                  className="relative bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col"
+                                >
                                   <div className="flex items-center justify-between mb-4 sm:mb-6">
                                     <h3 className="text-base sm:text-lg font-bold text-[#C72030]">Attendance Status</h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" onClick={handleAttendanceStatusExport} />
+                                    <div
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleAttendanceStatusCardClick();
+                                      }}
+                                      onPointerDown={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                      className="p-1 rounded hover:bg-gray-100 transition-colors"
+                                    >
+                                      <Download 
+                                        className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer hover:text-[#A01828] transition-colors" 
+                                      />
+                                    </div>
                                   </div>
                                   <div className="relative flex items-center justify-center min-h-[220px]">
                                     {chartsLoading ? (
@@ -740,6 +902,14 @@ export const AttendanceDashboard = () => {
                                       </div>
                                     ))}
                                   </div>
+                                  {statusExporting && (
+                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-[1px] flex items-center justify-center rounded-lg">
+                                      <div className="flex items-center gap-3 text-[#C72030] bg-white px-4 py-2 rounded-lg shadow-lg">
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                        <span className="text-sm font-medium">Exporting...</span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </SortableChartItem>
                             );
@@ -751,7 +921,18 @@ export const AttendanceDashboard = () => {
                                 <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col">
                                   <div className="flex items-center justify-between mb-4 sm:mb-6">
                                     <h3 className="text-sm sm:text-lg font-bold text-[#C72030] leading-tight">Regular vs Overtime</h3>
-                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer" onClick={handleRegularOvertimeExport} />
+                                    <div
+                                      className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleRegularOvertimeCardClick();
+                                      }}
+                                      onPointerDown={(e) => e.stopPropagation()}
+                                      onMouseDown={(e) => e.stopPropagation()}
+                                    >
+                                      <Download className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030]" />
+                                    </div>
                                   </div>
                                   <div className="relative flex items-center justify-center">
                                     <ResponsiveContainer width="100%" height={200} className="sm:h-[250px]">
@@ -790,6 +971,14 @@ export const AttendanceDashboard = () => {
                                       </div>
                                     ))}
                                   </div>
+                                  {trendsExporting && (
+                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+                                      <div className="flex flex-col items-center gap-3 text-white">
+                                        <Loader2 className="w-8 h-8 animate-spin" />
+                                        <span className="text-sm font-medium">Exporting...</span>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </SortableChartItem>
                             );
@@ -803,10 +992,21 @@ export const AttendanceDashboard = () => {
                         if (chartId === 'departmentChart' && visibleSections.includes('departmentChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
+                              <div className="relative bg-white border border-gray-200 p-3 sm:p-6 rounded-lg">
                                 <div className="flex items-center justify-between mb-4">
                                   <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Department-wise Attendance</h3>
-                                  <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer" style={{ color: '#C72030' }} onClick={handleDepartmentWiseExport} />
+                                  <div
+                                    className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleDepartmentWiseCardClick();
+                                    }}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                  >
+                                    <Download className="w-4 h-4 sm:w-4 sm:h-4 cursor-pointer hover:text-blue-600" style={{ color: '#C72030' }} />
+                                  </div>
                                 </div>
                                 <div className="w-full overflow-x-auto">
                                   <ResponsiveContainer width="100%" height={200} className="sm:h-[250px] min-w-[400px]">
@@ -826,6 +1026,14 @@ export const AttendanceDashboard = () => {
                                     </BarChart>
                                   </ResponsiveContainer>
                                 </div>
+                                {departmentExporting && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+                                    <div className="flex flex-col items-center gap-3 text-white">
+                                      <Loader2 className="w-8 h-8 animate-spin" />
+                                      <span className="text-sm font-medium">Exporting...</span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </SortableChartItem>
                           );
@@ -834,10 +1042,21 @@ export const AttendanceDashboard = () => {
                         if (chartId === 'matrixChart' && visibleSections.includes('matrixChart')) {
                           return (
                             <SortableChartItem key={chartId} id={chartId}>
-                              <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
+                              <div className="relative bg-white border border-gray-200 rounded-lg p-3 sm:p-6">
                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
                                   <h3 className="text-base sm:text-lg font-bold" style={{ color: '#C72030' }}>Attendance Matrix</h3>
-                                  <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer" style={{ color: '#C72030' }} onClick={handleAttendanceMatrixExport} />
+                                  <div
+                                    className="p-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleAttendanceMatrixCardClick();
+                                    }}
+                                    onPointerDown={(e) => e.stopPropagation()}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                  >
+                                    <Download className="w-4 h-4 sm:w-5 sm:h-5 cursor-pointer hover:text-blue-600" style={{ color: '#C72030' }} />
+                                  </div>
                                 </div>
                                 <div className="space-y-4 sm:space-y-6">
                                   <div className="overflow-x-auto -mx-3 sm:mx-0">
@@ -871,6 +1090,14 @@ export const AttendanceDashboard = () => {
                                     </div>
                                   </div>
                                 </div>
+                                {matrixExporting && (
+                                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10 rounded-lg">
+                                    <div className="flex flex-col items-center gap-3 text-white">
+                                      <Loader2 className="w-8 h-8 animate-spin" />
+                                      <span className="text-sm font-medium">Exporting...</span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </SortableChartItem>
                           );
@@ -898,7 +1125,7 @@ export const AttendanceDashboard = () => {
               selectedItems={selectedItems}
               onSelectAll={handleSelectAll}
               onSelectItem={handleSelectItem}
-              getItemId={item => String(item.id || item.user_id)}
+              getItemId={item => String((item as any).id || (item as any).user_id)}
               storageKey="attendance-dashboard-table"
               emptyMessage="No attendance records found"
               searchPlaceholder="Search..."

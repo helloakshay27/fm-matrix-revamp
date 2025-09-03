@@ -58,6 +58,7 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
+  sac_hsn_code?: string;
 }
 
 interface Attachment {
@@ -310,7 +311,7 @@ export const MaterialPRDetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
+        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -339,7 +340,7 @@ export const MaterialPRDetailsPage = () => {
     srNo: index + 1,
     item: item.inventory?.name ?? '-',
     availability: item.availability ?? '-',
-    sacHsnCode: item.sacHsnCode ?? '-',
+    sacHsnCode: item.sac_hsn_code ?? '-',
     expected_date: item.expected_date ? format(new Date(item.expected_date), 'dd-MM-yyyy') : 'NA',
     prod_desc: item.prod_desc ?? '-',
     quantity: item.quantity?.toString() ?? '0',
@@ -454,7 +455,7 @@ export const MaterialPRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Contact Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <div className="flex">
                   <span className="text-muted-foreground w-24">Phone</span>
@@ -493,7 +494,7 @@ export const MaterialPRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Material Purchase Request</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
                 <div className="flex">
                   <span className="text-muted-foreground w-40">MPR No.</span>
