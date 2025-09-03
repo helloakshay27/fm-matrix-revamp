@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { Recycle, Building, Trash2, MapPin } from 'lucide-react';
+import { 
+  fetchBuildings, 
+  fetchWings, 
+  fetchAreas, 
+  fetchVendors, 
+  fetchCommodities, 
+  fetchCategories, 
+  fetchOperationalLandlords,
+  createWasteGeneration,
+  Building as BuildingType,
+  Wing,
+  Area,
+  Vendor,
+  Commodity,
+  Category,
+  OperationalLandlord
+} from '@/services/wasteGenerationAPI';
+import { toast } from 'sonner';
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -31,7 +49,7 @@ const fieldStyles = {
 
 const AddWasteGenerationPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { toast: reactToast } = useToast();
   
   const [formData, setFormData] = useState({
     building: '',
@@ -41,12 +59,157 @@ const AddWasteGenerationPage = () => {
     vendor: '',
     commodity: '',
     category: '',
-    uom: '',
     operationalName: '',
     agencyName: '',
     generatedUnit: '',
-    recycledUnit: '0'
+    recycledUnit: '0',
+    uom: '',
+    typeOfWaste: ''
   });
+
+  // API data state
+  const [buildings, setBuildings] = useState<BuildingType[]>([]);
+  const [wings, setWings] = useState<Wing[]>([]);
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
+
+  // Loading states
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+  const [loadingWings, setLoadingWings] = useState(false);
+  const [loadingAreas, setLoadingAreas] = useState(false);
+  const [loadingVendors, setLoadingVendors] = useState(false);
+  const [loadingCommodities, setLoadingCommodities] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch all dropdowns data on component mount
+  useEffect(() => {
+    const fetchAllDropdowns = async () => {
+      // Fetch buildings
+      setLoadingBuildings(true);
+      try {
+        const buildingsData = await fetchBuildings();
+        setBuildings(Array.isArray(buildingsData) ? buildingsData : []);
+      } catch (error) {
+        console.error('Error fetching buildings:', error);
+        setBuildings([]);
+        toast.error('Failed to load buildings');
+      } finally {
+        setLoadingBuildings(false);
+      }
+
+      // Fetch vendors
+      setLoadingVendors(true);
+      try {
+        const vendorsData = await fetchVendors();
+        setVendors(Array.isArray(vendorsData) ? vendorsData : []);
+      } catch (error) {
+        console.error('Error fetching vendors:', error);
+        setVendors([]);
+        // Don't show error for vendors as they are optional
+      } finally {
+        setLoadingVendors(false);
+      }
+
+      // Fetch commodities
+      setLoadingCommodities(true);
+      try {
+        const commoditiesData = await fetchCommodities();
+        console.log('Commodities data received:', commoditiesData);
+        setCommodities(Array.isArray(commoditiesData) ? commoditiesData : []);
+      } catch (error) {
+        console.error('Error fetching commodities:', error);
+        setCommodities([]);
+        toast.error('Failed to load commodities');
+      } finally {
+        setLoadingCommodities(false);
+      }
+
+      // Fetch categories
+      setLoadingCategories(true);
+      try {
+        const categoriesData = await fetchCategories();
+        console.log('Categories data received:', categoriesData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]);
+        toast.error('Failed to load categories');
+      } finally {
+        setLoadingCategories(false);
+      }
+
+      // Fetch operational landlords
+      setLoadingOperationalLandlords(true);
+      try {
+        const operationalLandlordsData = await fetchOperationalLandlords();
+        console.log('Operational landlords data received:', operationalLandlordsData);
+        setOperationalLandlords(Array.isArray(operationalLandlordsData) ? operationalLandlordsData : []);
+      } catch (error) {
+        console.error('Error fetching operational landlords:', error);
+        setOperationalLandlords([]);
+        toast.error('Failed to load operational landlords');
+      } finally {
+        setLoadingOperationalLandlords(false);
+      }
+    };
+
+    fetchAllDropdowns();
+  }, []);
+
+  // Fetch wings when building changes
+  useEffect(() => {
+    const fetchWingsData = async () => {
+      if (!formData.building) {
+        setWings([]);
+        setFormData(prev => ({ ...prev, wing: '', area: '' }));
+        return;
+      }
+
+      setLoadingWings(true);
+      try {
+        const wingsData = await fetchWings(parseInt(formData.building));
+        setWings(Array.isArray(wingsData) ? wingsData : []);
+      } catch (error) {
+        console.error('Error fetching wings:', error);
+        setWings([]);
+        toast.error('Failed to fetch wings');
+      } finally {
+        setLoadingWings(false);
+      }
+    };
+
+    fetchWingsData();
+  }, [formData.building]);
+
+  // Fetch areas when wing changes
+  useEffect(() => {
+    const fetchAreasData = async () => {
+      if (!formData.wing) {
+        setAreas([]);
+        setFormData(prev => ({ ...prev, area: '' }));
+        return;
+      }
+
+      setLoadingAreas(true);
+      try {
+        const areasData = await fetchAreas(parseInt(formData.wing));
+        setAreas(Array.isArray(areasData) ? areasData : []);
+      } catch (error) {
+        console.error('Error fetching areas:', error);
+        setAreas([]);
+        toast.error('Failed to fetch areas');
+      } finally {
+        setLoadingAreas(false);
+      }
+    };
+
+    fetchAreasData();
+  }, [formData.wing]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -55,29 +218,52 @@ const AddWasteGenerationPage = () => {
     }));
   };
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
-  const handleSave = () => {
-    if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit) {
-      toast({
+  const handleSave = async () => {
+    if (!formData.building || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
+      reactToast({
         title: "Error",
         description: "Please fill in all required fields",
         variant: "destructive"
       });
       return;
     }
-    console.log('Saving waste generation data:', formData);
-    toast({
-      title: "Success",
-      description: "Waste generation record saved successfully"
-    });
-    navigate('/maintenance/waste/generation');
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        pms_waste_generation: {
+          building_id: parseInt(formData.building),
+          wing_id: formData.wing ? parseInt(formData.wing) : null,
+          area_id: formData.area ? parseInt(formData.area) : null,
+          vendor_id: formData.vendor ? parseInt(formData.vendor) : null,
+          commodity_id: parseInt(formData.commodity),
+          category_id: parseInt(formData.category),
+          operational_landlord_id: parseInt(formData.operationalName),
+          agency_name: formData.agencyName || '',
+          waste_unit: parseFloat(formData.generatedUnit),
+          recycled_unit: formData.recycledUnit ? parseFloat(formData.recycledUnit) : 0,
+          wg_date: formData.date,
+          uom: formData.uom || '',
+          type_of_waste: formData.typeOfWaste || ''
+        }
+      };
+
+      console.log('Submitting waste generation data:', payload);
+      
+      const response = await createWasteGeneration(payload);
+      
+      toast.success('Waste generation record saved successfully');
+      navigate('/utility/waste-generation');
+    } catch (error) {
+      console.error('Error saving waste generation:', error);
+      toast.error('Failed to save waste generation record');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleBack = () => {
-    navigate('/maintenance/waste/generation');
+    navigate('/utility/waste-generation');
   };
 
   return (
@@ -113,11 +299,16 @@ const AddWasteGenerationPage = () => {
                   label="Building"
                   notched
                   displayEmpty
+                  disabled={loadingBuildings}
                 >
-                  <MenuItem value="">Select Building</MenuItem>
-                  <MenuItem value="building-a">Building A</MenuItem>
-                  <MenuItem value="building-b">Building B</MenuItem>
-                  <MenuItem value="building-c">Building C</MenuItem>
+                  <MenuItem value="">
+                    {loadingBuildings ? 'Loading buildings...' : 'Select Building'}
+                  </MenuItem>
+                  {Array.isArray(buildings) && buildings.map((building) => (
+                    <MenuItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -133,11 +324,18 @@ const AddWasteGenerationPage = () => {
                   label="Wing"
                   notched
                   displayEmpty
+                  disabled={loadingWings || !formData.building}
                 >
-                  <MenuItem value="">Select Building First</MenuItem>
-                  <MenuItem value="east-wing">East Wing</MenuItem>
-                  <MenuItem value="west-wing">West Wing</MenuItem>
-                  <MenuItem value="north-wing">North Wing</MenuItem>
+                  <MenuItem value="">
+                    {loadingWings ? 'Loading wings...' : 
+                     !formData.building ? 'Select Building First' : 
+                     'Select Wing (Optional)'}
+                  </MenuItem>
+                  {Array.isArray(wings) && wings.map((wing) => (
+                    <MenuItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -153,11 +351,18 @@ const AddWasteGenerationPage = () => {
                   label="Area"
                   notched
                   displayEmpty
+                  disabled={loadingAreas || !formData.wing}
                 >
-                  <MenuItem value="">Select Floor First</MenuItem>
-                  <MenuItem value="lobby">Lobby</MenuItem>
-                  <MenuItem value="office">Office Area</MenuItem>
-                  <MenuItem value="cafeteria">Cafeteria</MenuItem>
+                  <MenuItem value="">
+                    {loadingAreas ? 'Loading areas...' : 
+                     !formData.wing ? 'Select Wing First' : 
+                     'Select Area (Optional)'}
+                  </MenuItem>
+                  {Array.isArray(areas) && areas.map((area) => (
+                    <MenuItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -180,7 +385,7 @@ const AddWasteGenerationPage = () => {
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -193,11 +398,16 @@ const AddWasteGenerationPage = () => {
                   label="Vendor"
                   notched
                   displayEmpty
+                  disabled={loadingVendors}
                 >
-                  <MenuItem value="">Select Vendor</MenuItem>
-                  <MenuItem value="ecogreen">EcoGreen Solutions</MenuItem>
-                  <MenuItem value="wasteco">WasteCo Ltd</MenuItem>
-                  <MenuItem value="greentech">GreenTech Services</MenuItem>
+                  <MenuItem value="">
+                    {loadingVendors ? 'Loading vendors...' : 'Select Vendor'}
+                  </MenuItem>
+                  {Array.isArray(vendors) && vendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                      {vendor.company_name || vendor.full_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -214,12 +424,16 @@ const AddWasteGenerationPage = () => {
                   label="Commodity*"
                   notched
                   displayEmpty
+                  disabled={loadingCommodities}
                 >
-                  <MenuItem value="">Select Commodity</MenuItem>
-                  <MenuItem value="paper">Paper</MenuItem>
-                  <MenuItem value="plastic">Plastic</MenuItem>
-                  <MenuItem value="metal">Metal</MenuItem>
-                  <MenuItem value="organic">Organic</MenuItem>
+                  <MenuItem value="">
+                    {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
+                  </MenuItem>
+                  {Array.isArray(commodities) && commodities.map((commodity) => (
+                    <MenuItem key={commodity.id} value={commodity.id.toString()}>
+                      {commodity.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -236,33 +450,43 @@ const AddWasteGenerationPage = () => {
                   label="Category*"
                   notched
                   displayEmpty
+                  disabled={loadingCategories}
                 >
-                  <MenuItem value="">Select Category</MenuItem>
-                  <MenuItem value="recyclable">Recyclable</MenuItem>
-                  <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
-                  <MenuItem value="hazardous">Hazardous</MenuItem>
+                  <MenuItem value="">
+                    {loadingCategories ? 'Loading categories...' : 'Select Category'}
+                  </MenuItem>
+                  {Array.isArray(categories) && categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
-              
-              <FormControl
+            </div>
+
+            {/* Additional Waste Details */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <TextField
                 fullWidth
+                label="UoM"
                 variant="outlined"
+                value={formData.uom}
+                onChange={(e) => handleInputChange('uom', e.target.value)}
+                placeholder="Enter UoM"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
-              >
-                <InputLabel shrink>UoM</InputLabel>
-                <MuiSelect
-                  value={formData.uom}
-                  onChange={(e) => handleInputChange('uom', e.target.value)}
-                  label="UoM"
-                  notched
-                  displayEmpty
-                >
-                  <MenuItem value="">Select UoM</MenuItem>
-                  <MenuItem value="kg">KG</MenuItem>
-                  <MenuItem value="tons">Tons</MenuItem>
-                  <MenuItem value="liters">Liters</MenuItem>
-                </MuiSelect>
-              </FormControl>
+                InputLabelProps={{ shrink: true }}
+              />
+              
+              <TextField
+                fullWidth
+                label="Type of Waste"
+                variant="outlined"
+                value={formData.typeOfWaste}
+                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
+                placeholder="Enter type of waste"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                InputLabelProps={{ shrink: true }}
+              />
             </div>
 
             {/* Organization Details Section */}
@@ -280,11 +504,16 @@ const AddWasteGenerationPage = () => {
                   label="Operational Name of Landlord/ Tenant*"
                   notched
                   displayEmpty
+                  disabled={loadingOperationalLandlords}
                 >
-                  <MenuItem value="">Select Operational Name</MenuItem>
-                  <MenuItem value="abc-corp">ABC Corp</MenuItem>
-                  <MenuItem value="xyz-inc">XYZ Inc</MenuItem>
-                  <MenuItem value="def-ltd">DEF Ltd</MenuItem>
+                  <MenuItem value="">
+                    {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}
+                  </MenuItem>
+                  {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
+                    <MenuItem key={landlord.id} value={landlord.id.toString()}>
+                      {landlord.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
               
@@ -349,15 +578,17 @@ const AddWasteGenerationPage = () => {
         <div className="flex gap-4 justify-center pt-6">
           <Button 
             type="submit"
-            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+            disabled={submitting}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Save
+            {submitting ? 'Saving...' : 'Save'}
           </Button>
           <Button 
             type="button"
             variant="outline"
             onClick={handleBack}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+            disabled={submitting}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 disabled:opacity-50"
           >
             Back
           </Button>

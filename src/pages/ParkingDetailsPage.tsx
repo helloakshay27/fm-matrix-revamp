@@ -136,7 +136,7 @@ const ParkingDetailsPage = () => {
               </h2>
               <button
                 onClick={() => {
-                  navigate(`/vas/parking/edit`);
+                  navigate(`/vas/parking/edit/${clientId}`);
                 }}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Edit Parking Details"
@@ -179,17 +179,21 @@ const ParkingDetailsPage = () => {
               <div className="space-y-4">
                 <Label className="text-sm font-medium text-gray-700">Lease Information</Label>
                 {parkingDetails.leases.map((lease) => (
-                  <div key={lease.id} className="bg-red-50 border border-red-200 rounded-lg p-6">
+                  <div key={lease.id} className={`border rounded-lg p-6 ${lease.lease_period.expired ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}`}>
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-sm font-medium text-gray-700">Lease Period</span>
-                      {lease.lease_period.expired && (
+                      {lease.lease_period.expired ? (
                         <span className="inline-block bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
                           Expired
+                        </span>
+                      ) : (
+                        <span className="inline-block bg-green-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                          Active
                         </span>
                       )}
                     </div>
                     <div>
-                      <span className="inline-block bg-[#C72030] text-white px-4 py-2 rounded font-medium">
+                      <span className={`inline-block text-white px-4 py-2 rounded font-medium ${lease.lease_period.expired ? 'bg-[#C72030]' : 'bg-green-600'}`}>
                         {lease.lease_period.start_date} - {lease.lease_period.end_date}
                       </span>
                     </div>
