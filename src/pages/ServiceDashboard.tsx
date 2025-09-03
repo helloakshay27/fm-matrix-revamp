@@ -788,7 +788,7 @@ export const ServiceDashboard = () => {
       <>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
           <div
-            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === undefined ? 'border-[#C72030]' : 'border-transparent'}`}
             onClick={handleTotalServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -803,7 +803,7 @@ export const ServiceDashboard = () => {
           </div>
 
           <div
-            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === true ? 'border-[#C72030]' : 'border-transparent'}`}
             onClick={handleActiveServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -818,7 +818,7 @@ export const ServiceDashboard = () => {
           </div>
 
           <div
-            className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer"
+            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === false ? 'border-[#C72030]' : 'border-transparent'}`}
             onClick={handleInactiveServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
