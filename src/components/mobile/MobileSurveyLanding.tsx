@@ -159,6 +159,9 @@ export const MobileSurveyLanding: React.FC = () => {
   const handleMultipleNext = () => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return;
+    
+    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+    
     // Check for negative option (option_type === 'n')
     const hasNegative = selectedOptions.some(opt => opt.option_type === 'n');
     if (hasNegative && currentQuestion.generic_tags && currentQuestion.generic_tags.length > 0) {
@@ -166,8 +169,15 @@ export const MobileSurveyLanding: React.FC = () => {
       setPendingNegativeAnswer(selectedOptions);
       setShowGenericTags(true);
     } else {
-      saveCurrentAnswer();
-      handleNextQuestion();
+      const answerData = saveCurrentAnswer();
+      
+      if (isSingleQuestion) {
+        // For single question surveys, submit immediately with answer data
+        handleSingleQuestionSubmit(answerData);
+      } else {
+        // For multi-question surveys, proceed to next question
+        handleNextQuestion();
+      }
     }
   };
 
@@ -181,13 +191,23 @@ export const MobileSurveyLanding: React.FC = () => {
   const handleRatingNext = () => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return;
+    
+    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+    
     if (selectedRating !== null && selectedRating <= 3 && currentQuestion.generic_tags && currentQuestion.generic_tags.length > 0) {
       setPendingNegativeType('rating');
       setPendingNegativeAnswer(selectedRating);
       setShowGenericTags(true);
     } else {
-      saveCurrentAnswer();
-      handleNextQuestion();
+      const answerData = saveCurrentAnswer();
+      
+      if (isSingleQuestion) {
+        // For single question surveys, submit immediately with answer data
+        handleSingleQuestionSubmit(answerData);
+      } else {
+        // For multi-question surveys, proceed to next question
+        handleNextQuestion();
+      }
     }
   };
 
@@ -195,14 +215,23 @@ export const MobileSurveyLanding: React.FC = () => {
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
     setSelectedRating(rating);
     const currentQuestion = getCurrentQuestion();
+    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+    
     if (rating <= 3 && currentQuestion?.generic_tags && currentQuestion.generic_tags.length > 0) {
       setPendingNegativeType('emoji');
       setPendingNegativeAnswer({ rating, emoji, label });
       setShowGenericTags(true);
     } else {
-      // For good ratings or no tags, proceed to next question
-      saveCurrentAnswer(rating, emoji, label);
-      handleNextQuestion();
+      // For good ratings or no tags
+      const answerData = saveCurrentAnswer(rating, emoji, label);
+      
+      if (isSingleQuestion) {
+        // For single question surveys, submit immediately with answer data
+        handleSingleQuestionSubmit(answerData);
+      } else {
+        // For multi-question surveys, proceed to next question
+        handleNextQuestion();
+      }
     }
   };
 
@@ -219,9 +248,9 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Save current answer
-  const saveCurrentAnswer = (rating?: number, emoji?: string, label?: string, tags?: GenericTag[], description?: string) => {
+  const saveCurrentAnswer = (rating?: number, emoji?: string, label?: string, tags?: GenericTag[], description?: string): SurveyAnswers[number] => {
     const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
+    if (!currentQuestion) return { qtype: '', value: '' };
 
     const answerData: SurveyAnswers[number] = {
       qtype: currentQuestion.qtype,
@@ -246,7 +275,7 @@ export const MobileSurveyLanding: React.FC = () => {
         answerData.emoji = emoji;
         answerData.label = label;
         answerData.selectedTags = tags || selectedTags;
-        answerData.value = `${emoji} ${label}`;
+        answerData.value = emoji && label ? `${emoji} ${label}` : (emoji || label || 'Good');
         if (description) answerData.description = description;
         break;
     }
@@ -255,6 +284,96 @@ export const MobileSurveyLanding: React.FC = () => {
       ...prev,
       [currentQuestion.id]: answerData
     }));
+
+    return answerData;
+  };
+
+  // Handle single question submission
+  const handleSingleQuestionSubmit = async (answerOverride?: SurveyAnswers[number]) => {
+    if (!surveyData) return;
+
+    setIsSubmitting(true);
+    try {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
+
+      // Use the provided answer override or get from state
+      const currentAnswer = answerOverride || answers[currentQuestion.id];
+      if (!currentAnswer) {
+        console.error('No current answer found for question:', currentQuestion.id);
+        return;
+      }
+
+      console.log('Current answer for single question:', currentAnswer);
+
+      // Build issues array from selected tags
+      const issues = currentAnswer.selectedTags?.map(tag => tag.category_name) || [];
+
+      // Create the base survey response payload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const surveyResponse: any = {
+        mapping_id: mappingId || '',
+        qtype: currentQuestion.qtype,
+        value: typeof currentAnswer.value === 'object' ? 
+               (Array.isArray(currentAnswer.value) ? currentAnswer.value.map(opt => opt.qname).join(', ') : String(currentAnswer.value)) : 
+               currentAnswer.value,
+        issues: issues,
+        description: currentAnswer.description || finalDescription || undefined,
+        question_id: currentQuestion.id
+      };
+
+      // Add question-specific fields
+      if (currentQuestion.qtype === 'multiple') {
+        surveyResponse.selectedOptions = currentAnswer.selectedOptions;
+        surveyResponse.option_id = currentAnswer.selectedOptions?.[0]?.id;
+      } else if (currentQuestion.qtype === 'emoji') {
+        surveyResponse.rating = currentAnswer.rating || 5;
+        surveyResponse.emoji = currentAnswer.emoji || "�";
+        surveyResponse.label = currentAnswer.label || "Good";
+      } else if (currentQuestion.qtype === 'rating') {
+        surveyResponse.rating = currentAnswer.rating || 5;
+      }
+
+      // For input/description questions without rating, only add rating if there are issues
+      if ((currentQuestion.qtype === 'input' || currentQuestion.qtype === 'description')) {
+        if (issues.length > 0) {
+          surveyResponse.rating = 2;
+        } else {
+          surveyResponse.rating = 5;
+        }
+      }
+
+      // For multiple choice, add rating based on option type only if there are issues
+      if (currentQuestion.qtype === 'multiple') {
+        const hasNegative = currentAnswer.selectedOptions?.some(opt => opt.option_type === 'n');
+        if (hasNegative || issues.length > 0) {
+          surveyResponse.rating = 2;
+        } else {
+          surveyResponse.rating = 5;
+        }
+      }
+      
+      console.log('Submitting single question survey:', surveyResponse);
+      
+      await surveyApi.submitSurveyResponse({
+        survey_response: surveyResponse,
+      });
+      
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: true
+        },
+      });
+    } catch (error) {
+      console.error("Failed to submit survey:", error);
+      navigate(`/mobile/survey/${mappingId}/thank-you`, {
+        state: {
+          submittedFeedback: false
+        },
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Handle next question
@@ -287,17 +406,74 @@ export const MobileSurveyLanding: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const surveyResponse = {
-        mapping_id: mappingId!,
-        answers: answers,
-        description: finalDescription || undefined,
-        questions_count: surveyData.snag_checklist.questions_count
-      };
+      console.log('=== MULTI-QUESTION SURVEY SUBMISSION ===');
+      console.log('All answers before processing:', answers);
+      
+      // For multi-question surveys, we need to aggregate the responses
+      const allAnswers = Object.values(answers);
+      console.log('Processed all answers:', allAnswers);
+      
+      if (allAnswers.length === 0) {
+        console.error('No answers found for multi-question survey');
+        throw new Error('No answers found');
+      }
+      
+      // Calculate overall rating (average of all ratings, default to 5 if no ratings)
+      const ratings = allAnswers
+        .filter(answer => answer.rating !== undefined && answer.rating !== null)
+        .map(answer => answer.rating!);
+      const overallRating = ratings.length > 0 
+        ? Math.round(ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length)
+        : 5;
+      
+      console.log('Calculated overall rating:', overallRating, 'from ratings:', ratings);
 
+      // Get the most recent emoji/label or default
+      const emojiAnswer = allAnswers.find(answer => answer.emoji);
+      const emoji = emojiAnswer?.emoji || "😄";
+      const label = emojiAnswer?.label || "Good";
+      
+      console.log('Selected emoji/label:', { emoji, label, emojiAnswer });
+
+      // Aggregate all issues/tags
+      const allIssues: string[] = [];
+      allAnswers.forEach(answer => {
+        if (answer.selectedTags) {
+          answer.selectedTags.forEach(tag => {
+            if (!allIssues.includes(tag.category_name)) {
+              allIssues.push(tag.category_name);
+            }
+          });
+        }
+      });
+      
+      console.log('Aggregated issues:', allIssues);
+
+      // Get the last question/option IDs for reference
+      const lastAnswer = allAnswers[allAnswers.length - 1];
+      const lastQuestion = surveyData.snag_checklist.snag_questions[surveyData.snag_checklist.snag_questions.length - 1];
+      
+      console.log('Last answer:', lastAnswer);
+      console.log('Last question:', lastQuestion);
+
+      // Create the survey response payload matching the API structure
+      const surveyResponse = {
+        mapping_id: mappingId || '',
+        rating: overallRating,
+        emoji: emoji,
+        label: label,
+        issues: allIssues,
+        description: finalDescription || undefined,
+        option_id: lastAnswer?.selectedOptions?.[0]?.id,
+        question_id: lastQuestion?.id
+      };
+      
+      console.log('Final survey response payload for multi-question:', surveyResponse);
+      
       await surveyApi.submitSurveyResponse({
         survey_response: surveyResponse,
       });
-
+      
       navigate(`/mobile/survey/${mappingId}/thank-you`, {
         state: {
           submittedFeedback: true
@@ -351,7 +527,7 @@ export const MobileSurveyLanding: React.FC = () => {
   const isLastStep = currentQuestionIndex >= surveyData.snag_checklist.questions_count;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+  <div className="min-h-screen flex flex-col" style={{ background: 'url(/9019830 1.png) center top/cover no-repeat, #f9fafb' }}>
       {/* Header with Logo */}
       <div className="bg-white py-8 px-4 text-center">
         <div className="flex justify-center items-center mb-4">
@@ -385,14 +561,19 @@ export const MobileSurveyLanding: React.FC = () => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-        <div className="text-center mb-8">
           <h1 className="text-2xl font-medium text-black mb-4">{surveyData.survey_title}</h1>
-          {/* {!isLastStep && (
-            <h2 className="text-xl font-bold text-black">
-              We would love to see your feedback! 
-            </h2>
-          )} */}
-        </div>
+
+        {/* Show image only on first question or single question surveys */}
+        {!showGenericTags && (
+          <div className="text-center mb-8">
+            <img
+              src="/9019830 1.png"
+              alt="Survey Illustration"
+              className="w-full max-w-xs md:max-w-md h-auto object-contain mx-auto"
+              style={{ aspectRatio: '1/1.1' }}
+            />
+          </div>
+        )}
 
         {/* Show Final Description Step */}
         {isLastStep && isMultiQuestion && (
@@ -475,7 +656,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   disabled={!isCurrentAnswerValid()}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                 >
-                  {currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue'}
+                  {surveyData!.snag_checklist.questions_count === 1 ? 'Submit Survey' : (currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue')}
                 </button>
               </>
             )}
@@ -494,11 +675,23 @@ export const MobileSurveyLanding: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={handleNextQuestion}
+                  onClick={async () => {
+                    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+                    
+                    // Save current answer first
+                    const answerData = saveCurrentAnswer();
+                    
+                    if (isSingleQuestion) {
+                      // Submit immediately with answer data
+                      handleSingleQuestionSubmit(answerData);
+                    } else {
+                      handleNextQuestion();
+                    }
+                  }}
                   disabled={!isCurrentAnswerValid()}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                 >
-                  {currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue'}
+                  {surveyData!.snag_checklist.questions_count === 1 ? 'Submit Survey' : (currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue')}
                 </button>
               </>
             )}
@@ -516,11 +709,23 @@ export const MobileSurveyLanding: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={handleNextQuestion}
+                  onClick={async () => {
+                    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+                    
+                    // Save current answer first
+                    const answerData = saveCurrentAnswer();
+                    
+                    if (isSingleQuestion) {
+                      // Submit immediately with answer data
+                      handleSingleQuestionSubmit(answerData);
+                    } else {
+                      handleNextQuestion();
+                    }
+                  }}
                   disabled={!isCurrentAnswerValid()}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                 >
-                  {currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue'}
+                  {surveyData!.snag_checklist.questions_count === 1 ? 'Submit Survey' : (currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue')}
                 </button>
               </>
             )}
@@ -559,7 +764,7 @@ export const MobileSurveyLanding: React.FC = () => {
                   disabled={!isCurrentAnswerValid()}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                 >
-                  {currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue'}
+                  {surveyData!.snag_checklist.questions_count === 1 ? 'Submit Survey' : (currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue')}
                 </button>
               </>
             )}
@@ -645,10 +850,13 @@ export const MobileSurveyLanding: React.FC = () => {
                 </div>
 
                 <button
-                  onClick={() => {
-                    // Save answer with tags and description, then next
+                  onClick={async () => {
+                    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+                    
+                    // Save answer with tags and description, then proceed
+                    let answerData;
                     if (pendingNegativeType === 'emoji' && typeof pendingNegativeAnswer === 'object' && pendingNegativeAnswer !== null && 'rating' in pendingNegativeAnswer) {
-                      saveCurrentAnswer(
+                      answerData = saveCurrentAnswer(
                         pendingNegativeAnswer.rating,
                         pendingNegativeAnswer.emoji,
                         pendingNegativeAnswer.label,
@@ -656,7 +864,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         finalDescription
                       );
                     } else if (pendingNegativeType === 'multiple') {
-                      saveCurrentAnswer(
+                      answerData = saveCurrentAnswer(
                         undefined,
                         undefined,
                         undefined,
@@ -664,7 +872,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         finalDescription
                       );
                     } else if (pendingNegativeType === 'rating' && typeof pendingNegativeAnswer === 'number') {
-                      saveCurrentAnswer(
+                      answerData = saveCurrentAnswer(
                         pendingNegativeAnswer,
                         undefined,
                         undefined,
@@ -672,12 +880,22 @@ export const MobileSurveyLanding: React.FC = () => {
                         finalDescription
                       );
                     }
+                    
+                    // Reset states immediately
                     setShowGenericTags(false);
                     setSelectedTags([]);
                     setFinalDescription('');
                     setPendingNegativeType(null);
                     setPendingNegativeAnswer(null);
-                    handleNextQuestion();
+                    
+                    // Proceed immediately
+                    if (isSingleQuestion) {
+                      // For single question surveys, submit immediately
+                      handleSingleQuestionSubmit(answerData);
+                    } else {
+                      // For multi-question surveys, proceed to next question
+                      handleNextQuestion();
+                    }
                   }}
                   disabled={selectedTags.length === 0 && !finalDescription.trim()}
                   className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
@@ -688,7 +906,7 @@ export const MobileSurveyLanding: React.FC = () => {
                       Submitting...
                     </div>
                   ) : (
-                    currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue'
+                    surveyData!.snag_checklist.questions_count === 1 ? 'Submit Survey' : (currentQuestionIndex < surveyData.snag_checklist.questions_count - 1 ? 'Next Question' : 'Continue')
                   )}
                 </button>
 
