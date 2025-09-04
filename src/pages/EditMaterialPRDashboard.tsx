@@ -116,6 +116,13 @@ export const EditMaterialPRDashboard = () => {
     const getData = async () => {
       try {
         const response = await dispatch(getMaterialPRById({ baseUrl, token, id: id })).unwrap();
+
+        setWbsSelection(
+          response.pms_po_inventories?.every(item => item.wbs_code !== null)
+            ? "individual"
+            : "overall"
+        );
+
         setSupplierDetails({
           supplier: response.supplier?.id,
           plantDetail: response.plant_detail?.id,
@@ -410,7 +417,7 @@ export const EditMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
-          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
         })),
       },
       attachments: files,
