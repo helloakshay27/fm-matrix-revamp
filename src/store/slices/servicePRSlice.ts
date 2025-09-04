@@ -13,6 +13,7 @@ export const getServicePr = createAsyncThunk(
             external_id,
             supplier_name,
             approval_status,
+            search = "",
         }: {
             baseUrl: string;
             token: string;
@@ -21,6 +22,7 @@ export const getServicePr = createAsyncThunk(
             external_id?: string;
             supplier_name?: string;
             approval_status?: string;
+            search?: string;
         },
         { rejectWithValue }
     ) => {
@@ -42,7 +44,7 @@ export const getServicePr = createAsyncThunk(
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/pms/work_orders/letter_of_indents_wo.json?page=${page}${queryParams.toString() ? `&${queryParams}` : ''}`,
+                `https://${baseUrl}/pms/work_orders/letter_of_indents_wo.json?page=${page}&q[reference_number_or_external_id_cont]=${search}${queryParams.toString() ? `&${queryParams}` : ''}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

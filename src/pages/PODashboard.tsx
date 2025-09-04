@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,14 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getPurchaseOrders } from "@/store/slices/purchaseOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
+
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -271,6 +279,23 @@ export const PODashboard = () => {
     }); // Fetch data with filters
   };
 
+  const debouncedFetchData = useCallback(
+    debounce((query: string) => {
+      fetchData({ search: query });
+    }, 500),
+    [pagination.current_page, filters]
+  );
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    debouncedFetchData(query, {
+      reference_number: filters.referenceNumber,
+      external_id: filters.poNumber,
+      supplier_name: filters.supplierName,
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -391,7 +416,13 @@ export const PODashboard = () => {
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData({ page: page });
+      await fetchData({
+        page,
+        reference_number: filters.referenceNumber,
+        external_id: filters.poNumber,
+        supplier_name: filters.supplierName,
+        search: searchQuery,
+      });
     } catch (error) {
       console.error("Error changing page:", error);
       toast.error("Failed to load page data. Please try again.");
@@ -545,8 +576,8 @@ export const PODashboard = () => {
         emptyMessage="No purchase orders found"
         selectAllLabel="Select all POs"
         searchTerm={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search POs..."
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search by PO No."
         exportFileName="purchase-orders"
         enableSearch={true}
         leftActions={leftActions}
