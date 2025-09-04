@@ -237,7 +237,7 @@ export const AddPODashboard = () => {
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantity) || 0;
     const rate = parseFloat(item.rate) || 0;
-    const baseAmount = rate;
+    const baseAmount = rate * quantity;
     const cgstRate = parseFloat(item.cgstRate) || 0;
     const sgstRate = parseFloat(item.sgstRate) || 0;
     const igstRate = parseFloat(item.igstRate) || 0;
@@ -265,6 +265,7 @@ export const AddPODashboard = () => {
     setSubmitting(true);
     const payload = {
       pms_purchase_order: {
+        reference_id: formData.materialPR,
         pms_supplier_id: formData.supplier,
         plant_detail_id: formData.plantDetail,
         billing_address_id: formData.billingAddress,
