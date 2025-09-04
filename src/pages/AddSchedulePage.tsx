@@ -5402,6 +5402,23 @@ export const AddSchedulePage = () => {
                             </Box>
                           </Box>
                         )}
+
+                        {task.inputType === 'multiline' && (
+  <Box sx={{ mt: 2 }}>
+    <TextField
+      disabled={stepIndex < activeStep && editingStep !== stepIndex}
+      label={<span>Multiline Text <span style={{ color: 'currentColor' }}>*</span></span>}
+      placeholder="Enter multiline text"
+      fullWidth
+      multiline
+      rows={4}
+      value={task.textarea || ''}
+      onChange={(e) => updateTaskInSection(section.id, task.id, 'textarea', e.target.value)}
+      sx={{ mb: 3 }}
+    />
+  </Box>
+)}
+
                       </Box>
                     </Box>
                   ))}
