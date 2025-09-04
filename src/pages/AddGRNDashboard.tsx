@@ -194,7 +194,7 @@ export const AddGRNDashboard = () => {
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
     // Calculate Amount (rate × approved quantity)
-    const amount = rate;
+    const amount = rate * approvedQty;
 
     // Calculate Tax Amounts (rate * qty * %)
     const cgstAmount = (amount * cgstRate) / 100;
