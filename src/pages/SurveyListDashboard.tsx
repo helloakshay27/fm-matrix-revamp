@@ -198,7 +198,7 @@ export const SurveyListDashboard = () => {
     { key: 'associations_count', label: 'No. of Associations', sortable: true, draggable: true, defaultVisible: true },
     { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
     { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true, defaultVisible: true },
+    // { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true, defaultVisible: true },
   ];
 
   const renderCell = (item: SurveyItem, columnKey: string) => {
