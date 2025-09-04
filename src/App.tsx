@@ -106,6 +106,8 @@ import { GenerateUtilityBillPage } from './pages/GenerateUtilityBillPage';
 import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
 import { UtilityWasteGenerationSetupDashboard } from './pages/UtilityWasteGenerationSetupDashboard';
 import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
+import EditWasteGenerationPage from './pages/EditWasteGenerationPage';
+import { WasteGenerationDetailsPage } from './pages/WasteGenerationDetailsPage';
 
 // Import Survey pages
 import { SurveyListDashboard } from './pages/SurveyListDashboard';
@@ -1249,6 +1251,14 @@ function App() {
                     path="/maintenance/waste/generation/add"
                     element={<AddWasteGenerationPage />}
                   />
+                  <Route
+                    path="/maintenance/waste/generation/edit/:id"
+                    element={<EditWasteGenerationPage />}
+                  />
+                  <Route
+                    path="/maintenance/waste/generation/:id"
+                    element={<WasteGenerationDetailsPage />}
+                  />
 
                   {/* Survey Routes */}
                   <Route
@@ -1756,7 +1766,7 @@ function App() {
                     element={<ParkingCreatePage />}
                   />
                   <Route
-                    path="/vas/parking/edit"
+                    path="/vas/parking/edit/:clientId?"
                     element={<ParkingEditPage />}
                   />
                   <Route path="/vas/osr" element={<OSRDashboard />} />

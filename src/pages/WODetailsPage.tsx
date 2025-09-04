@@ -233,7 +233,7 @@ export const WODetailsPage = () => {
         gstin_number: "",
         pan_number: "",
       },
-      work_category: "",
+      category_type: "",
       payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
       term_condition: "",
     },
@@ -411,11 +411,12 @@ export const WODetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf`,
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          responseType: 'blob'
         }
       );
 
@@ -770,7 +771,7 @@ export const WODetailsPage = () => {
                 Work Category
               </span>
               <span className="text-sm">
-                : {workOrder.work_order?.work_category}
+                : {workOrder.work_order?.category_type}
               </span>
             </div>
           </div>

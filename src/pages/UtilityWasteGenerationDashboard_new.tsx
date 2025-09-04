@@ -54,22 +54,21 @@ const UtilityWasteGenerationDashboard = () => {
   const handleImport = () => setIsImportOpen(true);
   const handleUpdate = () => setIsUpdateOpen(true);
   const handleFilters = () => setIsFilterOpen(true);
-  const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
+  const handleView = (id: number) => console.log('View waste generation record:', id);
   const handleEdit = (id: number) => console.log('Edit waste generation record:', id);
   const handleDelete = (id: number) => console.log('Delete waste generation record:', id);
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     // { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'location_details', label: 'Location', sortable: true, draggable: true },
     { key: 'vendor', label: 'Vendor', sortable: true, draggable: true },
     { key: 'commodity', label: 'Commodity/Source', sortable: true, draggable: true },
     { key: 'category', label: 'Category', sortable: true, draggable: true },
-    { key: 'operational_landlord', label: 'Operational Name of Landlord/ Tenant', sortable: true, draggable: true },
-    { key: 'uom', label: 'UoM', sortable: true, draggable: true },
-    { key: 'waste_unit', label: 'Generated Unit', sortable: true, draggable: true },
-    { key: 'recycled_unit', label: 'Recycled Unit', sortable: true, draggable: true },
-    { key: 'agency_name', label: 'Agency Name', sortable: true, draggable: true },
+    { key: 'operational_landlord', label: 'Operational Name', sortable: true, draggable: true },
+    { key: 'waste_unit', label: 'Generated', sortable: true, draggable: true },
+    { key: 'recycled_unit', label: 'Recycled', sortable: true, draggable: true },
+    { key: 'agency_name', label: 'Agency', sortable: true, draggable: true },
     { key: 'wg_date', label: 'Waste Date', sortable: true, draggable: true },
     { key: 'created_by', label: 'Created By', sortable: true, draggable: true },
     { key: 'created_at', label: 'Created On', sortable: true, draggable: true }
@@ -78,16 +77,16 @@ const UtilityWasteGenerationDashboard = () => {
   const renderCell = (item: WasteGeneration, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex justify-center space-x-1">
+        <div className="flex space-x-1">
           <Button variant="ghost" size="sm" onClick={() => handleView(item.id)} className="h-8 w-8 p-0">
             <Eye className="h-4 w-4" />
           </Button>
-          {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(item.id)} className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(item.id)} className="h-8 w-8 p-0">
             <Edit className="h-4 w-4" />
-          </Button> */}
-          {/* <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
             <Trash2 className="h-4 w-4" />
-          </Button> */}
+          </Button>
         </div>
       );
     }
@@ -108,19 +107,8 @@ const UtilityWasteGenerationDashboard = () => {
         return item.wg_date ? new Date(item.wg_date).toLocaleDateString() : 'N/A';
       case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A';
-      case 'uom':
-        // Since API doesn't provide UoM, we'll use a default value
-        // You can modify this logic based on your business requirements
-        return 'KG';
-      case 'waste_unit':
-        return item.waste_unit ? item.waste_unit.toString() : '0';
-      case 'recycled_unit':
-        return item.recycled_unit ? item.recycled_unit.toString() : '0';
-      default: {
-        // Handle direct properties from WasteGeneration interface
-        const value = item[columnKey as keyof WasteGeneration];
-        return value !== undefined && value !== null ? String(value) : 'N/A';
-      }
+      default:
+        return (item as any)[columnKey] || 'N/A';
     }
   };
   

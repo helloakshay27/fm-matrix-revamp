@@ -34,7 +34,7 @@ export interface SurveyResponseData {
   created_at: string;
   updated_at: string;
   response_json: string;
-  parsed_response: Record<string, any>;
+  parsed_response: Record<string, unknown>;
   question_count: number;
   response_count: number;
   survey_title: string;
@@ -48,13 +48,15 @@ export interface SurveyResponseData {
 export interface SurveySubmissionRequest {
   survey_response: {
     mapping_id: string;
-    rating: number;
-    emoji: string;
-    label: string;
-    issues: string[];
-    description?: string;
-    option_id?: number;
-    question_id?: number;
+    question_id: number;
+    option_id?: number; // For multiple choice questions
+    issues: string[]; // Array of issue category names
+    rating?: number; // For rating and emoji questions
+    emoji?: string; // For emoji questions
+    label?: string; // For emoji questions
+    response_text?: string; // For input/description questions
+    description?: string; // Additional description
+    final_description?: string; // Final survey description
   };
 }
 
@@ -108,8 +110,13 @@ export const surveyApi = {
   // Submit survey response
   async submitSurveyResponse(surveyData: SurveySubmissionRequest): Promise<SurveyResponse> {
     try {
-      console.log("Submitting survey response:", surveyData);
-       const response = await baseClient.post("/add_survey_feedback.json?skp_dr=true", surveyData); 
+      console.log("=== SURVEY API SUBMISSION ===");
+      console.log("Full payload being sent:", JSON.stringify(surveyData, null, 2));
+      console.log("survey_response object:", JSON.stringify(surveyData.survey_response, null, 2));
+      
+      const response = await baseClient.post("/add_survey_feedback.json?skp_dr=true", surveyData); 
+      
+      console.log("API Response:", response.data);
       return response.data.survey_response;
     } catch (error) {
       console.error("Error submitting survey response:", error);

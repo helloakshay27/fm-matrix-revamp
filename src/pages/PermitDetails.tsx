@@ -212,7 +212,6 @@ export const PermitDetails = () => {
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
     const userId = searchParams.get('user_id');
-    const invoiceApprovalHistoryId = searchParams.get('invoice_approval_history_id');
     const isApprovalPage = searchParams.get('type') === 'approval';
     const showApprovalButtons = levelId && userId && isApprovalPage;
 
@@ -314,11 +313,6 @@ export const PermitDetails = () => {
             return;
         }
 
-        if (!invoiceApprovalHistoryId) {
-            toast.error('Invoice approval history ID is required for rejection');
-            return;
-        }
-
         setIsRejecting(true);
         try {
             let baseUrl = localStorage.getItem('baseUrl');
@@ -338,7 +332,7 @@ export const PermitDetails = () => {
             const formData = new URLSearchParams();
             formData.append('rejection_reason', rejectComment.trim());
 
-            const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?invoice_approval_history_id=${invoiceApprovalHistoryId}&user_id=${userId}`, {
+            const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?user_id=${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,

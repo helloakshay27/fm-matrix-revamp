@@ -746,13 +746,21 @@ function AddWaterAssetDashboard() {
   // Helper: Build category-specific attachments for payload
   const getCategoryAttachments = () => {
     if (!selectedAssetCategory) return {};
-    const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, '').replace('&', '');
+
+    const categoryKey = selectedAssetCategory
+      .toLowerCase()
+      .replace(/\s+/g, "")
+      .replace("&", "");
+
     return {
       asset_image: attachments[`${categoryKey}AssetImage`] || [],
       asset_manuals: attachments[`${categoryKey}ManualsUpload`] || [],
       asset_insurances: attachments[`${categoryKey}InsuranceDetails`] || [],
       asset_purchases: attachments[`${categoryKey}PurchaseInvoice`] || [],
       asset_other_uploads: attachments[`${categoryKey}OtherDocuments`] || [],
+      amc_documents: attachments[`${categoryKey}Amc`] || [],
+      // Category-specific documents (if any)
+      category_attachments: attachments[`${categoryKey}Attachments`] || [],
     };
   };
 
@@ -858,13 +866,54 @@ function AddWaterAssetDashboard() {
             );
           });
         });
-        Object.entries(attachments).forEach(([key, arr]) => {
-          if (Array.isArray(arr)) {
-            arr.forEach((file) => {
-              formDataObj.append(`pms_asset[${key}][]`, file);
-            });
+        // Add category-specific files dynamically
+        if (selectedAssetCategory) {
+          const categoryAttachments = getCategoryAttachments();
+
+          // Add asset image (single file)
+          if (categoryAttachments.asset_image && categoryAttachments.asset_image.length > 0) {
+            formDataObj.append("pms_asset[asset_image]", categoryAttachments.asset_image[0]);
           }
-        });
+
+          // Add category-specific documents
+          if (categoryAttachments.asset_manuals) {
+            categoryAttachments.asset_manuals.forEach((file) =>
+              formDataObj.append("asset_manuals[]", file)
+            );
+          }
+
+          if (categoryAttachments.asset_insurances) {
+            categoryAttachments.asset_insurances.forEach((file) =>
+              formDataObj.append("asset_insurances[]", file)
+            );
+          }
+
+          if (categoryAttachments.asset_purchases) {
+            categoryAttachments.asset_purchases.forEach((file) =>
+              formDataObj.append("asset_purchases[]", file)
+            );
+          }
+
+          if (categoryAttachments.asset_other_uploads) {
+            categoryAttachments.asset_other_uploads.forEach((file) =>
+              formDataObj.append("asset_other_uploads[]", file)
+            );
+          }
+
+          if (categoryAttachments.amc_documents) {
+            categoryAttachments.amc_documents.forEach((file) =>
+              formDataObj.append("amc_documents[]", file)
+            );
+          }
+
+          // Add category-specific attachments (if any)
+          if (categoryAttachments.category_attachments) {
+            const categoryKey = selectedAssetCategory.toLowerCase().replace(/\s+/g, "").replace("&", "");
+            categoryAttachments.category_attachments.forEach((file) =>
+              formDataObj.append(`${categoryKey}_attachments[]`, file)
+            );
+          }
+        }
         response = await apiClient.post("pms/assets.json", formDataObj, {
           headers: { "Content-Type": "multipart/form-data" },
           timeout: 300000,
@@ -897,7 +946,7 @@ function AddWaterAssetDashboard() {
   };
 
   // Add selectedAssetCategory state for attachment logic
-  const [selectedAssetCategory, setSelectedAssetCategory] = React.useState("");
+  const [selectedAssetCategory, setSelectedAssetCategory] = React.useState("Meter");
   // Add attachments state for file uploads (copied from AddAssetPage)
   const [attachments, setAttachments] = React.useState({
     landAttachments: [],

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Bike, Car } from "lucide-react";
 import { toast } from 'sonner';
-import { fetchBuildings, fetchFloors, fetchParkingSlotsWithStatus, fetchEntities, fetchCustomerLeases, Building, Floor, ParkingCategory, Entity, CustomerLease } from '@/services/parkingConfigurationsAPI';
+import { fetchBuildings, fetchFloors, fetchParkingSlotsWithStatus, fetchEntities, fetchCustomerLeases, fetchParkingDetails, updateParkingBookings, Building, Floor, ParkingCategory, Entity, CustomerLease, ParkingDetailsResponse } from '@/services/parkingConfigurationsAPI';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"; // Import Dialog components
 
 export const ParkingEditPage = () => {
@@ -27,6 +27,7 @@ export const ParkingEditPage = () => {
   // API data state
   const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
   const [loadingParkingSlots, setLoadingParkingSlots] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   // Dynamic dropdown data
   const [buildings, setBuildings] = useState<Building[]>([]);
@@ -38,11 +39,61 @@ export const ParkingEditPage = () => {
   const [loadingEntities, setLoadingEntities] = useState(false);
   const [loadingLeases, setLoadingLeases] = useState(false);
 
-  // Dynamic client data based on current selection
+  // Dynamic client data based on current selection or API data
+  const [clientDetails, setClientDetails] = useState<ParkingDetailsResponse | null>(null);
+  const [loadingClientDetails, setLoadingClientDetails] = useState(false);
+  
   const clientData = useMemo(() => ({
-    clientName: clientName || "Select Client", 
+    clientName: clientDetails?.entity.name || clientName || "Select Client", 
     availableSlots: 0 // This will be calculated from API data
-  }), [clientName]);
+  }), [clientName, clientDetails]);
+
+  // Fetch client details if clientId is provided (edit mode)
+  useEffect(() => {
+    const fetchClientDetailsData = async () => {
+      if (!clientId) return;
+      
+      setLoadingClientDetails(true);
+      try {
+        const clientDetailsData = await fetchParkingDetails(clientId);
+        setClientDetails(clientDetailsData);
+        // Pre-populate client name if editing existing client
+        setClientName(clientDetailsData.entity.name);
+        
+        // Also fetch and populate the leases for this client
+        setLoadingLeases(true);
+        try {
+          const leasesData = await fetchCustomerLeases(clientDetailsData.entity.id);
+          setCustomerLeases(leasesData);
+          
+          // Pre-select the lease if there's lease data in the parking details
+          if (clientDetailsData.leases && clientDetailsData.leases.length > 0) {
+            // Assuming we want to select the first lease from the parking details
+            // or you could match by ID if you have the specific lease ID to select
+            const firstLeaseId = clientDetailsData.leases[0].id;
+            
+            // Find matching lease in the customer leases and pre-select it
+            const matchingLease = leasesData.find(lease => lease.id === firstLeaseId);
+            if (matchingLease) {
+              setLeaser(matchingLease.id.toString());
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching customer leases for client details:', error);
+          toast.error('Failed to fetch customer leases');
+        } finally {
+          setLoadingLeases(false);
+        }
+      } catch (error) {
+        console.error('Error fetching client details:', error);
+        toast.error('Failed to fetch client details');
+      } finally {
+        setLoadingClientDetails(false);
+      }
+    };
+
+    fetchClientDetailsData();
+  }, [clientId]);
 
   // Fetch buildings on component mount
   useEffect(() => {
@@ -177,27 +228,74 @@ export const ParkingEditPage = () => {
   };
 
   // This is the handler for the "Submit Parking" button inside the modal
-  const handleSubmitParkingSelection = () => {
-    // Here you would process the `selectedTwoWheelerSlots` and `selectedFourWheelerSlots`
-    // and send them to your backend along with other form data.
+  const handleSubmitParkingSelection = async () => {
+    // Validate that at least one slot is selected
+    const totalSelectedSlots = selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length;
+    if (totalSelectedSlots === 0) {
+      toast.error('Please select at least one parking slot');
+      return;
+    }
+
+    // Get the selected entity and lease information
+    const selectedEntity = entities.find(entity => entity.name === clientName);
+    if (!selectedEntity) {
+      toast.error('Selected client entity not found');
+      return;
+    }
+
+    const selectedLease = customerLeases.find(lease => lease.id.toString() === leaser);
+    if (!selectedLease) {
+      toast.error('Selected lease not found');
+      return;
+    }
+
+    // Combine all selected parking slots (both 2-wheeler and 4-wheeler)
+    const selectedParkingSlots = [
+      ...selectedTwoWheelerSlots.map(id => parseInt(id)),
+      ...selectedFourWheelerSlots.map(id => parseInt(id))
+    ];
+
     console.log("Selected 2-wheeler slots:", selectedTwoWheelerSlots);
     console.log("Selected 4-wheeler slots:", selectedFourWheelerSlots);
+    console.log("Combined selected slots:", selectedParkingSlots);
 
-    // Prepare data with IDs for backend
-    const formData = {
-      building_id: parseInt(building), // Send as ID to backend
-      floor_id: parseInt(floor), // Send as ID to backend
-      parkingSlot,
-      clientName,
-      leaser,
-      selectedTwoWheelerSlots, // Add selected slots
-      selectedFourWheelerSlots // Add selected slots
-    };
+    setLoadingSubmit(true);
+    try {
+      // Prepare data payload for API
+      const apiPayload = {
+        lease_id: selectedLease.id,
+        building_id: parseInt(building),
+        floor_id: parseInt(floor),
+        entity_id: selectedEntity.id,
+        selected_parking_slots: selectedParkingSlots
+      };
 
-    console.log('Parking updated with IDs:', formData);
-    toast.success('Parking booking updated successfully');
-    setShowParkingSelector(false); // Close the modal
-    navigate(`/vas/parking/details/${clientId}`);
+      console.log('API Payload:', apiPayload);
+      
+      // Call the update parking bookings API
+      const response = await updateParkingBookings(apiPayload);
+      
+      console.log('API Response:', response);
+      
+      if (response.status === 'success') {
+        toast.success(response.message || 'Parking booking updated successfully');
+        setShowParkingSelector(false); // Close the modal
+        
+        // Navigate back to parking details or main parking page
+        if (clientId) {
+          navigate(`/vas/parking/details/${clientId}`);
+        } else {
+          navigate('/vas/parking');
+        }
+      } else {
+        toast.error('Failed to update parking booking');
+      }
+    } catch (error) {
+      console.error('Error updating parking booking:', error);
+      toast.error('Failed to update parking booking. Please try again.');
+    } finally {
+      setLoadingSubmit(false);
+    }
   };
 
   const handleBack = () => {
@@ -235,7 +333,12 @@ export const ParkingEditPage = () => {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#C72030]">Edit Parking Details</h1>
+          <h1 className="text-2xl font-bold text-[#C72030]">
+            {clientId ? 'Edit Parking Details' : 'Create Parking Booking'}
+          </h1>
+          {loadingClientDetails && (
+            <p className="text-sm text-gray-600 mt-1">Loading client information...</p>
+          )}
         </div>
       </div>
 
@@ -246,7 +349,7 @@ export const ParkingEditPage = () => {
             {/* Form Header */}
             <div className="border-b border-gray-200 pb-4">
               <h2 className="text-xl font-semibold text-gray-900">
-                Edit Parking for: {clientData.clientName}
+                {clientId ? `Edit Parking for: ${clientData.clientName}` : 'Create New Parking Booking'}
               </h2>
             </div>
 
@@ -327,7 +430,10 @@ export const ParkingEditPage = () => {
                 </Label>
                 <Select value={clientName} onValueChange={handleClientNameChange} disabled={loadingEntities}>
                   <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={loadingEntities ? "Loading clients..." : "Select Client Name"} />
+                    <SelectValue placeholder={
+                      loadingEntities ? "Loading clients..." : 
+                      "Select Client Name"
+                    } />
                   </SelectTrigger>
                   <SelectContent>
                     {entities.map((entity) => (
@@ -360,7 +466,7 @@ export const ParkingEditPage = () => {
                   </SelectContent>
                 </Select>
               </div>
-
+              
               <div className="space-y-3 text-sm bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Free Parking:</span>
@@ -467,9 +573,15 @@ export const ParkingEditPage = () => {
             ))}
           </div>
           <DialogFooter className="p-6 pt-0">
-            <Button variant="outline" onClick={() => setShowParkingSelector(false)}>Cancel</Button>
-            <Button onClick={handleSubmitParkingSelection} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white">
-              Confirm Slots
+            <Button variant="outline" onClick={() => setShowParkingSelector(false)} disabled={loadingSubmit}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitParkingSelection} 
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white" 
+              disabled={loadingSubmit}
+            >
+              {loadingSubmit ? 'Updating...' : 'Confirm Slots'}
             </Button>
           </DialogFooter>
         </DialogContent>
