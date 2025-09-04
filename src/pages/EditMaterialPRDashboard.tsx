@@ -19,7 +19,6 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   changePlantDetails,
-  createMaterialPR,
   fetchWBS,
   getAddresses,
   getInventories,
@@ -141,7 +140,7 @@ export const EditMaterialPRDashboard = () => {
         });
 
         setItems(
-          response.pms_po_inventories.map((item, index) => ({
+          response.pms_po_inventories.map((item) => ({
             id: item.id,
             itemDetails: item.inventory?.id,
             sacHsnCode: item.sac_hsn_code,
