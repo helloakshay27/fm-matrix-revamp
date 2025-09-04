@@ -28,6 +28,36 @@ export const ExternalUserDetail = () => {
     } catch { return value || ''; }
   };
 
+  // Format as dd-mm-yyyy for date-only fields
+  const formatDate = (value?: string) => {
+    if (!value) return '';
+    try {
+      const str = String(value);
+      const firstTen = str.slice(0, 10);
+      // Prefer ISO-like yyyy-mm-dd from either a pure date or ISO timestamp
+      if (/^\d{4}-\d{2}-\d{2}$/.test(firstTen)) {
+        const [y, m, d] = firstTen.split('-');
+        return `${d}-${m}-${y}`;
+      }
+      // Fallback: try native Date parsing
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yyyy = d.getFullYear();
+        return `${dd}-${mm}-${yyyy}`;
+      }
+      // Convert from dd/mm/yyyy if present
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+        const [dd, mm, yyyy] = str.split('/');
+        return `${dd}-${mm}-${yyyy}`;
+      }
+      return str;
+    } catch {
+      return value || '';
+    }
+  };
+
   const getStatusBadge = (status?: string) => {
     if (!status) return <Badge className="bg-gray-500 text-white hover:bg-gray-600"></Badge>;
     switch (status.toLowerCase()) {
@@ -138,8 +168,8 @@ export const ExternalUserDetail = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 border border-[#D9D9D9] bg-[#F6F7F7] p-4 gap-6">
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Active</span><span className="mx-1">:</span><span className="font-semibold">{getYesNoBadge(activeVal)}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Birth Date</span><span className="mx-1">:</span><span className="font-semibold">{user.birth_date || ''}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Joining Date</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.joining_date || ''}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Birth Date</span><span className="mx-1">:</span><span className="font-semibold">{formatDate(user.birth_date)}</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Joining Date</span><span className="mx-1">:</span><span className="font-semibold">{formatDate(user.lock_user_permission?.joining_date)}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Status</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.status ? getStatusBadge(user.lock_user_permission?.status) : ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Cluster</span><span className="mx-1">:</span><span className="font-semibold">{user.cluster_name || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Department</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.department_name || ''}</span></div>
@@ -152,7 +182,7 @@ export const ExternalUserDetail = () => {
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Name</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.name || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.report_to?.email || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Line Manager Mobile</span><span className="mx-1">:</span><span className="font-semibold">{user.report_to?.mobile || ''}</span></div>
-                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">OTP</span><span className="mx-1">:</span><span className="font-semibold">NA</span></div>
+                  <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">OTP</span><span className="mx-1">:</span><span className="font-semibold">{user.otp || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Registration Source</span><span className="mx-1">:</span><span className="font-semibold">{user.lock_user_permission?.registration_source || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Name</span><span className="mx-1">:</span><span className="font-semibold">{user.created_by?.name || ''}</span></div>
                   <div className="flex text-sm"><span className="text-gray-600 min-w-[140px]">Created By Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.created_by?.email || ''}</span></div>
