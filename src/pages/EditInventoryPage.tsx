@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 // Removed custom ResponsiveDatePicker in favor of simple MUI date input
 
 export const EditInventoryPage = () => {
@@ -38,6 +39,13 @@ export const EditInventoryPage = () => {
   const [inventoryDetailsExpanded, setInventoryDetailsExpanded] = useState(true);
   const [taxDetailsExpanded, setTaxDetailsExpanded] = useState(true);
   const [sacList, setSacList] = useState([]);
+  // Inventory Type/Sub Type masters
+  const [invTypeOptions, setInvTypeOptions] = useState<Array<{ id: number; name?: string; title?: string; label?: string }>>([]);
+  const [invSubTypeOptions, setInvSubTypeOptions] = useState<Array<{ id: number; name?: string; title?: string; label?: string }>>([]);
+  const [invTypeLoading, setInvTypeLoading] = useState(false);
+  const [invSubTypeLoading, setInvSubTypeLoading] = useState(false);
+  const [invTypeId, setInvTypeId] = useState<string>('');
+  const [invSubTypeId, setInvSubTypeId] = useState<string>('');
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -243,6 +251,20 @@ export const EditInventoryPage = () => {
       setTaxApplicable(fetchedInventory.tax_applicable || false);
       // Support both boolean eco_friendly and numeric green_product
       setEcoFriendly(Boolean((fetchedInventory as any)?.eco_friendly || (fetchedInventory as any)?.green_product));
+
+      // Initialize Inventory Type/Sub Type ids from various possible keys
+      const typeId = (fetchedInventory as any)?.pms_inventory_type_id
+        ?? (fetchedInventory as any)?.inventory_type_master_id
+        ?? (fetchedInventory as any)?.inventory_type_id
+        ?? (fetchedInventory as any)?.item_type_id
+        ?? '';
+      const subTypeId = (fetchedInventory as any)?.pms_inventory_sub_type_id
+        ?? (fetchedInventory as any)?.inventory_sub_type_id
+        ?? (fetchedInventory as any)?.item_category_id
+        ?? (fetchedInventory as any)?.item_sub_type_id
+        ?? '';
+      if (typeId) setInvTypeId(String(typeId));
+      if (subTypeId) setInvSubTypeId(String(subTypeId));
     }
   }, [fetchedInventory]);
 
@@ -272,6 +294,76 @@ export const EditInventoryPage = () => {
       navigate('/maintenance/inventory');
     }
   }, [updatedInventory, navigate]);
+
+  // Fetch Inventory Types on mount
+  useEffect(() => {
+    const fetchInventoryTypes = async () => {
+      setInvTypeLoading(true);
+      try {
+        const res = await fetch(getFullUrl('/pms/inventory_types/autocomplete.json'), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': getAuthHeader(),
+          },
+        });
+        if (!res.ok) throw new Error('Failed to load inventory types');
+        const data = await res.json();
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
+        else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
+        else if (Array.isArray(data?.payload)) arr = data.payload;
+        setInvTypeOptions(arr);
+      } catch (e) {
+        console.error('Error fetching inventory types', e);
+        setInvTypeOptions([]);
+      } finally {
+        setInvTypeLoading(false);
+      }
+    };
+    fetchInventoryTypes();
+  }, []);
+
+  // Fetch Inventory Sub Types when type changes
+  useEffect(() => {
+    const fetchSubTypes = async () => {
+      if (!invTypeId) { setInvSubTypeOptions([]); return; }
+      setInvSubTypeLoading(true);
+      try {
+        const url = getFullUrl(`/pms/inventory_types/get_subtype.json?inventory_type_id=${encodeURIComponent(invTypeId)}`);
+        const res = await fetch(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': getAuthHeader(),
+          },
+        });
+        if (!res.ok) throw new Error('Failed to load inventory sub types');
+        const data = await res.json();
+        let arr: any[] = [];
+        if (Array.isArray(data)) arr = data;
+        else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
+        else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
+        else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
+        else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
+        else if (Array.isArray(data?.data)) arr = data.data;
+        else if (Array.isArray(data?.items)) arr = data.items;
+        else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
+        else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
+        else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
+        setInvSubTypeOptions(arr);
+      } catch (e) {
+        console.error('Error fetching inventory sub types', e);
+        setInvSubTypeOptions([]);
+      } finally {
+        setInvSubTypeLoading(false);
+      }
+    };
+    fetchSubTypes();
+  }, [invTypeId]);
 
   const handleInputChange = (field: string, value: string) => {
     // Basic sanitization for specific fields
@@ -346,6 +438,9 @@ export const EditInventoryPage = () => {
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: parseInt(formData.minStockLevel) || 0,
       min_order_level: formData.minOrderLevel || "0",
+  // New master fields
+  pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
+  pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
       green_product: ecoFriendly ? 1 : 0,
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
       // Map vendor name back to id
@@ -846,6 +941,55 @@ export const EditInventoryPage = () => {
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
+                </div>
+              </div>
+
+              {/* Inventory Type Masters - placed after Min Order Level */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Type</InputLabel>
+                    <MuiSelect
+                      value={invTypeId}
+                      onChange={(e) => {
+                        setInvTypeId(e.target.value as string);
+                        // Don't clear existing sub type id immediately; keep selected until list loads and validates
+                      }}
+                      label="Inventory Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
+                      {invTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Sub Type</InputLabel>
+                    <MuiSelect
+                      value={invSubTypeId}
+                      onChange={(e) => setInvSubTypeId(e.target.value as string)}
+                      label="Inventory Sub Type"
+                      notched
+                      displayEmpty
+                      disabled={!invTypeId || invSubTypeLoading}
+                    >
+                      <MenuItem value="">
+                        {invSubTypeLoading ? 'Loading...' : (!invTypeId ? 'Select Inventory Type first' : 'Select Inventory Sub Type')}
+                      </MenuItem>
+                      {invSubTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
               </div>
 
