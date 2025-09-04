@@ -162,6 +162,11 @@ export const EditServicePRPage = () => {
       try {
         const response = await dispatch(getWorkOrderById({ baseUrl, token, id: id })).unwrap();
         const data = response.page;
+        setWbsSelection(
+          data.inventories?.every(item => item.wbs_code !== null)
+            ? "individual"
+            : "overall"
+        );
         setFormData({
           contractor: data.pms_supplier_id,
           plantDetail: data.work_order.plant_detail_id,
