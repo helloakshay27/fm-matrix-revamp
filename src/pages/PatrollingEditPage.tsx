@@ -623,50 +623,121 @@ export const PatrollingEditPage: React.FC = () => {
           
           // If the checklist has questions, use those instead of direct questions
           if (data.checklist.snag_questions && Array.isArray(data.checklist.snag_questions)) {
-            const checklistQuestions = data.checklist.snag_questions.map((q: any) => ({
-              id: q.id.toString(),
-              task: q.descr,
-              inputType: q.qtype === 'multiple' ? 'multiple_choice' : (q.qtype === 'yesno' ? 'yes_no' : ''),
-              mandatory: !!q.quest_mandatory,
-              options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
-              optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
-            }));
+            const checklistQuestions = data.checklist.snag_questions.map((q: any) => {
+              // Map API question types to UI input types
+              let inputType = '';
+              switch (q.qtype) {
+                case 'multiple':
+                  inputType = 'multiple_choice';
+                  break;
+                case 'yesno':
+                  inputType = 'yes_no';
+                  break;
+                case 'rating':
+                  inputType = 'rating';
+                  break;
+                case 'input':
+                  inputType = 'text_input';
+                  break;
+                case 'description':
+                  inputType = 'description';
+                  break;
+                case 'emoji':
+                  inputType = 'emoji';
+                  break;
+                default:
+                  inputType = '';
+              }
+
+              return {
+                id: q.id.toString(),
+                task: q.descr,
+                inputType,
+                mandatory: !!q.quest_mandatory,
+                options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
+                optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+              };
+            });
             setQuestions(checklistQuestions);
           } else {
             // Fall back to direct questions if checklist has no questions
             setQuestions(
-              (data.questions || []).map((q: any) => ({
-                id: q.id.toString(),
-                task: q.task,
-                inputType:
-                  q.type === "multiple"
-                    ? "multiple_choice"
-                    : q.type === "yesno"
-                    ? "yes_no"
-                    : "",
-                mandatory: !!q.mandatory,
-                options: q.options || [],
-                optionsText: q.options ? q.options.join(", ") : "",
-              }))
+              (data.questions || []).map((q: any) => {
+                // Map API question types to UI input types for direct questions
+                let inputType = '';
+                switch (q.type) {
+                  case 'multiple':
+                    inputType = 'multiple_choice';
+                    break;
+                  case 'yesno':
+                    inputType = 'yes_no';
+                    break;
+                  case 'rating':
+                    inputType = 'rating';
+                    break;
+                  case 'input':
+                    inputType = 'text_input';
+                    break;
+                  case 'description':
+                    inputType = 'description';
+                    break;
+                  case 'emoji':
+                    inputType = 'emoji';
+                    break;
+                  default:
+                    inputType = '';
+                }
+
+                return {
+                  id: q.id.toString(),
+                  task: q.task,
+                  inputType,
+                  mandatory: !!q.mandatory,
+                  options: q.options || [],
+                  optionsText: q.options ? q.options.join(", ") : "",
+                };
+              })
             );
           }
         } else {
           setSelectedChecklist(null);
           // Use direct questions when no checklist is selected
           setQuestions(
-            (data.questions || []).map((q: any) => ({
-              id: q.id.toString(),
-              task: q.task,
-              inputType:
-                q.type === "multiple"
-                  ? "multiple_choice"
-                  : q.type === "yesno"
-                  ? "yes_no"
-                  : "",
-              mandatory: !!q.mandatory,
-              options: q.options || [],
-              optionsText: q.options ? q.options.join(", ") : "",
-            }))
+            (data.questions || []).map((q: any) => {
+              // Map API question types to UI input types for direct questions
+              let inputType = '';
+              switch (q.type) {
+                case 'multiple':
+                  inputType = 'multiple_choice';
+                  break;
+                case 'yesno':
+                  inputType = 'yes_no';
+                  break;
+                case 'rating':
+                  inputType = 'rating';
+                  break;
+                case 'input':
+                  inputType = 'text_input';
+                  break;
+                case 'description':
+                  inputType = 'description';
+                  break;
+                case 'emoji':
+                  inputType = 'emoji';
+                  break;
+                default:
+                  inputType = '';
+              }
+
+              return {
+                id: q.id.toString(),
+                task: q.task,
+                inputType,
+                mandatory: !!q.mandatory,
+                options: q.options || [],
+                optionsText: q.options ? q.options.join(", ") : "",
+              };
+            })
           );
         }
 
@@ -781,14 +852,41 @@ export const PatrollingEditPage: React.FC = () => {
   // When checklist is selected, fill questions and disable editing
   useEffect(() => {
     if (selectedChecklist && selectedChecklist.raw && selectedChecklist.raw.snag_questions) {
-      const filledQuestions = selectedChecklist.raw.snag_questions.map((q: any) => ({
-        id: q.id.toString(),
-        task: q.descr,
-        inputType: q.qtype === 'multiple' ? 'multiple_choice' : (q.qtype === 'yesno' ? 'yes_no' : ''),
-        mandatory: !!q.quest_mandatory,
-        options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
-        optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
-      }));
+      const filledQuestions = selectedChecklist.raw.snag_questions.map((q: any) => {
+        // Map API question types to UI input types
+        let inputType = '';
+        switch (q.qtype) {
+          case 'multiple':
+            inputType = 'multiple_choice';
+            break;
+          case 'yesno':
+            inputType = 'yes_no';
+            break;
+          case 'rating':
+            inputType = 'rating';
+            break;
+          case 'input':
+            inputType = 'text_input';
+            break;
+          case 'description':
+            inputType = 'description';
+            break;
+          case 'emoji':
+            inputType = 'emoji';
+            break;
+          default:
+            inputType = '';
+        }
+
+        return {
+          id: q.id.toString(),
+          task: q.descr,
+          inputType,
+          mandatory: !!q.quest_mandatory,
+          options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
+          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+        };
+      });
       setQuestions(filledQuestions);
     }
   }, [selectedChecklist]);
@@ -1517,7 +1615,7 @@ export const PatrollingEditPage: React.FC = () => {
                   <TextField
                     label={
                       <>
-                        Task<span className="text-red-500">*</span>
+                        Question<span className="text-red-500">*</span>
                       </>
                     }
                     placeholder="Enter Task"
@@ -1556,6 +1654,10 @@ export const PatrollingEditPage: React.FC = () => {
                       <MenuItem value="multiple_choice">
                         Multiple Choice
                       </MenuItem>
+                      <MenuItem value="rating">Rating</MenuItem>
+                      <MenuItem value="text_input">Text Input</MenuItem>
+                      <MenuItem value="description">Description</MenuItem>
+                      <MenuItem value="emoji">Emoji</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>
