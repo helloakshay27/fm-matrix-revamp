@@ -80,6 +80,7 @@ export const VisitorFormPage = () => {
     mobileNumber: initialMobileNumber,
     visitorComingFrom: "",
     remarks: "",
+    expected_at: "",
     skipHostApproval: false,
     goodsInwards: false,
     passValidFrom: "",
@@ -954,6 +955,17 @@ export const VisitorFormPage = () => {
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
+              />
+              <TextField
+                label="Expected At"
+                type="datetime-local"
+                value={formData.expected_at}
+                onChange={(e) => handleInputChange("expected_at", e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={fieldStyles}
+                // helperText="Expected arrival date and time"
               />
             </div>
             <div className="flex items-center space-x-8 pt-4">

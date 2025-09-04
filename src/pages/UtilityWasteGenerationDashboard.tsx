@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Download, Upload, Eye, Edit, Trash2, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Download, Upload, Eye, Edit, Trash2, Loader2, X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
-import { fetchWasteGenerations, WasteGeneration } from '../services/wasteGenerationAPI';
+import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
 
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
@@ -14,6 +15,25 @@ const UtilityWasteGenerationDashboard = () => {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // Filter state
+  const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
+  
+  // Check if any filters are active
+  const hasActiveFilters = Object.values(activeFilters).some(value => 
+    value !== undefined && value !== null && value !== '' && 
+    (Array.isArray(value) ? value.length > 0 : true)
+  );
+
+  // Get a readable description of active filters
+  const getActiveFiltersDescription = () => {
+    const activeFiltersList = [];
+    if (activeFilters.commodity_id_eq) activeFiltersList.push(`Commodity ID: ${activeFilters.commodity_id_eq}`);
+    if (activeFilters.category_id_eq) activeFiltersList.push(`Category ID: ${activeFilters.category_id_eq}`);
+    if (activeFilters.operational_landlord_id_in) activeFiltersList.push(`Landlord ID: ${activeFilters.operational_landlord_id_in}`);
+    if (activeFilters.date_range) activeFiltersList.push(`Date Range: ${activeFilters.date_range}`);
+    return activeFiltersList.length > 0 ? ` (${activeFiltersList.join(', ')})` : '';
+  };
   
   // API state management
   const [wasteGenerations, setWasteGenerations] = useState<WasteGeneration[]>([]);
@@ -24,31 +44,31 @@ const UtilityWasteGenerationDashboard = () => {
   const [totalCount, setTotalCount] = useState(0);
 
   // Load waste generations data
-  useEffect(() => {
-    const loadWasteGenerations = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        console.log('Loading waste generations, page:', currentPage);
-        const response = await fetchWasteGenerations(currentPage);
-        
-        console.log('Waste generations loaded:', response);
-        setWasteGenerations(response.waste_generations || []);
-        setTotalPages(response.pagination?.total_pages || 0);
-        setTotalCount(response.pagination?.total_count || 0);
-        
-      } catch (err) {
-        console.error('Error loading waste generations:', err);
-        setError('Failed to load waste generation data. Please try again.');
-        setWasteGenerations([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const loadWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log('Loading waste generations, page:', page, 'filters:', filters);
+      const response = await fetchWasteGenerations(page, filters);
+      
+      console.log('Waste generations loaded:', response);
+      setWasteGenerations(response.waste_generations || []);
+      setTotalPages(response.pagination?.total_pages || 0);
+      setTotalCount(response.pagination?.total_count || 0);
+      
+    } catch (err) {
+      console.error('Error loading waste generations:', err);
+      setError('Failed to load waste generation data. Please try again.');
+      setWasteGenerations([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    loadWasteGenerations();
-  }, [currentPage]);
+  useEffect(() => {
+    loadWasteGenerations(currentPage, activeFilters);
+  }, [currentPage, activeFilters]);
 
   const handleAdd = () => navigate('/maintenance/waste/generation/add');
   const handleImport = () => setIsImportOpen(true);
@@ -57,6 +77,24 @@ const UtilityWasteGenerationDashboard = () => {
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
   const handleEdit = (id: number) => console.log('Edit waste generation record:', id);
   const handleDelete = (id: number) => console.log('Delete waste generation record:', id);
+
+  // Filter handlers
+  const handleApplyFilters = (filters: WasteGenerationFilters) => {
+    console.log('Applying filters in dashboard:', filters);
+    setActiveFilters(filters);
+    setCurrentPage(1); // Reset to first page when applying filters
+  };
+
+  const handleExportFiltered = (filters: WasteGenerationFilters) => {
+    console.log('Exporting with filters:', filters);
+    // Implement export logic here
+    // You can use the same API endpoint with filters to get the data for export
+  };
+
+  const handleClearFilters = () => {
+    setActiveFilters({});
+    setCurrentPage(1);
+  };
 
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false, draggable: false },
@@ -139,6 +177,16 @@ const UtilityWasteGenerationDashboard = () => {
     );
   });
 
+  // Debug logging for empty states
+  console.log('Dashboard Debug:', {
+    hasData: filteredData.length > 0,
+    dataLength: filteredData.length,
+    hasActiveFilters,
+    activeFilters,
+    isLoading,
+    error
+  });
+
   if (isLoading) {
     return (
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
@@ -173,9 +221,21 @@ const UtilityWasteGenerationDashboard = () => {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={() => setCurrentPage(1)} variant="outline">
-                Retry
-              </Button>
+              {hasActiveFilters && (
+                <p className="text-gray-600 mb-4 text-sm">
+                  Active filters{getActiveFiltersDescription()} may be causing this issue.
+                </p>
+              )}
+              <div className="space-x-2">
+                <Button onClick={() => setCurrentPage(1)} variant="outline">
+                  Retry
+                </Button>
+                {hasActiveFilters && (
+                  <Button onClick={handleClearFilters} variant="outline">
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -212,12 +272,33 @@ const UtilityWasteGenerationDashboard = () => {
             onSearchChange={setSearchTerm}
             searchPlaceholder="Search by location, vendor, commodity, etc..."
             onFilterClick={handleFilters}
+            emptyMessage={
+              hasActiveFilters 
+                ? `No waste generation records found with the current filters${getActiveFiltersDescription()}. Try adjusting your filter criteria or click 'Clear' to view all records.`
+                : "No waste generation data available. Click 'Add' to create a new record."
+            }
             leftActions={
               <div className="flex flex-wrap items-center gap-2">
                 <Button onClick={handleAdd} style={{ backgroundColor: '#C72030' }} className="hover:bg-[#A01B26] text-white">
                   <Plus className="mr-2 h-4 w-4" />
                   Add
                 </Button>
+                {hasActiveFilters && (
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                      Filters Applied
+                    </Badge>
+                    <Button 
+                      onClick={handleClearFilters} 
+                      variant="outline" 
+                      size="sm"
+                      className="text-gray-600 hover:text-gray-800"
+                    >
+                      <X className="mr-1 h-3 w-3" />
+                      Clear
+                    </Button>
+                  </div>
+                )}
                 {/* <Button onClick={handleImport} variant="outline" style={{ borderColor: '#C72030', color: '#C72030' }} className="hover:bg-[#C72030] hover:text-white">
                   <Download className="mr-2 h-4 w-4" />
                   Import
@@ -260,7 +341,12 @@ const UtilityWasteGenerationDashboard = () => {
       </div>
 
       {/* Dialogs */}
-      <WasteGenerationFilterDialog isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+      <WasteGenerationFilterDialog 
+        isOpen={isFilterOpen} 
+        onClose={() => setIsFilterOpen(false)}
+        onApplyFilters={handleApplyFilters}
+        onExport={handleExportFiltered}
+      />
       <WasteGenerationBulkDialog isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} type="import" />
       <WasteGenerationBulkDialog isOpen={isUpdateOpen} onClose={() => setIsUpdateOpen(false)} type="update" />
     </>

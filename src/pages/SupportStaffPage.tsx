@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,11 +6,12 @@ import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Chip
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
-import { TicketPagination } from '@/components/TicketPagination';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+import { createSupportStaffCategory, fetchSupportStaffCategories, updateSupportStaffCategory, SupportStaffCategory } from '@/services/supportStaffAPI';
 
 interface SupportStaffData {
   id: string;
@@ -27,8 +28,13 @@ export const SupportStaffPage = () => {
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<SupportStaffCategory | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [supportStaffData, setSupportStaffData] = useState<SupportStaffCategory[]>([]);
   const [visibleColumns, setVisibleColumns] = useState({
     sNo: true,
     actions: true,
@@ -39,9 +45,16 @@ export const SupportStaffPage = () => {
   });
   const [formData, setFormData] = useState({
     categoryName: '',
-    days: '',
-    hours: '',
-    minutes: '',
+    days: '0',
+    hours: '0',
+    minutes: '0',
+    selectedIcon: '' as string
+  });
+  const [editFormData, setEditFormData] = useState({
+    categoryName: '',
+    days: '0',
+    hours: '0',
+    minutes: '0',
     selectedIcon: '' as string
   });
 
@@ -81,67 +94,28 @@ export const SupportStaffPage = () => {
     'Gardening'
   ];
 
-  // Sample data matching the uploaded image structure
-  const sampleStaff: SupportStaffData[] = [
-    {
-      id: '1',
-      sNo: 1,
-      name: 'DTDC',
-      estimatedTime: '',
-      createdOn: '15/01/2025 11:04 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '2', 
-      sNo: 2,
-      name: 'Swiggy/Instamrt',
-      estimatedTime: '',
-      createdOn: '15/01/2025 11:04 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '3',
-      sNo: 3,
-      name: 'OLA',
-      estimatedTime: '',
-      createdOn: '15/01/2025 11:03 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '4',
-      sNo: 4,
-      name: 'Flipkart',
-      estimatedTime: '',
-      createdOn: '15/01/2025 11:02 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '5',
-      sNo: 5,
-      name: 'Amazon',
-      estimatedTime: '',
-      createdOn: '15/01/2025 11:02 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '6',
-      sNo: 6,
-      name: 'UBER',
-      estimatedTime: '',
-      createdOn: '15/01/2025 10:59 AM',
-      createdBy: 'Abdul A'
-    },
-    {
-      id: '7',
-      sNo: 7,
-      name: 'Zomato',
-      estimatedTime: '',
-      createdOn: '15/01/2025 10:59 AM',
-      createdBy: 'Abdul A'
-    }
-  ];
+  const [filteredStaff, setFilteredStaff] = useState<SupportStaffCategory[]>([]);
 
-  const [filteredStaff, setFilteredStaff] = useState<SupportStaffData[]>(sampleStaff);
+  // Load support staff categories from API
+  const loadSupportStaffCategories = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      console.log('Loading support staff categories...');
+      const data = await fetchSupportStaffCategories();
+      console.log('Received data:', data);
+      setSupportStaffData(data);
+      setFilteredStaff(data);
+    } catch (error) {
+      console.error('Failed to load support staff categories:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load support staff categories",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   // Pagination calculations
   const totalRecords = filteredStaff.length;
@@ -155,22 +129,17 @@ export const SupportStaffPage = () => {
   }, [setCurrentSection]);
 
   useEffect(() => {
-    const filtered = sampleStaff.filter(staff =>
+    loadSupportStaffCategories();
+  }, [loadSupportStaffCategories]);
+
+  useEffect(() => {
+    const filtered = supportStaffData.filter(staff =>
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+      staff.created_by.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredStaff(filtered);
     setCurrentPage(1); // Reset to first page when filtering
-  }, [searchTerm]);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handlePerPageChange = (newPerPage: number) => {
-    setPerPage(newPerPage);
-    setCurrentPage(1); // Reset to first page when changing per page
-  };
+  }, [searchTerm, supportStaffData]);
 
   const iconOptions = [
     { id: '1', icon: '📦', name: 'Delivery' },
@@ -203,15 +172,15 @@ export const SupportStaffPage = () => {
     setIsAddModalOpen(false);
     setFormData({
       categoryName: '',
-      days: '',
-      hours: '',
-      minutes: '',
+      days: '0',
+      hours: '0',
+      minutes: '0',
       selectedIcon: ''
     });
   };
 
-  const handleSubmit = () => {
-    if (!formData.categoryName) {
+  const handleSubmit = async () => {
+    if (!formData.categoryName.trim()) {
       toast({
         title: "Error",
         description: "Please enter a category name",
@@ -220,15 +189,144 @@ export const SupportStaffPage = () => {
       return;
     }
 
-    toast({
-      title: "Success",
-      description: "Support staff category created successfully",
-    });
-    handleModalClose();
+    const days = parseInt(formData.days) || 0;
+    const hours = parseInt(formData.hours) || 0;
+    const minutes = parseInt(formData.minutes) || 0;
+
+    if (days === 0 && hours === 0 && minutes === 0) {
+      toast({
+        title: "Error",
+        description: "Please specify at least some estimated time",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      await createSupportStaffCategory({
+        name: formData.categoryName.trim(),
+        days,
+        hours,
+        minutes
+      });
+
+      toast({
+        title: "Success",
+        description: "Support staff category created successfully",
+      });
+      
+      handleModalClose();
+      // Reload the data
+      await loadSupportStaffCategories();
+    } catch (error) {
+      console.error('Failed to create support staff category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create support staff category. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleEdit = (staffId: string) => {
-    navigate(`/security/visitor-management/support-staff/edit/${staffId}`);
+    const staff = supportStaffData.find(s => s.id.toString() === staffId);
+    if (staff) {
+      setEditingStaff(staff);
+      // Parse the estimated time to extract days, hours, minutes
+      const timeString = staff.estimated_time;
+      let days = '0', hours = '0', minutes = '0';
+      
+      // Parse patterns like "1 hours, ", "2 hours, 55 minutes ", etc.
+      const hourMatch = timeString.match(/(\d+)\s*hours?/);
+      const minuteMatch = timeString.match(/(\d+)\s*minutes?/);
+      const dayMatch = timeString.match(/(\d+)\s*days?/);
+      
+      if (dayMatch) days = dayMatch[1];
+      if (hourMatch) hours = hourMatch[1];
+      if (minuteMatch) minutes = minuteMatch[1];
+      
+      setEditFormData({
+        categoryName: staff.name,
+        days,
+        hours,
+        minutes,
+        selectedIcon: '1' // Default icon, you might want to store this in the API
+      });
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingStaff(null);
+    setEditFormData({
+      categoryName: '',
+      days: '0',
+      hours: '0',
+      minutes: '0',
+      selectedIcon: ''
+    });
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editFormData.categoryName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a category name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const days = parseInt(editFormData.days) || 0;
+    const hours = parseInt(editFormData.hours) || 0;
+    const minutes = parseInt(editFormData.minutes) || 0;
+
+    if (days === 0 && hours === 0 && minutes === 0) {
+      toast({
+        title: "Error",
+        description: "Please specify at least some estimated time",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      if (!editingStaff) {
+        throw new Error('No staff selected for editing');
+      }
+      
+      await updateSupportStaffCategory(editingStaff.id, {
+        name: editFormData.categoryName.trim(),
+        days,
+        hours,
+        minutes
+      });
+      
+      toast({
+        title: "Success",
+        description: "Support staff category updated successfully",
+      });
+      
+      handleEditModalClose();
+      // Reload the data
+      await loadSupportStaffCategories();
+    } catch (error) {
+      console.error('Failed to update support staff category:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update support staff category. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (staffId: string) => {
@@ -239,10 +337,10 @@ export const SupportStaffPage = () => {
     });
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setSearchTerm('');
     setCurrentPage(1);
-    setFilteredStaff(sampleStaff);
+    await loadSupportStaffCategories();
     toast({
       title: "Refreshed",
       description: "Data has been refreshed successfully",
@@ -271,13 +369,23 @@ export const SupportStaffPage = () => {
       <div className="p-6 min-h-screen">
       {/* Action Bar */}
       <div className="flex items-center justify-between mb-6">
-        <Button 
-          onClick={handleAdd}
-          className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleAdd}
+            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+          {/* <Button
+            onClick={handleRefresh}
+            variant="outline"
+            className="px-4 py-2"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button> */}
+        </div>
 
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -303,59 +411,126 @@ export const SupportStaffPage = () => {
             <TableRow className="bg-[#f6f4ee]">
               {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
               {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-              {visibleColumns.name && <TableHead className="min-w-[200px]">Name</TableHead>}
+              {visibleColumns.name && <TableHead className="w-40">Name</TableHead>}
               {visibleColumns.estimatedTime && <TableHead className="w-40">Estimated time</TableHead>}
               {visibleColumns.createdOn && <TableHead className="w-48">Created On</TableHead>}
-              {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
+              {/* {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>} */}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentPageData.map((staff) => (
-              <TableRow key={staff.id} className="hover:bg-gray-50">
-                {visibleColumns.sNo && (
-                  <TableCell className="font-medium">
-                    {staff.sNo}
-                  </TableCell>
-                )}
-                {visibleColumns.actions && (
-                  <TableCell>
-                    <button
-                      onClick={() => handleEdit(staff.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                )}
-                {visibleColumns.name && (
-                  <TableCell className="font-medium">
-                    {staff.name}
-                  </TableCell>
-                )}
-                {visibleColumns.estimatedTime && (
-                  <TableCell className="text-gray-500">
-                    {staff.estimatedTime || '--'}
-                  </TableCell>
-                )}
-                {visibleColumns.createdOn && <TableCell>{staff.createdOn}</TableCell>}
-                {visibleColumns.createdBy && <TableCell>{staff.createdBy}</TableCell>}
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Loading support staff categories...
+                  </div>
+                </TableCell>
               </TableRow>
-            ))}
+            ) : currentPageData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                  {searchTerm ? `No support staff categories found matching "${searchTerm}"` : 'No support staff categories found'}
+                  <br />
+                  <span className="text-sm">Click "Add" to create your first category</span>
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentPageData.map((staff, index) => (
+                <TableRow key={staff.id} className="hover:bg-gray-50">
+                  {visibleColumns.sNo && (
+                    <TableCell className="font-medium">
+                      {startIndex + index + 1}
+                    </TableCell>
+                  )}
+                  {visibleColumns.actions && (
+                    <TableCell>
+                      <button
+                        onClick={() => handleEdit(staff.id.toString())}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                      </button>
+                    </TableCell>
+                  )}
+                  {visibleColumns.name && (
+                    <TableCell className="font-medium">
+                      {staff.name}
+                    </TableCell>
+                  )}
+                  {visibleColumns.estimatedTime && (
+                    <TableCell className="text-gray-500">
+                      {staff.estimated_time || '--'}
+                    </TableCell>
+                  )}
+                  {visibleColumns.createdOn && <TableCell>{staff.created_on}</TableCell>}
+                  {/* {visibleColumns.createdBy && <TableCell>{staff.created_by}</TableCell>} */}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
 
       {/* Pagination */}
-      <TicketPagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        totalRecords={totalRecords}
-        perPage={perPage}
-        isLoading={false}
-        onPageChange={handlePageChange}
-        onPerPageChange={handlePerPageChange}
-      />
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       </div>
 
@@ -375,7 +550,7 @@ export const SupportStaffPage = () => {
           </DialogHeader>
           
           <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               {/* Category Name Input */}
               <TextField
                 label="Category Name"
@@ -393,15 +568,19 @@ export const SupportStaffPage = () => {
                   sx: fieldStyles,
                 }}
               />
+              </div>
 
               {/* Days Input */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <TextField
                 label="Days"
-                placeholder="Days"
+                placeholder="0"
+                type="number"
                 value={formData.days}
                 onChange={(e) => setFormData({...formData, days: e.target.value})}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: 0, max: 365 }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
@@ -415,11 +594,13 @@ export const SupportStaffPage = () => {
               {/* Hours Input */}
               <TextField
                 label="Hours"
-                placeholder="Hrs"
+                placeholder="0"
+                type="number"
                 value={formData.hours}
                 onChange={(e) => setFormData({...formData, hours: e.target.value})}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: 0, max: 23 }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
@@ -433,11 +614,13 @@ export const SupportStaffPage = () => {
               {/* Minutes Input */}
               <TextField
                 label="Minutes"
-                placeholder="Min"
+                placeholder="0"
+                type="number"
                 value={formData.minutes}
                 onChange={(e) => setFormData({...formData, minutes: e.target.value})}
                 fullWidth
                 variant="outlined"
+                inputProps={{ min: 0, max: 59 }}
                 slotProps={{
                   inputLabel: {
                     shrink: true,
@@ -477,9 +660,153 @@ export const SupportStaffPage = () => {
             <div className="flex justify-end">
               <Button 
                 onClick={handleSubmit}
+                disabled={isSubmitting}
                 className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
-                Submit
+                {isSubmitting ? 'Creating...' : 'Submit'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Edit Support Staff Category</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleEditModalClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+              {/* Category Name Input */}
+              <TextField
+                label="Category Name"
+                placeholder="Enter Category Name"
+                value={editFormData.categoryName}
+                onChange={(e) => setEditFormData({...editFormData, categoryName: e.target.value})}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            </div>
+
+            {/* Days Input */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <TextField
+                label="Days"
+                placeholder="0"
+                type="number"
+                value={editFormData.days}
+                onChange={(e) => setEditFormData({...editFormData, days: e.target.value})}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: 0, max: 365 }}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              {/* Hours Input */}
+              <TextField
+                label="Hours"
+                placeholder="0"
+                type="number"
+                value={editFormData.hours}
+                onChange={(e) => setEditFormData({...editFormData, hours: e.target.value})}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: 0, max: 23 }}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              {/* Minutes Input */}
+              <TextField
+                label="Minutes"
+                placeholder="0"
+                type="number"
+                value={editFormData.minutes}
+                onChange={(e) => setEditFormData({...editFormData, minutes: e.target.value})}
+                fullWidth
+                variant="outlined"
+                inputProps={{ min: 0, max: 59 }}
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            </div>
+
+            {/* Icon Selection Grid */}
+            <div className="grid grid-cols-6 gap-3">
+              {iconOptions.map((option) => (
+                <div
+                  key={option.id}
+                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    setEditFormData({...editFormData, selectedIcon: option.id});
+                  }}
+                >
+                  <input
+                    type="radio"
+                    checked={editFormData.selectedIcon === option.id}
+                    onChange={() => {}}
+                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                    style={{
+                      accentColor: '#dc2626'
+                    }}
+                  />
+                  <div className="text-lg">{option.icon}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleEditModalClose}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleEditSubmit}
+                disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                {isSubmitting ? 'Updating...' : 'Update'}
               </Button>
             </div>
           </div>

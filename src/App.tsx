@@ -132,6 +132,7 @@ import { ViewSchedulePage } from './pages/ViewSchedulePage';
 // Import Visitors pages
 import { VisitorsDashboard } from './pages/VisitorsDashboard';
 import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
+import { VisitorDetailsPage } from './pages/VisitorDetailsPage';
 import { PatrollingDashboard } from './pages/PatrollingDashboard';
 import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
 import { PatrollingCreatePage } from './pages/PatrollingCreatePage';
@@ -1675,6 +1676,7 @@ function App() {
                   <Route path="/security/visitor" element={<VisitorsDashboard />} />
                   <Route path="/visitor-form" element={<VisitorFormPage />} />
                   <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
+                  <Route path="/visitor-details/:id" element={<VisitorDetailsPage />} />
                   <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
                   <Route path="/security/visitor-management/add-gate" element={<AddVisitorGatePage />} />
                   <Route path="/security/visitor-management/edit/:id" element={<EditVisitorGatePage />} />
