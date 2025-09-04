@@ -486,6 +486,7 @@ export const EditPODashboard = () => {
                                         onChange={handleMaterialPRChange}
                                         displayEmpty
                                         sx={fieldStyles}
+                                        disabled
                                     >
                                         <MenuItem value="">
                                             <em>Select...</em>

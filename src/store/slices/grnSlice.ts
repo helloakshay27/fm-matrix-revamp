@@ -88,6 +88,24 @@ export const createGRN = createAsyncThunk(
     }
 )
 
+export const editGRN = createAsyncThunk(
+    'editGRN',
+    async ({ data, baseUrl, token, id }: { data: any, baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/grns/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                },
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create GRN'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 // Fetch single GRN by ID
 export const fetchSingleGRN = createAsyncThunk(
     'fetchSingleGRN',
@@ -169,6 +187,7 @@ const fetchSingleGRNSlice = createApiSlice("fetchSingleGRN", fetchSingleGRN);
 const approveGRNSlice = createApiSlice("approveGRN", approveGRN);
 const rejectGrnSlice = createApiSlice("rejectGrn", rejectGrn);
 const getGRNFeedsSlice = createApiSlice("getGRNFeeds", getGRNFeeds);
+const editGRNSlice = createApiSlice("editGRN", editGRN);
 
 export const getGRNReducer = getGRNSlice.reducer
 export const getPurchaseOrdersListReducer = getPurchaseOrdersListSlice.reducer
@@ -179,3 +198,4 @@ export const fetchSingleGRNReducer = fetchSingleGRNSlice.reducer
 export const approveGRNReducer = approveGRNSlice.reducer
 export const rejectGrnReducer = rejectGrnSlice.reducer
 export const getGRNFeedsReducer = getGRNFeedsSlice.reducer
+export const editGRNReducer = editGRNSlice.reducer

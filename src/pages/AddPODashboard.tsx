@@ -237,7 +237,7 @@ export const AddPODashboard = () => {
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantity) || 0;
     const rate = parseFloat(item.rate) || 0;
-    const baseAmount = quantity * rate;
+    const baseAmount = rate;
     const cgstRate = parseFloat(item.cgstRate) || 0;
     const sgstRate = parseFloat(item.sgstRate) || 0;
     const igstRate = parseFloat(item.igstRate) || 0;
@@ -295,7 +295,8 @@ export const AddPODashboard = () => {
           tcs_rate: item.tcsRate,
           tcs_amount: item.tcsAmount,
           taxable_value: item.taxAmount,
-          total_value: item.totalAmount,
+          total_value: item.amount,
+          total_amount: item.totalAmount,
         })),
       },
       attachments: formData.attachments,
