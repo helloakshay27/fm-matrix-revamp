@@ -181,16 +181,16 @@ export const WasteGenerationDetailsPage = () => {
         </div>
         
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">Waste Generation Details - #{wasteData.id}</h1>
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">Waste Generation Details </h1>
           <div className="flex gap-3">
             <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
-            <Button onClick={handleDelete} variant="outline" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">
+            {/* <Button onClick={handleDelete} variant="outline" className="text-red-600 border-red-600 hover:bg-red-50 hover:text-red-700">
               <Trash className="w-4 h-4 mr-2" />
               Delete
-            </Button>
+            </Button> */}
           </div>
         </div>
       </div>

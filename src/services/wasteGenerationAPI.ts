@@ -276,7 +276,7 @@ export const fetchAreas = async (wingId: number): Promise<Area[]> => {
 // API function to fetch vendors
 export const fetchVendors = async (): Promise<Vendor[]> => {
   try {
-    const url = getFullUrl('/pms/suppliers.json');
+    const url = getFullUrl('/pms/suppliers/get_suppliers.json');
     
     console.log('Fetching vendors from:', url);
     
@@ -290,7 +290,20 @@ export const fetchVendors = async (): Promise<Vendor[]> => {
     const data = await response.json();
     console.log('Vendors API response:', data);
     
-    return data.suppliers || data;
+    // The new API returns an array directly with id and name properties
+    if (Array.isArray(data)) {
+      // Map the response to match the expected Vendor interface
+      const vendors = data.map(supplier => ({
+        id: supplier.id,
+        full_name: supplier.name, // Use name for full_name
+        company_name: supplier.name // Use name for company_name as well
+      }));
+      
+      console.log('Mapped vendors:', vendors);
+      return vendors;
+    }
+    
+    return [];
   } catch (error) {
     console.error('Error fetching vendors:', error);
     throw error;
@@ -300,7 +313,7 @@ export const fetchVendors = async (): Promise<Vendor[]> => {
 // API function to fetch commodities
 export const fetchCommodities = async (): Promise<Commodity[]> => {
   try {
-    const url = getFullUrl('/pms/generic_tags.json');
+    const url = getFullUrl('/pms/generic_tags.json?q[tag_type_eq]=Commodity');
     
     console.log('Fetching commodities from:', url);
     
@@ -320,21 +333,13 @@ export const fetchCommodities = async (): Promise<Commodity[]> => {
     console.log('Generic tags API response (commodities):', data);
     
     if (Array.isArray(data)) {
-      // Log all unique tag types to debug
-      const uniqueTagTypes = [...new Set(data.map(tag => tag.tag_type))];
-      console.log('All available tag types for commodities:', uniqueTagTypes);
-      
-      // Filter for commodity type tags and exclude empty category names
+      // Filter for active commodities with valid category names
       const commodities = data.filter(tag => {
-        const isCommodity = tag.tag_type === 'Commodity' || 
-                           tag.tag_type === 'commodity' || 
-                           tag.tag_type === 'waste_commodity' ||
-                           tag.tag_type === 'Waste Commodity';
         const hasName = tag.category_name && tag.category_name.trim() !== '';
         const isActive = tag.active === true;
         
-        console.log('Commodity tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Is Commodity:', isCommodity, 'Has Name:', hasName, 'Is Active:', isActive);
-        return isCommodity && hasName && isActive;
+        console.log('Commodity tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Has Name:', hasName, 'Is Active:', isActive);
+        return hasName && isActive;
       });
       
       console.log('Filtered commodities:', commodities);
@@ -352,7 +357,7 @@ export const fetchCommodities = async (): Promise<Commodity[]> => {
 // API function to fetch categories
 export const fetchCategories = async (): Promise<Category[]> => {
   try {
-    const url = getFullUrl('/pms/generic_tags.json');
+    const url = getFullUrl('/pms/generic_tags.json?q[tag_type_eq]=Category');
     
     console.log('Fetching categories from:', url);
     
@@ -369,24 +374,16 @@ export const fetchCategories = async (): Promise<Category[]> => {
     }
     
     const data = await response.json();
-    console.log('Generic tags API response (full data):', data);
+    console.log('Generic tags API response (categories):', data);
     
     if (Array.isArray(data)) {
-      // Log all unique tag types to debug
-      const uniqueTagTypes = [...new Set(data.map(tag => tag.tag_type))];
-      console.log('All available tag types:', uniqueTagTypes);
-      
-      // Filter for category type tags and exclude empty category names
+      // Filter for active categories with valid category names
       const categories = data.filter(tag => {
-        const isCategory = tag.tag_type === 'Category' || 
-                          tag.tag_type === 'category' || 
-                          tag.tag_type === 'waste_category' ||
-                          tag.tag_type === 'Waste Category';
         const hasName = tag.category_name && tag.category_name.trim() !== '';
         const isActive = tag.active === true;
         
-        console.log('Tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Is Category:', isCategory, 'Has Name:', hasName, 'Is Active:', isActive);
-        return isCategory && hasName && isActive;
+        console.log('Category tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Has Name:', hasName, 'Is Active:', isActive);
+        return hasName && isActive;
       });
       
       console.log('Filtered categories:', categories);
@@ -404,7 +401,7 @@ export const fetchCategories = async (): Promise<Category[]> => {
 // API function to fetch operational landlords
 export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]> => {
   try {
-    const url = getFullUrl('/pms/generic_tags.json');
+    const url = getFullUrl('/pms/generic_tags.json?q[tag_type_eq]=operational_name_of_landlord');
     
     console.log('Fetching operational landlords from:', url);
     
@@ -424,18 +421,13 @@ export const fetchOperationalLandlords = async (): Promise<OperationalLandlord[]
     console.log('Generic tags API response (operational landlords):', data);
     
     if (Array.isArray(data)) {
-      // Log all unique tag types to debug
-      const uniqueTagTypes = [...new Set(data.map(tag => tag.tag_type))];
-      console.log('All available tag types for operational landlords:', uniqueTagTypes);
-      
-      // Filter for operational landlord type tags and exclude empty category names
+      // Filter for active operational landlords with valid category names
       const operationalLandlords = data.filter(tag => {
-        const isOperationalLandlord = tag.tag_type === 'operational_name_of_landlord';
         const hasName = tag.category_name && tag.category_name.trim() !== '';
         const isActive = tag.active === true;
         
-        console.log('Operational landlord tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Is Operational Landlord:', isOperationalLandlord, 'Has Name:', hasName, 'Is Active:', isActive);
-        return isOperationalLandlord && hasName && isActive;
+        console.log('Operational landlord tag:', tag.category_name, 'Tag type:', tag.tag_type, 'Has Name:', hasName, 'Is Active:', isActive);
+        return hasName && isActive;
       });
       
       console.log('Filtered operational landlords:', operationalLandlords);

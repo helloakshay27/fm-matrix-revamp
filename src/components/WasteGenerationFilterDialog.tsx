@@ -1,11 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
 import { SelectChangeEvent } from '@mui/material/Select';
 import { X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { 
+  fetchCommodities, 
+  fetchCategories, 
+  fetchOperationalLandlords,
+  Commodity,
+  Category,
+  OperationalLandlord
+} from '@/services/wasteGenerationAPI';
 
 interface Filters {
   commodity: string;
@@ -28,8 +36,71 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     dateRange: ''
   });
 
+  // API data state
+  const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
+
+  // Loading states
+  const [loadingCommodities, setLoadingCommodities] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
+
+  // Fetch all dropdown data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllDropdowns();
+    }
+  }, [isOpen]);
+
+  const fetchAllDropdowns = async () => {
+    // Fetch commodities
+    setLoadingCommodities(true);
+    try {
+      const commoditiesData = await fetchCommodities();
+      console.log('Fetched commodities:', commoditiesData);
+      setCommodities(Array.isArray(commoditiesData) ? commoditiesData : []);
+    } catch (error) {
+      console.error('Error fetching commodities:', error);
+      setCommodities([]);
+    } finally {
+      setLoadingCommodities(false);
+    }
+
+    // Fetch categories
+    setLoadingCategories(true);
+    try {
+      const categoriesData = await fetchCategories();
+      console.log('Fetched categories:', categoriesData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    } finally {
+      setLoadingCategories(false);
+    }
+
+    // Fetch operational landlords
+    setLoadingOperationalLandlords(true);
+    try {
+      const operationalLandlordsData = await fetchOperationalLandlords();
+      console.log('Fetched operational landlords:', operationalLandlordsData);
+      setOperationalLandlords(Array.isArray(operationalLandlordsData) ? operationalLandlordsData : []);
+    } catch (error) {
+      console.error('Error fetching operational landlords:', error);
+      setOperationalLandlords([]);
+    } finally {
+      setLoadingOperationalLandlords(false);
+    }
+  };
+
   const handleSelectChange = (field: keyof Filters) => (event: SelectChangeEvent<string>) => {
-    setFilters(prev => ({ ...prev, [field]: event.target.value }));
+    const value = event.target.value;
+    console.log(`Updating ${field} with value:`, value);
+    setFilters(prev => ({ 
+      ...prev, 
+      [field]: value 
+    }));
   };
 
   const handleInputChange = (field: keyof Filters) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,13 +169,28 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   value={filters.commodity}
                   onChange={handleSelectChange('commodity')}
                   displayEmpty
+                  disabled={loadingCommodities}
                   sx={fieldStyles}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 224,
+                        width: 250,
+                      },
+                    },
+                  }}
                 >
-                  <MenuItem value=""><em>Select Commodity</em></MenuItem>
-                  <MenuItem value="paper">Paper</MenuItem>
-                  <MenuItem value="plastic">Plastic</MenuItem>
-                  <MenuItem value="metal">Metal</MenuItem>
-                  <MenuItem value="organic">Organic</MenuItem>
+                  <MenuItem value="">
+                    <em>{loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}</em>
+                  </MenuItem>
+                  {Array.isArray(commodities) && commodities.map((commodity) => (
+                    <MenuItem 
+                      key={`commodity-${commodity.id}`} 
+                      value={commodity.id.toString()}
+                    >
+                      {commodity.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -118,12 +204,28 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   value={filters.category}
                   onChange={handleSelectChange('category')}
                   displayEmpty
+                  disabled={loadingCategories}
                   sx={fieldStyles}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 224,
+                        width: 250,
+                      },
+                    },
+                  }}
                 >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="recyclable">Recyclable</MenuItem>
-                  <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
-                  <MenuItem value="hazardous">Hazardous</MenuItem>
+                  <MenuItem value="">
+                    <em>{loadingCategories ? 'Loading categories...' : 'Select Category'}</em>
+                  </MenuItem>
+                  {Array.isArray(categories) && categories.map((category) => (
+                    <MenuItem 
+                      key={`category-${category.id}`} 
+                      value={category.id.toString()}
+                    >
+                      {category.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>
@@ -139,12 +241,28 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
                   value={filters.operationalName}
                   onChange={handleSelectChange('operationalName')}
                   displayEmpty
+                  disabled={loadingOperationalLandlords}
                   sx={fieldStyles}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 224,
+                        width: 250,
+                      },
+                    },
+                  }}
                 >
-                  <MenuItem value=""><em>Select Operational Name</em></MenuItem>
-                  <MenuItem value="abc-corp">ABC Corp</MenuItem>
-                  <MenuItem value="xyz-inc">XYZ Inc</MenuItem>
-                  <MenuItem value="def-ltd">DEF Ltd</MenuItem>
+                  <MenuItem value="">
+                    <em>{loadingOperationalLandlords ? 'Loading operational names...' : 'Select Operational Name'}</em>
+                  </MenuItem>
+                  {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
+                    <MenuItem 
+                      key={`landlord-${landlord.id}`} 
+                      value={landlord.id.toString()}
+                    >
+                      {landlord.category_name}
+                    </MenuItem>
+                  ))}
                 </MuiSelect>
               </FormControl>
             </div>

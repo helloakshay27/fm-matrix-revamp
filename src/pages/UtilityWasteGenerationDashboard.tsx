@@ -143,9 +143,9 @@ const UtilityWasteGenerationDashboard = () => {
     return (
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          <div>
+          {/* <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-          </div>
+          </div> */}
         </div>
         
         <CardContent className="p-4">
@@ -164,9 +164,9 @@ const UtilityWasteGenerationDashboard = () => {
     return (
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          <div>
+          {/* <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-          </div>
+          </div> */}
         </div>
         
         <CardContent className="p-4">
@@ -188,12 +188,12 @@ const UtilityWasteGenerationDashboard = () => {
       <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          <div>
+          {/* <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
             <p className="text-muted-foreground text-sm sm:text-base ml-3">
               {totalCount > 0 && `Total: ${totalCount} records`}
             </p>
-          </div>
+          </div> */}
         </div>
 
         {/* Main Card */}
