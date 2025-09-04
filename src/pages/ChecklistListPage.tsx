@@ -101,9 +101,10 @@ export const ChecklistListPage = () => {
 
   const handleViewChecklist = (checklist: TransformedChecklistData) => {
     // Navigate to view checklist page with checklist data
-    navigate(`/master/checklist/view/${checklist.id}`, {
+    navigate(`/settings/masters/checklist-master/view/${checklist.id}`, {
       state: { checklist }
     });
+    
   };
 
   const handleEditChecklist = (id: number) => {

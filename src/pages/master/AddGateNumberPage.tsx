@@ -10,7 +10,7 @@ interface GateNumberFormValues {
   gate_number: string;
   company_id: number | null;
   pms_site_id: number | null;
-  project_id: number | null;
+  building_id: number | null;
   status: string;
 }
 
@@ -35,7 +35,7 @@ const AddGateNumberPage = () => {
       gate_number: '',
       company_id: null,
       pms_site_id: null,
-      project_id: null,
+      building_id: null,
       status: "Active",
     },
   });
@@ -63,7 +63,7 @@ const AddGateNumberPage = () => {
     if (siteId) {
       const fetchProjects = async () => {
         try {
-          setValue("project_id", null);
+          setValue("building_id", null);
           const data = await gateNumberService.getProjectsBySite(siteId);
           setProjects(data);
         } catch (error) {
@@ -138,7 +138,7 @@ const AddGateNumberPage = () => {
               )}
             />
             <Controller
-              name="project_id"
+              name="building_id"
               control={control}
               render={({ field }) => (
                 <Autocomplete
@@ -150,7 +150,7 @@ const AddGateNumberPage = () => {
                   renderInput={(params: TextFieldProps) => (
                     <TextField
                       {...params}
-                      label="Select Project"
+                      label="Select Building"
                       variant="outlined"
                     />
                   )}

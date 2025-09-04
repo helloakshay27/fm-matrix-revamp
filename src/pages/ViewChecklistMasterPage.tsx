@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -8,12 +7,12 @@ import {
   TextField,
   FormControl,
   InputLabel,
-  Select as MuiSelect,
-  MenuItem,
   RadioGroup,
   Radio,
   FormControlLabel,
+  Autocomplete,
 } from '@mui/material';
+import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 44 },
@@ -22,110 +21,36 @@ const fieldStyles = {
   },
 };
 
-// Mock data for demonstration - same as EditChecklistMasterPage
-const mockChecklistData = {
-  440: {
-    id: 440,
-    activityName: 'qawertyu',
-    description: 'Sample description for qawertyu checklist',
-    type: 'PPM',
-    scheduleFor: 'Asset',
-    assetType: 'electrical',
-    createTicket: false,
-    weightage: false,
-    taskSections: [
-      {
-        id: 1,
-        group: 'Daily Substation Log',
-        subGroup: 'B-Block MLT',
-        tasks: [
-          {
-            id: 1,
-            taskName: 'Task 1',
-            inputType: 'Radio Button',
-            mandatory: true,
-            reading: false,
-            helpText: false,
-            options: [
-              { id: 1, label: 'Yes', value: 'P' },
-              { id: 2, label: 'No', value: 'N' }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  435: {
-    id: 435,
-    activityName: 'VI Repair Preparedness Checklist',
-    description: 'Checklist for repair preparedness',
-    type: 'Preparedness',
-    scheduleFor: 'Service',
-    assetType: 'mechanical',
-    createTicket: true,
-    weightage: false,
-    taskSections: [
-      {
-        id: 1,
-        group: 'Repair Tasks',
-        subGroup: 'VI Systems',
-        tasks: [
-          {
-            id: 1,
-            taskName: 'Check System Status',
-            inputType: 'Checkbox',
-            mandatory: true,
-            reading: true,
-            helpText: true,
-            options: []
-          }
-        ]
-      }
-    ]
-  },
-  309: {
-    id: 309,
-    activityName: 'Daily Meeting Room Readiness Checklist',
-    description: 'Daily checklist for meeting room preparation',
-    type: 'Routine',
-    scheduleFor: 'Service',
-    assetType: 'facility',
-    createTicket: false,
-    weightage: true,
-    taskSections: [
-      {
-        id: 1,
-        group: 'Meeting Room Setup',
-        subGroup: 'Conference Facilities',
-        tasks: [
-          {
-            id: 1,
-            taskName: 'Check Audio Visual Equipment',
-            inputType: 'Radio Button',
-            mandatory: true,
-            reading: false,
-            helpText: true,
-            options: [
-              { id: 1, label: 'Working', value: 'W' },
-              { id: 2, label: 'Not Working', value: 'NW' }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-};
 
 export const ViewChecklistMasterPage = () => {
+
   const navigate = useNavigate();
   const { id } = useParams();
   const [checklistData, setChecklistData] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Load data based on ID
-    if (id && mockChecklistData[id]) {
-      setChecklistData(mockChecklistData[id]);
-    }
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    const fetchChecklist = async () => {
+      try {
+        const url = `${API_CONFIG.BASE_URL}/master_checklist_detail.json?id=${id}`;
+        const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
+        if (!response.ok) {
+          throw new Error('Failed to fetch checklist details');
+        }
+        const data = await response.json();
+        setChecklistData(data);
+      } catch (err) {
+        setError(err.message || 'Error fetching checklist details');
+        setChecklistData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChecklist();
   }, [id]);
 
   const handleEditDetails = () => {
@@ -136,7 +61,13 @@ export const ViewChecklistMasterPage = () => {
     return (
       <div className="p-6">
         <div className="text-center py-8">
-          <p className="text-gray-500">Loading checklist details...</p>
+          {loading ? (
+            <p className="text-gray-500">Loading checklist details...</p>
+          ) : error ? (
+            <p className="text-red-500">{error}</p>
+          ) : (
+            <p className="text-gray-500">No checklist details found.</p>
+          )}
         </div>
       </div>
     );
@@ -166,7 +97,7 @@ export const ViewChecklistMasterPage = () => {
       <div className="flex flex-wrap gap-4 mb-6">
         <div className="flex items-center space-x-2">
           <Checkbox 
-            checked={checklistData.createTicket} 
+            checked={!!checklistData.create_ticket} 
             disabled
             id="createTicket" 
           />
@@ -174,7 +105,7 @@ export const ViewChecklistMasterPage = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Checkbox 
-            checked={checklistData.weightage} 
+            checked={!!checklistData.weightage_enabled} 
             disabled
             id="weightage" 
           />
@@ -193,7 +124,7 @@ export const ViewChecklistMasterPage = () => {
             <div>
               <Label className="mb-2 block text-sm font-medium">Type</Label>
               <RadioGroup
-                value={checklistData.type}
+                value={checklistData.schedule_type}
                 row
                 sx={{
                   '& .MuiFormControlLabel-root .MuiRadio-root': {
@@ -218,7 +149,7 @@ export const ViewChecklistMasterPage = () => {
             <div>
               <Label className="mb-2 block text-sm font-medium">Schedule For</Label>
               <RadioGroup
-                value={checklistData.scheduleFor}
+                value={checklistData.checklist_for?.split('::')[1] || ''}
                 row
                 sx={{
                   '& .MuiFormControlLabel-root .MuiRadio-root': {
@@ -243,85 +174,42 @@ export const ViewChecklistMasterPage = () => {
             <TextField
               fullWidth
               label="Activity Name"
-              value={checklistData.activityName}
+              value={checklistData.form_name || ''}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ 
                 sx: fieldStyles,
                 readOnly: true
               }}
+              disabled={true}
             />
 
             <TextField
               fullWidth
-              multiline
-              rows={2}
               label="Description"
-              value={checklistData.description}
+              // placeholder="Description"
+              value={checklistData.description || ''}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  ...fieldStyles,
-                  alignItems: 'flex-start',
-                },
+              InputProps={{ 
+                sx: fieldStyles,
                 readOnly: true
               }}
+              disabled={true}
             />
-
-            <FormControl fullWidth>
-              <InputLabel shrink>Asset Type</InputLabel>
-              <MuiSelect
-                value={checklistData.assetType}
-                sx={fieldStyles}
-                disabled
-              >
-                {['electrical', 'mechanical', 'hvac', 'plumbing', 'facility'].map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
           </div>
         </div>
 
-        {checklistData.taskSections.map((section, sectionIndex) => (
-          <div key={section.id} className="bg-white border rounded-lg p-4 sm:p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</div>
-              <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Tasks</h2>
-            </div>
+        <div className="bg-white border rounded-lg p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm">2</div>
+            <h2 className="font-semibold text-lg" style={{ color: '#C72030' }}>Tasks</h2>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <TextField
-                fullWidth
-                label="Select Group"
-                value={section.group}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ 
-                  sx: fieldStyles,
-                  readOnly: true
-                }}
-              />
-
-              <TextField
-                fullWidth
-                label="Select Sub Group"
-                value={section.subGroup}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ 
-                  sx: fieldStyles,
-                  readOnly: true
-                }}
-              />
-            </div>
-
-            {section.tasks.map((task, taskIndex) => (
+          {Array.isArray(checklistData.content) && checklistData.content.length > 0 ? (
+            checklistData.content.map((task, taskIndex) => (
               <div
-                key={task.id}
+                key={taskIndex}
                 className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded"
               >
                 <div className="md:col-span-2">
@@ -331,61 +219,108 @@ export const ViewChecklistMasterPage = () => {
                 <TextField
                   fullWidth
                   label="Task"
-                  value={task.taskName}
+                  value={task.label || ''}
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ 
                     sx: fieldStyles,
                     readOnly: true
                   }}
+                  disabled={true}
                 />
 
                 <FormControl fullWidth>
-                  <InputLabel shrink>Input Type</InputLabel>
-                  <MuiSelect
-                    value={task.inputType}
-                    sx={fieldStyles}
+                  <Autocomplete
+                    options={[
+                      'Text',
+                      'Number',
+                      'Checkbox',
+                      'Radio Button',
+                      'Dropdown',
+                      'Date'
+                    ]}
+                    value={
+                      task.type === 'radio-group' ? 'Radio Button'
+                      : task.type === 'text' ? 'Text'
+                      : task.type === 'checkbox-group' ? 'Checkbox'
+                      : task.type === 'select' ? 'Dropdown'
+                      : task.type === 'number' ? 'Number'
+                      : task.type === 'date' ? 'Date'
+                      : task.type
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Input Type"
+                        InputLabelProps={{ shrink: true }}
+                        sx={fieldStyles}
+                        disabled
+                      />
+                    )}
+                    disableClearable
                     disabled
-                  >
-                    {['Text', 'Number', 'Checkbox', 'Radio Button', 'Dropdown', 'Date'].map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
+                  />
                 </FormControl>
 
                 <div className="md:col-span-2 flex flex-wrap gap-4 pt-2">
-                  {['mandatory', 'reading', 'helpText'].map((field) => (
-                    <label key={field} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={task[field]}
-                        disabled
-                      />
-                      <span className="capitalize">{field === 'helpText' ? 'Help Text' : field}</span>
-                    </label>
-                  ))}
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={task.required === 'true'}
+                      disabled
+                    />
+                    <span>Mandatory</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={task.is_reading === 'true'}
+                      disabled
+                    />
+                    <span>Reading</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={!!task.hint}
+                      disabled
+                    />
+                    <span>Help Text</span>
+                  </label>
                 </div>
 
-                {(task.inputType === 'Radio Button' || task.inputType === 'Dropdown') && task.options && task.options.length > 0 && (
+                {/* Show help text input if hint is present */}
+                {task.hint && (
+                  <div className="md:col-span-2 pt-2">
+                    <TextField
+                      fullWidth
+                      label="Help Text"
+                      value={task.hint}
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{
+                        sx: fieldStyles,
+                        readOnly: true
+                      }}
+                      disabled={true}
+                    />
+                  </div>
+                )}
+
+                {Array.isArray(task.values) && task.values.length > 0 && (
                   <div className="md:col-span-2 mt-4">
                     <div className="mb-2">
                       <Label className="text-sm font-medium">Selected Enter Value</Label>
                     </div>
-                    
                     <div className="space-y-2 border rounded p-3">
                       <div className="grid grid-cols-12 gap-2 items-center font-medium text-sm text-gray-600 mb-2">
                         <div className="col-span-1">Selected</div>
                         <div className="col-span-5">Enter Value</div>
                         <div className="col-span-6">P</div>
                       </div>
-                      
-                      {task.options.map((option, optionIndex) => (
-                        <div key={option.id} className="grid grid-cols-12 gap-2 items-center">
+                      {task.values.map((option, optionIndex) => (
+                        <div key={optionIndex} className="grid grid-cols-12 gap-2 items-center">
                           <div className="col-span-1">
                             <input
                               type="radio"
-                              name={`option-${task.id}`}
+                              name={`option-${task.name}`}
                               className="accent-[#C72030]"
                               disabled
                               checked={optionIndex === 0}
@@ -395,7 +330,7 @@ export const ViewChecklistMasterPage = () => {
                             <TextField
                               fullWidth
                               size="small"
-                              value={option.label}
+                              value={option.label || ''}
                               InputProps={{ 
                                 sx: { height: 32 },
                                 readOnly: true
@@ -406,7 +341,7 @@ export const ViewChecklistMasterPage = () => {
                             <TextField
                               fullWidth
                               size="small"
-                              value={option.value}
+                              value={option.type || ''}
                               InputProps={{ 
                                 sx: { height: 32 },
                                 readOnly: true
@@ -419,9 +354,11 @@ export const ViewChecklistMasterPage = () => {
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        ))}
+            ))
+          ) : (
+            <div className="text-gray-500">No tasks found.</div>
+          )}
+        </div>
       </div>
     </div>
   );

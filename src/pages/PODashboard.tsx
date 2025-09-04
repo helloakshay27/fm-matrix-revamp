@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getPurchaseOrders } from "@/store/slices/purchaseOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
+import { format } from "date-fns";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -380,6 +381,8 @@ export const PODashboard = () => {
             {item.debitCreditNoteRaised ? "Yes" : "No"}
           </span>
         );
+      case "createdOn":
+        return format(item.createdOn, "dd-MM-yyyy");
       default:
         return item[columnKey] ?? "-";
     }

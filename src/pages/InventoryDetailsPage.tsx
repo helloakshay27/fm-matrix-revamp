@@ -444,6 +444,14 @@ export const InventoryDetailsPage = () => {
                     <span>: {inventoryData?.inventory_type ? getInventoryType(inventoryData.inventory_type) : '—'}</span>
                   </div>
                   <div className="flex text-sm">
+                    <span className="text-gray-600 w-24">Type Name</span>
+                    <span>: {(inventoryData as any)?.inventory_type_name || '—'}</span>
+                  </div>
+                  <div className="flex text-sm">
+                    <span className="text-gray-600 w-24">Sub Type Name</span>
+                    <span>: {(inventoryData as any)?.inventory_sub_type_name || '—'}</span>
+                  </div>
+                  <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Criticality</span>
                     <span>: {inventoryData?.criticality ? getCriticality(inventoryData.criticality) : '—'}</span>
                   </div>

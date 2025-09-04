@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getMaterialPR, updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { format } from "date-fns";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -265,6 +266,8 @@ export const MaterialPRDashboard = () => {
         );
       case "prAmount":
         return <span className="font-medium">{item.prAmount}</span>;
+      case "createdOn":
+        return format(item.createdOn, "dd-MM-yyyy");
       default:
         return item[columnKey] || "-";
     }
