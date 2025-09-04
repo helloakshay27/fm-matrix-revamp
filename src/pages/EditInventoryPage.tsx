@@ -310,13 +310,7 @@ export const EditInventoryPage = () => {
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.inventory_types)) arr = data.inventory_types;
-        else if (Array.isArray(data?.item_types)) arr = data.item_types;
-        else if (Array.isArray(data?.data)) arr = data.data;
-        else if (Array.isArray(data?.items)) arr = data.items;
-        else if (Array.isArray(data?.inventory_types?.data)) arr = data.inventory_types.data;
-        else if (Array.isArray(data?.item_types?.data)) arr = data.item_types.data;
-        else if (Array.isArray(data?.payload)) arr = data.payload;
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;       
         setInvTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory types', e);
@@ -345,15 +339,7 @@ export const EditInventoryPage = () => {
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.inventory_sub_types)) arr = data.inventory_sub_types;
-        else if (Array.isArray(data?.item_sub_types)) arr = data.item_sub_types;
         else if (Array.isArray(data?.item_categories)) arr = data.item_categories;
-        else if (Array.isArray(data?.sub_types)) arr = data.sub_types;
-        else if (Array.isArray(data?.data)) arr = data.data;
-        else if (Array.isArray(data?.items)) arr = data.items;
-        else if (Array.isArray(data?.inventory_sub_types?.data)) arr = data.inventory_sub_types.data;
-        else if (Array.isArray(data?.item_sub_types?.data)) arr = data.item_sub_types.data;
-        else if (Array.isArray(data?.item_categories?.data)) arr = data.item_categories.data;
         setInvSubTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory sub types', e);
