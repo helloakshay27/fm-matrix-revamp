@@ -446,6 +446,17 @@ export const ScheduledTaskDashboard = () => {
     setCurrentPage(1); // Reset to first page when filtering by status
   };
 
+  // Handle download tasks
+  const handleDownloadTasks = async (statusFilter?: string) => {
+    try {
+      const status = statusFilter !== undefined ? statusFilter : selectedStatus;
+      await taskService.downloadTaskExport({ status: status || undefined });
+    } catch (error) {
+      console.error('Error downloading tasks:', error);
+      // You could add a toast notification here if you have one set up
+    }
+  };
+
   // Load calendar events
   useEffect(() => {
     const loadCalendarEvents = async () => {
@@ -662,6 +673,8 @@ export const ScheduledTaskDashboard = () => {
 
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
+      {/* Header Section */}
+     
 
       <Tabs value={activeTab} onValueChange={setActiveTab} defaultValue="list" className="w-full">
         <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
@@ -707,7 +720,7 @@ export const ScheduledTaskDashboard = () => {
                 <div
                   key={index}
                   className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer transition-all duration-200 ${selectedStatus === card.status
-                    ? 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
+                    ? 'bg-[#e6e2da] hover:bg-[#e6e2da]'
                     : 'bg-[#f6f4ee] hover:bg-[#e6e2da]'
                     }`}
                   onClick={() => handleStatusCardClick(card.status)}
@@ -733,9 +746,9 @@ export const ScheduledTaskDashboard = () => {
             })}
           </div>
 
-          {/* Clear Filter Button */}
+          {/* Clear Filter Button and Download Button */}
           {selectedStatus && (
-            <div className="flex justify-start">
+            <div className="flex justify-start gap-2">
               <Button
                 variant="outline"
                 onClick={() => setSelectedStatus(null)}
@@ -743,6 +756,7 @@ export const ScheduledTaskDashboard = () => {
               >
                 Clear Filter
               </Button>
+           
             </div>
           )}
 
@@ -830,7 +844,7 @@ export const ScheduledTaskDashboard = () => {
                   hideTableSearch={false}
                   storageKey="scheduled-tasks-table"
                   onFilterClick={() => setShowTaskFilter(true)}
-                  handleExport={() => downloadTaskExport()}
+                  handleExport={() => handleDownloadTasks(selectedStatus)}
                   searchTerm={searchQuery}
                   onSearchChange={handleSearch}
                   emptyMessage="No scheduled tasks found"

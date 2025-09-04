@@ -1178,7 +1178,7 @@ export const AMCDashboard = () => {
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${!filter && !isExpiringFilterActive ? 'border-2 border-[#C72030]' : ''}`}
                 onClick={handleTotalAMCClick}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -1198,7 +1198,7 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'active' ? 'border-2 border-[#C72030]' : ''}`}
                 onClick={handleActiveAMCClick}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -1213,7 +1213,7 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'inactive' ? 'border-2 border-[#C72030]' : ''}`}
                 onClick={handleInactiveAMCClick}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -1228,7 +1228,7 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'UnderObservation' ? 'border-2 border-[#C72030]' : ''}`}
                 onClick={handleFlaggedAMCClick}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -1243,7 +1243,7 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]"
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${isExpiringFilterActive ? 'border-2 border-[#C72030]' : ''}`}
                 onClick={handleExpiringIn90DaysClick}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">

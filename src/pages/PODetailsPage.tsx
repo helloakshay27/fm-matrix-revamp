@@ -209,6 +209,7 @@ export const PODetailsPage = () => {
       gst_number: "",
       pan_number: "",
       address: "",
+      notes: []
     },
     plant_detail: { name: "" },
     supplier: {
@@ -753,7 +754,15 @@ export const PODetailsPage = () => {
         <div className="space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Notes:</h3>
-            <p className="text-gray-700 ml-4">NA</p>
+            <div className="text-gray-700 ml-4">
+              <ol className="list-decimal">
+                {
+                  poDetails.billing_address.notes.map((note, index) => (
+                    <li key={index}>{note}</li>
+                  ))
+                }
+              </ol>
+            </div>
           </div>
 
           <div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Download, Upload, Eye, Edit, Trash2, Loader2 } from "lucide-react";
+import { CardContent } from "@/components/ui/card";
+import { Plus, Eye, Edit, Trash2, Loader2 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilterDialog';
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
@@ -54,22 +54,21 @@ const UtilityWasteGenerationDashboard = () => {
   const handleImport = () => setIsImportOpen(true);
   const handleUpdate = () => setIsUpdateOpen(true);
   const handleFilters = () => setIsFilterOpen(true);
-  const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
+  const handleView = (id: number) => console.log('View waste generation record:', id);
   const handleEdit = (id: number) => console.log('Edit waste generation record:', id);
   const handleDelete = (id: number) => console.log('Delete waste generation record:', id);
 
   const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
+    // { key: 'actions', label: 'Actions', sortable: false, draggable: false },
     // { key: 'id', label: 'ID', sortable: true, draggable: true },
     { key: 'location_details', label: 'Location', sortable: true, draggable: true },
     { key: 'vendor', label: 'Vendor', sortable: true, draggable: true },
     { key: 'commodity', label: 'Commodity/Source', sortable: true, draggable: true },
     { key: 'category', label: 'Category', sortable: true, draggable: true },
-    { key: 'operational_landlord', label: 'Operational Name of Landlord/ Tenant', sortable: true, draggable: true },
-    { key: 'uom', label: 'UoM', sortable: true, draggable: true },
-    { key: 'waste_unit', label: 'Generated Unit', sortable: true, draggable: true },
-    { key: 'recycled_unit', label: 'Recycled Unit', sortable: true, draggable: true },
-    { key: 'agency_name', label: 'Agency Name', sortable: true, draggable: true },
+    { key: 'operational_landlord', label: 'Operational Name', sortable: true, draggable: true },
+    { key: 'waste_unit', label: 'Generated', sortable: true, draggable: true },
+    { key: 'recycled_unit', label: 'Recycled', sortable: true, draggable: true },
+    { key: 'agency_name', label: 'Agency', sortable: true, draggable: true },
     { key: 'wg_date', label: 'Waste Date', sortable: true, draggable: true },
     { key: 'created_by', label: 'Created By', sortable: true, draggable: true },
     { key: 'created_at', label: 'Created On', sortable: true, draggable: true }
@@ -78,16 +77,16 @@ const UtilityWasteGenerationDashboard = () => {
   const renderCell = (item: WasteGeneration, columnKey: string) => {
     if (columnKey === 'actions') {
       return (
-        <div className="flex justify-center space-x-1">
+        <div className="flex space-x-1">
           <Button variant="ghost" size="sm" onClick={() => handleView(item.id)} className="h-8 w-8 p-0">
             <Eye className="h-4 w-4" />
           </Button>
-          {/* <Button variant="ghost" size="sm" onClick={() => handleEdit(item.id)} className="h-8 w-8 p-0">
+          <Button variant="ghost" size="sm" onClick={() => handleEdit(item.id)} className="h-8 w-8 p-0">
             <Edit className="h-4 w-4" />
-          </Button> */}
-          {/* <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="h-8 w-8 p-0 text-red-600 hover:text-red-800">
             <Trash2 className="h-4 w-4" />
-          </Button> */}
+          </Button>
         </div>
       );
     }
@@ -105,80 +104,50 @@ const UtilityWasteGenerationDashboard = () => {
       case 'created_by':
         return item.created_by?.full_name || 'N/A';
       case 'wg_date':
-        return item.wg_date ? new Date(item.wg_date).toLocaleDateString() : 'N/A';
+        return item.wg_date || 'N/A';
       case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A';
-      case 'uom':
-        // Since API doesn't provide UoM, we'll use a default value
-        // You can modify this logic based on your business requirements
-        return 'KG';
-      case 'waste_unit':
-        return item.waste_unit ? item.waste_unit.toString() : '0';
-      case 'recycled_unit':
-        return item.recycled_unit ? item.recycled_unit.toString() : '0';
-      default: {
-        // Handle direct properties from WasteGeneration interface
-        const value = item[columnKey as keyof WasteGeneration];
-        return value !== undefined && value !== null ? String(value) : 'N/A';
-      }
+      default:
+        return (item as any)[columnKey] || 'N/A';
     }
   };
   
   // Filter data based on search term
   const filteredData = wasteGenerations.filter(item => {
-    if (!searchTerm) return true;
-    
     const searchTermLower = searchTerm.toLowerCase();
     return (
       item.location_details?.toLowerCase().includes(searchTermLower) ||
       item.vendor?.company_name?.toLowerCase().includes(searchTermLower) ||
       item.commodity?.category_name?.toLowerCase().includes(searchTermLower) ||
       item.category?.category_name?.toLowerCase().includes(searchTermLower) ||
-      item.operational_landlord?.category_name?.toLowerCase().includes(searchTermLower) ||
       item.agency_name?.toLowerCase().includes(searchTermLower)
     );
   });
 
   if (isLoading) {
     return (
-      <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-          </div>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center space-y-2">
+          <Loader2 className="h-8 w-8 animate-spin text-[#C72030]" />
+          <p className="text-sm text-muted-foreground">Loading waste generation data...</p>
         </div>
-        
-        <CardContent className="p-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-              <p className="text-muted-foreground">Loading waste generation data...</p>
-            </div>
-          </div>
-        </CardContent>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-1 space-y-4 p-4 sm:p-5 md:p-3 pt-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
-          <div>
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-          </div>
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="flex flex-col items-center space-y-2 text-center">
+          <p className="text-sm text-red-600">{error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+          >
+            Retry
+          </Button>
         </div>
-        
-        <CardContent className="p-4">
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <p className="text-red-600 mb-4">{error}</p>
-              <Button onClick={() => setCurrentPage(1)} variant="outline">
-                Retry
-              </Button>
-            </div>
-          </div>
-        </CardContent>
       </div>
     );
   }
@@ -190,9 +159,11 @@ const UtilityWasteGenerationDashboard = () => {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-2 md:space-y-0">
           <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight ml-3">Waste Generation List</h2>
-            <p className="text-muted-foreground text-sm sm:text-base ml-3">
-              {totalCount > 0 && `Total: ${totalCount} records`}
-            </p>
+            {totalCount > 0 && (
+              <p className="text-muted-foreground text-sm sm:text-base ml-3">
+                Total: {totalCount} records
+              </p>
+            )}
           </div>
         </div>
 
@@ -210,7 +181,7 @@ const UtilityWasteGenerationDashboard = () => {
             pageSize={10}
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
-            searchPlaceholder="Search by location, vendor, commodity, etc..."
+            searchPlaceholder="Search by location, vendor, etc..."
             onFilterClick={handleFilters}
             leftActions={
               <div className="flex flex-wrap items-center gap-2">
@@ -229,33 +200,6 @@ const UtilityWasteGenerationDashboard = () => {
               </div>
             }
           />
-          
-          {/* API Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <p className="text-sm text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </p>
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1 || isLoading}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages || isLoading}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          )}
         </CardContent>
       </div>
 

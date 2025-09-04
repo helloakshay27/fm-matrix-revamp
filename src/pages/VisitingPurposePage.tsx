@@ -1609,7 +1609,7 @@ export const VisitingPurposePage = () => {
             {/* Multiple Purpose Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label>Enter Purpose *</Label>
+                <Label>Enter Purpose <span className="text-red-500">*</span></Label>
                 <Button
                   type="button"
                   variant="outline"

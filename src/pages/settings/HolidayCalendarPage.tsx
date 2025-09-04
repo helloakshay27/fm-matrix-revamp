@@ -426,6 +426,13 @@ export const HolidayCalendarPage = () => {
     setSelectedType('');
     setSelectedCustomers([]);
     setEditingHoliday(null);
+    
+    // Close all dropdowns
+    setSitesDropdownOpen(false);
+    setTypeDropdownOpen(false);
+    setCustomersDropdownOpen(false);
+    setRecurringOpen(false);
+    
     setIsEditDialogOpen(false);
   };
 
@@ -520,6 +527,13 @@ export const HolidayCalendarPage = () => {
     setSelectedSites([]);
     setSelectedType('');
     setSelectedCustomers([]);
+    
+    // Close all dropdowns
+    setSitesDropdownOpen(false);
+    setTypeDropdownOpen(false);
+    setCustomersDropdownOpen(false);
+    setRecurringOpen(false);
+    
     setIsAddDialogOpen(false);
   };
 
@@ -610,13 +624,13 @@ export const HolidayCalendarPage = () => {
   const renderRow = (holiday: Holiday) => ({
     actions: (
       <div className="flex items-center gap-2">
-        <button 
+        {/* <button 
           onClick={() => handleView(holiday.id)} 
           className="p-1 text-blue-600 hover:bg-blue-50 rounded" 
           title="View"
         >
           <Eye className="w-4 h-4" />
-        </button>
+        </button> */}
         <button 
           onClick={() => handleEdit(holiday.id)} 
           className="p-1 text-green-600 hover:bg-green-50 rounded" 
@@ -689,7 +703,22 @@ export const HolidayCalendarPage = () => {
         searchTerm={searchTerm}
         onSearchChange={handleSearch}
         leftActions={(
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            if (open) {
+              // Reset form when opening add dialog
+              setHolidayName('');
+              setDate(undefined);
+              setRecurring('');
+              setSelectedSites([]);
+              setSelectedType('');
+              setSelectedCustomers([]);
+              setSitesDropdownOpen(false);
+              setTypeDropdownOpen(false);
+              setCustomersDropdownOpen(false);
+              setRecurringOpen(false);
+            }
+            setIsAddDialogOpen(open);
+          }}>
             <DialogTrigger asChild>
               <Button className='bg-primary text-primary-foreground hover:bg-primary/90'>
                 <Plus className="w-4 h-4 mr-2" /> Add Holiday
@@ -937,7 +966,23 @@ export const HolidayCalendarPage = () => {
       />
 
       {/* Edit Holiday Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => {
+        if (!open) {
+          // Reset form when closing edit dialog
+          setHolidayName('');
+          setDate(undefined);
+          setRecurring('');
+          setSelectedSites([]);
+          setSelectedType('');
+          setSelectedCustomers([]);
+          setEditingHoliday(null);
+          setSitesDropdownOpen(false);
+          setTypeDropdownOpen(false);
+          setCustomersDropdownOpen(false);
+          setRecurringOpen(false);
+        }
+        setIsEditDialogOpen(open);
+      }}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Holiday</DialogTitle>

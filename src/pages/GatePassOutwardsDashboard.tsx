@@ -1,15 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Filter, Eye, Plus } from 'lucide-react';
 import { GatePassOutwardsFilterModal } from '@/components/GatePassOutwardsFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { API_CONFIG } from '@/config/apiConfig';
+
+// Define your API base URL here or import it from your config/environment
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 export const GatePassOutwardsDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  const [outwardData, setOutwardData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+      fetch(`${API_BASE_URL}/gate_passes.json?q[gate_pass_category_eq]=outward`, {
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(res => res.json())
+        .then(data => {
+          // If API returns { gate_passes: [...] }
+          setOutwardData(data.gate_passes || []);
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }, []);
 
   const handleViewDetails = (id: string) => {
     navigate(`/security/gate-pass/outwards/${id}`);
@@ -31,79 +53,27 @@ export const GatePassOutwardsDashboard = () => {
     { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
     { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
     { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
-    { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true, width: '300px' }
+    { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true }
   ];
 
-  // Data matching the screenshot
-  const outwardData = [
-    {
-      id: "850",
-      type: "Fresh",
-      returnableNonReturnable: "Non Returnable",
-      expectedReturnDate: "",
-      category: "Visitor",
-      personName: "Suraj",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand,By Vehicle",
-      lrNo: "",
-      tripId: "7-10013",
-      gateEntry: "",
-      itemDetails: "Transmission - - MW - -"
-    },
-    {
-      id: "845",
-      type: "SRN",
-      returnableNonReturnable: "Returnable",
-      expectedReturnDate: "20/02/2023",
-      category: "Visitor",
-      personName: "kshitij r",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Courier,By Vehicle",
-      lrNo: "12",
-      tripId: "7-10008",
-      gateEntry: "55",
-      itemDetails: "MW - 4 - 2 Transmission - 8 - 2"
-    },
-    {
-      id: "844",
-      type: "SRN",
-      returnableNonReturnable: "Returnable",
-      expectedReturnDate: "20/02/2023",
-      category: "Visitor",
-      personName: "Din",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "By Hand,By Courier",
-      lrNo: "123",
-      tripId: "7-10007",
-      gateEntry: "55",
-      itemDetails: "Transmission - 12 - 55 MW - 4 - 3"
-    },
-    {
-      id: "840",
-      type: "",
-      returnableNonReturnable: "Non Returnable",
-      expectedReturnDate: "",
-      category: "Staff",
-      personName: "demo demo",
-      profileImage: "/placeholder.svg",
-      passNo: "",
-      modeOfTransport: "",
-      lrNo: "",
-      tripId: "7-10003",
-      gateEntry: "",
-      itemDetails: "Transmission - 45 - 1 MW - 23 - 5"
-    }
-  ];
-
-  // Prepare data with index for the enhanced table
+    // Prepare data with index for the enhanced table
   const dataWithIndex = outwardData.map((item, index) => ({
-    ...item,
-    sNo: index + 1
+    sNo: index + 1,
+    id: item.id,
+    type: item.gate_pass_category || '--',
+    category: item.gate_pass_type_name || '--',
+    personName: item.created_by_name || '--',
+    profileImage: '/placeholder.svg', // or use a real field if available
+    passNo: item.gate_pass_no || '--',
+    modeOfTransport: item.vehicle_no || '--',
+    lrNo: item.lr_no || '--',
+    tripId: item.trip_id || '--',
+    gateEntry: item.gate_number || '--',
+    itemDetails: (item.gate_pass_materials || [])
+      .map(m => `ID:${m.pms_inventory_id} Qty:${m.gate_pass_qty ?? '--'}`)
+      .join(', ')
   }));
-
+  
   // Render row function for enhanced table
   const renderRow = (entry: any) => ({
     sNo: entry.sNo,
@@ -125,9 +95,7 @@ export const GatePassOutwardsDashboard = () => {
         {entry.id}
       </button>
     ),
-    type: entry.type || '--',
-    returnableNonReturnable: entry.returnableNonReturnable,
-    expectedReturnDate: entry.expectedReturnDate || '--',
+    type: entry.type,
     category: entry.category,
     personName: entry.personName,
     profileImage: (
@@ -137,11 +105,11 @@ export const GatePassOutwardsDashboard = () => {
         className="w-8 h-8 rounded-full object-cover border border-gray-200 mx-auto"
       />
     ),
-    passNo: entry.passNo || '--',
-    modeOfTransport: entry.modeOfTransport || '--',
-    lrNo: entry.lrNo || '--',
-    tripId: entry.tripId || '--',
-    gateEntry: entry.gateEntry || '--',
+    passNo: entry.passNo,
+    modeOfTransport: entry.modeOfTransport,
+    lrNo: entry.lrNo,
+    tripId: entry.tripId,
+    gateEntry: entry.gateEntry,
     itemDetails: (
       <div className="max-w-xs">
         <div className="truncate" title={entry.itemDetails}>

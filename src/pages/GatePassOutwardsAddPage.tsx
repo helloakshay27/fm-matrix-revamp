@@ -8,6 +8,7 @@ import { gateNumberService } from '@/services/gateNumberService';
 import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { useToast } from '@/hooks/use-toast';
+import { API_CONFIG } from '@/config/apiConfig';
 
 // Define DropdownOption type
 type DropdownOption = {
@@ -53,7 +54,12 @@ export const GatePassOutwardsAddPage = () => {
     companyId: null as number | null,
     vehicleNo: '',
     reportingTime: '',
-    modeOfTransport: ''
+    modeOfTransport: '',
+    driverName: '',
+    driverContactNo: '',
+    contactPerson: '',
+    contactPersonNo: '',
+    gateNoId: null as number | null,
   });
 
   const [gatePassDetails, setGatePassDetails] = useState({
@@ -71,12 +77,23 @@ export const GatePassOutwardsAddPage = () => {
   const [itemTypeOptions, setItemTypeOptions] = useState<DropdownOption[]>([]);
   const [itemCategoryOptions, setItemCategoryOptions] = useState<{ [key: number]: DropdownOption[] }>({});
   const [itemNameOptions, setItemNameOptions] = useState<{ [key: number]: DropdownOption[] }>({});
+  const [gateNumbers, setGateNumbers] = useState<DropdownOption[]>([]);
 
   useEffect(() => {
     gateNumberService.getCompanies().then(setCompanies);
     gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
     gatePassTypeService.getGatePassTypes().then(data => setGatePassTypes(data.map(d => ({ id: d.id, name: d.name }))));
     gateNumberService.getSites().then(setSites);
+    // Fetch gate numbers for dropdown using API_CONFIG
+    fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => setGateNumbers(data || data))
+      .catch(() => setGateNumbers([]));
   }, []);
 
   useEffect(() => {
@@ -219,6 +236,11 @@ export const GatePassOutwardsAddPage = () => {
     formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo ? visitorDetails.vehicleNo : '');
     formData.append('gate_pass[remarks]', gatePassDetails.remarks ? gatePassDetails.remarks : '');
     formData.append('gate_pass[building_id]', gatePassDetails.buildingId?.toString() ?? '');
+    if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
+    if (visitorDetails.driverName) formData.append('gate_pass[driver_name]', visitorDetails.driverName);
+    if (visitorDetails.driverContactNo) formData.append('gate_pass[driver_contact_no]', visitorDetails.driverContactNo);
+    if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
+    if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
 
     // Append material details
     materialRows.forEach((row, index) => {
@@ -342,17 +364,23 @@ export const GatePassOutwardsAddPage = () => {
             />
           )}
           {/* Row 2 */}
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-            <TextField label="Gate No." placeholder="Enter Gate No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          </FormControl>
-          <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <Autocomplete
+            options={gateNumbers}
+            getOptionLabel={(option) => option.gate_number}
+            value={gateNumbers.find(g => g.id === visitorDetails.gateNoId) || null}
+            onChange={(_, newValue) => handleVisitorChange('gateNoId', newValue ? newValue.id : null)}
+            renderInput={(params) => <TextField {...params} label="Gate No." placeholder="Select Gate No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+          />
+          <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField
             label="Reporting Time *"
             type="time"
             fullWidth
             variant="outlined"
             required
+            value={visitorDetails.reportingTime}
+            onChange={(e) => handleVisitorChange('reportingTime', e.target.value)}
             InputLabelProps={{ shrink: true }}
             InputProps={{ sx: fieldStyles }}
           />
@@ -366,18 +394,17 @@ export const GatePassOutwardsAddPage = () => {
           {/* Row 3 */}
           <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
             <InputLabel shrink>Select Mode Of Transport *</InputLabel>
-            <MuiSelect label="Select Mode Of Transport *" notched displayEmpty>
+            <MuiSelect label="Select Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
               <MenuItem value="">Type here</MenuItem>
               <MenuItem value="by-hand">By Hand</MenuItem>
               <MenuItem value="by-vehicle">By Vehicle</MenuItem>
               <MenuItem value="by-courier">By Courier</MenuItem>
             </MuiSelect>
           </FormControl>
-          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} label="Vehicle No." placeholder="Enter Vehicle No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField label="Remarks" placeholder="Enter remarks" fullWidth variant="outlined" value={gatePassDetails.remarks} onChange={(e) => handleGatePassChange('remarks', e.target.value)} InputLabelProps={{ shrink: true }} multiline rows={2} />
-
         </div>
 
 
@@ -539,7 +566,7 @@ export const GatePassOutwardsAddPage = () => {
               );
             })}
           </Box>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <MuiButton
               variant="outlined"
               onClick={() => fileInputRef.current?.click()}
@@ -566,7 +593,7 @@ export const GatePassOutwardsAddPage = () => {
               onChange={handleFileChange}
               className="hidden"
             />
-          </Box>
+          </Box> */}
         </div>
 
         {/* Footer */}

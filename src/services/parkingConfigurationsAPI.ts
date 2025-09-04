@@ -461,3 +461,54 @@ export const fetchCustomerLeases = async (entityId: number): Promise<CustomerLea
     throw error;
   }
 };
+
+// Types for updating parking bookings
+export interface UpdateParkingBookingsPayload {
+  lease_id: number;
+  building_id: number;
+  floor_id: number;
+  entity_id: number;
+  selected_parking_slots: number[];
+}
+
+export interface UpdatedParkingBooking {
+  id: number | null;
+  parking_number_id: number;
+  parking_configuration_id: number;
+  status: string;
+}
+
+export interface UpdateParkingBookingsResponse {
+  status: string;
+  message: string;
+  lease_id: number;
+  entity_id: number;
+  building_id: number;
+  floor_id: number;
+  updated_parking_bookings: UpdatedParkingBooking[];
+}
+
+// API function to update parking bookings
+export const updateParkingBookings = async (payload: UpdateParkingBookingsPayload): Promise<UpdateParkingBookingsResponse> => {
+  try {
+    const url = getFullUrl('/parking_bookings/update_bookings.json');
+    
+    console.log('Updating parking bookings to:', url);
+    console.log('Update payload:', payload);
+    
+    const options = getAuthenticatedFetchOptions('POST', payload);
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log('Update parking bookings API response:', data);
+    
+    return data;
+  } catch (error) {
+    console.error('Error updating parking bookings:', error);
+    throw error;
+  }
+};

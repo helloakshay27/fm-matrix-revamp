@@ -52,6 +52,13 @@ export const EditExternalUserPage = () => {
   const [selectedLineManager, setSelectedLineManager] = useState<any>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  // Simple email format validator
+  const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
+
+  // Mobile helpers: digits only and 10-digit validator
+  const normalizeDigits = (v: any) => String(v ?? '').replace(/\D/g, '');
+  const isValidMobile = (v: any) => normalizeDigits(v).length === 10;
+
   // Normalize gender coming from API (M/F/male/female) to lowercase 'male' | 'female'
   const normalizeGender = (g: string) => {
     if (!g) return '';
@@ -63,7 +70,27 @@ export const EditExternalUserPage = () => {
   };
 
   const handleChange = (field: string, value: any) => {
+    // Live mobile sanitization + validation
+    if (field === 'mobile') {
+      const digits = normalizeDigits(value).slice(0, 10);
+      setFormData((prev: any) => ({ ...prev, mobile: digits }));
+      setFieldErrors(prev => ({
+        ...prev,
+        mobile: digits && digits.length !== 10 ? 'Enter a valid 10-digit mobile number' : ''
+      }));
+      return;
+    }
     setFormData((prev: any) => ({ ...prev, [field]: value }));
+    // Field-specific validations (live)
+    if (field === 'email') {
+      const v = String(value || '');
+      setFieldErrors(prev => ({
+        ...prev,
+        email: v && !isValidEmail(v) ? 'Enter a valid email address' : ''
+      }));
+      return;
+    }
+    // Clear existing field error on change for other fields
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
@@ -104,9 +131,9 @@ export const EditExternalUserPage = () => {
     if (!isEmpty(formData.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(formData.email))) {
       errors.email = 'Enter a valid email address';
     }
-    // Mobile minimal length
-    if (!isEmpty(formData.mobile) && String(formData.mobile).trim().length < 8) {
-      errors.mobile = errors.mobile || 'Enter a valid mobile number';
+    // Mobile: require exactly 10 digits
+    if (!isEmpty(formData.mobile) && !isValidMobile(formData.mobile)) {
+      errors.mobile = errors.mobile || 'Enter a valid 10-digit mobile number';
     }
     // Date format YYYY-MM-DD (HTML date inputs generally ensure this, but validate anyway)
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
@@ -479,8 +506,33 @@ export const EditExternalUserPage = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <TextField label={<>First Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth error={!!fieldErrors.firstname} helperText={fieldErrors.firstname || ''} />
             <TextField label={<>Last Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
-            <TextField label={<>Email<span style={{ color: '#C72030' }}>*</span></>} type="email" value={formData.email} onChange={e => handleChange('email', e.target.value)} size="small" fullWidth error={!!fieldErrors.email} helperText={fieldErrors.email || ''} />
-            <TextField label={<>Mobile<span style={{ color: '#C72030' }}>*</span></>} type="number" value={formData.mobile} onChange={e => handleChange('mobile', e.target.value)} size="small" fullWidth error={!!fieldErrors.mobile} helperText={fieldErrors.mobile || ''} />
+            <TextField
+              label={<>
+                Email<span style={{ color: '#C72030' }}>*</span>
+              </>}
+              type="email"
+              value={formData.email}
+              onChange={e => handleChange('email', e.target.value)}
+              onBlur={e => handleChange('email', e.target.value)}
+              size="small"
+              fullWidth
+              error={!!fieldErrors.email}
+              helperText={fieldErrors.email || ''}
+              inputProps={{ inputMode: 'email', autoComplete: 'email' }}
+            />
+            <TextField
+              label={<>
+                Mobile<span style={{ color: '#C72030' }}>*</span>
+              </>}
+              value={formData.mobile}
+              onChange={e => handleChange('mobile', e.target.value)}
+              onBlur={e => handleChange('mobile', e.target.value)}
+              size="small"
+              fullWidth
+              error={!!fieldErrors.mobile}
+              helperText={fieldErrors.mobile || ''}
+              inputProps={{ inputMode: 'numeric', pattern: '\\d*', maxLength: 10 }}
+            />
             <TextField label={<>Company Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.ext_company_name} onChange={e => handleChange('ext_company_name', e.target.value)} size="small" fullWidth error={!!fieldErrors.ext_company_name} helperText={fieldErrors.ext_company_name || ''} />
             <TextField label={<>Employer Code<span style={{ color: '#C72030' }}>*</span></>} value={formData.org_user_id} onChange={e => handleChange('org_user_id', e.target.value)} size="small" fullWidth error={!!fieldErrors.org_user_id} helperText={fieldErrors.org_user_id || ''} />
             <FormControl fullWidth size="small" error={!!fieldErrors.gender}>
@@ -559,7 +611,7 @@ export const EditExternalUserPage = () => {
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
             <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">2</span>
-            ORGANIZATIONAL
+            ORGANIZATION
           </CardTitle>
         </CardHeader>
         <CardContent>

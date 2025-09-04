@@ -174,10 +174,11 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                     boq.id === boqDetailId
                         ? {
                             ...boq,
-                            quantity: data.quantity,
-                            rate: data.rate,
-                            taxableAmount: data.total_tax_per,
-                            invoiceAmount: calculateInvoiceAmount(data.quantity, data.rate, data.total_tax_per),
+                            quantity: data.quantity || "",
+                            rate: data.rate || "",
+                            taxableAmount: data.total_tax_per || "0.00",
+                            invoiceAmount: calculateInvoiceAmount(data.quantity || "", data.rate || "", data.total_tax_per || "0.00"),
+                            totalInvoiceAmount: calculateTotalInvoiceAmount(data.total_tax_per || "0.00", calculateInvoiceAmount(data.quantity || "", data.rate || "", data.total_tax_per || "0.00"))
                         }
                         : boq
                 )
@@ -194,6 +195,13 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
         const tax = parseFloat(taxableAmount) || 0;
         const invoiceAmount = (qty * rt) + tax;
         return invoiceAmount.toFixed(2);
+    };
+
+    const calculateTotalInvoiceAmount = (taxableAmount: string, invoiceAmount: string): string => {
+        const tax = parseFloat(taxableAmount) || 0;
+        const invoice = parseFloat(invoiceAmount) || 0;
+        const totalInvoiceAmount = tax + invoice;
+        return totalInvoiceAmount.toFixed(2);
     };
 
     useEffect(() => {
@@ -218,9 +226,9 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                 quantity: "",
                 workCompleted: "",
                 rate: "",
-                taxableAmount: "",
-                invoiceAmount: "",
-                totalInvoiceAmount: ""
+                taxableAmount: "0.00",
+                invoiceAmount: "0.00",
+                totalInvoiceAmount: "0.00"
             }
         ]);
         setAttachmentPreviews([]);
@@ -267,7 +275,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
             rate: "",
             taxableAmount: "0.00",
             invoiceAmount: "0.00",
-            totalInvoiceAmount: "0"
+            totalInvoiceAmount: "0.00"
         };
         setBOQDetails([...boqDetails, newBOQ]);
     };
@@ -287,6 +295,10 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                         updatedBOQ.quantity,
                         updatedBOQ.rate,
                         updatedBOQ.taxableAmount
+                    );
+                    updatedBOQ.totalInvoiceAmount = calculateTotalInvoiceAmount(
+                        updatedBOQ.taxableAmount,
+                        updatedBOQ.invoiceAmount
                     );
                 }
                 return updatedBOQ;
@@ -572,7 +584,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                             label="% of Work Completed"
                                             value={boq.workCompleted}
                                             onChange={(e) => updateBOQDetail(boq.id, 'workCompleted', e.target.value)}
-                                            placeholder="NaN"
+                                            placeholder="%"
                                             variant="outlined"
                                         />
                                     </Box>
@@ -618,7 +630,7 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                                             fullWidth
                                             label="Total Invoice Amount"
                                             value={boq.totalInvoiceAmount}
-                                            onChange={(e) => updateBOQDetail(boq.id, 'totalInvoiceAmount', e.target.value)}
+                                            InputProps={{ readOnly: true }}
                                             variant="outlined"
                                         />
                                     </Box>
