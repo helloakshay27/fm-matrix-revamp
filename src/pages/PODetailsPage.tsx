@@ -231,10 +231,9 @@ export const PODetailsPage = () => {
     payment_tenure: "",
     tds: "",
     advance_amount: "",
-    net_amount: "",
-    total_tax_amount: "",
-    taxes: "",
-    total_amount: "",
+    net_amount_formatted: "",
+    total_taxable_amount: "",
+    total_amount_formatted: "",
     show_send_sap_yes: false,
     approval_levels: [],
     deliveryAddress: "",
@@ -721,30 +720,30 @@ export const PODetailsPage = () => {
               <span className="font-medium text-gray-700">
                 Net Amount (INR):
               </span>
-              <span className="font-medium">{poDetails.net_amount}</span>
+              <span className="font-medium">{poDetails.net_amount_formatted}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Total Taxable Value Of PO:
               </span>
-              <span className="font-medium">{poDetails.total_tax_amount}</span>
+              <span className="font-medium">{poDetails.net_amount_formatted}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">Taxes (INR):</span>
-              <span className="font-medium">{poDetails.taxes}</span>
+              <span className="font-medium">{poDetails.total_taxable_amount}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium text-gray-700">
                 Total PO Value (INR):
               </span>
-              <span className="font-medium">{poDetails.total_amount}</span>
+              <span className="font-medium">{poDetails.total_amount_formatted}</span>
             </div>
             <div className="flex justify-between items-center pt-4 border-t border-gray-200">
               <span className="font-medium text-gray-700">
                 Amount In Words:
               </span>
               <span className="font-medium">
-                {numberToIndianCurrencyWords(poDetails.total_amount)}
+                {numberToIndianCurrencyWords(poDetails.total_amount_formatted)}
               </span>
             </div>
           </div>
