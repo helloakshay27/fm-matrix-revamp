@@ -4300,7 +4300,11 @@ const AddAssetPage = () => {
                       }}
                     />
                     <TextField
-                      label="Asset Name"
+                      label={
+                        <span>
+                          Asset Name<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Enter land name"
                       variant="outlined"
                       fullWidth
@@ -4328,7 +4332,7 @@ const AddAssetPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Land Type</InputLabel>
+                      <InputLabel>Land Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Land Type"
                         defaultValue=""
@@ -4406,7 +4410,11 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
-                      label="Location"
+                      label={
+                        <span>
+                          Location<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Full address or GPS coordinates"
                       variant="outlined"
                       fullWidth
@@ -4588,7 +4596,11 @@ const AddAssetPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex gap-2">
                       <TextField
-                        label="Area"
+                        label={
+                          <span>
+                            Area<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Enter area"
                         variant="outlined"
                         type="number"
@@ -5167,7 +5179,11 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
-                      label="Location / Site"
+                      label={
+                        <span>
+                          Location / Site<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Enter location"
                       variant="outlined"
                       fullWidth
@@ -5292,7 +5308,11 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
-                      label="Improvement Description"
+                      label={
+                        <span>
+                          Improvement Description<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Describe the improvement work"
                       variant="outlined"
                       fullWidth
@@ -6170,7 +6190,7 @@ const AddAssetPage = () => {
                       onChange={(e) => handleFieldChange("name", e.target.value)}
                     />
                     <FormControl fullWidth sx={{ "& .MuiOutlinedInput-root": { height: { xs: "36px", md: "45px" } } }}>
-                      <InputLabel>Vehicle Type</InputLabel>
+                      <InputLabel>Vehicle Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Vehicle Type"
                         defaultValue=""
@@ -6194,7 +6214,11 @@ const AddAssetPage = () => {
                       </MuiSelect>
                     </FormControl>
                     <TextField
-                      label="Make & Model"
+                      label={
+                        <span>
+                          Make & Model<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="e.g., Tata Ace, Honda Activa"
                       variant="outlined"
                       fullWidth
@@ -6210,7 +6234,11 @@ const AddAssetPage = () => {
                       }
                     />
                     <TextField
-                      label="Registration Number"
+                      label={
+                        <span>
+                          Registration Number<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="e.g., MH01AB1234"
                       variant="outlined"
                       fullWidth
@@ -6748,7 +6776,11 @@ const AddAssetPage = () => {
                       }}
                     /> */}
                     <TextField
-                      label="Warranty Expires On"
+                      label={
+                        <span>
+                          Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       type="date"
                       fullWidth
                       variant="outlined"
@@ -7606,7 +7638,7 @@ const AddAssetPage = () => {
                         },
                       }}
                     >
-                      <InputLabel>Building Type</InputLabel>
+                      <InputLabel>Building Type<span style={{ color: '#C72030' }}>*</span></InputLabel>
                       <MuiSelect
                         label="Building Type"
                         defaultValue=""
@@ -7686,7 +7718,11 @@ const AddAssetPage = () => {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <TextField
-                      label="Location"
+                      label={
+                        <span>
+                          Location<span style={{ color: '#C72030' }}>*</span>
+                        </span>
+                      }
                       placeholder="Full address"
                       variant="outlined"
                       fullWidth
@@ -7869,7 +7905,11 @@ const AddAssetPage = () => {
                     />
                     <div className="flex gap-2">
                       <TextField
-                        label="Built-up Area"
+                        label={
+                          <span>
+                            Built-up Area<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Enter area"
                         variant="outlined"
                         type="number"
@@ -8761,8 +8801,12 @@ const AddAssetPage = () => {
                     {/* First row: Asset Name, Asset No, Serial No, Model No., Manufacturer */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                       <TextField
-                        required
-                        label="Asset Name"
+
+                        label={
+                          <span>
+                            Asset Name<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Enter Asset Name"
                         name="assetName"
                         fullWidth
@@ -8785,7 +8829,6 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
                         label="Asset No."
                         placeholder="Enter Asset No."
                         name="assetNo"
@@ -8809,7 +8852,6 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
                         label="Serial No."
                         placeholder="Enter Serial No."
                         name="serialNo"
@@ -8833,7 +8875,6 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
                         label="Model No."
                         placeholder="Enter Model No"
                         name="modelNo"
@@ -8857,7 +8898,6 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
                         label="Manufacturer"
                         placeholder="Enter Manufacturer"
                         name="manufacturer"
@@ -8892,7 +8932,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="group-select-label" shrink>
-                          Group
+                          Group<span style={{ color: '#C72030' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="group-select-label"
@@ -8907,7 +8947,6 @@ const AddAssetPage = () => {
                             );
                           }}
                           sx={fieldStyles}
-                          required
                           disabled={groupsLoading}
                         >
                           <MenuItem value="">
@@ -8930,7 +8969,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="subgroup-select-label" shrink>
-                          Subgroup
+                          Subgroup<span style={{ color: '#C72030' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="subgroup-select-label"
@@ -8945,7 +8984,6 @@ const AddAssetPage = () => {
                             )
                           }
                           sx={fieldStyles}
-                          required
                           disabled={subgroupsLoading || !selectedGroup}
                         >
                           <MenuItem value="">
@@ -8970,7 +9008,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name*
+                          Vendor Name<span style={{ color: '#C72030' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -8985,7 +9023,6 @@ const AddAssetPage = () => {
                             );
                           }}
                           sx={fieldStyles}
-                          required
                         >
                           <MenuItem value="">
                             <em>
@@ -9229,7 +9266,7 @@ const AddAssetPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="site-select-label" shrink>
-                          Site
+                          Site<span style={{ color: '#C72030' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="site-select-label"
@@ -9260,7 +9297,7 @@ const AddAssetPage = () => {
                         sx={{ minWidth: 120 }}
                       >
                         <InputLabel id="building-select-label" shrink>
-                          Building
+                          Building<span style={{ color: '#C72030' }}>*</span>
                         </InputLabel>
                         <MuiSelect
                           labelId="building-select-label"
@@ -9970,7 +10007,7 @@ const AddAssetPage = () => {
                         {meterType === "SubMeter" && (
                           <div className="mb-6">
                             <label className="block text-sm font-medium text-gray-700 mb-2">
-                              Parent Meter <span className="text-red-500">*</span>
+                              Parent Meter <span style={{ color: '#C72030' }}>*</span>
                             </label>
                             <Select
                               value={selectedParentMeterId}
@@ -10386,8 +10423,11 @@ const AddAssetPage = () => {
                   <div className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
                       <TextField
-                        required
-                        label="Purchase Cost"
+                        label={
+                          <span>
+                            Purchase Cost<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="Enter cost"
                         name="purchaseCost"
                         fullWidth
@@ -10404,8 +10444,11 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
-                        label="Purchase Date"
+                        label={
+                          <span>
+                            Purchase Date<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="dd/mm/yyyy"
                         name="purchaseDate"
                         type="date"
@@ -10425,8 +10468,11 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
-                        label="Commissioning Date"
+                        label={
+                          <span>
+                            Commissioning Date<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="dd/mm/yyyy"
                         name="commisioning_date"
                         type="date"
@@ -10443,8 +10489,11 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
-                        label="Warranty Expires On"
+                        label={
+                          <span>
+                            Warranty Expires On<span style={{ color: '#C72030' }}>*</span>
+                          </span>
+                        }
                         placeholder="dd/mm/yyyy"
                         name="warrantyExpiresOn"
                         type="date"
@@ -10714,7 +10763,11 @@ const AddAssetPage = () => {
                       {/* Input Fields Row */}
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <TextField
-                          label="Useful Life (Years)"
+                          label={
+                            <span>
+                              Useful Life (Years){depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            </span>
+                          }
                           placeholder="Enter years"
                           variant="outlined"
                           fullWidth
@@ -10747,7 +10800,11 @@ const AddAssetPage = () => {
                           required={
                             depreciationToggle && !!formData.depreciation_method
                           }
-                          label="Salvage Value"
+                          label={
+                            <span>
+                              Salvage Value{depreciationToggle && <span style={{ color: '#C72030' }}>*</span>}
+                            </span>
+                          }
                           placeholder="Enter Value"
                           name="salvageValue"
                           fullWidth
@@ -11242,7 +11299,7 @@ const AddAssetPage = () => {
                             {allocationBasedOn === "department"
                               ? "Department"
                               : "Users"}
-                            *
+                            <span style={{ color: '#C72030' }}>*</span>
                           </InputLabel>
                           <MuiSelect
                             labelId="allocation-select-label"
@@ -11273,7 +11330,6 @@ const AddAssetPage = () => {
                               }
                             }}
                             sx={fieldStyles}
-                            required
                             disabled={
                               allocationBasedOn === "department"
                                 ? departmentsLoading
@@ -11379,7 +11435,7 @@ const AddAssetPage = () => {
                         }}
                       >
                         <InputLabel id="vendor-select-label" shrink>
-                          Vendor Name*
+                          Vendor Name{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
                         </InputLabel>
                         <MuiSelect
                           labelId="vendor-select-label"
@@ -11394,7 +11450,6 @@ const AddAssetPage = () => {
                             );
                           }}
                           sx={fieldStyles}
-                          required
                           disabled={vendorsLoading || !assetLoanedToggle}
                         >
                           <MenuItem value="">
@@ -11412,8 +11467,11 @@ const AddAssetPage = () => {
                         </MuiSelect>
                       </FormControl>
                       <TextField
-                        required
-                        label="Agreement Start Date*"
+                        label={
+                          <span>
+                            Agreement Start Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                          </span>
+                        }
                         placeholder="dd/mm/yyyy"
                         name="agreementStartDate"
                         type="date"
@@ -11442,8 +11500,11 @@ const AddAssetPage = () => {
                         }
                       />
                       <TextField
-                        required
-                        label="Agreement End Date*"
+                        label={
+                          <span>
+                            Agreement End Date{assetLoanedToggle && <span style={{ color: '#C72030' }}>*</span>}
+                          </span>
+                        }
                         placeholder="dd/mm/yyyy"
                         name="agreementEndDate"
                         type="date"
