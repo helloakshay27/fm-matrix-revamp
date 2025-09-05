@@ -188,6 +188,8 @@ export const InventoryDashboard = () => {
   const [downloadingQR, setDownloadingQR] = useState(false);
   // Track currently applied server-side filters so pagination & refresh honor them
   const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  // Track which summary tile is currently selected; null on initial load
+  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'green'>(null);
   // Track last filter signature we already showed a no-results toast for
   const lastNoResultSigRef = useRef<string | null>(null);
 
@@ -467,6 +469,8 @@ export const InventoryDashboard = () => {
     if (groupId) newFilters['q[pms_asset_pms_asset_group_id_eq]'] = groupId;
     if (subGroupId) newFilters['q[pms_asset_pms_asset_sub_group_id_eq]'] = subGroupId;
     setActiveFilters(newFilters);
+  // Changing filters via dialog shouldn't preselect any summary tile
+  setSelectedSummary(null);
     setLocalCurrentPage(1);
   };
 
@@ -810,9 +814,11 @@ export const InventoryDashboard = () => {
     if (term && term.trim()) {
       const nf = { 'q[name_cont]': term.trim() };
       setActiveFilters(nf);
+  setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize, filters: nf }));
     } else {
       setActiveFilters({});
+  setSelectedSummary(null);
       dispatch(fetchInventoryData({ page: 1, pageSize }));
     }
   };
@@ -1114,6 +1120,7 @@ export const InventoryDashboard = () => {
     setShowFilter(false);
     setShowDateFilter(false);
     setActiveFilters({});
+  setSelectedSummary(null);
     setLocalCurrentPage(1);
     dispatch(fetchInventoryData({ page: 1, pageSize }));
   };
@@ -1216,9 +1223,10 @@ export const InventoryDashboard = () => {
           <div className="overflow-x-auto">
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4 my-6">
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${Object.keys(activeFilters || {}).length === 0 ? 'border-2 border-[#C72030]' : ''}`}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
                   onClick={() => {
                     setActiveFilters({});
+                    setSelectedSummary('total');
                     setLocalCurrentPage(1);
                   }}
               >
@@ -1238,10 +1246,11 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[active_eq]']) === 'true' ? 'border-2 border-[#C72030]' : ''}`}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
                   onClick={() => {
                     const nf = { 'q[active_eq]': true as any } as Record<string, string>;
                     setActiveFilters(nf);
+                    setSelectedSummary('active');
                     setLocalCurrentPage(1);
                   }}
               >
@@ -1261,10 +1270,11 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[active_eq]']) === 'false' ? 'border-2 border-[#C72030]' : ''}`}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
                   onClick={() => {
                     const nf = { 'q[active_eq]': false as any } as Record<string, string>;
                     setActiveFilters(nf);
+                    setSelectedSummary('inactive');
                     setLocalCurrentPage(1);
                   }}
               >
@@ -1284,10 +1294,11 @@ export const InventoryDashboard = () => {
                 </div>
               </div>
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer ${String((activeFilters as any)['q[green_product_eq]']) === 'true' ? 'border-2 border-[#C72030]' : ''}`}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'green' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
                   onClick={() => {
                     const nf = { 'q[green_product_eq]': true as any } as Record<string, string>;
                     setActiveFilters(nf);
+                    setSelectedSummary('green');
                     setLocalCurrentPage(1);
                   }}
               >
@@ -1411,6 +1422,7 @@ export const InventoryDashboard = () => {
         onOpenChange={setShowDateFilter}
         onApply={(range) => {
           setDateRange(range);
+          setSelectedSummary(null);
           dispatch(
             fetchInventoryData({
               filters: { startDate: range.startDate, endDate: range.endDate },

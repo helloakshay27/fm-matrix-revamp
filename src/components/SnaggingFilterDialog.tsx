@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
+import { useEnhancedSelectStyles } from '@/hooks/useEnhancedSelectStyles';
 import { X } from 'lucide-react';
 
 interface SnaggingFilterDialogProps {
@@ -20,6 +21,7 @@ interface FilterValues {
 
 export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: SnaggingFilterDialogProps) => {
   const { toast } = useToast();
+  const { fieldStyles, menuProps } = useEnhancedSelectStyles();
   const [filters, setFilters] = useState<FilterValues>({
     tower: '',
     floor: '',
@@ -48,27 +50,6 @@ export const SnaggingFilterDialog = ({ open, onOpenChange, onApplyFilters }: Sna
 
   const handleClose = () => {
     onOpenChange(false);
-  };
-
-  const menuProps = {
-    disablePortal: true,
-    PaperProps: {
-      sx: {
-        mt: 0.5,
-        zIndex: 9999,
-        boxShadow: 3,
-      },
-    },
-  };
-
-  const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
-    },
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: 'white',
-    },
   };
 
   return (

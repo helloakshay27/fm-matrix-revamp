@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Upload, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -41,17 +41,12 @@ export const AddMaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
-
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
-
   const { data } = useAppSelector((state) => state.changePlantDetails);
-
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-
   const cloneId = searchParams.get("clone");
-
   const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
@@ -62,7 +57,7 @@ export const AddMaterialPRDashboard = () => {
   const [wbsSelection, setWbsSelection] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [overallWbs, setOverallWbs] = useState("");
-  const [submitting, setSubmitting] = useState(false)
+  const [submitting, setSubmitting] = useState(false);
   const [items, setItems] = useState([
     {
       id: 1,
@@ -77,7 +72,6 @@ export const AddMaterialPRDashboard = () => {
       wbsCode: "",
     },
   ]);
-
   const [supplierDetails, setSupplierDetails] = useState({
     supplier: "",
     plantDetail: "",
@@ -94,8 +88,85 @@ export const AddMaterialPRDashboard = () => {
     termsConditions: "",
     wbsCode: "",
   });
-
   const [files, setFiles] = useState([]);
+  const [slid, setSlid] = useState(null);
+
+  useEffect(() => {
+    const createSystemLog = async () => {
+      try {
+        const response = await axios.post(
+          `https://${baseUrl}/pms/purchase_orders/create_system_log_for_pr.json`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setSlid(response.data.id);
+      } catch (error) {
+        console.error("Error creating system log:", error);
+        toast.error("Failed to create system log");
+      }
+    };
+
+    createSystemLog();
+  }, []);
+
+  useEffect(() => {
+    if (!slid) return;
+
+    const interval = setInterval(async () => {
+      const payload = {
+        pms_purchase_order: {
+          pms_supplier_id: supplierDetails.supplier,
+          plant_detail_id: supplierDetails.plantDetail,
+          billing_address_id: supplierDetails.billingAddress,
+          shipping_address_id: supplierDetails.deliveryAddress,
+          po_date: supplierDetails.prDate,
+          letter_of_indent: true,
+          terms_conditions: supplierDetails.termsConditions,
+          retention: supplierDetails.retention,
+          tds: supplierDetails.tds,
+          transportation: supplierDetails.transportation,
+          quality_holding: supplierDetails.qc,
+          payment_tenure: supplierDetails.paymentTenure,
+          related_to: supplierDetails.relatedTo,
+          advance_amount: supplierDetails.advanceAmount,
+          ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
+          pms_po_inventories_attributes: items.map((item) => ({
+            pms_inventory_id: item.itemDetails,
+            quantity: item.quantity,
+            rate: item.each,
+            total_value: item.amount,
+            expected_date: item.expectedDate,
+            sac_hsn_code: item.sacHsnCodeId,
+            prod_desc: item.productDescription,
+            ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          })),
+        },
+        attachments: files,
+        slid,
+      };
+
+      try {
+        await axios.put(
+          `https://${baseUrl}/pms/purchase_orders/update_temp_records.json`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Auto saved successfully");
+      } catch (error) {
+        console.error("Error updating system log:", error);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [slid, supplierDetails, items, files, wbsSelection, overallWbs, token, baseUrl]);
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -110,14 +181,13 @@ export const AddMaterialPRDashboard = () => {
           const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
           setWbsCodes(response.wbs);
         } catch (error) {
-          console.log(error)
-          toast.error(error)
+          console.log(error);
+          toast.error(error);
         }
-      }
-
-      fetchData()
+      };
+      fetchData();
     }
-  }, [showRadio])
+  }, [showRadio]);
 
   useEffect(() => {
     if (shouldFetch) {
@@ -138,36 +208,34 @@ export const AddMaterialPRDashboard = () => {
             advanceAmount: response.advance_amount,
             relatedTo: response.related_to,
             termsConditions: response.terms_conditions,
-            wbsCode: ""
+            wbsCode: "",
           });
-
-          setItems(response.pms_po_inventories.map((item, index) => ({
-            id: index + 1,
-            itemDetails: item.inventory?.id,
-            sacHsnCode: item.sac_hsn_code,
-            productDescription: item.prod_desc,
-            each: item.rate,
-            quantity: item.quantity,
-            expectedDate: item.expected_date,
-            amount: item.total_value,
-            wbsCode: ""
-          })))
+          setItems(
+            response.pms_po_inventories.map((item, index) => ({
+              id: index + 1,
+              itemDetails: item.inventory?.id,
+              sacHsnCode: item.sac_hsn_code,
+              productDescription: item.prod_desc,
+              each: item.rate,
+              quantity: item.quantity,
+              expectedDate: item.expected_date,
+              amount: item.total_value,
+              wbsCode: "",
+            }))
+          );
         } catch (error) {
-          console.log(error)
-          toast.error(error)
+          console.log(error);
+          toast.error(error);
         }
-      }
-
+      };
       cloneData();
     }
-  }, [shouldFetch])
+  }, [shouldFetch]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
-        const response = await dispatch(
-          getSuppliers({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
         setSuppliers(response.suppliers);
       } catch (error) {
         console.log(error);
@@ -178,9 +246,7 @@ export const AddMaterialPRDashboard = () => {
 
     const fetchPlantDetails = async () => {
       try {
-        const response = await dispatch(
-          getPlantDetails({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
         setPlantDetails(response);
       } catch (error) {
         console.log(error);
@@ -191,9 +257,7 @@ export const AddMaterialPRDashboard = () => {
 
     const fetchAddresses = async () => {
       try {
-        const response = await dispatch(
-          getAddresses({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
         setAddresses(response.admin_invoice_addresses);
       } catch (error) {
         console.log(error);
@@ -204,9 +268,7 @@ export const AddMaterialPRDashboard = () => {
 
     const fetchInventories = async () => {
       try {
-        const response = await dispatch(
-          getInventories({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
         setInventories(response.inventories);
       } catch (error) {
         console.log(error);
@@ -234,9 +296,9 @@ export const AddMaterialPRDashboard = () => {
 
   useEffect(() => {
     if (supplierDetails.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } })
+      handlePlantDetailsChange({ target: { name: "plantDetail", value: supplierDetails.plantDetail } });
     }
-  }, [supplierDetails.plantDetail])
+  }, [supplierDetails.plantDetail]);
 
   const handleItemChange = (id, field, value) => {
     setItems((prevItems) =>
@@ -261,9 +323,7 @@ export const AddMaterialPRDashboard = () => {
   };
 
   const removeFile = (indexToRemove) => {
-    setFiles((prevFiles) =>
-      prevFiles.filter((_, index) => index !== indexToRemove)
-    );
+    setFiles((prevFiles) => prevFiles.filter((_, index) => index !== indexToRemove));
   };
 
   const handleDashedBorderClick = () => {
@@ -302,7 +362,6 @@ export const AddMaterialPRDashboard = () => {
           },
         }
       );
-
       setItems((prevItems) =>
         prevItems.map((item) =>
           item.id === itemId
@@ -323,13 +382,10 @@ export const AddMaterialPRDashboard = () => {
   };
 
   const calculateTotalAmount = () => {
-    return items
-      .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
-      .toFixed(2);
+    return items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0).toFixed(2);
   };
 
   const validateForm = () => {
-    // Supplier Details Validation
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
       return false;
@@ -358,8 +414,6 @@ export const AddMaterialPRDashboard = () => {
       toast.error("Terms & Conditions are required");
       return false;
     }
-
-    // Item Details Validation
     for (const item of items) {
       if (!item.itemDetails) {
         toast.error("Item Details is required for all items");
@@ -382,16 +436,15 @@ export const AddMaterialPRDashboard = () => {
         return false;
       }
     }
-
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      return
+      return;
     }
-    setSubmitting(true)
+    setSubmitting(true);
     const payload = {
       pms_purchase_order: {
         pms_supplier_id: supplierDetails.supplier,
@@ -418,21 +471,20 @@ export const AddMaterialPRDashboard = () => {
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
-        }))
+        })),
       },
       attachments: files,
+      slid, // Include slid in the submit payload if required
     };
 
     try {
-      await dispatch(
-        createMaterialPR({ baseUrl, token, data: payload })
-      ).unwrap();
+      await dispatch(createMaterialPR({ baseUrl, token, data: payload })).unwrap();
       toast.success("Material PR created successfully");
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
     } finally {
-      setSubmitting(false)
+      setSubmitting(false);
     }
   };
 
@@ -441,7 +493,7 @@ export const AddMaterialPRDashboard = () => {
       <Button
         variant="ghost"
         onClick={() => navigate("/finance/material-pr")}
-        className='p-0'
+        className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -514,7 +566,7 @@ export const AddMaterialPRDashboard = () => {
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
                 inputProps={{
-                  min: new Date().toISOString().split("T")[0], // today as min date
+                  min: new Date().toISOString().split("T")[0],
                 }}
               />
 
@@ -660,9 +712,15 @@ export const AddMaterialPRDashboard = () => {
                 fullWidth
                 variant="outlined"
                 multiline
-                minRows={4}
+                minRows={2}
                 InputLabelProps={{ shrink: true }}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
               />
 
               {showRadio && (
@@ -684,7 +742,6 @@ export const AddMaterialPRDashboard = () => {
                     <FormControlLabel value="individual" control={<Radio />} label="Individual" />
                     <FormControlLabel value="overall" control={<Radio />} label="All Items" />
                   </RadioGroup>
-
                 </Box>
               )}
 
@@ -778,9 +835,7 @@ export const AddMaterialPRDashboard = () => {
                   <TextField
                     label="SAC/HSN Code"
                     value={item.sacHsnCode}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "sacHsnCode", e.target.value)
-                    }
+                    onChange={(e) => handleItemChange(item.id, "sacHsnCode", e.target.value)}
                     placeholder="Enter Code"
                     fullWidth
                     variant="outlined"
@@ -792,9 +847,7 @@ export const AddMaterialPRDashboard = () => {
                   <TextField
                     label="Product Description*"
                     value={item.productDescription}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "productDescription", e.target.value)
-                    }
+                    onChange={(e) => handleItemChange(item.id, "productDescription", e.target.value)}
                     placeholder="Product Description"
                     fullWidth
                     variant="outlined"
@@ -806,9 +859,7 @@ export const AddMaterialPRDashboard = () => {
                   <TextField
                     label="Rate"
                     value={item.each}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "each", e.target.value)
-                    }
+                    onChange={(e) => handleItemChange(item.id, "each", e.target.value)}
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
@@ -820,9 +871,7 @@ export const AddMaterialPRDashboard = () => {
                   <TextField
                     label="Quantity*"
                     value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "quantity", e.target.value)
-                    }
+                    onChange={(e) => handleItemChange(item.id, "quantity", e.target.value)}
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
@@ -835,9 +884,7 @@ export const AddMaterialPRDashboard = () => {
                     label="Expected Date*"
                     type="date"
                     value={item.expectedDate}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "expectedDate", e.target.value)
-                    }
+                    onChange={(e) => handleItemChange(item.id, "expectedDate", e.target.value)}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
@@ -909,9 +956,7 @@ export const AddMaterialPRDashboard = () => {
               >
                 <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">
-                    Drag & Drop or Click to Upload
-                  </span>
+                  <span className="font-medium">Drag & Drop or Click to Upload</span>
                   <input
                     type="file"
                     multiple
@@ -921,9 +966,7 @@ export const AddMaterialPRDashboard = () => {
                     ref={fileInputRef}
                   />
                   <span className="ml-1">
-                    {files.length > 0
-                      ? `${files.length} image(s) selected`
-                      : "No images chosen"}
+                    {files.length > 0 ? `${files.length} image(s) selected` : "No images chosen"}
                   </span>
                 </div>
               </div>

@@ -30,6 +30,8 @@ export const EditSlotConfigurationPage = () => {
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
+  const [twoWheelerCategoryId, setTwoWheelerCategoryId] = useState<number | null>(null);
+  const [fourWheelerCategoryId, setFourWheelerCategoryId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
@@ -124,9 +126,34 @@ export const EditSlotConfigurationPage = () => {
           const groupData = data.grouped_parking_configurations[0];
           const configs = groupData.parking_configurations;
           
-          // Find 2 Wheeler and 4 Wheeler configurations
-          const twoWheelerConfig = configs.find(config => config.category_name === '2 Wheeler');
-          const fourWheelerConfig = configs.find(config => config.category_name === '4 Wheeler');
+          // Dynamically find category IDs from the configurations
+          // Use the parking_category_id to distinguish between different categories
+          // Sort configs by parking_category_id to ensure consistent assignment
+          const sortedConfigs = configs.sort((a, b) => a.parking_category_id - b.parking_category_id);
+          
+          const twoWheelerConfig = sortedConfigs.find(config => 
+            config.parking_category_id === 5 || // Usually 5 for 2-wheeler
+            config.category_name.toLowerCase().includes('2') ||
+            config.category_name.toLowerCase().includes('two') ||
+            config.category_name.toLowerCase().includes('wheeler')
+          );
+          const fourWheelerConfig = sortedConfigs.find(config => 
+            config.parking_category_id === 6 || // Usually 6 for 4-wheeler
+            (config.category_name.toLowerCase().includes('4') ||
+            config.category_name.toLowerCase().includes('four') ||
+            config.category_name.toLowerCase().includes('car')) &&
+            config.parking_category_id !== twoWheelerConfig?.parking_category_id
+          );
+          
+          // Store the category IDs for later use
+          if (twoWheelerConfig) {
+            setTwoWheelerCategoryId(twoWheelerConfig.parking_category_id);
+            console.log('Two Wheeler Config found:', twoWheelerConfig.category_name, 'ID:', twoWheelerConfig.parking_category_id);
+          }
+          if (fourWheelerConfig) {
+            setFourWheelerCategoryId(fourWheelerConfig.parking_category_id);
+            console.log('Four Wheeler Config found:', fourWheelerConfig.category_name, 'ID:', fourWheelerConfig.parking_category_id);
+          }
           
           // Count different parking types for each category
           const get2WheelerCounts = (config: ParkingConfiguration | undefined) => {
@@ -212,19 +239,17 @@ export const EditSlotConfigurationPage = () => {
       return;
     }
 
-    // Find category IDs dynamically
-    const twoWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('2') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
+    // Find category IDs dynamically from state (which were set during data loading)
+    const twoWheelerCategory = twoWheelerCategoryId 
+      ? parkingCategories.find(cat => cat.id === twoWheelerCategoryId)
+      : null;
     
-    const fourWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('4') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
+    const fourWheelerCategory = fourWheelerCategoryId 
+      ? parkingCategories.find(cat => cat.id === fourWheelerCategoryId)
+      : null;
 
     if (!twoWheelerCategory || !fourWheelerCategory) {
-      toast.error('Unable to find parking categories. Please ensure 2 Wheeler and 4 Wheeler categories exist.');
+      toast.error('Unable to find parking categories. Please ensure categories are properly configured.');
       return;
     }
 
@@ -238,7 +263,7 @@ export const EditSlotConfigurationPage = () => {
       
       // Generate parking slots data for update
       const twoWheelerSlots = generateParkingSlotsData('twoWheeler', 'P');
-      const fourWheelerSlots = generateParkingSlotsData('fourWheeler', 'B');
+      const fourWheelerSlots = generateParkingSlotsData('fourWheeler', 'P');
 
       // Build the request body using same structure as Add page
       const requestData: CreateParkingConfigurationRequest = {
@@ -355,8 +380,23 @@ export const EditSlotConfigurationPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    
+    // Clean up previous preview URL if it exists
+    if (formData.floorMap && typeof formData.floorMap === 'object') {
+      URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+    }
+    
     setFormData(prev => ({ ...prev, floorMap: file }));
   };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (formData.floorMap && typeof formData.floorMap === 'object') {
+        URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+      }
+    };
+  }, [formData.floorMap]);
 
   // A reusable component for rendering a parking slot category
   const ParkingSlotCategory = ({
@@ -376,7 +416,7 @@ export const EditSlotConfigurationPage = () => {
   }) => {
 
     const generateSlotName = (index: number) => {
-        const prefix = category === 'twoWheeler' ? 'P' : 'B';
+        const prefix = category === 'twoWheeler' ? 'P' : 'P';
         
         if (isStack) {
             const stackPairIndex = Math.floor(index / 2);
@@ -561,7 +601,12 @@ export const EditSlotConfigurationPage = () => {
           
           {/* 2 Wheeler Section */}
           <div className="bg-pink-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-6">2 Wheeler</h3>
+            <h3 className="text-lg font-semibold mb-6">
+              {twoWheelerCategoryId 
+                ? parkingCategories.find(cat => cat.id === twoWheelerCategoryId)?.name || ''
+                : '2 Wheeler'
+              }
+            </h3>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                <ParkingSlotCategory
                     title="Non Stack Parking"
@@ -590,7 +635,12 @@ export const EditSlotConfigurationPage = () => {
 
           {/* 4 Wheeler Section */}
           <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-6">4 Wheeler</h3>
+            <h3 className="text-lg font-semibold mb-6">
+              {fourWheelerCategoryId 
+                ? parkingCategories.find(cat => cat.id === fourWheelerCategoryId)?.name || '4 Wheeler'
+                : '4 Wheeler'
+              }
+            </h3>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <ParkingSlotCategory
                     title="Non Stack Parking"
@@ -636,22 +686,66 @@ export const EditSlotConfigurationPage = () => {
               >
                 Choose File
               </label>
-              {formData.parking_image_url && (
+              <div className="">
+              <span className="text-gray-500">
+                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
+              </span>
+            </div>
+              {/* {formData.parking_image_url && !formData.floorMap && (
                 <a
                   href={formData.parking_image_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 font-medium hover:text-blue-700 underline"
                 >
-                  View Image
+                  View Current Image
                 </a>
-              )}
+              )} */}
             </div>
-            <div className="mt-2">
-              <span className="text-gray-500">
-                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
-              </span>
-            </div>
+            
+            
+            {/* Image Preview */}
+            {(formData.floorMap || formData.parking_image_url) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  {formData.floorMap ? 'Preview:' : 'Preview:'}
+                </p>
+                <div className="w-32 h-32 bg-gray-100 rounded border overflow-hidden mx-auto">
+                  {formData.floorMap ? (
+                    // Preview new uploaded file
+                    formData.floorMap.type.startsWith('image/') ? (
+                      <img 
+                        src={URL.createObjectURL(formData.floorMap)} 
+                        alt="Floor map preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                        PDF Preview
+                      </div>
+                    )
+                  ) : (
+                    // Show existing image
+                    <img 
+                      src={formData.parking_image_url} 
+                      alt="Current floor map"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  )}
+                  {/* Fallback for broken images */}
+                  {!formData.floorMap && (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs" style={{display: 'none'}}>
+                      Image Not Available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

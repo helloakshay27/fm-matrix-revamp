@@ -409,11 +409,17 @@ const InvoiceModal: React.FC<InvoiceModalProps> = ({
                             fullWidth
                             label="Notes"
                             multiline
-                            rows={3}
+                            rows={2}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             placeholder="Add any additional notes..."
                             variant="outlined"
+                            sx={{
+                                "& .MuiOutlinedInput-root": {
+                                    height: "auto !important",
+                                    padding: "2px !important",
+                                },
+                            }}
                         />
                     </Box>
 

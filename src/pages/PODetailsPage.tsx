@@ -29,6 +29,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
@@ -124,15 +128,14 @@ interface PaymentDetail {
 
 interface DebitCreditNote {
   id: number;
-  type?: string;
+  note_type?: string;
   amount?: number;
-  description?: string;
-  approved?: boolean;
-  approved_on?: string;
+  note?: string;
+  approved?: string;
+  approved_at?: string;
   approved_by?: string;
-  created_on?: string;
-  created_by?: string;
-  attachment?: string;
+  created_at?: string;
+  creator_name?: string;
 }
 
 interface PODetails {
@@ -166,7 +169,7 @@ interface PODetails {
   terms_conditions?: string;
   pms_grns?: GRNDetail[];
   payment_details?: PaymentDetail[];
-  debit_credit_notes?: DebitCreditNote[];
+  debit_notes?: DebitCreditNote[];
 }
 
 // Table column configurations
@@ -329,10 +332,11 @@ const debitNoteDetailsColumns: ColumnConfig[] = [
   { key: "approved_by", label: "Approved By", sortable: true, draggable: true },
   { key: "created_on", label: "Created On", sortable: true, draggable: true },
   { key: "created_by", label: "Created By", sortable: true, draggable: true },
-  { key: "attachment", label: "Attachment", sortable: true, draggable: true },
 ];
 
 export const PODetailsPage = () => {
+  const baseUrl = localStorage.getItem('baseUrl');
+  const token = localStorage.getItem('token')
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -346,36 +350,43 @@ export const PODetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
+  const [openDebitCreditModal, setOpenDebitCreditModal] = useState(false);
   const [selectedAttachment, setSelectedAttachment] =
     useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [debitCreditForm, setDebitCreditForm] = useState({
+    type: "",
+    amount: "",
+    description: "",
+  });
 
   // Fetch PO data
+  const fetchData = async () => {
+    if (!id) return;
+
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+
+    if (!baseUrl || !token) {
+      toast.error("Missing required configuration");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await dispatch(
+        getMaterialPRById({ baseUrl, token, id })
+      ).unwrap();
+      setPoDetails(response || {});
+    } catch (error: any) {
+      toast.error(error.message || "Failed to fetch purchase order");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!id) return;
-
-      const token = localStorage.getItem("token");
-      const baseUrl = localStorage.getItem("baseUrl");
-
-      if (!baseUrl || !token) {
-        toast.error("Missing required configuration");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const response = await dispatch(
-          getMaterialPRById({ baseUrl, token, id })
-        ).unwrap();
-        setPoDetails(response || {});
-      } catch (error: any) {
-        toast.error(error.message || "Failed to fetch purchase order");
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, [dispatch, id]);
 
@@ -506,6 +517,52 @@ export const PODetailsPage = () => {
     }
   }, [dispatch, id, levelId, userId, rejectComment, navigate]);
 
+  const handleOpenDebitCreditModal = () => {
+    setOpenDebitCreditModal(true);
+  };
+
+  const handleCloseDebitCreditModal = () => {
+    setOpenDebitCreditModal(false);
+  };
+
+  const handleDebitCreditChange = (e) => {
+    const { name, value } = e.target;
+    setDebitCreditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitDebitCredit = async () => {
+    try {
+      const payload = {
+        debit_note: {
+          amount: debitCreditForm.amount,
+          note: debitCreditForm.description,
+          note_type: debitCreditForm.type,
+          resource_id: Number(id),
+          resource_type: "Pms::PurchaseOrder",
+        },
+      };
+
+      await axios.post(`https://${baseUrl}/debit_notes.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchData();
+      setDebitCreditForm({
+        type: "",
+        amount: "",
+        description: "",
+      });
+
+      toast.success("Debit note created successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      handleCloseDebitCreditModal();
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -582,21 +639,20 @@ export const PODetailsPage = () => {
     })) || [];
 
   const debitCreditTableData =
-    poDetails.debit_credit_notes?.map((item, index) => ({
+    poDetails.debit_notes?.map((item, index) => ({
       id: item.id || index,
-      type: item.type || "-",
+      type: item.note_type || "-",
       amount: item.amount?.toString() || "-",
-      description: item.description || "-",
-      approved: item.approved ? "Yes" : "No",
-      approved_on: item.approved_on
-        ? format(new Date(item.approved_on), "dd-MM-yyyy")
+      description: item.note || "-",
+      approved: item.approved,
+      approved_on: item.approved_at
+        ? format(new Date(item.approved_at), "dd-MM-yyyy")
         : "-",
       approved_by: item.approved_by || "-",
-      created_on: item.created_on
-        ? format(new Date(item.created_on), "dd-MM-yyyy")
+      created_on: item.created_at
+        ? format(new Date(item.created_at), "dd-MM-yyyy")
         : "-",
-      created_by: item.created_by || "-",
-      attachment: item.attachment || "-",
+      created_by: item.creator_name || "-",
     })) || [];
 
   const renderCell = (item: any, columnKey: string) => {
@@ -673,6 +729,18 @@ export const PODetailsPage = () => {
               >
                 Send To SAP Team
               </Button>
+            )}
+            {poDetails.all_level_approved && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handleOpenDebitCreditModal}
+                >
+                  Debit/Credit Note
+                </Button>
+              </>
             )}
             <Button
               size="sm"
@@ -1170,6 +1238,9 @@ export const PODetailsPage = () => {
             <EnhancedTable
               data={debitCreditTableData}
               columns={debitNoteDetailsColumns}
+              renderCell={(item, columnKey) => {
+                return item[columnKey] || "-";
+              }}
               storageKey="debit-credit-table"
               hideColumnsButton={true}
               hideTableExport={true}
@@ -1216,10 +1287,17 @@ export const PODetailsPage = () => {
               type="text"
               fullWidth
               multiline
-              rows={4}
+              rows={2}
               value={rejectComment}
               onChange={(e) => setRejectComment(e.target.value)}
               variant="outlined"
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                },
+              }}
             />
           </DialogContent>
           <DialogActions>
@@ -1234,6 +1312,89 @@ export const PODetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Reject
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDebitCreditModal}
+          onClose={handleCloseDebitCreditModal}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Debit/Credit Notes</DialogTitle>
+          <DialogContent>
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={{
+                mt: 1,
+              }}
+            >
+              <InputLabel shrink>Select Type</InputLabel>
+              <Select
+                label="Select Type"
+                value={debitCreditForm.type}
+                onChange={handleDebitCreditChange}
+                displayEmpty
+                name="type"
+                sx={{
+                  height: {
+                    xs: 28,
+                    sm: 36,
+                    md: 45,
+                  },
+                  "& .MuiInputBase-input, & .MuiSelect-select": {
+                    padding: {
+                      xs: "8px",
+                      sm: "10px",
+                      md: "12px",
+                    },
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>Select Type</em>
+                </MenuItem>
+                <MenuItem value="Debit">Debit</MenuItem>
+                <MenuItem value="Credit">Credit</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              margin="dense"
+              name="amount"
+              label="Amount"
+              type="number"
+              fullWidth
+              value={debitCreditForm.amount}
+              onChange={handleDebitCreditChange}
+            />
+            <TextField
+              margin="dense"
+              name="description"
+              label="Description"
+              type="text"
+              fullWidth
+              value={debitCreditForm.description}
+              onChange={handleDebitCreditChange}
+              multiline
+              rows={2}
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                },
+              }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseDebitCreditModal}>Close</Button>
+            <Button
+              onClick={handleSubmitDebitCredit}
+              style={{ backgroundColor: "#6B46C1", color: "white" }}
+            >
+              Submit
             </Button>
           </DialogActions>
         </Dialog>

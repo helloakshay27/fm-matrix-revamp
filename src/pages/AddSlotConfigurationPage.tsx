@@ -33,17 +33,12 @@ export const AddSlotConfigurationPage = () => {
     building_id: '',
     floor_id: '',
     qrcode_needed: false,
-    twoWheeler: {
-      nonStack: 0, // Initial value for better visualization
-      stack: 0,    // Initial value for better visualization
-      reserved: 0  // Initial value for better visualization
-    },
-    fourWheeler: {
-      nonStack: 0, // Initial value for better visualization
-      stack: 0,    // Initial value for better visualization
-      reserved: 0  // Initial value for better visualization
-    },
-    floorMap: null as File | null
+    floorMap: null as File | null,
+    categories: {} as Record<number, {
+      nonStack: number;
+      stack: number;
+      reserved: number;
+    }>
   });
 
   const fetchBuildingsData = useCallback(async () => {
@@ -89,6 +84,30 @@ export const AddSlotConfigurationPage = () => {
     fetchParkingCategoriesData();
   }, [setCurrentSection, fetchBuildingsData, fetchParkingCategoriesData]);
 
+  // Initialize form categories when parking categories are loaded
+  useEffect(() => {
+    if (parkingCategories.length > 0) {
+      const categoriesFormData: Record<number, {
+        nonStack: number;
+        stack: number;
+        reserved: number;
+      }> = {};
+      
+      parkingCategories.forEach(category => {
+        categoriesFormData[category.id] = {
+          nonStack: 0,
+          stack: 0,
+          reserved: 0
+        };
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        categories: categoriesFormData
+      }));
+    }
+  }, [parkingCategories]);
+
   useEffect(() => {
     if (formData.building_id) {
       fetchFloorsData(formData.building_id);
@@ -109,58 +128,62 @@ export const AddSlotConfigurationPage = () => {
       return;
     }
 
+    console.log('Current formData:', formData);
+    console.log('Available parking categories:', parkingCategories);
+    console.log('Form categories data:', formData.categories);
+
     // Check if there are any parking slots to create
-    const totalSlots = formData.twoWheeler.nonStack + formData.twoWheeler.stack + formData.twoWheeler.reserved +
-                      formData.fourWheeler.nonStack + formData.fourWheeler.stack + formData.fourWheeler.reserved;
+    const totalSlots = Object.values(formData.categories).reduce((total, category) => 
+      total + category.nonStack + category.stack + category.reserved, 0);
     
     if (totalSlots === 0) {
       toast.error('Please add at least one parking slot');
       return;
     }
 
-    // Find category IDs dynamically
-    const twoWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('2') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
-    
-    const fourWheelerCategory = parkingCategories.find(category => 
-      category.name.toLowerCase().includes('4') && 
-      category.name.toLowerCase().includes('wheeler')
-    );
-
-    if (!twoWheelerCategory || !fourWheelerCategory) {
-      toast.error('Unable to find parking categories. Please ensure 2 Wheeler and 4 Wheeler categories exist.');
+    if (parkingCategories.length === 0) {
+      toast.error('Unable to find parking categories. Please try again.');
       return;
     }
-
-    console.log('Found categories:', {
-      twoWheeler: twoWheelerCategory,
-      fourWheeler: fourWheelerCategory
-    });
 
     try {
       setSubmitting(true);
       
-      // Generate parking slots data
-      const twoWheelerSlots = generateParkingSlotsData('twoWheeler', 'P');
-      const fourWheelerSlots = generateParkingSlotsData('fourWheeler', 'B');
-
+      // Generate parking slots data for all categories
       const requestData: CreateParkingConfigurationRequest = {
         building_id: formData.building_id,
         floor_id: formData.floor_id,
         // qrcode_needed: true, // Add QR code generation flag
-        [twoWheelerCategory.id]: { // Use dynamic 2 Wheeler category ID
-          no_of_parkings: twoWheelerSlots.length,
-          reserved_parkings: twoWheelerSlots.filter(slot => slot.reserved).length,
-          parking: twoWheelerSlots
-        },
-        [fourWheelerCategory.id]: { // Use dynamic 4 Wheeler category ID  
-          no_of_parkings: fourWheelerSlots.length,
-          reserved_parkings: fourWheelerSlots.filter(slot => slot.reserved).length,
-          parking: fourWheelerSlots
-        }
       };
+
+      // Add data for each category dynamically
+      parkingCategories.forEach(category => {
+        const categoryData = formData.categories[category.id];
+        if (categoryData) {
+          const totalCategorySlots = categoryData.nonStack + categoryData.stack + categoryData.reserved;
+          
+          // Only include categories that have at least one slot configured
+          if (totalCategorySlots > 0) {
+            const prefix = 'P'; // Use 'P' prefix for all categories
+            const categorySlots = generateParkingSlotsData(category.id, prefix);
+            
+            console.log(`Category ${category.name} (ID: ${category.id}) slots:`, categorySlots);
+            console.log(`Category ${category.name} data:`, {
+              nonStack: categoryData.nonStack,
+              stack: categoryData.stack,
+              reserved: categoryData.reserved,
+              totalSlots: categorySlots.length,
+              generatedSlots: categorySlots
+            });
+            
+            requestData[category.id.toString()] = {
+              no_of_parkings: categorySlots.length,
+              reserved_parkings: categorySlots.filter(slot => slot.reserved).length,
+              parking: categorySlots
+            };
+          }
+        }
+      });
 
       // Add image if selected
       if (formData.floorMap) {
@@ -168,8 +191,8 @@ export const AddSlotConfigurationPage = () => {
       }
 
       console.log('Submitting parking configuration:', requestData);
-      console.log('Two Wheeler Slots:', twoWheelerSlots);
-      console.log('Four Wheeler Slots:', fourWheelerSlots);
+      console.log('Final request data keys:', Object.keys(requestData));
+      console.log('Request data details:', JSON.stringify(requestData, null, 2));
       console.log('Floor Map File:', formData.floorMap ? formData.floorMap.name : 'None selected');
       
       await createParkingConfiguration(requestData);
@@ -184,11 +207,14 @@ export const AddSlotConfigurationPage = () => {
   };
 
   const generateParkingSlotsData = (
-    category: 'twoWheeler' | 'fourWheeler', 
+    categoryId: number, 
     prefix: string
   ): ParkingSlotData[] => {
     const slots: ParkingSlotData[] = [];
-    const categoryData = formData[category];
+    const categoryData = formData.categories[categoryId];
+    
+    if (!categoryData) return slots;
+    
     let slotNumber = 1;
 
     // Non-stack slots
@@ -232,7 +258,7 @@ export const AddSlotConfigurationPage = () => {
   };
 
   const handleSlotCountChange = (
-    category: 'twoWheeler' | 'fourWheeler',
+    categoryId: number,
     type: 'nonStack' | 'stack' | 'reserved',
     value: number
   ) => {
@@ -240,29 +266,47 @@ export const AddSlotConfigurationPage = () => {
     const newValue = Math.max(0, value);
     setFormData(prev => ({
       ...prev,
-      [category]: {
-        ...prev[category],
-        [type]: newValue
+      categories: {
+        ...prev.categories,
+        [categoryId]: {
+          ...prev.categories[categoryId],
+          [type]: newValue
+        }
       }
     }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    
+    // Clean up previous object URL if it exists
+    if (formData.floorMap && formData.floorMap.type.startsWith('image/')) {
+      URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+    }
+    
     setFormData(prev => ({ ...prev, floorMap: file }));
   };
+
+  // Cleanup object URL on component unmount
+  useEffect(() => {
+    return () => {
+      if (formData.floorMap && formData.floorMap.type.startsWith('image/')) {
+        URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+      }
+    };
+  }, [formData.floorMap]);
 
   // A reusable component for rendering a parking slot category
   const ParkingSlotCategory = ({
     title,
-    category,
+    categoryId,
     type,
     count,
     buttonColorClass,
     isStack = false,
   }: {
     title: string;
-    category: 'twoWheeler' | 'fourWheeler';
+    categoryId: number;
     type: 'nonStack' | 'stack' | 'reserved';
     count: number;
     buttonColorClass: string;
@@ -270,21 +314,21 @@ export const AddSlotConfigurationPage = () => {
   }) => {
 
     const generateSlotName = (index: number) => {
-        const prefix = category === 'twoWheeler' ? 'P' : 'B';
+        const prefix = 'P'; // Use 'P' prefix for all categories
         
         if (isStack) {
             const stackPairIndex = Math.floor(index / 2);
-            const nonStackCount = formData[category].nonStack;
+            const nonStackCount = formData.categories[categoryId]?.nonStack || 0;
             const stackSlotNumber = nonStackCount + stackPairIndex + 1;
             const suffix = index % 2 === 0 ? 'A' : 'B';
             return `${prefix}${stackSlotNumber}${suffix}`;
         }
         
         let baseNumber = 1;
-        if (type === 'stack') { // This logic is simplified; main logic is in `isStack`
-             baseNumber = formData[category].nonStack + 1;
+        if (type === 'stack') {
+             baseNumber = (formData.categories[categoryId]?.nonStack || 0) + 1;
         } else if (type === 'reserved') {
-             baseNumber = formData[category].nonStack + formData[category].stack + 1;
+             baseNumber = (formData.categories[categoryId]?.nonStack || 0) + (formData.categories[categoryId]?.stack || 0) + 1;
         }
         
         return `${prefix}${baseNumber + index}`;
@@ -306,7 +350,7 @@ export const AddSlotConfigurationPage = () => {
                 </Button>
                 <button
                   className="absolute -top-2 -right-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 text-xs border-2 border-white"
-                  onClick={() => handleSlotCountChange(category, type, count - 1)}
+                  onClick={() => handleSlotCountChange(categoryId, type, count - 1)}
                 >
                   &#x2715;
                 </button>
@@ -318,14 +362,14 @@ export const AddSlotConfigurationPage = () => {
           <Input
             type="number"
             value={count}
-            onChange={(e) => handleSlotCountChange(category, type, parseInt(e.target.value, 10) || 0)}
+            onChange={(e) => handleSlotCountChange(categoryId, type, parseInt(e.target.value, 10) || 0)}
             className="w-16 h-8 text-center"
             min="0"
           />
           <Button
             size="sm"
             className={`${buttonColorClass} text-white`}
-            onClick={() => handleSlotCountChange(category, type, count + 1)}
+            onClick={() => handleSlotCountChange(categoryId, type, count + 1)}
           >
             Add
           </Button>
@@ -402,7 +446,7 @@ export const AddSlotConfigurationPage = () => {
         </div>
 
         {/* QR Code Configuration */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -415,91 +459,47 @@ export const AddSlotConfigurationPage = () => {
               QR Code Needed for Parking Access
             </label>
           </div>
-        </div>
+        </div> */}
 
         {/* Summary Section */}
-        {(formData.twoWheeler.nonStack + formData.twoWheeler.stack + formData.twoWheeler.reserved +
-          formData.fourWheeler.nonStack + formData.fourWheeler.stack + formData.fourWheeler.reserved) > 0 && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h3 className="text-sm font-semibold text-blue-800 mb-2">Parking Summary</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-medium text-blue-700">2 Wheeler Total:</span>
-                <span className="ml-2 text-blue-600">
-                  {formData.twoWheeler.nonStack + formData.twoWheeler.stack * 2 + formData.twoWheeler.reserved} slots
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-blue-700">4 Wheeler Total:</span>
-                <span className="ml-2 text-blue-600">
-                  {formData.fourWheeler.nonStack + formData.fourWheeler.stack * 2 + formData.fourWheeler.reserved} slots
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
+      
         {/* Parking Configuration */}
         <div className="mb-8">
           <div className="text-sm font-semibold text-red-600 mb-6 border-b pb-2">Parking Configuration</div>
           
           {/* 2 Wheeler Section */}
-          <div className="bg-pink-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-6">2 Wheeler</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-               <ParkingSlotCategory
-                    title="Non Stack Parking"
-                    category="twoWheeler"
-                    type="nonStack"
-                    count={formData.twoWheeler.nonStack}
-                    buttonColorClass="bg-purple-600 hover:bg-purple-700"
+          {/* Dynamic Parking Categories */}
+          {parkingCategories.map((category, index) => (
+            <div key={category.id} className={`${index % 2 === 0 ? 'bg-pink-50' : 'bg-blue-50'} rounded-lg p-6 mb-6`}>
+              <h3 className="text-lg font-semibold mb-6">
+                {category.name}
+              </h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <ParkingSlotCategory
+                  title="Non Stack Parking"
+                  categoryId={category.id}
+                  type="nonStack"
+                  count={formData.categories[category.id]?.nonStack || 0}
+                  buttonColorClass="bg-purple-600 hover:bg-purple-700"
                 />
                 <ParkingSlotCategory
-                    title="Stack Parking"
-                    category="twoWheeler"
-                    type="stack"
-                    count={formData.twoWheeler.stack}
-                    buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
-                    isStack
+                  title="Stack Parking"
+                  categoryId={category.id}
+                  type="stack"
+                  count={formData.categories[category.id]?.stack || 0}
+                  buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
+                  isStack
                 />
                 <ParkingSlotCategory
-                    title="Reserved Parking"
-                    category="twoWheeler"
-                    type="reserved"
-                    count={formData.twoWheeler.reserved}
-                    buttonColorClass="bg-purple-600 hover:bg-purple-700"
+                  title="Reserved Parking"
+                  categoryId={category.id}
+                  type="reserved"
+                  count={formData.categories[category.id]?.reserved || 0}
+                  buttonColorClass={index % 2 === 0 ? "bg-purple-600 hover:bg-purple-700" : "bg-cyan-500 hover:bg-cyan-600"}
                 />
+              </div>
             </div>
-          </div>
-
-          {/* 4 Wheeler Section */}
-          <div className="bg-blue-50 rounded-lg p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-6">4 Wheeler</h3>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <ParkingSlotCategory
-                    title="Non Stack Parking"
-                    category="fourWheeler"
-                    type="nonStack"
-                    count={formData.fourWheeler.nonStack}
-                    buttonColorClass="bg-purple-600 hover:bg-purple-700"
-                />
-                <ParkingSlotCategory
-                    title="Stack Parking"
-                    category="fourWheeler"
-                    type="stack"
-                    count={formData.fourWheeler.stack}
-                    buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
-                    isStack
-                />
-                <ParkingSlotCategory
-                    title="Reserved Parking"
-                    category="fourWheeler"
-                    type="reserved"
-                    count={formData.fourWheeler.reserved}
-                    buttonColorClass="bg-cyan-500 hover:bg-cyan-600"
-                />
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Floor Map */}
@@ -522,11 +522,25 @@ export const AddSlotConfigurationPage = () => {
             <span className="ml-2 text-gray-500">
               {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
             </span>
+            
+            {/* Image Preview */}
+            {formData.floorMap && formData.floorMap.type.startsWith('image/') && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                <div className="w-32 h-32 bg-gray-100 rounded border overflow-hidden mx-auto">
+                  <img 
+                    src={URL.createObjectURL(formData.floorMap)} 
+                    alt="Floor map preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-4">
+        <div className="flex justify-center items-center gap-4">
           <Button
             onClick={handleSubmit}
             disabled={submitting || !formData.building_id || !formData.floor_id}

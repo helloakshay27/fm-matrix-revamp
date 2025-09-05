@@ -12,6 +12,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
+import { EnhancedSelectThemeProvider } from "./providers/GlobalSelectEnhancer";
+import "./utils/globalMUISelectSearchEnhancer"; // Auto-activates search in all MUI selects
+import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
@@ -692,6 +695,7 @@ import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
 import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
+import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 
 
 const queryClient = new QueryClient();
@@ -726,8 +730,9 @@ function App() {
     <Provider store={store}>
       <Router>
         <QueryClientProvider client={queryClient}>
-          <LayoutProvider>
-            <PermissionsProvider>
+          <EnhancedSelectThemeProvider>
+            <LayoutProvider>
+              <PermissionsProvider>
               <Routes>
                 {/* Login Route */}
                 <Route
@@ -968,6 +973,7 @@ function App() {
                   <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                   <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                   <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
+                  <Route path="/crm/customers/add" element={<AddCRMCustomerPage />} />
                   <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
                   <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
 
@@ -1952,7 +1958,7 @@ function App() {
                   />
 
                   {/* M Safe Routes */}
-    
+
                   <Route
                     path="/maintenance/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
@@ -2265,9 +2271,9 @@ function App() {
                     color: "#374151",
                   },
                 }}
-              />
-            </PermissionsProvider>
-          </LayoutProvider>
+              />              </PermissionsProvider>
+            </LayoutProvider>
+        </EnhancedSelectThemeProvider>
         </QueryClientProvider>
       </Router>
     </Provider>

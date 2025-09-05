@@ -716,12 +716,16 @@ export const WorkOrderAddPage: React.FC = () => {
                   fullWidth
                   variant="outlined"
                   multiline
-                  rows={4}
+                  rows={2}
                   InputLabelProps={{
                     shrink: true,
                   }}
                   sx={{
                     mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                    },
                   }}
                 />
               </div>

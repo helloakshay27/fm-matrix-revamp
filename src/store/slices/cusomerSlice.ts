@@ -36,8 +36,46 @@ export const getCustomerById = createAsyncThunk(
     }
 )
 
+export const createCustomer = createAsyncThunk(
+    "createCustomer",
+    async ({ baseUrl, token, data }: { baseUrl: string, token: string, data: any }, { rejectWithValue }) => {
+        try {
+            const response = await axios.post(`https://${baseUrl}/entities.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create customer'
+            return rejectWithValue(message)
+        }
+    }
+)
+
+export const editCustomer = createAsyncThunk(
+    "editCustomer",
+    async ({ baseUrl, token, data, id }: { baseUrl: string, token: string, data: any, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/entities/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create customer'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const getCustomerListSlice = createApiSlice("getCustomerList", getCustomerList);
 const getCustomerByIdSlice = createApiSlice("getCustomerById", getCustomerById);
+const createCustomerSlice = createApiSlice("createCustomer", createCustomer);
+const editCustomerSlice = createApiSlice("editCustomer", editCustomer);
 
 export const getCustomerListReducer = getCustomerListSlice.reducer
 export const getCustomerByIdReducer = getCustomerByIdSlice.reducer
+export const createCustomerReducer = createCustomerSlice.reducer
+export const editCustomerReducer = editCustomerSlice.reducer
