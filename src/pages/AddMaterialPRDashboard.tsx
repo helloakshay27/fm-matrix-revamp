@@ -915,7 +915,6 @@ export const AddMaterialPRDashboard = () => {
                   <input
                     type="file"
                     multiple
-                    accept="image/*"
                     onChange={handleFileChange}
                     className="hidden"
                     id="file-upload"
