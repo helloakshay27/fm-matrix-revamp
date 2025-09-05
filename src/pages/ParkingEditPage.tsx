@@ -227,12 +227,32 @@ export const ParkingEditPage = () => {
     }
   };
 
-  // This is the handler for the "Submit Parking" button inside the modal
-  const handleSubmitParkingSelection = async () => {
+  // This is the handler for the "Confirm Slots" button inside the modal
+  const handleConfirmSlots = () => {
     // Validate that at least one slot is selected
     const totalSelectedSlots = selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length;
     if (totalSelectedSlots === 0) {
       toast.error('Please select at least one parking slot');
+      return;
+    }
+
+    // Just close the modal and stay on the page
+    setShowParkingSelector(false);
+    toast.success(`${totalSelectedSlots} parking slot(s) selected successfully`);
+  };
+
+  // This is the handler for the final "Submit Parking" button
+  const handleFinalSubmit = async () => {
+    // Validate that slots have been selected
+    const totalSelectedSlots = selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length;
+    if (totalSelectedSlots === 0) {
+      toast.error('Please select parking slots first');
+      return;
+    }
+
+    // Validate that all required fields are filled
+    if (!building || !floor || !parkingSlot || !clientName || !leaser) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
@@ -279,7 +299,6 @@ export const ParkingEditPage = () => {
       
       if (response.status === 'success') {
         toast.success(response.message || 'Parking booking updated successfully');
-        setShowParkingSelector(false); // Close the modal
         
         // Navigate back to parking details or main parking page
         if (clientId) {
@@ -497,6 +516,59 @@ export const ParkingEditPage = () => {
               </div>
             </div>
 
+            {/* Selected Parking Slots Display */}
+            {(selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Selected Parking Slots</h3>
+                
+                <div className="space-y-4">
+                  {selectedTwoWheelerSlots.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                        <Bike className="w-4 h-4" />
+                        Two Wheeler Slots ({selectedTwoWheelerSlots.length})
+                      </h4>
+                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+                        {selectedTwoWheelerSlots.map(slotId => {
+                          const slot = parkingCategories
+                            .find(cat => cat.parking_category === '2 Wheeler')
+                            ?.parking_slots.find(s => s.id.toString() === slotId);
+                          return (
+                            <div key={slotId} className="flex flex-col items-center justify-center p-2 rounded-md border bg-green-100 border-green-300">
+                              <Bike className="w-6 h-6 mb-1 text-green-600" />
+                              <span className="text-xs font-medium text-green-800">{slot?.name || slotId}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedFourWheelerSlots.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                        <Car className="w-4 h-4" />
+                        Four Wheeler Slots ({selectedFourWheelerSlots.length})
+                      </h4>
+                      <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+                        {selectedFourWheelerSlots.map(slotId => {
+                          const slot = parkingCategories
+                            .find(cat => cat.parking_category === '4 Wheeler')
+                            ?.parking_slots.find(s => s.id.toString() === slotId);
+                          return (
+                            <div key={slotId} className="flex flex-col items-center justify-center p-2 rounded-md border bg-green-100 border-green-300">
+                              <Car className="w-6 h-6 mb-1 text-green-600" />
+                              <span className="text-xs font-medium text-green-800">{slot?.name || slotId}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Bottom Action Buttons (These will now submit the entire form) */}
             <div className="flex justify-center gap-4 pt-6">
               <Button 
@@ -508,10 +580,11 @@ export const ParkingEditPage = () => {
               </Button>
               {/* This button will trigger the final submission AFTER the parking slots are selected */}
               <Button 
-                onClick={handleSubmitParkingSelection} 
+                onClick={handleFinalSubmit} 
+                disabled={loadingSubmit}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-12 py-3"
               >
-                Submit Parking
+                {loadingSubmit ? 'Submitting...' : 'Submit Parking'}
               </Button>
             </div>
           </div>
@@ -543,9 +616,19 @@ export const ParkingEditPage = () => {
                       ? selectedTwoWheelerSlots.includes(slotId)
                       : selectedFourWheelerSlots.includes(slotId);
                     const isAvailable = slot.status === 'available';
+                    const isBooked = slot.status === 'booked';
+                    const entityColor = slot.booking_details?.entity_color;
                     
                     let slotClass = "flex flex-col items-center justify-center p-2 rounded-md border cursor-pointer";
-                    if (!isAvailable) {
+                    const slotStyle: React.CSSProperties = {};
+                    
+                    if (isBooked && entityColor) {
+                      // Use entity color for booked slots
+                      slotClass += " text-white border-opacity-80 cursor-not-allowed";
+                      slotStyle.backgroundColor = entityColor;
+                      slotStyle.borderColor = entityColor;
+                    } else if (!isAvailable) {
+                      // Fallback red color for unavailable slots without entity color
                       slotClass += " bg-red-600 text-white border-red-600 cursor-not-allowed";
                     } else if (isSelected) {
                       slotClass += " bg-green-500 text-white border-green-500";
@@ -557,7 +640,14 @@ export const ParkingEditPage = () => {
                       <div 
                         key={slot.id} 
                         className={slotClass}
+                        style={slotStyle}
                         onClick={() => handleSlotClick(slotId, category.parking_category as '2 Wheeler' | '4 Wheeler', slot.status)}
+                        title={isBooked && slot.booking_details ? 
+                          `Booked by: ${slot.booking_details.entity_name}` : 
+                          slot.reserved ? 'Reserved slot' : 
+                          slot.stacked ? 'Stacked parking' : 
+                          'Available slot'
+                        }
                       >
                         {category.parking_category === '2 Wheeler' ? (
                           <Bike className="w-8 h-8 mb-1" />
@@ -565,6 +655,17 @@ export const ParkingEditPage = () => {
                           <Car className="w-8 h-8 mb-1" />
                         )}
                         <span className="text-xs font-medium">{slot.name}</span>
+                        {slot.stacked && (
+                          <span className="text-xs opacity-75">Stacked</span>
+                        )}
+                        {slot.reserved && (
+                          <span className="text-xs opacity-75">Reserved</span>
+                        )}
+                        {isBooked && slot.booking_details && (
+                          <span className="text-xs opacity-90 text-center leading-tight">
+                            {slot.booking_details.entity_name}
+                          </span>
+                        )}
                       </div>
                     );
                   })}
@@ -573,15 +674,14 @@ export const ParkingEditPage = () => {
             ))}
           </div>
           <DialogFooter className="p-6 pt-0">
-            <Button variant="outline" onClick={() => setShowParkingSelector(false)} disabled={loadingSubmit}>
+            <Button variant="outline" onClick={() => setShowParkingSelector(false)}>
               Cancel
             </Button>
             <Button 
-              onClick={handleSubmitParkingSelection} 
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white" 
-              disabled={loadingSubmit}
+              onClick={handleConfirmSlots} 
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
             >
-              {loadingSubmit ? 'Updating...' : 'Confirm Slots'}
+              Confirm Slots
             </Button>
           </DialogFooter>
         </DialogContent>

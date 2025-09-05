@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -123,10 +123,22 @@ interface CommentLog {
     updated_at: string;
 }
 
+interface PermitExtend {
+    id: number;
+    reason_for_extension: string;
+    extension_date: string;
+    created_by: {
+        full_name: string;
+    };
+    assignees: string;
+    attachments_count: number;
+    extend_approval_levels: ApprovalLevel[];
+}
+
 interface PermitDetailsResponse {
     permit: Permit;
     approval_levels: ApprovalLevel[];
-    permit_extends: any[];
+    permit_extends: PermitExtend[];
     permit_resume: any[];
     permit_closure: PermitClosure;
     activity_details: any[];
@@ -208,11 +220,11 @@ export const PermitDetails = () => {
     const [extendReason, setExtendReason] = useState("");
     const [extendDate, setExtendDate] = useState("");
     const [extendAttachments, setExtendAttachments] = useState<FileList | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
     const userId = searchParams.get('user_id');
-    const invoiceApprovalHistoryId = searchParams.get('invoice_approval_history_id');
     const isApprovalPage = searchParams.get('type') === 'approval';
     const showApprovalButtons = levelId && userId && isApprovalPage;
 
@@ -314,11 +326,6 @@ export const PermitDetails = () => {
             return;
         }
 
-        if (!invoiceApprovalHistoryId) {
-            toast.error('Invoice approval history ID is required for rejection');
-            return;
-        }
-
         setIsRejecting(true);
         try {
             let baseUrl = localStorage.getItem('baseUrl');
@@ -338,7 +345,7 @@ export const PermitDetails = () => {
             const formData = new URLSearchParams();
             formData.append('rejection_reason', rejectComment.trim());
 
-            const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?invoice_approval_history_id=${invoiceApprovalHistoryId}&user_id=${userId}`, {
+            const response = await fetch(`${baseUrl}/pms/permits/${id}/update_rejection_reason.json?user_id=${userId}`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -429,6 +436,9 @@ export const PermitDetails = () => {
             setExtendReason("");
             setExtendDate("");
             setExtendAttachments(null);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
 
             // Refresh permit details to show updated information
             const updatedData = await fetchPermitDetails(id);
@@ -892,20 +902,72 @@ export const PermitDetails = () => {
                 {/* Permit Extensions Section */}
                 {permitData.permit_extends && permitData.permit_extends.length > 0 && (
                     <Section title="PERMIT EXTENSIONS" icon={<Clock />} sectionKey="extensions">
-                        <div className="space-y-3">
-                            {permitData.permit_extends.map((extension: any, index: number) => (
-                                <div key={index} className="p-4 bg-gray-50 rounded-lg">
-                                    <h4 className="font-medium text-gray-900 mb-2">Extension {index + 1}</h4>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                        <div className="space-y-4">
+                            {permitData.permit_extends.map((extension: PermitExtend, index: number) => (
+                                <div key={extension.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex justify-between items-start mb-4">
+                                        <h4 className="font-medium text-gray-900">Extension #{extension.id}</h4>
+                                        <Badge className={`${extension.extend_approval_levels?.[0]?.status === 'Approved'
+                                                ? 'bg-green-100 text-green-800'
+                                                : extension.extend_approval_levels?.[0]?.status === 'Rejected'
+                                                    ? 'bg-red-100 text-red-800'
+                                                    : 'bg-yellow-100 text-yellow-800'
+                                            }`}>
+                                            {extension.extend_approval_levels?.[0]?.status || 'Pending'}
+                                        </Badge>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                                         <div>
-                                            <span className="text-gray-600">Date: </span>
-                                            <span className="text-gray-900">{formatDate(extension.date) || "N/A"}</span>
+                                            <span className="font-medium text-gray-700">Reason:</span>
+                                            <p className="text-gray-900 mt-1">{extension.reason_for_extension || '-'}</p>
                                         </div>
                                         <div>
-                                            <span className="text-gray-600">Status: </span>
-                                            <span className="text-gray-900">{extension.status || "N/A"}</span>
+                                            <span className="font-medium text-gray-700">Extension Date:</span>
+                                            <p className="text-gray-900 mt-1">{formatDate(extension.extension_date)}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Created By:</span>
+                                            <p className="text-gray-900 mt-1">{extension.created_by?.full_name || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Assignees:</span>
+                                            <p className="text-gray-900 mt-1">{extension.assignees || '-'}</p>
+                                        </div>
+                                        <div>
+                                            <span className="font-medium text-gray-700">Attachments:</span>
+                                            <p className="text-gray-900 mt-1">{extension.attachments_count || 0}</p>
                                         </div>
                                     </div>
+
+                                    {/* Extension Approval Levels */}
+                                    {extension.extend_approval_levels && extension.extend_approval_levels.length > 0 && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <h5 className="font-medium text-gray-700 mb-2">Approval Levels:</h5>
+                                            <div className="space-y-2">
+                                                {extension.extend_approval_levels.map((level: any, levelIndex: number) => (
+                                                    <div key={levelIndex} className="flex items-center justify-between p-2 bg-white rounded border">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="text-sm font-medium">{level.name}</span>
+                                                            <Badge className={getStatusColor(level.status)}>
+                                                                {level.status}
+                                                            </Badge>
+                                                        </div>
+                                                        {level.updated_by && (
+                                                            <div className="text-xs text-gray-500">
+                                                                {level.updated_by}
+                                                                {level.status_updated_at && (
+                                                                    <span className="ml-1">
+                                                                        ({formatDateOnly(level.status_updated_at)})
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>
@@ -1159,6 +1221,7 @@ export const PermitDetails = () => {
                                             <Upload className="w-4 h-4" />
                                             Choose files
                                             <input
+                                                ref={fileInputRef}
                                                 type="file"
                                                 className="hidden"
                                                 multiple

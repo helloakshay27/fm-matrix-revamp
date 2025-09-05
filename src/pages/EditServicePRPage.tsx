@@ -24,7 +24,7 @@ import {
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createServicePR, editServicePR, getServices } from "@/store/slices/servicePRSlice";
+import { editServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 
 const fieldStyles = {
@@ -79,7 +79,7 @@ export const EditServicePRPage = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: new Date().toISOString().split("T")[0],
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -162,10 +162,16 @@ export const EditServicePRPage = () => {
       try {
         const response = await dispatch(getWorkOrderById({ baseUrl, token, id: id })).unwrap();
         const data = response.page;
+        setWbsSelection(
+          data.inventories?.every(item => item.wbs_code !== null)
+            ? "individual"
+            : "overall"
+        );
+
         setFormData({
           contractor: data.pms_supplier_id,
           plantDetail: data.work_order.plant_detail_id,
-          woDate: data.work_order.wo_date,
+          woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
           billingAddress: data.work_order.billing_address_id,
           retention: data.work_order?.payment_terms?.retention,
           tds: data.work_order?.payment_terms?.tds,
@@ -186,7 +192,7 @@ export const EditServicePRPage = () => {
             productDescription: item.product_description,
             quantityArea: item.quantity,
             uom: item.unit,
-            expectedDate: item.expected_date,
+            expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             rate: item.rate,
             cgstRate: item.cgst_rate,
             cgstAmt: item.cgst_amount,
@@ -307,7 +313,7 @@ export const EditServicePRPage = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: new Date().toISOString().split("T")[0],
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -441,7 +447,7 @@ export const EditServicePRPage = () => {
           prod_desc: item.productDescription,
           quantity: item.quantityArea,
           unit: item.uom,
-          expected_date: item.expectedDate,
+          expected_date: item.expectedDate ? item.expectedDate.split("T")[0] : "",
           rate: item.rate,
           cgst_rate: item.cgstRate,
           cgst_amount: item.cgstAmt,
@@ -539,11 +545,7 @@ export const EditServicePRPage = () => {
 
               <TextField
                 label="Select WO Date*"
-                value={
-                  formData.woDate instanceof Date
-                    ? formData.woDate.toISOString().split("T")[0]
-                    : ""
-                }
+                value={formData.woDate}
                 onChange={(e) =>
                   handleInputChange("woDate", new Date(e.target.value))
                 }
@@ -819,11 +821,7 @@ export const EditServicePRPage = () => {
 
                   <TextField
                     label="Expected Date*"
-                    value={
-                      detailsData.expectedDate instanceof Date
-                        ? detailsData.expectedDate.toISOString().split("T")[0]
-                        : ""
-                    }
+                    value={detailsData.expectedDate}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,

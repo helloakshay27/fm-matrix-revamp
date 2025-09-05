@@ -1,11 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from "@mui/material";
-import { SelectChangeEvent } from '@mui/material/Select';
 import { X } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
+import { 
+  fetchCommodities, 
+  fetchCategories, 
+  fetchOperationalLandlords,
+  Commodity,
+  Category,
+  OperationalLandlord,
+  WasteGenerationFilters
+} from '@/services/wasteGenerationAPI';
 
 interface Filters {
   commodity: string;
@@ -17,9 +25,16 @@ interface Filters {
 interface WasteGenerationFilterDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onApplyFilters: (filters: WasteGenerationFilters) => void;
+  onExport: (filters: WasteGenerationFilters) => void;
 }
 
-export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogProps> = ({ isOpen, onClose }) => {
+export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogProps> = ({ 
+  isOpen, 
+  onClose, 
+  onApplyFilters, 
+  onExport 
+}) => {
   const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     commodity: '',
@@ -28,16 +43,88 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
     dateRange: ''
   });
 
-  const handleSelectChange = (field: keyof Filters) => (event: SelectChangeEvent<string>) => {
-    setFilters(prev => ({ ...prev, [field]: event.target.value }));
+  // API data state
+  const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [operationalLandlords, setOperationalLandlords] = useState<OperationalLandlord[]>([]);
+
+  // Loading states
+  const [loadingCommodities, setLoadingCommodities] = useState(false);
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingOperationalLandlords, setLoadingOperationalLandlords] = useState(false);
+
+  // Fetch all dropdown data when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchAllDropdowns();
+    }
+  }, [isOpen]);
+
+  const fetchAllDropdowns = async () => {
+    // Fetch commodities
+    setLoadingCommodities(true);
+    try {
+      const commoditiesData = await fetchCommodities();
+      console.log('Fetched commodities:', commoditiesData);
+      setCommodities(Array.isArray(commoditiesData) ? commoditiesData : []);
+    } catch (error) {
+      console.error('Error fetching commodities:', error);
+      setCommodities([]);
+    } finally {
+      setLoadingCommodities(false);
+    }
+
+    // Fetch categories
+    setLoadingCategories(true);
+    try {
+      const categoriesData = await fetchCategories();
+      console.log('Fetched categories:', categoriesData);
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+      setCategories([]);
+    } finally {
+      setLoadingCategories(false);
+    }
+
+    // Fetch operational landlords
+    setLoadingOperationalLandlords(true);
+    try {
+      const operationalLandlordsData = await fetchOperationalLandlords();
+      console.log('Fetched operational landlords:', operationalLandlordsData);
+      setOperationalLandlords(Array.isArray(operationalLandlordsData) ? operationalLandlordsData : []);
+    } catch (error) {
+      console.error('Error fetching operational landlords:', error);
+      setOperationalLandlords([]);
+    } finally {
+      setLoadingOperationalLandlords(false);
+    }
   };
 
-  const handleInputChange = (field: keyof Filters) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setFilters(prev => ({ ...prev, [field]: event.target.value }));
+  const handleInputChange = (field: keyof Filters, value: string) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
   };
 
   const handleSubmit = () => {
     console.log('Applying filters:', filters);
+    
+    // Convert internal filter format to API format
+    const apiFilters: WasteGenerationFilters = {
+      commodity_id_eq: filters.commodity || undefined,
+      category_id_eq: filters.category || undefined,
+      operational_landlord_id_in: filters.operationalName || undefined,
+      date_range: filters.dateRange || undefined,
+    };
+    
+    // Remove undefined values
+    Object.keys(apiFilters).forEach(key => 
+      apiFilters[key as keyof WasteGenerationFilters] === undefined && 
+      delete apiFilters[key as keyof WasteGenerationFilters]
+    );
+    
+    console.log('API filters:', apiFilters);
+    onApplyFilters(apiFilters);
+    
     toast({
       title: 'Success',
       description: 'Filters applied successfully!',
@@ -47,6 +134,23 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
 
   const handleExport = () => {
     console.log('Exporting filtered data');
+    
+    // Convert internal filter format to API format
+    const apiFilters: WasteGenerationFilters = {
+      commodity_id_eq: filters.commodity || undefined,
+      category_id_eq: filters.category || undefined,
+      operational_landlord_id_in: filters.operationalName || undefined,
+      date_range: filters.dateRange || undefined,
+    };
+    
+    // Remove undefined values
+    Object.keys(apiFilters).forEach(key => 
+      apiFilters[key as keyof WasteGenerationFilters] === undefined && 
+      delete apiFilters[key as keyof WasteGenerationFilters]
+    );
+    
+    onExport(apiFilters);
+    
     toast({
       title: 'Success',
       description: 'Data exported successfully!',
@@ -64,9 +168,17 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
   };
 
   const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    '& .MuiInputBase-input, & .MuiSelect-select': {
-      padding: { xs: '8px', sm: '10px', md: '12px' },
+    height: "45px",
+    backgroundColor: "#fff",
+    borderRadius: "4px",
+    "& .MuiOutlinedInput-root": {
+      height: "45px",
+      "& fieldset": { borderColor: "#999" },
+      "&:hover fieldset": { borderColor: "#1976d2" },
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+    },
+    "& .MuiInputLabel-root": {
+      "&.Mui-focused": { color: "#1976d2" },
     },
   };
 
@@ -89,79 +201,97 @@ export const WasteGenerationFilterDialog: React.FC<WasteGenerationFilterDialogPr
         
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="commodity-select-label" shrink>Commodity/Source</InputLabel>
-                <MuiSelect
-                  labelId="commodity-select-label"
-                  label="Commodity/Source"
-                  value={filters.commodity}
-                  onChange={handleSelectChange('commodity')}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Commodity</em></MenuItem>
-                  <MenuItem value="paper">Paper</MenuItem>
-                  <MenuItem value="plastic">Plastic</MenuItem>
-                  <MenuItem value="metal">Metal</MenuItem>
-                  <MenuItem value="organic">Organic</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            >
+              <InputLabel shrink>Commodity/Source</InputLabel>
+              <MuiSelect
+                value={filters.commodity}
+                onChange={(e) => handleInputChange('commodity', e.target.value)}
+                label="Commodity/Source"
+                notched
+                displayEmpty
+                disabled={loadingCommodities}
+              >
+                <MenuItem value="">
+                  {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
+                </MenuItem>
+                {Array.isArray(commodities) && commodities.map((commodity) => (
+                  <MenuItem key={commodity.id} value={commodity.id.toString()}>
+                    {commodity.category_name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="category-select-label" shrink>Category</InputLabel>
-                <MuiSelect
-                  labelId="category-select-label"
-                  label="Category"
-                  value={filters.category}
-                  onChange={handleSelectChange('category')}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Category</em></MenuItem>
-                  <MenuItem value="recyclable">Recyclable</MenuItem>
-                  <MenuItem value="non-recyclable">Non-Recyclable</MenuItem>
-                  <MenuItem value="hazardous">Hazardous</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            >
+              <InputLabel shrink>Category</InputLabel>
+              <MuiSelect
+                value={filters.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+                label="Category"
+                notched
+                displayEmpty
+                disabled={loadingCategories}
+              >
+                <MenuItem value="">
+                  {loadingCategories ? 'Loading categories...' : 'Select Category'}
+                </MenuItem>
+                {Array.isArray(categories) && categories.map((category) => (
+                  <MenuItem key={category.id} value={category.id.toString()}>
+                    {category.category_name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel id="operational-name-select-label" shrink>Operational Name</InputLabel>
-                <MuiSelect
-                  labelId="operational-name-select-label"
-                  label="Operational Name"
-                  value={filters.operationalName}
-                  onChange={handleSelectChange('operationalName')}
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value=""><em>Select Operational Name</em></MenuItem>
-                  <MenuItem value="abc-corp">ABC Corp</MenuItem>
-                  <MenuItem value="xyz-inc">XYZ Inc</MenuItem>
-                  <MenuItem value="def-ltd">DEF Ltd</MenuItem>
-                </MuiSelect>
-              </FormControl>
-            </div>
+            <FormControl
+              fullWidth
+              variant="outlined"
+              sx={fieldStyles}
+            >
+              <InputLabel shrink>Operational Name</InputLabel>
+              <MuiSelect
+                value={filters.operationalName}
+                onChange={(e) => handleInputChange('operationalName', e.target.value)}
+                label="Operational Name"
+                notched
+                displayEmpty
+                disabled={loadingOperationalLandlords}
+              >
+                <MenuItem value="">
+                  {loadingOperationalLandlords ? 'Loading operational names...' : 'Select Operational Name'}
+                </MenuItem>
+                {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
+                  <MenuItem key={landlord.id} value={landlord.id.toString()}>
+                    {landlord.category_name}
+                  </MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
 
-            <div className="space-y-2">
-              <TextField
-                label="Date Range"
-                type="date"
-                value={filters.dateRange}
-                onChange={handleInputChange('dateRange')}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-            </div>
+            <TextField
+              label="Date Range"
+              type="date"
+              value={filters.dateRange}
+              onChange={(e) => handleInputChange('dateRange', e.target.value)}
+              fullWidth
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              sx={fieldStyles}
+            />
           </div>
 
           <div className="flex justify-center gap-4 pt-6">

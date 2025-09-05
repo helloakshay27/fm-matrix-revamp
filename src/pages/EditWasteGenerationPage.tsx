@@ -28,25 +28,23 @@ import { toast } from 'sonner';
 
 // Field styles for Material-UI components
 const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
-    },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: "45px",
+    "& fieldset": { borderColor: "#999" },
+    "&:hover fieldset": { borderColor: "#1976d2" },
+    "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+  },
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": { color: "#1976d2" },
+    "& .MuiInputLabel-asterisk": {
+      color: "#C72030 !important",
     },
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
+  "& .MuiFormLabel-asterisk": {
+    color: "#C72030 !important",
   },
 };
 
@@ -124,7 +122,7 @@ const EditWasteGenerationPage = () => {
           agencyName: existingData.agency_name || '',
           generatedUnit: existingData.waste_unit?.toString() || '',
           recycledUnit: existingData.recycled_unit?.toString() || '0',
-          uom: '', // Not available in current API response
+          uom: 'KG', // Not available in current API response
           typeOfWaste: '' // Not available in current API response
         });
         
@@ -275,7 +273,7 @@ const EditWasteGenerationPage = () => {
   const handleUpdate = async () => {
     if (!id) return;
     
-    if (!formData.building || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
+    if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
       reactToast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -312,7 +310,7 @@ const EditWasteGenerationPage = () => {
       
       toast.success('Waste generation updated successfully!');
       
-      // Navigate back to details page or list page
+      // Navigate back to details page
       navigate(`/maintenance/waste/generation/${id}`);
       
     } catch (error) {
@@ -347,289 +345,354 @@ const EditWasteGenerationPage = () => {
   }
 
   return (
-    <div className="p-6 bg-white min-h-screen">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+      <div className="mb-8">
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <button onClick={handleBack} className="flex items-center gap-1 hover:text-[#C72030] transition-colors">
             <ArrowLeft className="w-4 h-4" />
             <span className="font-bold text-[#1a1a1a]">Back to Details</span>
           </button>
         </div>
-        
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-[#1a1a1a]">Edit Waste Generation - #{id}</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">EDIT WASTE GENERATION</h1>
       </div>
 
-      {/* Form */}
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Building */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Building *</InputLabel>
-            <MuiSelect
-              value={formData.building}
-              label="Building *"
-              onChange={(e) => handleInputChange('building', e.target.value)}
-              sx={fieldStyles}
-              disabled={loadingBuildings}
-            >
-              {loadingBuildings ? (
-                <MenuItem disabled>Loading buildings...</MenuItem>
-              ) : buildings.length === 0 ? (
-                <MenuItem disabled>No buildings available</MenuItem>
-              ) : (
-                buildings.map((building) => (
-                  <MenuItem key={building.id} value={building.id.toString()}>
-                    {building.name}
+      <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }} className="space-y-6">
+        {/* Waste Generation Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <Recycle size={16} color="#C72030" />
+              </span>
+              WASTE GENERATION DETAILS
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            {/* Location Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Building <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.building}
+                  onChange={(e) => handleInputChange('building', e.target.value)}
+                  label="Building*"
+                  notched
+                  displayEmpty
+                  disabled={loadingBuildings}
+                >
+                  <MenuItem value="">
+                    {loadingBuildings ? 'Loading buildings...' : 'Select Building'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
-
-          {/* Wing */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Wing</InputLabel>
-            <MuiSelect
-              value={formData.wing}
-              label="Wing"
-              onChange={(e) => handleInputChange('wing', e.target.value)}
-              sx={fieldStyles}
-              disabled={!formData.building || loadingWings}
-            >
-              <MenuItem value="">
-                <em>Select Wing</em>
-              </MenuItem>
-              {loadingWings ? (
-                <MenuItem disabled>Loading wings...</MenuItem>
-              ) : wings.length === 0 ? (
-                <MenuItem disabled>No wings available</MenuItem>
-              ) : (
-                wings.map((wing) => (
-                  <MenuItem key={wing.id} value={wing.id.toString()}>
-                    {wing.name}
+                  {Array.isArray(buildings) && buildings.map((building) => (
+                    <MenuItem key={building.id} value={building.id.toString()}>
+                      {building.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Wing</InputLabel>
+                <MuiSelect
+                  value={formData.wing}
+                  onChange={(e) => handleInputChange('wing', e.target.value)}
+                  label="Wing"
+                  notched
+                  displayEmpty
+                  disabled={loadingWings || !formData.building}
+                >
+                  <MenuItem value="">
+                    {loadingWings ? 'Loading wings...' : 
+                     !formData.building ? 'Select Building First' : 
+                     'Select Wing (Optional)'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
-
-          {/* Area */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Area</InputLabel>
-            <MuiSelect
-              value={formData.area}
-              label="Area"
-              onChange={(e) => handleInputChange('area', e.target.value)}
-              sx={fieldStyles}
-              disabled={!formData.wing || loadingAreas}
-            >
-              <MenuItem value="">
-                <em>Select Area</em>
-              </MenuItem>
-              {loadingAreas ? (
-                <MenuItem disabled>Loading areas...</MenuItem>
-              ) : areas.length === 0 ? (
-                <MenuItem disabled>No areas available</MenuItem>
-              ) : (
-                areas.map((area) => (
-                  <MenuItem key={area.id} value={area.id.toString()}>
-                    {area.name}
+                  {Array.isArray(wings) && wings.map((wing) => (
+                    <MenuItem key={wing.id} value={wing.id.toString()}>
+                      {wing.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Area</InputLabel>
+                <MuiSelect
+                  value={formData.area}
+                  onChange={(e) => handleInputChange('area', e.target.value)}
+                  label="Area"
+                  notched
+                  displayEmpty
+                  disabled={loadingAreas || !formData.wing}
+                >
+                  <MenuItem value="">
+                    {loadingAreas ? 'Loading areas...' : 
+                     !formData.wing ? 'Select Wing First' : 
+                     'Select Area (Optional)'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
+                  {Array.isArray(areas) && areas.map((area) => (
+                    <MenuItem key={area.id} value={area.id.toString()}>
+                      {area.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <TextField
+                label="Date*"
+                type="date"
+                value={formData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+            </div>
 
-          {/* Date */}
-          <TextField
-            label="Date *"
-            type="date"
-            value={formData.date}
-            onChange={(e) => handleInputChange('date', e.target.value)}
-            size="small"
-            fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-            sx={fieldStyles}
-          />
-
-          {/* Vendor */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Vendor</InputLabel>
-            <MuiSelect
-              value={formData.vendor}
-              label="Vendor"
-              onChange={(e) => handleInputChange('vendor', e.target.value)}
-              sx={fieldStyles}
-              disabled={loadingVendors}
-            >
-              <MenuItem value="">
-                <em>Select Vendor</em>
-              </MenuItem>
-              {loadingVendors ? (
-                <MenuItem disabled>Loading vendors...</MenuItem>
-              ) : vendors.length === 0 ? (
-                <MenuItem disabled>No vendors available</MenuItem>
-              ) : (
-                vendors.map((vendor) => (
-                  <MenuItem key={vendor.id} value={vendor.id.toString()}>
-                    {vendor.company_name || vendor.full_name}
+            {/* Waste Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Vendor <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.vendor}
+                  onChange={(e) => handleInputChange('vendor', e.target.value)}
+                  label="Vendor*"
+                  notched
+                  displayEmpty
+                  disabled={loadingVendors}
+                >
+                  <MenuItem value="">
+                    {loadingVendors ? 'Loading vendors...' : 'Select Vendor'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
-
-          {/* Commodity/Source */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Commodity/Source *</InputLabel>
-            <MuiSelect
-              value={formData.commodity}
-              label="Commodity/Source *"
-              onChange={(e) => handleInputChange('commodity', e.target.value)}
-              sx={fieldStyles}
-              disabled={loadingCommodities}
-            >
-              {loadingCommodities ? (
-                <MenuItem disabled>Loading commodities...</MenuItem>
-              ) : commodities.length === 0 ? (
-                <MenuItem disabled>No commodities available</MenuItem>
-              ) : (
-                commodities.map((commodity) => (
-                  <MenuItem key={commodity.id} value={commodity.id.toString()}>
-                    {commodity.category_name}
+                  {Array.isArray(vendors) && vendors.map((vendor) => (
+                    <MenuItem key={vendor.id} value={vendor.id.toString()}>
+                      {vendor.company_name || vendor.full_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Commodity <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.commodity}
+                  onChange={(e) => handleInputChange('commodity', e.target.value)}
+                  label="Commodity*"
+                  notched
+                  displayEmpty
+                  disabled={loadingCommodities}
+                >
+                  <MenuItem value="">
+                    {loadingCommodities ? 'Loading commodities...' : 'Select Commodity'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
-
-          {/* Category */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Category *</InputLabel>
-            <MuiSelect
-              value={formData.category}
-              label="Category *"
-              onChange={(e) => handleInputChange('category', e.target.value)}
-              sx={fieldStyles}
-              disabled={loadingCategories}
-            >
-              {loadingCategories ? (
-                <MenuItem disabled>Loading categories...</MenuItem>
-              ) : categories.length === 0 ? (
-                <MenuItem disabled>No categories available</MenuItem>
-              ) : (
-                categories.map((category) => (
-                  <MenuItem key={category.id} value={category.id.toString()}>
-                    {category.category_name}
+                  {Array.isArray(commodities) && commodities.map((commodity) => (
+                    <MenuItem key={commodity.id} value={commodity.id.toString()}>
+                      {commodity.category_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Category <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.category}
+                  onChange={(e) => handleInputChange('category', e.target.value)}
+                  label="Category*"
+                  notched
+                  displayEmpty
+                  disabled={loadingCategories}
+                >
+                  <MenuItem value="">
+                    {loadingCategories ? 'Loading categories...' : 'Select Category'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
+                  {Array.isArray(categories) && categories.map((category) => (
+                    <MenuItem key={category.id} value={category.id.toString()}>
+                      {category.category_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              <TextField
+                fullWidth
+                label="UoM"
+                variant="outlined"
+                value={formData.uom}
+                onChange={(e) => handleInputChange('uom', e.target.value)}
+                placeholder="Enter UoM"
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+                InputLabelProps={{ shrink: true }}
+              />
+            </div>
 
-          {/* Operational Name */}
-          <FormControl fullWidth size="small">
-            <InputLabel>Operational Name *</InputLabel>
-            <MuiSelect
-              value={formData.operationalName}
-              label="Operational Name *"
-              onChange={(e) => handleInputChange('operationalName', e.target.value)}
-              sx={fieldStyles}
-              disabled={loadingOperationalLandlords}
-            >
-              {loadingOperationalLandlords ? (
-                <MenuItem disabled>Loading operational names...</MenuItem>
-              ) : operationalLandlords.length === 0 ? (
-                <MenuItem disabled>No operational names available</MenuItem>
-              ) : (
-                operationalLandlords.map((landlord) => (
-                  <MenuItem key={landlord.id} value={landlord.id.toString()}>
-                    {landlord.category_name}
+            {/* Additional Waste Details */}
+            <div className="">
+              
+              
+              {/* <TextField
+                fullWidth
+                label="Type of Waste"
+                variant="outlined"
+                value={formData.typeOfWaste}
+                onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
+                placeholder="Enter type of waste"
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                InputLabelProps={{ shrink: true }}
+              /> */}
+            </div>
+
+            {/* Organization Details Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
+              >
+                <InputLabel shrink>Operational Name of Landlord/ Tenant <span className="text-red-500">*</span></InputLabel>
+                <MuiSelect
+                  value={formData.operationalName}
+                  onChange={(e) => handleInputChange('operationalName', e.target.value)}
+                  label="Operational Name of Landlord/ Tenant*"
+                  notched
+                  displayEmpty
+                  disabled={loadingOperationalLandlords}
+                >
+                  <MenuItem value="">
+                    {loadingOperationalLandlords ? 'Loading...' : 'Select Operational Name'}
                   </MenuItem>
-                ))
-              )}
-            </MuiSelect>
-          </FormControl>
-
-          {/* Agency Name */}
-          <TextField
-            label="Agency Name"
-            value={formData.agencyName}
-            onChange={(e) => handleInputChange('agencyName', e.target.value)}
-            size="small"
-            fullWidth
-            sx={fieldStyles}
-          />
-
-          {/* Generated Unit */}
-          <TextField
-            label="Generated Unit (KG) *"
-            type="number"
-            value={formData.generatedUnit}
-            onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
-            size="small"
-            fullWidth
-            sx={fieldStyles}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-
-          {/* Recycled Unit */}
-          <TextField
-            label="Recycled Unit (KG)"
-            type="number"
-            value={formData.recycledUnit}
-            onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
-            size="small"
-            fullWidth
-            sx={fieldStyles}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
-
-          {/* UOM */}
-          <TextField
-            label="Unit of Measurement"
-            value={formData.uom}
-            onChange={(e) => handleInputChange('uom', e.target.value)}
-            size="small"
-            fullWidth
-            sx={fieldStyles}
-          />
-
-          {/* Type of Waste */}
-          <TextField
-            label="Type of Waste"
-            value={formData.typeOfWaste}
-            onChange={(e) => handleInputChange('typeOfWaste', e.target.value)}
-            size="small"
-            fullWidth
-            sx={fieldStyles}
-          />
+                  {Array.isArray(operationalLandlords) && operationalLandlords.map((landlord) => (
+                    <MenuItem key={landlord.id} value={landlord.id.toString()}>
+                      {landlord.category_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+              
+              <TextField
+                label="Agency Name"
+                placeholder="Enter Agency Name"
+                value={formData.agencyName}
+                onChange={(e) => handleInputChange('agencyName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx={fieldStyles}
+              />
+              
+              <TextField
+                // label="Generated Unit"
+                label={<span>Generated Unit <span className="text-red-500">*</span></span>}
+                type="number"
+                placeholder="Enter Unit"
+                value={formData.generatedUnit}
+                onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
+                fullWidth
+                // required
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx={fieldStyles}
+              />
+              
+              <TextField
+                label="Recycled Unit"
+                type="number"
+                placeholder="0"
+                value={formData.recycledUnit}
+                onChange={(e) => handleInputChange('recycledUnit', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx={fieldStyles}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-3 mt-6">
+        <div className="flex gap-4 justify-center pt-6">
           <Button 
-            variant="outline" 
-            onClick={handleCancel}
-            className="px-6"
+            type="submit"
+            disabled={submitting}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Cancel
+            {submitting ? 'Updating...' : 'Update'}
           </Button>
           <Button 
-            onClick={handleUpdate}
+            type="button"
+            variant="outline"
+            onClick={handleBack}
             disabled={submitting}
-            className="px-6"
-            style={{ backgroundColor: '#C72030' }}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2 disabled:opacity-50"
           >
-            {submitting ? 'Updating...' : 'Update Waste Generation'}
+            Back
           </Button>
         </div>
-      </div>
+      </form>
     </div>
   );
 };

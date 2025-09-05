@@ -25,25 +25,33 @@ import { toast } from 'sonner';
 
 // Field styles for Material-UI components
 const fieldStyles = {
-  height: '45px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    height: '45px',
-    '& fieldset': {
-      borderColor: '#ddd',
+  height: "45px",
+  backgroundColor: "#fff",
+  borderRadius: "4px",
+  "& .MuiOutlinedInput-root": {
+    height: "45px",
+    "& fieldset": { borderColor: "#999" },
+    "&:hover fieldset": { borderColor: "#1976d2" },
+    "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+  },
+  "& .MuiInputLabel-root": {
+    "&.Mui-focused": { color: "#1976d2" },
+    "& .MuiInputLabel-asterisk": {
+      color: "#C72030 !important",
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    "&.Mui-required .MuiInputLabel-asterisk": {
+      color: "#C72030 !important",
     },
   },
-  '& .MuiInputLabel-root': {
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
+  "& .MuiFormLabel-asterisk": {
+    color: "#C72030 !important",
+  },
+  "& .MuiInputLabel-asterisk": {
+    color: "#C72030 !important",
+  },
+  // Additional asterisk selectors to ensure red color
+  "& .MuiFormLabel-root .MuiFormLabel-asterisk": {
+    color: "#C72030 !important",
   },
 };
 
@@ -63,7 +71,7 @@ const AddWasteGenerationPage = () => {
     agencyName: '',
     generatedUnit: '',
     recycledUnit: '0',
-    uom: '',
+    uom: 'KG',
     typeOfWaste: ''
   });
 
@@ -219,7 +227,7 @@ const AddWasteGenerationPage = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.building || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
+    if (!formData.building || !formData.vendor || !formData.commodity || !formData.category || !formData.operationalName || !formData.generatedUnit || !formData.date) {
       reactToast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -253,7 +261,7 @@ const AddWasteGenerationPage = () => {
       const response = await createWasteGeneration(payload);
       
       toast.success('Waste generation record saved successfully');
-      navigate('/utility/waste-generation');
+      navigate('/maintenance/waste/generation');
     } catch (error) {
       console.error('Error saving waste generation:', error);
       toast.error('Failed to save waste generation record');
@@ -263,7 +271,7 @@ const AddWasteGenerationPage = () => {
   };
 
   const handleBack = () => {
-    navigate('/utility/waste-generation');
+    navigate('/maintenance/waste/generation');
   };
 
   return (
@@ -290,13 +298,15 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
-                <InputLabel shrink>Building</InputLabel>
+                <InputLabel shrink>Building <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.building}
                   onChange={(e) => handleInputChange('building', e.target.value)}
-                  label="Building"
+                  label="Building*"
                   notched
                   displayEmpty
                   disabled={loadingBuildings}
@@ -315,7 +325,8 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
                 <InputLabel shrink>Wing</InputLabel>
                 <MuiSelect
@@ -342,7 +353,8 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
                 <InputLabel shrink>Area</InputLabel>
                 <MuiSelect
@@ -367,7 +379,7 @@ const AddWasteGenerationPage = () => {
               </FormControl>
               
               <TextField
-                label="Date*"
+                label={<span>Date <span className="text-red-500">*</span></span>}
                 type="date"
                 value={formData.date}
                 onChange={(e) => handleInputChange('date', e.target.value)}
@@ -378,24 +390,27 @@ const AddWasteGenerationPage = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx={fieldStyles}
               />
             </div>
 
             {/* Waste Details Section */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <FormControl
                 fullWidth
                 variant="outlined"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
-                <InputLabel shrink>Vendor</InputLabel>
+                <InputLabel shrink>Vendor <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.vendor}
                   onChange={(e) => handleInputChange('vendor', e.target.value)}
-                  label="Vendor"
+                  label="Vendor*"
                   notched
                   displayEmpty
                   disabled={loadingVendors}
@@ -414,10 +429,11 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
-                <InputLabel shrink>Commodity*</InputLabel>
+                <InputLabel shrink>Commodity <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.commodity}
                   onChange={(e) => handleInputChange('commodity', e.target.value)}
@@ -440,10 +456,11 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
-                <InputLabel shrink>Category*</InputLabel>
+                <InputLabel shrink>Category <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.category}
                   onChange={(e) => handleInputChange('category', e.target.value)}
@@ -462,22 +479,24 @@ const AddWasteGenerationPage = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-            </div>
-
-            {/* Additional Waste Details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
+               <TextField
                 fullWidth
                 label="UoM"
                 variant="outlined"
                 value={formData.uom}
                 onChange={(e) => handleInputChange('uom', e.target.value)}
                 placeholder="Enter UoM"
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
                 InputLabelProps={{ shrink: true }}
               />
+            </div>
+
+            {/* Additional Waste Details */}
+            <div className="">
+             
               
-              <TextField
+              {/* <TextField
                 fullWidth
                 label="Type of Waste"
                 variant="outlined"
@@ -486,7 +505,7 @@ const AddWasteGenerationPage = () => {
                 placeholder="Enter type of waste"
                 sx={{ '& .MuiInputBase-root': fieldStyles }}
                 InputLabelProps={{ shrink: true }}
-              />
+              /> */}
             </div>
 
             {/* Organization Details Section */}
@@ -494,10 +513,11 @@ const AddWasteGenerationPage = () => {
               <FormControl
                 fullWidth
                 variant="outlined"
-                required
-                sx={{ '& .MuiInputBase-root': fieldStyles }}
+                // required
+                // sx={{ '& .MuiInputBase-root': fieldStyles }}
+                sx={fieldStyles}
               >
-                <InputLabel shrink>Operational Name of Landlord/ Tenant*</InputLabel>
+                <InputLabel shrink>Operational Name of Landlord/ Tenant <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.operationalName}
                   onChange={(e) => handleInputChange('operationalName', e.target.value)}
@@ -529,28 +549,30 @@ const AddWasteGenerationPage = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                sx={fieldStyles}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
               />
               
               <TextField
-                label="Generated Unit*"
+                // label="Generated Unit*"
+                label={<span>Generated Unit <span className="text-red-500">*</span></span>}
                 type="number"
                 placeholder="Enter Unit"
                 value={formData.generatedUnit}
                 onChange={(e) => handleInputChange('generatedUnit', e.target.value)}
                 fullWidth
-                required
                 variant="outlined"
                 slotProps={{
                   inputLabel: {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                sx={fieldStyles}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
               />
               
               <TextField
@@ -566,9 +588,10 @@ const AddWasteGenerationPage = () => {
                     shrink: true,
                   },
                 }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                sx={fieldStyles}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
               />
             </div>
           </div>

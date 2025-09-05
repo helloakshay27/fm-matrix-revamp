@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from "lucide-react";
+import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File, Eye, FileSpreadsheet, Download } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -37,6 +37,13 @@ interface Approval {
   updated_by?: string;
   updated_at?: string;
   rejection_reason?: string; // Added for rejection reason tooltip
+}
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
 }
 
 const boqColumns: ColumnConfig[] = [
@@ -233,7 +240,7 @@ export const WODetailsPage = () => {
         gstin_number: "",
         pan_number: "",
       },
-      work_category: "",
+      category_type: "",
       payment_terms: { payment_tenure: "", retention: "", tds: "", qc: "" },
       term_condition: "",
     },
@@ -411,11 +418,12 @@ export const WODetailsPage = () => {
   const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf`,
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
+          responseType: 'blob'
         }
       );
 
@@ -770,7 +778,7 @@ export const WODetailsPage = () => {
                 Work Category
               </span>
               <span className="text-sm">
-                : {workOrder.work_order?.work_category}
+                : {workOrder.work_order?.category_type}
               </span>
             </div>
           </div>
@@ -862,48 +870,87 @@ export const WODetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
+      <Card className="shadow-sm border border-border">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-medium">Attachments</CardTitle>
         </CardHeader>
         <CardContent>
           {Array.isArray(workOrder.attachments) && workOrder.attachments.length > 0 ? (
-            <div className="space-y-3">
-              {workOrder.attachments.map((attachment: any) => {
-                const getFileIcon = (fileName: string) => {
-                  const ext = fileName.split(".").pop()?.toLowerCase();
-                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
-                    return <Image className="w-5 h-5 text-blue-600" />;
-                  }
-                  if (ext === "pdf") {
-                    return <FileText className="w-5 h-5 text-red-600" />;
-                  }
-                  return <File className="w-5 h-5 text-gray-600" />;
-                };
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {workOrder.attachments.map((attachment: Attachment) => {
+                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                const isPdf = /\.pdf$/i.test(attachment.url);
+                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
+                const isWord = /\.(doc|docx)$/i.test(attachment.url);
+                const isDownloadable = isPdf || isExcel || isWord;
 
                 return (
                   <div
                     key={attachment.id}
-                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedAttachment(attachment);
-                      setIsPreviewModalOpen(true);
-                    }}
+                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
-                    {getFileIcon(attachment.document_file_name)}
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">
-                        {attachment.document_file_name}
-                      </p>
-                    </div>
+                    {isImage ? (
+                      <>
+                        <button
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            setSelectedAttachment(attachment);
+                            setIsPreviewModalOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <img
+                          src={attachment.url}
+                          alt={attachment.document_name || attachment.document_file_name}
+                          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                          onClick={() => {
+                            setSelectedAttachment(attachment);
+                            setIsPreviewModalOpen(true);
+                          }}
+                        />
+                      </>
+                    ) : isPdf ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <File className="w-6 h-6" />
+                      </div>
+                    )}
+                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                      {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                    </span>
+                    {isDownloadable && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                        onClick={() => {
+                          setSelectedAttachment(attachment);
+                          setIsPreviewModalOpen(true);
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className='text-muted-foreground'>
-              No attachments
-            </p>
+            <p className="text-muted-foreground">No attachments</p>
           )}
         </CardContent>
       </Card>
@@ -1123,12 +1170,10 @@ export const WODetailsPage = () => {
       />
 
       <AttachmentPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={() => {
-          setIsPreviewModalOpen(false);
-          setSelectedAttachment(null);
-        }}
-        attachment={selectedAttachment}
+        isModalOpen={isPreviewModalOpen}
+        setIsModalOpen={setIsPreviewModalOpen}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
       />
     </div>
   );

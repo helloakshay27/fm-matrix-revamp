@@ -19,7 +19,6 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
   changePlantDetails,
-  createMaterialPR,
   fetchWBS,
   getAddresses,
   getInventories,
@@ -116,10 +115,17 @@ export const EditMaterialPRDashboard = () => {
     const getData = async () => {
       try {
         const response = await dispatch(getMaterialPRById({ baseUrl, token, id: id })).unwrap();
+
+        setWbsSelection(
+          response.pms_po_inventories?.every(item => item.wbs_code !== null)
+            ? "individual"
+            : "overall"
+        );
+
         setSupplierDetails({
           supplier: response.supplier?.id,
           plantDetail: response.plant_detail?.id,
-          prDate: response.po_date,
+          prDate: response.po_date ? response.po_date.split("T")[0] : "",
           billingAddress: response.billing_address_id,
           deliveryAddress: response.shipping_address_id,
           transportation: response.transportation,
@@ -134,14 +140,14 @@ export const EditMaterialPRDashboard = () => {
         });
 
         setItems(
-          response.pms_po_inventories.map((item, index) => ({
+          response.pms_po_inventories.map((item) => ({
             id: item.id,
             itemDetails: item.inventory?.id,
             sacHsnCode: item.sac_hsn_code,
             productDescription: item.prod_desc,
             each: item.rate,
             quantity: item.quantity,
-            expectedDate: item.expected_date,
+            expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             amount: item.total_value,
             wbsCode: "",
           }))
@@ -410,7 +416,7 @@ export const EditMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
-          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
         })),
       },
       attachments: files,

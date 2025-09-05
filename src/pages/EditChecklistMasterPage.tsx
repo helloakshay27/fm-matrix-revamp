@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -15,6 +14,8 @@ import {
   Radio,
   FormControlLabel,
 } from '@mui/material';
+import { API_CONFIG, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { Autocomplete } from '@mui/material';
 
 const fieldStyles = {
   height: { xs: 36, sm: 40, md: 44 },
@@ -23,112 +24,152 @@ const fieldStyles = {
   },
 };
 
-// Mock data for demonstration
-const mockChecklistData = {
-  440: {
-    id: 440,
-    activityName: 'qawertyu',
-    description: 'Sample description for qawertyu checklist',
-    type: 'PPM',
-    scheduleFor: 'Asset',
-    assetType: 'electrical',
-    createTicket: false,
-    weightage: false,
-    taskSections: [
-      {
-        id: 1,
-        group: 'Daily Substation Log',
-        subGroup: 'B-Block MLT',
-        tasks: [
-          {
-            id: 1,
-            taskName: 'Task 1',
-            inputType: 'Radio Button',
-            mandatory: true,
-            reading: false,
-            helpText: false,
-            options: [
-              { id: 1, label: 'Yes', value: 'yes' },
-              { id: 2, label: 'No', value: 'no' }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  435: {
-    id: 435,
-    activityName: 'VI Repair Preparedness Checklist',
-    description: 'Checklist for repair preparedness',
-    type: 'Preparedness',
-    scheduleFor: 'Service',
-    assetType: 'mechanical',
-    createTicket: true,
-    weightage: false,
-    taskSections: [
-      {
-        id: 1,
-        group: 'Repair Tasks',
-        subGroup: 'VI Systems',
-        tasks: [
-          {
-            id: 1,
-            taskName: 'Check System Status',
-            inputType: 'checkbox',
-            mandatory: true,
-            reading: true,
-            helpText: true,
-            options: []
-          }
-        ]
-      }
-    ]
-  }
-};
-
 export const EditChecklistMasterPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [type, setType] = useState('PPM');
-  const [scheduleFor, setScheduleFor] = useState('Asset');
+  // State for API data
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Editable fields
+  const [type, setType] = useState('');
+  const [scheduleFor, setScheduleFor] = useState('');
   const [activityName, setActivityName] = useState('');
   const [description, setDescription] = useState('');
   const [assetType, setAssetType] = useState('');
   const [createTicket, setCreateTicket] = useState(false);
   const [weightage, setWeightage] = useState(false);
-  const [taskSections, setTaskSections] = useState([
-    {
-      id: 1,
-      group: '',
-      subGroup: '',
-      tasks: [
-        {
-          id: 1,
-          taskName: '',
-          inputType: '',
-          mandatory: false,
-          reading: false,
-          helpText: false,
-          options: []
-        }
-      ]
-    }
-  ]);
+  const [taskSections, setTaskSections] = useState([]);
+  const [taskGroups, setTaskGroups] = useState([]);
+  const [taskSubGroups, setTaskSubGroups] = useState({});
 
+  // Fetch checklist data from API
   useEffect(() => {
-    // Load data based on ID
-    if (id && mockChecklistData[id]) {
-      const data = mockChecklistData[id];
-      setType(data.type);
-      setScheduleFor(data.scheduleFor);
-      setActivityName(data.activityName);
-      setDescription(data.description);
-      setAssetType(data.assetType);
-      setCreateTicket(data.createTicket);
-      setWeightage(data.weightage);
-      setTaskSections(data.taskSections);
-    }
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+    const fetchChecklist = async () => {
+      try {
+        const url = `${API_CONFIG.BASE_URL}/master_checklist_detail.json?id=${id}`;
+        const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
+        if (!response.ok) throw new Error('Failed to fetch checklist details');
+        const data = await response.json();
+
+        // Map API data to local state
+        setType(data.schedule_type || '');
+        setScheduleFor(data.checklist_for?.split('::')[1] || '');
+        setActivityName(data.form_name || '');
+        setDescription(data.description || '');
+        setAssetType(data.asset_type || '');
+        setCreateTicket(!!data.create_ticket);
+        setWeightage(!!data.weightage_enabled);
+
+        // Map API content to taskSections
+        const sections = Array.isArray(data.content)
+          ? data.content.map((task, idx) => ({
+              id: idx + 1,
+              group: task.group_id || '',
+              subGroup: task.sub_group_id || '',
+              tasks: [
+                {
+                  id: idx + 1,
+                  taskName: task.label || '',
+                  inputType:
+                    task.type === 'radio-group' ? 'Radio Button'
+                    : task.type === 'text' ? 'Text'
+                    : task.type === 'checkbox-group' ? 'Checkbox'
+                    : task.type === 'select' ? 'Dropdown'
+                    : task.type === 'number' ? 'Number'
+                    : task.type === 'date' ? 'Date'
+                    : task.type || '',
+                  mandatory: task.required === 'true',
+                  reading: task.is_reading === 'true',
+                  helpText: !!task.hint,
+                  helpTextValue: task.hint || '',
+                  options: Array.isArray(task.values)
+                    ? task.values.map((opt, oidx) => ({
+                        id: oidx + 1,
+                        label: opt.label || '',
+                        value: opt.type || '',
+                      }))
+                    : [],
+                }
+              ]
+            }))
+          : [];
+        setTaskSections(sections.length > 0 ? sections : [{
+          id: 1,
+          group: '',
+          subGroup: '',
+          tasks: [{
+            id: 1,
+            taskName: '',
+            inputType: '',
+            mandatory: false,
+            reading: false,
+            helpText: false,
+            helpTextValue: '',
+            options: []
+          }]
+        }]);
+      } catch (err) {
+        setError(err.message || 'Error fetching checklist details');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchChecklist();
   }, [id]);
+
+  // Fetch task groups and sub-groups on mount
+  useEffect(() => {
+    // Fetch task groups
+    const fetchTaskGroups = async () => {
+      try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_GROUPS}`, getAuthenticatedFetchOptions('GET'));
+        if (!response.ok) throw new Error('Failed to fetch task groups');
+        const data = await response.json();
+        const groupsArray = data.map((group) => ({
+          id: group.id,
+          name: group.name
+        }));
+        setTaskGroups(groupsArray);
+      } catch (error) {
+        setTaskGroups([
+          { id: 1, name: 'Safety' },
+          { id: 2, name: 'Maintenance' },
+          { id: 3, name: 'Operations' }
+        ]);
+      }
+    };
+    fetchTaskGroups();
+  }, []);
+
+  const fetchTaskSubGroups = async (groupId) => {
+    if (!groupId) return;
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TASK_SUB_GROUPS}?group_id=${groupId}`, getAuthenticatedFetchOptions('GET'));
+      if (!response.ok) throw new Error('Failed to fetch sub groups');
+      const data = await response.json();
+      const subGroupsArray = (data.asset_groups || []).map((subGroup) => ({
+        id: subGroup.id,
+        name: subGroup.name
+      }));
+      setTaskSubGroups(prev => ({
+        ...prev,
+        [groupId]: subGroupsArray
+      }));
+    } catch (error) {
+      setTaskSubGroups(prev => ({
+        ...prev,
+        [groupId]: [
+          { id: 1, name: 'Equipment' },
+          { id: 2, name: 'Cleaning' },
+          { id: 3, name: 'Inspection' }
+        ]
+      }));
+    }
+  };
 
   const addTaskSection = () => {
     setTaskSections((prev) => [
@@ -282,6 +323,26 @@ export const EditChecklistMasterPage = () => {
     navigate('/settings/masters/checklist-master');
   };
 
+  if (loading) {
+    return <div className="p-6 text-center">Loading checklist details...</div>;
+  }
+  if (error) {
+    return <div className="p-6 text-center text-red-500">{error}</div>;
+  }
+
+  // When a group is selected, fetch its sub-groups
+  const handleGroupChange = (sectionId, taskId, newGroup) => {
+    updateTask(sectionId, taskId, 'group', newGroup ? newGroup.id : '');
+    updateTask(sectionId, taskId, 'subGroup', '');
+    if (newGroup && newGroup.id) {
+      fetchTaskSubGroups(newGroup.id);
+    }
+  };
+
+  const handleSubGroupChange = (sectionId, taskId, newSubGroup) => {
+    updateTask(sectionId, taskId, 'subGroup', newSubGroup ? newSubGroup.id : '');
+  };
+
   return (
     <div className="p-4 sm:p-6 md:p-8 max-w-screen-xl mx-auto">
       <div className="flex flex-wrap gap-4 mb-6">
@@ -378,39 +439,57 @@ export const EditChecklistMasterPage = () => {
             <TextField
               fullWidth
               multiline
-              rows={2}
+              rows={3}
               label="Description"
               placeholder="Enter Description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
-              InputProps={{
-                sx: {
-                  ...fieldStyles,
-                  alignItems: 'flex-start',
-                },
-              }}
+              // InputProps={{
+              //   sx: {
+              //     ...fieldStyles,
+              //     alignItems: 'flex-start',
+              //     // paddingTop: '12px',
+              //     // paddingBottom: '12px',
+              //   },
+              // }}
             />
 
-            <FormControl fullWidth>
-              <InputLabel shrink>Asset Type</InputLabel>
-              <MuiSelect
-                displayEmpty
-                value={assetType}
-                onChange={(e) => setAssetType(e.target.value)}
-                sx={fieldStyles}
-              >
-                <MenuItem value="">
-                  <em>Select Asset Type</em>
-                </MenuItem>
-                {['electrical', 'mechanical', 'hvac', 'plumbing'].map((type) => (
-                  <MenuItem key={type} value={type}>
-                    {type}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
+                {scheduleFor === 'Asset' && (
+  <FormControl fullWidth>
+    {/* Replace MuiSelect with Autocomplete */}
+    <Autocomplete
+      options={[
+        { label: 'electrical', value: 'electrical' },
+        { label: 'mechanical', value: 'mechanical' },
+        { label: 'hvac', value: 'hvac' },
+        { label: 'plumbing', value: 'plumbing' }
+      ]}
+      getOptionLabel={(option) => option.label}
+      value={
+        [
+          { label: 'electrical', value: 'electrical' },
+          { label: 'mechanical', value: 'mechanical' },
+          { label: 'hvac', value: 'hvac' },
+          { label: 'plumbing', value: 'plumbing' }
+        ].find(opt => opt.value === assetType) || null
+      }
+      onChange={(_, newValue) => setAssetType(newValue ? newValue.value : '')}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          label="Asset Type"
+          placeholder="Select Asset Type"
+          InputLabelProps={{ shrink: true }}
+          sx={fieldStyles}
+        />
+      )}
+      isOptionEqualToValue={(option, value) => option.value === value.value}
+      disableClearable
+    />
+  </FormControl>
+                )}
           </div>
         </div>
 
@@ -444,34 +523,52 @@ export const EditChecklistMasterPage = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <TextField
-                fullWidth
-                label="Select Group"
-                placeholder="Enter Group"
-                value={section.group}
-                onChange={(e) => updateTaskSection(section.id, 'group', e.target.value)}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+              <Autocomplete
+                options={taskGroups}
+                getOptionLabel={(option) => option.name}
+                value={taskGroups.find(g => String(g.id) === String(section.group)) || null}
+                onChange={(_, newValue) => handleGroupChange(section.id, null, newValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Select Group"
+                    placeholder="Enter Group"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                )}
+                isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
               />
-
-              <TextField
-                fullWidth
-                label="Select Sub Group"
-                placeholder="Enter Sub Group"
-                value={section.subGroup}
-                onChange={(e) => updateTaskSection(section.id, 'subGroup', e.target.value)}
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+              <Autocomplete
+                options={section.group && taskSubGroups[section.group] ? taskSubGroups[section.group] : []}
+                getOptionLabel={(option) => option.name}
+                value={
+                  section.group && taskSubGroups[section.group]
+                    ? taskSubGroups[section.group].find(sg => String(sg.id) === String(section.subGroup)) || null
+                    : null
+                }
+                onChange={(_, newValue) => handleSubGroupChange(section.id, null, newValue)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Select Sub Group"
+                    placeholder="Enter Sub Group"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    sx={fieldStyles}
+                  />
+                )}
+                isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
+                disabled={!section.group}
               />
             </div>
 
             {section.tasks.map((task, taskIndex) => (
               <div
                 key={task.id}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border p-4 rounded"
+                className="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 border p-4 rounded"
               >
                 <div className="flex items-center justify-between md:col-span-2">
                   <h4 className="font-medium">Task {taskIndex + 1}</h4>
@@ -500,23 +597,34 @@ export const EditChecklistMasterPage = () => {
                 />
 
                 <FormControl fullWidth>
-                  <InputLabel shrink>Input Type</InputLabel>
-                  <MuiSelect
-                    displayEmpty
-                    value={task.inputType}
-                    onChange={(e) => updateTask(section.id, task.id, 'inputType', e.target.value)}
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select Input Type</em>
-                    </MenuItem>
-                    {['Text', 'Number', 'Checkbox', 'Radio Button', 'Dropdown', 'Date'].map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                                  <Autocomplete
+                                    options={[
+                                      'Text',
+                                      'Number',
+                                      'Checkbox',
+                                      'Radio Button',
+                                      'Dropdown',
+                                      'Date'
+                                    ]}
+                                    value={
+                                      task.type === 'radio-group' ? 'Radio Button'
+                                      : task.type === 'text' ? 'Text'
+                                      : task.type === 'checkbox-group' ? 'Checkbox'
+                                      : task.type === 'select' ? 'Dropdown'
+                                      : task.type === 'number' ? 'Number'
+                                      : task.type === 'date' ? 'Date'
+                                      : task.type
+                                    }
+                                    renderInput={(params) => (
+                                      <TextField
+                                        {...params}
+                                        label="Input Type"
+                                        InputLabelProps={{ shrink: true }}
+                                        sx={fieldStyles}
+                                      />
+                                    )}
+                                  />
+                                </FormControl>
 
                 <div className="md:col-span-2 flex flex-wrap gap-4 pt-2">
                   {['mandatory', 'reading', 'helpText'].map((field) => (
@@ -529,6 +637,30 @@ export const EditChecklistMasterPage = () => {
                     </label>
                   ))}
                 </div>
+
+                {/* Editable help text input if helpText is checked */}
+                {task.helpText && (
+                  <div className="md:col-span-2 pt-2">
+                    <TextField
+                      fullWidth
+                      rows={4}
+                      label="Help Text"
+                      placeholder="Enter Help Text"
+                      value={task.helpTextValue || ''}
+                      onChange={(e) => updateTask(section.id, task.id, 'helpTextValue', e.target.value)}
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      // InputProps={{
+                      //   sx: {
+                      //     ...fieldStyles,
+                      //     alignItems: 'flex-start',
+                      //     paddingTop: '12px',
+                      //     paddingBottom: '12px',
+                      //   },
+                      // }}
+                    />
+                  </div>
+                )}
 
                 {(task.inputType === 'Radio Button' || task.inputType === 'Dropdown') && (
                   <div className="md:col-span-2 mt-4">

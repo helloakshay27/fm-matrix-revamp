@@ -145,7 +145,7 @@ export const EditWODashboard: React.FC = () => {
                 setFormData({
                     contractor: data.pms_supplier_id,
                     plantDetail: data.work_order?.plant_detail_id,
-                    woDate: data.work_order?.wo_date,
+                    woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
                     billingAddress: data.work_order?.billing_address_id,
                     retention: data.work_order?.payment_terms?.retention,
                     tds: data.work_order?.payment_terms?.tds,
@@ -477,11 +477,7 @@ export const EditWODashboard: React.FC = () => {
 
                             <TextField
                                 label="Select WO Date*"
-                                value={
-                                    formData.woDate instanceof Date
-                                        ? formData.woDate.toISOString().split("T")[0]
-                                        : ""
-                                }
+                                value={formData.woDate}
                                 onChange={(e) =>
                                     handleInputChange("woDate", new Date(e.target.value))
                                 }
@@ -913,11 +909,7 @@ export const EditWODashboard: React.FC = () => {
 
                                     <TextField
                                         label="Expected Date*"
-                                        value={
-                                            detailsData.expectedDate instanceof Date
-                                                ? detailsData.expectedDate.toISOString().split("T")[0]
-                                                : ""
-                                        }
+                                        value={detailsData.expectedDate}
                                         onChange={(e) =>
                                             handleDetailsChange(
                                                 detailsData.id,

@@ -252,7 +252,7 @@ export const taskService = {
 
 updateTaskComments: async (id: string, comments: string) => {
   try {
-    const response = await apiClient.put(`/pms/asset_task_occurences/${id}.json`, {
+    const response = await apiClient.patch(`/pms/asset_task_occurrences/${id}.json`, {
       pms_asset_task_occurrence: {
         task_comments: comments
       }

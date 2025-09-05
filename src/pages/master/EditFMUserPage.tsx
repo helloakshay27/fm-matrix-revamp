@@ -111,6 +111,7 @@ interface FormData {
   selectEmailPreference: string;
   selectedSites: string[];
   selectedCompanies: string[];
+  lastWorkingDate: string;
 }
 
 interface Payload {
@@ -128,6 +129,7 @@ interface Payload {
       access_level: string;
       access_to: string[];
       urgency_email_enabled: string;
+      last_working_date: string;
     }[];
     firstname: string;
     lastname: string;
@@ -220,6 +222,7 @@ export const EditFMUserPage = () => {
     selectEmailPreference: "",
     selectedSites: [],
     selectedCompanies: [],
+    lastWorkingDate: "",
   });
   const [userData, setUserData] = useState<UserData>({});
 
@@ -297,6 +300,7 @@ export const EditFMUserPage = () => {
           userData.lock_user_permission?.access_level === "Company"
             ? userData.lock_user_permission?.access_to || []
             : [],
+        lastWorkingDate: userData.lock_user_permission?.last_working_date || "",
       });
     } else {
       console.log("userData not found for id:", id);
@@ -373,6 +377,7 @@ export const EditFMUserPage = () => {
                 ? formData.selectedSites
                 : formData.selectedCompanies,
             urgency_email_enabled: formData.selectEmailPreference,
+            last_working_date: formData.lastWorkingDate,
           },
         ],
         firstname: formData.firstName,
@@ -877,6 +882,25 @@ export const EditFMUserPage = () => {
                     />
                   </div>
                 )}
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Last Working Date"
+                    variant="outlined"
+                    type="date"
+                    value={formData.lastWorkingDate}
+                    onChange={(e) =>
+                      handleInputChange("lastWorkingDate", e.target.value)
+                    }
+                    required
+                    InputLabelProps={{
+                      classes: {
+                        asterisk: "text-red-500", // Tailwind class for red color
+                      },
+                      shrink: true
+                    }}
+                  />
+                </div>
               </div>
             </Box>
             {/* Action Buttons */}

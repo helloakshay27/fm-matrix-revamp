@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { Copy, Printer, Rss, ArrowLeft, Image, FileText, File } from 'lucide-react';
+import { Copy, Printer, Rss, ArrowLeft, FileText, File, Eye, FileSpreadsheet, Download } from 'lucide-react';
 import { useAppDispatch } from '@/store/hooks';
 import { getMaterialPRById } from '@/store/slices/materialPRSlice';
 import { format } from 'date-fns';
@@ -16,7 +16,7 @@ import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from '@m
 import { approvePO, rejectPO } from '@/store/slices/purchaseOrderSlice';
 import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
-// Define interfaces for type safety
+// Interfaces
 interface BillingAddress {
   phone?: string;
   email?: string;
@@ -37,7 +37,7 @@ interface ApprovalLevel {
   status_label: string;
   approved_by?: string;
   approval_date?: string;
-  rejection_reason?: string; // Added for rejection reason tooltip
+  rejection_reason?: string;
 }
 
 interface Inventory {
@@ -48,7 +48,7 @@ interface PRInventory {
   id?: number;
   inventory?: Inventory;
   availability?: string;
-  sacHsnCode?: string;
+  sac_hsn_code?: string;
   expected_date?: string;
   prod_desc?: string;
   quantity?: number;
@@ -58,12 +58,13 @@ interface PRInventory {
   approved_qty?: number;
   transfer_qty?: number;
   wbs_code?: string;
-  sac_hsn_code?: string;
 }
 
 interface Attachment {
+  id: number;
   url: string;
-  name?: string;
+  document_name?: string;
+  document_file_name?: string;
 }
 
 interface MaterialPR {
@@ -82,7 +83,7 @@ interface MaterialPR {
   supplier?: Supplier;
   approval_levels?: ApprovalLevel[];
   pms_pr_inventories?: PRInventory[];
-  attachments?: Attachment[] | string;
+  attachments?: Attachment[];
   show_send_sap_yes?: boolean;
 }
 
@@ -104,7 +105,7 @@ interface TableRow {
   wbs_code?: string;
 }
 
-// Define column configuration for the EnhancedTable
+// Column configuration
 const columns: ColumnConfig[] = [
   { key: 'srNo', label: 'SR No.', sortable: true, defaultVisible: true },
   { key: 'item', label: 'Item', sortable: true, defaultVisible: true },
@@ -113,7 +114,7 @@ const columns: ColumnConfig[] = [
   { key: 'expected_date', label: 'Expected Date', sortable: true, defaultVisible: true },
   { key: 'prod_desc', label: 'Product Description', sortable: true, defaultVisible: true },
   { key: 'quantity', label: 'Quantity', sortable: true, defaultVisible: true },
-  { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
+  // { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
   { key: 'total_value', label: 'Moving Avg Rate', sortable: true, defaultVisible: true },
   { key: 'rate', label: 'Rate', sortable: true, defaultVisible: true },
   { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
@@ -124,58 +125,31 @@ const columns: ColumnConfig[] = [
 
 export const MaterialPRDetailsPage = () => {
   const dispatch = useAppDispatch();
-  const token = localStorage.getItem('token') || '';
-  const baseUrl = localStorage.getItem('baseUrl') || '';
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const levelId = searchParams.get("level_id");
+  const userId = searchParams.get("user_id");
+  const shouldShowButtons = Boolean(levelId && userId);
 
-  const [pr, setPR] = useState<MaterialPR>({
-    id: '',
-    external_id: '',
-    po_date: '',
-    plant_detail: {
-      plant_name: '',
-    },
-    related_to: '',
-    reference_number: '',
-    adminApproval: '',
-    total_amount: 0,
-    terms_conditions: '',
-    billing_address: {
-      phone: '',
-      email: '',
-      pan_number: '',
-      fax: '',
-      gst_number: '',
-      address: '',
-    },
-    supplier: {
-      company_name: '',
-      email: '',
-      address: '',
-    },
-    approval_levels: [],
-    pms_pr_inventories: [],
-    attachments: [],
-    show_send_sap_yes: false,
-  });
+  const [pr, setPR] = useState<MaterialPR>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
-  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-
-  const levelId = searchParams.get("level_id");
-  const userId = searchParams.get("user_id");
-
-  const shouldShowButtons = Boolean(levelId && userId);
-
+  // Fetch PR data
   useEffect(() => {
     const fetchData = async () => {
-      if (!baseUrl || !token || !id) {
+      if (!id) return;
+
+      const token = localStorage.getItem('token');
+      const baseUrl = localStorage.getItem('baseUrl');
+
+      if (!baseUrl || !token) {
+        toast.error('Missing required configuration');
         setLoading(false);
         return;
       }
@@ -186,50 +160,59 @@ export const MaterialPRDetailsPage = () => {
         setPR(response);
       } catch (err) {
         console.error('Error fetching PR:', err);
+        toast.error('Failed to fetch purchase request');
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [dispatch, baseUrl, token, id]);
+  }, [dispatch, id]);
 
-  const handleApprove = async () => {
+  // Handle approve action
+  const handleApprove = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    if (!baseUrl || !token || !id || !levelId || !userId) {
+      toast.error('Missing required configuration');
+      return;
+    }
+
     const payload = {
       pms_purchase_order: {
         id: Number(id),
-        pms_pr_inventories_attributes: pr.pms_pr_inventories.map(
-          (item) => ({
-            id: item.id,
-            rate: item.rate,
-            total_value: item.total_value,
-            approved_qty: item.quantity,
-            transfer_qty: item.transfer_qty,
-          })
-        ),
+        pms_pr_inventories_attributes: pr.pms_pr_inventories?.map(item => ({
+          id: item.id,
+          rate: item.rate,
+          total_value: item.total_value,
+          approved_qty: item.quantity,
+          transfer_qty: item.transfer_qty,
+        })) || [],
       },
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
     };
+
     try {
-      await dispatch(
-        approvePO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
+      await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("PO approved successfully");
       navigate(`/finance/pending-approvals`);
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to approve PO");
     }
-  };
+  }, [dispatch, id, levelId, userId, pr.pms_pr_inventories, navigate]);
 
-  const handleRejectClick = () => {
-    setOpenRejectDialog(true);
-  };
-
-  const handleRejectConfirm = async () => {
+  // Handle reject action
+  const handleRejectConfirm = useCallback(async () => {
     if (!rejectComment.trim()) {
       toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    if (!baseUrl || !token || !id || !levelId || !userId) {
+      toast.error('Missing required configuration');
       return;
     }
 
@@ -242,21 +225,21 @@ export const MaterialPRDetailsPage = () => {
     };
 
     try {
-      await dispatch(
-        rejectPO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
+      await dispatch(rejectPO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("PO rejected successfully");
       navigate(`/finance/pending-approvals`);
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to reject PO");
     } finally {
       setOpenRejectDialog(false);
       setRejectComment("");
     }
-  };
+  }, [dispatch, id, levelId, userId, rejectComment, navigate]);
 
-  const handleSendToSap = async () => {
+  // Handle send to SAP
+  const handleSendToSap = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
     if (!baseUrl || !token || !id) {
       toast.error('Missing required configuration');
       return;
@@ -266,56 +249,30 @@ export const MaterialPRDetailsPage = () => {
       const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/purchase_orders/${id}.json?send_sap=yes`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       toast.success(response.data.message);
-    } catch (error) {
-      console.error('Error sending to SAP:', error);
-      toast.error('Failed to send to SAP');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to send to SAP');
     }
-  };
+  }, [id]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'approved':
-        return 'bg-green-100 text-green-800';
-      case 'rejected':
-        return 'bg-red-100 text-red-800';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+  // Handle print
+  const handlePrint = useCallback(async () => {
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    if (!baseUrl || !token || !id) {
+      toast.error('Missing required configuration');
+      return;
     }
-  };
 
-  const handleRejectCancel = () => {
-    setOpenRejectDialog(false);
-    setRejectComment("");
-  };
-
-  const handleClone = () => {
-    if (id) {
-      navigate(`/finance/material-pr/add?clone=${id}`);
-    }
-  };
-
-  const handleFeeds = () => {
-    if (id) {
-      navigate(`/finance/material-pr/feeds/${id}`);
-    }
-  };
-
-  const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf`,
+        `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
         }
       );
 
@@ -328,15 +285,22 @@ export const MaterialPRDetailsPage = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download PDF');
+    }
+  }, [id]);
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // Transform pr.pms_pr_inventories to match column keys
   const tableData: TableRow[] = pr?.pms_pr_inventories?.map((item, index) => ({
-    id: index,
+    id: item.id || index,
     srNo: index + 1,
     item: item.inventory?.name ?? '-',
     availability: item.availability ?? '-',
@@ -355,10 +319,8 @@ export const MaterialPRDetailsPage = () => {
 
   const renderCell = (item: any, columnKey: string) => {
     const value = item[columnKey] ?? "-";
-
     if (columnKey === "prod_desc") {
-      const truncated = value.length > 30 ? value.slice(0, 30) + "..." : value; // adjust 30 as needed
-
+      const truncated = value.length > 30 ? value.slice(0, 30) + "..." : value;
       return (
         <TooltipProvider>
           <Tooltip>
@@ -372,13 +334,11 @@ export const MaterialPRDetailsPage = () => {
         </TooltipProvider>
       );
     }
-
     return value;
   };
 
   return (
     <div className="p-6 mx-auto max-w-7xl">
-      {/* Header */}
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
@@ -388,25 +348,23 @@ export const MaterialPRDetailsPage = () => {
         Back
       </Button>
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-2xl font-semibold">Material PR Details</h1>
-        </div>
+        <h1 className="text-2xl font-semibold">Material PR Details</h1>
         <div className="flex items-center gap-3">
           {pr.show_send_sap_yes && (
             <Button
               size="sm"
               variant="outline"
-              className="border-gray-300 bg-purple-600 text-white sap_button"
+              className="border-gray-300 bg-purple-600 text-white"
               onClick={handleSendToSap}
             >
               Send To SAP Team
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={handleClone}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/finance/material-pr/add?clone=${id}`)}>
             <Copy className="w-4 h-4 mr-2" />
             Clone
           </Button>
-          <Button variant="outline" size="sm" onClick={handleFeeds}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/finance/material-pr/feeds/${id}`)}>
             <Rss className="w-4 h-4 mr-2" />
             Feeds
           </Button>
@@ -417,7 +375,6 @@ export const MaterialPRDetailsPage = () => {
         </div>
       </div>
 
-      {/* Approval Levels with Tooltip */}
       <TooltipProvider>
         <div className="flex items-start gap-4 my-6">
           {pr.approval_levels?.map((level, index) => (
@@ -449,7 +406,6 @@ export const MaterialPRDetailsPage = () => {
       </TooltipProvider>
 
       <div className="space-y-6">
-        {/* Contact Information Card */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium">Contact Information</CardTitle>
@@ -457,38 +413,19 @@ export const MaterialPRDetailsPage = () => {
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Phone</span>
-                  <span className="font-medium">: {pr.billing_address?.phone ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Email</span>
-                  <span className="font-medium">: {pr.billing_address?.email ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">PAN</span>
-                  <span className="font-medium">: {pr.billing_address?.pan_number ?? '-'}</span>
-                </div>
+                <div className="flex"><span className="text-muted-foreground w-24">Phone</span><span className="font-medium">: {pr.billing_address?.phone ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">Email</span><span className="font-medium">: {pr.billing_address?.email ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">PAN</span><span className="font-medium">: {pr.billing_address?.pan_number ?? '-'}</span></div>
               </div>
               <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Fax</span>
-                  <span className="font-medium">: {pr.billing_address?.fax ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">GST</span>
-                  <span className="font-medium">: {pr.billing_address?.gst_number ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-24">Address</span>
-                  <span className="font-medium">: {pr.billing_address?.address ?? '-'}</span>
-                </div>
+                <div className="flex"><span className="text-muted-foreground w-24">Fax</span><span className="font-medium">: {pr.billing_address?.fax ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">GST</span><span className="font-medium">: {pr.billing_address?.gst_number ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">Address</span><span className="font-medium">: {pr.billing_address?.address ?? '-'}</span></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Material PR Card */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium">Material Purchase Request</CardTitle>
@@ -496,52 +433,22 @@ export const MaterialPRDetailsPage = () => {
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">MPR No.</span>
-                  <span className="font-medium">: {pr.external_id ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">MPR Date</span>
-                  <span className="font-medium">
-                    : {pr.po_date ? format(new Date(pr.po_date), 'dd-MM-yyyy') : '-'}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Plant Detail</span>
-                  <span className="font-medium">: {pr.plant_detail.plant_name ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Address</span>
-                  <span className="font-medium">: {pr.supplier?.address ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Related To</span>
-                  <span className="font-medium">: {pr.related_to ?? '-'}</span>
-                </div>
+                <div className="flex"><span className="text-muted-foreground w-40">MPR No.</span><span className="font-medium">: {pr.external_id ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">MPR Date</span><span className="font-medium">: {pr.po_date ? format(new Date(pr.po_date), 'dd-MM-yyyy') : '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Plant Detail</span><span className="font-medium">: {pr.plant_detail?.plant_name ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Address</span><span className="font-medium">: {pr.supplier?.address ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Related To</span><span className="font-medium">: {pr.related_to ?? '-'}</span></div>
               </div>
               <div className="space-y-3">
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Reference No.</span>
-                  <span className="font-medium">: {pr.reference_number ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">ID</span>
-                  <span className="font-medium">: {pr.id ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Supplier</span>
-                  <span className="font-medium">: {pr.supplier?.company_name ?? '-'}</span>
-                </div>
-                <div className="flex">
-                  <span className="text-muted-foreground w-40">Email</span>
-                  <span className="font-medium">: {pr.supplier?.email ?? '-'}</span>
-                </div>
+                <div className="flex"><span className="text-muted-foreground w-40">Reference No.</span><span className="font-medium">: {pr.reference_number ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">ID</span><span className="font-medium">: {pr.id ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Supplier</span><span className="font-medium">: {pr.supplier?.company_name ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Email</span><span className="font-medium">: {pr.supplier?.email ?? '-'}</span></div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Items Table Card */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-0">
             <CardTitle className="text-lg font-medium">Items Table</CardTitle>
@@ -572,54 +479,91 @@ export const MaterialPRDetailsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Attachments Card */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
             {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
-              <div className="space-y-3">
-                {pr.attachments.map((attachment: any) => {
-                  const getFileIcon = (fileName: string) => {
-                    const ext = fileName.split(".").pop()?.toLowerCase();
-                    if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
-                      return <Image className="w-5 h-5 text-blue-600" />;
-                    }
-                    if (ext === "pdf") {
-                      return <FileText className="w-5 h-5 text-red-600" />;
-                    }
-                    return <File className="w-5 h-5 text-gray-600" />;
-                  };
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {pr.attachments.map((attachment) => {
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                  const isPdf = /\.pdf$/i.test(attachment.url);
+                  const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
+                  const isWord = /\.(doc|docx)$/i.test(attachment.url);
+                  const isDownloadable = isPdf || isExcel || isWord;
 
                   return (
                     <div
                       key={attachment.id}
-                      className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                      onClick={() => {
-                        setSelectedAttachment(attachment);
-                        setIsPreviewModalOpen(true);
-                      }}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                     >
-                      {getFileIcon(attachment.document_file_name)}
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">
-                          {attachment.document_file_name}
-                        </p>
-                      </div>
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedDoc(attachment);
+                              setIsModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={attachment.url}
+                            alt={attachment.document_name}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedDoc(attachment);
+                              setIsModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                      </span>
+                      {isDownloadable && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                          onClick={() => {
+                            setSelectedDoc(attachment);
+                            setIsModalOpen(true);
+                          }}
+                        >
+                          <Download className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className='text-muted-foreground'>
-                No attachments
-              </p>
+              <p className='text-muted-foreground'>No attachments</p>
             )}
           </CardContent>
         </Card>
 
-        {/* Terms & Conditions Card */}
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
@@ -631,22 +575,22 @@ export const MaterialPRDetailsPage = () => {
 
         {shouldShowButtons && (
           <div className="flex items-center justify-center gap-4">
-            <button
-              className="bg-green-600 text-white py-2 px-4 rounded-md"
+            <Button
+              className="bg-green-600 text-white hover:bg-green-700"
               onClick={handleApprove}
             >
               Approve
-            </button>
-            <button
-              className="bg-[#C72030] text-white py-2 px-4 rounded-md"
-              onClick={handleRejectClick}
+            </Button>
+            <Button
+              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+              onClick={() => setOpenRejectDialog(true)}
             >
               Reject
-            </button>
+            </Button>
           </div>
         )}
 
-        <Dialog open={openRejectDialog} onClose={handleRejectCancel} maxWidth="sm" fullWidth>
+        <Dialog open={openRejectDialog} onClose={() => setOpenRejectDialog(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Reject Purchase Order</DialogTitle>
           <DialogContent>
             <TextField
@@ -663,7 +607,7 @@ export const MaterialPRDetailsPage = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleRejectCancel} variant="outline">
+            <Button onClick={() => setOpenRejectDialog(false)} variant="outline">
               Cancel
             </Button>
             <Button
@@ -677,12 +621,10 @@ export const MaterialPRDetailsPage = () => {
       </div>
 
       <AttachmentPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={() => {
-          setIsPreviewModalOpen(false);
-          setSelectedAttachment(null);
-        }}
-        attachment={selectedAttachment}
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
       />
     </div>
   );

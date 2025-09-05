@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,14 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
+
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -261,6 +269,23 @@ export const WODashboard = () => {
     }); // Fetch data with filters
   };
 
+  const debouncedFetchData = useCallback(
+    debounce((query: string) => {
+      fetchData({ search: query });
+    }, 500),
+    [pagination.current_page, filters]
+  );
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    debouncedFetchData(query, {
+      reference_number: filters.referenceNumber,
+      external_id: filters.poNumber,
+      supplier_name: filters.supplierName,
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
       case "approved":
@@ -386,7 +411,13 @@ export const WODashboard = () => {
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData({ page: page });
+      await fetchData({
+        page,
+        reference_number: filters.referenceNumber,
+        external_id: filters.poNumber,
+        supplier_name: filters.supplierName,
+        search: searchQuery,
+      });
     } catch (error) {
       console.error("Error changing page:", error);
       toast.error("Failed to load page data. Please try again.");
@@ -526,8 +557,8 @@ export const WODashboard = () => {
         className="min-w-[1200px]"
         emptyMessage="No work orders found"
         searchTerm={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search WOs..."
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search by WO No."
         exportFileName="work-orders"
         loading={loading}
         enableSearch={true}

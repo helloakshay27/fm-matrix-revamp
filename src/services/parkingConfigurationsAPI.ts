@@ -136,6 +136,14 @@ export interface ParkingDetailsResponse {
 }
 
 // Types for parking slots with status API
+export interface ParkingBookingDetails {
+  id: number;
+  entity_name: string;
+  entity_color: string;
+  booking_date: string | null;
+  status: string;
+}
+
 export interface ParkingSlot {
   id: number;
   name: string;
@@ -143,7 +151,7 @@ export interface ParkingSlot {
   reserved: boolean;
   parking_type: number;
   status: string;
-  booking_details: unknown;
+  booking_details?: ParkingBookingDetails;
 }
 
 export interface ParkingCategory {

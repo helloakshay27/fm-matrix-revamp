@@ -153,7 +153,7 @@ export const VisitorsDashboard = () => {
   const [currentVisitorNumber, setCurrentVisitorNumber] = useState('');
   const [activeVisitorType, setActiveVisitorType] = useState('unexpected');
   const [mainTab, setMainTab] = useState('visitor');
-  const [visitorSubTab, setVisitorSubTab] = useState('history');
+  const [visitorSubTab, setVisitorSubTab] = useState('visitor-in');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -365,12 +365,6 @@ export const VisitorsDashboard = () => {
   };
 
   useEffect(() => {
-    // Load visitor history when visitor tab is selected
-    if (mainTab === 'visitor') {
-      fetchVisitorHistory();
-    }
-    
-    // Keep the original conditions for other tabs if they exist (for future use)
     if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       fetchUnexpectedVisitors();
     } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'expected') {
@@ -380,7 +374,7 @@ export const VisitorsDashboard = () => {
     } else if (visitorSubTab === 'history') {
       fetchVisitorHistory();
     }
-  }, [visitorSubTab, activeVisitorType, mainTab]);
+  }, [visitorSubTab, activeVisitorType]);
 
   // Filter handlers
   const handleFilterOpen = () => {
@@ -390,16 +384,11 @@ export const VisitorsDashboard = () => {
   const handleFilterApply = (filters: VisitorFilters) => {
     console.log('🔧 Filter apply called with:', filters);
     console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters(filters);
     setIsFilterOpen(false);
     
-    // Set filters based on the active tab and visitor type
-    if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Setting visitor history filters:', filters);
-      fetchVisitorHistory(1); // Refresh history with filters if needed
-    } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+    // Set filters based on the active visitor type
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       console.log('🔧 Setting unexpected visitor filters:', filters);
       setUnexpectedFilters(filters);
       fetchUnexpectedVisitorsWithFilters(1, filters);
@@ -418,16 +407,11 @@ export const VisitorsDashboard = () => {
   const handleFilterReset = () => {
     console.log('🔧 Filter reset called');
     console.log('🔧 Active visitor type:', activeVisitorType);
-    console.log('🔧 Main tab:', mainTab);
     setVisitorFilters({});
     setIsFilterOpen(false);
     
-    // Reset filters based on the active tab and visitor type
-    if (mainTab === 'visitor') {
-      // For visitor history table
-      console.log('🔧 Resetting visitor history filters');
-      fetchVisitorHistory(1); // Refresh history without filters
-    } else if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
+    // Reset filters based on the active visitor type
+    if (visitorSubTab === 'visitor-in' && activeVisitorType === 'unexpected') {
       console.log('🔧 Resetting unexpected visitor filters');
       setUnexpectedFilters({});
       fetchUnexpectedVisitorsWithFilters(1, {});
@@ -495,7 +479,6 @@ export const VisitorsDashboard = () => {
     { key: 'primary_host', label: 'Host', sortable: true, hideable: true, draggable: true },
     { key: 'visit_purpose', label: 'Purpose', sortable: true, hideable: true, draggable: true },
     { key: 'guest_from', label: 'Location', sortable: true, hideable: true, draggable: true },
-    { key: 'visitor_type', label: 'Visitor Type', sortable: true, hideable: true, draggable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true, draggable: true },
     { key: 'check_in_time', label: 'Check-in Time', sortable: true, hideable: true, draggable: true },
     
@@ -769,16 +752,6 @@ default:
       return visitor.guest_from || '--';
     case 'visit_purpose':
       return visitor.visit_purpose || '--';
-    case 'visitor_type':
-      return (
-        <Badge className={`${
-          visitor.visitor_type === 'unexpected' ? 'bg-red-100 text-red-800' : 
-          visitor.visitor_type === 'expected' ? 'bg-green-100 text-green-800' : 
-          'bg-gray-100 text-gray-800'
-        }`}>
-          {visitor.visitor_type ? visitor.visitor_type.charAt(0).toUpperCase() + visitor.visitor_type.slice(1) : '--'}
-        </Badge>
-      );
     case 'check_in_time':
       return visitor.check_in_time || '--';
     case 'pass_number':
@@ -1149,7 +1122,7 @@ default:
           </TabsList>
           </div>
 
-            {/* <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200">
+          <TabsContent value="visitor" className="bg-white rounded-lg border border-gray-200">
             <Tabs value={visitorSubTab} onValueChange={setVisitorSubTab} className="w-full">
               <div className="p-4 pb-0">
                 <TabsList className="grid w-full grid-cols-3 bg-white border border-gray-200">
@@ -1174,9 +1147,9 @@ default:
                 </TabsList>
               </div>
 
-            
+              {/* Visitor In tab content */}
               <TabsContent value="visitor-in" className="p-4">
-               
+                {/* Visitor Type Tabs */}
                 <div className="flex bg-white p-1 rounded-lg mb-6">
                   <Button 
                     onClick={() => setActiveVisitorType('unexpected')}
@@ -1202,7 +1175,7 @@ default:
                   </Button>
                 </div>
 
-               
+                {/* Content Area */}
                 <div className="min-h-[400px]">
                   {activeVisitorType === 'unexpected' && (
                     <EnhancedTable
@@ -1266,7 +1239,7 @@ default:
                 </div>
               </TabsContent>
 
-             
+              {/* Visitor Out tab content */}
               <TabsContent value="visitor-out" className="p-4 min-h-[400px]">
                 <EnhancedTable
                   data={visitorsOutData}
@@ -1297,40 +1270,42 @@ default:
                     </div>
                   }
                 />
-              </TabsContent> */}
+              </TabsContent>
 
-
-          <TabsContent value="visitor" className="pt-4 min-h-[400px]">
-            {/* Visitor History Table - Direct display without sub-tabs */}
-            <EnhancedTable
-              data={visitorHistoryData}
-              columns={visitorHistoryColumns}
-              renderCell={renderVisitorHistoryCell}
-              enableSearch={true}
-              enableSelection={false}
-              // enableExport={true}
-              enablePagination={true}
-              pagination={historyPagination}
-              onPageChange={fetchVisitorHistory}
-              loading={historyLoading}
-              storageKey="visitor-history-table"
-              emptyMessage="No visitor history available"
-              exportFileName="visitor-history"
-              searchPlaceholder="Search..."
-              hideTableExport={false}
-              hideColumnsButton={false}
-              onFilterClick={handleFilterOpen}
-              leftActions={
-                <div className="flex gap-3">
-                  <Button
-                    onClick={() => setIsNewVisitorDialogOpen(true)}
-                    className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add
-                  </Button>
-                </div>
-              }
-            />
+              {/* History tab content */}
+              <TabsContent value="history" className="p-4 min-h-[400px] space-y-4">
+                {/* Visitor History Table */}
+                <EnhancedTable
+                  data={visitorHistoryData}
+                  columns={visitorHistoryColumns}
+                  renderCell={renderVisitorHistoryCell}
+                  enableSearch={true}
+                  enableSelection={false}
+                  // enableExport={true}
+                  enablePagination={true}
+                  pagination={historyPagination}
+                  onPageChange={fetchVisitorHistory}
+                  loading={historyLoading}
+                  storageKey="visitor-history-table"
+                  emptyMessage="No visitor history available"
+                  exportFileName="visitor-history"
+                  searchPlaceholder="Search..."
+                  hideTableExport={false}
+                  hideColumnsButton={false}
+                  // onFilterClick={handleFilterOpen}
+                  leftActions={
+                    <div className="flex gap-3">
+                      <Button
+                        onClick={() => setIsNewVisitorDialogOpen(true)}
+                        className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
+                      >
+                        <Plus className="w-4 h-4 mr-2" /> Add
+                      </Button>
+                    </div>
+                  }
+                />
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-4">

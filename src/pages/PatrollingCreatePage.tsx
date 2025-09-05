@@ -389,14 +389,41 @@ export const PatrollingCreatePage: React.FC = () => {
   // When checklist is selected, fill questions and disable editing
   useEffect(() => {
     if (selectedChecklist && selectedChecklist.raw && selectedChecklist.raw.snag_questions) {
-      const filledQuestions = selectedChecklist.raw.snag_questions.map((q: any) => ({
-        id: q.id.toString(),
-        task: q.descr,
-        inputType: q.qtype === 'multiple' ? 'multiple_choice' : (q.qtype === 'yesno' ? 'yes_no' : ''),
-        mandatory: !!q.quest_mandatory,
-        options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
-        optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
-      }));
+      const filledQuestions = selectedChecklist.raw.snag_questions.map((q: any) => {
+        // Map API question types to UI input types
+        let inputType = '';
+        switch (q.qtype) {
+          case 'multiple':
+            inputType = 'multiple_choice';
+            break;
+          case 'yesno':
+            inputType = 'yes_no';
+            break;
+          case 'rating':
+            inputType = 'rating';
+            break;
+          case 'input':
+            inputType = 'text_input';
+            break;
+          case 'description':
+            inputType = 'description';
+            break;
+          case 'emoji':
+            inputType = 'emoji';
+            break;
+          default:
+            inputType = '';
+        }
+
+        return {
+          id: q.id.toString(),
+          task: q.descr,
+          inputType,
+          mandatory: !!q.quest_mandatory,
+          options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
+          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+        };
+      });
       setQuestions(filledQuestions);
     }
   }, [selectedChecklist]);
@@ -1233,7 +1260,7 @@ export const PatrollingCreatePage: React.FC = () => {
                   <TextField
                     label={
                       <>
-                        Task<span className="text-red-500">*</span>
+                        Question<span className="text-red-500">*</span>
                       </>
                     }
                     placeholder="Enter Task"
@@ -1264,6 +1291,10 @@ export const PatrollingCreatePage: React.FC = () => {
                       <MenuItem value="">Select Input Type</MenuItem>
                       <MenuItem value="yes_no">Yes/No</MenuItem>
                       <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
+                      <MenuItem value="rating">Rating</MenuItem>
+                      <MenuItem value="text_input">Text Input</MenuItem>
+                      <MenuItem value="description">Description</MenuItem>
+                      <MenuItem value="emoji">Emoji</MenuItem>
                     </MuiSelect>
                   </FormControl>
                 </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useLayout } from '@/contexts/LayoutContext';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '@/store/store';
@@ -11,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Users, Download, X } from 'lucide-react';
+import { Users, Download, X, Eye } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -28,6 +29,7 @@ import { toast } from 'sonner';
 
 export const OccupantUserMasterDashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [occupantUser, setOccupantUser] = useState([])
   const [pagination, setPagination] = useState({
@@ -43,20 +45,28 @@ export const OccupantUserMasterDashboard = () => {
     entity: ''
   });
 
-  const { users: occupantUsersData, loading } = useSelector((state: RootState) => state.occupantUsers);
+  const { users: occupantUsersData, pagination: statePagination, loading } = useSelector((state: RootState) => state.occupantUsers as any);
   const occupantUserCounts = useSelector((state: RootState) => state.occupantUserCounts);
   const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
 
   useEffect(() => {
-    if (occupantUsersData?.transformedUsers) {
-      setOccupantUser(occupantUsersData?.transformedUsers)
+    const data: any = occupantUsersData;
+    if (data?.transformedUsers) {
+      setOccupantUser(data.transformedUsers);
       setPagination({
-        current_page: occupantUsersData.pagination?.current_page,
-        total_count: occupantUsersData.pagination?.total_count,
-        total_pages: occupantUsersData.pagination?.total_pages
-      })
+        current_page: statePagination?.current_page ?? data.pagination?.current_page ?? 1,
+        total_count: statePagination?.total_count ?? data.pagination?.total_count ?? 0,
+        total_pages: statePagination?.total_pages ?? data.pagination?.total_pages ?? 0,
+      });
+    } else if (Array.isArray(data)) {
+      setOccupantUser(data);
+      setPagination((prev) => ({
+        current_page: statePagination?.current_page ?? prev.current_page,
+        total_count: statePagination?.total_count ?? prev.total_count,
+        total_pages: statePagination?.total_pages ?? prev.total_pages,
+      }));
     }
-  }, [occupantUsersData.transformedUsers])
+  }, [occupantUsersData, statePagination])
 
   const handleFilterChange = (field: string, value: string) => {
     setFilters(prev => ({
@@ -137,7 +147,7 @@ export const OccupantUserMasterDashboard = () => {
           <PaginationLink
             onClick={() => handlePageChange(1)}
             isActive={currentPage === 1}
-            disabled={loading}
+            className={loading ? 'pointer-events-none opacity-50' : ''}
           >
             1
           </PaginationLink>
@@ -157,7 +167,7 @@ export const OccupantUserMasterDashboard = () => {
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                className={loading ? 'pointer-events-none opacity-50' : ''}
               >
                 {i}
               </PaginationLink>
@@ -173,7 +183,7 @@ export const OccupantUserMasterDashboard = () => {
               <PaginationLink
                 onClick={() => handlePageChange(i)}
                 isActive={currentPage === i}
-                disabled={loading}
+                className={loading ? 'pointer-events-none opacity-50' : ''}
               >
                 {i}
               </PaginationLink>
@@ -196,7 +206,7 @@ export const OccupantUserMasterDashboard = () => {
                 <PaginationLink
                   onClick={() => handlePageChange(i)}
                   isActive={currentPage === i}
-                  disabled={loading}
+                  className={loading ? 'pointer-events-none opacity-50' : ''}
                 >
                   {i}
                 </PaginationLink>
@@ -212,7 +222,7 @@ export const OccupantUserMasterDashboard = () => {
             <PaginationLink
               onClick={() => handlePageChange(totalPages)}
               isActive={currentPage === totalPages}
-              disabled={loading}
+              className={loading ? 'pointer-events-none opacity-50' : ''}
             >
               {totalPages}
             </PaginationLink>
@@ -226,7 +236,7 @@ export const OccupantUserMasterDashboard = () => {
             <PaginationLink
               onClick={() => handlePageChange(i)}
               isActive={currentPage === i}
-              disabled={loading}
+              className={loading ? 'pointer-events-none opacity-50' : ''}
             >
               {i}
             </PaginationLink>
@@ -306,12 +316,27 @@ export const OccupantUserMasterDashboard = () => {
             data={occupantUser}
             columns={columns}
             renderCell={renderCell}
+            renderActions={(item: any) => (
+              <div className="flex justify-center">
+                <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); navigate(`/master/user/occupant-users/view/${item.id}`); }} title="View">
+                  <Eye className="w-4 h-4" />
+                </Button>
+              </div>
+            )}
             onFilterClick={() => setFilterDialogOpen(true)}
             enableExport
             handleExport={handleExport}
             storageKey="fm-user-master-table"
             searchPlaceholder="Search users..."
             loading={loading}
+            leftActions={
+              <Button
+                onClick={() => navigate('/master/user/occupant-users/add')}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md border-0"
+              >
+                Add
+              </Button>
+            }
           />
         </div>
 

@@ -1,139 +1,127 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { useCallback } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Download, X, FileText, File } from 'lucide-react';
+import { Download, X, FileText, FileSpreadsheet, File } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 interface AttachmentPreviewModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  attachment: {
+  isModalOpen: boolean;
+  setIsModalOpen: (isOpen: boolean) => void;
+  selectedDoc: {
     id: number;
+    document_name?: string;
     document_file_name?: string;
-    filename?: string;
     url: string;
   } | null;
+  setSelectedDoc: React.Dispatch<React.SetStateAction<{
+    id: number;
+    document_name?: string;
+    document_file_name?: string;
+    url: string;
+  } | null>>;
 }
 
 export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
-  isOpen,
-  onClose,
-  attachment
+  isModalOpen,
+  setIsModalOpen,
+  selectedDoc,
+  setSelectedDoc,
 }) => {
-  if (!attachment) return null;
+  const handleDownload = useCallback(async () => {
+    if (!selectedDoc?.id) {
+      toast.error('No document selected');
+      return;
+    }
 
-  const fileName = attachment.document_file_name || attachment.filename;
-  const ext = fileName.split(".").pop()?.toLowerCase();
+    const token = localStorage.getItem('token');
+    const baseUrl = localStorage.getItem('baseUrl');
+    if (!token || !baseUrl) {
+      toast.error('Missing required configuration');
+      return;
+    }
 
-  // derive pseudo type
-  const getFileType = () => {
-    if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) return "image";
-    if (ext === "pdf") return "pdf";
-    return "other";
-  };
-
-  const type = getFileType();
-
-  const handleDownload = async () => {
     try {
-      const baseUrl = localStorage.getItem("baseUrl");
-      const token = localStorage.getItem("token");
-
-      if (!baseUrl || !token) {
-        throw new Error("Missing baseUrl or token in localStorage");
-      }
-
       const response = await axios.get(
-        `https://${baseUrl}/attachfiles/${attachment.id}.json?show_file=true`,
+        `https://${baseUrl}/attachfiles/${selectedDoc.id}?show_file=true`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          responseType: "blob",
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
         }
       );
 
-      const blob = new Blob([response.data]);
+      const contentType = response.headers['content-type'] || 'application/octet-stream';
+      const blob = new Blob([response.data], { type: contentType });
       const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement("a");
+      const link = document.createElement('a');
       link.href = url;
-      link.download = attachment.document_file_name || "download";
+      link.download = selectedDoc.document_name || selectedDoc.document_file_name || `document_${selectedDoc.id}`;
       document.body.appendChild(link);
       link.click();
-
-      link.remove();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("File download failed:", error);
-      toast.error(error.message)
+      setIsModalOpen(false);
+      setSelectedDoc(null);
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to download file');
     }
-  };
+  }, [selectedDoc, setIsModalOpen, setSelectedDoc]);
 
-  const renderPreview = () => {
-    if (type === "image") {
-      return (
-        <div className="flex justify-center">
-          <img
-            src={attachment.url}
-            alt={fileName}
-            className="max-w-full max-h-96 object-contain rounded-lg"
-          />
-        </div>
-      );
-    } else if (type === "pdf") {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 bg-muted rounded-lg">
-          <FileText className="w-16 h-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">PDF File</p>
-          <p className="text-sm text-muted-foreground">{fileName}</p>
-        </div>
-      );
-    } else {
-      return (
-        <div className="flex flex-col items-center justify-center h-64 bg-muted rounded-lg">
-          <File className="w-16 h-16 text-muted-foreground mb-4" />
-          <p className="text-muted-foreground">Unsupported Preview</p>
-          <p className="text-sm text-muted-foreground">{fileName}</p>
-        </div>
-      );
+  const handleClose = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedDoc(null);
+  }, [setIsModalOpen, setSelectedDoc]);
+
+  const isImage = selectedDoc?.url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.url);
+  const isPdf = selectedDoc?.url && /\.pdf$/i.test(selectedDoc.url);
+  const isExcel = selectedDoc?.url && /\.(xls|xlsx|csv)$/i.test(selectedDoc.url);
+  const isWord = selectedDoc?.url && /\.(doc|docx)$/i.test(selectedDoc.url);
+
+  const renderFileIcon = () => {
+    if (isPdf) {
+      return <FileText className="w-16 h-16 text-red-600" />;
+    } else if (isExcel) {
+      return <FileSpreadsheet className="w-16 h-16 text-green-600" />;
+    } else if (isWord) {
+      return <FileText className="w-16 h-16 text-blue-600" />;
     }
+    return <File className="w-16 h-16 text-gray-600" />;
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-xl font-semibold">{fileName}</DialogTitle>
-          <DialogClose asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogClose>
+    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <DialogContent className="w-full max-w-[90vw] sm:max-w-2xl bg-white rounded-lg">
+        <button
+          className="absolute top-3 right-3 text-gray-500 hover:text-black"
+          aria-label="Close"
+          onClick={handleClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+        <DialogHeader>
+          <DialogTitle className="text-center text-lg font-medium">
+            {selectedDoc?.document_name || selectedDoc?.document_file_name || 'Document'}
+          </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-4">
-          {/* File Info */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Type: {ext?.toUpperCase()}</span>
-          </div>
-
-          {/* Preview Area */}
-          <div className="border border-border rounded-lg p-4">
-            {renderPreview()}
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Close
-            </Button>
-            <Button onClick={handleDownload} className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              Download
-            </Button>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-4 py-4">
+          {isImage && selectedDoc?.url ? (
+            <img
+              src={selectedDoc.url}
+              alt={selectedDoc.document_name || selectedDoc.document_file_name}
+              className="max-w-full max-h-[400px] rounded-md border object-contain"
+            />
+          ) : (
+            <div className="flex items-center justify-center w-20 h-20 bg-gray-100 rounded-md border">
+              {renderFileIcon()}
+            </div>
+          )}
+          <Button
+            onClick={handleDownload}
+            className="bg-blue-600 text-white hover:bg-blue-700"
+          >
+            <Download className="mr-2 w-4 h-4" />
+            Download
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

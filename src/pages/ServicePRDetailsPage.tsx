@@ -1,40 +1,71 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import {
-  Edit,
-  Copy,
-  Printer,
-  Rss,
-  ArrowLeft,
-  Image,
-  FileText,
-  File,
-} from "lucide-react";
+import { Edit, Copy, Printer, Rss, ArrowLeft, FileText, FileSpreadsheet, File, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import {
-  approveRejectWO,
-  getWorkOrderById,
-} from "@/store/slices/workOrderSlice";
+import { approveRejectWO, getWorkOrderById } from "@/store/slices/workOrderSlice";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-} from "@mui/material";
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
-// Define the interface for service items
+// Interfaces
+interface Company {
+  site_name?: string;
+  phone?: string;
+  fax?: string;
+  email?: string;
+  gst?: string;
+  pan?: string;
+  address?: string;
+}
+
+interface SupplierDetails {
+  company_name?: string;
+  mobile1?: string;
+  email?: string;
+  gstin_number?: string;
+  pan_number?: string;
+}
+
+interface SupplierAddress {
+  address?: string;
+}
+
+interface PaymentTerms {
+  payment_tenure?: number;
+  retention?: number;
+  tds?: number;
+  qc?: number;
+}
+
+interface WorkOrder {
+  number?: string;
+  wo_date?: string;
+  kind_attention?: string;
+  subject?: string;
+  related_to?: string;
+  payment_terms?: PaymentTerms;
+  advance_amount?: number;
+  description?: string;
+  reference_no?: string;
+  id?: string;
+  supplier_details?: SupplierDetails;
+  supplier_address?: SupplierAddress;
+  work_category?: string;
+  plant_detail?: string;
+  wo_status?: string;
+  term_condition?: string;
+}
+
 interface ServiceItem {
+  id?: number;
   sno: number;
   boq_details: string;
   quantity: number;
@@ -54,33 +85,48 @@ interface ServiceItem {
   total_amount: number;
 }
 
-// Define the interface for approvals
 interface Approval {
   level: string;
   status: string;
   updated_by?: string;
   updated_at?: string;
-  rejection_reason?: string; // Added for rejection reason tooltip
+  rejection_reason?: string;
 }
 
-// Define column configurations for the EnhancedTable
+interface Totals {
+  net_amount?: number;
+  total_taxable?: number;
+  taxes?: number;
+  total_value?: number;
+}
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
+}
+
+interface ServicePR {
+  company?: Company;
+  work_order?: WorkOrder;
+  inventories?: ServiceItem[];
+  approvals?: Approval[];
+  totals?: Totals;
+  attachments?: Attachment[];
+  preparedBy?: string;
+  signature?: string;
+  contractor?: string;
+}
+
+// Column configurations
 const serviceColumns: ColumnConfig[] = [
   { key: "sno", label: "S.No", sortable: true, draggable: true },
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
-  {
-    key: "expected_date",
-    label: "Expected Date",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "product_description",
-    label: "Product Description",
-    sortable: true,
-    draggable: true,
-  },
+  { key: "expected_date", label: "Expected Date", sortable: true, draggable: true },
+  { key: "product_description", label: "Product Description", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
   { key: "cgst_rate", label: "CGST Rate(%)", sortable: true, draggable: true },
@@ -91,32 +137,24 @@ const serviceColumns: ColumnConfig[] = [
   { key: "igst_amount", label: "IGST Amount", sortable: true, draggable: true },
   { key: "tcs_amount", label: "TCS Amount", sortable: true, draggable: true },
   { key: "tax_amount", label: "Tax Amount", sortable: true, draggable: true },
-  {
-    key: "total_amount",
-    label: "Total Amount",
-    sortable: true,
-    draggable: true,
-  },
+  { key: "total_amount", label: "Total Amount", sortable: true, draggable: true },
 ];
 
 export const ServicePRDetailsPage = () => {
   const dispatch = useAppDispatch();
-  const baseUrl = localStorage.getItem("baseUrl");
-  const token = localStorage.getItem("token");
   const navigate = useNavigate();
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-
   const levelId = searchParams.get("level_id");
   const userId = searchParams.get("user_id");
-
   const shouldShowButtons = Boolean(levelId && userId);
 
+  const [servicePR, setServicePR] = useState<ServicePR>({});
+  const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
-  const [servicePR, setServicePR] = useState<any>({});
-  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
@@ -124,47 +162,53 @@ export const ServicePRDetailsPage = () => {
     showAddDebitCredit: false,
   });
 
+  // Fetch service PR data
   useEffect(() => {
     const fetchData = async () => {
+      if (!id) return;
+
+      const token = localStorage.getItem("token");
+      const baseUrl = localStorage.getItem("baseUrl");
+
+      if (!baseUrl || !token) {
+        toast.error("Missing required configuration");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const response = await dispatch(
-          getWorkOrderById({ baseUrl, token, id })
-        ).unwrap();
-        setServicePR(response.page);
+        setLoading(true);
+        const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
+        setServicePR(response.page || {});
         setButtonCondition({
           showSap: response.show_send_sap_yes,
           showAddInvoice: response.show_add_invoice_ses,
           showAddDebitCredit: response.can_add_debit_credit_note,
         });
-      } catch (error) {
-        toast.error(String(error));
+      } catch (error: any) {
+        toast.error(error.message || "Failed to fetch service PR");
+      } finally {
+        setLoading(false);
       }
     };
-
     fetchData();
-  }, [dispatch, baseUrl, token, id]);
+  }, [dispatch, id]);
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "approved":
-        return "bg-green-100 text-green-800";
-      case "rejected":
-        return "bg-red-100 text-red-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
+  // Handle print
+  const handlePrint = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
     }
-  };
 
-  const handlePrint = async () => {
     try {
       const response = await axios.get(
-        `https://${baseUrl}/pms/work_orders/${id}/print_pdf`,
+        `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
+          responseType: 'blob'
         }
       );
 
@@ -177,76 +221,68 @@ export const ServicePRDetailsPage = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-      console.log(error)
-      toast.error(error.message);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to download PDF");
     }
-  };
+  }, [id]);
 
-  const handleSendToSap = async () => {
+  // Handle send to SAP
+  const handleSendToSap = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+
     try {
-      const response = await axios.get(
+      const response = await axios.get<{ message: string }>(
         `https://${baseUrl}/pms/work_orders/${id}.json?send_sap=yes`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
       toast.success(response.data.message);
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to send to SAP");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send to SAP");
     }
-  };
+  }, [id]);
 
-  // Transform inventory data to match ServiceItem interface
-  const serviceItems: ServiceItem[] =
-    servicePR.inventories?.map((item: any) => ({
-      sno: item.sno,
-      boq_details: item.boq_details,
-      quantity: item.quantity,
-      uom: item.uom,
-      expected_date: item.expected_date,
-      product_description: item.product_description,
-      rate: item.rate,
-      wbs_code: item.wbs_code,
-      cgst_rate: item.cgst_rate,
-      cgst_amount: item.cgst_amount,
-      sgst_rate: item.sgst_rate,
-      sgst_amount: item.sgst_amount,
-      igst_rate: item.igst_rate,
-      igst_amount: item.igst_amount,
-      tcs_amount: item.tcs_amount,
-      tax_amount: item.tax_amount,
-      total_amount: item.total_amount,
-    })) || [];
+  // Handle approve
+  const handleApprove = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl || !token || !id || !levelId || !userId) {
+      toast.error("Missing required configuration");
+      return;
+    }
 
-  const handleApprove = async () => {
     const payload = {
       level_id: Number(levelId),
       user_id: Number(userId),
       approve: true,
     };
+
     try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
+      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("Work Order approved successfully");
       navigate(`/finance/pending-approvals`);
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to approve Work Order");
     }
-  };
+  }, [dispatch, id, levelId, userId, navigate]);
 
-  const handleRejectClick = () => {
-    setOpenRejectDialog(true);
-  };
-
-  const handleRejectConfirm = async () => {
+  // Handle reject
+  const handleRejectConfirm = useCallback(async () => {
     if (!rejectComment.trim()) {
       toast.error("Please provide a reason for rejection");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+    if (!baseUrl || !token || !id || !levelId || !userId) {
+      toast.error("Missing required configuration");
       return;
     }
 
@@ -258,48 +294,85 @@ export const ServicePRDetailsPage = () => {
     };
 
     try {
-      await dispatch(
-        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
-      ).unwrap();
+      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
       toast.success("Work Order rejected successfully");
       navigate(`/finance/pending-approvals`);
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to reject Work Order");
     } finally {
       setOpenRejectDialog(false);
       setRejectComment("");
     }
+  }, [dispatch, id, levelId, userId, rejectComment, navigate]);
+
+  const getStatusColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case "approved": return "bg-green-100 text-green-800";
+      case "rejected": return "bg-red-100 text-red-800";
+      case "pending": return "bg-yellow-100 text-yellow-800";
+      default: return "bg-gray-100 text-gray-800";
+    }
   };
 
-  const handleRejectCancel = () => {
-    setOpenRejectDialog(false);
-    setRejectComment("");
+  const serviceItems: ServiceItem[] = servicePR.inventories?.map((item: any, index: number) => ({
+    id: item.id || index,
+    sno: item.sno || index + 1,
+    boq_details: item.boq_details || "-",
+    quantity: item.quantity || 0,
+    uom: item.uom || "-",
+    expected_date: item.expected_date ? format(new Date(item.expected_date), 'dd-MM-yyyy') : "-",
+    product_description: item.product_description || "-",
+    rate: item.rate || 0,
+    wbs_code: item.wbs_code || "-",
+    cgst_rate: item.cgst_rate || 0,
+    cgst_amount: item.cgst_amount || 0,
+    sgst_rate: item.sgst_rate || 0,
+    sgst_amount: item.sgst_amount || 0,
+    igst_rate: item.igst_rate || 0,
+    igst_amount: item.igst_amount || 0,
+    tcs_amount: item.tcs_amount || 0,
+    tax_amount: item.tax_amount || 0,
+    total_amount: item.total_amount || 0,
+  })) || [];
+
+  const renderCell = (item: ServiceItem, columnKey: string) => {
+    const value = item[columnKey as keyof ServiceItem] ?? "-";
+    if (columnKey === "product_description") {
+      const truncated = typeof value === 'string' && value.length > 30 ? value.slice(0, 30) + "..." : value;
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="cursor-pointer">{truncated}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-[20rem] text-wrap break-words">{value}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return <span className="text-sm font-medium">{value}</span>;
   };
 
   return (
-    <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
+    <div className="p-6 mx-auto max-w-7xl bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
         <div className="flex flex-col items-start">
-          <div className="flex items-center gap-4 mb-3">
-            <h1 className="text-2xl font-semibold">Service PR Details</h1>
-          </div>
+          <h1 className="text-2xl font-semibold">Service PR Details</h1>
           <TooltipProvider>
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-3 mt-3">
               {servicePR?.approvals?.map((level: Approval) => (
                 <div className="space-y-2" key={level.level}>
                   {level.status.toLowerCase() === 'rejected' ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div
-                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}
-                        >
-                          {`${level.level} approval : ${level.status}`}
+                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
+                          {`${level.level} Approval : ${level.status}`}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
@@ -307,10 +380,8 @@ export const ServicePRDetailsPage = () => {
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}
-                    >
-                      {`${level.level} approval : ${level.status}`}
+                    <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                      {`${level.level} Approval : ${level.status}`}
                     </div>
                   )}
                   {level.updated_by && level.updated_at && (
@@ -323,20 +394,24 @@ export const ServicePRDetailsPage = () => {
             </div>
           </TooltipProvider>
         </div>
-
         <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
           <div className="flex gap-2 flex-wrap">
             {buttonCondition.showSap && (
               <Button
                 size="sm"
                 variant="outline"
-                className="border-gray-300 bg-purple-600 text-white sap_button"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
                 onClick={handleSendToSap}
               >
                 Send To SAP Team
               </Button>
             )}
-            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/service-pr/edit/${id}`)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+            >
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
@@ -371,432 +446,266 @@ export const ServicePRDetailsPage = () => {
         </div>
       </div>
 
-      {/* Vendor/Contact Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            {servicePR.company?.site_name}
-          </h2>
-        </div>
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left side - Contact details */}
-          <div className="flex-1 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <span className="text-sm font-medium text-gray-700">Phone</span>
-                <span className="ml-8">: {servicePR.company?.phone}</span>
+      <div className="space-y-6">
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium text-center">{servicePR.company?.site_name || "Company Details"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="space-y-3">
+                <div className="flex"><span className="text-muted-foreground w-24">Phone</span><span className="font-medium">: {servicePR.company?.phone ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">Email</span><span className="font-medium">: {servicePR.company?.email ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">PAN</span><span className="font-medium">: {servicePR.company?.pan ?? '-'}</span></div>
               </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Fax</span>
-                <span className="ml-12">: {servicePR.company?.fax}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">Email</span>
-                <span className="ml-8">: {servicePR.company?.email}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">GST</span>
-                <span className="ml-11">: {servicePR.company?.gst}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">PAN</span>
-                <span className="ml-9">: {servicePR.company?.pan}</span>
-              </div>
-              <div>
-                <span className="text-sm font-medium text-gray-700">
-                  Address
-                </span>
-                <span className="ml-5">: {servicePR.company?.address}</span>
+              <div className="space-y-3">
+                <div className="flex"><span className="text-muted-foreground w-24">Fax</span><span className="font-medium">: {servicePR.company?.fax ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">GST</span><span className="font-medium">: {servicePR.company?.gst ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-24">Address</span><span className="font-medium">: {servicePR.company?.address ?? '-'}</span></div>
               </div>
             </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Center - Contractor name */}
-          <div className="flex flex-col items-center justify-center lg:min-w-[200px]">
-            <div className="w-16 h-16 bg-gray-200 rounded border-2 border-dashed border-gray-300 flex items-center justify-center">
-              <span className="text-xs text-gray-500">image</span>
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium text-center">
+              Service Purchase Request ({servicePR.work_order?.wo_status || "-"})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
+              <div className="space-y-3">
+                <div className="flex"><span className="text-muted-foreground w-40">SPR Number</span><span className="font-medium">: {servicePR.work_order?.number ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">SPR Date</span><span className="font-medium">: {servicePR.work_order?.wo_date ? format(new Date(servicePR.work_order.wo_date), 'dd-MM-yyyy') : '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Kind Attention</span><span className="font-medium">: {servicePR.work_order?.kind_attention ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Subject</span><span className="font-medium">: {servicePR.work_order?.subject ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Related To</span><span className="font-medium">: {servicePR.work_order?.related_to ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Payment Tenure(In Days)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.payment_tenure ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Retention(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.retention ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">TDS(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.tds ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">QC(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.qc ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Advance Amount</span><span className="font-medium">: {servicePR.work_order?.advance_amount ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-40">Description</span><span className="font-medium">: {servicePR.work_order?.description ?? '-'}</span></div>
+              </div>
+              <div className="space-y-3">
+                <div className="flex"><span className="text-muted-foreground w-32">Reference No.</span><span className="font-medium">: {servicePR.work_order?.reference_no ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">ID</span><span className="font-medium">: {servicePR.work_order?.id ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Contractor</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.company_name ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Address</span><span className="font-medium">: {servicePR.work_order?.supplier_address?.address ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Phone</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.mobile1 ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Email</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.email ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">GST</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.gstin_number ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">PAN</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.pan_number ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Work Category</span><span className="font-medium">: {servicePR.work_order?.work_category ?? '-'}</span></div>
+                <div className="flex"><span className="text-muted-foreground w-32">Plant Detail</span><span className="font-medium">: {servicePR.work_order?.plant_detail ?? '-'}</span></div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </CardContent>
+        </Card>
 
-      {/* Service PR Details Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">
-          Service Purchase Request ({servicePR.work_order?.wo_status})
-        </h3>
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-0">
+            <CardTitle className="text-lg font-medium">Service Items Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <EnhancedTable
+              data={serviceItems}
+              columns={serviceColumns}
+              storageKey="service-items-table"
+              className="min-w-[1200px]"
+              emptyMessage="No service items available"
+              pagination={true}
+              pageSize={10}
+              hideColumnsButton={true}
+              hideTableExport={true}
+              hideTableSearch={true}
+              loading={loading}
+              renderCell={renderCell}
+            />
+            <div className="mt-6 border-t pt-4">
+              <div className="flex justify-between items-center py-2">
+                <span className="font-medium text-gray-700">Net Amount (INR):</span>
+                <span className="font-medium">{servicePR.totals?.net_amount ?? '-'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="font-medium text-gray-700">Total Taxable Value Of Service PR:</span>
+                <span className="font-medium">{servicePR.totals?.total_taxable ?? '-'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="font-medium text-gray-700">Taxes (INR):</span>
+                <span className="font-medium">{servicePR.totals?.taxes ?? '-'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-t">
+                <span className="font-semibold text-gray-900">Total Service PR Value (INR):</span>
+                <span className="font-semibold">{servicePR.totals?.total_value ?? '-'}</span>
+              </div>
+              <div className="mt-4">
+                <span className="font-medium text-gray-700">Amount In Words: </span>
+                <span className="text-gray-900">{numberToIndianCurrencyWords(servicePR.totals?.total_value ?? 0)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
-          {/* Left Column */}
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                SPR Number
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.number || "-"}
-              </span>
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
+          </CardHeader>
+          <CardContent className="text-wrap break-words">
+            <p className="text-muted-foreground">{servicePR.work_order?.term_condition ?? 'No terms and conditions available'}</p>
+            <div className="mt-6">
+              <p className="font-medium text-gray-900">For {servicePR.contractor || "-"} We Confirm & Accept,</p>
             </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                SPR Date
-              </span>
-              <span className="text-sm">: {servicePR.work_order?.wo_date}</span>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div>
+                <p className="font-medium text-gray-900">PREPARED BY: {servicePR.preparedBy || "-"}</p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900">SIGNATURE: {servicePR.signature || "-"}</p>
+              </div>
             </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Kind Attention
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.kind_attention || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Subject
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.subject || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Related To
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.related_to || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Payment Tenure(In Days)
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.payment_terms?.payment_tenure}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Retention(%)
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.payment_terms?.retention}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                TDS(%)
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.payment_terms?.tds || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                QC(%)
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.payment_terms?.qc || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Advance Amount
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.advance_amount || "-"}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-40">
-                Description
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.description || "-"}
-              </span>
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          {/* Right Column */}
-          <div className="space-y-4">
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Reference No.
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.reference_no}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">ID</span>
-              <span className="text-sm">: {servicePR.work_order?.id}</span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Contractor
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_details?.company_name}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Address
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_address?.address}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Phone
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_details?.mobile1}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Email
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_details?.email}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                GST
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_details?.gstin_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                PAN
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.supplier_details?.pan_number}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Work Category
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.work_category}
-              </span>
-            </div>
-            <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-32">
-                Plant Detail
-              </span>
-              <span className="text-sm">
-                : {servicePR.work_order?.plant_detail}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Card className="shadow-sm border border-border">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {Array.isArray(servicePR.attachments) && servicePR.attachments.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {servicePR.attachments.map((attachment: Attachment) => {
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                  const isPdf = /\.pdf$/i.test(attachment.url);
+                  const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
+                  const isWord = /\.(doc|docx)$/i.test(attachment.url);
+                  const isDownloadable = isPdf || isExcel || isWord;
 
-      {/* Service Items Section with EnhancedTable */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Service Items Details
-        </h3>
-        <div className="overflow-x-auto">
-          <EnhancedTable
-            data={serviceItems}
-            columns={serviceColumns}
-            storageKey="service-items-table"
-            className="min-w-[1200px]"
-            emptyMessage="No service items available"
-            pagination={true}
-            pageSize={10}
-            hideColumnsButton={true}
-            hideTableExport={true}
-            hideTableSearch={true}
-            renderCell={(item: ServiceItem, columnKey: string) => (
-              <span className="text-sm font-medium">
-                {columnKey === "total_amount" ? (
-                  <span className="font-semibold">{item[columnKey]}</span>
-                ) : (
-                  item[columnKey as keyof ServiceItem]
-                )}
-              </span>
-            )}
-          />
-        </div>
-
-        {/* Summary Section */}
-        <div className="mt-6 border-t pt-4">
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Net Amount (INR):</span>
-            <span className="font-medium">{servicePR.totals?.net_amount}</span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">
-              Total Taxable Value Of Service PR:
-            </span>
-            <span className="font-medium">
-              {servicePR.totals?.total_taxable}
-            </span>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <span className="font-medium text-gray-700">Taxes (INR):</span>
-            <span className="font-medium">{servicePR.totals?.taxes}</span>
-          </div>
-          <div className="flex justify-between items-center py-2 border-t">
-            <span className="font-semibold text-gray-900">
-              Total Service PR Value (INR):
-            </span>
-            <span className="font-semibold">
-              {servicePR.totals?.total_value}
-            </span>
-          </div>
-          <div className="mt-4">
-            <span className="font-medium text-gray-700">Amount In Words: </span>
-            <span className="text-gray-900">
-              {numberToIndianCurrencyWords(servicePR.totals?.total_value)}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Terms & Conditions Section */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
-          Terms & Conditions :
-        </h3>
-        <p className="text-gray-700">{servicePR.work_order?.term_condition ?? 'No terms and conditions available'}</p>
-
-        <div className="mt-6">
-          <p className="text-gray-900 font-medium">
-            For {servicePR.contractor} We Confirm & Accept,
-          </p>
-        </div>
-
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div>
-            <p className="font-medium text-gray-900">
-              PREPARED BY: {servicePR.preparedBy}
-            </p>
-          </div>
-          <div>
-            <p className="font-medium text-gray-900">
-              SIGNATURE: {servicePR.signature || "-"}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Attachments Card */}
-      <Card className="shadow-sm border border-border">
-        <CardHeader className="pb-4">
-          <CardTitle className="text-lg font-medium">Attachments</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {Array.isArray(servicePR.attachments) &&
-            servicePR.attachments.length > 0 ? (
-            <div className="space-y-3">
-              {servicePR.attachments.map((attachment: any) => {
-                const getFileIcon = (fileName: string) => {
-                  const ext = fileName.split(".").pop()?.toLowerCase();
-                  if (
-                    ["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")
-                  ) {
-                    return <Image className="w-5 h-5 text-blue-600" />;
-                  }
-                  if (ext === "pdf") {
-                    return <FileText className="w-5 h-5 text-red-600" />;
-                  }
-                  return <File className="w-5 h-5 text-gray-600" />;
-                };
-
-                return (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedAttachment(attachment);
-                      setIsPreviewModalOpen(true);
-                    }}
-                  >
-                    {getFileIcon(attachment.document_file_name)}
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">
-                        {attachment.document_file_name}
-                      </p>
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    >
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedAttachment(attachment);
+                              setIsPreviewModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={attachment.url}
+                            alt={attachment.document_name || attachment.document_file_name}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedAttachment(attachment);
+                              setIsPreviewModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                      </span>
+                      {isDownloadable && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                          onClick={() => {
+                            setSelectedAttachment(attachment);
+                            setIsPreviewModalOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <p className="text-muted-foreground">No attachments</p>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No attachments</p>
+            )}
+          </CardContent>
+        </Card>
 
-      {shouldShowButtons && (
-        <div className="flex items-center justify-center gap-4 my-6">
-          <button
-            className="bg-green-600 text-white py-2 px-4 rounded-md"
-            onClick={handleApprove}
-          >
-            Approve
-          </button>
-          <button
-            className="bg-[#C72030] text-white py-2 px-4 rounded-md"
-            onClick={handleRejectClick}
-          >
-            Reject
-          </button>
-        </div>
-      )}
+        {shouldShowButtons && (
+          <div className="flex items-center justify-center gap-4 my-6">
+            <Button
+              className="bg-green-600 text-white hover:bg-green-700"
+              onClick={handleApprove}
+            >
+              Approve
+            </Button>
+            <Button
+              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+              onClick={() => setOpenRejectDialog(true)}
+            >
+              Reject
+            </Button>
+          </div>
+        )}
 
-      <Dialog
-        open={openRejectDialog}
-        onClose={handleRejectCancel}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Reject Work Order</DialogTitle>
-        <DialogContent>
-          <TextField
-            autoFocus
-            margin="dense"
-            label="Reason for Rejection"
-            type="text"
-            fullWidth
-            multiline
-            rows={4}
-            value={rejectComment}
-            onChange={(e) => setRejectComment(e.target.value)}
-            variant="outlined"
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleRejectCancel} variant="outline">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleRejectConfirm}
-            className="bg-[#C72030] text-white hover:bg-[#a61b27]"
-          >
-            Reject
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog open={openRejectDialog} onClose={() => setOpenRejectDialog(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Reject Work Order</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Reason for Rejection"
+              type="text"
+              fullWidth
+              multiline
+              rows={4}
+              value={rejectComment}
+              onChange={(e) => setRejectComment(e.target.value)}
+              variant="outlined"
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenRejectDialog(false)} variant="outline">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRejectConfirm}
+              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+            >
+              Reject
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <AttachmentPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={() => {
-          setIsPreviewModalOpen(false);
-          setSelectedAttachment(null);
-        }}
-        attachment={selectedAttachment}
-      />
+        <AttachmentPreviewModal
+          isModalOpen={isPreviewModalOpen}
+          setIsModalOpen={setIsPreviewModalOpen}
+          selectedDoc={selectedAttachment}
+          setSelectedDoc={setSelectedAttachment}
+        />
+      </div>
     </div>
   );
 };

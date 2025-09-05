@@ -117,6 +117,7 @@ export const getMaterialPR = createAsyncThunk(
             external_id,
             supplier_name,
             approval_status,
+            search = ""
         }: {
             baseUrl: string;
             token: string;
@@ -125,6 +126,7 @@ export const getMaterialPR = createAsyncThunk(
             external_id?: string;
             supplier_name?: string;
             approval_status?: string; // "" should still be valid
+            search?: string
         },
         { rejectWithValue }
     ) => {
@@ -146,7 +148,7 @@ export const getMaterialPR = createAsyncThunk(
             }
 
             const response = await axios.get(
-                `https://${baseUrl}/pms/purchase_orders/letter_of_indents.json?page=${page}${queryParams.toString() ? `&${queryParams}` : ""
+                `https://${baseUrl}/pms/purchase_orders/letter_of_indents.json?page=${page}&q[reference_number_or_external_id_cont]=${search}${queryParams.toString() ? `&${queryParams}` : ""
                 }`,
                 {
                     headers: {
