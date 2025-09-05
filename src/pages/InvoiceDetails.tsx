@@ -741,10 +741,17 @@ export const InvoiceDetails = () => {
                         type="text"
                         fullWidth
                         multiline
-                        rows={4}
+                        rows={2}
                         value={rejectComment}
                         onChange={(e) => setRejectComment(e.target.value)}
                         variant="outlined"
+                        sx={{
+                            mt: 1,
+                            "& .MuiOutlinedInput-root": {
+                                height: "auto !important",
+                                padding: "2px !important",
+                            },
+                        }}
                     />
                 </DialogContent>
                 <DialogActions>

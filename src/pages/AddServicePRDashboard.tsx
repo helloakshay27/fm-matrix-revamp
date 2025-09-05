@@ -653,9 +653,15 @@ export const AddServicePRDashboard = () => {
                 fullWidth
                 variant="outlined"
                 multiline
-                rows={4}
+                rows={2}
                 InputLabelProps={{ shrink: true }}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important", // textarea height controlled by rows
+                    padding: "2px !important",
+                  },
+                }}
               />
 
               {showRadio && (
@@ -1115,10 +1121,16 @@ export const AddServicePRDashboard = () => {
                 variant="outlined"
                 onChange={(e) => handleInputChange("description", e.target.value)}
                 multiline
-                rows={6}
+                rows={3}
                 InputLabelProps={{ shrink: true }}
                 value={formData.description}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
               />
 
               <TextField
@@ -1130,10 +1142,16 @@ export const AddServicePRDashboard = () => {
                   handleInputChange("termsConditions", e.target.value)
                 }
                 multiline
-                rows={6}
+                rows={3}
                 InputLabelProps={{ shrink: true }}
                 value={formData.termsConditions}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
               />
             </div>
           </div>

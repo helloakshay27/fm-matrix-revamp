@@ -1116,12 +1116,12 @@ export const AddMaterialPRDashboard = () => {
           })),
         },
         attachments: files,
-        slid, // Include slid in the payload
+        slid,
       };
 
       try {
         await axios.put(
-          `https://${baseUrl}/pms/purchase_orders/update_system_log_for_pr.json`,
+          `https://${baseUrl}/pms/purchase_orders/update_temp_records.json`,
           payload,
           {
             headers: {
@@ -1129,11 +1129,11 @@ export const AddMaterialPRDashboard = () => {
             },
           }
         );
-        console.log("System log updated successfully");
+        toast.success("Auto saved successfully");
       } catch (error) {
         console.error("Error updating system log:", error);
       }
-    }, 10000);
+    }, 60000);
 
     return () => clearInterval(interval);
   }, [slid, supplierDetails, items, files, wbsSelection, overallWbs, token, baseUrl]);
@@ -1682,9 +1682,15 @@ export const AddMaterialPRDashboard = () => {
                 fullWidth
                 variant="outlined"
                 multiline
-                minRows={4}
+                minRows={2}
                 InputLabelProps={{ shrink: true }}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
               />
 
               {showRadio && (
