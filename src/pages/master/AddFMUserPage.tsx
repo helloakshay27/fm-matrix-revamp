@@ -37,6 +37,9 @@ export const AddFMUserPage = () => {
   const { sites } = useAppSelector((state) => state.site);
   const { selectedCompany } = useAppSelector((state: RootState) => state.project);
 
+  const hostname = window.location.hostname;
+  const isOmanSite = hostname.includes('oig.gophygital.work');
+
   const [userAccount, setUserAccount] = useState({})
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
@@ -102,6 +105,17 @@ export const AddFMUserPage = () => {
     }));
   };
 
+  const handleMobileNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Allow only digits
+    if (!/^\d*$/.test(value)) return;
+    // Restrict length based on isOmanSite
+    const maxLength = isOmanSite ? 8 : 10;
+    if (value.length <= maxLength) {
+      handleInputChange('mobileNumber', value);
+    }
+  };
+
   const validateForm = () => {
     if (!formData.firstName) {
       toast.error('Please enter first name')
@@ -111,6 +125,15 @@ export const AddFMUserPage = () => {
       return false
     } else if (!formData.mobileNumber) {
       toast.error('Please enter mobile number')
+      return false
+    } else if (!/^\d+$/.test(formData.mobileNumber)) {
+      toast.error('Mobile number must contain only digits')
+      return false
+    } else if (isOmanSite && formData.mobileNumber.length !== 8) {
+      toast.error('Mobile number must be exactly 8 digits')
+      return false
+    } else if (!isOmanSite && formData.mobileNumber.length !== 10) {
+      toast.error('Mobile number must be exactly 10 digits')
       return false
     } else if (!formData.emailAddress) {
       toast.error('Please enter email address')
@@ -241,8 +264,13 @@ export const AddFMUserPage = () => {
                     label="Mobile Number"
                     variant="outlined"
                     value={formData.mobileNumber}
-                    onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
+                    onChange={handleMobileNumberChange}
                     required
+                    inputProps={{
+                      maxLength: isOmanSite ? 8 : 10,
+                      inputMode: 'numeric',
+                      pattern: '[0-9]*',
+                    }}
                     InputLabelProps={{
                       classes: {
                         asterisk: "text-red-500", // Tailwind class for red color
