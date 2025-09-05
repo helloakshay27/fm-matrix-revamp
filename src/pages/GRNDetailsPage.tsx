@@ -1,8 +1,22 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, File, FileText, Image, Printer, Rss } from "lucide-react";
+import {
+  ArrowLeft,
+  Eye,
+  File,
+  FileSpreadsheet,
+  FileText,
+  Image,
+  Printer,
+  Rss,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { fetchSingleGRN, approveGRN, rejectGrn } from "@/store/slices/grnSlice";
@@ -17,6 +31,7 @@ import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import axios from "axios";
 
 // Define the interface for Approval
 interface Approval {
@@ -28,78 +43,179 @@ interface Approval {
   rejection_reason?: string; // Added for rejection reason tooltip
 }
 
+interface Attachment {
+  id: number;
+  document_url?: string;
+  filename?: string;
+}
+
 // Define column configurations
 const itemsColumns: ColumnConfig[] = [
-  { key: 'sno', label: 'S.No.', sortable: true, draggable: true },
-  { key: 'inventory_name', label: 'Inventory', sortable: true, draggable: true },
-  { key: 'expected_quantity', label: 'Expected Quantity', sortable: true, draggable: true },
-  { key: 'received_quantity', label: 'Received Quantity', sortable: true, draggable: true },
-  { key: 'unit_type', label: 'Unit', sortable: true, draggable: true },
-  { key: 'rate', label: 'Rate', sortable: true, draggable: true },
-  { key: 'approved_qty', label: 'Approved Qty', sortable: true, draggable: true },
-  { key: 'rejected_qty', label: 'Rejected Qty', sortable: true, draggable: true },
-  { key: 'cgst_rate', label: 'CGST Rate', sortable: true, draggable: true },
-  { key: 'cgst_amount', label: 'CGST Amount', sortable: true, draggable: true },
-  { key: 'sgst_rate', label: 'SGST Rate', sortable: true, draggable: true },
-  { key: 'sgst_amount', label: 'SGST Amount', sortable: true, draggable: true },
-  { key: 'igst_rate', label: 'IGST Rate', sortable: true, draggable: true },
-  { key: 'igst_amount', label: 'IGST Amount', sortable: true, draggable: true },
-  { key: 'tcs_rate', label: 'TCS Rate', sortable: true, draggable: true },
-  { key: 'tcs_amount', label: 'TCS Amount', sortable: true, draggable: true },
-  { key: 'taxable_value', label: 'Total Taxes', sortable: true, draggable: true },
-  { key: 'total_value', label: 'Total Amount', sortable: true, draggable: true },
+  { key: "sno", label: "S.No.", sortable: true, draggable: true },
+  {
+    key: "inventory_name",
+    label: "Inventory",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "expected_quantity",
+    label: "Expected Quantity",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "received_quantity",
+    label: "Received Quantity",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "unit_type", label: "Unit", sortable: true, draggable: true },
+  { key: "rate", label: "Rate", sortable: true, draggable: true },
+  {
+    key: "approved_qty",
+    label: "Approved Qty",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "rejected_qty",
+    label: "Rejected Qty",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "cgst_rate", label: "CGST Rate", sortable: true, draggable: true },
+  { key: "cgst_amount", label: "CGST Amount", sortable: true, draggable: true },
+  { key: "sgst_rate", label: "SGST Rate", sortable: true, draggable: true },
+  { key: "sgst_amount", label: "SGST Amount", sortable: true, draggable: true },
+  { key: "igst_rate", label: "IGST Rate", sortable: true, draggable: true },
+  { key: "igst_amount", label: "IGST Amount", sortable: true, draggable: true },
+  { key: "tcs_rate", label: "TCS Rate", sortable: true, draggable: true },
+  { key: "tcs_amount", label: "TCS Amount", sortable: true, draggable: true },
+  {
+    key: "taxable_value",
+    label: "Total Taxes",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "total_value",
+    label: "Total Amount",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 const debitNoteColumns: ColumnConfig[] = [
-  { key: 'id', label: 'ID', sortable: true, draggable: true },
-  { key: 'amount', label: 'Amount', sortable: true, draggable: true },
-  { key: 'description', label: 'Description', sortable: true, draggable: true },
-  { key: 'approved', label: 'Approved', sortable: true, draggable: true },
-  { key: 'approved_on', label: 'Approved On', sortable: true, draggable: true },
-  { key: 'approved_by', label: 'Approved By', sortable: true, draggable: true },
-  { key: 'created_on', label: 'Created On', sortable: true, draggable: true },
-  { key: 'created_by', label: 'Created By', sortable: true, draggable: true },
+  { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "amount", label: "Amount", sortable: true, draggable: true },
+  { key: "description", label: "Description", sortable: true, draggable: true },
+  { key: "approved", label: "Approved", sortable: true, draggable: true },
+  { key: "approved_on", label: "Approved On", sortable: true, draggable: true },
+  { key: "approved_by", label: "Approved By", sortable: true, draggable: true },
+  { key: "created_on", label: "Created On", sortable: true, draggable: true },
+  { key: "created_by", label: "Created By", sortable: true, draggable: true },
   {
-    key: 'attachment',
-    label: 'Attachment',
+    key: "attachment",
+    label: "Attachment",
     sortable: false,
     draggable: true,
   },
 ];
 
 const paymentDetailsColumns: ColumnConfig[] = [
-  { key: 'action', label: 'Action', sortable: true, draggable: true },
-  { key: 'amount', label: 'Amount', sortable: true, draggable: true },
-  { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
-  { key: 'transaction_number', label: 'Transaction Number', sortable: true, draggable: true },
-  { key: 'status', label: 'Status', sortable: true, draggable: true },
-  { key: 'payment_date', label: 'Payment Date', sortable: true, draggable: true },
-  { key: 'note', label: 'Note', sortable: true, draggable: true },
-  { key: 'date_of_entry', label: 'Date of Entry', sortable: true, draggable: true },
-  { key: 'actions', label: 'Actions', sortable: false, draggable: true },
+  { key: "action", label: "Action", sortable: true, draggable: true },
+  { key: "amount", label: "Amount", sortable: true, draggable: true },
+  {
+    key: "payment_mode",
+    label: "Payment Mode",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "transaction_number",
+    label: "Transaction Number",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  {
+    key: "payment_date",
+    label: "Payment Date",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "note", label: "Note", sortable: true, draggable: true },
+  {
+    key: "date_of_entry",
+    label: "Date of Entry",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "actions", label: "Actions", sortable: false, draggable: true },
 ];
 
 const retentionPaymentColumns: ColumnConfig[] = [
-  { key: 'action', label: 'Action', sortable: true, draggable: true },
-  { key: 'amount', label: 'Amount', sortable: true, draggable: true },
-  { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
-  { key: 'transaction_number', label: 'Transaction Number', sortable: true, draggable: true },
-  { key: 'status', label: 'Status', sortable: true, draggable: true },
-  { key: 'payment_date', label: 'Payment Date', sortable: true, draggable: true },
-  { key: 'note', label: 'Note', sortable: true, draggable: true },
-  { key: 'date_of_entry', label: 'Date of Entry', sortable: true, draggable: true },
-  { key: 'actions', label: 'Actions', sortable: false, draggable: true },
+  { key: "action", label: "Action", sortable: true, draggable: true },
+  { key: "amount", label: "Amount", sortable: true, draggable: true },
+  {
+    key: "payment_mode",
+    label: "Payment Mode",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "transaction_number",
+    label: "Transaction Number",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  {
+    key: "payment_date",
+    label: "Payment Date",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "note", label: "Note", sortable: true, draggable: true },
+  {
+    key: "date_of_entry",
+    label: "Date of Entry",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "actions", label: "Actions", sortable: false, draggable: true },
 ];
 
 const qcPaymentColumns: ColumnConfig[] = [
-  { key: 'amount', label: 'Amount', sortable: true, draggable: true },
-  { key: 'payment_mode', label: 'Payment Mode', sortable: true, draggable: true },
-  { key: 'transaction_number', label: 'Transaction Number', sortable: true, draggable: true },
-  { key: 'status', label: 'Status', sortable: true, draggable: true },
-  { key: 'payment_date', label: 'Payment Date', sortable: true, draggable: true },
-  { key: 'note', label: 'Note', sortable: true, draggable: true },
-  { key: 'date_of_entry', label: 'Date of Entry', sortable: true, draggable: true },
-  { key: 'actions', label: 'Actions', sortable: false, draggable: true, },
+  { key: "amount", label: "Amount", sortable: true, draggable: true },
+  {
+    key: "payment_mode",
+    label: "Payment Mode",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "transaction_number",
+    label: "Transaction Number",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  {
+    key: "payment_date",
+    label: "Payment Date",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "note", label: "Note", sortable: true, draggable: true },
+  {
+    key: "date_of_entry",
+    label: "Date of Entry",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "actions", label: "Actions", sortable: false, draggable: true },
 ];
 
 export const GRNDetailsPage = () => {
@@ -147,8 +263,31 @@ export const GRNDetailsPage = () => {
   const billingAddress = purchaseOrder.billing_address || {};
   const approvalStatus = grnDetails.approval_status || {};
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = async () => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/grns/${id}/print_pdf.pdf`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          responseType: "blob",
+        }
+      );
+
+      const blob = new Blob([response.data], { type: "application/pdf" });
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = "grn.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
   };
   const handleFeeds = () => {
     navigate(`/finance/grn-srn/feeds/${id}`);
@@ -223,18 +362,15 @@ export const GRNDetailsPage = () => {
   };
 
   // Transform grn_inventories to include S.No.
-  const itemsData = grnDetails.grn_inventories?.map((item: any, index: number) => ({
-    ...item,
-    sno: index + 1,
-  })) || [];
+  const itemsData =
+    grnDetails.grn_inventories?.map((item: any, index: number) => ({
+      ...item,
+      sno: index + 1,
+    })) || [];
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className='p-0'
-      >
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
@@ -246,34 +382,42 @@ export const GRNDetailsPage = () => {
           </h1>
           <TooltipProvider>
             <div className="flex items-center gap-3">
-              {
-                approvalStatus?.approval_levels?.map((approval: Approval) => (
-                  <div className='space-y-2' key={approval.id}>
-                    {approval.status.toLowerCase() === 'rejected' ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
-                            {`${approval.name} Approval : ${approval.status}`}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
-                        {`${approval.name} Approval : ${approval.status}`}
-                      </div>
-                    )}
-                    {
-                      approval.approved_by && approval.approved_at &&
-                      <div className='ms-2 w-[190px]'>
-                        {`${approval.approved_by} (${approval.approved_at})`}
-                      </div>
-                    }
-                  </div>
-                ))
-              }
+              {approvalStatus?.approval_levels?.map((approval: Approval) => (
+                <div className="space-y-2" key={approval.id}>
+                  {approval.status.toLowerCase() === "rejected" ? (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                            approval.status
+                          )}`}
+                        >
+                          {`${approval.name} Approval : ${approval.status}`}
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Rejection Reason:{" "}
+                          {approval.rejection_reason ?? "No reason provided"}
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : (
+                    <div
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                        approval.status
+                      )}`}
+                    >
+                      {`${approval.name} Approval : ${approval.status}`}
+                    </div>
+                  )}
+                  {approval.approved_by && approval.approved_at && (
+                    <div className="ms-2 w-[190px]">
+                      {`${approval.approved_by} (${approval.approved_at})`}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </TooltipProvider>
         </div>
@@ -342,7 +486,9 @@ export const GRNDetailsPage = () => {
                 <span className="ml-9">: {billingAddress.pan_number}</span>
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-700">Address</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Address
+                </span>
                 <span className="ml-5">: {billingAddress.address}</span>
               </div>
             </div>
@@ -363,98 +509,150 @@ export const GRNDetailsPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
           <div className="space-y-4">
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Invoice Number</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Invoice Number
+              </span>
               <span className="text-sm">: {grnDetails.invoice_no}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Invoice Date</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Invoice Date
+              </span>
               <span className="text-sm">: {grnDetails.bill_date}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Posting Date</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Posting Date
+              </span>
               <span className="text-sm">: {grnDetails.posting_date}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Retention Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Retention Amount
+              </span>
               <span className="text-sm">: {grnDetails.retention_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">TDS Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                TDS Amount
+              </span>
               <span className="text-sm">: {grnDetails.tds_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">PO Reference Number</span>
-              <span className="text-sm">: {purchaseOrder.reference_number}</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                PO Reference Number
+              </span>
+              <span className="text-sm">
+                : {purchaseOrder.reference_number}
+              </span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">GRN Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                GRN Amount
+              </span>
               <span className="text-sm">: {grnDetails.grn_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Payment Mode</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Payment Mode
+              </span>
               <span className="text-sm">: {grnDetails.payment_mod}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Payable Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Payable Amount
+              </span>
               <span className="text-sm">: {grnDetails.payable_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Related To</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Related To
+              </span>
               <span className="text-sm">: {grnDetails.related_to}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Physical Invoice sent to</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Physical Invoice sent to
+              </span>
               <span className="text-sm">: {grnDetails.invoice_sent_at}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Gross Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Gross Amount
+              </span>
               <span className="text-sm">: {grnDetails.amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Notes</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Notes
+              </span>
               <span className="text-sm">: {grnDetails.notes}</span>
             </div>
           </div>
           <div className="space-y-4">
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Reference No.</span>
-              <span className="text-sm">: {purchaseOrder.reference_number}</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Reference No.
+              </span>
+              <span className="text-sm">
+                : {purchaseOrder.reference_number}
+              </span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-44">ID</span>
               <span className="text-sm">: {grnDetails.id}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Supplier Name</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Supplier Name
+              </span>
               <span className="text-sm">: {supplier.company_name}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">PO Number</span>
-              <span className="text-sm">: {purchaseOrder.reference_number}</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                PO Number
+              </span>
+              <span className="text-sm">
+                : {purchaseOrder.reference_number}
+              </span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">QC Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                QC Amount
+              </span>
               <span className="text-sm">: {grnDetails.qh_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Total Taxes</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Total Taxes
+              </span>
               <span className="text-sm">: {grnDetails.total_taxes}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">PO Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                PO Amount
+              </span>
               <span className="text-sm">: {purchaseOrder.amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Invoice Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Invoice Amount
+              </span>
               <span className="text-sm">: {grnDetails.invoice_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">GRN Amount</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                GRN Amount
+              </span>
               <span className="text-sm">: {grnDetails.grn_amount}</span>
             </div>
             <div className="flex">
-              <span className="text-sm font-medium text-gray-700 w-44">Physical Invoice received on</span>
-              <span className="text-sm">: {grnDetails.invoice_received_at}</span>
+              <span className="text-sm font-medium text-gray-700 w-44">
+                Physical Invoice received on
+              </span>
+              <span className="text-sm">
+                : {grnDetails.invoice_received_at}
+              </span>
             </div>
           </div>
         </div>
@@ -486,66 +684,124 @@ export const GRNDetailsPage = () => {
               <span className="font-medium">{grnDetails.other_expenses}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium text-gray-700">Loading Expense:</span>
+              <span className="font-medium text-gray-700">
+                Loading Expense:
+              </span>
               <span className="font-medium">{grnDetails.loading_expense}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="font-medium text-gray-700">Adjustment Amount:</span>
+              <span className="font-medium text-gray-700">
+                Adjustment Amount:
+              </span>
               <span className="font-medium">{grnDetails.adj_amount}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border mb-6">
+      <Card className="shadow-sm border border-border">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-medium">Attachments</CardTitle>
         </CardHeader>
         <CardContent>
-          {Array.isArray(grnDetails.attachments?.general_attachments) && grnDetails.attachments.general_attachments.length > 0 ? (
-            <div className="space-y-3">
-              {grnDetails.attachments.general_attachments.map((attachment: any) => {
-                const getFileIcon = (fileName: string) => {
-                  const ext = fileName.split(".").pop()?.toLowerCase();
-                  if (["png", "jpg", "jpeg", "gif", "webp"].includes(ext || "")) {
-                    return <Image className="w-5 h-5 text-blue-600" />;
-                  }
-                  if (ext === "pdf") {
-                    return <FileText className="w-5 h-5 text-red-600" />;
-                  }
-                  return <File className="w-5 h-5 text-gray-600" />;
-                };
+          {Array.isArray(grnDetails.attachments?.general_attachments) &&
+            grnDetails.attachments.general_attachments.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {grnDetails.attachments.general_attachments.map(
+                (attachment: Attachment) => {
+                  const isImage =
+                    attachment.document_url &&
+                    /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                      attachment.document_url
+                    );
+                  const isPdf =
+                    attachment.document_url &&
+                    /\.pdf$/i.test(attachment.document_url);
+                  const isExcel =
+                    attachment.document_url &&
+                    /\.(xls|xlsx|csv)$/i.test(attachment.document_url);
+                  const isWord =
+                    attachment.document_url &&
+                    /\.(doc|docx)$/i.test(attachment.document_url);
+                  const isDownloadable = isPdf || isExcel || isWord;
 
-                return (
-                  <div
-                    key={attachment.id}
-                    className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                    onClick={() => {
-                      setSelectedAttachment(attachment);
-                      setIsPreviewModalOpen(true);
-                    }}
-                  >
-                    {getFileIcon(attachment.filename)}
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">
-                        {attachment.filename}
-                      </p>
+                  return (
+                    <div
+                      key={attachment.id}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    >
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedAttachment(attachment);
+                              setIsPreviewModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={attachment.document_url}
+                            alt={attachment.filename}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedAttachment(attachment);
+                              setIsPreviewModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {attachment.filename || `Document_${attachment.id}`}
+                      </span>
+                      {isDownloadable && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                          onClick={() => {
+                            setSelectedAttachment(attachment);
+                            setIsPreviewModalOpen(true);
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                }
+              )}
             </div>
           ) : (
-            <p className='text-muted-foreground'>
-              No attachments
-            </p>
+            <p className="text-muted-foreground">No attachments</p>
           )}
         </CardContent>
       </Card>
 
       {/* Debit Note Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Debit Note Details</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Debit Note Details
+        </h2>
         <EnhancedTable
           data={grnDetails.debit_notes || []}
           columns={debitNoteColumns}
@@ -565,7 +821,7 @@ export const GRNDetailsPage = () => {
           leftActions={
             <>
               <Button
-                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
                 className="hover:bg-[#F2EEE9]/90"
               >
                 Retention Payment
@@ -577,7 +833,9 @@ export const GRNDetailsPage = () => {
 
       {/* Payment Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Details</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Payment Details
+        </h2>
         <EnhancedTable
           data={grnDetails.payment_details || []}
           columns={paymentDetailsColumns}
@@ -597,7 +855,7 @@ export const GRNDetailsPage = () => {
           leftActions={
             <>
               <Button
-                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
                 className="hover:bg-[#F2EEE9]/90"
               >
                 Retention Payment
@@ -609,7 +867,9 @@ export const GRNDetailsPage = () => {
 
       {/* Retention Payment Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">Retention Payment Details</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          Retention Payment Details
+        </h2>
         <EnhancedTable
           data={grnDetails.retention_payment_details || []}
           columns={retentionPaymentColumns}
@@ -629,7 +889,7 @@ export const GRNDetailsPage = () => {
           leftActions={
             <>
               <Button
-                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
                 className="hover:bg-[#F2EEE9]/90"
               >
                 Retention Payment
@@ -641,7 +901,9 @@ export const GRNDetailsPage = () => {
 
       {/* QC Payment Details Card */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">QC Payment Details</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          QC Payment Details
+        </h2>
         <EnhancedTable
           data={grnDetails.qc_payment_details || []}
           columns={qcPaymentColumns}
@@ -661,7 +923,7 @@ export const GRNDetailsPage = () => {
           leftActions={
             <>
               <Button
-                style={{ backgroundColor: '#F2EEE9', color: '#BF213E' }}
+                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
                 className="hover:bg-[#F2EEE9]/90"
               >
                 Retention Payment
@@ -723,16 +985,11 @@ export const GRNDetailsPage = () => {
       </Dialog>
 
       <AttachmentPreviewModal
-        isOpen={isPreviewModalOpen}
-        onClose={() => {
-          setIsPreviewModalOpen(false);
-          setSelectedAttachment(null);
-        }}
-        attachment={selectedAttachment}
+        isModalOpen={isPreviewModalOpen}
+        setIsModalOpen={setIsPreviewModalOpen}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
       />
     </div>
   );
 };
-
-
-

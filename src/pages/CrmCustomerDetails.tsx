@@ -246,13 +246,13 @@ export const CrmCustomerDetails = () => {
                     <p className="text-gray-600 text-sm">Back</p>
                 </button>
                 <div className="flex items-center gap-4">
-                    <span className="text-sm text-gray-600">Wallet Balance: 0 Points</span>
-                    <Button
+                    {/* <span className="text-sm text-gray-600">Wallet Balance: 0 Points</span> */}
+                    {/* <Button
                         className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 text-sm"
                         onClick={handleTopUpClick}
                     >
                         Top-Up Wallet
-                    </Button>
+                    </Button> */}
                     <Button
                         variant="outline"
                         size="sm"
@@ -326,7 +326,7 @@ export const CrmCustomerDetails = () => {
                 />
             </div>
 
-            <div className="bg-white rounded-lg p-6 shadow-sm">
+            {/* <div className="bg-white rounded-lg p-6 shadow-sm">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Transactions</h3>
                 <EnhancedTable
                     data={walletTransactions}
@@ -337,7 +337,7 @@ export const CrmCustomerDetails = () => {
                     hideColumnsButton={true}
                     hideTableSearch={true}
                 />
-            </div>
+            </div> */}
 
             <Dialog
                 open={topUpDialogOpen}

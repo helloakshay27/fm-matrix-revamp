@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, Plus } from "lucide-react";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getCustomerList } from "@/store/slices/cusomerSlice";
 import { useNavigate } from "react-router-dom";
+import { format } from "date-fns";
 
 const columns: ColumnConfig[] = [
   {
@@ -146,12 +147,12 @@ const CRMCustomersDashboard = () => {
             lease_end_date: lease?.lease_end_date,
             free_parking: lease?.free_parking,
             paid_parking: lease?.paid_parking,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
+            created_at: format(item.created_at, 'dd-MM-yyyy'),
+            updated_at: format(item.updated_at, 'dd-MM-yyyy'),
             color_code: item.color_code,
           }
         })
-        setCustomers(transformedData);
+        setCustomers(transformedData.reverse());
       } catch (error) {
         console.log(error);
         toast.error(error);
@@ -190,6 +191,18 @@ const CRMCustomersDashboard = () => {
     </Button>
   );
 
+  const leftActions = (
+    <>
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={() => navigate("/crm/customers/add")}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
+  );
+
   return (
     <div className="p-6 space-y-6">
       <EnhancedTable
@@ -197,6 +210,7 @@ const CRMCustomersDashboard = () => {
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}
+        leftActions={leftActions}
         storageKey="crm-customers-table"
         selectAllLabel="Select all customers"
         searchTerm={searchTerm}
@@ -206,7 +220,7 @@ const CRMCustomersDashboard = () => {
         exportFileName="customers"
         handleExport={handleExport}
         pagination={true}
-        pageSize={5}
+        pageSize={10}
       />
     </div>
   );

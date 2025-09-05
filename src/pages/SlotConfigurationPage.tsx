@@ -9,6 +9,7 @@ import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
 import { SlotConfigBulkUploadModal } from '../components/SlotConfigBulkUploadModal';
 import { fetchParkingConfigurations, GroupedParkingConfiguration } from '../services/parkingConfigurationsAPI';
+import { fetchParkingCategories, ParkingCategory } from '../services/parkingConfigAPI';
 
 interface SlotConfigurationData {
   id: string;
@@ -37,6 +38,9 @@ export const SlotConfigurationPage = () => {
   const { setCurrentSection } = useLayout();
   const [searchTerm, setSearchTerm] = useState('');
   const [slotConfigurationData, setSlotConfigurationData] = useState<SlotConfigurationData[]>([]);
+  const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
+  const [twoWheelerCategoryName, setTwoWheelerCategoryName] = useState('2 Wheeler');
+  const [fourWheelerCategoryName, setFourWheelerCategoryName] = useState('4 Wheeler');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
@@ -54,6 +58,41 @@ export const SlotConfigurationPage = () => {
     fourWheelerStack: true,
     fourWheelerReserved: true
   });
+
+  const fetchParkingCategoriesData = useCallback(async () => {
+    try {
+      const categoriesData = await fetchParkingCategories();
+      setParkingCategories(categoriesData);
+      console.log('Fetched parking categories:', categoriesData);
+      
+      // Find and set category names dynamically
+      const twoWheelerCategory = categoriesData.find(cat => 
+        cat.id === 5 || 
+        cat.name.toLowerCase().includes('2') ||
+        cat.name.toLowerCase().includes('two') ||
+        cat.name.toLowerCase().includes('wheeler')
+      );
+      const fourWheelerCategory = categoriesData.find(cat => 
+        cat.id === 6 || 
+        (cat.name.toLowerCase().includes('4') ||
+        cat.name.toLowerCase().includes('four') ||
+        cat.name.toLowerCase().includes('car')) &&
+        cat.id !== twoWheelerCategory?.id
+      );
+      
+      if (twoWheelerCategory) {
+        setTwoWheelerCategoryName(twoWheelerCategory.name);
+        console.log('Two Wheeler Category Name:', twoWheelerCategory.name);
+      }
+      if (fourWheelerCategory) {
+        setFourWheelerCategoryName(fourWheelerCategory.name);
+        console.log('Four Wheeler Category Name:', fourWheelerCategory.name);
+      }
+    } catch (error) {
+      console.error('Error fetching parking categories:', error);
+      toast.error('Failed to fetch parking categories');
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -73,11 +112,13 @@ export const SlotConfigurationPage = () => {
 
   useEffect(() => {
     setCurrentSection('Settings');
+    fetchParkingCategoriesData();
     fetchData();
-  }, [setCurrentSection, fetchData]);
+  }, [setCurrentSection, fetchData, fetchParkingCategoriesData]);
 
   const transformApiDataToTableData = (apiData: GroupedParkingConfiguration[]): SlotConfigurationData[] => {
     const tableData: SlotConfigurationData[] = [];
+    console.log('Transform API Data - Input:', apiData);
 
     apiData.forEach((group) => {
       // Initialize counters for 2W and 4W
@@ -96,22 +137,78 @@ export const SlotConfigurationPage = () => {
 
       // Process each parking configuration
       group.parking_configurations.forEach((config) => {
-        if (config.category_name === '2 Wheeler') {
+        console.log('Processing config:', config.category_name, 'ID:', config.parking_category_id);
+        console.log('Config data:', {
+          no_of_parkings: config.no_of_parkings,
+          reserved_parkings: config.reserved_parkings,
+          unstacked_count: config.unstacked_count,
+          stacked_count: config.stacked_count,
+          parking_numbers_length: config.parking_numbers.length
+        });
+        
+        // Calculate actual counts from parking_numbers array
+        const nonStackCount = config.parking_numbers.filter(p => !p.stacked && !p.reserved).length;
+        const stackCount = config.parking_numbers.filter(p => p.stacked && !p.reserved).length;
+        const reservedCount = config.parking_numbers.filter(p => p.reserved).length;
+        const totalCount = config.parking_numbers.length;
+        
+        console.log('Calculated counts:', {
+          nonStack: nonStackCount,
+          stack: stackCount,
+          reserved: reservedCount,
+          total: totalCount
+        });
+        
+        // Use parking_category_id as primary matching criteria for reliability
+        if (config.parking_category_id === 5) {
+          console.log('Matched as Two Wheeler by ID:', config);
           twoWheelerData = {
-            totalParkings: config.no_of_parkings,
-            nonStackParkings: config.unstacked_count,
-            stackParkings: config.stacked_count,
-            reservedParkings: config.reserved_parkings
+            totalParkings: totalCount,
+            nonStackParkings: nonStackCount,
+            stackParkings: stackCount,
+            reservedParkings: reservedCount
           };
-        } else if (config.category_name === '4 Wheeler') {
+        } else if (config.parking_category_id === 6) {
+          console.log('Matched as Four Wheeler by ID:', config);
           fourWheelerData = {
-            totalParkings: config.no_of_parkings,
-            nonStackParkings: config.unstacked_count,
-            stackParkings: config.stacked_count,
-            reservedParkings: config.reserved_parkings
+            totalParkings: totalCount,
+            nonStackParkings: nonStackCount,
+            stackParkings: stackCount,
+            reservedParkings: reservedCount
           };
+        } else {
+          // Fallback to name-based matching only if ID-based matching fails
+          if (config.category_name.toLowerCase().includes('2') ||
+              config.category_name.toLowerCase().includes('two') ||
+              config.category_name.toLowerCase().includes('wheeler') && 
+              !config.category_name.toLowerCase().includes('4') &&
+              !config.category_name.toLowerCase().includes('four')) {
+            console.log('Matched as Two Wheeler by name:', config);
+            twoWheelerData = {
+              totalParkings: totalCount,
+              nonStackParkings: nonStackCount,
+              stackParkings: stackCount,
+              reservedParkings: reservedCount
+            };
+          } else if (config.category_name.toLowerCase().includes('4') ||
+                     config.category_name.toLowerCase().includes('four') ||
+                     config.category_name.toLowerCase().includes('car')) {
+            console.log('Matched as Four Wheeler by name:', config);
+            fourWheelerData = {
+              totalParkings: totalCount,
+              nonStackParkings: nonStackCount,
+              stackParkings: stackCount,
+              reservedParkings: reservedCount
+            };
+          } else {
+            console.log('No match found for config:', config);
+          }
         }
       });
+
+      console.log('Final data for building/floor:', group.building_name, group.floor_name);
+      console.log('Two Wheeler Data:', twoWheelerData);
+      console.log('Four Wheeler Data:', fourWheelerData);
 
       tableData.push({
         id: `${group.building_id}-${group.floor_id}`, // Use building_id-floor_id as unique identifier for edit navigation
@@ -238,8 +335,8 @@ export const SlotConfigurationPage = () => {
                 {visibleColumns.location && <TableHead rowSpan={2}>Location</TableHead>}
                 {visibleColumns.floor && <TableHead rowSpan={2}>Floor</TableHead>}
                 {visibleColumns.qrcode_needed && <TableHead className="text-center" rowSpan={2}>QR<br/>Needed</TableHead>}
-                <TableHead className="text-center" colSpan={4}>2 Wheeler</TableHead>
-                <TableHead className="text-center" colSpan={4}>4 Wheeler</TableHead>
+                <TableHead className="text-center" colSpan={4}>{twoWheelerCategoryName}</TableHead>
+                <TableHead className="text-center" colSpan={4}>{fourWheelerCategoryName}</TableHead>
               </TableRow>
               <TableRow className="bg-[#f6f4ee]">
                 {visibleColumns.twoWheelerTotal && <TableHead className="text-center">Total<br/>Parkings</TableHead>}
