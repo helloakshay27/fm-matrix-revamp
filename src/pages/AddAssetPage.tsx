@@ -6815,6 +6815,13 @@ const AddAssetPage = () => {
                       onChange={(event) => {
                         const selectedDate = event.target.value; // Already in YYYY-MM-DD format
                         handleFieldChange("warranty_expiry", selectedDate);
+                        handleExtraFieldChange(
+                          "warranty_expiry",
+                          selectedDate,
+                          "date",
+                          "vehicleFinancial",
+                          "Warranty Expires On"
+                        );
                       }}
                     />
 
