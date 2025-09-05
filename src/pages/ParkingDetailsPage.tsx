@@ -211,12 +211,12 @@ const ParkingDetailsPage = () => {
               >
                 Back to Dashboard
               </Button>
-              <Button 
+              {/* <Button 
                 onClick={() => navigate('/vas/parking/create')}
                 className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
               >
                 Create New Booking
-              </Button>
+              </Button> */}
             </div>
           </div>
         </CardContent>

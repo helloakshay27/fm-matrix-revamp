@@ -128,12 +128,45 @@ export interface UpdateWasteGenerationResponse {
   status: string;
 }
 
-// API function to fetch waste generations
-export const fetchWasteGenerations = async (page: number = 1): Promise<WasteGenerationResponse> => {
+// Filter interface for waste generation API
+export interface WasteGenerationFilters {
+  commodity_id_eq?: string;
+  category_id_eq?: string;
+  operational_landlord_id_in?: string;
+  date_range?: string;
+}
+
+// API function to fetch waste generations with filters
+export const fetchWasteGenerations = async (page: number = 1, filters?: WasteGenerationFilters): Promise<WasteGenerationResponse> => {
   try {
-    const url = getFullUrl(`/pms/waste_generations.json?page=${page}`);
+    // Build query parameters manually to preserve square brackets
+    const queryParts: string[] = [`page=${page}`];
     
-    console.log('Fetching waste generations from:', url);
+    // Add filter parameters if provided
+    if (filters) {
+      if (filters.commodity_id_eq) {
+        queryParts.push(`q[commodity_id_eq]=${encodeURIComponent(filters.commodity_id_eq)}`);
+      }
+      if (filters.category_id_eq) {
+        queryParts.push(`q[category_id_eq]=${encodeURIComponent(filters.category_id_eq)}`);
+      }
+      if (filters.operational_landlord_id_in) {
+        queryParts.push(`q[operational_landlord_id_in]=${encodeURIComponent(filters.operational_landlord_id_in)}`);
+      }
+      if (filters.date_range) {
+        queryParts.push(`q[date_range]=${encodeURIComponent(filters.date_range)}`);
+      }
+    }
+    
+    const queryString = queryParts.join('&');
+    const url = getFullUrl(`/pms/waste_generations.json?${queryString}`);
+    
+    console.log('=== Waste Generation API Debug ===');
+    console.log('Query string parts:', queryParts);
+    console.log('Final query string:', queryString);
+    console.log('Complete URL:', url);
+    console.log('Applied filters:', filters);
+    console.log('=================================');
     
     const options = getAuthenticatedFetchOptions('GET');
     const response = await fetch(url, options);
