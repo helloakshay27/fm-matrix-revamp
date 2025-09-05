@@ -12,6 +12,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
+import { EnhancedSelectThemeProvider } from "./providers/GlobalSelectEnhancer";
+import "./utils/globalMUISelectSearchEnhancer"; // Auto-activates search in all MUI selects
+import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
@@ -727,8 +730,9 @@ function App() {
     <Provider store={store}>
       <Router>
         <QueryClientProvider client={queryClient}>
-          <LayoutProvider>
-            <PermissionsProvider>
+          <EnhancedSelectThemeProvider>
+            <LayoutProvider>
+              <PermissionsProvider>
               <Routes>
                 {/* Login Route */}
                 <Route
@@ -2267,9 +2271,9 @@ function App() {
                     color: "#374151",
                   },
                 }}
-              />
-            </PermissionsProvider>
-          </LayoutProvider>
+              />              </PermissionsProvider>
+            </LayoutProvider>
+        </EnhancedSelectThemeProvider>
         </QueryClientProvider>
       </Router>
     </Provider>

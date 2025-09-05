@@ -1,0 +1,536 @@
+/* Enhanced Select Global Styles - AUTOMATIC APPLICATION */
+
+/* ===========================================
+   GLOBAL MUI SELECT HEIGHT CONTROL
+   Applies to ALL MUI Select components automatically
+   =========================================== */
+
+/* All MUI FormControl components get consistent height */
+.MuiFormControl-root .MuiOutlinedInput-root {
+  height: 36px !important;
+}
+
+@media (min-width: 640px) {
+  .MuiFormControl-root .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiFormControl-root .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+/* All MUI Select input padding */
+.MuiFormControl-root .MuiInputBase-input,
+.MuiFormControl-root .MuiSelect-select {
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+@media (min-width: 640px) {
+  .MuiFormControl-root .MuiInputBase-input,
+  .MuiFormControl-root .MuiSelect-select {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiFormControl-root .MuiInputBase-input,
+  .MuiFormControl-root .MuiSelect-select {
+    padding: 12px 14px !important;
+  }
+}
+
+/* ===========================================
+   GLOBAL MUI SELECT DROPDOWN SCROLL CONTROL
+   All dropdown menus get internal scroll
+   =========================================== */
+
+/* All MUI Select dropdown menus */
+.MuiPaper-root.MuiMenu-paper,
+.MuiPaper-root.MuiPopover-paper {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  z-index: 9999 !important;
+}
+
+/* All MUI Menu Items */
+.MuiMenuItem-root {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  min-height: auto !important;
+}
+
+@media (min-width: 768px) {
+  .MuiMenuItem-root {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* Enhanced Menu Item Hover States */
+.MuiMenuItem-root:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.MuiMenuItem-root.Mui-selected {
+  background-color: #e3f2fd !important;
+}
+
+.MuiMenuItem-root.Mui-selected:hover {
+  background-color: #bbdefb !important;
+}
+
+/* ===========================================
+   GLOBAL AUTOCOMPLETE ENHANCEMENT
+   All Autocomplete components get enhanced styling
+   =========================================== */
+
+/* Autocomplete input height control */
+.MuiAutocomplete-root .MuiOutlinedInput-root {
+  height: 36px !important;
+  padding: 0 !important;
+}
+
+@media (min-width: 640px) {
+  .MuiAutocomplete-root .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiAutocomplete-root .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+/* Autocomplete input padding */
+.MuiAutocomplete-root .MuiInputBase-input {
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 640px) {
+  .MuiAutocomplete-root .MuiInputBase-input {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiAutocomplete-root .MuiInputBase-input {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Autocomplete dropdown list scroll control */
+.MuiAutocomplete-listbox {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+/* Autocomplete option styling */
+.MuiAutocomplete-option {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 768px) {
+  .MuiAutocomplete-option {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* ===========================================
+   GLOBAL FOCUS AND INTERACTION STATES
+   Enhanced visual feedback for all selects
+   =========================================== */
+
+/* Focus states for all MUI inputs */
+.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #1976d2 !important;
+  border-width: 2px !important;
+}
+
+.MuiInputLabel-root.Mui-focused {
+  color: #1976d2 !important;
+}
+
+/* Consistent background for all form controls */
+.MuiFormControl-root .MuiOutlinedInput-root {
+  background-color: white !important;
+}
+
+/* ===========================================
+   LEGACY CLASS SUPPORT
+   Keep existing classes for backward compatibility
+   =========================================== */
+
+/* Enhanced select global class */
+.enhanced-select-global .MuiOutlinedInput-root {
+  height: 36px !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-select-global .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-select-global .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+/* Enhanced select global input padding */
+.enhanced-select-global .MuiInputBase-input,
+.enhanced-select-global .MuiSelect-select {
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-select-global .MuiInputBase-input,
+  .enhanced-select-global .MuiSelect-select {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-select-global .MuiInputBase-input,
+  .enhanced-select-global .MuiSelect-select {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Enhanced select menu */
+.enhanced-select-menu .MuiPaper-root {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.enhanced-select-menu .MuiMenuItem-root {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 768px) {
+  .enhanced-select-menu .MuiMenuItem-root {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* Enhanced autocomplete global */
+.enhanced-autocomplete-global .MuiOutlinedInput-root {
+  height: 36px !important;
+  padding: 0 !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-autocomplete-global .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+.enhanced-autocomplete-global .MuiInputBase-input {
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-autocomplete-global .MuiInputBase-input {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiInputBase-input {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Enhanced autocomplete listbox */
+.enhanced-autocomplete-global .MuiAutocomplete-listbox {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.enhanced-autocomplete-global .MuiAutocomplete-option {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiAutocomplete-option {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-select-menu .MuiMenuItem-root {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+.enhanced-select-menu .MuiMenuItem-root:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.enhanced-select-menu .MuiMenuItem-root.Mui-selected {
+  background-color: #e3f2fd !important;
+}
+
+.enhanced-select-menu .MuiMenuItem-root.Mui-selected:hover {
+  background-color: #bbdefb !important;
+}
+
+/* Global Autocomplete styling for searchable selects */
+.enhanced-autocomplete-global .MuiOutlinedInput-root {
+  height: 36px !important;
+  padding: 0 !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-autocomplete-global .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+.enhanced-autocomplete-global .MuiInputBase-input {
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 640px) {
+  .enhanced-autocomplete-global .MuiInputBase-input {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiInputBase-input {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Autocomplete listbox styling */
+.enhanced-autocomplete-global .MuiAutocomplete-listbox {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.enhanced-autocomplete-global .MuiAutocomplete-option {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 768px) {
+  .enhanced-autocomplete-global .MuiAutocomplete-option {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+/* Focus and hover states */
+.enhanced-select-global .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #1976d2 !important;
+  border-width: 2px !important;
+}
+
+.enhanced-select-global .MuiInputLabel-root.Mui-focused {
+  color: #1976d2 !important;
+}
+
+.enhanced-autocomplete-global .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: #1976d2 !important;
+  border-width: 2px !important;
+}
+
+.enhanced-autocomplete-global .MuiInputLabel-root.Mui-focused {
+  color: #1976d2 !important;
+}
+
+/* Global MUI Select Search Enhancement Styles */
+
+/* Search input container in dropdowns */
+.search-input-container {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1 !important;
+  background: white !important;
+  padding: 8px 12px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+/* Search input styling */
+.search-input-container input {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  background: white !important;
+  font-family: inherit !important;
+}
+
+.search-input-container input:focus {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2) !important;
+}
+
+/* No results message */
+.no-results-message {
+  padding: 16px 12px !important;
+  text-align: center !important;
+  color: #666 !important;
+  font-style: italic !important;
+  background: #f9f9f9 !important;
+}
+
+/* Global MUI Select Search Input Styles */
+.mui-search-input-container {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 999 !important;
+  background: white !important;
+  padding: 12px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  margin: 0 !important;
+}
+
+.mui-search-input {
+  width: 100% !important;
+  padding: 10px 12px !important;
+  border: 1px solid #ddd !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  outline: none !important;
+  background: white !important;
+  font-family: inherit !important;
+  box-sizing: border-box !important;
+  transition: all 0.2s ease !important;
+}
+
+.mui-search-input:focus {
+  border-color: #1976d2 !important;
+  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1) !important;
+  background-color: #fafafa !important;
+}
+
+.mui-no-results-message {
+  padding: 20px 12px !important;
+  text-align: center !important;
+  color: #666 !important;
+  font-style: italic !important;
+  background: #f9f9f9 !important;
+  border-radius: 4px !important;
+  margin: 8px !important;
+}
+
+/* Enhanced MUI Select global overrides for ALL selects */
+.MuiSelect-root {
+  height: 36px !important;
+}
+
+@media (min-width: 640px) {
+  .MuiSelect-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiSelect-root {
+    height: 45px !important;
+  }
+}
+
+/* Global MUI FormControl height */
+.MuiFormControl-root .MuiOutlinedInput-root {
+  height: 36px !important;
+}
+
+@media (min-width: 640px) {
+  .MuiFormControl-root .MuiOutlinedInput-root {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiFormControl-root .MuiOutlinedInput-root {
+    height: 45px !important;
+  }
+}
+
+/* Global MUI Select input and select padding */
+.MuiFormControl-root .MuiInputBase-input,
+.MuiFormControl-root .MuiSelect-select {
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 640px) {
+  .MuiFormControl-root .MuiInputBase-input,
+  .MuiFormControl-root .MuiSelect-select {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .MuiFormControl-root .MuiInputBase-input,
+  .MuiFormControl-root .MuiSelect-select {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Global menu styling for ALL MUI Select dropdowns */
+.MuiMenu-root .MuiPaper-root,
+.MuiPopover-root .MuiPaper-root {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+}
+
+.MuiMenu-root .MuiMenuItem-root,
+.MuiPopover-root .MuiMenuItem-root {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+}
+
+@media (min-width: 768px) {
+  .MuiMenu-root .MuiMenuItem-root,
+  .MuiPopover-root .MuiMenuItem-root {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+.MuiMenu-root .MuiMenuItem-root:hover,
+.MuiPopover-root .MuiMenuItem-root:hover {
+  background-color: #f5f5f5 !important;
+}
+
+.MuiMenu-root .MuiMenuItem-root.Mui-selected,
+.MuiPopover-root .MuiMenuItem-root.Mui-selected {
+  background-color: #e3f2fd !important;
+}
+
+.MuiMenu-root .MuiMenuItem-root.Mui-selected:hover,
+.MuiPopover-root .MuiMenuItem-root.Mui-selected:hover {
+  background-color: #bbdefb !important;
+}
