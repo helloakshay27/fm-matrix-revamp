@@ -555,10 +555,10 @@ export const FMUserMasterDashboard = () => {
     }));
   };
 
-  const cardFilter = async (status: string) => {
+  const cardFilter = async ({ status, downloaded }: { status?: string, downloaded?: boolean }) => {
     try {
       const response = await dispatch(
-        getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status })
+        getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status, downloaded })
       ).unwrap() as FMUserAPIResponse;
       const transformedData = response.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
@@ -821,27 +821,29 @@ export const FMUserMasterDashboard = () => {
           title="Approved Users"
           value={approvedUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter("approved")}
+          onClick={() => cardFilter({ status: "approved" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Pending Users"
           value={pendingUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter("pending")}
+          onClick={() => cardFilter({ status: "pending" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="Rejected Users"
           value={rejectedUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={() => cardFilter("rejected")}
+          onClick={() => cardFilter({ status: "rejected" })}
           className="cursor-pointer"
         />
         <StatsCard
           title="App Downloaded"
           value={appDownloaded}
           icon={<Download className="w-6 h-6" />}
+          onClick={() => cardFilter({ downloaded: true })}
+          className="cursor-pointer"
         />
       </div>
 
