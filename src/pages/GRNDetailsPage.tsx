@@ -699,7 +699,7 @@ export const GRNDetailsPage = () => {
         </div>
       </div>
 
-      <Card className="shadow-sm border border-border">
+      <Card className="shadow-sm border border-border mb-6">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg font-medium">Attachments</CardTitle>
         </CardHeader>
