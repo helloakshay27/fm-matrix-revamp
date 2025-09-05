@@ -114,6 +114,8 @@ export const ServiceDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [downloadedQRCodes, setDownloadedQRCodes] = useState<Set<string>>(new Set());
   const [downloadingQR, setDownloadingQR] = useState(false);
+  // Track which summary tile is selected; null => no highlight on initial load
+  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive'>(null);
 
   useEffect(() => {
     const filtersWithSearch = {
@@ -152,6 +154,7 @@ export const ServiceDashboard = () => {
   const handleApplyFilters = useCallback((filters: any) => {
     setAppliedFilters(filters);
     setSearchQuery('');
+    setSelectedSummary(null);
     setCurrentPage(1);
     setShowFilterModal(false);
   }, []);
@@ -163,6 +166,7 @@ export const ServiceDashboard = () => {
 
   const handleSearch = useCallback((query: string) => {
     setSearchQuery(query);
+    setSelectedSummary(null);
     setCurrentPage(1);
   }, []);
 
@@ -351,6 +355,7 @@ export const ServiceDashboard = () => {
     setSearchQuery('');
     setAppliedFilters({});
     setCurrentPage(1);
+    setSelectedSummary('total');
   };
 
   const handleActiveServicesClick = () => {
@@ -358,6 +363,7 @@ export const ServiceDashboard = () => {
     setSearchQuery('');
     setAppliedFilters({});
     setCurrentPage(1);
+    setSelectedSummary('active');
   };
 
   const handleInactiveServicesClick = () => {
@@ -365,6 +371,7 @@ export const ServiceDashboard = () => {
     setSearchQuery('');
     setAppliedFilters({});
     setCurrentPage(1);
+    setSelectedSummary('inactive');
   };
 
   const handleStatusToggle = async (id: number) => {
@@ -786,9 +793,9 @@ export const ServiceDashboard = () => {
       )}
 
       <>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-3">
           <div
-            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === undefined ? 'border-[#C72030]' : 'border-transparent'}`}
+      className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
             onClick={handleTotalServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -803,7 +810,7 @@ export const ServiceDashboard = () => {
           </div>
 
           <div
-            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === true ? 'border-[#C72030]' : 'border-transparent'}`}
+            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
             onClick={handleActiveServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
@@ -818,7 +825,7 @@ export const ServiceDashboard = () => {
           </div>
 
           <div
-            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer border-2 ${activeFilter === false ? 'border-[#C72030]' : 'border-transparent'}`}
+            className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
             onClick={handleInactiveServicesClick}
           >
             <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">

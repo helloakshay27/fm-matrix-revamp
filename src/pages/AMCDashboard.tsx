@@ -179,6 +179,8 @@ export const AMCDashboard = () => {
 
   const [analyticsChartOrder, setAnalyticsChartOrder] = useState<string[]>(['status_overview', 'type_distribution', 'unit_resource_wise', 'service_stats', 'expiry_analysis', 'coverage_by_location']);
   const [togglingIds, setTogglingIds] = useState<Set<number>>(new Set());
+  // Track which summary tile is selected; null means none selected on initial load
+  const [selectedSummary, setSelectedSummary] = useState<null | 'total' | 'active' | 'inactive' | 'underObservation' | 'expiring'>(null);
 
   const getDefaultDateRange = () => {
     const today = new Date();
@@ -388,6 +390,7 @@ export const AMCDashboard = () => {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
+  setSelectedSummary(null);
   };
 
   useEffect(() => {
@@ -609,7 +612,7 @@ export const AMCDashboard = () => {
                     record.id === item.id ? { ...record, status: value } : record
                   );
                   const updatedApiData = {
-                    ...apiData,
+                    ...((apiData as any) || {}),
                     asset_amcs: updatedAmcData,
                     active_amcs_count:
                       value === 'active'
@@ -950,6 +953,7 @@ export const AMCDashboard = () => {
     setIsFilterModalOpen(false);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
+  setSelectedSummary(null);
     toast.success('Filters applied');
   };
 
@@ -963,6 +967,7 @@ export const AMCDashboard = () => {
     setFilter(null);
     setCurrentPage(1);
     setIsExpiringFilterActive(false);
+  setSelectedSummary(null);
     fetchFilteredAMCs(null, 1, undefined, debouncedSearchQuery);
     toast.success('Filters reset');
   };
@@ -1178,8 +1183,8 @@ export const AMCDashboard = () => {
           <TabsContent value="amclist" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-4">
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${!filter && !isExpiringFilterActive ? 'border-2 border-[#C72030]' : ''}`}
-                onClick={handleTotalAMCClick}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'total' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+                onClick={() => { setSelectedSummary('total'); handleTotalAMCClick(); }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -1198,8 +1203,8 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'active' ? 'border-2 border-[#C72030]' : ''}`}
-                onClick={handleActiveAMCClick}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'active' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+                onClick={() => { setSelectedSummary('active'); handleActiveAMCClick(); }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -1213,8 +1218,8 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'inactive' ? 'border-2 border-[#C72030]' : ''}`}
-                onClick={handleInactiveAMCClick}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'inactive' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+                onClick={() => { setSelectedSummary('inactive'); handleInactiveAMCClick(); }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -1228,8 +1233,8 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${filter === 'UnderObservation' ? 'border-2 border-[#C72030]' : ''}`}
-                onClick={handleFlaggedAMCClick}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'underObservation' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+                onClick={() => { setSelectedSummary('underObservation'); handleFlaggedAMCClick(); }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -1243,8 +1248,8 @@ export const AMCDashboard = () => {
               </div>
 
               <div
-                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3] ${isExpiringFilterActive ? 'border-2 border-[#C72030]' : ''}`}
-                onClick={handleExpiringIn90DaysClick}
+                className={`p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 cursor-pointer hover:bg-[#edeae3] ${selectedSummary === 'expiring' ? 'bg-[#e6e2da]' : 'bg-[#f6f4ee]'}`}
+                onClick={() => { setSelectedSummary('expiring'); handleExpiringIn90DaysClick(); }}
               >
                 <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                   <Settings className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
