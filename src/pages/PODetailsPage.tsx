@@ -1,15 +1,36 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Printer, Copy, Rss, ArrowLeft, FileText, FileSpreadsheet, File, Eye, Download } from "lucide-react";
+import {
+  Printer,
+  Copy,
+  Rss,
+  ArrowLeft,
+  FileText,
+  FileSpreadsheet,
+  File,
+  Eye,
+  Download,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { getMaterialPRById } from "@/store/slices/materialPRSlice";
 import { approvePO, rejectPO } from "@/store/slices/purchaseOrderSlice";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +49,7 @@ interface BillingAddress {
 }
 
 interface PlantDetail {
-  name?: string;
+  plant_name?: string;
 }
 
 interface Supplier {
@@ -73,21 +94,21 @@ interface GRNDetail {
   id: number;
   inventory?: string;
   supplier?: string;
-  invoice_number?: string;
-  total_grn_amount?: number;
+  invoice_no?: string;
+  amount?: number;
   payable_amount?: number;
   retention_amount?: number;
   tds_amount?: number;
-  qc_amount?: number;
-  invoice_date?: string;
-  payment_mode?: string;
+  qh_amount?: number;
+  bill_date?: string;
+  payment_mod?: string;
   other_expense?: number;
   loading_expense?: number;
-  adjustment_amount?: number;
+  adj_amount?: number;
   qc_approval_status?: string;
   hse_approval_status?: string;
   admin_approval_status?: string;
-  physical_invoice_sent?: string;
+  invoice_sent_label?: string;
 }
 
 interface PaymentDetail {
@@ -136,12 +157,14 @@ interface PODetails {
   total_amount_formatted?: string;
   show_send_sap_yes?: boolean;
   approval_levels?: ApprovalLevel[];
-  deliveryAddress?: string;
+  shipping_address?: {
+    title?: string;
+  };
   email?: string;
   gst?: string;
   attachments?: Attachment[];
   terms_conditions?: string;
-  grn_details?: GRNDetail[];
+  pms_grns?: GRNDetail[];
   payment_details?: PaymentDetail[];
   debit_credit_notes?: DebitCreditNote[];
 }
@@ -149,48 +172,151 @@ interface PODetails {
 // Table column configurations
 const inventoryTableColumns: ColumnConfig[] = [
   { key: "inventory_name", label: "Item", sortable: true, draggable: true },
-  { key: "sac_hsn_code", label: "SAC/HSN Code", sortable: true, draggable: true },
-  { key: "expected_date", label: "Expected Date", sortable: true, draggable: true },
+  {
+    key: "sac_hsn_code",
+    label: "SAC/HSN Code",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "expected_date",
+    label: "Expected Date",
+    sortable: true,
+    draggable: true,
+  },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "total_value", label: "Amount", sortable: true, draggable: true },
-  { key: "approved_qty", label: "Approved Qty", sortable: true, draggable: true },
-  { key: "transfer_qty", label: "Transfer Qty", sortable: true, draggable: true },
-  { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
+  {
+    key: "approved_qty",
+    label: "Approved Qty",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "transfer_qty",
+    label: "Transfer Qty",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 const grnDetailsColumns: ColumnConfig[] = [
-  { key: "action", label: "Action", sortable: false, draggable: false },
   { key: "id", label: "ID", sortable: true, draggable: true },
   { key: "inventory", label: "Inventory", sortable: true, draggable: true },
   { key: "supplier", label: "Supplier", sortable: true, draggable: true },
-  { key: "invoice_number", label: "Invoice Number", sortable: true, draggable: true },
-  { key: "total_grn_amount", label: "Total GRN Amount", sortable: true, draggable: true },
-  { key: "payable_amount", label: "Payable Amount", sortable: true, draggable: true },
-  { key: "retention_amount", label: "Retention Amount", sortable: true, draggable: true },
+  {
+    key: "invoice_number",
+    label: "Invoice Number",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "total_grn_amount",
+    label: "Total GRN Amount",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "payable_amount",
+    label: "Payable Amount",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "retention_amount",
+    label: "Retention Amount",
+    sortable: true,
+    draggable: true,
+  },
   { key: "tds_amount", label: "TDS Amount", sortable: true, draggable: true },
   { key: "qc_amount", label: "QC Amount", sortable: true, draggable: true },
-  { key: "invoice_date", label: "Invoice Date", sortable: true, draggable: true },
-  { key: "payment_mode", label: "Payment Mode", sortable: true, draggable: true },
-  { key: "other_expense", label: "Other Expense", sortable: true, draggable: true },
-  { key: "loading_expense", label: "Loading Expense", sortable: true, draggable: true },
-  { key: "adjustment_amount", label: "Adjustment Amount", sortable: true, draggable: true },
-  { key: "qc_approval_status", label: "QC Approval Status", sortable: true, draggable: true },
-  { key: "hse_approval_status", label: "HSE Approval Status", sortable: true, draggable: true },
-  { key: "admin_approval_status", label: "Admin Approval Status", sortable: true, draggable: true },
-  { key: "physical_invoice_sent", label: "Physical Invoice Sent to Accounts", sortable: true, draggable: true },
+  {
+    key: "invoice_date",
+    label: "Invoice Date",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "payment_mode",
+    label: "Payment Mode",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "other_expense",
+    label: "Other Expense",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "loading_expense",
+    label: "Loading Expense",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "adjustment_amount",
+    label: "Adjustment Amount",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "qc_approval_status",
+    label: "QC Approval Status",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "hse_approval_status",
+    label: "HSE Approval Status",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "admin_approval_status",
+    label: "Admin Approval Status",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "physical_invoice_sent",
+    label: "Physical Invoice Sent to Accounts",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 const paymentDetailsColumns: ColumnConfig[] = [
   { key: "grn_id", label: "GRN ID", sortable: true, draggable: true },
   { key: "amount", label: "Amount", sortable: true, draggable: true },
-  { key: "payment_mode", label: "Payment Mode", sortable: true, draggable: true },
-  { key: "transaction_number", label: "Transaction Number", sortable: true, draggable: true },
+  {
+    key: "payment_mode",
+    label: "Payment Mode",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "transaction_number",
+    label: "Transaction Number",
+    sortable: true,
+    draggable: true,
+  },
   { key: "status", label: "Status", sortable: true, draggable: true },
-  { key: "payment_date", label: "Payment Date", sortable: true, draggable: true },
+  {
+    key: "payment_date",
+    label: "Payment Date",
+    sortable: true,
+    draggable: true,
+  },
   { key: "note", label: "Note", sortable: true, draggable: true },
-  { key: "date_of_entry", label: "Date Of Entry", sortable: true, draggable: true },
+  {
+    key: "date_of_entry",
+    label: "Date Of Entry",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 const debitNoteDetailsColumns: ColumnConfig[] = [
@@ -220,7 +346,8 @@ export const PODetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
-  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
   // Fetch PO data
@@ -239,7 +366,9 @@ export const PODetailsPage = () => {
 
       try {
         setLoading(true);
-        const response = await dispatch(getMaterialPRById({ baseUrl, token, id })).unwrap();
+        const response = await dispatch(
+          getMaterialPRById({ baseUrl, token, id })
+        ).unwrap();
         setPoDetails(response || {});
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch purchase order");
@@ -264,15 +393,15 @@ export const PODetailsPage = () => {
         `https://${baseUrl}/pms/purchase_orders/${id}/print_pdf.pdf`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob'
+          responseType: "blob",
         }
       );
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: "application/pdf" });
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'purchase_order.pdf';
+      link.download = "purchase_order.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -316,13 +445,14 @@ export const PODetailsPage = () => {
     const payload = {
       pms_purchase_order: {
         id: Number(id),
-        pms_pr_inventories_attributes: poDetails.pms_pr_inventories?.map((item) => ({
-          id: item.id,
-          rate: item.rate,
-          total_value: item.total_value,
-          approved_qty: item.quantity,
-          transfer_qty: item.transfer_qty,
-        })) || [],
+        pms_pr_inventories_attributes:
+          poDetails.pms_pr_inventories?.map((item) => ({
+            id: item.id,
+            rate: item.rate,
+            total_value: item.total_value,
+            approved_qty: item.quantity,
+            transfer_qty: item.transfer_qty,
+          })) || [],
       },
       level_id: Number(levelId),
       user_id: Number(userId),
@@ -330,7 +460,9 @@ export const PODetailsPage = () => {
     };
 
     try {
-      await dispatch(approvePO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        approvePO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("PO approved successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
@@ -361,7 +493,9 @@ export const PODetailsPage = () => {
     };
 
     try {
-      await dispatch(rejectPO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        rejectPO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("PO rejected successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
@@ -374,73 +508,96 @@ export const PODetailsPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'rejected': return 'bg-red-100 text-red-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "approved":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const inventoryTableData = poDetails.pms_pr_inventories?.map((item, index) => ({
-    id: item.id || index,
-    inventory_name: item.inventory?.name || "-",
-    sac_hsn_code: item.sac_hsn_code || "-",
-    expected_date: item.expected_date ? format(new Date(item.expected_date), 'dd-MM-yyyy') : "-",
-    quantity: item.quantity?.toString() || "-",
-    unit: item.unit || "-",
-    rate: item.rate?.toString() || "-",
-    total_value: item.total_value?.toString() || "-",
-    approved_qty: item.approved_qty?.toString() || "-",
-    transfer_qty: item.transfer_qty?.toString() || "-",
-    wbs_code: item.wbs_code || "-",
-  })) || [];
+  const inventoryTableData =
+    poDetails.pms_pr_inventories?.map((item, index) => ({
+      id: item.id || index,
+      inventory_name: item.inventory?.name || "-",
+      sac_hsn_code: item.sac_hsn_code || "-",
+      expected_date: item.expected_date
+        ? format(new Date(item.expected_date), "dd-MM-yyyy")
+        : "-",
+      quantity: item.quantity?.toString() || "-",
+      unit: item.unit || "-",
+      rate: item.rate?.toString() || "-",
+      total_value: item.total_value?.toString() || "-",
+      approved_qty: item.approved_qty?.toString() || "-",
+      transfer_qty: item.transfer_qty?.toString() || "-",
+    })) || [];
 
-  const grnTableData = poDetails.grn_details?.map((item, index) => ({
-    id: item.id || index,
-    action: <Button size="sm" variant="outline">View</Button>,
-    inventory: item.inventory || "-",
-    supplier: item.supplier || "-",
-    invoice_number: item.invoice_number || "-",
-    total_grn_amount: item.total_grn_amount?.toString() || "-",
-    payable_amount: item.payable_amount?.toString() || "-",
-    retention_amount: item.retention_amount?.toString() || "-",
-    tds_amount: item.tds_amount?.toString() || "-",
-    qc_amount: item.qc_amount?.toString() || "-",
-    invoice_date: item.invoice_date ? format(new Date(item.invoice_date), 'dd-MM-yyyy') : "-",
-    payment_mode: item.payment_mode || "-",
-    other_expense: item.other_expense?.toString() || "-",
-    loading_expense: item.loading_expense?.toString() || "-",
-    adjustment_amount: item.adjustment_amount?.toString() || "-",
-    qc_approval_status: item.qc_approval_status || "-",
-    hse_approval_status: item.hse_approval_status || "-",
-    admin_approval_status: item.admin_approval_status || "-",
-    physical_invoice_sent: item.physical_invoice_sent || "-",
-  })) || [];
+  const grnTableData =
+    poDetails.pms_grns?.map((item, index) => ({
+      id: item.id || index,
+      action: (
+        <Button size="sm" variant="outline">
+          View
+        </Button>
+      ),
+      inventory: item.inventory || "-",
+      supplier: item.supplier || "-",
+      invoice_number: item.invoice_no || "-",
+      total_grn_amount: item.amount || "-",
+      payable_amount: item.payable_amount || "-",
+      retention_amount: item.retention_amount || "-",
+      tds_amount: item.tds_amount || "-",
+      qc_amount: item.qh_amount || "-",
+      invoice_date: item.bill_date
+        ? format(new Date(item.bill_date), "dd-MM-yyyy")
+        : "-",
+      payment_mode: item.payment_mod || "-",
+      other_expense: item.other_expense || "-",
+      loading_expense: item.loading_expense || "-",
+      adjustment_amount: item.adj_amount || "-",
+      qc_approval_status: item.qc_approval_status || "-",
+      hse_approval_status: item.hse_approval_status || "-",
+      admin_approval_status: item.admin_approval_status || "-",
+      physical_invoice_sent: item.invoice_sent_label || "-",
+    })) || [];
 
-  const paymentTableData = poDetails.payment_details?.map((item, index) => ({
-    id: item.grn_id || index,
-    grn_id: item.grn_id?.toString() || "-",
-    amount: item.amount?.toString() || "-",
-    payment_mode: item.payment_mode || "-",
-    transaction_number: item.transaction_number || "-",
-    status: item.status || "-",
-    payment_date: item.payment_date ? format(new Date(item.payment_date), 'dd-MM-yyyy') : "-",
-    note: item.note || "-",
-    date_of_entry: item.date_of_entry ? format(new Date(item.date_of_entry), 'dd-MM-yyyy') : "-",
-  })) || [];
+  const paymentTableData =
+    poDetails.payment_details?.map((item, index) => ({
+      id: item.grn_id || index,
+      grn_id: item.grn_id?.toString() || "-",
+      amount: item.amount?.toString() || "-",
+      payment_mode: item.payment_mode || "-",
+      transaction_number: item.transaction_number || "-",
+      status: item.status || "-",
+      payment_date: item.payment_date
+        ? format(new Date(item.payment_date), "dd-MM-yyyy")
+        : "-",
+      note: item.note || "-",
+      date_of_entry: item.date_of_entry
+        ? format(new Date(item.date_of_entry), "dd-MM-yyyy")
+        : "-",
+    })) || [];
 
-  const debitCreditTableData = poDetails.debit_credit_notes?.map((item, index) => ({
-    id: item.id || index,
-    type: item.type || "-",
-    amount: item.amount?.toString() || "-",
-    description: item.description || "-",
-    approved: item.approved ? "Yes" : "No",
-    approved_on: item.approved_on ? format(new Date(item.approved_on), 'dd-MM-yyyy') : "-",
-    approved_by: item.approved_by || "-",
-    created_on: item.created_on ? format(new Date(item.created_on), 'dd-MM-yyyy') : "-",
-    created_by: item.created_by || "-",
-    attachment: item.attachment || "-",
-  })) || [];
+  const debitCreditTableData =
+    poDetails.debit_credit_notes?.map((item, index) => ({
+      id: item.id || index,
+      type: item.type || "-",
+      amount: item.amount?.toString() || "-",
+      description: item.description || "-",
+      approved: item.approved ? "Yes" : "No",
+      approved_on: item.approved_on
+        ? format(new Date(item.approved_on), "dd-MM-yyyy")
+        : "-",
+      approved_by: item.approved_by || "-",
+      created_on: item.created_on
+        ? format(new Date(item.created_on), "dd-MM-yyyy")
+        : "-",
+      created_by: item.created_by || "-",
+      attachment: item.attachment || "-",
+    })) || [];
 
   const renderCell = (item: any, columnKey: string) => {
     const value = item[columnKey] ?? "-";
@@ -465,25 +622,39 @@ export const PODetailsPage = () => {
             <div className="flex items-start gap-3 mt-3">
               {poDetails?.approval_levels?.map((level: ApprovalLevel) => (
                 <div className="space-y-2" key={level.id}>
-                  {level.status_label.toLowerCase() === 'rejected' ? (
+                  {level.status_label.toLowerCase() === "rejected" ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status_label)}`}>
+                        <div
+                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                            level.status_label
+                          )}`}
+                        >
                           {`${level.name} Approval : ${level.status_label}`}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                        <p>
+                          Rejection Reason:{" "}
+                          {level.rejection_reason ?? "No reason provided"}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status_label)}`}>
+                    <div
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                        level.status_label
+                      )}`}
+                    >
                       {`${level.name} Approval : ${level.status_label}`}
                     </div>
                   )}
                   {level.approved_by && level.approval_date && (
                     <div className="ms-2">
-                      {`${level.approved_by} (${format(new Date(level.approval_date), 'dd-MM-yyyy')})`}
+                      {`${level.approved_by} (${format(
+                        new Date(level.approval_date),
+                        "dd-MM-yyyy"
+                      )})`}
                     </div>
                   )}
                 </div>
@@ -544,14 +715,44 @@ export const PODetailsPage = () => {
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-24">Phone</span><span className="font-medium">: {poDetails.billing_address?.phone ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">Email</span><span className="font-medium">: {poDetails.billing_address?.email ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">PAN</span><span className="font-medium">: {poDetails.billing_address?.pan_number ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Phone</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.phone ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Email</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.email ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">PAN</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.pan_number ?? "-"}
+                  </span>
+                </div>
               </div>
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-24">Fax</span><span className="font-medium">: {poDetails.billing_address?.fax ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">GST</span><span className="font-medium">: {poDetails.billing_address?.gst_number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">Address</span><span className="font-medium">: {poDetails.billing_address?.address ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Fax</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.fax ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">GST</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.gst_number ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Address</span>
+                  <span className="font-medium">
+                    : {poDetails.billing_address?.address ?? "-"}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -560,33 +761,132 @@ export const PODetailsPage = () => {
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium text-center">
-              Purchase Order {poDetails.all_level_approved ? "(Approved)" : "(Pending)"}
+              Purchase Order{" "}
+              {poDetails.all_level_approved ? "(Approved)" : "(Pending)"}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-44">PO No.</span><span className="font-medium">: {poDetails.external_id ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">PO Date</span><span className="font-medium">: {poDetails.po_date ? format(new Date(poDetails.po_date), 'dd-MM-yyyy') : '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Plant Detail</span><span className="font-medium">: {poDetails.plant_detail?.name ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Address</span><span className="font-medium">: {poDetails.supplier?.address ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Email</span><span className="font-medium">: {poDetails.supplier?.email ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">PAN</span><span className="font-medium">: {poDetails.supplier?.pan_number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Phone</span><span className="font-medium">: {poDetails.supplier?.mobile1 ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Related To</span><span className="font-medium">: {poDetails.related_to ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Retention(%)</span><span className="font-medium">: {poDetails.retention ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">QC(%)</span><span className="font-medium">: {poDetails.quality_holding ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">PO No.</span>
+                  <span className="font-medium">
+                    : {poDetails.external_id ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">PO Date</span>
+                  <span className="font-medium">
+                    :{" "}
+                    {poDetails.po_date
+                      ? format(new Date(poDetails.po_date), "dd-MM-yyyy")
+                      : "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Plant Detail
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.plant_detail?.plant_name ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">Address</span>
+                  <span className="font-medium">
+                    : {poDetails.supplier?.address ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">Email</span>
+                  <span className="font-medium">
+                    : {poDetails.supplier?.email ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">PAN</span>
+                  <span className="font-medium">
+                    : {poDetails.supplier?.pan_number ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">Phone</span>
+                  <span className="font-medium">
+                    : {poDetails.supplier?.mobile1 ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">Related To</span>
+                  <span className="font-medium">
+                    : {poDetails.related_to ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Retention(%)
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.retention ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">QC(%)</span>
+                  <span className="font-medium">
+                    : {poDetails.quality_holding ?? "-"}
+                  </span>
+                </div>
               </div>
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-44">Reference No.</span><span className="font-medium">: {poDetails.reference_number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">ID</span><span className="font-medium">: {poDetails.id ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Supplier</span><span className="font-medium">: {poDetails.supplier?.company_name ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">GST</span><span className="font-medium">: {poDetails.gst ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Delivery Address</span><span className="font-medium">: {poDetails.deliveryAddress ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Email</span><span className="font-medium">: {poDetails.email ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Payment Tenure(In Days)</span><span className="font-medium">: {poDetails.payment_tenure ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">TDS(%)</span><span className="font-medium">: {poDetails.tds ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-44">Advance Amount</span><span className="font-medium">: {poDetails.advance_amount ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Reference No.
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.reference_number ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">ID</span>
+                  <span className="font-medium">: {poDetails.id ?? "-"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">Supplier</span>
+                  <span className="font-medium">
+                    : {poDetails.supplier?.company_name ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">GST</span>
+                  <span className="font-medium">: {poDetails.gst ?? "-"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Delivery Address
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.shipping_address?.title ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Payment Tenure(In Days)
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.payment_tenure ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">TDS(%)</span>
+                  <span className="font-medium">: {poDetails.tds ?? "-"}</span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-44">
+                    Advance Amount
+                  </span>
+                  <span className="font-medium">
+                    : {poDetails.advance_amount ?? "-"}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -615,24 +915,46 @@ export const PODetailsPage = () => {
             <div className="mt-6 border-t border-gray-200 pt-6">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Net Amount (INR):</span>
-                  <span className="font-medium">{poDetails.net_amount_formatted ?? '-'}</span>
+                  <span className="font-medium text-gray-700">
+                    Net Amount (INR):
+                  </span>
+                  <span className="font-medium">
+                    {poDetails.net_amount_formatted ?? "-"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Total Taxable Value Of PO:</span>
-                  <span className="font-medium">{poDetails.net_amount_formatted ?? '-'}</span>
+                  <span className="font-medium text-gray-700">
+                    Total Taxable Value Of PO:
+                  </span>
+                  <span className="font-medium">
+                    {poDetails.net_amount_formatted ?? "-"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Taxes (INR):</span>
-                  <span className="font-medium">{poDetails.total_taxable_amount ?? '-'}</span>
+                  <span className="font-medium text-gray-700">
+                    Taxes (INR):
+                  </span>
+                  <span className="font-medium">
+                    {poDetails.total_taxable_amount ?? "-"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="font-medium text-gray-700">Total PO Value (INR):</span>
-                  <span className="font-medium">{poDetails.total_amount_formatted ?? '-'}</span>
+                  <span className="font-medium text-gray-700">
+                    Total PO Value (INR):
+                  </span>
+                  <span className="font-medium">
+                    {poDetails.total_amount_formatted ?? "-"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                  <span className="font-medium text-gray-700">Amount In Words:</span>
-                  <span className="font-medium">{numberToIndianCurrencyWords(parseFloat(poDetails.total_amount_formatted || '0'))}</span>
+                  <span className="font-medium text-gray-700">
+                    Amount In Words:
+                  </span>
+                  <span className="font-medium">
+                    {numberToIndianCurrencyWords(
+                      parseFloat(poDetails.total_amount_formatted || "0")
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -646,7 +968,9 @@ export const PODetailsPage = () => {
           <CardContent className="text-wrap break-words">
             <div className="space-y-6">
               <div>
-                <h3 className="text-md font-semibold text-gray-900 mb-2">Notes:</h3>
+                <h3 className="text-md font-semibold text-gray-900 mb-2">
+                  Notes:
+                </h3>
                 <div className="text-gray-700 ml-4">
                   {poDetails.billing_address?.notes?.length ? (
                     <ol className="list-decimal">
@@ -660,14 +984,24 @@ export const PODetailsPage = () => {
                 </div>
               </div>
               <div>
-                <h3 className="text-md font-semibold text-gray-900 mb-2">Terms & Conditions:</h3>
-                <p className="text-muted-foreground ml-4">{poDetails.terms_conditions ?? 'No terms and conditions available'}</p>
+                <h3 className="text-md font-semibold text-gray-900 mb-2">
+                  Terms & Conditions:
+                </h3>
+                <p className="text-muted-foreground ml-4">
+                  {poDetails.terms_conditions ??
+                    "No terms and conditions available"}
+                </p>
               </div>
               <div className="border-t border-gray-200 pt-6">
-                <p className="text-gray-900 font-medium">For {poDetails.supplier?.company_name || "-"} We Confirm & Accept,</p>
+                <p className="text-gray-900 font-medium">
+                  For {poDetails.supplier?.company_name || "-"} We Confirm &
+                  Accept,
+                </p>
               </div>
               <div>
-                <p className="text-gray-900 font-medium">Authorised Signatory</p>
+                <p className="text-gray-900 font-medium">
+                  Authorised Signatory
+                </p>
               </div>
             </div>
           </CardContent>
@@ -678,10 +1012,13 @@ export const PODetailsPage = () => {
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            {Array.isArray(poDetails.attachments) && poDetails.attachments.length > 0 ? (
+            {Array.isArray(poDetails.attachments) &&
+              poDetails.attachments.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {poDetails.attachments.map((attachment: Attachment) => {
-                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                    attachment.url
+                  );
                   const isPdf = /\.pdf$/i.test(attachment.url);
                   const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
                   const isWord = /\.(doc|docx)$/i.test(attachment.url);
@@ -707,7 +1044,10 @@ export const PODetailsPage = () => {
                           </button>
                           <img
                             src={attachment.url}
-                            alt={attachment.document_name || attachment.document_file_name}
+                            alt={
+                              attachment.document_name ||
+                              attachment.document_file_name
+                            }
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
                               setSelectedAttachment(attachment);
@@ -733,7 +1073,9 @@ export const PODetailsPage = () => {
                         </div>
                       )}
                       <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                        {attachment.document_name ||
+                          attachment.document_file_name ||
+                          `Document_${attachment.id}`}
                       </span>
                       {isDownloadable && (
                         <Button
@@ -766,6 +1108,20 @@ export const PODetailsPage = () => {
             <EnhancedTable
               data={grnTableData}
               columns={grnDetailsColumns}
+              renderCell={(item, columnKey) => {
+                const value = item[columnKey] ?? "-";
+                return value;
+              }}
+              renderActions={(item) => (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="p-1"
+                  onClick={() => navigate(`/finance/grn-srn/details/${item.id}`)}
+                >
+                  <Eye className="w-4 h-4" />
+                </Button>
+              )}
               storageKey="grn-table"
               hideColumnsButton={true}
               hideTableExport={true}
@@ -782,7 +1138,9 @@ export const PODetailsPage = () => {
 
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">Payment Details</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Payment Details
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <EnhancedTable
@@ -804,7 +1162,9 @@ export const PODetailsPage = () => {
 
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">Debit/Credit Note Details</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Debit/Credit Note Details
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <EnhancedTable
@@ -841,7 +1201,12 @@ export const PODetailsPage = () => {
           </div>
         )}
 
-        <Dialog open={openRejectDialog} onClose={() => setOpenRejectDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openRejectDialog}
+          onClose={() => setOpenRejectDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Reject Purchase Order</DialogTitle>
           <DialogContent>
             <TextField
@@ -858,7 +1223,10 @@ export const PODetailsPage = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenRejectDialog(false)} variant="outline">
+            <Button
+              onClick={() => setOpenRejectDialog(false)}
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button
@@ -877,6 +1245,6 @@ export const PODetailsPage = () => {
           setSelectedDoc={setSelectedAttachment}
         />
       </div>
-    </div>
+    </div >
   );
 };

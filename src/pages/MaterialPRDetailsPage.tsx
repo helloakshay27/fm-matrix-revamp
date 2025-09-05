@@ -114,7 +114,7 @@ const columns: ColumnConfig[] = [
   { key: 'expected_date', label: 'Expected Date', sortable: true, defaultVisible: true },
   { key: 'prod_desc', label: 'Product Description', sortable: true, defaultVisible: true },
   { key: 'quantity', label: 'Quantity', sortable: true, defaultVisible: true },
-  { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
+  // { key: 'unit', label: 'Unit', sortable: true, defaultVisible: true },
   { key: 'total_value', label: 'Moving Avg Rate', sortable: true, defaultVisible: true },
   { key: 'rate', label: 'Rate', sortable: true, defaultVisible: true },
   { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
