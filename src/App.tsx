@@ -689,6 +689,9 @@ import AddInventoryTypePage from "./pages/master/AddInventoryTypePage";
 import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
+import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
+import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
+import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 
 
 const queryClient = new QueryClient();
@@ -919,6 +922,19 @@ function App() {
                   <Route
                     path="/master/unit-default"
                     element={<UnitMasterByDefaultPage />}
+                  />
+
+                  <Route
+                    path="/master/user/occupant-users/add"
+                    element={<AddOccupantUserPage />}
+                  />
+                  <Route
+                    path="/master/user/occupant-users/view/:id"
+                    element={<ViewOccupantUserPage />}
+                  />
+                  <Route
+                    path="/master/user/occupant-users/edit/:id"
+                    element={<EditOccupantUserPage />}
                   />
 
                   {/* CRM Routes */}
