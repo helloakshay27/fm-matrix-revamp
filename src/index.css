@@ -1,8 +1,89 @@
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import './styles/enhanced-select.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ===========================================
+   GLOBAL MUI SELECT OVERRIDE INJECTION
+   Ensures all MUI components are enhanced globally
+   =========================================== */
+   
+/* Force apply to any MUI component that might not be caught */
+[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+  height: 36px !important;
+  background-color: white !important;
+}
+
+@media (min-width: 640px) {
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+    height: 40px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+    height: 45px !important;
+  }
+}
+
+[class*="MuiFormControl"] [class*="MuiSelect-select"],
+[class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+  padding: 8px 12px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+@media (min-width: 640px) {
+  [class*="MuiFormControl"] [class*="MuiSelect-select"],
+  [class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+    padding: 10px 14px !important;
+  }
+}
+
+@media (min-width: 768px) {
+  [class*="MuiFormControl"] [class*="MuiSelect-select"],
+  [class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+    padding: 12px 14px !important;
+  }
+}
+
+/* Force dropdown menu height and scroll for ANY MUI menu */
+[class*="MuiPaper-root"][class*="MuiMenu-paper"],
+[class*="MuiPaper-root"][class*="MuiPopover-paper"] {
+  max-height: 200px !important;
+  overflow-y: auto !important;
+  z-index: 9999 !important;
+}
+
+/* Force menu item styling */
+[class*="MuiMenuItem-root"] {
+  font-size: 14px !important;
+  padding: 8px 12px !important;
+  min-height: auto !important;
+}
+
+@media (min-width: 768px) {
+  [class*="MuiMenuItem-root"] {
+    font-size: 16px !important;
+    padding: 10px 16px !important;
+  }
+}
+
+[class*="MuiMenuItem-root"]:hover {
+  background-color: #f5f5f5 !important;
+}
+
+[class*="MuiMenuItem-root"][aria-selected="true"],
+[class*="MuiMenuItem-root"][class*="Mui-selected"] {
+  background-color: #e3f2fd !important;
+}
+
+[class*="MuiMenuItem-root"][aria-selected="true"]:hover,
+[class*="MuiMenuItem-root"][class*="Mui-selected"]:hover {
+  background-color: #bbdefb !important;
+}
 
 @layer base {
   :root {

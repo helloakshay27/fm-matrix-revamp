@@ -39,7 +39,7 @@ export const getServicePr = createAsyncThunk(
                 queryParams.append("q[pms_supplier_company_name_cont]", supplier_name);
             }
 
-            if (approval_status !== undefined && approval_status !== null) {
+            if (approval_status !== undefined && approval_status !== null && approval_status !== "Select") {
                 queryParams.append("q[all_level_approved_eq]", approval_status);
             }
 

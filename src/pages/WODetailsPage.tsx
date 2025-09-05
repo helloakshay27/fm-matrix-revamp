@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Copy, Printer, Rss, ArrowLeft, Image, FileText, File, Eye, FileSpreadsheet, Download } from "lucide-react";
+import { Edit, Copy, Printer, Rss, ArrowLeft, FileText, File, Eye, FileSpreadsheet, Download } from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -1103,7 +1103,14 @@ export const WODetailsPage = () => {
             value={debitCreditForm.description}
             onChange={handleDebitCreditChange}
             multiline
-            rows={4}
+            rows={2}
+            sx={{
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+              },
+            }}
           />
         </DialogContent>
         <DialogActions>
@@ -1132,10 +1139,17 @@ export const WODetailsPage = () => {
             type="text"
             fullWidth
             multiline
-            rows={4}
+            rows={2}
             value={rejectComment}
             onChange={(e) => setRejectComment(e.target.value)}
             variant="outlined"
+            sx={{
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+              },
+            }}
           />
         </DialogContent>
         <DialogActions>

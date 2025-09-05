@@ -1,8 +1,11 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Dialog, DialogContent } from '@mui/material';
+import { getSuppliers } from '@/store/slices/materialPRSlice';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import { toast } from 'sonner';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -43,6 +46,27 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
   setFilters,
   onApplyFilters
 }) => {
+  const [suppliers, setSuppliers] = useState([])
+
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+
+  useEffect(() => {
+    const fetchSuppliers = async () => {
+      try {
+        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
+        setSuppliers(response.suppliers);
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    };
+
+    fetchSuppliers();
+  }, []);
+
   const handleInputChange = (field: string, value: string) => {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
@@ -103,17 +127,21 @@ export const ServicePRFilterDialog: React.FC<ServicePRFilterDialogProps> = ({
             />
           </div>
 
-          <TextField
-            label="Supplier Name"
-            placeholder="Supplier Name"
-            value={filters.supplierName}
-            onChange={(e) => handleInputChange('supplierName', e.target.value)}
-            fullWidth
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            sx={{ mt: 1 }}
-          />
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Supplier Name</InputLabel>
+            <MuiSelect
+              label="Supplier Name"
+              value={filters.supplierName}
+              onChange={(e) => handleInputChange('supplierName', e.target.value)}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select Supplier</em></MenuItem>
+              {suppliers.map((supplier: any) => (
+                <MenuItem key={supplier.id} value={supplier.name.split('-')[0]}>{supplier.name.split('-')[0]}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
 
           <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
             <InputLabel shrink>Approval Status</InputLabel>
