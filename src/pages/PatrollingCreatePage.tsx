@@ -185,7 +185,7 @@ const CheckpointLocationSelector: React.FC<{
           ))}
         </MuiSelect>
         {loading.wings && (
-          <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+          <div className="absolute s right-8 top-1/2 transform -translate-y-1/2">
             <CircularProgress size={16} />
           </div>
         )}
