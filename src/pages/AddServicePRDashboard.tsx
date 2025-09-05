@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
+import axios from "axios";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -101,6 +102,96 @@ export const AddServicePRDashboard = () => {
 
   const [attachedFiles, setAttachedFiles] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [slid, setSlid] = useState(null);
+
+  useEffect(() => {
+    const createSystemLog = async () => {
+      try {
+        const response = await axios.post(
+          `https://${baseUrl}/pms/work_orders/create_system_log_for_wo.json`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setSlid(response.data.id);
+      } catch (error) {
+        console.error("Error creating system log:", error);
+        toast.error("Failed to create system log");
+      }
+    };
+
+    createSystemLog();
+  }, []);
+
+  useEffect(() => {
+    if (!slid) return;
+
+    const interval = setInterval(async () => {
+      const payload = {
+        pms_work_order: {
+          letter_of_indent: true,
+          pms_supplier_id: formData.contractor,
+          plant_detail_id: formData.plantDetail,
+          wo_date: formData.woDate,
+          billing_address_id: formData.billingAddress,
+          retention: formData.retention,
+          tds: formData.tds,
+          quality_holding: formData.qc,
+          payment_tenure: formData.paymentTenure,
+          advance_amount: formData.advanceAmount,
+          related_to: formData.relatedTo,
+          address_to: formData.kindAttention,
+          subject: formData.subject,
+          description: formData.description,
+          term_condition: formData.termsConditions,
+          ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
+          pms_wo_inventories_attributes: detailsForms.map((item) => ({
+            pms_service_id: item.service,
+            prod_desc: item.productDescription,
+            quantity: item.quantityArea,
+            unit: item.uom,
+            expected_date: item.expectedDate,
+            rate: item.rate,
+            cgst_rate: item.cgstRate,
+            cgst_amount: item.cgstAmt,
+            sgst_rate: item.sgstRate,
+            sgst_amount: item.sgstAmt,
+            igst_rate: item.igstRate,
+            igst_amount: item.igstAmt,
+            tcs_rate: item.tcsRate,
+            tcs_amount: item.tcsAmt,
+            taxable_value: item.taxAmount,
+            total_value: item.amount,
+            total_amount: item.totalAmount,
+            ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          })),
+        },
+        attachments: attachedFiles,
+        apply_wbs: wbsSelection === "overall" ? "overall" : "individual",
+        slid,
+      };
+
+      try {
+        await axios.put(
+          `https://${baseUrl}/pms/work_orders/update_temp_records.json`,
+          payload,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        toast.success("Auto saved successfully");
+      } catch (error) {
+        console.error("Error updating system log:", error);
+      }
+    }, 60000);
+
+    return () => clearInterval(interval);
+  }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, token, baseUrl])
 
   useEffect(() => {
     const fetchSuppliers = async () => {
