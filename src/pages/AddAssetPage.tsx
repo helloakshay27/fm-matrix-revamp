@@ -3526,13 +3526,18 @@ const AddAssetPage = () => {
         })
         .then((response) => {
           console.log("Asset created successfully:", response.data);
+          const assetId = response.data.asset?.id;
           toast.success("Asset Created Successfully", {
             description: "The asset has been created and saved.",
             duration: 3000,
           });
           // Small delay to show the toast before redirect
           setTimeout(() => {
-            window.location.href = "/maintenance/asset";
+            if (assetId) {
+              navigate(`/maintenance/asset/details/${assetId}`);
+            } else {
+              navigate("/maintenance/asset");
+            }
           }, 1000);
         })
         .catch((err) => {
@@ -3576,11 +3581,26 @@ const AddAssetPage = () => {
         })
         .then((response) => {
           console.log("Asset created successfully:", response.data);
-          // navigate('/maintenance/asset');
-          location.reload();
+          const assetId = response.data.asset?.id;
+          toast.success("Asset Created Successfully", {
+            description: "The asset has been created and saved.",
+            duration: 3000,
+          });
+          // Small delay to show the toast before redirect
+          setTimeout(() => {
+            if (assetId) {
+              navigate(`/maintenance/asset/details/${assetId}`);
+            } else {
+              navigate("/maintenance/asset");
+            }
+          }, 1000);
         })
         .catch((err) => {
           console.error("Error creating asset:", err);
+          toast.error("Asset Creation Failed", {
+            description: err.response?.data?.message || "An error occurred while creating the asset.",
+            duration: 5000,
+          });
         })
         .finally(() => {
           setSubmitting(false);
