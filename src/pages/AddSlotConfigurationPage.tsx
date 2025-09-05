@@ -278,8 +278,23 @@ export const AddSlotConfigurationPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    
+    // Clean up previous object URL if it exists
+    if (formData.floorMap && formData.floorMap.type.startsWith('image/')) {
+      URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+    }
+    
     setFormData(prev => ({ ...prev, floorMap: file }));
   };
+
+  // Cleanup object URL on component unmount
+  useEffect(() => {
+    return () => {
+      if (formData.floorMap && formData.floorMap.type.startsWith('image/')) {
+        URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+      }
+    };
+  }, [formData.floorMap]);
 
   // A reusable component for rendering a parking slot category
   const ParkingSlotCategory = ({
@@ -507,6 +522,20 @@ export const AddSlotConfigurationPage = () => {
             <span className="ml-2 text-gray-500">
               {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
             </span>
+            
+            {/* Image Preview */}
+            {formData.floorMap && formData.floorMap.type.startsWith('image/') && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">Image Preview:</p>
+                <div className="w-32 h-32 bg-gray-100 rounded border overflow-hidden mx-auto">
+                  <img 
+                    src={URL.createObjectURL(formData.floorMap)} 
+                    alt="Floor map preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

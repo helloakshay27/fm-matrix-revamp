@@ -380,8 +380,23 @@ export const EditSlotConfigurationPage = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    
+    // Clean up previous preview URL if it exists
+    if (formData.floorMap && typeof formData.floorMap === 'object') {
+      URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+    }
+    
     setFormData(prev => ({ ...prev, floorMap: file }));
   };
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      if (formData.floorMap && typeof formData.floorMap === 'object') {
+        URL.revokeObjectURL(URL.createObjectURL(formData.floorMap));
+      }
+    };
+  }, [formData.floorMap]);
 
   // A reusable component for rendering a parking slot category
   const ParkingSlotCategory = ({
@@ -671,22 +686,66 @@ export const EditSlotConfigurationPage = () => {
               >
                 Choose File
               </label>
-              {formData.parking_image_url && (
+              <div className="">
+              <span className="text-gray-500">
+                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
+              </span>
+            </div>
+              {/* {formData.parking_image_url && !formData.floorMap && (
                 <a
                   href={formData.parking_image_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-600 font-medium hover:text-blue-700 underline"
                 >
-                  View Image
+                  View Current Image
                 </a>
-              )}
+              )} */}
             </div>
-            <div className="mt-2">
-              <span className="text-gray-500">
-                {formData.floorMap ? formData.floorMap.name : 'No file chosen'}
-              </span>
-            </div>
+            
+            
+            {/* Image Preview */}
+            {(formData.floorMap || formData.parking_image_url) && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  {formData.floorMap ? 'Preview:' : 'Preview:'}
+                </p>
+                <div className="w-32 h-32 bg-gray-100 rounded border overflow-hidden mx-auto">
+                  {formData.floorMap ? (
+                    // Preview new uploaded file
+                    formData.floorMap.type.startsWith('image/') ? (
+                      <img 
+                        src={URL.createObjectURL(formData.floorMap)} 
+                        alt="Floor map preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs">
+                        PDF Preview
+                      </div>
+                    )
+                  ) : (
+                    // Show existing image
+                    <img 
+                      src={formData.parking_image_url} 
+                      alt="Current floor map"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.nextElementSibling as HTMLElement;
+                        if (fallback) fallback.style.display = 'flex';
+                      }}
+                    />
+                  )}
+                  {/* Fallback for broken images */}
+                  {!formData.floorMap && (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs" style={{display: 'none'}}>
+                      Image Not Available
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
