@@ -5,19 +5,16 @@ import { Button } from '../components/ui/button';
 import { Calendar, Trash2, Settings, ArrowLeft } from 'lucide-react';
 import { TextField, Card, CardContent } from '@mui/material';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
-import { editCustomer, getCustomerById } from '@/store/slices/cusomerSlice';
+import { createCustomer } from '@/store/slices/cusomerSlice';
 import { toast } from 'sonner';
 
-export const EditCrmCustomer = () => {
+export const AddCRMCustomerPage = () => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
 
-    const { id } = useParams();
     const navigate = useNavigate();
-    const {
-        setCurrentSection
-    } = useLayout();
+    const { setCurrentSection } = useLayout();
 
     // Form state
     const [formData, setFormData] = useState({
@@ -34,34 +31,6 @@ export const EditCrmCustomer = () => {
         freeParking: '',
         paidParking: ''
     }]);
-
-    useEffect(() => {
-        const fetchCustomer = async () => {
-            try {
-                const response = await dispatch(getCustomerById({ id: Number(id), baseUrl, token })).unwrap();
-                setFormData({
-                    customerName: response.entity.name,
-                    email: response.entity.email,
-                    mobile: response.entity.mobile,
-                    colorCode: response.entity.color_code,
-                    ssid: response.entity.ssid
-                });
-                setLeases(response.customer_leases.map(lease => ({
-                    id: lease.id,
-                    leaseStartDate: lease.lease_start_date,
-                    leaseEndDate: lease.lease_end_date,
-                    freeParking: lease.free_parking,
-                    paidParking: lease.paid_parking
-                })));
-            } catch (error: unknown) {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to fetch customer';
-                console.error(errorMessage);
-                toast.error(errorMessage);
-            }
-        };
-
-        fetchCustomer();
-    }, []);
 
     useEffect(() => {
         setCurrentSection('CRM');
@@ -107,7 +76,6 @@ export const EditCrmCustomer = () => {
                 color_code: formData.colorCode,
                 ssid: formData.ssid,
                 customer_leases_attributes: leases.map(lease => ({
-                    id: lease.id,
                     site_id: localStorage.getItem('selectedSiteId'),
                     lease_start_date: lease.leaseStartDate,
                     lease_end_date: lease.leaseEndDate,
@@ -118,8 +86,8 @@ export const EditCrmCustomer = () => {
         }
 
         try {
-            await dispatch(editCustomer({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
-            toast.success('Customer updated successfully');
+            await dispatch(createCustomer({ baseUrl, token, data: payload })).unwrap();
+            toast.success('Customer created successfully');
             navigate(`/crm/customers`);
         } catch (error) {
             console.log(error)

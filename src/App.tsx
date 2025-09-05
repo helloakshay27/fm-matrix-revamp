@@ -692,6 +692,7 @@ import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
 import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
+import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 
 
 const queryClient = new QueryClient();
@@ -968,6 +969,7 @@ function App() {
                   <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
                   <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
                   <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
+                  <Route path="/crm/customers/add" element={<AddCRMCustomerPage />} />
                   <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
                   <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
 
@@ -1952,7 +1954,7 @@ function App() {
                   />
 
                   {/* M Safe Routes */}
-    
+
                   <Route
                     path="/maintenance/m-safe/non-fte-users"
                     element={<NonFTEUsersDashboard />}
