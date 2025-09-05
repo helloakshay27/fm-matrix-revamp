@@ -1,5 +1,3 @@
-
-
 import { useDebounce } from '@/hooks/useDebounce';
 import React, { useState, useEffect, useMemo } from 'react';
 import { AMCAnalyticsFilterDialog } from '@/components/AMCAnalyticsFilterDialog';
@@ -15,7 +13,6 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStr
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { AttendanceSelector } from '@/components/AttendanceSelector';
-import { RecentAttendanceSidebar } from '@/components/RecentAttendanceSidebar';
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchAttendanceData, AttendanceRecord } from '@/store/slices/attendanceSlice';
@@ -24,6 +21,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton, TextField } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { RecentAttendanceSidebar } from '@/components/RecentAttendanceSidebar';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({ id, children }: { id: string; children: React.ReactNode }) => {
@@ -40,7 +38,7 @@ const SortableChartItem = ({ id, children }: { id: string; children: React.React
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-  };
+  } as React.CSSProperties;
 
   return (
     <div
@@ -122,6 +120,7 @@ export const AttendanceDashboard = () => {
       : '';
     dispatch(fetchAttendanceData({ departmentFilter, page: currentPage, perPage }));
   }, [dispatch, debouncedSearchQuery, currentPage]);
+
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setCurrentPage(1);
@@ -449,7 +448,7 @@ export const AttendanceDashboard = () => {
   }];
 
   const renderPaginationItems = () => {
-    const items = [];
+    const items = [] as React.ReactNode[];
     const showEllipsis = totalPages > 7;
     if (showEllipsis) {
       items.push(<PaginationItem key={1}>
@@ -488,7 +487,7 @@ export const AttendanceDashboard = () => {
         </PaginationItem>);
       } else {
         for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => item.key === i)) {
+          if (!items.find(item => (item as any).key === i)) {
             items.push(<PaginationItem key={i}>
               <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
                 {i}
@@ -821,7 +820,7 @@ export const AttendanceDashboard = () => {
                           className="text-xs border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
                           onClick={() => setIsChartFilterOpen(true)}
                         >
-                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block mr-1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 019 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
+                          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="inline-block mr-1"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707l-6.414 6.414A1 1 0 0013 13.414V19a1 1 0 01-1.447.894l-2-1A1 1 0 009 18v-4.586a1 1 0 00-.293-.707L2.293 6.707A1 1 0 012 6V4z" /></svg>
                           Filter
                         </Button>
                         <AMCAnalyticsFilterDialog
