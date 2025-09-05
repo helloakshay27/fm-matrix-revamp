@@ -22,6 +22,9 @@ export const MultipleUserDeletePage = () => {
     const [deletedUsers, setDeletedUsers] = useState<UserRow[]>([]);
     const [skippedUsers, setSkippedUsers] = useState<UserRow[]>([]);
     const [notFoundUsers, setNotFoundUsers] = useState<string[]>([]);
+    type Reportee = { name?: string; email?: string; mobile_number?: string };
+    type NotDeletedManager = { name?: string; email?: string; mobile_number?: string; reportees?: Reportee[] };
+    const [notDeletedDueToReportee, setNotDeletedDueToReportee] = useState<NotDeletedManager[]>([]);
 
     // Tabs and hierarchy (tree) state
     const [activeTab, setActiveTab] = useState<'single' | 'tree'>('single');
@@ -96,6 +99,34 @@ export const MultipleUserDeletePage = () => {
         return out;
     };
 
+    // Merge managers (not deleted due to reportee) uniquely by email|mobile, and merge their reportees uniquely as well
+    const mergeUniqueManagers = (prev: NotDeletedManager[], next: NotDeletedManager[]): NotDeletedManager[] => {
+        const keyOf = (u?: { email?: string; mobile_number?: string }) => `${(u?.email || '').toLowerCase()}|${u?.mobile_number || ''}`;
+        const mergeReportees = (a: Reportee[] = [], b: Reportee[] = []): Reportee[] => {
+            const map = new Map<string, Reportee>();
+            const put = (r?: Reportee) => {
+                if (!r) return;
+                const k = keyOf(r);
+                if (!map.has(k)) map.set(k, r);
+            };
+            a.forEach(put); b.forEach(put);
+            return Array.from(map.values());
+        };
+        const map = new Map<string, NotDeletedManager>();
+        const putMgr = (m?: NotDeletedManager) => {
+            if (!m) return;
+            const k = keyOf(m);
+            if (map.has(k)) {
+                const existing = map.get(k)!;
+                existing.reportees = mergeReportees(existing.reportees, m.reportees);
+            } else {
+                map.set(k, { ...m, reportees: mergeReportees([], m.reportees) });
+            }
+        };
+        prev.forEach(putMgr); next.forEach(putMgr);
+        return Array.from(map.values());
+    };
+
     const handleChange = (id: number, value: string) => {
         setEntries(prev => prev.map(e => (e.id === id ? { ...e, value } : e)));
     };
@@ -159,7 +190,7 @@ export const MultipleUserDeletePage = () => {
             try {
                 const all = collectAllIds(data as TreeNode);
                 setExpandedNodes(new Set(all));
-            } catch {}
+            } catch { }
             toast.success('Hierarchy fetched');
         } catch (e: any) {
             console.error('Hierarchy fetch error', e);
@@ -177,7 +208,7 @@ export const MultipleUserDeletePage = () => {
         }
         try {
             setTreeDeleteLoading(true);
-            const url = getFullUrl('/pms/users/delete_with_reportees');
+            const url = getFullUrl('/pms/users/delete_user_with_reportees.json');
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -193,7 +224,7 @@ export const MultipleUserDeletePage = () => {
                     if (typeof data === 'string') message = data;
                     else if (data?.message) message = data.message;
                 } catch {
-                    try { message = (await resp.text()) || message; } catch {}
+                    try { message = (await resp.text()) || message; } catch { }
                 }
                 throw new Error(message);
             }
@@ -201,6 +232,7 @@ export const MultipleUserDeletePage = () => {
             const deleted = Array.isArray(result?.deleted_users) ? result.deleted_users : [];
             const skipped = Array.isArray(result?.skipped_users) ? result.skipped_users : [];
             const notFound = Array.isArray(result?.not_found_users) ? result.not_found_users : [];
+            const notDeletedManagers = Array.isArray(result?.not_deleted_due_to_reportee) ? result.not_deleted_due_to_reportee : [];
 
             // merge into the summary boxes below for consistency
             setDeletedUsers(prev => mergeUniqueUsers(prev, deleted));
@@ -208,6 +240,7 @@ export const MultipleUserDeletePage = () => {
             const nf: string[] = (notFound as any[]).map((n) => typeof n === 'string' ? n : (n?.email || ''))
                 .filter(Boolean);
             setNotFoundUsers(prev => mergeUniqueStrings(prev, nf));
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
 
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
@@ -327,6 +360,7 @@ export const MultipleUserDeletePage = () => {
             const deleted = Array.isArray(result?.deleted_users) ? result.deleted_users : [];
             const skipped = Array.isArray(result?.skipped_users) ? result.skipped_users : [];
             const notFound = Array.isArray(result?.not_found_users) ? result.not_found_users : [];
+            const notDeletedManagers = Array.isArray(result?.not_deleted_due_to_reportee) ? result.not_deleted_due_to_reportee : [];
 
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
@@ -341,6 +375,9 @@ export const MultipleUserDeletePage = () => {
             const nf: string[] = (notFound as any[]).map((n) => typeof n === 'string' ? n : (n?.email || ''))
                 .filter(Boolean);
             setNotFoundUsers(prev => mergeUniqueStrings(prev, nf));
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
+            // append not deleted due to reportees
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
             setEntries([{ id: 1, value: '' }]);
             setPendingIds([]);
             setConfirmOpen(false);
@@ -482,9 +519,9 @@ export const MultipleUserDeletePage = () => {
                             </div>
                         )}
 
-                        {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length) ? (
+                        {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length || notDeletedDueToReportee.length) ? (
                             <div className="mt-6 space-y-4 max-w-6xl mx-auto">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                     <Card className="border-[#D9D9D9] bg-white">
                                         <CardHeader className="bg-[#F6F4EE]">
                                             <CardTitle className="text-base flex items-center justify-between">
@@ -582,6 +619,57 @@ export const MultipleUserDeletePage = () => {
                                                 </div>
                                             ) : (
                                                 <p className="text-sm text-gray-500">All users matched.</p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="border-[#D9D9D9] bg-white">
+                                        <CardHeader className="bg-[#F6F4EE]">
+                                            <CardTitle className="text-base flex items-center justify-between">
+                                                <span>Not deleted due to reportee</span>
+                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{notDeletedDueToReportee.length}</span>
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {notDeletedDueToReportee.length ? (
+                                                <div className="overflow-x-auto mt-2">
+                                                    <table className="w-full text-sm">
+                                                        <thead>
+                                                            <tr className="bg-[#F6F7F7] text-gray-700">
+                                                                <th className="text-left p-2 border-b">Name</th>
+                                                                <th className="text-left p-2 border-b">Email</th>
+                                                                <th className="text-left p-2 border-b">Mobile</th>
+                                                                <th className="text-left p-2 border-b">Reportees</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {notDeletedDueToReportee.map((m, i) => (
+                                                                <tr key={`ndr-${m.email || i}`} className="align-top hover:bg-gray-50">
+                                                                    <td className="p-2 border-b">{m.name || '-'}</td>
+                                                                    <td className="p-2 border-b break-all">{m.email || '-'}</td>
+                                                                    <td className="p-2 border-b">{m.mobile_number || '-'}</td>
+                                                                    <td className="p-2 border-b">
+                                                                        {m.reportees && m.reportees.length ? (
+                                                                            <ul className="list-disc pl-4 space-y-1">
+                                                                                {m.reportees.map((r, ri) => (
+                                                                                    <li key={`ndr-r-${(r.email || ri)}`} className="break-all">
+                                                                                        <span className="font-medium">{r.name || '-'}</span>
+                                                                                        {` `}
+                                                                                        <span className="text-gray-600">({r.email || '-'}{r.mobile_number ? `, ${r.mobile_number}` : ''})</span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        ) : (
+                                                                            <span className="text-gray-500">-</span>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500">No entries.</p>
                                             )}
                                         </CardContent>
                                     </Card>
