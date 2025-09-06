@@ -30,6 +30,15 @@ const ReporteesReassignPage = () => {
         },
     } as const;
 
+    // Prefill currentEmail from query param if provided
+    React.useEffect(() => {
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const fromQ = (params.get('current_email') || '').trim();
+            if (fromQ && !currentEmail) setCurrentEmail(fromQ.toLowerCase());
+        } catch {}
+    }, []); // run once
+
     const handleFetchReportees = async () => {
         if (isFetching) return;
         const current = currentEmail.trim().toLowerCase();
