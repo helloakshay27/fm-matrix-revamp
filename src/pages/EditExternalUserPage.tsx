@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TextField, Select, MenuItem, FormControl, InputLabel, Autocomplete, CircularProgress, FormHelperText } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, CircularProgress, FormHelperText } from '@mui/material';
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import axios from 'axios';
@@ -50,6 +50,9 @@ export const EditExternalUserPage = () => {
   const [lmOptions, setLmOptions] = useState<any[]>([]);
   const [lmLoading, setLmLoading] = useState(false);
   const [selectedLineManager, setSelectedLineManager] = useState<any>(null);
+  // Local search input ref for focusing when the menu opens
+  const lmSearchInputRef = useRef<HTMLInputElement | null>(null);
+  const [lmMenuId] = useState(() => `lm-menu-${Math.random().toString(36).slice(2)}`);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Simple email format validator
@@ -256,6 +259,7 @@ export const EditExternalUserPage = () => {
         const data = resp.data?.user || resp.data;
         setFormData((prev: any) => ({
           ...prev,
+          company_id: data.company_id || data.lock_user_permission?.company_id || prev.company_id || '',
           firstname: data.firstname || '',
           lastname: data.lastname || '',
           email: data.email || '',
@@ -432,9 +436,17 @@ export const EditExternalUserPage = () => {
     }
   }, [workLocations.length, formData.work_location]);
 
-  // Debounced Line Manager search
+  // Clear LM options/loading when query is below threshold
   useEffect(() => {
-    if (lmQuery.length < 4) { setLmOptions([]); return; }
+    if (lmQuery.length < 3) {
+      setLmOptions([]);
+      setLmLoading(false);
+    }
+  }, [lmQuery]);
+
+  // Debounced Line Manager search (also triggered via global enhancer events)
+  useEffect(() => {
+    if (lmQuery.length < 3) { return; }
     let active = true;
     const handler = setTimeout(async () => {
       try {
@@ -442,8 +454,8 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setLmLoading(true);
-        const companyId = formData.company_id || 15; // fallback if not provided
-        // encode query param for email substring search
+    // Prefer company from user/permission; fallback to 145 then 15
+    const companyId = (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
         const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
@@ -451,13 +463,27 @@ export const EditExternalUserPage = () => {
         setLmOptions(users);
       } catch (e) {
         console.error('Line manager search error', e);
-        if (active) setLmOptions([]);
       } finally {
         if (active) setLmLoading(false);
       }
-    }, 400); // 400ms debounce
+    }, 350);
     return () => { active = false; clearTimeout(handler); };
-  }, [lmQuery, formData.company_id]);
+  }, [lmQuery, formData.company_id, originalUser?.company_id]);
+
+  // No global enhancer dependency: all LM search handled locally in this component
+  // Bridge to global enhancer's search input: listen for input events in this menu only
+  useEffect(() => {
+    const onInput = (e: Event) => {
+      const target = e.target as HTMLElement | null;
+      if (!target || !(target instanceof HTMLInputElement)) return;
+      if (!target.classList.contains('mui-search-input')) return;
+      const paper = target.closest('.MuiMenu-paper, .MuiPaper-root') as HTMLElement | null;
+      if (!paper || paper.id !== lmMenuId) return;
+      setLmQuery(target.value || '');
+    };
+    document.addEventListener('input', onInput, true);
+    return () => document.removeEventListener('input', onInput, true);
+  }, [lmMenuId]);
 
   console.log('formData', formData.company_id);
 
@@ -543,55 +569,43 @@ export const EditExternalUserPage = () => {
               </Select>
               {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
             </FormControl>
-            {/* Line Manager Async Search */}
-            <Autocomplete
-              fullWidth
-              size="small"
-              loading={lmLoading}
-              options={lmOptions}
-              isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
-              getOptionLabel={(option: any) => option?.email || ''}
-              value={selectedLineManager || (formData.report_to_id && lmOptions.find(o => o.id === formData.report_to_id)) || null}
-              onChange={(_, val: any) => {
-                setSelectedLineManager(val || null);
-                handleChange('report_to_id', val ? val.id : '');
-                if (val) {
-                  setLmOptions(prev => {
-                    if (prev.some(p => p.id === val.id)) return prev; return [val, ...prev];
-                  });
-                }
-              }}
-              onInputChange={(_, val, reason) => {
-                if (reason === 'input') setLmQuery(val);
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={<>Line Manager (search by email)<span style={{ color: '#C72030' }}>*</span></>}
-                  placeholder="Type at least 4 characters"
-                  error={!!fieldErrors.report_to_id}
-                  helperText={fieldErrors.report_to_id || ''}
-                  InputProps={{
-                    ...params.InputProps,
-                    endAdornment: (
-                      <>
-                        {lmLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                        {params.InputProps.endAdornment}
-                      </>
-                    )
-                  }}
-                />
-              )}
-              renderOption={(props, option: any) => (
-                <li {...props} key={option.id}>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium">{option.email}</span>
-                    {option.name && <span className="text-xs text-gray-500">{option.name}</span>}
-                  </div>
-                </li>
-              )}
-              noOptionsText={lmQuery.length < 4 ? 'Type 4+ chars to search' : 'No results'}
-            />
+            {/* Line Manager Select with remote search via global enhancer */}
+            <FormControl fullWidth size="small" error={!!fieldErrors.report_to_id}>
+              <InputLabel>Line Manager<span style={{ color: '#C72030' }}>*</span></InputLabel>
+              <Select
+                value={formData.report_to_id || ''}
+                label="Line Manager"
+                onOpen={() => {
+                  setLmQuery('');
+                }}
+                onChange={e => handleChange('report_to_id', e.target.value)}
+                MenuProps={{
+                  PaperProps: {
+                    id: lmMenuId,
+                    style: { maxHeight: 48 * 6.5, width: 360, paddingTop: 4, paddingBottom: 4 }
+                  } as any,
+                  MenuListProps: {
+                    // prevent MUI from auto-focusing the first item so typing goes to our input
+                    autoFocusItem: false,
+                  } as any,
+                }}
+              >
+                <MenuItem value="">Select</MenuItem>
+                {lmQuery.length > 0 && lmQuery.length < 3 && (
+                  <MenuItem disabled>Type at least 3 characters…</MenuItem>
+                )}
+                {lmLoading && <MenuItem disabled>Searching…</MenuItem>}
+                {!lmLoading && lmQuery.length >= 3 && lmOptions.length === 0 && (
+                  <MenuItem disabled>No results</MenuItem>
+                )}
+                {lmOptions.map((u: any) => (
+                  <MenuItem key={u.id} value={u.id}>
+                    {u.email || `User ${u.id}`}{u.name ? ` — ${u.name}` : ''}
+                  </MenuItem>
+                ))}
+              </Select>
+              {fieldErrors.report_to_id && <FormHelperText>{fieldErrors.report_to_id}</FormHelperText>}
+            </FormControl>
             <FormControl fullWidth size="small" error={!!fieldErrors.department_id}>
               <InputLabel>Department<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select value={formData.department_id} label="Department" onChange={e => handleChange('department_id', e.target.value)}>
