@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TextField, InputAdornment, IconButton } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { X, User as UserIcon, ChevronRight, ChevronDown } from 'lucide-react';
+import { X, User as UserIcon, ChevronRight, ChevronDown, Trash2, ArrowLeftRight, ShieldAlert } from 'lucide-react';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
@@ -13,6 +14,7 @@ type Entry = {
 };
 
 export const MultipleUserDeletePage = () => {
+    const navigate = useNavigate();
     const [entries, setEntries] = useState<Entry[]>([{ id: 1, value: '' }]);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [pendingIds, setPendingIds] = useState<string[]>([]);
@@ -22,6 +24,9 @@ export const MultipleUserDeletePage = () => {
     const [deletedUsers, setDeletedUsers] = useState<UserRow[]>([]);
     const [skippedUsers, setSkippedUsers] = useState<UserRow[]>([]);
     const [notFoundUsers, setNotFoundUsers] = useState<string[]>([]);
+    type Reportee = { name?: string; email?: string; mobile_number?: string };
+    type NotDeletedManager = { name?: string; email?: string; mobile_number?: string; reportees?: Reportee[] };
+    const [notDeletedDueToReportee, setNotDeletedDueToReportee] = useState<NotDeletedManager[]>([]);
 
     // Tabs and hierarchy (tree) state
     const [activeTab, setActiveTab] = useState<'single' | 'tree'>('single');
@@ -31,6 +36,9 @@ export const MultipleUserDeletePage = () => {
     const [treeData, setTreeData] = useState<TreeNode | null>(null);
     const [treeDeleteLoading, setTreeDeleteLoading] = useState(false);
     const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
+    // Modals for hierarchy delete flow
+    const [showDeleteChoice, setShowDeleteChoice] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     // Determine if the fetched hierarchy has any meaningful content
     const isTreeEmpty = (n: any): boolean => {
@@ -96,6 +104,34 @@ export const MultipleUserDeletePage = () => {
         return out;
     };
 
+    // Merge managers (not deleted due to reportee) uniquely by email|mobile, and merge their reportees uniquely as well
+    const mergeUniqueManagers = (prev: NotDeletedManager[], next: NotDeletedManager[]): NotDeletedManager[] => {
+        const keyOf = (u?: { email?: string; mobile_number?: string }) => `${(u?.email || '').toLowerCase()}|${u?.mobile_number || ''}`;
+        const mergeReportees = (a: Reportee[] = [], b: Reportee[] = []): Reportee[] => {
+            const map = new Map<string, Reportee>();
+            const put = (r?: Reportee) => {
+                if (!r) return;
+                const k = keyOf(r);
+                if (!map.has(k)) map.set(k, r);
+            };
+            a.forEach(put); b.forEach(put);
+            return Array.from(map.values());
+        };
+        const map = new Map<string, NotDeletedManager>();
+        const putMgr = (m?: NotDeletedManager) => {
+            if (!m) return;
+            const k = keyOf(m);
+            if (map.has(k)) {
+                const existing = map.get(k)!;
+                existing.reportees = mergeReportees(existing.reportees, m.reportees);
+            } else {
+                map.set(k, { ...m, reportees: mergeReportees([], m.reportees) });
+            }
+        };
+        prev.forEach(putMgr); next.forEach(putMgr);
+        return Array.from(map.values());
+    };
+
     const handleChange = (id: number, value: string) => {
         setEntries(prev => prev.map(e => (e.id === id ? { ...e, value } : e)));
     };
@@ -151,7 +187,24 @@ export const MultipleUserDeletePage = () => {
             });
             if (!resp.ok) {
                 const t = await resp.text();
-                throw new Error(t || 'Failed to fetch hierarchy');
+                let message = 'Failed to fetch hierarchy';
+                if (t) {
+                    try {
+                        const parsed = JSON.parse(t);
+                        if (typeof parsed === 'string') message = parsed;
+                        else if (parsed?.message) message = parsed.message;
+                        else if (parsed?.error) message = parsed.error;
+                        else if (Array.isArray(parsed?.errors)) message = parsed.errors.join(', ');
+                        else if (parsed?.errors && typeof parsed.errors === 'string') message = parsed.errors;
+                        else message = t;
+                    } catch {
+                        // Not JSON; use raw but strip braces if it's a simple {"error":"..."} pattern
+                        message = t;
+                    }
+                    // Final cleanup: remove surrounding braces/quotes for simple single-field JSON string leftovers
+                    message = message.toString().replace(/^\{"[a-zA-Z_]+":\s*"(.+)"\}$/,'$1').trim();
+                }
+                throw new Error(message);
             }
             const data = await resp.json();
             setTreeData(data as TreeNode);
@@ -159,7 +212,7 @@ export const MultipleUserDeletePage = () => {
             try {
                 const all = collectAllIds(data as TreeNode);
                 setExpandedNodes(new Set(all));
-            } catch {}
+            } catch { }
             toast.success('Hierarchy fetched');
         } catch (e: any) {
             console.error('Hierarchy fetch error', e);
@@ -177,7 +230,7 @@ export const MultipleUserDeletePage = () => {
         }
         try {
             setTreeDeleteLoading(true);
-            const url = getFullUrl('/pms/users/delete_with_reportees');
+            const url = getFullUrl('/pms/users/delete_user_with_reportees.json');
             const resp = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -193,7 +246,7 @@ export const MultipleUserDeletePage = () => {
                     if (typeof data === 'string') message = data;
                     else if (data?.message) message = data.message;
                 } catch {
-                    try { message = (await resp.text()) || message; } catch {}
+                    try { message = (await resp.text()) || message; } catch { }
                 }
                 throw new Error(message);
             }
@@ -201,6 +254,7 @@ export const MultipleUserDeletePage = () => {
             const deleted = Array.isArray(result?.deleted_users) ? result.deleted_users : [];
             const skipped = Array.isArray(result?.skipped_users) ? result.skipped_users : [];
             const notFound = Array.isArray(result?.not_found_users) ? result.not_found_users : [];
+            const notDeletedManagers = Array.isArray(result?.not_deleted_due_to_reportee) ? result.not_deleted_due_to_reportee : [];
 
             // merge into the summary boxes below for consistency
             setDeletedUsers(prev => mergeUniqueUsers(prev, deleted));
@@ -208,6 +262,7 @@ export const MultipleUserDeletePage = () => {
             const nf: string[] = (notFound as any[]).map((n) => typeof n === 'string' ? n : (n?.email || ''))
                 .filter(Boolean);
             setNotFoundUsers(prev => mergeUniqueStrings(prev, nf));
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
 
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
@@ -327,6 +382,7 @@ export const MultipleUserDeletePage = () => {
             const deleted = Array.isArray(result?.deleted_users) ? result.deleted_users : [];
             const skipped = Array.isArray(result?.skipped_users) ? result.skipped_users : [];
             const notFound = Array.isArray(result?.not_found_users) ? result.not_found_users : [];
+            const notDeletedManagers = Array.isArray(result?.not_deleted_due_to_reportee) ? result.not_deleted_due_to_reportee : [];
 
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
@@ -341,6 +397,9 @@ export const MultipleUserDeletePage = () => {
             const nf: string[] = (notFound as any[]).map((n) => typeof n === 'string' ? n : (n?.email || ''))
                 .filter(Boolean);
             setNotFoundUsers(prev => mergeUniqueStrings(prev, nf));
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
+            // append not deleted due to reportees
+            setNotDeletedDueToReportee(prev => mergeUniqueManagers(prev, (notDeletedManagers as NotDeletedManager[])));
             setEntries([{ id: 1, value: '' }]);
             setPendingIds([]);
             setConfirmOpen(false);
@@ -370,7 +429,7 @@ export const MultipleUserDeletePage = () => {
 
                     <TabsContent value="single">
                         <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">MULTIPLE USER DELETION</h1>
+                            <h1 className="text-2xl font-bold text-[#1a1a1a]">SINGLE USER DELETION</h1>
                             <p className="text-sm text-gray-600 mt-1">
                                 Enter one or more Email addresses or Mobile numbers. Click "Add User" to add more.
                             </p>
@@ -482,9 +541,9 @@ export const MultipleUserDeletePage = () => {
                             </div>
                         )}
 
-                        {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length) ? (
+                        {(resultMessage || deletedUsers.length || skippedUsers.length || notFoundUsers.length || notDeletedDueToReportee.length) ? (
                             <div className="mt-6 space-y-4 max-w-6xl mx-auto">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <Card className="border-[#D9D9D9] bg-white">
                                         <CardHeader className="bg-[#F6F4EE]">
                                             <CardTitle className="text-base flex items-center justify-between">
@@ -585,6 +644,57 @@ export const MultipleUserDeletePage = () => {
                                             )}
                                         </CardContent>
                                     </Card>
+
+                                    <Card className="border-[#D9D9D9] bg-white">
+                                        <CardHeader className="bg-[#F6F4EE]">
+                                            <CardTitle className="text-base flex items-center justify-between">
+                                                <span>Not deleted due to reportee</span>
+                                                <span className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">{notDeletedDueToReportee.length}</span>
+                                            </CardTitle>
+                                        </CardHeader>
+                                        <CardContent>
+                                            {notDeletedDueToReportee.length ? (
+                                                <div className="overflow-x-auto mt-2">
+                                                    <table className="w-full text-sm">
+                                                        <thead>
+                                                            <tr className="bg-[#F6F7F7] text-gray-700">
+                                                                <th className="text-left p-2 border-b">Name</th>
+                                                                <th className="text-left p-2 border-b">Email</th>
+                                                                <th className="text-left p-2 border-b">Mobile</th>
+                                                                <th className="text-left p-2 border-b">Reportees</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {notDeletedDueToReportee.map((m, i) => (
+                                                                <tr key={`ndr-${m.email || i}`} className="align-top hover:bg-gray-50">
+                                                                    <td className="p-2 border-b">{m.name || '-'}</td>
+                                                                    <td className="p-2 border-b break-all">{m.email || '-'}</td>
+                                                                    <td className="p-2 border-b">{m.mobile_number || '-'}</td>
+                                                                    <td className="p-2 border-b">
+                                                                        {m.reportees && m.reportees.length ? (
+                                                                            <ul className="list-disc pl-4 space-y-1">
+                                                                                {m.reportees.map((r, ri) => (
+                                                                                    <li key={`ndr-r-${(r.email || ri)}`} className="break-all">
+                                                                                        <span className="font-medium">{r.name || '-'}</span>
+                                                                                        {` `}
+                                                                                        <span className="text-gray-600">({r.email || '-'}{r.mobile_number ? `, ${r.mobile_number}` : ''})</span>
+                                                                                    </li>
+                                                                                ))}
+                                                                            </ul>
+                                                                        ) : (
+                                                                            <span className="text-gray-500">-</span>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500">No entries.</p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
                                 </div>
                             </div>
                         ) : null}
@@ -635,11 +745,11 @@ export const MultipleUserDeletePage = () => {
                                         </Button>
                                         {treeIdentifier.trim().includes('@') && treeData && !isTreeEmpty(treeData) && (
                                             <Button
-                                                onClick={handleTreeDelete}
+                                                onClick={() => setShowDeleteChoice(true)}
                                                 disabled={treeDeleteLoading}
                                                 className="bg-red-600 text-white hover:bg-red-600/90"
                                             >
-                                                {treeDeleteLoading ? 'Deleting...' : 'Delete'}
+                                                Delete
                                             </Button>
                                         )}
                                     </div>
@@ -678,6 +788,183 @@ export const MultipleUserDeletePage = () => {
                     </TabsContent>
                 </Tabs>
             </div>
+
+            {/* Modal 1: Choose reassign or delete hierarchy */}
+            {showDeleteChoice && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-options-title"
+                    onKeyDown={(e) => { if (e.key === 'Escape') setShowDeleteChoice(false); }}
+                >
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in duration-150">
+                        {/* Header */}
+                        <div className="p-6 border-b flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600">
+                                <ShieldAlert className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 id="delete-options-title" className="text-lg font-semibold text-gray-900 tracking-tight">Delete Options</h3>
+                                <p className="text-xs text-gray-500">Choose how you want to proceed with this line manager and their reportees.</p>
+                            </div>
+                            <button
+                                aria-label="Close"
+                                className="text-gray-400 hover:text-gray-600 transition"
+                                onClick={() => setShowDeleteChoice(false)}
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        {/* Body */}
+                        <div className="p-6">
+                            <div className="mb-5 text-sm text-gray-700">
+                                Target user: <span className="font-semibold break-all text-gray-900">{treeIdentifier.trim()}</span>
+                            </div>
+                            <div className="grid md:grid-cols-2 gap-5">
+                                {/* Reassign Option */}
+                                <button
+                                    onClick={() => {
+                                        const email = treeIdentifier.trim().toLowerCase();
+                                        setShowDeleteChoice(false);
+                                        navigate(`/maintenance/m-safe/reportees-reassign?current_email=${encodeURIComponent(email)}`);
+                                    }}
+                                    className="group relative flex flex-col items-start w-full h-full text-left rounded-xl border border-gray-200 hover:border-[#C72030] hover:shadow-md bg-white p-5 transition focus:outline-none focus:ring-2 focus:ring-[#C72030]"
+                                >
+                                    <div className="flex items-center justify-between w-full mb-3">
+                                        <span className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-[#F6F4EE] text-[#C72030] group-hover:scale-105 transition">
+                                            <ArrowLeftRight className="w-5 h-5" />
+                                        </span>
+                                        <span className="text-[11px] uppercase tracking-wide font-medium text-[#C72030]">Preferred</span>
+                                    </div>
+                                    <h4 className="font-semibold text-gray-900 text-sm mb-1">Reportees Reassign</h4>
+                                    <p className="text-xs text-gray-600 leading-relaxed pr-2">Move the existing reportees to another Line Manager first to preserve ownership before removing this user.</p>
+                                    <span className="mt-3 inline-flex items-center text-[11px] font-medium text-[#C72030] group-hover:underline">Continue &rarr;</span>
+                                </button>
+
+                                {/* Delete Hierarchy Option */}
+                                <button
+                                    onClick={() => { setShowDeleteChoice(false); setShowDeleteConfirm(true); }}
+                                    className="group relative flex flex-col items-start w-full h-full text-left rounded-xl border border-gray-200 hover:border-red-600 hover:shadow-md bg-white p-5 transition focus:outline-none focus:ring-2 focus:ring-red-600"
+                                >
+                                    <div className="flex items-center justify-between w-full mb-3">
+                                        <span className="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-red-50 text-red-600 group-hover:scale-105 transition">
+                                            <Trash2 className="w-5 h-5" />
+                                        </span>
+                                        <span className="text-[11px] uppercase tracking-wide font-medium text-red-600">Destructive</span>
+                                    </div>
+                                    <h4 className="font-semibold text-gray-900 text-sm mb-1">Delete Entire Hierarchy</h4>
+                                    <p className="text-xs text-gray-600 leading-relaxed pr-2">Remove this user and all associated reportees permanently. This cannot be undone and may affect reporting structure.</p>
+                                    <span className="mt-3 inline-flex items-center text-[11px] font-medium text-red-600 group-hover:underline">Proceed to Delete &rarr;</span>
+                                </button>
+                            </div>
+                            <div className="mt-6 rounded-lg bg-amber-50 border border-amber-200 p-3 flex items-start gap-3 text-[11px] text-amber-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 mt-0.5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p>Reassign first to avoid orphaned users and preserve data continuity.</p>
+                            </div>
+                        </div>
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t bg-gray-50 flex justify-end gap-2">
+                            <Button variant="ghost" onClick={() => setShowDeleteChoice(false)} className="text-sm">Close</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 2: Confirm final delete */}
+            {showDeleteConfirm && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="confirm-delete-title"
+                    onKeyDown={(e) => { if (e.key === 'Escape' && !treeDeleteLoading) { setShowDeleteConfirm(false); setShowDeleteChoice(true); } }}
+                >
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden ring-1 ring-black/5 animate-in fade-in zoom-in duration-150">
+                        {/* Header */}
+                        <div className="p-6 border-b flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0">
+                                <Trash2 className="w-6 h-6" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 id="confirm-delete-title" className="text-lg font-semibold text-gray-900 tracking-tight">Confirm Hierarchy Deletion</h3>
+                                <p className="text-xs text-gray-500 leading-relaxed">This will permanently remove the selected line manager and (optionally) all their reportees from the system.</p>
+                            </div>
+                            <button
+                                aria-label="Close dialog"
+                                disabled={treeDeleteLoading}
+                                className="text-gray-400 hover:text-gray-600 disabled:opacity-40 transition"
+                                onClick={() => setShowDeleteConfirm(false)}
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-5 text-sm">
+                            <div className="text-gray-700">
+                                You are about to delete hierarchy for:
+                                <span className="block mt-1 font-semibold break-all text-gray-900">{treeIdentifier.trim()}</span>
+                            </div>
+                            {treeData && !isTreeEmpty(treeData) && (
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                        <div className="text-xs text-gray-500 tracking-wide uppercase">Manager</div>
+                                        <div className="text-base font-semibold text-gray-900 mt-0.5">1</div>
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                        <div className="text-xs text-gray-500 tracking-wide uppercase">Reportees</div>
+                                        <div className="text-base font-semibold text-gray-900 mt-0.5">{countDescendants(treeData)}</div>
+                                    </div>
+                                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                        <div className="text-xs text-gray-500 tracking-wide uppercase">Total Nodes</div>
+                                        <div className="text-base font-semibold text-gray-900 mt-0.5">{1 + countDescendants(treeData)}</div>
+                                    </div>
+                                </div>
+                            )}
+                            <div className="rounded-md border border-red-200 bg-red-50 p-4 flex gap-3 text-red-700 text-xs leading-relaxed">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 mt-0.5">
+                                    <path d="M12 9v4" />
+                                    <path d="M12 17h.01" />
+                                    <path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                <p>
+                                    This action is irreversible. Data and associations for these users may be lost. If you have not reassigned reportees, consider cancelling and using the <span className="font-medium">Reportees Reassign</span> option first.
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t bg-gray-50 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+                            <Button
+                                variant="outline"
+                                onClick={() => { setShowDeleteConfirm(false); setShowDeleteChoice(true); }}
+                                disabled={treeDeleteLoading}
+                                className="sm:min-w-[110px]"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                disabled={treeDeleteLoading}
+                                onClick={async () => {
+                                    await handleTreeDelete();
+                                    setShowDeleteConfirm(false);
+                                }}
+                                className="relative bg-red-600 hover:bg-red-600/90 text-white sm:min-w-[170px] font-medium"
+                            >
+                                {treeDeleteLoading && (
+                                    <span className="absolute left-3 inline-flex">
+                                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56" /></svg>
+                                    </span>
+                                )}
+                                <span className={treeDeleteLoading ? 'pl-5' : ''}>{treeDeleteLoading ? 'Deleting…' : 'Yes, Delete Entire Hierarchy'}</span>
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

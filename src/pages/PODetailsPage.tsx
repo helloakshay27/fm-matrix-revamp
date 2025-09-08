@@ -96,7 +96,7 @@ interface Attachment {
 
 interface GRNDetail {
   id: number;
-  inventory?: string;
+  inventories_name?: string;
   supplier?: string;
   invoice_no?: string;
   amount?: number;
@@ -600,7 +600,7 @@ export const PODetailsPage = () => {
           View
         </Button>
       ),
-      inventory: item.inventory || "-",
+      inventory: item.inventories_name || "-",
       supplier: item.supplier || "-",
       invoice_number: item.invoice_no || "-",
       total_grn_amount: item.amount || "-",
@@ -1190,7 +1190,7 @@ export const PODetailsPage = () => {
                   <Eye className="w-4 h-4" />
                 </Button>
               )}
-              storageKey="grn-table"
+              storageKey="po-grn-table"
               hideColumnsButton={true}
               hideTableExport={true}
               hideTableSearch={true}

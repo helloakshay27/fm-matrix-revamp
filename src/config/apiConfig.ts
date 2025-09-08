@@ -42,6 +42,12 @@ export const API_CONFIG = {
     DEPARTMENTS: '/pms/departments.json',
     SITES: '/pms/sites.json',
     UNITS: '/pms/units.json',
+    SOCIETY_STAFF_TYPES: '/pms/society_staff_types.json',
+    SOCIETY_STAFF_DETAILS: '/pms/admin/society_staffs', // Base path, will append /{id}.json
+    UPDATE_SOCIETY_STAFF: '/pms/admin/society_staffs', // Base path, will append /{id}.json
+    SEND_STAFF_OTP: '/pms/admin/society_staffs/send_otp.json',
+    VERIFY_STAFF_NUMBER: '/pms/admin/society_staffs/verify_number.json',
+    PRINT_QR_CODES: '/pms/admin/society_staffs/print_qr_codes.json',
     ROLES: '/lock_roles.json',
     ROLES_WITH_MODULES: '/lock_roles_with_modules.json',
     FUNCTIONS: '/lock_functions.json',
@@ -255,7 +261,7 @@ export const getAuthHeader = (): string => {
 }
 
 // Helper to create authenticated fetch options
-export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: any): RequestInit => {
+export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: string | FormData | null): RequestInit => {
   const options: RequestInit = {
     method,
     headers: {

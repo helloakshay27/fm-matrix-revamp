@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree } from 'lucide-react';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
@@ -29,6 +29,7 @@ const modulesByPackage = {
         //         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
         //     ],
         // },
+        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
         { name: 'Msafe Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
     ],
@@ -92,9 +93,8 @@ const ViSidebar: React.FC = () => {
                                 <div key={sub.name} className={level === 0 ? 'ml-8' : 'ml-4'}>
                                     <button
                                         onClick={() => handleNavigation(sub.href)}
-                                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                                            sub.color || 'text-[#1a1a1a]'
-                                        }`}
+                                        className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${sub.color || 'text-[#1a1a1a]'
+                                            }`}
                                     >
                                         {isActiveRoute(sub.href) && (
                                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C72030]"></div>
@@ -109,13 +109,12 @@ const ViSidebar: React.FC = () => {
             );
         }
 
-    return (
+        return (
             <div key={item.name}>
                 <button
                     onClick={() => item.href && handleNavigation(item.href)}
-                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${
-                        item.color || 'text-[#1a1a1a]'
-                    }`}
+                    className={`flex items-center gap-3 !w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors hover:bg-[#DBC2A9] relative ${item.color || 'text-[#1a1a1a]'
+                        }`}
                 >
                     {level === 0 && (
                         <>
@@ -151,9 +150,8 @@ const ViSidebar: React.FC = () => {
 
                 <div className={`mb-4 ${isSidebarCollapsed ? 'text-center' : ''}`}>
                     <h3
-                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${
-                            isSidebarCollapsed ? 'text-center' : 'tracking-wide'
-                        }`}
+                        className={`text-sm font-medium text-[#1a1a1a] opacity-70 uppercase ${isSidebarCollapsed ? 'text-center' : 'tracking-wide'
+                            }`}
                     >
                         {isSidebarCollapsed ? '' : 'Maintenance'}
                     </h3>
@@ -166,20 +164,18 @@ const ViSidebar: React.FC = () => {
                                 <button
                                     key={module.name}
                                     onClick={() => module.href && handleNavigation(module.href)}
-                                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
-                                        isActiveRoute(module.href)
+                                    className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
                                             ? 'bg-[#f0e8dc] shadow-inner'
                                             : 'hover:bg-[#DBC2A9]'
-                                    }`}
+                                        }`}
                                     title={module.name}
                                 >
                                     {isActiveRoute(module.href) && (
                                         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-[#C72030]"></div>
                                     )}
                                     <module.icon
-                                        className={`w-5 h-5 ${
-                                            isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
-                                        }`}
+                                        className={`w-5 h-5 ${isActiveRoute(module.href) ? 'text-[#C72030]' : 'text-[#1a1a1a]'
+                                            }`}
                                     />
                                 </button>
                             ))}

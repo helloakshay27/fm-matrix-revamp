@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,9 +8,21 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Filter, Eye, Edit, FileText, QrCode, Search, Trash2 } from 'lucide-react';
+import { 
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 import { StaffsFilterModal } from '@/components/StaffsFilterModal';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { fetchSocietyStaffs, searchSocietyStaffs, SocietyStaff, PaginationInfo } from '@/services/societyStaffsAPI';
+import { staffService } from '@/services/staffService';
+import { toast } from 'sonner';
 
 // Sample data for different views
 const allStaffsData = [
@@ -139,47 +151,224 @@ export const StaffsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStaffs, setSelectedStaffs] = useState<string[]>([]);
   const [searchTrigger, setSearchTrigger] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [activeSearchQuery, setActiveSearchQuery] = useState<string>('');
+  
+  // API state management
+  const [apiStaffsData, setApiStaffsData] = useState<SocietyStaff[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationInfo>({
+    current_page: 1,
+    total_count: 0,
+    total_pages: 1
+  });
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const handlePrintQR = () => {
-    console.log('Printing QR codes for selected staff...');
-    // Mock QR generation logic
-    const selectedStaffs = allStaffsData.slice(0, 1); // Mock selected staff
-    
-    const qrData = selectedStaffs.map(staff => ({
-      id: staff.id,
-      name: staff.name,
-      mobile: staff.mobile,
-      qrCode: `STAFF-${staff.id}-${Date.now()}`
-    }));
-    
-    console.log('Generated QR codes:', qrData);
-    
-    // In a real app, this would integrate with a QR code library
-    alert(`Generated QR codes for ${qrData.length} staff member(s)`);
+  // Fetch staff data from API
+  useEffect(() => {
+    const loadStaffsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('🔄 Fetching society staffs data:');
+        console.log('  - Current page (local state):', currentPage);
+        console.log('  - Active search query:', activeSearchQuery);
+        
+        let response;
+        if (activeSearchQuery.trim()) {
+          // Use search API when there's an active search query
+          console.log('🔍 Using search API');
+          response = await searchSocietyStaffs(activeSearchQuery, currentPage);
+        } else {
+          // Use regular fetch API when no search
+          console.log('📋 Using regular fetch API');
+          response = await fetchSocietyStaffs(currentPage);
+        }
+        
+        console.log('📊 API Response:', {
+          totalCount: response.pagination.total_count,
+          totalPages: response.pagination.total_pages,
+          currentPageFromAPI: response.pagination.current_page,
+          staffsCount: response.society_staffs.length
+        });
+        
+        setApiStaffsData(response.society_staffs);
+        setPagination(response.pagination);
+      } catch (err) {
+        console.error('❌ Error loading staffs data:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load staffs data');
+        toast.error('Failed to load staffs data');
+      } finally {
+        setLoading(false);
+        setIsSearching(false);
+      }
+    };
+
+    loadStaffsData();
+  }, [currentPage, activeSearchQuery]);
+
+  // Pagination handlers
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      console.log('⬅️ Moving to previous page:', newPage);
+      setCurrentPage(newPage);
+    }
   };
 
-  const handlePrintAllQR = () => {
-    console.log('Printing QR codes for all staff...');
-    
-    const qrData = allStaffsData.map(staff => ({
-      id: staff.id,
-      name: staff.name,
-      mobile: staff.mobile,
-      qrCode: `STAFF-${staff.id}-${Date.now()}`
-    }));
-    
-    console.log('Generated QR codes for all staff:', qrData);
-    
-    // In a real app, this would integrate with a QR code library
-    alert(`Generated QR codes for all ${qrData.length} staff members`);
+  const handleNextPage = () => {
+    if (currentPage < pagination.total_pages) {
+      const newPage = currentPage + 1;
+      console.log('➡️ Moving to next page:', newPage);
+      setCurrentPage(newPage);
+    }
+  };
+
+  const handlePageClick = (page: number) => {
+    console.log('🔢 Clicking page:', page, '(current:', currentPage, ')');
+    setCurrentPage(page);
+  };
+
+  // Generate pagination items like other dashboards
+  const renderPaginationItems = () => {
+    const items = [];
+    const totalPages = pagination.total_pages;
+    const currentPageState = currentPage; // Use local state instead of API response
+
+    if (totalPages <= 10) {
+      // Show all pages if total is 10 or less
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              onClick={() => handlePageClick(i)}
+              isActive={currentPageState === i}
+              className="cursor-pointer"
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show smart pagination for more than 10 pages
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            onClick={() => handlePageClick(1)}
+            isActive={currentPageState === 1}
+            className="cursor-pointer"
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show ellipsis if current page is far from start
+      if (currentPageState > 4) {
+        items.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Show pages around current page
+      const start = Math.max(2, currentPageState - 1);
+      const end = Math.min(totalPages - 1, currentPageState + 1);
+
+      for (let i = start; i <= end; i++) {
+        if (i !== 1 && i !== totalPages) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                onClick={() => handlePageClick(i)}
+                isActive={currentPageState === i}
+                className="cursor-pointer"
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      }
+
+      // Show ellipsis if current page is far from end
+      if (currentPageState < totalPages - 3) {
+        items.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page (if different from first)
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              onClick={() => handlePageClick(totalPages)}
+              isActive={currentPageState === totalPages}
+              className="cursor-pointer"
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const handlePrintQR = async () => {
+    if (selectedStaffs.length === 0) {
+      toast.error('Please select staff members to print QR codes');
+      return;
+    }
+
+    try {
+      console.log('Printing QR codes for selected staff:', selectedStaffs);
+      
+      // Convert string IDs to numbers for the API
+      const staffIds = selectedStaffs.map(id => parseInt(id, 10));
+      
+      await staffService.printQRCodes(staffIds);
+      
+      // Clear selections after successful print
+      setSelectedStaffs([]);
+    } catch (error) {
+      console.error('Failed to print QR codes:', error);
+      // Error is already handled in the service with toast
+    }
   };
 
   const handleSearch = () => {
-    console.log('Search triggered for:', searchTerm);
-    // Trigger re-render by updating search trigger
-    setSearchTrigger(prev => prev + 1);
-    // Clear selections to show updated results
+    console.log('🔍 Search triggered for:', searchTerm);
+    
+    // Only proceed if there's a search term or we're clearing
+    if (searchTerm.trim() || activeSearchQuery) {
+      setIsSearching(true);
+      setCurrentPage(1); // Reset to first page when searching
+      setActiveSearchQuery(searchTerm.trim());
+      setSelectedStaffs([]); // Clear selections when searching
+      
+      console.log('🔄 Search state updated:');
+      console.log('  - New search query:', searchTerm.trim());
+      console.log('  - Page reset to: 1');
+    }
+  };
+
+  const handleClearSearch = () => {
+    console.log('🔄 Clearing search');
+    setSearchTerm('');
+    setActiveSearchQuery('');
+    setCurrentPage(1);
     setSelectedStaffs([]);
+    setIsSearching(false);
   };
 
   const handleViewStaff = (staffId: string) => {
@@ -204,34 +393,59 @@ export const StaffsDashboard = () => {
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedStaffs(checked ? filteredData('all').map(staff => staff.id) : []);
+    setSelectedStaffs(checked ? transformedApiData().map(staff => staff.id) : []);
+  };
+
+  // Transform API data to match table format
+  const transformedApiData = () => {
+    return apiStaffsData.map(staff => ({
+      id: staff.id.toString(),
+      name: staff.full_name,
+      unit: staff.unit_name || '--',
+      department: staff.department_name,
+      email: staff.email,
+      mobile: staff.mobile,
+      workType: staff.work_type_name,
+      vendorName: staff.vendor_name || '--',
+      status: staff.status_text,
+      validTill: staff.valid_from || '--',
+      checkIn: null as string | null, // This would come from staff_workings if needed
+      checkOut: null as string | null, // This would come from staff_workings if needed
+      isIn: false, // This would be calculated from staff_workings if needed
+      staffId: staff.soc_staff_id,
+      numberVerified: staff.number_verified,
+      imageUrl: staff.staff_image_url,
+      qrCodeUrl: staff.qr_code_url,
+      expiry: staff.expiry,
+      createdAt: staff.created_at,
+      updatedAt: staff.updated_at
+    }));
   };
 
   const filteredData = (activeTab: string = 'all') => {
-    if (activeTab === 'history') {
-      return historyData.filter(staff =>
-        staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        staff.mobile.includes(searchTerm)
-      );
-    }
+    const transformedData = transformedApiData();
     
+    // Since search is now handled by API, we only filter by tab type
+    // No need for local search filtering
     const baseData = activeTab === 'in' 
-      ? allStaffsData.filter(staff => staff.isIn)
+      ? transformedData.filter(staff => staff.isIn)
       : activeTab === 'out'
-      ? allStaffsData.filter(staff => !staff.isIn)
-      : allStaffsData;
+      ? transformedData.filter(staff => !staff.isIn)
+      : transformedData;
     
-    return baseData.filter(staff =>
+    return baseData;
+  };
+
+  const filteredHistoryData = () => {
+    return historyData.filter(staff =>
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.mobile.includes(searchTerm) ||
-      staff.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      staff.id.includes(searchTerm)
+      staff.mobile.includes(searchTerm)
     );
   };
 
-  const renderRow = (staff: any) => ({
+  const renderRow = (staff: ReturnType<typeof transformedApiData>[0]) => ({
     actions: (
-      <div className="flex gap-2">
+      <div className="flex justify-center gap-2">
         <Button
           variant="ghost"
           size="sm"
@@ -256,7 +470,7 @@ export const StaffsDashboard = () => {
         >
           <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
         </Button>
-        <Button
+        {/* <Button
           variant="ghost"
           size="sm"
           onClick={(e) => {
@@ -267,7 +481,7 @@ export const StaffsDashboard = () => {
           title="Delete staff"
         >
           <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
-        </Button>
+        </Button> */}
       </div>
     ),
     id: <span className="font-medium text-blue-600">{staff.id}</span>,
@@ -303,7 +517,7 @@ export const StaffsDashboard = () => {
     { key: 'out', label: 'Out', sortable: false, hideable: true, draggable: true }
   ];
 
-  const renderHistoryRow = (staff: any) => ({
+  const renderHistoryRow = (staff: typeof historyData[0]) => ({
     name: <span className="text-blue-600">{staff.name}</span>,
     mobile: staff.mobile,
     workType: staff.workType,
@@ -356,7 +570,33 @@ export const StaffsDashboard = () => {
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* <h1 className="text-2xl font-bold text-gray-900 mb-6">Society Staffs</h1> */}
       
-      <Tabs defaultValue="history" className="w-full">
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-lg text-gray-600">
+            {isSearching ? 'Searching staffs...' : 'Loading staffs data...'}
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <div className="text-red-800 font-medium">Error loading staffs data</div>
+          <div className="text-red-600 text-sm mt-1">{error}</div>
+          <Button 
+            onClick={() => window.location.reload()} 
+            className="mt-2 bg-red-600 hover:bg-red-700 text-white"
+            size="sm"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Main Content */}
+      {!loading && !error && (
+        <Tabs defaultValue="all" className="w-full">
         {/* Tab Navigation */}
         <div className="mb-4 pb-4">
           <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
@@ -390,7 +630,7 @@ export const StaffsDashboard = () => {
         {/* History Tab Content */}
         <TabsContent value="history">
           <EnhancedTable
-            data={filteredData('history')}
+            data={filteredHistoryData()}
             columns={historyColumns}
             renderRow={renderHistoryRow}
             enableSearch={true}
@@ -399,7 +639,7 @@ export const StaffsDashboard = () => {
             storageKey="staff-history-table"
             emptyMessage="No history found"
             exportFileName="staff-history"
-            searchPlaceholder="Search history by name or mobile"
+            searchPlaceholder="Search..."
             hideTableExport={false}
             hideColumnsButton={false}
           />
@@ -407,15 +647,34 @@ export const StaffsDashboard = () => {
 
         {/* All Tab Content */}
         <TabsContent value="all">
+          {/* Search Bar for API Search */}
+         
+
+          {/* Search Results Summary */}
+          {activeSearchQuery && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="text-sm text-blue-800">
+                <span className="font-medium">Search results for:</span> "{activeSearchQuery}"
+                {pagination.total_count > 0 && (
+                  <span className="ml-2">({pagination.total_count} results found)</span>
+                )}
+                <div className="text-xs text-blue-600 mt-1">
+                  Page {currentPage} of {pagination.total_pages} • {apiStaffsData.length} items on this page
+                </div>
+              </div>
+            </div>
+          )}
+
           <EnhancedTable
             data={filteredData('all')}
             columns={columns}
             renderRow={renderRow}
-            enableSearch={false}
+            selectable={true}
+            enableSearch={false} // Disable built-in search since we're using API search
             enableSelection={true}
             enableExport={true}
             storageKey="staff-table"
-            emptyMessage="No staff found"
+            emptyMessage={activeSearchQuery ? "No staff found for your search" : "No staff found"}
             exportFileName="staff-records"
             selectedItems={selectedStaffs}
             getItemId={(staff) => staff.id}
@@ -431,26 +690,21 @@ export const StaffsDashboard = () => {
                   <Plus className="w-4 h-4 mr-2" />
                   Add
                 </Button>
-                <Button 
-                  onClick={handlePrintQR}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                >
-                  <QrCode className="w-4 h-4 mr-2" />
-                  Print QR
-                </Button>
-                <Button 
-                  onClick={handlePrintAllQR}
-                  style={{ backgroundColor: '#C72030' }}
-                  className="hover:bg-[#C72030]/90 text-white px-4 py-2"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Print ALL QR
-                </Button>
+                {selectedStaffs.length > 0 && (
+                  <Button 
+                    onClick={handlePrintQR}
+                    style={{ backgroundColor: '#C72030' }}
+                    className="hover:bg-[#C72030]/90 text-white px-4 py-2"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Print QR 
+                    {/* ({selectedStaffs.length}) */}
+                  </Button>
+                )}
               </div>
             }
             onFilterClick={() => setIsFilterModalOpen(true)}
-            searchPlaceholder="Search staff by name, ID, email or mobile"
+            searchPlaceholder="Search..."
             hideTableExport={false}
             hideColumnsButton={false}
           />
@@ -514,6 +768,47 @@ export const StaffsDashboard = () => {
           {renderCardView('out')}
         </TabsContent>
       </Tabs>
+      )}
+      
+      {/* Pagination Controls */}
+      {!loading && !error && pagination.total_pages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={handlePreviousPage}
+                  className={
+                    currentPage === 1 
+                      ? "pointer-events-none opacity-50" 
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+              
+              {renderPaginationItems()}
+              
+              <PaginationItem>
+                <PaginationNext
+                  onClick={handleNextPage}
+                  className={
+                    currentPage === pagination.total_pages 
+                      ? "pointer-events-none opacity-50" 
+                      : "cursor-pointer"
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      {/* Results Summary */}
+      {/* {!loading && !error && pagination.total_count > 0 && (
+        <div className="text-center mt-2 text-sm text-gray-600">
+          Showing page {currentPage} of {pagination.total_pages} ({pagination.total_count} total staff members)
+        </div>
+      )} */}
 
       {/* Filter Modal */}
       <StaffsFilterModal 
