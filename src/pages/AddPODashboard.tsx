@@ -260,8 +260,31 @@ export const AddPODashboard = () => {
     };
   };
 
+  const validateForm = () => {
+    if (!formData.supplier) {
+      toast.error("Please select a supplier");
+      return false;
+    } else if (!formData.plantDetail) {
+      toast.error("Please select a plant detail");
+      return false;
+    } else if (!formData.poDate) {
+      toast.error("Please select a po date");
+      return false;
+    } else if (!formData.billingAddress) {
+      toast.error("Please select a billing address");
+      return false;
+    } else if (!formData.deliveryAddress) {
+      toast.error("Please select a delivery address");
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     setSubmitting(true);
     const payload = {
       pms_purchase_order: {
