@@ -14,7 +14,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Autocomplete,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -479,7 +478,7 @@ export const AddMaterialPRDashboard = () => {
         })),
       },
       attachments: files,
-      slid, // Include slid in the submit payload if required
+      slid,
     };
 
     try {
@@ -751,30 +750,25 @@ export const AddMaterialPRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <Autocomplete
-                  options={wbsCodes}
-                  getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
-                  onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.wbs_code : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="WBS Code*"
-                      variant="outlined"
-                      sx={{
-                        height: { xs: 28, sm: 36 },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: { xs: "8px", sm: "10px" },
-                        },
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder="Search WBS Code"
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>WBS Code*</InputLabel>
+                  <MuiSelect
+                    label="WBS Code*"
+                    value={overallWbs}
+                    onChange={(e) => setOverallWbs(e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               )}
             </CardContent>
           </Card>
@@ -909,30 +903,25 @@ export const AddMaterialPRDashboard = () => {
                   />
 
                   {wbsSelection === "individual" && (
-                    <Autocomplete
-                      options={wbsCodes}
-                      getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.wbs_code === item.wbsCode) || null}
-                      onChange={(event, newValue) => {
-                        handleItemChange(item.id, "wbsCode", newValue ? newValue.wbs_code : "");
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="WBS Code*"
-                          variant="outlined"
-                          sx={{
-                            height: { xs: 28, sm: 36 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px" },
-                            },
-                          }}
-                          InputLabelProps={{ shrink: true }}
-                          placeholder="Search WBS Code"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={item.wbsCode}
+                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   )}
                 </div>
               ))}

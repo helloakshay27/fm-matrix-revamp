@@ -14,7 +14,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Autocomplete,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -416,7 +415,7 @@ export const EditMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           hsn_code_name: item.sacHsnCode,
           prod_desc: item.productDescription,
-          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
+          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
       attachments: files,
@@ -424,7 +423,7 @@ export const EditMaterialPRDashboard = () => {
 
     try {
       await dispatch(updateMaterialPR({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
-      toast.success("Material PR created successfully");
+      toast.success("Material PR updated successfully");
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
@@ -690,30 +689,25 @@ export const EditMaterialPRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <Autocomplete
-                  options={wbsCodes}
-                  getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
-                  onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.wbs_code : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="WBS Code*"
-                      variant="outlined"
-                      sx={{
-                        height: { xs: 28, sm: 36 },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: { xs: "8px", sm: "10px" },
-                        },
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder="Search WBS Code"
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>WBS Code*</InputLabel>
+                  <MuiSelect
+                    label="WBS Code*"
+                    value={overallWbs}
+                    onChange={(e) => setOverallWbs(e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               )}
             </CardContent>
           </Card>
@@ -858,30 +852,25 @@ export const EditMaterialPRDashboard = () => {
                   />
 
                   {wbsSelection === "individual" && (
-                    <Autocomplete
-                      options={wbsCodes}
-                      getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.wbs_code === item.wbsCode) || null}
-                      onChange={(event, newValue) => {
-                        handleItemChange(item.id, "wbsCode", newValue ? newValue.wbs_code : "");
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="WBS Code*"
-                          variant="outlined"
-                          sx={{
-                            height: { xs: 28, sm: 36 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px" },
-                            },
-                          }}
-                          InputLabelProps={{ shrink: true }}
-                          placeholder="Search WBS Code"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={item.wbsCode}
+                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   )}
                 </div>
               ))}

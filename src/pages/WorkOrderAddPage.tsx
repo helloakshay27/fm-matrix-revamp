@@ -302,7 +302,42 @@ export const WorkOrderAddPage: React.FC = () => {
     .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
     .toFixed(2);
 
+  const validateForm = () => {
+    if (!formData.contractor) {
+      toast.error("Please select a contractor");
+      return false;
+    } else if (!formData.plantDetail) {
+      toast.error("Please select a plant detail");
+      return false;
+    } else if (!formData.woDate) {
+      toast.error("Please select a work order date");
+      return false;
+    } else if (!formData.billingAddress) {
+      toast.error("Please select a billing address");
+      return false;
+    }
+    for (const item of detailsForms) {
+      if (!item.service) {
+        toast.error("Please select a service");
+        return false;
+      } else if (!item.productDescription) {
+        toast.error("Please enter a product description");
+        return false;
+      } else if (!item.expectedDate) {
+        toast.error("Please enter an expected date");
+        return false;
+      } else if (!item.rate) {
+        toast.error("Please enter a rate");
+        return false;
+      }
+    }
+    return true;
+  }
+
   const handleSubmit = async () => {
+    if (!validateForm()) {
+      return;
+    }
     const payload = {
       pms_work_order: {
         letter_of_indent: false,

@@ -167,10 +167,7 @@ export const EnergyDashboard = () => {
     navigate('/utility/energy/add-asset?type=energy');
   };
   const handleViewAsset = (assetId: string) => {
-    // Find the asset in the current list to get its type
-    const asset = energyAssets.find((a) => a.id?.toString() === assetId);
-    const assetType = asset?.asset_type_category || 'energy';
-    navigate(`/maintenance/asset/details/${assetId}`, { state: { type: assetType } });
+    navigate(`/maintenance/asset/details/${assetId}?type=Energy`);
   };
   const handleSelectAll = (checked: boolean) => {
     if (checked) {

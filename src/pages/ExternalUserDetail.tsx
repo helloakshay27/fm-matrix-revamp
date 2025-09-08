@@ -144,7 +144,7 @@ export const ExternalUserDetail = () => {
                   <div className="space-y-3">
                     <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">First Name</span><span className="mx-1">:</span><span className="font-semibold">{user.firstname || ''}</span></div>
                     <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Last Name</span><span className="mx-1">:</span><span className="font-semibold">{user.lastname || ''}</span></div>
-                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Employee ID</span><span className="mx-1">:</span><span className="font-semibold">{employeeId || ''}</span></div>
+                    <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Employee ID</span><span className="mx-1">:</span><span className="font-semibold">{user.org_user_id || ''}</span></div>
                   </div>
                   <div className="space-y-3">
                     <div className="flex text-sm"><span className="text-gray-600 min-w-[110px]">Email</span><span className="mx-1">:</span><span className="font-semibold break-all">{user.email || ''}</span></div>
