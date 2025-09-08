@@ -23,6 +23,8 @@ const MinutesOfMeeting = () => {
 
     const { fetchMoM: mom } = useSelector((state) => state.fetchMoM);
 
+    const currentPath = window.location.pathname;
+
     const [activeTab, setActiveTab] = useState(momTabs[0].id);
     const [currentPage, setCurrentPage] = useState(0);
     const itemsPerPage = 10; // Number of items per page
@@ -86,6 +88,10 @@ const MinutesOfMeeting = () => {
         (_, i) => startPage + i
     );
 
+    const handleAdd = () => {
+        navigate(currentPath.includes("cloud-mom") ? "/cloud-mom/new-mom" : "/new-mom");
+    }
+
     return (
         <>
             <div className="relative flex items-center mx-6 mt-3 mb-0 gap-10 text-sm">
@@ -111,7 +117,7 @@ const MinutesOfMeeting = () => {
             <div className="flex items-center justify-end mx-8 my-5 text-sm">
                 <button
                     className="text-[12px] flex items-center justify-center gap-2 bg-red text-white px-3 py-2 w-40"
-                    onClick={() => navigate("/new-mom")}
+                    onClick={handleAdd}
                 >
                     <Plus size={18} /> New MoM
                 </button>
@@ -138,7 +144,7 @@ const MinutesOfMeeting = () => {
                                     <tr key={item.id}>
                                         <td className="p-4">{item.id}</td>
                                         <td className="p-4">
-                                            <Link to={`/mom/${item.id}`} className="hover:underline">
+                                            <Link to={currentPath.includes("cloud-mom") ? `/cloud-mom/${item.id}` : `/mom/${item.id}`} className="hover:underline">
                                                 {item.title}
                                             </Link>
                                         </td>

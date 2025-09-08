@@ -57,6 +57,7 @@ const GanttChart = () => {
             if (btn) {
                 const id = btn.getAttribute("data-id");
                 if (id) {
+                    console.log(id)
                     navigate(`${id}/tasks`); // ✅ navigate without reload
                 }
             }
@@ -72,7 +73,7 @@ const GanttChart = () => {
 
     useEffect(() => {
         console.log("Gantt useEffect started, scale:", scale);
-        
+
         // Columns
         gantt.config.columns = [
             {
@@ -198,11 +199,11 @@ const GanttChart = () => {
         gantt.config.show_progress = true;
         gantt.config.grid_resize = true;
         gantt.config.autofit_columns = true;
-        
+
         // Ensure dates are parsed correctly
         gantt.config.date_format = "%d-%m-%Y";
         gantt.config.xml_date = "%d-%m-%Y";
-        
+
         // Enable auto-scheduling and proper display
         gantt.config.auto_scheduling = true;
         gantt.config.auto_scheduling_strict = true;
@@ -395,7 +396,7 @@ const GanttChart = () => {
 
                 console.log("Parsed tasks data:", tasksData);
                 console.log("Links data:", linksData);
-                
+
                 const tasks = {
                     data: tasksData,
                     links: linksData,
@@ -408,7 +409,7 @@ const GanttChart = () => {
                     const today = new Date();
                     const tomorrow = new Date(today);
                     tomorrow.setDate(today.getDate() + 1);
-                    
+
                     tasksData.push({
                         id: "sample-milestone",
                         text: "Sample Milestone",
@@ -425,7 +426,7 @@ const GanttChart = () => {
 
                 // Clear and parse new data
                 gantt.clearAll();
-                
+
                 // Add validation before parsing
                 const validTasks = tasksData.filter(task => {
                     if (!task.id || !task.text) {
@@ -436,21 +437,21 @@ const GanttChart = () => {
                 });
 
                 console.log("Valid tasks to render:", validTasks.length);
-                
+
                 try {
                     gantt.parse({
                         data: validTasks,
                         links: linksData,
                     });
-                    
+
                     // Force refresh and fit to screen
                     gantt.render();
-                    
+
                     // Auto-fit timeline to show all tasks
                     setTimeout(() => {
                         gantt.render();
                     }, 100);
-                    
+
                     console.log("Gantt chart rendered successfully");
                 } catch (error) {
                     console.error("Error parsing gantt data:", error);
@@ -522,8 +523,8 @@ const GanttChart = () => {
             </div>
             <div
                 ref={ganttContainer}
-                style={{ 
-                    minWidth: "1200px", 
+                style={{
+                    minWidth: "1200px",
                     height: "600px",
                     position: "relative",
                     overflow: "hidden"

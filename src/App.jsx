@@ -58,6 +58,70 @@ const App = () => {
       <Toaster />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route
+          path="/cloud-projects"
+          element={
+            <ProtectedRoute>
+              <Projects />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-projects/:id"
+          element={
+            <ProtectedRoute>
+              <ProjectDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-projects/:id/milestones"
+          element={
+            <ProtectedRoute>
+              <MileStoneMain />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-projects/:id/milestones/:mid/tasks"
+          element={
+            <ProtectedRoute>
+              <Tasks />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-projects/:id/milestones/:mid/tasks/:tid"
+          element={
+            <ProtectedRoute>
+              <TaskDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-mom"
+          element={
+            <ProtectedRoute>
+              <MinutesOfMeeting />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-mom/:id"
+          element={
+            <ProtectedRoute>
+              <MomDetails />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/cloud-mom/new-mom"
+          element={
+            <ProtectedRoute>
+              <MoMAdd />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="*"

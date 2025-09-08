@@ -447,6 +447,8 @@ const ProjectList = () => {
         const [title, setTitle] = useState(getValue());
         const [edit, setEdit] = useState(false);
 
+        const currentPath = window.location.pathname;
+
         // Sync title with getValue() when row data changes
         useEffect(() => {
             setTitle(getValue());
@@ -479,7 +481,7 @@ const ProjectList = () => {
                     />
                 ) : (
                     <Link
-                        to={`/projects/${row.original.actualId}/milestones`}
+                        to={currentPath.includes("cloud-projects") ? `/cloud-projects/${row.original.actualId}/milestones` : `/projects/${row.original.actualId}/milestones`}
                         className="cursor-pointer"
                         onDoubleClick={handleDoubleClick}
                     >
@@ -637,6 +639,8 @@ const ProjectList = () => {
     const rowHeight = 40;
     const headerHeight = 48;
 
+    const currentPath = window.location.pathname;
+
     const columns = useMemo(
         () => [
             {
@@ -645,7 +649,7 @@ const ProjectList = () => {
                 size: 110,
                 cell: ({ row, getValue }) => (
                     <Link
-                        to={`/projects/${row.original.actualId}`}
+                        to={currentPath.includes("cloud-projects") ? `/cloud-projects/${row.original.actualId}` : `/projects/${row.original.actualId}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                     >
                         {getValue()}
