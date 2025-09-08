@@ -16,7 +16,8 @@ import {
   User,
   BarChart,
   UserRoundPen, DoorOpen,
-  Ticket, PackagePlus
+  Ticket, PackagePlus,
+  FolderTree
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -381,6 +382,8 @@ const modulesByPackage = {
         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' }
       ]
     },
+    { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
+
     {
       name: 'Msafe Report',
       icon: Download,

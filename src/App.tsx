@@ -696,6 +696,7 @@ import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
 import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
+import CheckHierarchy from "./components/CheckHierarchy";
 
 
 const queryClient = new QueryClient();
@@ -1708,6 +1709,7 @@ function App() {
                   <Route path="/security/staff" element={<StaffsDashboard />} />
                   <Route path="/maintenance/msafe-report" element={<MsafeReportDownload />} />
                   <Route path="/maintenance/msafe-detail-report" element={<MsafeDetailReportDownload />} />
+                  <Route path="/maintenance/check-hierarchy-levels" element={<CheckHierarchy />} />
                   <Route
                     path="/security/staff/details/:id"
                     element={<StaffDetailsPage />}
