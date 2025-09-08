@@ -656,9 +656,15 @@ export const EditMaterialPRDashboard = () => {
                 fullWidth
                 variant="outlined"
                 multiline
-                minRows={4}
+                minRows={2}
                 InputLabelProps={{ shrink: true }}
-                sx={{ mt: 1 }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
               />
 
               {showRadio && (

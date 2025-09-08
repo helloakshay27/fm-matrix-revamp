@@ -2918,7 +2918,7 @@ export const AddSchedulePage = () => {
             <TextField
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-              label={<span>Activity Name <span style={{ color: 'currentColor' }}>*</span></span>}
+              label={<span>Activity Name <span style={{ color: 'red' }}>*</span></span>}
               placeholder="Enter Activity Name"
               fullWidth
               value={formData.activityName}
@@ -2929,7 +2929,7 @@ export const AddSchedulePage = () => {
             <TextField
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-              label={<span>Description <span style={{ color: 'currentColor' }}>*</span></span>}
+              label={<span>Description <span style={{ color: 'red' }}>*</span></span>}
               placeholder="Enter Description/SOP"
               fullWidth
               multiline
@@ -3186,7 +3186,7 @@ export const AddSchedulePage = () => {
                         {...params}
                         label={
                           <span>
-                            Select Assets <span style={{ color: 'currentColor' }}>*</span>
+                            Select Assets <span style={{ color: 'red' }}>*</span>
                           </span>
                         }
                         placeholder="Search and select assets..."
@@ -3231,7 +3231,7 @@ export const AddSchedulePage = () => {
                         {...params}
                         label={
                           <span>
-                            Select Services <span style={{ color: 'currentColor' }}>*</span>
+                            Select Services <span style={{ color: 'red' }}>*</span>
                           </span>
                         }
                         placeholder="Search and select services..."
@@ -3287,7 +3287,7 @@ export const AddSchedulePage = () => {
                           {...params}
                           label={
                             <span>
-                              Asset Group <span style={{ color: 'currentColor' }}>*</span>
+                              Asset Group <span style={{ color: 'red' }}>*</span>
                             </span>
                           }
                           placeholder="Select Asset Group"
@@ -3307,7 +3307,7 @@ export const AddSchedulePage = () => {
                   {selectedAssetGroup && (
                     <FormControl fullWidth>
                       <InputLabel>
-                        Select Asset Sub-Groups <span style={{ color: 'currentColor' }}>*</span>
+                        Select Asset Sub-Groups <span style={{ color: 'red' }}>*</span>
                       </InputLabel>
                       <Select
                         multiple
@@ -3367,7 +3367,7 @@ export const AddSchedulePage = () => {
                       {...params}
                       label={
                         <span>
-                          Assign To <span style={{ color: 'currentColor' }}>*</span>
+                          Assign To <span style={{ color: 'red' }}>*</span>
                         </span>
                       }
                       placeholder="Select Assign To"
@@ -3396,7 +3396,7 @@ export const AddSchedulePage = () => {
                         {...params}
                         label={
                           <span>
-                            Select Users <span style={{ color: 'currentColor' }}>*</span>
+                            Select Users <span style={{ color: 'red' }}>*</span>
                           </span>
                         }
                         placeholder="Search and select users..."
@@ -3422,7 +3422,7 @@ export const AddSchedulePage = () => {
               {formData.assignToType === 'group' && (
                 <FormControl fullWidth>
                   <InputLabel>
-                    Select Groups <span style={{ color: 'currentColor' }}>*</span>
+                    Select Groups <span style={{ color: 'red' }}>*</span>
                   </InputLabel>
                   <Select
                     multiple
@@ -3479,7 +3479,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Backup Assignee <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Backup Assignee <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Backup Assignee"
                       fullWidth
                     />
@@ -3522,7 +3522,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Plan Duration <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Plan Duration <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Plan Duration"
                       fullWidth
                     />
@@ -3536,7 +3536,7 @@ export const AddSchedulePage = () => {
                 <TextField
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                  label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'currentColor' }}>*</span></span>}
+                  label={<span>Plan Duration ({formData.planDuration}) <span style={{ color: 'red' }}>*</span></span>}
                   type="number"
                   fullWidth
                   value={formData.planDurationValue}
@@ -3577,7 +3577,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Email Trigger Rule <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Email Trigger Rule <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Email Trigger Rule"
                       fullWidth
                     />
@@ -3613,7 +3613,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Scan Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Scan Type <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Scan Type"
                       fullWidth
                     />
@@ -3644,7 +3644,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Category <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Category"
                       fullWidth
                     />
@@ -3680,7 +3680,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Submission Time <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Submission Time <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Submission Time"
                       fullWidth
                     />
@@ -3694,7 +3694,7 @@ export const AddSchedulePage = () => {
                 <TextField
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                  label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'currentColor' }}>*</span></span>}
+                  label={<span>Submission Time ({formData.submissionTime}) <span style={{ color: 'red' }}>*</span></span>}
                   type="number"
                   fullWidth
                   value={formData.submissionTimeValue}
@@ -3735,7 +3735,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Supervisors <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Supervisors <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Supervisors"
                       fullWidth
                     />
@@ -3771,7 +3771,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Lock Overdue Task <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Lock Overdue Task <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Lock Status"
                       fullWidth
                     />
@@ -3850,7 +3850,7 @@ export const AddSchedulePage = () => {
                       disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                       {...params}
-                      label={<span>Grace Time <span style={{ color: 'currentColor' }}>*</span></span>}
+                      label={<span>Grace Time <span style={{ color: 'red' }}>*</span></span>}
                       placeholder="Select Grace Time"
                       fullWidth
                     />
@@ -3863,8 +3863,11 @@ export const AddSchedulePage = () => {
               {needsValueInput(formData.graceTime) && (
                 <TextField
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
-                  label={`Grace Time (${formData.graceTime}) *`}
+                  label={
+                    <span>
+                      Grace Time ({formData.graceTime}) <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
                   type="number"
                   fullWidth
                   value={formData.graceTimeValue}
@@ -3923,7 +3926,7 @@ export const AddSchedulePage = () => {
                 <DatePicker
                   label={
                     <span>
-                      Start Date *
+                      Start Date <span style={{ color: 'red' }}>*</span>
                     </span>
                   }
                   slotProps={{
@@ -4438,7 +4441,7 @@ export const AddSchedulePage = () => {
             {...params}
             label={
               <span>
-                Template <span style={{ color: 'currentColor' }}>*</span>
+                Template <span style={{ color: 'red' }}>*</span>
               </span>
             }
             fullWidth
@@ -4521,7 +4524,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                        {...params} label={<span>Assigned To <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                        {...params} label={<span>Assigned To <span style={{ color: 'red' }}>*</span></span>} fullWidth />
                     )}
                   />
 
@@ -4551,7 +4554,7 @@ export const AddSchedulePage = () => {
                     renderInput={(params) => (
                       <TextField
                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                        {...params} label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                        {...params} label={<span>Category <span style={{ color: 'red' }}>*</span></span>} fullWidth />
                     )}
                   />
                   {loading.helpdeskCategories && (
@@ -4649,7 +4652,7 @@ export const AddSchedulePage = () => {
                           renderInput={(params) => (
                             <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                              {...params} label={<span>Assigned To <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                              {...params} label={<span>Assigned To <span style={{ color: 'red' }}>*</span></span>} fullWidth />
                           )}
                         />
 
@@ -4679,7 +4682,7 @@ export const AddSchedulePage = () => {
                           renderInput={(params) => (
                             <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                              {...params} label={<span>Category <span style={{ color: 'currentColor' }}>*</span></span>} fullWidth />
+                              {...params} label={<span>Category <span style={{ color: 'red' }}>*</span></span>} fullWidth />
                           )}
                         />
                         {loading.helpdeskCategories && (
@@ -4874,7 +4877,7 @@ export const AddSchedulePage = () => {
                           <TextField
                             disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                            label={<span>Task{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                            label={<span>Task{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                             placeholder="Enter Task"
                             fullWidth
                             value={task.task}
@@ -4944,7 +4947,7 @@ export const AddSchedulePage = () => {
                             renderInput={(params) => (
                               <TextField
                                 disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                {...params} label={<span>Input Type{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>} fullWidth />
+                                {...params} label={<span>Input Type{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>} fullWidth />
                             )}
                           />
 
@@ -4952,7 +4955,7 @@ export const AddSchedulePage = () => {
                             <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
-                              label={<span>Weightage{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                              label={<span>Weightage{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                               type="number"
                               fullWidth
                               value={task.weightage}
@@ -5074,7 +5077,7 @@ export const AddSchedulePage = () => {
                                     placeholder="Enter option value"
                                     value={value.label}
                                     onChange={(e) => updateDropdownValue(section.id, task.id, valueIndex, e.target.value)}
-                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                                     sx={{
                                       '& .MuiOutlinedInput-root': {
                                         backgroundColor: 'white'
@@ -5101,7 +5104,7 @@ export const AddSchedulePage = () => {
                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
 
                                         {...params}
-                                        label={<span>Type <span style={{ color: 'currentColor' }}>*</span></span>}
+                                        label={<span>Type <span style={{ color: 'red' }}>*</span></span>}
                                         fullWidth
                                       />
                                     )}
@@ -5178,7 +5181,7 @@ export const AddSchedulePage = () => {
                                     placeholder="Enter option value"
                                     value={value.label}
                                     onChange={(e) => updateRadioValue(section.id, task.id, valueIndex, e.target.value)}
-                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                                     sx={{
                                       '& .MuiOutlinedInput-root': {
                                         backgroundColor: 'white'
@@ -5207,7 +5210,7 @@ export const AddSchedulePage = () => {
         {...params}
         label={
           <span>
-            Type <span style={{ color: 'currentColor' }}>*</span>
+            Type <span style={{ color: 'red' }}>*</span>
           </span>
         }
         size="small"
@@ -5289,7 +5292,7 @@ export const AddSchedulePage = () => {
                                     placeholder="Enter option value"
                                     value={value}
                                     onChange={(e) => updateCheckboxValue(section.id, task.id, valueIndex, e.target.value)}
-                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                                     sx={{
                                       '& .MuiOutlinedInput-root': {
                                         backgroundColor: 'white'
@@ -5356,7 +5359,7 @@ export const AddSchedulePage = () => {
                                     placeholder=""
                                     value={value}
                                     onChange={(e) => updateOptionsInputsValue(section.id, task.id, valueIndex, e.target.value)}
-                                    label={<span>Option{task.mandatory && <span style={{ color: 'inherit' }}>&nbsp;*</span>}</span>}
+                                    label={<span>Option{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</span>}
                                     sx={{
                                       '& .MuiOutlinedInput-root': {
                                         backgroundColor: 'white'
@@ -5407,7 +5410,7 @@ export const AddSchedulePage = () => {
   <Box sx={{ mt: 2 }}>
     <TextField
       disabled={stepIndex < activeStep && editingStep !== stepIndex}
-      label={<span>Multiline Text <span style={{ color: 'currentColor' }}>*</span></span>}
+      label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
       placeholder="Enter multiline text"
       fullWidth
       multiline
@@ -5520,7 +5523,7 @@ export const AddSchedulePage = () => {
             <button
               onClick={handleSave}
               disabled={isSubmitting}
-              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
               style={{ fontFamily: 'Work Sans, sans-serif' }}
             >
               {isSubmitting ? 'Saving...' : 'Save & Continue'}

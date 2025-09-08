@@ -792,10 +792,16 @@ export const EditGRNDashboard = () => {
               fullWidth
               variant="outlined"
               multiline
-              rows={4}
+              rows={2}
               placeholder="Enter any additional notes..."
               InputLabelProps={{ shrink: true }}
-              sx={{ mt: 1 }}
+              sx={{
+                mt: 1,
+                "& .MuiOutlinedInput-root": {
+                  height: "auto !important",
+                  padding: "2px !important",
+                },
+              }}
             />
           </div>
         </div>
