@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree } from 'lucide-react';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
@@ -29,7 +29,7 @@ const modulesByPackage = {
         //         { name: 'Vehicle Check In', href: '/maintenance/vi-miles/vehicle-check-in', color: 'text-[#1a1a1a]' },
         //     ],
         // },
-        { name: 'Check Hierarchy Levels', icon: ChevronDown, href: '/maintenance/check-hierarchy-levels' },
+        { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
         { name: 'Msafe Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
     ],
