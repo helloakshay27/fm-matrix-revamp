@@ -231,7 +231,7 @@ export const AddFacilityBookingPage = () => {
   };
 
   const handleBackToList = () => {
-    navigate('/vas/booking/list');
+    navigate(-1);
   };
 
   const fieldStyles = {
