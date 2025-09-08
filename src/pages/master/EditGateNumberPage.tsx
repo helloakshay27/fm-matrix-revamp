@@ -135,7 +135,7 @@ const EditGateNumberPage = () => {
                   }}
                   value={sites.find((s) => s.id === field.value) || null}
                   renderInput={(params: TextFieldProps) => (
-                    <TextField {...params} label="Select PMS Site" variant="outlined" />
+                    <TextField {...params} label="Select Site" variant="outlined" />
                   )}
                 />
               )}

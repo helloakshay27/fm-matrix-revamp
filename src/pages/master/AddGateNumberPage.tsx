@@ -130,7 +130,7 @@ const AddGateNumberPage = () => {
                   renderInput={(params: TextFieldProps) => (
                     <TextField
                       {...params}
-                      label="Select PMS Site"
+                      label="Select Site"
                       variant="outlined"
                     />
                   )}

@@ -305,10 +305,12 @@ export const AddGatePassInwardPage = () => {
                 <MenuItem value="bike">Bike</MenuItem>
                 <MenuItem value="truck">Truck</MenuItem>
                 <MenuItem value="walk">Walking</MenuItem>
-                <MenuItem value="bicycle">Bicycle</MenuItem>
+                <MenuItem value="self">Self</MenuItem>
               </MuiSelect>
             </FormControl>
-            <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            {visitorDetails.modeOfTransport !== "self" || visitorDetails.modeOfTransport !== "walk" && (
+              <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            )}
             <TextField label="Reporting Time" type="time" fullWidth variant="outlined" required value={visitorDetails.reportingTime} onChange={(e) => handleVisitorChange('reportingTime', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Driver Contact No." placeholder="Enter Driver Contact No." fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
@@ -321,21 +323,7 @@ export const AddGatePassInwardPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Autocomplete
-              options={gatePassTypes}
-              getOptionLabel={(option) => option.name}
-              value={gatePassTypes.find(c => c.id === gatePassDetails.gatePassTypeId) || null}
-              onChange={(_, newValue) => handleGatePassChange('gatePassTypeId', newValue ? newValue.id : null)}
-              renderInput={(params) => <TextField {...params} label="Gate Pass Type" placeholder="Select Type" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-            />
-            <Autocomplete
-              options={gateNumbers}
-              getOptionLabel={(option) => option.gate_number}
-              value={gateNumbers.find(g => g.id === gatePassDetails.gateNumberId) || null}
-              onChange={(_, newValue) => handleGatePassChange('gateNumberId', newValue ? newValue.id : null)}
-              renderInput={(params) => <TextField {...params} label="Gate Number" placeholder="Select Gate Number" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-            />
-            <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            {/* Move Site and Building fields to the top */}
             <Autocomplete
               options={sites}
               getOptionLabel={(option) => option.name}
@@ -351,6 +339,24 @@ export const AddGatePassInwardPage = () => {
               disabled={!gatePassDetails.siteId}
               renderInput={(params) => <TextField {...params} label="Building" placeholder="Select Building" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
             />
+            <Autocomplete
+              options={gatePassTypes}
+              getOptionLabel={(option) => option.name}
+              value={gatePassTypes.find(c => c.id === gatePassDetails.gatePassTypeId) || null}
+              onChange={(_, newValue) => handleGatePassChange('gatePassTypeId', newValue ? newValue.id : null)}
+              renderInput={(params) => <TextField {...params} label="Gate Pass Type" placeholder="Select Type" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
+            />
+            <TextField
+              label={<span>Gate Number <span style={{ color: 'red' }}>*</span></span>}
+              placeholder="Enter Gate Number"
+              fullWidth
+              variant="outlined"
+              value={gatePassDetails.gateNumberId || ''}
+              onChange={e => handleGatePassChange('gateNumberId', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+            />
+            <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <div className="lg:col-span-3">
               <TextField label="Remarks" placeholder="Enter remarks" fullWidth variant="outlined" value={gatePassDetails.remarks} onChange={(e) => handleGatePassChange('remarks', e.target.value)} InputLabelProps={{ shrink: true }} multiline rows={2} />
             </div>
@@ -367,21 +373,21 @@ export const AddGatePassInwardPage = () => {
             <table className="w-full text-sm text-left text-gray-500">
               <thead className="text-xs text-white uppercase bg-[#C72030]">
                 <tr>
-                  <th scope="col" className="px-4 py-3">Sr.No.</th>
-                  <th scope="col" className="px-4 py-3">Item Type</th>
-                  <th scope="col" className="px-4 py-3">Item Category</th>
-                  <th scope="col" className="px-4 py-3">Item Name</th>
-                  <th scope="col" className="px-4 py-3">Quantity</th>
-                  <th scope="col" className="px-4 py-3">Unit</th>
-                  <th scope="col" className="px-4 py-3">Description</th>
-                  <th scope="col" className="px-4 py-3">Action</th>
+                  <th scope="col" className="px-4 py-3" style={{ width: '30px' }}>Sr.No.</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Type</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Category</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Name</th>
+                  <th scope="col" className="px-4 py-3" /* Quantity: balance width */>Quantity</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '80px' }}>Unit</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Description</th>
+                  <th scope="col" className="px-4 py-3" style={{ width: '80px' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {materialRows.map((row, index) => (
                   <tr key={row.id} className="bg-white border-b">
-                    <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                    <td className="px-4 py-2" style={{ width: '30px' }}>{index + 1}</td>
+                    <td className="px-4 py-2" style={{ minWidth: 180 }}>
                       <Autocomplete
                         options={itemTypeOptions}
                         getOptionLabel={(option) => option.name}
@@ -390,7 +396,7 @@ export const AddGatePassInwardPage = () => {
                         renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Type" />}
                       />
                     </td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                    <td className="px-4 py-2" style={{ minWidth: 180 }}>
                       <Autocomplete
                         options={itemCategoryOptions[row.id] || []}
                         getOptionLabel={(option) => option.name}
@@ -400,7 +406,7 @@ export const AddGatePassInwardPage = () => {
                         renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Category" />}
                       />
                     </td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
+                    <td className="px-4 py-2" style={{ minWidth: 180 }}>
                       <Autocomplete
                         options={itemNameOptions[row.id] || []}
                         getOptionLabel={(option) => option.name}
@@ -423,7 +429,7 @@ export const AddGatePassInwardPage = () => {
                     </td>
                     <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
                     <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-2" style={{ width: '80px' }}>
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </button>
@@ -502,7 +508,7 @@ export const AddGatePassInwardPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 pt-4">
+        <div className="flex items-center justify-center gap-4 pt-4">
           <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2">Submit</Button>
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/inwards')}>Cancel</Button>
         </div>

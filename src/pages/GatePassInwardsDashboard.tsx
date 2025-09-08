@@ -34,7 +34,7 @@ export const GatePassInwardsDashboard = () => {
 
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
-    { key: 'sNo', label: 'S No.', sortable: false, hideable: false, draggable: false },
+    { key: 'sNo', label: 'Sr No.', sortable: false, hideable: false, draggable: false },
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
     { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
