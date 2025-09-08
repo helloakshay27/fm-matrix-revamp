@@ -12,8 +12,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { LayoutProvider } from "./contexts/LayoutContext";
 import { PermissionsProvider } from "./contexts/PermissionsContext";
-import { EnhancedSelectThemeProvider } from "./providers/GlobalSelectEnhancer";
-import "./utils/globalMUISelectSearchEnhancer"; // Auto-activates search in all MUI selects
+import { EnhancedSelectProvider } from "./providers/EnhancedSelectProvider";
+import { initializeGlobalMUISelectSearchEnhancer } from "./utils/globalMUISelectSearchEnhancer";
 import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
@@ -711,6 +711,19 @@ function App() {
   // Check if it's Oman site
   const isOmanSite = hostname.includes('oig.gophygital.work');
 
+  // Initialize global MUI Select search enhancer
+  useEffect(() => {
+    console.log('🚀 Initializing Global MUI Select Search Enhancer from App.tsx');
+    const cleanup = initializeGlobalMUISelectSearchEnhancer();
+    
+    return () => {
+      if (cleanup) {
+        cleanup();
+      }
+    };
+  }, []);
+
+  // Check authentication and fetch currency on app load
   useEffect(() => {
     if (!baseUrl || !token) return;
 
@@ -731,7 +744,7 @@ function App() {
     <Provider store={store}>
       <Router>
         <QueryClientProvider client={queryClient}>
-          <EnhancedSelectThemeProvider>
+          <EnhancedSelectProvider>
             <LayoutProvider>
               <PermissionsProvider>
                 <Routes>
@@ -2305,7 +2318,7 @@ function App() {
                   }}
                 />              </PermissionsProvider>
             </LayoutProvider>
-          </EnhancedSelectThemeProvider>
+        </EnhancedSelectProvider>
         </QueryClientProvider>
       </Router>
     </Provider>
