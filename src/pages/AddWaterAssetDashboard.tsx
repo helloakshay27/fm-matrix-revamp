@@ -428,7 +428,9 @@ function AddWaterAssetDashboard() {
         },
       });
       const data = await response.json();
-      setRooms(data || []);
+      // Extract rooms from the nested structure
+      const roomsArray = Array.isArray(data) ? data.map(item => item.rooms) : [];
+      setRooms(roomsArray);
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setRooms([]);
