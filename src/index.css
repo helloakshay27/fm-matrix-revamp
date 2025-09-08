@@ -8,45 +8,112 @@
 /* ===========================================
    GLOBAL MUI SELECT OVERRIDE INJECTION
    Ensures all MUI components are enhanced globally
+   EXCLUDES textarea and multiline fields
    =========================================== */
    
-/* Force apply to any MUI component that might not be caught */
-[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+/* Force apply to any MUI component that might not be caught - EXCLUDE TEXTAREA */
+[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
   height: 36px !important;
   background-color: white !important;
 }
 
 @media (min-width: 640px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
     height: 40px !important;
   }
 }
 
 @media (min-width: 768px) {
-  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"] {
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
     height: 45px !important;
   }
 }
 
-[class*="MuiFormControl"] [class*="MuiSelect-select"],
-[class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+/* EXCLUDE textarea from padding and height constraints */
+[class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
+[class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
   padding: 8px 12px !important;
   display: flex !important;
   align-items: center !important;
 }
 
 @media (min-width: 640px) {
-  [class*="MuiFormControl"] [class*="MuiSelect-select"],
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+  [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
+  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
     padding: 10px 14px !important;
   }
 }
 
 @media (min-width: 768px) {
-  [class*="MuiFormControl"] [class*="MuiSelect-select"],
-  [class*="MuiFormControl"] [class*="MuiInputBase-input"] {
+  [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
+  [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
     padding: 12px 14px !important;
   }
+}
+
+/* ===========================================
+   GLOBAL TEXTAREA AND MULTILINE STYLING
+   Short height and visible labels
+   =========================================== */
+
+/* Make all textarea/multiline fields shorter but functional */
+[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+[class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
+[class*="MuiFormControl"] textarea {
+  height: 80px !important;
+  min-height: 80px !important;
+  max-height: 120px !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Textarea input styling - FIX CURSOR AND INPUT BEHAVIOR */
+[class*="MuiFormControl"] textarea,
+[class*="MuiFormControl"] .MuiInputBase-inputMultiline {
+  padding: 12px 14px !important;
+  resize: vertical !important;
+  overflow-y: auto !important;
+  font-family: inherit !important;
+  line-height: 1.4 !important;
+  border: none !important;
+  outline: none !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  cursor: text !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  caret-color: #333 !important;
+  color: #333 !important;
+  background: transparent !important;
+}
+
+/* FORCE labels to be visible for ALL multiline fields */
+[class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"],
+[class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"],
+.MuiFormControl-root:has(.MuiInputBase-multiline) .MuiInputLabel-root,
+.MuiFormControl-root:has(textarea) .MuiInputLabel-root {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: translate(14px, -9px) scale(0.75) !important;
+  background: white !important;
+  padding: 0 8px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  z-index: 2 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Focused state for textarea labels */
+[class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"].Mui-focused,
+[class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"].Mui-focused {
+  color: #1976d2 !important;
 }
 
 /* Force dropdown menu height and scroll for ANY MUI menu */
@@ -484,6 +551,24 @@
   .action-button {
     font-size: 12px;
     padding: 4px 8px;
+  }
+}
+
+/* Mobile responsive textarea styling */
+@media (max-width: 640px) {
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"].MuiInputBase-multiline,
+  [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"][class*="multiline"],
+  [class*="MuiFormControl"] textarea {
+    height: 70px !important;
+    min-height: 70px !important;
+    max-height: 100px !important;
+  }
+  
+  /* Smaller label on mobile */
+  [class*="MuiFormControl"]:has(.MuiInputBase-multiline) [class*="MuiInputLabel"],
+  [class*="MuiFormControl"]:has(textarea) [class*="MuiInputLabel"] {
+    transform: translate(12px, -8px) scale(0.75) !important;
+    font-size: 12px !important;
   }
 }
 
