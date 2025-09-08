@@ -697,7 +697,7 @@ import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
-import InvoiceFeeds from "./pages/InvoiceFeeds";
+import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 
 
 const queryClient = new QueryClient();
@@ -716,7 +716,7 @@ function App() {
   useEffect(() => {
     console.log('🚀 Initializing Global MUI Select Search Enhancer from App.tsx');
     const cleanup = initializeGlobalMUISelectSearchEnhancer();
-    
+
     return () => {
       if (cleanup) {
         cleanup();
@@ -2333,7 +2333,7 @@ function App() {
                   }}
                 />              </PermissionsProvider>
             </LayoutProvider>
-        </EnhancedSelectProvider>
+          </EnhancedSelectProvider>
         </QueryClientProvider>
       </Router>
     </Provider>
