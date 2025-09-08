@@ -58,6 +58,12 @@ interface RosterTemplate {
   seat_category_id: number;
   created_at: string;
   updated_at: string;
+  // New fields from API response
+  departments?: Array<{ id: number; name: string }>;
+  employees?: Array<{ id: number; name: string; email: string }>;
+  location?: string;
+  shift?: string;
+  created_by?: string;
 }
 
 export const RosterDetailPage: React.FC = () => {
@@ -109,7 +115,7 @@ export const RosterDetailPage: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Roster Template API Response:', data);
+      console.log('📝 Roster Template API Response:', data);
       setRosterTemplate(data);
     } catch (error) {
       console.error('Error fetching roster template:', error);
@@ -139,12 +145,12 @@ export const RosterDetailPage: React.FC = () => {
       const data = await response.json();
       
       // Adapt the response to our expected format
-      const users = data.fm_users || data.users || data || [];
+      const users = data.fm_users || data.users || data.employees || data || [];
       setFMUsers(users.map((user: any) => ({
         id: user.id,
         name: user.name || user.full_name || `${user.firstname || ''} ${user.lastname || ''}`.trim(),
         email: user.email,
-        department: user.department ? user.department.department_name : undefined
+        department: user.department ? (user.department.department_name || user.department.name) : undefined
       })));
     } catch (error) {
       console.error('Error fetching FM Users:', error);
@@ -277,16 +283,46 @@ export const RosterDetailPage: React.FC = () => {
 
   // Helper functions
   const getSelectedDepartments = () => {
-    if (!rosterTemplate || !rosterTemplate.department_id) return [];
+    if (!rosterTemplate) return [];
+    
+    // First try to get from new API response structure
+    if (rosterTemplate.departments && Array.isArray(rosterTemplate.departments)) {
+      return rosterTemplate.departments.map(dept => ({
+        id: dept.id,
+        department_name: dept.name
+      }));
+    }
+    
+    // Fallback to old structure
+    if (!rosterTemplate.department_id) return [];
     const deptIds = Array.isArray(rosterTemplate.department_id) 
       ? rosterTemplate.department_id 
       : [rosterTemplate.department_id];
     return departments.filter(dept => deptIds.includes(dept.id!));
   };
 
+  const getSelectedEmployees = () => {
+    if (!rosterTemplate) return [];
+    
+    // First try to get from new API response structure
+    if (rosterTemplate.employees && Array.isArray(rosterTemplate.employees)) {
+      return rosterTemplate.employees.map(emp => ({
+        id: emp.id,
+        name: emp.name,
+        email: emp.email,
+        department: undefined // Department info not included in employee object
+      }));
+    }
+    
+    // Fallback to old structure
+    if (!rosterTemplate.resource_id) return [];
+    const employee = fmUsers.find(user => user.id === rosterTemplate.resource_id);
+    return employee ? [employee] : [];
+  };
+
   const getSelectedEmployee = () => {
-    if (!rosterTemplate || !rosterTemplate.resource_id) return null;
-    return fmUsers.find(user => user.id === rosterTemplate.resource_id);
+    const employees = getSelectedEmployees();
+    return employees.length > 0 ? employees[0] : null;
   };
 
   const getSelectedShift = () => {
@@ -503,7 +539,7 @@ export const RosterDetailPage: React.FC = () => {
               <label className="text-sm font-medium text-gray-700 block mb-2">Location</label>
               <div className="flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-gray-400" />
-                <span className="text-gray-900">{currentLocation}</span>
+                <span className="text-gray-900">{rosterTemplate.location || currentLocation}</span>
               </div>
             </div>
             <div>
@@ -527,37 +563,47 @@ export const RosterDetailPage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">Assigned Shift</label>
-              {getSelectedShift() && (
+              {(rosterTemplate.shift || getSelectedShift()) && (
                 <div className="flex items-center gap-2 p-3 bg-[#f6f4ee] border border-[#D5DbDB] rounded-lg">
                   <Clock className="w-4 h-4 text-[#C72030]" />
-                  <span className="font-medium text-gray-900">{getSelectedShift()?.timings}</span>
-                  <span className="text-sm text-gray-600">
-                    ({getSelectedShift()?.total_hour}h)
+                  <span className="font-medium text-gray-900">
+                    {rosterTemplate.shift || getSelectedShift()?.timings}
                   </span>
+                  {getSelectedShift()?.total_hour && (
+                    <span className="text-sm text-gray-600">
+                      ({getSelectedShift()?.total_hour}h)
+                    </span>
+                  )}
                 </div>
+              )}
+              {!rosterTemplate.shift && !getSelectedShift() && (
+                <p className="text-gray-500 italic">No shift assigned</p>
               )}
             </div>
 
             <div>
               <label className="text-sm font-medium text-gray-700 block mb-2">
-                Assigned Employee ({getSelectedEmployee() ? 1 : 0})
+                Assigned Employees ({getSelectedEmployees().length})
               </label>
-              {getSelectedEmployee() && (
+              {getSelectedEmployees().length > 0 ? (
                 <div className="space-y-2">
-                  <div className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                    <Users className="w-4 h-4 text-gray-400" />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{getSelectedEmployee()?.name || 'No name available'}</div>
-                      <div className="text-sm text-gray-600">{getSelectedEmployee()?.email}</div>
+                  {getSelectedEmployees().map((employee, index) => (
+                    <div key={employee.id || index} className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                      <Users className="w-4 h-4 text-gray-400" />
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-900">{employee.name || 'No name available'}</div>
+                        <div className="text-sm text-gray-600">{employee.email}</div>
+                      </div>
+                      {employee.department && (
+                        <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
+                          {employee.department}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded">
-                      {getSelectedEmployee()?.department || 'No dept'}
-                    </span>
-                  </div>
+                  ))}
                 </div>
-              )}
-              {!getSelectedEmployee() && (
-                <p className="text-gray-500 italic">No employee assigned</p>
+              ) : (
+                <p className="text-gray-500 italic">No employees assigned</p>
               )}
             </div>
           </div>
