@@ -26,7 +26,7 @@ export const TicketDetailsPage = () => {
   const displayValue = (value) => {
     return value && value !== null && value !== undefined && value !== '' ? value : 'Not Provided';
   };
-  
+
   // State for expandable sections - will be set dynamically based on data
   const [expandedSections, setExpandedSections] = useState({
     ticketDetails: false,
@@ -43,7 +43,7 @@ export const TicketDetailsPage = () => {
   useEffect(() => {
     if (ticketData) {
       const complaintLogs = ticketData.complaint_logs || [];
-      
+
       setExpandedSections({
         ticketDetails: hasData(ticketData.heading) || hasData(ticketData.issue_status) || hasData(ticketData.ticket_number) || hasData(ticketData.sub_category_type) || hasData(ticketData.created_by_name) || hasData(ticketData.created_date) || hasData(ticketData.created_time) || hasData(ticketData.category_type) || hasData(ticketData.updated_by) || hasData(ticketData.complaint_mode) || hasData(ticketData.priority) || hasData(ticketData.external_priority) || hasData(ticketData.priority_status) || hasData(ticketData.effective_priority) || hasData(ticketData.assigned_to),
         creatorInfo: hasData(ticketData.posted_by) || hasData(ticketData.id_society),
@@ -67,7 +67,7 @@ export const TicketDetailsPage = () => {
   useEffect(() => {
     const fetchTicketDetails = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const data = await ticketManagementAPI.getTicketDetails(id);
@@ -84,7 +84,7 @@ export const TicketDetailsPage = () => {
   }, [id]);
 
   const handleBackToList = () => {
-    navigate('/maintenance/ticket');
+    navigate(-1);
   };
 
   const handleFeeds = () => {
@@ -105,14 +105,14 @@ export const TicketDetailsPage = () => {
       console.log('Fetching create task data for ticket:', id);
       const taskData = await ticketManagementAPI.getCreateTaskData(id);
       console.log('Create task data:', taskData);
-      
+
       // You can handle the response data here
       // For example, navigate to a create task page with the data
       // or open a modal with the task creation form
-      
+
       // Placeholder for now - you can customize this based on your requirements
       toast.success('Create task data fetched successfully! Check console for details.');
-      
+
     } catch (error) {
       console.error('Error fetching create task data:', error);
       toast.error('Failed to fetch create task data. Please try again.');
@@ -122,9 +122,9 @@ export const TicketDetailsPage = () => {
   const handleUpdate = () => {
     // Navigate to update page with the ticket ID and pass source information
     navigate(`/maintenance/ticket/update/${id}`, {
-      state: { 
+      state: {
         from: 'details',
-        returnTo: `/maintenance/ticket/${id}` 
+        returnTo: `/maintenance/ticket/${id}`
       }
     });
   };
@@ -153,18 +153,18 @@ export const TicketDetailsPage = () => {
   const complaintLogs = ticketData?.complaint_logs || [];
 
   // Expandable Section Component (similar to AMC cards)
-  const ExpandableSection = ({ 
-    title, 
-    icon: Icon, 
-    number, 
-    isExpanded, 
-    onToggle, 
+  const ExpandableSection = ({
+    title,
+    icon: Icon,
+    number,
+    isExpanded,
+    onToggle,
     children,
-    hasData = true 
+    hasData = true
   }) => (
     <div className="border-2 rounded-lg mb-6">
-      <div 
-        onClick={onToggle} 
+      <div
+        onClick={onToggle}
         className="flex items-center justify-between cursor-pointer p-6"
         style={{ backgroundColor: 'rgb(246 244 238)' }}
       >
@@ -184,7 +184,7 @@ export const TicketDetailsPage = () => {
         </div>
       </div>
       {isExpanded && (
-        <div 
+        <div
           className="p-6"
           style={{ backgroundColor: 'rgb(246 247 247)' }}
         >
@@ -204,12 +204,12 @@ export const TicketDetailsPage = () => {
             <span className=" font-bold text-[#1a1a1a]">Back to Ticket List</span>
           </button>
         </div>
-        
-        
+
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">Ticket Summary</h1>
           <div className="flex gap-3">
-            
+
             <Button onClick={handleFeeds} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               Logs
             </Button>
@@ -241,7 +241,7 @@ export const TicketDetailsPage = () => {
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Title</span>
                 <span className="text-gray-500 mx-3">:</span>
-                <span className="text-gray-900 font-semibold flex-1 break-words truncate max-w-full" style={{wordBreak: 'break-word', overflowWrap: 'anywhere', minWidth: 0, display: 'block'}} title={ticketData.heading}>
+                <span className="text-gray-900 font-semibold flex-1 break-words truncate max-w-full" style={{ wordBreak: 'break-word', overflowWrap: 'anywhere', minWidth: 0, display: 'block' }} title={ticketData.heading}>
                   {ticketData.heading}
                 </span>
               </div>
@@ -274,7 +274,7 @@ export const TicketDetailsPage = () => {
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Created On</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <span className="text-gray-900 font-semibold flex-1">
-                  {ticketData.created_at 
+                  {ticketData.created_at
                     ? new Date(ticketData.created_at).toLocaleString()
                     : `${ticketData.created_date || ''} ${ticketData.created_time || ''}`.trim()
                   }
@@ -289,7 +289,7 @@ export const TicketDetailsPage = () => {
               </div>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {hasData(ticketData.ticket_number) && (
               <div className="flex items-start">
@@ -429,7 +429,7 @@ export const TicketDetailsPage = () => {
               </div>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {hasData(ticketData.area_name || ticketData.site_name) && (
               <div className="flex items-start">
@@ -569,7 +569,7 @@ export const TicketDetailsPage = () => {
               </div>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {hasData(ticketData.resolution_tat) && (
               <div className="flex items-start">
@@ -626,14 +626,14 @@ export const TicketDetailsPage = () => {
               {ticketData.documents.map((document, index) => {
                 // Updated to use the correct field name from API response
                 const documentUrl = document.document || document.document_url || document.url || document.attachment_url;
-                const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() || 
-                                    document.doctype?.split('/').pop()?.toLowerCase() || '';
-                const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(fileExtension) || 
-                               document.doctype?.startsWith('image/');
+                const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() ||
+                  document.doctype?.split('/').pop()?.toLowerCase() || '';
+                const isImage = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(fileExtension) ||
+                  document.doctype?.startsWith('image/');
                 const isPdf = fileExtension === 'pdf' || document.doctype === 'application/pdf';
-                const isExcel = ['xls', 'xlsx', 'csv'].includes(fileExtension) || 
-                               document.doctype?.includes('spreadsheet') || 
-                               document.doctype?.includes('excel');
+                const isExcel = ['xls', 'xlsx', 'csv'].includes(fileExtension) ||
+                  document.doctype?.includes('spreadsheet') ||
+                  document.doctype?.includes('excel');
 
                 console.log('📄 Document processing:', {
                   id: document.id,
@@ -651,7 +651,7 @@ export const TicketDetailsPage = () => {
                     className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
                     {isImage ? (
-                      <div 
+                      <div
                         className="w-14 h-14 cursor-pointer border rounded-md mb-2 overflow-hidden"
                         onClick={() => {
                           if (documentUrl) {
@@ -673,7 +673,7 @@ export const TicketDetailsPage = () => {
                             e.target.nextSibling.style.display = 'flex';
                           }}
                         />
-                        <div className="w-full h-full flex items-center justify-center border rounded-md text-gray-600 bg-white" style={{display: 'none'}}>
+                        <div className="w-full h-full flex items-center justify-center border rounded-md text-gray-600 bg-white" style={{ display: 'none' }}>
                           <FileText className="w-6 h-6" />
                         </div>
                       </div>
@@ -693,7 +693,7 @@ export const TicketDetailsPage = () => {
                     <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                       {`Document_${document.id || index + 1}.${fileExtension || 'file'}`}
                     </span>
-                    
+
                     {/* Download Button */}
                     <Button
                       size="icon"
@@ -724,7 +724,7 @@ export const TicketDetailsPage = () => {
                           // For S3 URLs, we can try direct download first
                           if (documentUrl.includes('s3.') || documentUrl.includes('amazonaws.com')) {
                             console.log('📥 Direct S3 download attempt...');
-                            
+
                             try {
                               const response = await fetch(documentUrl, {
                                 method: 'GET',
@@ -781,7 +781,7 @@ export const TicketDetailsPage = () => {
                           console.log('🌐 Opening in new tab as fallback...');
                           window.open(documentUrl, '_blank');
                           // toast.success('File opened in new tab for download');
-                          
+
                         } catch (error) {
                           console.error('Error downloading file:', error);
                           // Fallback: open URL in new tab
@@ -815,7 +815,7 @@ export const TicketDetailsPage = () => {
                           }
                         }}
                       >
-                       
+
                       </Button>
                     )}
                   </div>
@@ -842,8 +842,8 @@ export const TicketDetailsPage = () => {
                     // Reuse the download logic for the preview modal
                     const document = previewImage.document;
                     const documentUrl = document.document || document.document_url || document.url || document.attachment_url;
-                    const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() || 
-                                        document.doctype?.split('/').pop()?.toLowerCase() || '';
+                    const fileExtension = documentUrl?.split('.').pop()?.toLowerCase() ||
+                      document.doctype?.split('/').pop()?.toLowerCase() || '';
                     const documentName = `document_${document.id}.${fileExtension || 'file'}`;
 
                     console.log('📎 Modal download attempt:', {
@@ -862,7 +862,7 @@ export const TicketDetailsPage = () => {
                       // For S3 URLs, try direct download first
                       if (documentUrl.includes('s3.') || documentUrl.includes('amazonaws.com')) {
                         console.log('📥 Direct S3 download attempt...');
-                        
+
                         try {
                           const response = await fetch(documentUrl, {
                             method: 'GET',
@@ -919,7 +919,7 @@ export const TicketDetailsPage = () => {
                       console.log('🌐 Opening in new tab as fallback...');
                       window.open(documentUrl, '_blank');
                       // toast.success('File opened in new tab for download');
-                      
+
                     } catch (error) {
                       console.error('Error downloading file:', error);
                       // Fallback: open URL in new tab
@@ -978,7 +978,7 @@ export const TicketDetailsPage = () => {
                   <TableHead className="text-gray-600 font-medium">Comments</TableHead>
                   <TableHead className="text-gray-600 font-medium">Created On</TableHead>
                   <TableHead className="text-gray-600 font-medium">Created By</TableHead>
-                   <TableHead className="text-gray-600 font-medium">L1</TableHead>
+                  <TableHead className="text-gray-600 font-medium">L1</TableHead>
                   <TableHead className="text-gray-600 font-medium">L2</TableHead>
                   <TableHead className="text-gray-600 font-medium">L3</TableHead>
                   <TableHead className="text-gray-600 font-medium">L4</TableHead>
@@ -1016,8 +1016,8 @@ export const TicketDetailsPage = () => {
                       )}
                     </TableCell> */}
                     <TableCell>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={() => {
                           // Check if request has attachments
@@ -1041,7 +1041,7 @@ export const TicketDetailsPage = () => {
                         View
                       </Button>
                     </TableCell>
-                   
+
                   </TableRow>
                 ))}
               </TableBody>
