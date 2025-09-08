@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Users, Download, X, Eye } from 'lucide-react';
+import { Users, Download, X, Eye, Plus } from 'lucide-react';
 import {
   Pagination,
   PaginationContent,
@@ -25,6 +25,7 @@ import {
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast } from 'sonner';
+import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 
 
 export const OccupantUserMasterDashboard = () => {
@@ -48,6 +49,8 @@ export const OccupantUserMasterDashboard = () => {
   const { users: occupantUsersData, pagination: statePagination, loading } = useSelector((state: RootState) => state.occupantUsers as any);
   const occupantUserCounts = useSelector((state: RootState) => state.occupantUserCounts);
   const { total: totalUsers = 0, approved: approvedUsers = 0, pending: pendingUsers = 0, rejected: rejectedUsers = 0, appDownloaded = 0 } = occupantUserCounts || {};
+
+  const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
 
   useEffect(() => {
     const data: any = occupantUsersData;
@@ -272,13 +275,25 @@ export const OccupantUserMasterDashboard = () => {
     }
   };
 
+  const leftActions = (
+    <>
+      <Button
+        onClick={() => setShowActionPanel(true)}
+        className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md flex items-center gap-2 border-0"
+      >
+        <Plus className="w-4 h-4" />
+        Action
+      </Button>
+    </>
+  );
+
   return (
     <div className="w-full p-4 sm:p-6 lg:p-8 space-y-6">
       <div className="w-full space-y-6">
 
         {/* Header */}
         <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-semibold text-[#1a1a1a]">Occupant User Master</h1>
+          <h1 className="text-2xl font-semibold text-[#1a1a1a]">Occupant Users</h1>
         </div>
 
         {/* Statistics Cards */}
@@ -329,14 +344,7 @@ export const OccupantUserMasterDashboard = () => {
             storageKey="fm-user-master-table"
             searchPlaceholder="Search users..."
             loading={loading}
-            leftActions={
-              <Button
-                onClick={() => navigate('/master/user/occupant-users/add')}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-md border-0"
-              >
-                Add
-              </Button>
-            }
+            leftActions={leftActions}
           />
         </div>
 
@@ -360,6 +368,14 @@ export const OccupantUserMasterDashboard = () => {
           </Pagination>
         </div>
       </div>
+
+      {showActionPanel && (
+        <SelectionPanel
+          onAdd={() => navigate('/master/user/occupant-users/add')}
+          onImport={() => { }}
+          onClearSelection={() => setShowActionPanel(false)}
+        />
+      )}
 
       {/* Filter Dialog */}
       <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>

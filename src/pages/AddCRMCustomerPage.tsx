@@ -175,7 +175,7 @@ export const AddCRMCustomerPage = () => {
                     </div>
 
                     {/* SSID Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <div>
                             <TextField label="SSID" variant="outlined" fullWidth size="small" placeholder="Enter SS" value={formData.ssid} onChange={e => handleInputChange('ssid', e.target.value)} sx={{
                                 '& .MuiOutlinedInput-root': {
@@ -183,7 +183,7 @@ export const AddCRMCustomerPage = () => {
                                 }
                             }} />
                         </div>
-                    </div>
+                    </div> */}
                 </div>
 
                 {/* Lease Information Section */}
