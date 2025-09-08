@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface PRData {
   id: string;
@@ -46,6 +47,7 @@ const formattedData = (data: any) => {
 export const AutoSavedPRDashboard = () => {
   const baseUrl = localStorage.getItem('baseUrl');
   const token = localStorage.getItem('token');
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [savedPR, setSavedPR] = useState<PRData[]>([]);
@@ -72,6 +74,18 @@ export const AutoSavedPRDashboard = () => {
     return item[columnKey as keyof PRData];
   };
 
+  const handleNavigate = (item: PRData) => {
+    const url = item.type === "Material PR"
+      ? `/finance/material-pr/add?saved_pr_id=${item.id}`
+      : item.type === "Service PR"
+        ? `/finance/service-pr/add?saved_pr_id=${item.id}`
+        : item.type === "GRN"
+          ? `/finance/grn-srn/add?saved_pr_id=${item.id}`
+          : "";
+
+    navigate(url);
+  }
+
   const renderActions = (item: PRData) => {
     return (
       <div className="flex space-x-2 justify-center">
@@ -81,7 +95,7 @@ export const AutoSavedPRDashboard = () => {
           className="p-1"
           onClick={(e) => {
             e.stopPropagation();
-            // navigate(`/finance/material-pr/details/${item.id}`);
+            handleNavigate(item);
           }}
         >
           <Eye className="w-4 h-4" />
