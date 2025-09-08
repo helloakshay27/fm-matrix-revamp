@@ -1553,7 +1553,6 @@ export const PatrollingEditPage: React.FC = () => {
                 displayEmpty
                 disabled={isSubmitting || isChecklistLoading}
               >
-                <MenuItem value="">Select Checklist</MenuItem>
                 {checklistOptions.map(opt => (
                   <MenuItem key={opt.id} value={opt.id}>
                     {opt.name}
