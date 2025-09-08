@@ -25,7 +25,7 @@ const fetchAndFormat = async (url: string, key: string) => {
         }));
     }
 
-    return items.map((item: any) => ({ id: item.id, name: item.name, quantity: item.quantity })) ;
+    return items.map((item: any) => ({ id: item.id, name: item.name, quantity: item.quantity, unit: item.unit }) ); ;
 };
 
 export const gatePassInwardService = {
@@ -54,7 +54,7 @@ export const gatePassInwardService = {
 
   async getInventories(inventoryTypeId: number, inventorySubTypeId: number) {
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/inventory_types/inventories.json?q[pms_inventory_type_id_eq]=${inventoryTypeId}&q[pms_inventory_sub_type_id_eq]=${inventorySubTypeId}`;
+      const url = `${API_CONFIG.BASE_URL}/pms/inventory_types/inventories.json?q[category_eq]=${inventorySubTypeId}`;
       return await fetchAndFormat(url, 'items');
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching inventories.');

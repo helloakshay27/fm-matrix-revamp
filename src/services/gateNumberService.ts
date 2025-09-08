@@ -39,6 +39,8 @@ export const gateNumberService = {
   },
 
   async getProjectsBySite(siteId: number) {
+    console.log("Fetching projects for siteId:", siteId);
+
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`, {
         headers: {
@@ -56,9 +58,9 @@ export const gateNumberService = {
     }
   },
 
-  async getGateNumbers() {
+  async getGateNumbers(buildingId: number) {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${buildingId}`, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
