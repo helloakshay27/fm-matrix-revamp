@@ -23,6 +23,7 @@ import {
 } from "@heroicons/react/20/solid";
 import { Link, useParams } from "react-router-dom";
 import "../../Home/Sprints/Table.css";
+import { getTaskPaths, useIsCloudRoute } from "../../../utils/navigationUtils";
 
 import {
   fetchTasks,
@@ -225,6 +226,7 @@ const TaskTable = () => {
   const { id, mid } = useParams();
   const dispatch = useDispatch();
   const location = useLocation();
+  const isCloudRoute = useIsCloudRoute();
 
   const {
     loading: loadingTasks,
@@ -696,9 +698,14 @@ const TaskTable = () => {
         } else {
           displayId = `T-${originalId}`;
         }
+        
+        // Generate cloud-aware navigation path
+        const taskPaths = getTaskPaths(id, mid, linkIdPart, isCloudRoute);
+        const navigationPath = taskPaths.taskDetailSimple;
+        
         return (
           <Link
-            to={`${linkIdPart}`}
+            to={navigationPath}
             className="text-xs text-blue-600 hover:text-blue-800 hover:underline p-1 block"
             style={{ paddingLeft: `${row.depth * 1.5}rem` }}
           >
@@ -834,6 +841,33 @@ const TaskTable = () => {
       header: "Successor",
       size: 100,
       cell: ({ getValue }) => <span className="text-xs">{getValue()}</span>,
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      size: 100,
+      cell: ({ row }) => {
+        const taskId = row.original.id;
+        const taskPaths = getTaskPaths(id, mid, taskId, isCloudRoute);
+        const detailPath = taskPaths.taskDetailSimple;
+        
+        return (
+          <div className="flex gap-2 items-center">
+            <Link
+              to={detailPath}
+              className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-600 rounded hover:bg-blue-50"
+            >
+              View
+            </Link>
+            <Link
+              to={`${detailPath}?edit=true`}
+              className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-600 rounded hover:bg-green-50"
+            >
+              Edit
+            </Link>
+          </div>
+        );
+      },
     },
   ];
 

@@ -7,6 +7,7 @@ import {
     Fragment,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { getProjectPaths, useIsCloudRoute } from "../../../utils/navigationUtils";
 import OpenInFullIcon from "@mui/icons-material/OpenInFull";
 import LoginTwoToneIcon from "@mui/icons-material/LoginTwoTone";
 import ArchiveOutlinedIcon from "@mui/icons-material/ArchiveOutlined";
@@ -96,7 +97,10 @@ const NewProjectDateEditor = ({
 const ActionIcons = ({ row }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const isCloudRoute = useIsCloudRoute();
     const [deleting, setDeleting] = useState(false); // Local state for delete button
+
+    const projectPaths = getProjectPaths(row.original.actualId, isCloudRoute);
 
     const handleDelete = async (id) => {
         const formatId = id.split('-')[1];
@@ -141,13 +145,13 @@ const ActionIcons = ({ row }) => {
     return (
         <div className="action-icons flex justify-around items-center">
             <button
-                onClick={() => navigate(`/projects/${row.original.actualId}`)}
+                onClick={() => navigate(projectPaths.project)}
                 title="View Details"
             >
                 <OpenInFullIcon sx={{ fontSize: "1.2em" }} />
             </button>
             <button
-                onClick={() => navigate(`/projects/${row.original.actualId}/milestones`)}
+                onClick={() => navigate(projectPaths.milestones)}
                 title="View Tasks"
             >
                 <LoginTwoToneIcon sx={{ fontSize: "1.2em" }} />
@@ -197,6 +201,7 @@ const ProjectList = () => {
     const token = localStorage.getItem("token");
     const fixedRowsPerPage = 10;
     const dispatch = useDispatch();
+    const isCloudRoute = useIsCloudRoute();
 
     const {
         fetchProjects: initialProjects,
@@ -447,8 +452,6 @@ const ProjectList = () => {
         const [title, setTitle] = useState(getValue());
         const [edit, setEdit] = useState(false);
 
-        const currentPath = window.location.pathname;
-
         // Sync title with getValue() when row data changes
         useEffect(() => {
             setTitle(getValue());
@@ -481,7 +484,7 @@ const ProjectList = () => {
                     />
                 ) : (
                     <Link
-                        to={currentPath.includes("cloud-projects") ? `/cloud-projects/${row.original.actualId}/milestones` : `/projects/${row.original.actualId}/milestones`}
+                        to={getProjectPaths(row.original.actualId, isCloudRoute).milestones}
                         className="cursor-pointer"
                         onDoubleClick={handleDoubleClick}
                     >
@@ -639,8 +642,6 @@ const ProjectList = () => {
     const rowHeight = 40;
     const headerHeight = 48;
 
-    const currentPath = window.location.pathname;
-
     const columns = useMemo(
         () => [
             {
@@ -649,7 +650,7 @@ const ProjectList = () => {
                 size: 110,
                 cell: ({ row, getValue }) => (
                     <Link
-                        to={currentPath.includes("cloud-projects") ? `/cloud-projects/${row.original.actualId}` : `/projects/${row.original.actualId}`}
+                        to={getProjectPaths(row.original.actualId, isCloudRoute).project}
                         className="text-blue-600 hover:text-blue-800 hover:underline"
                     >
                         {getValue()}

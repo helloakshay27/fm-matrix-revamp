@@ -3,6 +3,7 @@ import gsap from "gsap";
 import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { getMoMPaths, useIsCloudRoute } from "../../utils/navigationUtils";
 import { momTabs } from "../../data/Data";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMoM } from "../../redux/slices/momSlice";
@@ -20,10 +21,9 @@ const MinutesOfMeeting = () => {
     const token = localStorage.getItem("token");
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const isCloudRoute = useIsCloudRoute();
 
     const { fetchMoM: mom } = useSelector((state) => state.fetchMoM);
-
-    const currentPath = window.location.pathname;
 
     const [activeTab, setActiveTab] = useState(momTabs[0].id);
     const [currentPage, setCurrentPage] = useState(0);
@@ -89,7 +89,7 @@ const MinutesOfMeeting = () => {
     );
 
     const handleAdd = () => {
-        navigate(currentPath.includes("cloud-mom") ? "/cloud-mom/new-mom" : "/new-mom");
+        navigate(getMoMPaths("", isCloudRoute).newMom);
     }
 
     return (
@@ -136,6 +136,7 @@ const MinutesOfMeeting = () => {
                                 <th className="px-4 py-4">Participants</th>
                                 <th className="px-4 py-4">Agenda Items</th>
                                 <th className="px-4 py-4">Action Items</th>
+                                <th className="px-4 py-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -144,7 +145,7 @@ const MinutesOfMeeting = () => {
                                     <tr key={item.id}>
                                         <td className="p-4">{item.id}</td>
                                         <td className="p-4">
-                                            <Link to={currentPath.includes("cloud-mom") ? `/cloud-mom/${item.id}` : `/mom/${item.id}`} className="hover:underline">
+                                            <Link to={getMoMPaths(item.id, isCloudRoute).mom} className="hover:underline">
                                                 {item.title}
                                             </Link>
                                         </td>
@@ -168,11 +169,27 @@ const MinutesOfMeeting = () => {
                                         </td>
                                         <td className="p-4">Meeting 1</td>
                                         <td className="p-4">Meeting 1</td>
+                                        <td className="p-4">
+                                            <div className="flex gap-2 items-center">
+                                                <Link
+                                                    to={getMoMPaths(item.id, isCloudRoute).mom}
+                                                    className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-600 rounded hover:bg-blue-50"
+                                                >
+                                                    View
+                                                </Link>
+                                                <Link
+                                                    to={`${getMoMPaths(item.id, isCloudRoute).mom}?edit=true`}
+                                                    className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-600 rounded hover:bg-green-50"
+                                                >
+                                                    Edit
+                                                </Link>
+                                            </div>
+                                        </td>
                                     </tr>
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="8" className="text-center py-6 text-gray-500">
+                                    <td colSpan="9" className="text-center py-6 text-gray-500">
                                         No meetings
                                     </td>
                                 </tr>

@@ -161,7 +161,7 @@ const TaskActions = ({
         (type) => {
             setSelectedType(type);
             setIsTypeOpen(false);
-            if (type === "Kanban") setIsSidebarOpen(false);
+            if (type === "Kanban" && setIsSidebarOpen) setIsSidebarOpen(false);
         },
         [setSelectedType, setIsSidebarOpen]
     );

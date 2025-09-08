@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
+import { useIsCloudRoute } from "../../../utils/navigationUtils";
 import { useDispatch, useSelector } from "react-redux";
 import {
   useReactTable,
@@ -147,6 +148,7 @@ const IssuesTable = () => {
   const { id: parentId } = useParams();
   const dispatch = useDispatch();
   const token = localStorage.getItem("token");
+  const isCloudRoute = useIsCloudRoute();
 
   const {
     fetchIssue: allIssuesFromStore,
@@ -922,12 +924,16 @@ const IssuesTable = () => {
         accessorKey: "id",
         header: "Issue ID",
         size: 80,
-        cell: ({ getValue }) => (
-          <Link
-            to={`/issues/${getValue()}`}
-            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-          >{`I-${getValue()?.toString().slice(-5)}`}</Link>
-        ),
+        cell: ({ getValue }) => {
+          const issueId = getValue();
+          const issuePath = isCloudRoute ? `/cloud-issues/${issueId}` : `/issues/${issueId}`;
+          return (
+            <Link
+              to={issuePath}
+              className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+            >{`I-${issueId?.toString().slice(-5)}`}</Link>
+          );
+        },
       },
       {
         accessorKey: "projectName",
@@ -1099,6 +1105,32 @@ const IssuesTable = () => {
               placeholder="Comments"
               validator={false}
             />
+          );
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        size: 100,
+        cell: ({ row }) => {
+          const issueId = row.original.id;
+          const issuePath = isCloudRoute ? `/cloud-issues/${issueId}` : `/issues/${issueId}`;
+          
+          return (
+            <div className="flex gap-2 items-center">
+              <Link
+                to={issuePath}
+                className="text-blue-600 hover:text-blue-800 text-xs px-2 py-1 border border-blue-600 rounded hover:bg-blue-50"
+              >
+                View
+              </Link>
+              <Link
+                to={`${issuePath}?edit=true`}
+                className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-600 rounded hover:bg-green-50"
+              >
+                Edit
+              </Link>
+            </div>
           );
         },
       },

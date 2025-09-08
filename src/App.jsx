@@ -58,71 +58,8 @@ const App = () => {
       <Toaster />
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route
-          path="/cloud-projects"
-          element={
-            <ProtectedRoute>
-              <Projects />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-projects/:id"
-          element={
-            <ProtectedRoute>
-              <ProjectDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-projects/:id/milestones"
-          element={
-            <ProtectedRoute>
-              <MileStoneMain />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-projects/:id/milestones/:mid/tasks"
-          element={
-            <ProtectedRoute>
-              <Tasks />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-projects/:id/milestones/:mid/tasks/:tid"
-          element={
-            <ProtectedRoute>
-              <TaskDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-mom"
-          element={
-            <ProtectedRoute>
-              <MinutesOfMeeting />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-mom/:id"
-          element={
-            <ProtectedRoute>
-              <MomDetails />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/cloud-mom/new-mom"
-          element={
-            <ProtectedRoute>
-              <MoMAdd />
-            </ProtectedRoute>
-          }
-        />
-
+        
+        {/* All Routes - Layout will conditionally show/hide sidebar and header */}
         <Route
           path="*"
           element={
@@ -132,6 +69,21 @@ const App = () => {
                 setIsSidebarOpen={setIsSidebarOpen}
               >
                 <Routes>
+                  {/* External Portal Routes */}
+                  <Route path="/cloud-projects" element={<Projects />} />
+                  <Route path="/cloud-projects/:id" element={<ProjectDetails />} />
+                  <Route path="/cloud-projects/:id/milestones" element={<MileStoneMain />} />
+                  <Route path="/cloud-projects/:id/milestones/:mid/tasks" element={<Tasks />} />
+                  <Route path="/cloud-projects/:id/milestones/:mid/tasks/:tid" element={<TaskDetails />} />
+                  <Route path="/cloud-mom" element={<MinutesOfMeeting />} />
+                  <Route path="/cloud-mom/:id" element={<MomDetails />} />
+                  <Route path="/cloud-mom/new-mom" element={<MoMAdd />} />
+                  <Route path="/cloud-tasks" element={<Tasks />} />
+                  <Route path="/cloud-tasks/:tid" element={<TaskDetails />} />
+                  <Route path="/cloud-issues" element={<Issues />} />
+                  <Route path="/cloud-issues/:id" element={<IssueDetails />} />
+
+                  {/* Internal Routes */}
                   <Route path="/" element={<Navigate to="/projects" />} />
                   <Route
                     path="projects/:id/milestones/:mid/tasks"
@@ -163,7 +115,6 @@ const App = () => {
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/mom/:id" element={<MomDetails />} />
                   <Route path="/new-mom" element={<MoMAdd />} />
-
 
                   <Route path="/channels/*" element={<Channel />} />
                   <Route path="/documents" element={<Documents />} />
