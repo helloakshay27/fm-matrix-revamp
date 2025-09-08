@@ -26,8 +26,8 @@ const PRIORITY_OPTIONS = [
 ];
 
 const PROACTIVE_REACTIVE_OPTIONS = [
-  { value: 'Proactive',label: 'Proactive' },
-  { value: 'Reactive',label: 'Reactive' }
+  { value: 'Proactive', label: 'Proactive' },
+  { value: 'Reactive', label: 'Reactive' }
 ];
 
 // Field styles for Material-UI components
@@ -57,7 +57,7 @@ const fieldStyles = {
 export const AddTicketDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   // Form state
   const [onBehalfOf, setOnBehalfOf] = useState('self');
   const [ticketType, setTicketType] = useState('');
@@ -66,7 +66,7 @@ export const AddTicketDashboard = () => {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFieldsReadOnly, setIsFieldsReadOnly] = useState(false);
-  
+
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
@@ -76,7 +76,7 @@ export const AddTicketDashboard = () => {
   const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
   const [isGoldenTicket, setIsGoldenTicket] = useState(false);
   const [isFlagged, setIsFlagged] = useState(false);
-  
+
   // Loading states
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
@@ -117,7 +117,7 @@ export const AddTicketDashboard = () => {
     setSelectedUser('');
     setSelectedUserId(null);
     setIsFieldsReadOnly(false);
-    
+
     if (onBehalfOf === 'self') {
       loadUserAccount();
     } else {
@@ -159,7 +159,7 @@ export const AddTicketDashboard = () => {
     } catch (error) {
       console.error('Error loading subcategories:', error);
       toast({
-        title: "Error", 
+        title: "Error",
         description: "Failed to load subcategories",
         variant: "destructive"
       });
@@ -184,15 +184,15 @@ export const AddTicketDashboard = () => {
     try {
       const url = getFullUrl(API_CONFIG.ENDPOINTS.COMPLAINT_MODE);
       const options = getAuthenticatedFetchOptions('GET');
-      
+
       const response = await fetch(url, options);
       if (!response.ok) {
         throw new Error(`Failed to fetch complaint modes: ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('Complaint modes response:', data);
-      
+
       // The API returns an array directly, not wrapped in complaint_modes property
       setComplaintModes(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -338,7 +338,7 @@ export const AddTicketDashboard = () => {
 
       // Get site_id from user account API response
       const siteId = userAccount?.site_id?.toString();
-      
+
       if (!siteId) {
         toast({
           title: "Error",
@@ -347,7 +347,7 @@ export const AddTicketDashboard = () => {
         });
         return;
       }
-      
+
       const ticketData = {
         of_phase: 'pms',
         site_id: parseInt(siteId),
@@ -365,9 +365,9 @@ export const AddTicketDashboard = () => {
         floor_id: 1,
         // Add user parameters based on selection type
         ...(onBehalfOf === 'self' && userAccount?.id && { id_user: userAccount.id }),
-        ...(onBehalfOf !== 'self' && selectedUserId && { 
+        ...(onBehalfOf !== 'self' && selectedUserId && {
           sel_id_user: selectedUserId,
-          id_user: selectedUserId 
+          id_user: selectedUserId
         }),
         ...(formData.assignedTo && { assigned_to: parseInt(formData.assignedTo) }),
         ...(formData.referenceNumber && { reference_number: formData.referenceNumber }),
@@ -386,18 +386,25 @@ export const AddTicketDashboard = () => {
 
       const response = await ticketManagementAPI.createTicket(ticketData, attachedFiles);
       console.log('Create ticket response:', response);
-      
+
       // Extract ticket number from response - common patterns are ticket_number, complaint_number, or number
       const ticketNumber = response?.ticket_number || response?.complaint_number || response?.number || response?.complaint?.ticket_number;
-      
+
       toast({
         title: "Success",
-        description: ticketNumber 
+        description: ticketNumber
           ? `Ticket created successfully - ${ticketNumber}`
           : "Ticket created successfully!"
       });
-      
-      navigate('/maintenance/ticket');
+
+      // navigate('/maintenance/ticket');
+      const currentPath = window.location.pathname;
+
+      if (currentPath.includes("tickets")) {
+        navigate("/tickets");
+      } else {
+        navigate("/maintenance/ticket");
+      }
     } catch (error) {
       console.error('Error creating ticket:', error);
       toast({
@@ -555,53 +562,53 @@ export const AddTicketDashboard = () => {
             {/* Radio buttons for ticket type and flags */}
             <div className="flex gap-8">
               <RadioGroup value={ticketType} onValueChange={setTicketType} className="flex gap-8">
-    <div className="flex items-center space-x-2">
-      <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
-      <label htmlFor="request" className="text-sm font-medium">Request</label>
-    </div>
-    <div className="flex items-center space-x-2">
-      <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
-      <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
-    </div>
-    <div className="flex items-center space-x-2">
-      <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
-      <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
-    </div>
-  </RadioGroup>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="request" id="request" className="text-[#C72030] border-[#C72030]" />
+                  <label htmlFor="request" className="text-sm font-medium">Request</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="complaint" id="complaint" className="text-[#C72030] border-[#C72030]" />
+                  <label htmlFor="complaint" className="text-sm font-medium">Complaint</label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="suggestion" id="suggestion" className="text-[#C72030] border-[#C72030]" />
+                  <label htmlFor="suggestion" className="text-sm font-medium">Suggestion</label>
+                </div>
+              </RadioGroup>
             </div>
 
-               <div className="flex gap-8">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="golden"
-                    checked={isGoldenTicket}
-                    onChange={(e) => setIsGoldenTicket(e.target.checked)}
-                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030] focus:ring-[#C72030]"
-                    style={{
-                      accentColor: '#C72030'
-                    }}
-                  />
-                  <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="flagged"
-                    checked={isFlagged}
-                    onChange={(e) => setIsFlagged(e.target.checked)}
-                    className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030]"
-                    style={{
-                      accentColor: '#C72030'
-                    }}
-                  />
-                  <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
-                </div>
+            <div className="flex gap-8">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="golden"
+                  checked={isGoldenTicket}
+                  onChange={(e) => setIsGoldenTicket(e.target.checked)}
+                  className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030] focus:ring-[#C72030]"
+                  style={{
+                    accentColor: '#C72030'
+                  }}
+                />
+                <label htmlFor="golden" className="text-sm font-medium">Golden Ticket</label>
               </div>
-              
-              {/* Golden Ticket and Is Flagged radio buttons */}
-             
-                {/* <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="flagged"
+                  checked={isFlagged}
+                  onChange={(e) => setIsFlagged(e.target.checked)}
+                  className="w-3 h-3 rounded border-2 border-[#C72030] text-[#C72030]"
+                  style={{
+                    accentColor: '#C72030'
+                  }}
+                />
+                <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
+              </div>
+            </div>
+
+            {/* Golden Ticket and Is Flagged radio buttons */}
+
+            {/* <div className="flex items-center space-x-2">
                   <RadioGroupItem value="golden" id="golden" className="text-red-500 border-red-500" 
                     checked={isGoldenTicket}
                     onClick={() => setIsGoldenTicket(!isGoldenTicket)}
@@ -615,8 +622,8 @@ export const AddTicketDashboard = () => {
                   />
                   <label htmlFor="flagged" className="text-sm font-medium">Is Flagged</label>
                 </div> */}
-              
-           
+
+
 
             {/* Form fields in exact layout as per image */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -659,9 +666,9 @@ export const AddTicketDashboard = () => {
                   disabled={loadingSubcategories || !formData.categoryType}
                 >
                   <MenuItem value="" sx={{ fontSize: '14px' }}>
-                    {loadingSubcategories ? "Loading..." : 
-                     !formData.categoryType ? "Select Category First" : 
-                     "Select Sub Category Type"}
+                    {loadingSubcategories ? "Loading..." :
+                      !formData.categoryType ? "Select Category First" :
+                        "Select Sub Category Type"}
                   </MenuItem>
                   {subcategories.map((subcategory) => (
                     <MenuItem key={subcategory.id} value={subcategory.id.toString()}>
@@ -716,10 +723,10 @@ export const AddTicketDashboard = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
-          
 
-            {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
-            
+
+              {/* Row 2: Proactive/Reactive, Admin Priority, Reference Number */}
+
               <FormControl
                 fullWidth
                 variant="outlined"
@@ -814,8 +821,8 @@ export const AddTicketDashboard = () => {
             <h2 className="text-lg font-medium text-gray-900 flex items-center">
               <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030"/>
-                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3"/>
+                  <path d="M3 2C2.44772 2 2 2.44772 2 3V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V5.41421C14 5.149 13.8946 4.89464 13.7071 4.70711L11.2929 2.29289C11.1054 2.10536 10.851 2 10.5858 2H3Z" fill="#C72030" />
+                  <path d="M10 2V5C10 5.55228 10.4477 6 11 6H14" fill="#E5E0D3" />
                 </svg>
               </span>
               Add Attachments
@@ -823,9 +830,9 @@ export const AddTicketDashboard = () => {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              <input 
-                type="file" 
-                multiple 
+              <input
+                type="file"
+                multiple
                 onChange={handleFileUpload}
                 className="hidden"
                 id="file-upload"
@@ -839,7 +846,7 @@ export const AddTicketDashboard = () => {
                 <Upload className="w-4 h-4 mr-2" />
                 Upload Files
               </Button>
-              
+
               {/* Display attached files */}
               {attachedFiles.length > 0 && (
                 <div className="space-y-2">
@@ -867,17 +874,17 @@ export const AddTicketDashboard = () => {
 
         {/* Action Buttons */}
         <div className="flex gap-4 justify-center pt-6">
-          <Button 
+          <Button
             type="submit"
             disabled={isSubmitting}
             className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
           >
             {isSubmitting ? 'Creating...' : 'Create Tickets'}
           </Button>
-          <Button 
+          <Button
             type="button"
             variant="outline"
-            onClick={() => navigate('/maintenance/ticket')}
+            onClick={() => navigate(-1)}
             className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
           >
             Cancel

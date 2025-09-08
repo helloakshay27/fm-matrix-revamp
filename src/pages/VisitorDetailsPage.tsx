@@ -108,18 +108,18 @@ export const VisitorDetailsPage = () => {
         setLoading(true);
         const url = getFullUrl(`/pms/visitors/${id}.json`);
         const options = getAuthenticatedFetchOptions();
-        
+
         console.log('Fetching visitor details from:', url);
-        
+
         const response = await fetch(url, options);
-        
+
         if (!response.ok) {
           throw new Error(`Failed to fetch visitor details: ${response.status} ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         console.log('Visitor details received:', data);
-        
+
         // Handle the nested gatekeeper structure from the API
         const visitor = data.gatekeeper || data.visitor || data;
         setVisitorData(visitor);
@@ -136,7 +136,7 @@ export const VisitorDetailsPage = () => {
   }, [id]);
 
   const handleBackToList = () => {
-    navigate('/security/visitor');
+    navigate(-1);
   };
 
   const handleUpdate = () => {
@@ -145,49 +145,49 @@ export const VisitorDetailsPage = () => {
 
   const handleResendOTP = async () => {
     if (!visitorData || !id) return;
-    
+
     try {
       console.log('Resending OTP for visitor:', id);
-      
+
       // Show loading toast
       toast.info('Sending OTP...');
-      
+
       // Disable the button
       setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: true }));
-      
+
       // Construct the API URL using the resend OTP endpoint
       const url = getFullUrl('/pms/admin/visitors/resend_otp.json');
       const options = getAuthenticatedFetchOptions();
-      
+
       // Add query parameter for visitor ID
       const urlWithParams = new URL(url);
       urlWithParams.searchParams.append('id', id.toString());
-      
+
       console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
-      
+
       const response = await fetch(urlWithParams.toString(), options);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
         throw new Error(`Failed to resend OTP: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ OTP sent successfully:', data);
-      
+
       // Show success toast
       toast.success('OTP sent successfully!');
-      
+
       // Re-enable the button after 1 minute (60000ms)
       setTimeout(() => {
         setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: false }));
       }, 60000);
-      
+
     } catch (err) {
       console.error('❌ Error sending OTP:', err);
       toast.error('Failed to send OTP. Please try again.');
-      
+
       // Re-enable the button on error
       setDisabledOTPButtons(prev => ({ ...prev, [visitorData.id]: false }));
     }
@@ -195,17 +195,17 @@ export const VisitorDetailsPage = () => {
 
   const handleSkipApproval = async () => {
     if (!visitorData || !id) return;
-    
+
     try {
       console.log('Skipping approval for visitor:', id);
-      
+
       // Show loading toast
       toast.info('Processing approval...');
-      
+
       // Construct the API URL
       const url = getFullUrl(`/pms/visitors/${id}.json`);
       const options = getAuthenticatedFetchOptions();
-      
+
       // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
@@ -221,25 +221,25 @@ export const VisitorDetailsPage = () => {
           }
         })
       };
-      
+
       console.log('🚀 Calling skip approval API:', url);
       console.log('📋 Request body:', requestOptions.body);
-      
+
       const response = await fetch(url, requestOptions);
-      
+
       if (!response.ok) {
         throw new Error(`Failed to skip approval: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ Approval skipped successfully:', data);
-      
+
       // Show success toast
       toast.success('Host approval skipped successfully!');
-      
+
       // Refresh visitor data
       window.location.reload();
-      
+
     } catch (err) {
       console.error('❌ Error skipping approval:', err);
       toast.error('Failed to skip approval. Please try again.');
@@ -248,17 +248,17 @@ export const VisitorDetailsPage = () => {
 
   const handleCheckIn = async () => {
     if (!visitorData || !id) return;
-    
+
     try {
       console.log('Checking in visitor:', id);
-      
+
       // Show loading toast
       toast.info('Processing check-in...');
-      
+
       // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/visitors/${id}.json`);
       const options = getAuthenticatedFetchOptions();
-      
+
       // Create request body for check-in with current timestamp
       const requestBody = {
         gatekeeper: {
@@ -267,7 +267,7 @@ export const VisitorDetailsPage = () => {
           status: "checked_in"
         }
       };
-      
+
       // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
@@ -278,27 +278,27 @@ export const VisitorDetailsPage = () => {
         },
         body: JSON.stringify(requestBody)
       };
-      
+
       console.log('🚀 Calling check-in API:', url);
       console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-      
+
       const response = await fetch(url, requestOptions);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
         throw new Error(`Failed to check-in visitor: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ Visitor checked in successfully:', data);
-      
+
       // Show success toast
       toast.success('Visitor checked in successfully!');
-      
+
       // Refresh visitor data
       window.location.reload();
-      
+
     } catch (err) {
       console.error('❌ Error checking in visitor:', err);
       toast.error('Failed to check-in visitor. Please try again.');
@@ -307,17 +307,17 @@ export const VisitorDetailsPage = () => {
 
   const handleCheckOut = async () => {
     if (!visitorData || !id) return;
-    
+
     try {
       console.log('Checking out visitor:', id);
-      
+
       // Show loading toast
       toast.info('Processing checkout...');
-      
+
       // Construct the API URL using the visitor ID
       const url = getFullUrl(`/pms/visitors/${id}.json`);
       const options = getAuthenticatedFetchOptions();
-      
+
       // Create request body for checkout with current timestamp
       const requestBody = {
         gatekeeper: {
@@ -326,7 +326,7 @@ export const VisitorDetailsPage = () => {
           status: "checked_out"
         }
       };
-      
+
       // Set the request method to PUT and add the request body
       const requestOptions = {
         ...options,
@@ -337,27 +337,27 @@ export const VisitorDetailsPage = () => {
         },
         body: JSON.stringify(requestBody)
       };
-      
+
       console.log('🚀 Calling checkout API:', url);
       console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
-      
+
       const response = await fetch(url, requestOptions);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('API Error Response:', errorText);
         throw new Error(`Failed to checkout visitor: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
       console.log('✅ Visitor checked out successfully:', data);
-      
+
       // Show success toast
       toast.success('Visitor checked out successfully!');
-      
+
       // Refresh visitor data
       window.location.reload();
-      
+
     } catch (err) {
       console.error('❌ Error checking out visitor:', err);
       toast.error('Failed to checkout visitor. Please try again.');
@@ -451,12 +451,11 @@ export const VisitorDetailsPage = () => {
               <>
                 {/* Resend OTP Button - Show for pending/unapproved visitors */}
                 {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
-                  <Button 
-                    className={`px-3 py-2 text-sm rounded ${
-                      disabledOTPButtons[visitorData.id] 
-                        ? 'bg-gray-400 cursor-not-allowed' 
+                  <Button
+                    className={`px-3 py-2 text-sm rounded ${disabledOTPButtons[visitorData.id]
+                        ? 'bg-gray-400 cursor-not-allowed'
                         : 'bg-orange-500 hover:bg-orange-600'
-                    } text-white`}
+                      } text-white`}
                     onClick={handleResendOTP}
                     disabled={disabledOTPButtons[visitorData.id]}
                   >
@@ -466,7 +465,7 @@ export const VisitorDetailsPage = () => {
 
                 {/* Skip Host Approval Button - Show for pending/unapproved visitors */}
                 {(visitorData.vstatus === 'Pending' || visitorData.approve === 0) && (
-                  <Button 
+                  <Button
                     className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 text-sm rounded"
                     onClick={handleSkipApproval}
                   >
@@ -476,7 +475,7 @@ export const VisitorDetailsPage = () => {
 
                 {/* Check In Button - Show for approved visitors who haven't checked in */}
                 {(visitorData.vstatus === 'Approved' && !visitorData.check_in) && (
-                  <Button 
+                  <Button
                     className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckIn}
                   >
@@ -486,7 +485,7 @@ export const VisitorDetailsPage = () => {
 
                 {/* Check Out Button - Show for checked-in visitors who haven't checked out */}
                 {(visitorData.vstatus === 'Approved' && visitorData.check_in && !visitorData.check_out) && (
-                  <Button 
+                  <Button
                     className="bg-[#F97316] hover:bg-[#F97316]/90 text-white px-3 py-2 text-sm rounded"
                     onClick={handleCheckOut}
                   >
@@ -495,7 +494,7 @@ export const VisitorDetailsPage = () => {
                 )}
               </>
             )}
-            
+
             {/* Edit Button */}
             {/* <Button onClick={handleUpdate} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90">
               <Edit className="w-4 h-4 mr-2" /> Edit
@@ -520,8 +519,8 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Image</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <img 
-                    src={visitorData.image?.startsWith('http') ? visitorData.image : '/placeholder.svg'} 
+                  <img
+                    src={visitorData.image?.startsWith('http') ? visitorData.image : '/placeholder.svg'}
                     alt={visitorData.guest_name || 'Visitor'}
                     className="w-24 h-24 object-cover rounded-md"
                     onError={(e) => {
@@ -532,7 +531,7 @@ export const VisitorDetailsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {hasData(visitorData.guest_name) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Name</span>
@@ -540,23 +539,22 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_name}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.vstatus) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Status</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    visitorData.vstatus === 'Approved' ? 'bg-green-100 text-green-700' : 
-                    visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
-                    'bg-red-100 text-red-700'
-                  }`}>
+                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.vstatus === 'Approved' ? 'bg-green-100 text-green-700' :
+                      visitorData.vstatus === 'Pending' ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
+                    }`}>
                     {visitorData.vstatus}
                   </Badge>
                 </div>
               </div>
             )}
-            
+
             {hasData(visitorData.guest_number) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Mobile</span>
@@ -564,7 +562,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_number}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.visit_purpose) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit Purpose</span>
@@ -572,7 +570,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_purpose}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.notes) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Notes</span>
@@ -580,7 +578,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.notes}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.guest_type) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Guest Type</span>
@@ -588,23 +586,22 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_type}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.visitor_type) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visitor Type</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    visitorData.visitor_type === 'unexpected' ? 'bg-red-100 text-red-700' : 
-                    visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' : 
-                    'bg-gray-100 text-gray-700'
-                  }`}>
+                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.visitor_type === 'unexpected' ? 'bg-red-100 text-red-700' :
+                      visitorData.visitor_type === 'expected' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-700'
+                    }`}>
                     {visitorData.visitor_type ? visitorData.visitor_type.charAt(0).toUpperCase() + visitorData.visitor_type.slice(1) : '--'}
                   </Badge>
                 </div>
               </div>
             )}
-            
+
             {hasData(visitorData.otp_string) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">OTP</span>
@@ -622,7 +619,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_from}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.visit_to) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit To</span>
@@ -630,7 +627,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_to}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.visit_to_number) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Visit To Number</span>
@@ -638,7 +635,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.visit_to_number}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.guest_vehicle_number) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Vehicle Number</span>
@@ -646,7 +643,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.guest_vehicle_number}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.checkin_time) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Check-in Time</span>
@@ -654,7 +651,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.checkin_time}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.checkout_time) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Check-out Time</span>
@@ -662,7 +659,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.checkout_time}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.expected_at) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Expected At</span>
@@ -670,7 +667,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.expected_at}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.location) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Location</span>
@@ -734,7 +731,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.pass_start_date}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.pass_end_date) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass End Date</span>
@@ -742,22 +739,21 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.pass_end_date}</span>
               </div>
             )}
-            
+
             {visitorData.pass_valid !== undefined && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Pass Valid</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <div className="flex-1">
-                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                    visitorData.pass_valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}>
+                  <Badge className={`px-2 py-1 rounded-full text-xs font-semibold ${visitorData.pass_valid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                    }`}>
                     {visitorData.pass_valid ? 'Valid' : 'Invalid'}
                   </Badge>
                 </div>
               </div>
             )}
           </div>
-          
+
           <div className="space-y-4">
             {visitorData.pass_days && visitorData.pass_days.length > 0 && (
               <div className="flex items-start">
@@ -777,7 +773,7 @@ export const VisitorDetailsPage = () => {
                 </div>
               </div>
             )}
-            
+
             {hasData(visitorData.time_since_in) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Time Since In</span>
@@ -785,7 +781,7 @@ export const VisitorDetailsPage = () => {
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.time_since_in}</span>
               </div>
             )}
-            
+
             {hasData(visitorData.created_by) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">Created By</span>
