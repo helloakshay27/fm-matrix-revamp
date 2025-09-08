@@ -169,6 +169,8 @@ export const RosterEditPage: React.FC = () => {
       const data = await response.json();
       const r = data; // Direct response structure
       
+      console.log('📝 Roster Template API Response:', r);
+      
       // Parse no_of_days based on roster type
       let selectedDays: string[] = [];
       let weekSelection: string[] = [];
@@ -219,7 +221,20 @@ export const RosterEditPage: React.FC = () => {
         periodDates.toYear = endDate.getFullYear();
       }
       
-      const departments = r.department_id ? (Array.isArray(r.department_id) ? r.department_id.map(Number) : [Number(r.department_id)]) : [];
+      // Map departments from the new response structure
+      const departments = r.departments && Array.isArray(r.departments) 
+        ? r.departments.map((dept: any) => dept.id) 
+        : (r.department_id ? (Array.isArray(r.department_id) ? r.department_id.map(Number) : [Number(r.department_id)]) : []);
+      
+      // Map employees from the new response structure
+      const selectedEmployees = r.employees && Array.isArray(r.employees)
+        ? r.employees.map((emp: any) => emp.id)
+        : (r.resource_id ? [Number(r.resource_id)] : []);
+      
+      console.log('🏢 Mapped Departments:', departments);
+      console.log('👥 Mapped Employees:', selectedEmployees);
+      console.log('📊 Original departments data:', r.departments);
+      console.log('📊 Original employees data:', r.employees);
       
       setFormData({
         templateName: r.name || '',
@@ -229,7 +244,7 @@ export const RosterEditPage: React.FC = () => {
         location: r.location || '',
         departments,
         shift: r.user_shift_id ? Number(r.user_shift_id) : null,
-        selectedEmployees: r.resource_id ? [Number(r.resource_id)] : [],
+        selectedEmployees,
         rosterType: r.allocation_type || 'Permanent',
         active: r.active !== undefined ? r.active : true
       });
@@ -271,12 +286,12 @@ export const RosterEditPage: React.FC = () => {
       const data = await response.json();
 
       // Adapt the response to our expected format
-      const users = data.fm_users || data.users || data || [];
+      const users = data.fm_users || data.users || data.employees || data || [];
       setFMUsers(users.map((user: any) => ({
         id: user.id,
         name: user.name || user.full_name || `${user.firstname || ''} ${user.lastname || ''}`.trim(),
         email: user.email,
-        department: user.department ? user.department.department_name : undefined
+        department: user.department ? (user.department.department_name || user.department.name) : undefined
       })));
     } catch (error) {
       console.error('Error fetching FM Users:', error);
@@ -406,12 +421,12 @@ export const RosterEditPage: React.FC = () => {
       }
       const data = await response.json();
       // Adapt response to FMUser[]
-      const users = data.fm_users || data.users || data || [];
+      const users = data.fm_users || data.users || data.employees || data || [];
       setFilteredFMUsers(users.map((user: any) => ({
         id: user.id,
         name: user.name || user.full_name || `${user.firstname || ''} ${user.lastname || ''}`.trim(),
         email: user.email,
-        department: user.department ? user.department.department_name : undefined
+        department: user.department ? (user.department.department_name || user.department.name) : undefined
       })));
     } catch (error) {
       console.error('Error fetching filtered FM users:', error);
