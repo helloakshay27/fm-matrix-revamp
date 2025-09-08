@@ -55,10 +55,6 @@ interface RosterFormData {
 }
 
 export const RosterEditPage: React.FC = () => {
-  // Arrays for select period dropdowns
-  const daysArr = Array.from({ length: 31 }, (_, i) => i + 1);
-  const monthsArr = Array.from({ length: 12 }, (_, i) => i + 1);
-  const yearsArr = Array.from({ length: 5 }, (_, i) => 2023 + i);
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
 
@@ -84,14 +80,10 @@ export const RosterEditPage: React.FC = () => {
     active: true
   });
 
-  // Period selection state
+  // Period selection state - Updated to use Date objects
   const [period, setPeriod] = useState({
-    fromDay: 19,
-    fromMonth: 8,
-    fromYear: 2025,
-    toDay: 18,
-    toMonth: 9,
-    toYear: 2025
+    startDate: new Date(2025, 7, 19), // Month is 0-indexed, so 7 = August
+    endDate: new Date(2025, 8, 18)    // 8 = September
   });
 
   // Loading states
@@ -199,26 +191,16 @@ export const RosterEditPage: React.FC = () => {
       
       // Parse dates
       let periodDates = {
-        fromDay: 21,
-        fromMonth: 8,
-        fromYear: 2025,
-        toDay: 19,
-        toMonth: 9,
-        toYear: 2025
+        startDate: new Date(2025, 7, 21), // Default: Aug 21, 2025
+        endDate: new Date(2025, 8, 19)    // Default: Sep 19, 2025
       };
       
       if (r.start_date) {
-        const startDate = new Date(r.start_date);
-        periodDates.fromDay = startDate.getDate();
-        periodDates.fromMonth = startDate.getMonth() + 1;
-        periodDates.fromYear = startDate.getFullYear();
+        periodDates.startDate = new Date(r.start_date);
       }
       
       if (r.end_date) {
-        const endDate = new Date(r.end_date);
-        periodDates.toDay = endDate.getDate();
-        periodDates.toMonth = endDate.getMonth() + 1;
-        periodDates.toYear = endDate.getFullYear();
+        periodDates.endDate = new Date(r.end_date);
       }
       
       // Map departments from the new response structure
@@ -637,12 +619,12 @@ export const RosterEditPage: React.FC = () => {
 
       // Common date format (Rails style for all types - matching RosterCreatePage)
       const commonDateFields = {
-        'start_date(3i)': period.fromDay.toString(),
-        'start_date(2i)': period.fromMonth.toString(),
-        'start_date(1i)': period.fromYear.toString(),
-        'end_date(3i)': period.toDay.toString(),
-        'end_date(2i)': period.toMonth.toString(),
-        'end_date(1i)': period.toYear.toString()
+        'start_date(3i)': period.startDate.getDate().toString(),
+        'start_date(2i)': (period.startDate.getMonth() + 1).toString(),
+        'start_date(1i)': period.startDate.getFullYear().toString(),
+        'end_date(3i)': period.endDate.getDate().toString(),
+        'end_date(2i)': (period.endDate.getMonth() + 1).toString(),
+        'end_date(1i)': period.endDate.getFullYear().toString()
       };
 
       // Base payload structure (common for all day types)
@@ -1291,71 +1273,83 @@ export const RosterEditPage: React.FC = () => {
         )}
 
         <Section title="Select Period" icon={<Calendar className="w-4 h-4" />}>
-          <div className="flex flex-col gap-2 mb-4">
-            <div className="font-semibold text-lg">Select Period</div>
-            <div className="flex items-center gap-4">
-              <span className="font-medium">From</span>
-              <select
-                value={period.fromDay}
-                onChange={e => setPeriod(prev => ({ ...prev, fromDay: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {daysArr.map(day => (
-                  <option key={day} value={day}>{day}</option>
-                ))}
-              </select>
-              <select
-                value={period.fromMonth}
-                onChange={e => setPeriod(prev => ({ ...prev, fromMonth: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {monthsArr.map(month => (
-                  <option key={month} value={month}>{month}</option>
-                ))}
-              </select>
-              <select
-                value={period.fromYear}
-                onChange={e => setPeriod(prev => ({ ...prev, fromYear: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {yearsArr.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-              <span className="mx-2 font-semibold">To</span>
-              <select
-                value={period.toDay}
-                onChange={e => setPeriod(prev => ({ ...prev, toDay: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {daysArr.map(day => (
-                  <option key={day} value={day}>{day}</option>
-                ))}
-              </select>
-              <select
-                value={period.toMonth}
-                onChange={e => setPeriod(prev => ({ ...prev, toMonth: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {monthsArr.map(month => (
-                  <option key={month} value={month}>{month}</option>
-                ))}
-              </select>
-              <select
-                value={period.toYear}
-                onChange={e => setPeriod(prev => ({ ...prev, toYear: Number(e.target.value) }))}
-                className="border rounded px-2 py-1"
-                disabled={isSubmitting}
-              >
-                {yearsArr.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
+          <div className="space-y-6">
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-4 block">
+                Roster Period *
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Start Date */}
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    Start Date
+                  </Label>
+                  <input
+                    type="date"
+                    value={period.startDate.toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      const newDate = new Date(e.target.value);
+                      setPeriod(prev => ({ ...prev, startDate: newDate }));
+                    }}
+                    disabled={isSubmitting}
+                    className="w-full px-3 py-2 border border-[#e1e5e9] rounded-md bg-[#fafbfc] 
+                             focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             text-gray-900 text-sm"
+                    style={{ height: '45px' }}
+                  />
+                </div>
+
+                {/* End Date */}
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                    End Date
+                  </Label>
+                  <input
+                    type="date"
+                    value={period.endDate.toISOString().split('T')[0]}
+                    onChange={(e) => {
+                      const newDate = new Date(e.target.value);
+                      setPeriod(prev => ({ ...prev, endDate: newDate }));
+                    }}
+                    disabled={isSubmitting}
+                    min={period.startDate.toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 border border-[#e1e5e9] rounded-md bg-[#fafbfc] 
+                             focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]
+                             disabled:opacity-50 disabled:cursor-not-allowed
+                             text-gray-900 text-sm"
+                    style={{ height: '45px' }}
+                  />
+                </div>
+              </div>
+
+              {/* Date Range Display */}
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center gap-2 text-sm text-blue-800">
+                  <Calendar className="w-4 h-4" />
+                  <span className="font-medium">Selected Period:</span>
+                  <span>
+                    {period.startDate.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                  <span className="mx-1">→</span>
+                  <span>
+                    {period.endDate.toLocaleDateString('en-US', {
+                      weekday: 'short',
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })}
+                  </span>
+                  <span className="ml-2 text-blue-600">
+                    ({Math.ceil((period.endDate.getTime() - period.startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </Section>
