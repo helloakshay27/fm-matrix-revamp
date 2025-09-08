@@ -204,7 +204,7 @@ export const EditServicePRPage = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: item.total_amount,
+            totalAmount: Number(item.total_value) + Number(item.tax_amount),
             wbsCode: "",
           }))
         );
