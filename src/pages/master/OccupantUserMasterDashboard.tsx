@@ -26,6 +26,7 @@ import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { toast } from 'sonner';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import axios from 'axios';
 
 
 export const OccupantUserMasterDashboard = () => {
@@ -95,10 +96,26 @@ export const OccupantUserMasterDashboard = () => {
     setFilterDialogOpen(false);
   };
 
-  const handleExport = () => {
+  const handleExport = async () => {
     try {
       // Create CSV data
+      const response = await axios.get(
+        `https://${localStorage.getItem("baseUrl")}/pms/account_setups/export_occupant_users.xlsx`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+          responseType: "blob",
+        }
+      );
 
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "occupant_users.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
       toast.success('Data exported successfully');
     } catch (error) {
