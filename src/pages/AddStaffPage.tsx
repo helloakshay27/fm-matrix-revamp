@@ -5,8 +5,33 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft } from 'lucide-react';
-import { staffService, StaffFormData, ScheduleData, StaffAttachments, Unit, Department } from '@/services/staffService';
+import { staffService, StaffFormData, ScheduleData, StaffAttachments, Unit, Department, WorkType } from '@/services/staffService';
 import { toast } from 'sonner';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 export const AddStaffPage = () => {
   const navigate = useNavigate();
@@ -38,27 +63,33 @@ export const AddStaffPage = () => {
   });
 
   const [attachments, setAttachments] = useState<StaffAttachments>({});
+  const [documents, setDocuments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [units, setUnits] = useState<Unit[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(true);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [loadingWorkTypes, setLoadingWorkTypes] = useState(true);
 
-  // Fetch units and departments on component mount
+  // Fetch units, departments, and work types on component mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [unitsData, departmentsData] = await Promise.all([
+        const [unitsData, departmentsData, workTypesData] = await Promise.all([
           staffService.getUnits(),
-          staffService.getDepartments()
+          staffService.getDepartments(),
+          staffService.getWorkTypes()
         ]);
         setUnits(unitsData);
         setDepartments(departmentsData);
+        setWorkTypes(workTypesData);
       } catch (error) {
         console.error('Failed to fetch dropdown data:', error);
       } finally {
         setLoadingUnits(false);
         setLoadingDepartments(false);
+        setLoadingWorkTypes(false);
       }
     };
 
@@ -81,6 +112,10 @@ export const AddStaffPage = () => {
       ...prev,
       [field]: file || undefined
     }));
+  };
+
+  const handleDocumentsChange = (files: File[]) => {
+    setDocuments(files);
   };
 
   const handleSubmit = async () => {
@@ -111,7 +146,10 @@ export const AddStaffPage = () => {
         status: formData.status || 'active'
       };
       
-      await staffService.createSocietyStaff(staffDataWithCalculated, schedule, attachments);
+      await staffService.createSocietyStaff(staffDataWithCalculated, schedule, {
+        profilePicture: attachments.profilePicture,
+        documents: documents
+      });
       toast.success('Society staff created successfully!');
       navigate('/security/staff'); // Navigate back to staff dashboard
     } catch (error) {
@@ -134,197 +172,275 @@ export const AddStaffPage = () => {
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
-      {/* Header with Back Button */}
-      <div className="flex items-center mb-6">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCancel}
-          className="mr-4 hover:bg-gray-100"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        <h1 className="text-2xl font-bold text-gray-900">Add Society Staff</h1>
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">NEW STAFF</h1>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="p-6 space-y-8">
-          {/* Staff Details Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-medium">1</div>
-              <h3 className="text-lg font-semibold text-[#C72030]">STAFF DETAILS</h3>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">First Name*</Label>
-                <Input
-                  placeholder="First Name"
-                  value={formData.firstName}
-                  onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+        {/* Section 1: Staff Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              Staff Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <TextField
+                label="First Name*"
+                placeholder="First Name"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Last Name*</Label>
-                <Input
-                  placeholder="Last Name"
-                  value={formData.lastName}
-                  onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Last Name*"
+                placeholder="Last Name"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Email</Label>
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Email"
+                placeholder="Email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Password</Label>
-                <Input
-                  type="password"
-                  placeholder="Password"
-                  value={formData.password}
-                  onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Password"
+                placeholder="Password"
+                type="password"
+                value={formData.password}
+                onChange={(e) => handleInputChange('password', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Mobile*</Label>
-                <Input
-                  placeholder="Mobile Number"
-                  value={formData.mobile}
-                  onChange={(e) => handleInputChange('mobile', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Mobile*"
+                placeholder="Mobile Number"
+                value={formData.mobile}
+                onChange={(e) => handleInputChange('mobile', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Unit</Label>
-                <Select value={formData.unit} onValueChange={(value) => handleInputChange('unit', value)}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder={loadingUnits ? "Loading units..." : "Select Unit"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {units.map((unit) => (
-                      <SelectItem key={unit.id} value={unit.unit_name}>
-                        {unit.unit_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ '&.Mui-focused': { color: '#C72030' } }}>
+                  Unit
+                </InputLabel>
+                <MuiSelect
+                  value={formData.unit}
+                  onChange={(e) => handleInputChange('unit', e.target.value)}
+                  label="Unit"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="" disabled>
+                    {loadingUnits ? "Loading units..." : "Select Unit"}
+                  </MenuItem>
+                  {units.map((unit) => (
+                    <MenuItem key={unit.id} value={unit.unit_name}>
+                      {unit.unit_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Department</Label>
-                <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder={loadingDepartments ? "Loading departments..." : "Select Department"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((department) => (
-                      <SelectItem key={department.id} value={department.department_name}>
-                        {department.department_name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ '&.Mui-focused': { color: '#C72030' } }}>
+                  Department
+                </InputLabel>
+                <MuiSelect
+                  value={formData.department}
+                  onChange={(e) => handleInputChange('department', e.target.value)}
+                  label="Department"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="" disabled>
+                    {loadingDepartments ? "Loading departments..." : "Select Department"}
+                  </MenuItem>
+                  {departments.map((department) => (
+                    <MenuItem key={department.id} value={department.department_name}>
+                      {department.department_name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Work Type</Label>
-                <Select value={formData.workType} onValueChange={(value) => handleInputChange('workType', value)}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Work Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="other">Other</SelectItem>
-                    <SelectItem value="vendor">Vendor</SelectItem>
-                    <SelectItem value="contractor">Contractor</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ '&.Mui-focused': { color: '#C72030' } }}>
+                  Work Type
+                </InputLabel>
+                <MuiSelect
+                  value={formData.workType}
+                  onChange={(e) => handleInputChange('workType', e.target.value)}
+                  label="Work Type"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="" disabled>
+                    {loadingWorkTypes ? "Loading work types..." : "Select Work Type"}
+                  </MenuItem>
+                  {workTypes.map((workType) => (
+                    <MenuItem key={workType.id} value={workType.id.toString()}>
+                      {workType.staff_type}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Staff ID</Label>
-                <Input
-                  placeholder="Enter Staff ID"
-                  value={formData.staffId}
-                  onChange={(e) => handleInputChange('staffId', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Staff ID"
+                placeholder="Enter Staff ID"
+                value={formData.staffId}
+                onChange={(e) => handleInputChange('staffId', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Vendor Name</Label>
-                <Input
-                  placeholder="Vendor Name"
-                  value={formData.vendorName}
-                  onChange={(e) => handleInputChange('vendorName', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Vendor Name"
+                placeholder="Vendor Name"
+                value={formData.vendorName}
+                onChange={(e) => handleInputChange('vendorName', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Valid From*</Label>
-                <Input
-                  type="date"
-                  placeholder="Valid From"
-                  value={formData.validFrom}
-                  onChange={(e) => handleInputChange('validFrom', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Valid From*"
+                type="date"
+                value={formData.validFrom}
+                onChange={(e) => handleInputChange('validFrom', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Valid Till*</Label>
-                <Input
-                  type="date"
-                  placeholder="Valid Till"
-                  value={formData.validTill}
-                  onChange={(e) => handleInputChange('validTill', e.target.value)}
-                  className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]"
-                />
-              </div>
+              <TextField
+                label="Valid Till*"
+                type="date"
+                value={formData.validTill}
+                onChange={(e) => handleInputChange('validTill', e.target.value)}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
               
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700">Status</Label>
-                <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
-                  <SelectTrigger className="border-gray-300 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink sx={{ '&.Mui-focused': { color: '#C72030' } }}>
+                  Status
+                </InputLabel>
+                <MuiSelect
+                  value={formData.status}
+                  onChange={(e) => handleInputChange('status', e.target.value)}
+                  label="Status"
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="" disabled>Select Status</MenuItem>
+                  <MenuItem value="1">Approved</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="0">Rejected</MenuItem>
+                </MuiSelect>
+              </FormControl>
             </div>
           </div>
+        </div>
 
-          {/* Attachments Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-medium">2</div>
-              <h3 className="text-lg font-semibold text-[#C72030]">ATTACHMENTS</h3>
-            </div>
-            
+        {/* Section 2: Attachments */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              Add Attachments
+            </h2>
+          </div>
+          <div className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-2 block">Profile Picture Upload</Label>
-                <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center hover:border-orange-400 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
                   <input
                     type="file"
                     accept="image/*"
@@ -340,15 +456,20 @@ export const AddStaffPage = () => {
                           alt="Profile Preview"
                           className="w-16 h-16 object-cover rounded-lg mx-auto"
                         />
-                        <p className="text-xs text-[#C72030] font-medium">{attachments.profilePicture.name}</p>
+                        <p className="text-xs text-red-600 font-medium">{attachments.profilePicture.name}</p>
                         <p className="text-xs text-gray-500">Click to change</p>
                       </div>
                     ) : (
                       <>
+                        <div className="mx-auto w-12 h-12 text-gray-400 mb-4">
+                          <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                          </svg>
+                        </div>
                         <p className="text-sm text-gray-600">
-                          Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
+                          Drag & Drop or <span className="text-red-500 cursor-pointer font-medium">Choose File</span>
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">No file chosen</p>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 10MB</p>
                       </>
                     )}
                   </label>
@@ -356,24 +477,29 @@ export const AddStaffPage = () => {
               </div>
               
               <div>
-                <Label className="text-sm font-medium text-gray-700 mb-2 block">Manuals Upload</Label>
-                <div className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center hover:border-orange-400 transition-colors cursor-pointer">
+                <Label className="text-sm font-medium text-gray-700 mb-2 block">Documents Upload</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx"
-                    onChange={(e) => handleFileChange('manuals', e.target.files?.[0] || null)}
+                    onChange={(e) => handleDocumentsChange(e.target.files ? Array.from(e.target.files) : [])}
                     className="hidden"
                     id="manuals-upload"
                   />
                   <label htmlFor="manuals-upload" className="cursor-pointer">
+                    <div className="mx-auto w-12 h-12 text-gray-400 mb-4">
+                      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
                     <p className="text-sm text-gray-600">
-                      Drag & Drop or <span className="text-orange-500 cursor-pointer font-medium">Choose File</span>
+                      Drag & Drop or <span className="text-red-500 cursor-pointer font-medium">Choose File</span>
                     </p>
                     <p className="text-xs mt-1">
-                      {attachments.manuals ? (
-                        <span className="text-[#C72030] font-medium">{attachments.manuals.name}</span>
+                      {documents.length > 0 ? (
+                        <span className="text-red-600 font-medium">{documents.length} file(s) selected</span>
                       ) : (
-                        <span className="text-gray-500">No file chosen</span>
+                        <span className="text-gray-500">PDF, DOC up to 10MB</span>
                       )}
                     </p>
                   </label>
@@ -381,14 +507,16 @@ export const AddStaffPage = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Schedule Section */}
-          <div>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white text-sm font-medium">3</div>
-              <h3 className="text-lg font-semibold text-[#C72030]">SCHEDULE</h3>
-            </div>
-            
+        {/* Section 3: Schedule */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              Schedule Information
+            </h2>
+          </div>
+          <div className="p-6">
             <div className="overflow-x-auto">
               <table className="w-full border border-gray-200 rounded-lg">
                 <thead>
@@ -407,7 +535,7 @@ export const AddStaffPage = () => {
                             type="checkbox"
                             checked={data.checked}
                             onChange={(e) => handleScheduleChange(day, 'checked', e.target.checked)}
-                            className="rounded border-gray-300 text-[#C72030] focus:ring-[#C72030]"
+                            className="rounded border-gray-300 text-red-600 focus:ring-red-600"
                           />
                           <span className="capitalize font-medium text-gray-700">{day}</span>
                         </div>
@@ -480,26 +608,27 @@ export const AddStaffPage = () => {
               </table>
             </div>
           </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4 justify-center pt-6 border-t border-gray-200">
-            <Button
-              onClick={handleCancel}
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Creating...' : 'Submit'}
-            </Button>
-          </div>
         </div>
-      </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center pt-6">
+          <Button 
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-red-600 hover:bg-red-700 text-white px-8 py-2"
+          >
+            {isSubmitting ? 'Creating...' : 'Submit'}
+          </Button>
+          <Button 
+            type="button"
+            variant="outline"
+            onClick={handleCancel}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+          >
+            Cancel
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
