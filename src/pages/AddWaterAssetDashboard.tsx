@@ -106,7 +106,7 @@ function AddWaterAssetDashboard() {
   // Parse query params
   const searchParams = new URLSearchParams(location.search);
   const type = searchParams.get("type");
-  const [assetType, setAssetType] = useState(type || "water");
+  const [assetType, setAssetType] = useState(type || "Water");
   console.log("Asset Type:", assetType);
 
   // --- Meter Details Section State (match AddAssetPage) ---
@@ -764,6 +764,20 @@ function AddWaterAssetDashboard() {
     };
   };
 
+  // Helper function to get asset type from URL parameter
+  const getAssetTypeFromUrl = (urlType) => {
+    switch (urlType) {
+      case 'Water':
+        return 'Water';
+      case 'energy':
+        return 'Energy';
+      case 'stp':
+        return 'STP';
+      default:
+        return 'Water'; // Default fallback
+    }
+  };
+
   // Main Save & Create New Asset handler (API flow matches AddAssetPage)
   const [saving, setSaving] = useState(false);
   const handleSaveAndCreateNew = async () => {
@@ -792,7 +806,8 @@ function AddWaterAssetDashboard() {
         purchased_on: formData.purchasedOnDate,
         warranty_expiry: formData.warrantyExpiresOn,
         purchase_cost: formData.purchaseCost,
-        type: assetType,
+        type: getAssetTypeFromUrl(type),
+        asset_type: assetType,
         meter_tag_type: meterCategoryType,
         asset_meter_type_id: (() => {
           const meterTypeId = getAssetMeterTypeId(meterCategoryType, subCategoryType, tertiaryCategory);
@@ -1468,7 +1483,7 @@ function AddWaterAssetDashboard() {
                     </MuiRadioGroup>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <FormControlLabel
                       control={
                         <MuiCheckbox
@@ -1478,7 +1493,7 @@ function AddWaterAssetDashboard() {
                       }
                       label="Meter Applicable"
                     />
-                  </div>
+                  </div> */}
                 </div>
               </CardContent>
             </CollapsibleContent>
@@ -1682,8 +1697,8 @@ function AddWaterAssetDashboard() {
                       <div className="mb-6">
                         <div className="rounded-lg p-4 bg-[#f6f4ee]">
                           <h3 className="font-medium mb-4 text-sm sm:text-base text-orange-700">METER DETAILS</h3>
-                          {/* WaterAsset: Nested Fresh Water options */}
-                          {type === 'WaterAsset' ? (
+                          {/* Water: Nested Fresh Water options */}
+                          {type === 'Water' ? (
                             <>
                               {/* Top-level: Fresh Water only */}
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">

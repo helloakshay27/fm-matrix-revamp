@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +27,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 export const AssetDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get type from URL search params
+  const searchParams = new URLSearchParams(location.search);
+  const assetType = searchParams.get("type");
 
   const [assetData, setAssetData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -89,7 +94,15 @@ export const AssetDetailsPage = () => {
   const handleBack = () => navigate("/maintenance/asset");
 
   const handleEditDetails = () => {
-    navigate(`/maintenance/asset/edit/${id}`);
+    // Navigate to the appropriate edit page based on asset type
+    if (assetType === 'WaterAsset') {
+      navigate(`/utility/water/edit/${id}?type=Water`);
+    } else if (assetType === 'Energy') {
+      navigate(`/utility/water/edit/${id}?type=Energy`);
+    } else {
+      // Default to regular asset edit page for other asset types
+      navigate(`/maintenance/asset/edit/${id}`);
+    }
   };
 
   const handleCreateChecklist = () => {

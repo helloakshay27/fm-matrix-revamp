@@ -139,11 +139,11 @@ export const UtilityWaterDashboard = () => {
   };
 
   const handleAdd = () => {
-    navigate('/utility/water/add-asset?type=WaterAsset');
+    navigate('/utility/water/add-asset?type=Water');
   };
 
   const handleAddSchedule = () => {
-    navigate('/maintenance/schedule/add?type=WaterAsset');
+    navigate('/maintenance/schedule/add?type=Water');
   };
 
   const handleImport = () => {
@@ -248,8 +248,7 @@ export const UtilityWaterDashboard = () => {
   const handleViewAsset = (assetId: string) => {
     // Find the asset in the current list to get its type
     const asset = waterAssets.find((a) => a.id?.toString() === assetId);
-    const assetType = asset?.asset_type_category || 'water';
-    navigate(`/maintenance/asset/details/${assetId}`, { state: { type: assetType } });
+    navigate(`/maintenance/asset/details/${assetId}?type=Water`);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
