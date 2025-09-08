@@ -92,7 +92,7 @@ export const AutoSavedPRDashboard = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Temp Requests</h1>
+      <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
 
       <EnhancedTable
         data={savedPR}
@@ -102,14 +102,14 @@ export const AutoSavedPRDashboard = () => {
         storageKey="auto-saved-pr-dashboard"
         className="bg-white rounded-lg shadow overflow-x-auto"
         emptyMessage="No temp requests available"
-        enableSearch={true}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
         searchPlaceholder="Search temp requests..."
         enableExport={true}
         exportFileName="temp-requests"
         pagination={true}
         pageSize={10}
+        hideColumnsButton={true}
+        hideTableExport={true}
+        hideTableSearch={true}
       />
     </div>
   );
