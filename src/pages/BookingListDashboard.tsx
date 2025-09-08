@@ -356,7 +356,14 @@ const BookingListDashboard = () => {
   };
 
   const handleAddBooking = () => {
-    navigate('/vas/booking/add');
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("bookings")) {
+      navigate('/bookings/add');
+    } else {
+      navigate('/vas/booking/add');
+    }
+    // navigate('/vas/booking/add');
   };
 
   const handlePageChange = async (page: number) => {
@@ -530,11 +537,21 @@ const BookingListDashboard = () => {
     }
   };
 
+  const handleView = (id: number) => {
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("bookings")) {
+      navigate(`/bookings/${id}`);
+    } else {
+      navigate(`/vas/bookings/details/${id}`);
+    }
+  };
+
   const renderActions = (item: BookingData) => (
     <Button
       variant="ghost"
       size="sm"
-      onClick={() => navigate(`/vas/bookings/details/${item.id}`)}
+      onClick={() => handleView(item.id)}
     >
       <Eye className="w-4 h-4" />
     </Button>
