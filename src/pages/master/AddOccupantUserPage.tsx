@@ -162,6 +162,7 @@ export const AddOccupantUserPage: React.FC = () => {
               user_type: formData.userType,
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+              status: "pending"
             },
           ],
           firstname: formData.firstName,
