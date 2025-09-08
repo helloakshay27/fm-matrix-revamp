@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from "@/utils/apiClient";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'sonner';
 import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbSeparator, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel, Box } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Checkbox, FormControlLabel, Box, FormHelperText } from '@mui/material';
 import { Plus, X, ArrowLeft } from "lucide-react";
 
 interface ApprovalLevel {
@@ -22,11 +22,15 @@ interface User {
 
 const AddApprovalMatrixPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  // Sonner toast imported above
   const [selectedFunction, setSelectedFunction] = useState('');
   const [approvalLevels, setApprovalLevels] = useState<ApprovalLevel[]>([
     { order: 1, name: '', users: [], sendEmails: false }
   ]);
+  const [levelErrors, setLevelErrors] = useState<Array<{ order?: string; name?: string; users?: string }>>([
+    {}
+  ]);
+  const [functionError, setFunctionError] = useState<string>('');
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,12 +84,14 @@ const AddApprovalMatrixPage = () => {
       sendEmails: false
     };
     setApprovalLevels([...approvalLevels, newLevel]);
+    setLevelErrors(prev => [...prev, {}]);
   };
 
   const removeApprovalLevel = (index: number) => {
     if (approvalLevels.length > 1) {
       const updatedLevels = approvalLevels.filter((_, i) => i !== index);
       setApprovalLevels(updatedLevels);
+      setLevelErrors(errs => errs.filter((_, i) => i !== index));
     }
   };
 
@@ -93,26 +99,65 @@ const AddApprovalMatrixPage = () => {
     const updatedLevels = [...approvalLevels];
     updatedLevels[index] = { ...updatedLevels[index], [field]: value };
     setApprovalLevels(updatedLevels);
+    // Clear field-specific error when user edits
+    setLevelErrors(prev => {
+      const copy = [...prev];
+      const current = { ...(copy[index] || {}) } as { order?: string; name?: string; users?: string };
+      if (field === 'order') current.order = '';
+      if (field === 'name') current.name = '';
+      if (field === 'users') current.users = '';
+      copy[index] = current;
+      return copy;
+    });
+  };
+
+  const validateForm = (): boolean => {
+    let valid = true;
+    // Function required
+    if (!selectedFunction) {
+      setFunctionError('Please select a function.');
+      valid = false;
+    } else {
+      setFunctionError('');
+    }
+
+    // Per-level validation
+    const newErrors: Array<{ order?: string; name?: string; users?: string }> = approvalLevels.map((level) => ({ }));
+
+    approvalLevels.forEach((level, idx) => {
+      // Order: required, integer >= 1
+      const orderNum = Number(level.order);
+      if (!Number.isInteger(orderNum) || orderNum < 1) {
+        newErrors[idx].order = 'Order must be a positive integer.';
+        valid = false;
+      }
+      // Name: required
+      if (!level.name || !String(level.name).trim()) {
+        newErrors[idx].name = 'Name of Level is required.';
+        valid = false;
+      }
+      // Users: at least 1, at most 15
+      const count = Array.isArray(level.users) ? level.users.length : 0;
+      if (count === 0) {
+        newErrors[idx].users = 'Select at least one user.';
+        valid = false;
+      } else if (count > 15) {
+        newErrors[idx].users = 'You can select up to 15 users.';
+        valid = false;
+      }
+    });
+
+    setLevelErrors(newErrors);
+
+    if (!valid) {
+      toast.error('Please fill the required fields.');
+    }
+
+    return valid;
   };
 
   const handleCreate = async () => {
-    if (!selectedFunction) {
-      toast({
-        title: "Error",
-        description: "Please select a function",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (approvalLevels.some(level => !level.name || level.users.length === 0)) {
-      toast({
-        title: "Error", 
-        description: "Please fill in all approval level details",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setIsSubmitting(true);
@@ -131,20 +176,12 @@ const AddApprovalMatrixPage = () => {
       };
 
       await apiClient.post('/pms/admin/invoice_approvals.json', payload);
-      
-      toast({
-        title: "Success",
-        description: "Approval matrix created successfully",
-      });
+      toast.success('Approval matrix created successfully');
       
       navigate('/settings/approval-matrix/setup');
     } catch (error) {
       console.error('Error creating approval matrix:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create approval matrix. Please try again.",
-        variant: "destructive",
-      });
+      toast.error('Failed to create approval matrix. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +245,7 @@ const AddApprovalMatrixPage = () => {
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         {/* Function Selection */}
         <div className="mb-8">
-          <FormControl fullWidth>
+            <FormControl fullWidth error={!!functionError}>
             <InputLabel 
               required
               shrink={true}
@@ -221,7 +258,7 @@ const AddApprovalMatrixPage = () => {
             </InputLabel>
             <MuiSelect
               value={selectedFunction}
-              onChange={(e) => setSelectedFunction(e.target.value)}
+              onChange={(e) => { setSelectedFunction(e.target.value); setFunctionError(''); }}
               label="Function"
               sx={{
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -241,6 +278,7 @@ const AddApprovalMatrixPage = () => {
                 </MenuItem>
               ))}
             </MuiSelect>
+              {functionError && <FormHelperText>{functionError}</FormHelperText>}
           </FormControl>
         </div>
 
@@ -275,6 +313,8 @@ const AddApprovalMatrixPage = () => {
                       },
                       '& .MuiInputLabel-root.Mui-focused': { color: '#C72030' },
                     }}
+                    error={!!levelErrors[index]?.order}
+                    helperText={levelErrors[index]?.order}
                   />
                 </div>
 
@@ -297,12 +337,14 @@ const AddApprovalMatrixPage = () => {
                       },
                       '& .MuiInputLabel-root.Mui-focused': { color: '#C72030' },
                     }}
+                    error={!!levelErrors[index]?.name}
+                    helperText={levelErrors[index]?.name}
                   />
                 </div>
 
                 {/* Users */}
                 <div className="md:col-span-5">
-                  <FormControl fullWidth size="small">
+                  <FormControl fullWidth size="small" error={!!levelErrors[index]?.users}>
                     <InputLabel 
                       required
                       shrink={true}
@@ -356,6 +398,9 @@ const AddApprovalMatrixPage = () => {
                         ))
                       )}
                     </MuiSelect>
+                    {levelErrors[index]?.users && (
+                      <FormHelperText>{levelErrors[index]?.users}</FormHelperText>
+                    )}
                   </FormControl>
                 </div>
 
