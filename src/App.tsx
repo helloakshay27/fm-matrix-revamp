@@ -791,42 +791,74 @@ function App() {
 
                   <Route
                     path="/tickets"
-                    element={<TicketDashboard />}
+                    element={
+                      <ProtectedRoute>
+                        <TicketDashboard />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/tickets/add"
-                    element={<AddTicketDashboard />}
+                    element={
+                      <ProtectedRoute>
+                        <AddTicketDashboard />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/tickets/details/:id"
-                    element={<TicketDetailsPage />}
+                    element={
+                      <ProtectedRoute>
+                        <TicketDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/visitors"
-                    element={<VisitorsDashboard />}
+                    element={
+                      <ProtectedRoute>
+                        <VisitorsDashboard />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/visitors/:id"
-                    element={<VisitorDetailsPage />}
+                    element={
+                      <ProtectedRoute>
+                        <VisitorDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/bookings"
-                    element={<BookingListDashboard />}
+                    element={
+                      <ProtectedRoute>
+                        <BookingListDashboard />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/bookings/add"
-                    element={<AddFacilityBookingPage />}
+                    element={
+                      <ProtectedRoute>
+                        <AddFacilityBookingPage />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
                     path="/bookings/:id"
-                    element={<BookingDetailsPage />}
+                    element={
+                      <ProtectedRoute>
+                        <BookingDetailsPage />
+                      </ProtectedRoute>
+                    }
                   />
 
                   <Route
