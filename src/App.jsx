@@ -75,7 +75,7 @@ const App = () => {
                   <Route path="/cloud-projects/:id/milestones" element={<MileStoneMain />} />
                   <Route path="/cloud-projects/:id/milestones/:mid/tasks" element={<Tasks />} />
                   <Route path="/cloud-projects/:id/milestones/:mid/tasks/:tid" element={<TaskDetails />} />
-                  <Route path="/cloud-mom" element={<MinutesOfMeeting />} />
+                  <Route path="/cloud-minutes" element={<MinutesOfMeeting />} />
                   <Route path="/cloud-mom/:id" element={<MomDetails />} />
                   <Route path="/cloud-mom/new-mom" element={<MoMAdd />} />
                   <Route path="/cloud-tasks" element={<Tasks />} />
