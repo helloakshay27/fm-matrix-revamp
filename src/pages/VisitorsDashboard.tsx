@@ -1126,7 +1126,7 @@ export const VisitorsDashboard = () => {
                     strokeLinejoin="round"
                   />
                 </svg>
-                Visitor
+                Visitors
               </TabsTrigger>
               <TabsTrigger
                 value="analytics"

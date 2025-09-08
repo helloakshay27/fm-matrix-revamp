@@ -87,9 +87,9 @@ export const TicketFeedsPage = () => {
       <div className="mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(`/maintenance/ticket/details/${id}`)}
+          <Button
+            variant="ghost"
+            onClick={() => navigate(-1)}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

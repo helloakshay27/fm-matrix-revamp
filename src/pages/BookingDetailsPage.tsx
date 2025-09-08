@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch } from "@/store/hooks";
 import {
@@ -7,10 +7,12 @@ import {
   fetchBookingDetails,
   getLogs,
 } from "@/store/slices/facilityBookingsSlice";
+import { ArrowLeft } from "lucide-react";
 
 export const BookingDetailsPage = () => {
   const { id } = useParams();
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
 
   const [bookings, setBookings] = useState<FacilityBookingDetails | null>(null);
   const [logs, setLogs] = useState<any[]>([]);
@@ -52,6 +54,15 @@ export const BookingDetailsPage = () => {
   return (
     <div className="p-[30px] min-h-screen bg-transparent">
       {/* Header */}
+      <div className="flex items-center gap-2 text-sm text-gray-600 mb-2 cursor-pointer">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1 hover:text-gray-800 transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back</span>
+        </button>
+      </div>
       <>
         <div className="flex items-center gap-4 mb-[30px]">
           <h1 className="text-[24px] font-semibold text-[#1a1a1a]">

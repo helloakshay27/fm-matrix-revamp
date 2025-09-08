@@ -88,7 +88,14 @@ export const TicketDetailsPage = () => {
   };
 
   const handleFeeds = () => {
-    navigate(`/maintenance/ticket/${id}/feeds`);
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/${id}/feeds`);
+    } else {
+      navigate(`/maintenance/ticket/${id}/feeds`);
+    }
+    // navigate(`/maintenance/ticket/${id}/feeds`);
   };
 
   const handleTagVendor = () => {
@@ -120,13 +127,30 @@ export const TicketDetailsPage = () => {
   };
 
   const handleUpdate = () => {
-    // Navigate to update page with the ticket ID and pass source information
-    navigate(`/maintenance/ticket/update/${id}`, {
-      state: {
-        from: 'details',
-        returnTo: `/maintenance/ticket/${id}`
-      }
-    });
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/edit/${id}`, {
+        state: {
+          from: 'details',
+          returnTo: `/tickets/details/${id}`
+        }
+      });
+    } else {
+      navigate(`/maintenance/ticket/update/${id}`, {
+        state: {
+          from: 'details',
+          returnTo: `/maintenance/ticket/${id}`
+        }
+      });
+    }
+
+    // navigate(`/maintenance/ticket/update/${id}`, {
+    //   state: {
+    //     from: 'details',
+    //     returnTo: `/maintenance/ticket/${id}`
+    //   }
+    // });
   };
 
   if (loading) {
