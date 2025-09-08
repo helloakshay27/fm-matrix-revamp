@@ -47,6 +47,7 @@ export const AddMaterialPRDashboard = () => {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const cloneId = searchParams.get("clone");
+  const savedPrId = searchParams.get("saved_pr_id");
   const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
@@ -92,6 +93,10 @@ export const AddMaterialPRDashboard = () => {
   const [slid, setSlid] = useState(null);
 
   useEffect(() => {
+    if (savedPrId) {
+      setSlid(savedPrId)
+      return;
+    }
     const createSystemLog = async () => {
       try {
         const response = await axios.post(

@@ -1225,15 +1225,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                               </div>
                                             </div>
                                           </div>
-                                          <details className="group mt-3">
-                                            <summary className="cursor-pointer text-xs text-gray-600 hover:text-gray-800 select-none flex items-center gap-1">
-                                              <Code className="w-3 h-3" />
-                                              Show raw cron expression
-                                            </summary>
-                                            <div className="mt-2 p-3 bg-gray-900 text-green-400 rounded-lg text-xs font-mono border overflow-x-auto shadow-inner">
-                                              {schedule.cron_setting.cron_expression}
-                                            </div>
-                                          </details>
+                                        
                                         </>
                                       ) : (
                                         <div className="space-y-2">

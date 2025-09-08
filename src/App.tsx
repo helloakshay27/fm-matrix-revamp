@@ -817,6 +817,24 @@ function App() {
                   />
 
                   <Route
+                    path="/tickets/edit/:id"
+                    element={
+                      <ProtectedRoute>
+                        <UpdateTicketsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/tickets/:id/feeds"
+                    element={
+                      <ProtectedRoute>
+                        <TicketFeedsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  <Route
                     path="/visitors"
                     element={
                       <ProtectedRoute>

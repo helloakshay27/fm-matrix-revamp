@@ -216,7 +216,7 @@ export const EditPODashboard = () => {
                         tcsAmount: item.tcs_amount || "",
                         taxAmount: item.taxable_value || "",
                         amount: item.total_value || "",
-                        totalAmount: item.total_value || "",
+                        totalAmount: Number(item.taxable_value) + Number(item.total_value),
                     })) || []
                 );
 
@@ -298,7 +298,8 @@ export const EditPODashboard = () => {
                     tcs_rate: item.tcsRate,
                     tcs_amount: item.tcsAmount,
                     taxable_value: item.taxAmount,
-                    total_value: item.totalAmount,
+                    total_value: item.amount,
+                    total_amount: item.totalAmount,
                 })),
             },
             attachments: formData.attachments,
