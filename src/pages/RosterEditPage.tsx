@@ -1073,24 +1073,54 @@ export const RosterEditPage: React.FC = () => {
                   value={formData.departments}
                   onChange={(e) => handleInputChange('departments', e.target.value as number[])}
                   input={<OutlinedInput notched label="Department *" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as number[]).map((value) => {
-                        const dept = departments.find(d => d.id === value);
-                        return (
-                          <Chip
-                            key={value}
-                            label={dept?.department_name || `ID: ${value}`}
-                            size="small"
-                            sx={{ backgroundColor: '#C72030', color: 'white' }}
-                          />
-                        );
-                      })}
-                    </Box>
-                  )}
+                  renderValue={(selected) => {
+                    const selectedArray = selected as number[];
+                    if (selectedArray.length === 0) return "";
+                    if (selectedArray.length <= 2) {
+                      return (
+                        <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 0.5, overflow: "hidden" }}>
+                          {selectedArray.map((value) => {
+                            const dept = departments.find((d) => d.id === value);
+                            return (
+                              <Chip
+                                key={value}
+                                label={dept?.department_name || `ID: ${value}`}
+                                size="small"
+                                sx={{ 
+                                  backgroundColor: "#C72030", 
+                                  color: "white",
+                                  maxWidth: "150px",
+                                  "& .MuiChip-label": {
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap"
+                                  }
+                                }}
+                              />
+                            );
+                          })}
+                        </Box>
+                      );
+                    }
+                    return (
+                      <Chip
+                        label={`${selectedArray.length} departments selected`}
+                        size="small"
+                        sx={{ backgroundColor: "#C72030", color: "white" }}
+                      />
+                    );
+                  }}
                   displayEmpty
                   disabled={loadingDepartments || isSubmitting}
                   error={errors.departments}
+                  MenuProps={{
+                    PaperProps: {
+                      style: {
+                        maxHeight: 300,
+                        overflow: 'auto',
+                      },
+                    },
+                  }}
                 >
                   {departments.map((dept) => (
                     <MenuItem key={dept.id} value={dept.id}>
@@ -1177,23 +1207,48 @@ export const RosterEditPage: React.FC = () => {
                       />
                     }
                     renderValue={(selected) => (
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                        {(selected as number[]).map((value) => {
-                          const user = filteredFMUsers.find(
-                            (u) => u.id === value
-                          );
-                          return (
-                            <Chip
-                              key={value}
-                              label={user?.name || `User ${value}`}
-                              size="small"
-                              sx={{
-                                backgroundColor: "#C72030",
-                                color: "white",
-                              }}
-                            />
-                          );
-                        })}
+                      <Box sx={{ 
+                        display: "flex", 
+                        flexWrap: "nowrap", 
+                        gap: 0.5,
+                        overflow: 'hidden',
+                        maxWidth: '100%'
+                      }}>
+                        {(selected as number[]).length <= 2 ? (
+                          // Show individual chips for 1-2 selections
+                          (selected as number[]).map((value) => {
+                            const user = filteredFMUsers.find(
+                              (u) => u.id === value
+                            );
+                            return (
+                              <Chip
+                                key={value}
+                                label={user?.name || `User ${value}`}
+                                size="small"
+                                sx={{
+                                  backgroundColor: "#C72030",
+                                  color: "white",
+                                  maxWidth: '150px',
+                                  '& .MuiChip-label': {
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                  }
+                                }}
+                              />
+                            );
+                          })
+                        ) : (
+                          // Show count for 3+ selections
+                          <Chip
+                            label={`${(selected as number[]).length} employees selected`}
+                            size="small"
+                            sx={{
+                              backgroundColor: "#C72030",
+                              color: "white",
+                            }}
+                          />
+                        )}
                       </Box>
                     )}
                     displayEmpty
@@ -1203,6 +1258,14 @@ export const RosterEditPage: React.FC = () => {
                       formData.departments.length === 0
                     }
                     error={errors.selectedEmployees}
+                    MenuProps={{
+                      PaperProps: {
+                        style: {
+                          maxHeight: 300,
+                          overflow: 'auto',
+                        },
+                      },
+                    }}
                   >
                     {filteredFMUsers.length > 0 ? (
                       filteredFMUsers.map((user) => (
