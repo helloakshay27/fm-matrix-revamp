@@ -4,9 +4,10 @@ import createApiSlice from "../api/apiSlice";
 
 export const getGRN = createAsyncThunk(
     "getGRN",
-    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page: number }, { rejectWithValue }) => {
+        console.log(page)
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/grns.json`, {
+            const response = await axios.get(`https://${baseUrl}/pms/grns.json?page=${page}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }

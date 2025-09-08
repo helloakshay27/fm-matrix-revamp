@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Printer, Rss } from "lucide-react";
+import { ArrowLeft, Download, Eye, File, FileSpreadsheet, FileText, Printer, Rss } from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
@@ -15,6 +15,8 @@ import {
 } from "@mui/material";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Define interfaces for data structures
 interface BillingAddress {
@@ -43,6 +45,9 @@ interface WOInvoiceInventory {
 }
 
 interface Attachment {
+    id: number;
+    url: string;
+    document_name?: string;
     document_file_name?: string;
 }
 
@@ -256,6 +261,8 @@ export const InvoiceDetails = () => {
     const [invoice, setInvoice] = useState<Invoice>({});
     const [openRejectDialog, setOpenRejectDialog] = useState<boolean>(false);
     const [rejectComment, setRejectComment] = useState<string>("");
+    const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -616,35 +623,90 @@ export const InvoiceDetails = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                    Attachments
-                </h3>
-                <div className="flex flex-col items-start gap-2 text-blue-600">
-                    {
-                        invoice?.attachments?.map((attachment, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                                <span className="cursor-pointer hover:underline">
-                                    {attachment.document_file_name}
-                                </span>
-                            </div>
-                        ))
-                    }
-                </div>
-            </div>
+            <Card className="shadow-sm border border-border mb-6">
+                <CardHeader className="pb-4">
+                    <CardTitle className="text-lg font-medium">Attachments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    {Array.isArray(invoice.attachments) && invoice.attachments.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            {invoice.attachments.map((attachment: Attachment) => {
+                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                                const isPdf = /\.pdf$/i.test(attachment.url);
+                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
+                                const isWord = /\.(doc|docx)$/i.test(attachment.url);
+                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                return (
+                                    <div
+                                        key={attachment.id}
+                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                    >
+                                        {isImage ? (
+                                            <>
+                                                <button
+                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                    title="View"
+                                                    onClick={() => {
+                                                        setSelectedAttachment(attachment);
+                                                        setIsPreviewModalOpen(true);
+                                                    }}
+                                                    type="button"
+                                                >
+                                                    <Eye className="w-4 h-4" />
+                                                </button>
+                                                <img
+                                                    src={attachment.url}
+                                                    alt={attachment.document_name || attachment.document_file_name}
+                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelectedAttachment(attachment);
+                                                        setIsPreviewModalOpen(true);
+                                                    }}
+                                                />
+                                            </>
+                                        ) : isPdf ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                        ) : isExcel ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                <FileSpreadsheet className="w-6 h-6" />
+                                            </div>
+                                        ) : isWord ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                <File className="w-6 h-6" />
+                                            </div>
+                                        )}
+                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                            {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                                        </span>
+                                        {isDownloadable && (
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                onClick={() => {
+                                                    setSelectedAttachment(attachment);
+                                                    setIsPreviewModalOpen(true);
+                                                }}
+                                            >
+                                                <Download className="w-4 h-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <p className="text-muted-foreground">No attachments</p>
+                    )}
+                </CardContent>
+            </Card>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -766,6 +828,13 @@ export const InvoiceDetails = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <AttachmentPreviewModal
+                isModalOpen={isPreviewModalOpen}
+                setIsModalOpen={setIsPreviewModalOpen}
+                selectedDoc={selectedAttachment}
+                setSelectedDoc={setSelectedAttachment}
+            />
         </div>
     );
 };
