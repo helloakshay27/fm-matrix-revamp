@@ -13,7 +13,7 @@ import { apiClient } from '@/utils/apiClient';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
 import { fetchInventoryAssets } from '@/store/slices/inventoryAssetsSlice';
-import { Autocomplete, Checkbox, CircularProgress } from '@mui/material';
+import { Checkbox, CircularProgress } from '@mui/material';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 
@@ -38,6 +38,16 @@ export const AddAMCPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittingAction, setSubmittingAction] = useState<'show' | 'schedule' | null>(null);
   const [assetList, setAssetList] = useState<any[]>([]); // [setAssetList]
+  // Assets remote search using global enhancer
+  const [assetOptions, setAssetOptions] = useState<any[]>([]);
+  const [assetQuery, setAssetQuery] = useState('');
+  const [assetSearchLoading, setAssetSearchLoading] = useState(false);
+  const [assetMenuId] = useState(() => `asset-menu-${Math.random().toString(36).slice(2)}`);
+  // Suppliers remote search using global enhancer
+  const [supplierOptions, setSupplierOptions] = useState<any[]>([]);
+  const [supplierQuery, setSupplierQuery] = useState('');
+  const [supplierSearchLoading, setSupplierSearchLoading] = useState(false);
+  const [supplierMenuId] = useState(() => `supplier-menu-${Math.random().toString(36).slice(2)}`);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -85,7 +95,13 @@ export const AddAMCPage = () => {
 
   const [loading, setLoading] = useState(false);
 
-  const suppliers = Array.isArray((suppliersData as any)?.suppliers) ? (suppliersData as any).suppliers : Array.isArray(suppliersData) ? suppliersData : [];
+  const suppliers = Array.isArray((suppliersData as any)?.suppliers)
+    ? (suppliersData as any).suppliers
+    : Array.isArray((suppliersData as any)?.pms_suppliers)
+    ? (suppliersData as any).pms_suppliers
+    : Array.isArray(suppliersData)
+    ? (suppliersData as any)
+    : [];
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -186,6 +202,123 @@ export const AddAMCPage = () => {
     fetchService();
     fetchAssetGroups();
   }, [dispatch]);
+
+  // Seed initial options from the fetched asset list
+  useEffect(() => {
+    if (Array.isArray(assetList) && assetList.length) {
+      setAssetOptions(assetList);
+    }
+  }, [assetList]);
+
+  // Listen to global enhancer search input only within the Assets menu
+  useEffect(() => {
+    const onInput = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (!t || !(t instanceof HTMLInputElement)) return;
+      if (!t.classList.contains('mui-search-input')) return;
+      const paper = t.closest('.MuiMenu-paper, .MuiPaper-root') as HTMLElement | null;
+      if (!paper || paper.id !== assetMenuId) return;
+      setAssetQuery(t.value || '');
+    };
+    document.addEventListener('input', onInput, true);
+    return () => document.removeEventListener('input', onInput, true);
+  }, [assetMenuId]);
+
+  // Listen within the Supplier menu
+  useEffect(() => {
+    const onInput = (e: Event) => {
+      const t = e.target as HTMLElement | null;
+      if (!t || !(t instanceof HTMLInputElement)) return;
+      if (!t.classList.contains('mui-search-input')) return;
+      const paper = t.closest('.MuiMenu-paper, .MuiPaper-root') as HTMLElement | null;
+      if (!paper || paper.id !== supplierMenuId) return;
+      setSupplierQuery(t.value || '');
+    };
+    document.addEventListener('input', onInput, true);
+    return () => document.removeEventListener('input', onInput, true);
+  }, [supplierMenuId]);
+
+  // Clear back to initial options when below threshold
+  useEffect(() => {
+    if (assetQuery.length < 3) {
+      setAssetOptions(assetList || []);
+      setAssetSearchLoading(false);
+    }
+  }, [assetQuery, assetList]);
+
+  // Debounced remote search for assets after 3+ chars
+  useEffect(() => {
+    if (assetQuery.length < 3) return;
+    let active = true;
+    const handler = setTimeout(async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        setAssetSearchLoading(true);
+        const url = `https://${baseUrl}/pms/assets/get_assets.json?q[name_cont]=${encodeURIComponent(assetQuery)}`;
+        const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        if (!active) return;
+        if (resp.ok) {
+          const data = await resp.json();
+          const arr = Array.isArray(data) ? data : (Array.isArray(data?.assets) ? data.assets : []);
+          setAssetOptions(arr);
+        } else {
+          setAssetOptions([]);
+        }
+      } catch (err) {
+        console.error('Asset search error', err);
+      } finally {
+        if (active) setAssetSearchLoading(false);
+      }
+    }, 350);
+    return () => { active = false; clearTimeout(handler); };
+  }, [assetQuery]);
+
+  // Clear and seed supplier options
+  useEffect(() => {
+    const list = Array.isArray(suppliers) ? suppliers : [];
+    setSupplierOptions(list);
+  }, [suppliers]);
+
+  // Reset to initial suppliers when search is cleared
+  useEffect(() => {
+    if (supplierQuery.length === 0) {
+      const list = Array.isArray(suppliers) ? suppliers : [];
+      setSupplierOptions(list);
+      setSupplierSearchLoading(false);
+    }
+  }, [supplierQuery, suppliers]);
+
+  // Debounced remote search for suppliers on any input (1+ char)
+  useEffect(() => {
+    if (supplierQuery.length === 0) return;
+    let active = true;
+    const handler = setTimeout(async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        setSupplierSearchLoading(true);
+        // Prefer company_name match; fallbacks exist in slices using pms_supplier_company_name_cont
+        const url = `https://${baseUrl}/pms/suppliers/get_suppliers.json?q[company_name_cont]=${encodeURIComponent(supplierQuery)}`;
+        const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+  if (!active) return;
+        if (resp.ok) {
+          const data = await resp.json();
+          const arr = Array.isArray(data) ? data : (Array.isArray(data?.pms_suppliers) ? data.pms_suppliers : (Array.isArray(data?.suppliers) ? data.suppliers : []));
+          setSupplierOptions(arr);
+        } else {
+          setSupplierOptions([]);
+        }
+      } catch (err) {
+        console.error('Supplier search error', err);
+      } finally {
+        if (active) setSupplierSearchLoading(false);
+      }
+    }, 350);
+    return () => { active = false; clearTimeout(handler); };
+  }, [supplierQuery]);
 
   useEffect(() => {
     if (amcCreateSuccess) {
@@ -572,80 +705,55 @@ export const AddAMCPage = () => {
             {formData.type === 'Individual' ? (
               <>
                 {formData.details === 'Asset' ? (
-                  <Autocomplete
-                    multiple
-                    size="small"
-                    disableCloseOnSelect
-                    options={assetList || []}
-                    loading={loading}
-                    getOptionLabel={(option) => option.name}
-                    value={
-                      assetList?.filter(asset => formData.asset_ids.includes(asset.id)) || []
-                    }
-                    onChange={(event, newValue) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        asset_ids: newValue.map(asset => asset.id)
-                      }));
-                      setErrors(prev => ({ ...prev, asset_ids: '' }));
-                    }}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
-                    renderOption={(props, option, { selected }) => (
-                      <li {...props}>
-                        <Checkbox
-                          icon={icon}
-                          checkedIcon={checkedIcon}
-                          style={{ marginRight: 8 }}
-                          checked={selected}
-                        />
-                        {option.name}
-                      </li>
-                    )}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        variant="outlined"
-                        label={
-                          <span>
-                            Assets<span style={{ color: '#C72030' }}>*</span>
-                          </span>
-                        }
-                        placeholder="Search Assets..."
-                        fullWidth
-                        size="small"
-                        InputLabelProps={{ shrink: true }}
-                        error={!!errors.asset_ids}
-                        helperText={errors.asset_ids}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            height: 'auto',
-                            minHeight: '45px',
-                            alignItems: 'flex-start',
-                            paddingTop: '4px',
-                            paddingBottom: '4px',
-                          },
-                          '& .MuiInputBase-root': {
-                            flexWrap: 'wrap',
-                            maxHeight: '100px',
-                            overflowY: 'auto',
-                          },
-                          '& .MuiChip-root': {
-                            margin: '2px',
-                          },
-                        }}
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {loading ? <CircularProgress color="inherit" size={20} /> : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                    disabled={loading || isSubmitting}
-                  />
+                  <FormControl fullWidth variant="outlined" error={!!errors.asset_ids}>
+                    <InputLabel id="assets-multiselect-label" shrink>
+                      Assets <span style={{ color: '#C72030' }}>*</span>
+                    </InputLabel>
+                    <MuiSelect
+                      labelId="assets-multiselect-label"
+                      label="Assets"
+                      multiple
+                      value={formData.asset_ids}
+                      onChange={(e) => {
+                        const val = e.target.value as (string[] | number[]);
+                        const ids = (Array.isArray(val) ? val : []).map(v => Number(v));
+                        setFormData(prev => ({ ...prev, asset_ids: ids }));
+                        setErrors(prev => ({ ...prev, asset_ids: '' }));
+                      }}
+                      renderValue={(selected) => {
+                        const all = [...(assetList || []), ...(assetOptions || [])];
+                        const map = new Map<number, string>();
+                        all.forEach(a => map.set(Number(a.id), a.name));
+                        const labels = (selected as number[]).map(id => map.get(Number(id)) || String(id));
+                        return labels.length ? labels.join(', ') : 'Select Assets';
+                      }}
+                      sx={fieldStyles}
+                      disabled={isSubmitting}
+                      MenuProps={{
+                        PaperProps: { id: assetMenuId } as any,
+                        MenuListProps: { autoFocusItem: false } as any,
+                      }}
+                    >
+                      <MenuItem disabled>
+                        {assetQuery.length > 0 && assetQuery.length < 3
+                          ? 'Type at least 3 characters…'
+                          : (assetSearchLoading ? 'Searching…' : 'Select assets')}
+                      </MenuItem>
+                      {assetOptions.map((a) => {
+                        const checked = formData.asset_ids.includes(Number(a.id));
+                        return (
+                          <MenuItem key={a.id} value={Number(a.id)}>
+                            <Checkbox checked={checked} />
+                            {a.name}
+                          </MenuItem>
+                        );
+                      })}
+                      {!assetSearchLoading && assetOptions.length === 0 && (
+                        <MenuItem disabled>No results</MenuItem>
+                      )}
+                    </MuiSelect>
+                    {errors.asset_ids && <FormHelperText>{errors.asset_ids}</FormHelperText>}
+                  </FormControl>
                 ) : (
                   <FormControl fullWidth variant="outlined" error={!!errors.service}>
                     <InputLabel id="service-select-label" shrink>
@@ -684,11 +792,19 @@ export const AddAMCPage = () => {
                       onChange={e => handleInputChange('supplier', e.target.value)}
                       sx={fieldStyles}
                       disabled={loading || suppliersLoading || isSubmitting}
+                      MenuProps={{
+                        PaperProps: { id: supplierMenuId } as any,
+                        MenuListProps: { autoFocusItem: false } as any,
+                      }}
                     >
                       <MenuItem value=""><em>Select Supplier</em></MenuItem>
-                      {Array.isArray(suppliers) && suppliers.map((supplier) => (
-                        <MenuItem key={supplier.id} value={supplier.id.toString()}>
-                          {supplier.company_name}
+                      {supplierSearchLoading && <MenuItem disabled>Searching…</MenuItem>}
+                      {!supplierSearchLoading && supplierOptions.length === 0 && (
+                        <MenuItem disabled>No results</MenuItem>
+                      )}
+                      {Array.isArray(supplierOptions) && supplierOptions.map((supplier) => (
+                        <MenuItem key={supplier.id} value={supplier.id?.toString?.() || String(supplier.id)}>
+                          {supplier.company_name || supplier.name}
                         </MenuItem>
                       ))}
                     </MuiSelect>
