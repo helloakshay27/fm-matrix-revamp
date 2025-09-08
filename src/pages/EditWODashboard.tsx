@@ -721,12 +721,16 @@ export const EditWODashboard: React.FC = () => {
                                     fullWidth
                                     variant="outlined"
                                     multiline
-                                    rows={4}
+                                    rows={2}
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
                                     sx={{
                                         mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
                                     }}
                                 />
                             </div>
@@ -1422,12 +1426,16 @@ export const EditWODashboard: React.FC = () => {
                                         handleInputChange("description", e.target.value)
                                     }
                                     multiline
-                                    rows={6}
+                                    rows={3}
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
                                     sx={{
                                         mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
                                     }}
                                 />
                             </div>
@@ -1443,12 +1451,16 @@ export const EditWODashboard: React.FC = () => {
                                         handleInputChange("termsConditions", e.target.value)
                                     }
                                     multiline
-                                    rows={6}
+                                    rows={3}
                                     InputLabelProps={{
                                         shrink: true,
                                     }}
                                     sx={{
                                         mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
                                     }}
                                 />
                             </div>

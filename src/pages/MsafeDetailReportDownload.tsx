@@ -45,7 +45,10 @@ const MsafeDetailReportDownload: React.FC = () => {
         return;
       }
 
-      const response = await axios.get(`${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`);
+      const response = await axios.get(
+        `${baseUrl}/krcc_forms/msafe_detail_report_fetch.json?company_id=${companyId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       if (response.data.status === 'completed') {
         const downloadUrl = response.data.download_url;
@@ -79,8 +82,8 @@ const MsafeDetailReportDownload: React.FC = () => {
     <div className="p-6 md:p-10">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">MSafe Detail Report Download</h1>
       <p className="text-gray-600 mb-6">
-  This report contains downloadable files, including the Master Report SSO, Master Report Sign-in, SMT Report, LMC Report, and Training Report.
-</p>
+        This report contains downloadable files, including the Master Report SSO, Master Report Sign-in, SMT Report, LMC Report, and Training Report.
+      </p>
 
       {/* <FormGroup className="space-y-6 mb-8">
         <FormControlLabel

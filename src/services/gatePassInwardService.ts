@@ -16,7 +16,14 @@ const fetchAndFormat = async (url: string, key: string) => {
         return [];
     }
 
-    console.log("Fetched items:", items, data);
+    // Special handling for item_categories with only 'category' property
+    if (key === 'item_categories' && items.length > 0 && items[0].category && !items[0].id && !items[0].name) {
+        return items.map((item: any, idx: number) => ({
+            id: item.category, // use category string as id
+            name: item.category,
+            quantity: undefined
+        }));
+    }
 
     return items.map((item: any) => ({ id: item.id, name: item.name, quantity: item.quantity })) ;
 };
@@ -32,9 +39,12 @@ export const gatePassInwardService = {
     }
   },
 
-  async getInventorySubTypes(inventoryTypeId: number) {
+  async getInventorySubTypes(inventoryTypeId?: number) {
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/inventory_types/get_subtype.json?inventory_type_id=${inventoryTypeId}`;
+      let url = `${API_CONFIG.BASE_URL}/pms/inventory_types/get_subtype.json`;
+      if (inventoryTypeId) {
+        url += `?inventory_type_id=${inventoryTypeId}`;
+      }
       return await fetchAndFormat(url, 'item_categories');
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching inventory sub-types.');

@@ -240,7 +240,7 @@ export const GatePassOutwardsDetailPage = () => {
                 <Table>
                 <TableHeader>
                     <TableRow className="bg-gray-50">
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">S No.</TableHead>
+                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sr No.</TableHead>
                     <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
                     <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
                     <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
