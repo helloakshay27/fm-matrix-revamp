@@ -62,7 +62,7 @@ interface TaskSection {
 }
 
 const SectionCard = ({ children, style = {} }: { children: React.ReactNode, style?: React.CSSProperties }) => (
-  <Paper 
+  <Paper
     sx={{
       backgroundColor: 'white',
       boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
@@ -76,6 +76,31 @@ const SectionCard = ({ children, style = {} }: { children: React.ReactNode, styl
   </Paper>
 );
 
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '40px',
+    fontSize: '14px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
 export const ChecklistMasterPage = () => {
   const { setCurrentSection } = useLayout();
   const navigate = useNavigate();
@@ -83,7 +108,7 @@ export const ChecklistMasterPage = () => {
   useEffect(() => {
     setCurrentSection('Master');
   }, [setCurrentSection]);
-  
+
   const [formData, setFormData] = useState({
     type: 'PPM',
     scheduleFor: 'Asset',
@@ -164,16 +189,16 @@ export const ChecklistMasterPage = () => {
               prevSections.map(section =>
                 section.id === sectionId
                   ? {
-                      ...section,
-                      tasks: section.tasks.map(task =>
-                        task.id === taskId
-                          ? {
-                              ...task,
-                              helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments],
-                            }
-                          : task
-                      ),
-                    }
+                    ...section,
+                    tasks: section.tasks.map(task =>
+                      task.id === taskId
+                        ? {
+                          ...task,
+                          helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments],
+                        }
+                        : task
+                    ),
+                  }
                   : section
               )
             );
@@ -192,16 +217,16 @@ export const ChecklistMasterPage = () => {
       prevSections.map(section =>
         section.id === sectionId
           ? {
-              ...section,
-              tasks: section.tasks.map(task =>
-                task.id === taskId
-                  ? {
-                      ...task,
-                      helpTextAttachments: (task.helpTextAttachments || []).filter(att => att.id !== attachmentId),
-                    }
-                  : task
-              ),
-            }
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  helpTextAttachments: (task.helpTextAttachments || []).filter(att => att.id !== attachmentId),
+                }
+                : task
+            ),
+          }
           : section
       )
     );
@@ -248,16 +273,16 @@ export const ChecklistMasterPage = () => {
       rating_enabled: false
     };
 
-    setSections(sections.map(section => 
-      section.id === sectionId 
+    setSections(sections.map(section =>
+      section.id === sectionId
         ? { ...section, tasks: [...section.tasks, newTask] }
         : section
     ));
   };
 
   const removeTask = (sectionId: string, taskId: string) => {
-    setSections(sections.map(section => 
-      section.id === sectionId 
+    setSections(sections.map(section =>
+      section.id === sectionId
         ? { ...section, tasks: section.tasks.filter(task => task.id !== taskId) }
         : section
     ));
@@ -265,38 +290,38 @@ export const ChecklistMasterPage = () => {
 
   const updateTask = useCallback((sectionId: string, taskId: string, field: keyof Task, value: any) => {
     console.log('Updating task:', { sectionId, taskId, field, value }); // Debug log
-    setSections(prevSections => prevSections.map(section => 
-      section.id === sectionId 
+    setSections(prevSections => prevSections.map(section =>
+      section.id === sectionId
         ? {
-            ...section,
-            tasks: section.tasks.map(task => 
-              task.id === taskId 
-                ? { ...task, [field]: value }
-                : task
-            )
-          }
+          ...section,
+          tasks: section.tasks.map(task =>
+            task.id === taskId
+              ? { ...task, [field]: value }
+              : task
+          )
+        }
         : section
     ));
   }, []);
 
-  const updateTaskValues = useCallback((sectionId: string, taskId: string, values: Array<{label: string; type: string; value: string}>) => {
-    setSections(prevSections => prevSections.map(section => 
-      section.id === sectionId 
+  const updateTaskValues = useCallback((sectionId: string, taskId: string, values: Array<{ label: string; type: string; value: string }>) => {
+    setSections(prevSections => prevSections.map(section =>
+      section.id === sectionId
         ? {
-            ...section,
-            tasks: section.tasks.map(task => 
-              task.id === taskId 
-                ? { ...task, values }
-                : task
-            )
-          }
+          ...section,
+          tasks: section.tasks.map(task =>
+            task.id === taskId
+              ? { ...task, values }
+              : task
+          )
+        }
         : section
     ));
   }, []);
 
   const toggleSection = (sectionId: string) => {
-    setSections(sections.map(section => 
-      section.id === sectionId 
+    setSections(sections.map(section =>
+      section.id === sectionId
         ? { ...section, isExpanded: !section.isExpanded }
         : section
     ));
@@ -353,8 +378,8 @@ export const ChecklistMasterPage = () => {
 
   const updateValue = (sectionId: string, taskId: string, valueIndex: number, field: 'label' | 'type', value: string) => {
     const currentValues = getTaskValues(sectionId, taskId);
-    const newValues = currentValues.map((val, index) => 
-      index === valueIndex 
+    const newValues = currentValues.map((val, index) =>
+      index === valueIndex
         ? { ...val, [field]: value, value: field === 'label' ? value : val.value }
         : val
     );
@@ -369,13 +394,13 @@ export const ChecklistMasterPage = () => {
 
   const handleSubmit = () => {
     // Validate required fields
-    if (!formData.activityName ) {
+    if (!formData.activityName) {
       toast.error('Please fill in all required fields');
       return;
     }
 
     // Validate that all tasks have questions
-    const hasEmptyQuestions = sections.some(section => 
+    const hasEmptyQuestions = sections.some(section =>
       section.tasks.some(task => !task.question.trim())
     );
 
@@ -385,7 +410,7 @@ export const ChecklistMasterPage = () => {
     }
 
     // Transform form data to API payload format
-    const content = sections.flatMap(section => 
+    const content = sections.flatMap(section =>
       section.tasks.map(task => ({
         label: task.question,
         name: `qnm_${task.id}`,
@@ -397,13 +422,13 @@ export const ChecklistMasterPage = () => {
         required: task.mandatory.toString(),
         is_reading: task.reading.toString(),
         hint: task.helpTextEnabled ? task.helpTextValue : task.helpText,
-        values: task.inputType === 'radio-group' || task.inputType === 'dropdown' 
-          ? task.values.length > 0 
-            ? task.values 
+        values: task.inputType === 'radio-group' || task.inputType === 'dropdown'
+          ? task.values.length > 0
+            ? task.values
             : [
-                { label: "Yes", type: "positive", value: "Yes" },
-                { label: "No", type: "negative", value: "No" }
-              ]
+              { label: "Yes", type: "positive", value: "Yes" },
+              { label: "No", type: "negative", value: "No" }
+            ]
           : task.values,
         consumption_type: task.consumption_type,
         consumption_unit_type: task.consumption_unit_type,
@@ -701,10 +726,8 @@ export const ChecklistMasterPage = () => {
             onChange={(e) => handleFormChange('activityName', e.target.value)}
             sx={{ mb: 3 }}
           />
-
           <TextField
-            label="Description"
-            required
+            label={<span>Description <span style={{ color: 'red' }}>*</span></span>}
             placeholder="Enter Description/SOP"
             fullWidth
             multiline
@@ -716,36 +739,24 @@ export const ChecklistMasterPage = () => {
           {
             formData.scheduleFor === 'Asset' && (
 
-          <Box >
-            <Autocomplete
-              options={[
-                { id: 'Electrical', label: 'Electrical', value: 'Electrical' },
-                { id: 'Mechanical', label: 'Mechanical', value: 'Mechanical' },
-                { id: 'HVAC', label: 'HVAC', value: 'HVAC' },
-                { id: 'Plumbing', label: 'Plumbing', value: 'Plumbing' }
-              ]}
-              getOptionLabel={(option) => option.label}
-              value={[
-                { id: 'Electrical', label: 'Electrical', value: 'Electrical' },
-                { id: 'Mechanical', label: 'Mechanical', value: 'Mechanical' },
-                { id: 'HVAC', label: 'HVAC', value: 'HVAC' },
-                { id: 'Plumbing', label: 'Plumbing', value: 'Plumbing' }
-              ].find(option => option.value === formData.assetType) || null}
-              onChange={(event, newValue) => {
-                handleFormChange('assetType', newValue?.value || '');
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Asset Type"
-                  required
-                  placeholder="Select Asset Type"
-                  fullWidth
-                />
-              )}
-              isOptionEqualToValue={(option, value) => option.id === value.id}
-            />
-          </Box>
+              <Box >
+                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Asset Type</InputLabel>
+                  <MuiSelect
+                    label="Asset Type"
+                    notched
+                    displayEmpty
+                    value={formData.assetType}
+                    onChange={e => handleFormChange('assetType', e.target.value)}
+                  >
+                    <MenuItem value="">Select Asset Type</MenuItem>
+                    <MenuItem value="Electrical">Electrical</MenuItem>
+                    <MenuItem value="Mechanical">Mechanical</MenuItem>
+                    <MenuItem value="HVAC">HVAC</MenuItem>
+                    <MenuItem value="Plumbing">Plumbing</MenuItem>
+                  </MuiSelect>
+                </FormControl>
+              </Box>
             )
           }
 
@@ -954,69 +965,39 @@ export const ChecklistMasterPage = () => {
                   </MuiRadioGroup>
                 </Box>
 
-                <Autocomplete
-                  disabled={loading.users}
-                  options={[
-                    { id: '', label: 'Select Assigned To', value: '' },
-                    ...users.map((user) => ({
-                      id: user.id.toString(),
-                      label: user.full_name,
-                      value: user.id.toString()
-                    }))
-                  ]}
-                  getOptionLabel={(option) => option.label}
-                  value={[
-                    { id: '', label: 'Select Assigned To', value: '' },
-                    ...users.map((user) => ({
-                      id: user.id.toString(),
-                      label: user.full_name,
-                      value: user.id.toString()
-                    }))
-                  ].find(option => option.value === formData.ticketAssignedTo) || null}
-                  onChange={(event, newValue) => {
-                    if (newValue) handleFormChange('ticketAssignedTo', newValue.value);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params} 
-                      label="Assigned To"
-                      required
-                      fullWidth 
-                    />
-                  )}
-                />
+                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Assigned To</InputLabel>
+                  <MuiSelect
+                    label="Assigned To"
+                    notched
+                    displayEmpty
+                    value={formData.ticketAssignedTo}
+                    onChange={e => handleFormChange('ticketAssignedTo', e.target.value)}
+                    disabled={loading.users}
+                  >
+                    <MenuItem value="">Select Assigned To</MenuItem>
+                    {users.map(user => (
+                      <MenuItem key={user.id} value={user.id.toString()}>{user.full_name}</MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
 
-                <Autocomplete
-                  disabled={loading.helpdeskCategories}
-                  options={[
-                    { id: '', label: 'Select Category', value: '' },
-                    ...helpdeskCategories.map((category) => ({
-                      id: category.id.toString(),
-                      label: category.name,
-                      value: category.id.toString()
-                    }))
-                  ]}
-                  getOptionLabel={(option) => option.label}
-                  value={[
-                    { id: '', label: 'Select Category', value: '' },
-                    ...helpdeskCategories.map((category) => ({
-                      id: category.id.toString(),
-                      label: category.name,
-                      value: category.id.toString()
-                    }))
-                  ].find(option => option.value === formData.ticketCategory) || null}
-                  onChange={(event, newValue) => {
-                    if (newValue) handleFormChange('ticketCategory', newValue.value);
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params} 
-                      label="Category"
-                      required
-                      fullWidth 
-                    />
-                  )}
-                />
+                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Category</InputLabel>
+                  <MuiSelect
+                    label="Category"
+                    notched
+                    displayEmpty
+                    value={formData.ticketCategory}
+                    onChange={e => handleFormChange('ticketCategory', e.target.value)}
+                    disabled={loading.helpdeskCategories}
+                  >
+                    <MenuItem value="">Select Category</MenuItem>
+                    {helpdeskCategories.map(category => (
+                      <MenuItem key={category.id} value={category.id.toString()}>{category.name}</MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
                 {loading.helpdeskCategories && (
                   <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
                     Loading categories...
@@ -1024,7 +1005,7 @@ export const ChecklistMasterPage = () => {
                 )}
               </Box>
             </div>
-            )}
+          )}
 
           {/* Main Content in White Box */}
           {sections.map((section, sectionIndex) => (
@@ -1133,52 +1114,39 @@ export const ChecklistMasterPage = () => {
                           onChange={(e) => updateTask(section.id, task.id, 'question', e.target.value)}
                         />
 
-                        <Autocomplete
-                          options={[
-                            { id: '', label: 'Select Input Type', value: '' },
-                            { id: 'text', label: 'Text', value: 'text' },
-                            { id: 'number', label: 'Numeric', value: 'number' },
-                            { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
-                            // { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
-                            { id: 'radio-group', label: 'Radio', value: 'radio-group' },
-                            { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
-                          ]}
-                          getOptionLabel={(option) => option.label}
-                          value={[
-                            { id: '', label: 'Select Input Type', value: '' },
-                            { id: 'text', label: 'Text', value: 'text' },
-                            { id: 'number', label: 'Numeric', value: 'number' },
-                            { id: 'dropdown', label: 'Dropdown', value: 'dropdown' },
-                            { id: 'checkbox', label: 'Checkbox', value: 'checkbox' },
-                            { id: 'radio-group', label: 'Radio', value: 'radio-group' },
-                            { id: 'options-inputs', label: 'Options & Inputs', value: 'options-inputs' }
-                          ].find(option => option.value === task.inputType) || null}
-                          onChange={(event, newValue) => {
-                            if (!newValue) return;
-                            updateTask(section.id, task.id, 'inputType', newValue.value);
-                            // Handle default values for different input types
-                            if (newValue.value === 'radio-group' || newValue.value === 'dropdown') {
-                              updateTaskValues(section.id, task.id, [
-                                { label: "Yes", type: "positive", value: "Yes" },
-                                { label: "No", type: "negative", value: "No" }
-                              ]);
-                            } else if (newValue.value === 'checkbox' || newValue.value === 'options-inputs') {
-                              updateTaskValues(section.id, task.id, [
-                                { label: "", type: "positive", value: "" }
-                              ]);
-                            } else {
-                              updateTaskValues(section.id, task.id, []);
-                            }
-                          }}
-                          renderInput={(params) => (
-                            <TextField
-                              {...params} 
-                              label="Input Type"
-                              required={task.mandatory}
-                              fullWidth 
-                            />
-                          )}
-                        />
+                        <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                          <InputLabel shrink>Input Type</InputLabel>
+                          <MuiSelect
+                            label="Input Type"
+                            notched
+                            displayEmpty
+                            value={task.inputType}
+                            onChange={e => {
+                              const newValue = e.target.value;
+                              updateTask(section.id, task.id, 'inputType', newValue);
+                              // Handle default values for different input types
+                              if (newValue === 'radio-group' || newValue === 'dropdown') {
+                                updateTaskValues(section.id, task.id, [
+                                  { label: "Yes", type: "positive", value: "Yes" },
+                                  { label: "No", type: "negative", value: "No" }
+                                ]);
+                              } else if (newValue === 'checkbox' || newValue === 'options-inputs') {
+                                updateTaskValues(section.id, task.id, [
+                                  { label: "", type: "positive", value: "" }
+                                ]);
+                              } else {
+                                updateTaskValues(section.id, task.id, []);
+                              }
+                            }}
+                          >
+                            <MenuItem value="">Select Input Type</MenuItem>
+                            <MenuItem value="text">Text</MenuItem>
+                            <MenuItem value="number">Numeric</MenuItem>
+                            <MenuItem value="dropdown">Dropdown</MenuItem>
+                            <MenuItem value="radio-group">Radio</MenuItem>
+                            <MenuItem value="options-inputs">Options & Inputs</MenuItem>
+                          </MuiSelect>
+                        </FormControl>
 
                         {weightage && (
                           <TextField
@@ -1193,7 +1161,7 @@ export const ChecklistMasterPage = () => {
                         )}
                       </Box>
 
-                          {task.helpTextEnabled && (
+                      {task.helpTextEnabled && (
                         <Box sx={{ mt: 2 }}>
                           <TextField
                             label="Help Text (Hint)"
@@ -1270,7 +1238,7 @@ export const ChecklistMasterPage = () => {
                         <div className="space-y-2">
                           <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
                             <Label className="block text-sm font-semibold mb-2 text-gray-700">Enter Value</Label>
-                            
+
                             {task.values.map((value, valueIndex) => (
                               <div key={valueIndex} className="flex items-center gap-2 mb-2">
                                 <Input
@@ -1279,7 +1247,7 @@ export const ChecklistMasterPage = () => {
                                   placeholder="Enter option value"
                                   className="flex-1 bg-white"
                                 />
-                                
+
                                 <Select
                                   value={value.type}
                                   onValueChange={(newType) => updateValue(section.id, task.id, valueIndex, 'type', newType)}
@@ -1292,7 +1260,7 @@ export const ChecklistMasterPage = () => {
                                     <SelectItem value="negative">N</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                
+
                                 {task.values.length > 1 && (
                                   <Button
                                     type="button"
@@ -1306,7 +1274,7 @@ export const ChecklistMasterPage = () => {
                                 )}
                               </div>
                             ))}
-                            
+
                             <div className="flex justify-end mt-2">
                               <Button
                                 type="button"
@@ -1330,7 +1298,7 @@ export const ChecklistMasterPage = () => {
                               <Label className="text-sm font-semibold text-gray-700">Selected</Label>
                               <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
                             </div>
-                            
+
                             {task.values.map((value, valueIndex) => (
                               <div key={valueIndex} className="flex items-center gap-2 mb-2">
                                 <input
@@ -1340,14 +1308,14 @@ export const ChecklistMasterPage = () => {
                                   className="text-red-600"
                                   readOnly
                                 />
-                                
+
                                 <Input
                                   value={value.label}
                                   onChange={(e) => updateValue(section.id, task.id, valueIndex, 'label', e.target.value)}
                                   placeholder="Enter option value"
                                   className="flex-1 bg-white"
                                 />
-                                
+
                                 <Select
                                   value={value.type}
                                   onValueChange={(newType) => updateValue(section.id, task.id, valueIndex, 'type', newType)}
@@ -1360,7 +1328,7 @@ export const ChecklistMasterPage = () => {
                                     <SelectItem value="negative">N</SelectItem>
                                   </SelectContent>
                                 </Select>
-                                
+
                                 {task.values.length > 1 && (
                                   <Button
                                     type="button"
@@ -1374,7 +1342,7 @@ export const ChecklistMasterPage = () => {
                                 )}
                               </div>
                             ))}
-                            
+
                             <div className="flex justify-end mt-2">
                               <Button
                                 type="button"
@@ -1398,14 +1366,14 @@ export const ChecklistMasterPage = () => {
                               <Label className="text-sm font-semibold text-gray-700">Selected</Label>
                               <Label className="text-sm font-semibold text-gray-700">Enter Value</Label>
                             </div>
-                            
+
                             {(task.values.length > 0 ? task.values : [{ label: "", type: "positive", value: "" }]).map((value, valueIndex) => (
                               <div key={valueIndex} className="flex items-center gap-2 mb-2">
                                 <Checkbox
                                   checked={valueIndex === 0}
                                   className="text-red-600"
                                 />
-                                
+
                                 <Input
                                   value={value.label}
                                   onChange={(e) => {
@@ -1418,7 +1386,7 @@ export const ChecklistMasterPage = () => {
                                   placeholder="Enter option value"
                                   className="flex-1 bg-white"
                                 />
-                                
+
                                 {task.values.length > 1 && (
                                   <Button
                                     type="button"
@@ -1432,7 +1400,7 @@ export const ChecklistMasterPage = () => {
                                 )}
                               </div>
                             ))}
-                            
+
                             <div className="flex justify-end mt-2">
                               <Button
                                 type="button"
@@ -1462,7 +1430,7 @@ export const ChecklistMasterPage = () => {
                         <div className="space-y-2">
                           <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
                             <Label className="block text-sm font-semibold mb-2 text-gray-700 text-center">Enter Value</Label>
-                            
+
                             {(task.values.length > 0 ? task.values : [{ label: "", type: "positive", value: "" }]).map((value, valueIndex) => (
                               <div key={valueIndex} className="flex items-center gap-2 mb-2">
                                 <Input
@@ -1477,7 +1445,7 @@ export const ChecklistMasterPage = () => {
                                   placeholder="Enter option value"
                                   className="flex-1 bg-white"
                                 />
-                                
+
                                 {task.values.length > 1 && (
                                   <Button
                                     type="button"
@@ -1491,7 +1459,7 @@ export const ChecklistMasterPage = () => {
                                 )}
                               </div>
                             ))}
-                            
+
                             <div className="flex justify-end mt-2">
                               <Button
                                 type="button"
