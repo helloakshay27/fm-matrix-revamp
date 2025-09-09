@@ -143,6 +143,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case 'rating':
         return selectedRating !== null;
       case 'emoji':
+      case 'smiley':
         return selectedRating !== null;
       default:
         return true;
