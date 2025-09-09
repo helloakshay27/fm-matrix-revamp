@@ -14,7 +14,6 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
-  Autocomplete,
 } from "@mui/material";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import {
@@ -62,6 +61,7 @@ export const EditMaterialPRDashboard = () => {
       id: 1,
       itemDetails: "",
       sacHsnCode: "",
+      sacHsnCodeId: "",
       productDescription: "",
       each: "",
       quantity: "",
@@ -143,6 +143,7 @@ export const EditMaterialPRDashboard = () => {
           response.pms_po_inventories.map((item) => ({
             id: item.id,
             itemDetails: item.inventory?.id,
+            sacHsnCodeId: item.hsn_id,
             sacHsnCode: item.sac_hsn_code,
             productDescription: item.prod_desc,
             each: item.rate,
@@ -279,6 +280,7 @@ export const EditMaterialPRDashboard = () => {
         id: items.length + 1,
         itemDetails: "",
         sacHsnCode: "",
+        sacHsnCodeId: "",
         productDescription: "",
         each: "",
         quantity: "",
@@ -309,7 +311,8 @@ export const EditMaterialPRDashboard = () => {
           item.id === itemId
             ? {
               ...item,
-              sacHsnCode: response.data.hsn?.id || "",
+              sacHsnCode: response.data.hsn?.code || "",
+              sacHsnCodeId: response.data.hsn?.id || "",
               each: response.data.rate || "",
               amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
             }
@@ -331,10 +334,6 @@ export const EditMaterialPRDashboard = () => {
   const validateForm = () => {
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
-      return false;
-    }
-    if (!supplierDetails.plantDetail) {
-      toast.error("Plant Detail is required");
       return false;
     }
     if (!supplierDetails.prDate) {
@@ -414,9 +413,9 @@ export const EditMaterialPRDashboard = () => {
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
-          hsn_code_name: item.sacHsnCode,
+          sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
-          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
+          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
       attachments: files,
@@ -424,7 +423,7 @@ export const EditMaterialPRDashboard = () => {
 
     try {
       await dispatch(updateMaterialPR({ baseUrl, token, data: payload, id: Number(id) })).unwrap();
-      toast.success("Material PR created successfully");
+      toast.success("Material PR updated successfully");
       navigate("/finance/material-pr");
     } catch (error) {
       toast.error(error);
@@ -478,9 +477,9 @@ export const EditMaterialPRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
                   onChange={handlePlantDetailsChange}
@@ -563,6 +562,7 @@ export const EditMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -690,30 +690,25 @@ export const EditMaterialPRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <Autocomplete
-                  options={wbsCodes}
-                  getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
-                  onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.wbs_code : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="WBS Code*"
-                      variant="outlined"
-                      sx={{
-                        height: { xs: 28, sm: 36 },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: { xs: "8px", sm: "10px" },
-                        },
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder="Search WBS Code"
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>WBS Code*</InputLabel>
+                  <MuiSelect
+                    label="WBS Code*"
+                    value={overallWbs}
+                    onChange={(e) => setOverallWbs(e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               )}
             </CardContent>
           </Card>
@@ -858,30 +853,25 @@ export const EditMaterialPRDashboard = () => {
                   />
 
                   {wbsSelection === "individual" && (
-                    <Autocomplete
-                      options={wbsCodes}
-                      getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.wbs_code === item.wbsCode) || null}
-                      onChange={(event, newValue) => {
-                        handleItemChange(item.id, "wbsCode", newValue ? newValue.wbs_code : "");
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="WBS Code*"
-                          variant="outlined"
-                          sx={{
-                            height: { xs: 28, sm: 36 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px" },
-                            },
-                          }}
-                          InputLabelProps={{ shrink: true }}
-                          placeholder="Search WBS Code"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option.wbs_code === value.wbs_code}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={item.wbsCode}
+                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   )}
                 </div>
               ))}

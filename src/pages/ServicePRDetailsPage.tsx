@@ -320,7 +320,7 @@ export const ServicePRDetailsPage = () => {
     boq_details: item.boq_details || "-",
     quantity: item.quantity || 0,
     uom: item.uom || "-",
-    expected_date: item.expected_date ? format(new Date(item.expected_date), 'dd-MM-yyyy') : "-",
+    expected_date: item.expected_date ? item.expected_date : "-",
     product_description: item.product_description || "-",
     rate: item.rate || 0,
     wbs_code: item.wbs_code || "-",
@@ -356,7 +356,7 @@ export const ServicePRDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto max-w-7xl bg-[#fafafa] min-h-screen">
+    <div className="p-6 mx-auto bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back

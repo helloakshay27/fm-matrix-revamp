@@ -405,34 +405,41 @@
 }
 
 /* Global MUI Select Search Input Styles */
-.mui-search-input-container {
+.mui-search-container {
   position: sticky !important;
   top: 0 !important;
   z-index: 999 !important;
-  background: white !important;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
   padding: 12px !important;
-  border-bottom: 1px solid #e0e0e0 !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  border-bottom: 1px solid #dee2e6 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
   margin: 0 !important;
 }
 
 .mui-search-input {
   width: 100% !important;
-  padding: 10px 12px !important;
-  border: 1px solid #ddd !important;
-  border-radius: 6px !important;
+  padding: 12px 16px !important;
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
   font-size: 14px !important;
   outline: none !important;
   background: white !important;
-  font-family: inherit !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
   box-sizing: border-box !important;
-  transition: all 0.2s ease !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
 }
 
 .mui-search-input:focus {
   border-color: #1976d2 !important;
-  box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1) !important;
-  background-color: #fafafa !important;
+  box-shadow: 0 0 0 4px rgba(25, 118, 210, 0.15), 0 2px 8px rgba(0,0,0,0.15) !important;
+  background-color: #fafbfc !important;
+  transform: translateY(-1px) !important;
+}
+
+.mui-search-input::placeholder {
+  color: #6c757d !important;
+  font-weight: 500 !important;
 }
 
 .mui-no-results-message {
@@ -533,4 +540,133 @@
 .MuiMenu-root .MuiMenuItem-root.Mui-selected:hover,
 .MuiPopover-root .MuiMenuItem-root.Mui-selected:hover {
   background-color: #bbdefb !important;
+}
+
+/* ===========================================
+   GLOBAL TEXTAREA AND MULTILINE STYLING
+   Short height and visible labels for all textareas
+   =========================================== */
+
+/* Override global height for multiline fields - make them shorter */
+.MuiFormControl-root .MuiOutlinedInput-root.MuiInputBase-multiline,
+.MuiFormControl-root .MuiOutlinedInput-root[class*="multiline"],
+.MuiFormControl-root textarea {
+  height: 80px !important;
+  min-height: 80px !important;
+  max-height: 120px !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Textarea input styling - FIX CURSOR POSITIONING */
+.MuiFormControl-root .MuiInputBase-inputMultiline,
+.MuiFormControl-root textarea {
+  padding: 12px 14px !important;
+  resize: vertical !important;
+  overflow-y: auto !important;
+  font-family: inherit !important;
+  line-height: 1.4 !important;
+  height: 100% !important;
+  min-height: 56px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  position: relative !important;
+  z-index: 1 !important;
+  caret-color: #333 !important;
+  color: #333 !important;
+}
+
+/* Ensure labels are ALWAYS visible for multiline fields */
+.MuiFormControl-root:has(.MuiInputBase-multiline) .MuiInputLabel-root,
+.MuiFormControl-root:has(textarea) .MuiInputLabel-root,
+.MuiFormControl-root .MuiInputLabel-outlined {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  transform: translate(14px, -9px) scale(0.75) !important;
+  background: white !important;
+  padding: 0 8px !important;
+  color: #666 !important;
+  font-weight: 500 !important;
+  z-index: 1 !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Focused label styling */
+.MuiFormControl-root:has(.MuiInputBase-multiline) .MuiInputLabel-root.Mui-focused,
+.MuiFormControl-root:has(textarea) .MuiInputLabel-root.Mui-focused {
+  color: #1976d2 !important;
+}
+
+/* Ensure proper spacing for multiline form controls */
+.MuiFormControl-root:has(.MuiInputBase-multiline),
+.MuiFormControl-root:has(textarea) {
+  margin-top: 16px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Mobile responsive textarea height */
+@media (max-width: 640px) {
+  .MuiFormControl-root .MuiOutlinedInput-root.MuiInputBase-multiline,
+  .MuiFormControl-root .MuiOutlinedInput-root[class*="multiline"],
+  .MuiFormControl-root textarea {
+    height: 70px !important;
+    min-height: 70px !important;
+    max-height: 100px !important;
+  }
+}
+
+/* ===========================================
+   TEXTAREA CURSOR AND INPUT FIX
+   Fix cursor positioning and text input behavior
+   =========================================== */
+
+/* Fix textarea click and cursor behavior */
+.MuiOutlinedInput-root.MuiInputBase-multiline .MuiOutlinedInput-input,
+.MuiOutlinedInput-root.MuiInputBase-multiline textarea,
+.MuiInputBase-multiline .MuiInputBase-input {
+  cursor: text !important;
+  pointer-events: auto !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+}
+
+/* Ensure textarea container doesn't interfere with text selection */
+.MuiOutlinedInput-root.MuiInputBase-multiline {
+  cursor: text !important;
+  pointer-events: auto !important;
+}
+
+/* Fix any z-index issues that might affect cursor */
+.MuiOutlinedInput-root.MuiInputBase-multiline,
+.MuiInputBase-inputMultiline {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* Prevent any overlay or pseudo-elements from blocking text input */
+.MuiOutlinedInput-root.MuiInputBase-multiline::before,
+.MuiOutlinedInput-root.MuiInputBase-multiline::after {
+  content: none !important;
+  display: none !important;
+}
+
+/* Ensure proper text selection and cursor behavior */
+.MuiInputBase-inputMultiline:focus {
+  outline: none !important;
+  caret-color: #1976d2 !important;
+}
+
+/* Fix any transform issues that might affect cursor positioning */
+.MuiOutlinedInput-root.MuiInputBase-multiline,
+.MuiInputBase-inputMultiline {
+  transform: none !important;
+  will-change: auto !important;
 }

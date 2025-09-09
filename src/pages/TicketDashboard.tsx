@@ -21,7 +21,7 @@ import { ticketAnalyticsDownloadAPI } from '@/services/ticketAnalyticsDownloadAP
 import { TicketAnalyticsCard } from '@/components/TicketAnalyticsCard';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
-import { 
+import {
   TicketStatusOverviewCard,
   ProactiveReactiveCard,
   CategoryWiseProactiveReactiveCard,
@@ -288,25 +288,25 @@ export const TicketDashboard = () => {
     } else {
       setLoading(true);
     }
-    
+
     try {
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
-      
+
       // Sort tickets: flagged first, then golden tickets, then regular tickets
       const sortedTickets = [...response.complaints].sort((a, b) => {
         // Flagged tickets always come first
         if (a.is_flagged && !b.is_flagged) return -1;
         if (!a.is_flagged && b.is_flagged) return 1;
-        
+
         // Among non-flagged tickets, golden tickets come first
         if (!a.is_flagged && !b.is_flagged) {
           if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
           if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
         }
-        
+
         return 0; // Maintain original order for same priority
       });
-      
+
       setTickets(sortedTickets);
       if (response.pagination) {
         setTotalPages(response.pagination.total_pages);
@@ -341,11 +341,11 @@ export const TicketDashboard = () => {
     // Skip if search query is the same as current filter
     const currentSearch = filters.search_all_fields_cont || '';
     const newSearch = debouncedSearchQuery.trim();
-    
+
     if (currentSearch === newSearch) {
       return; // No change needed
     }
-    
+
     // Update filters when debounced search query changes
     setFilters(prevFilters => {
       const newFilters = { ...prevFilters };
@@ -356,7 +356,7 @@ export const TicketDashboard = () => {
       }
       return newFilters;
     });
-    
+
     // Reset to first page when searching, but only if it's a new search
     if (isSearchingRef.current || (newSearch && !currentSearch)) {
       setCurrentPage(1);
@@ -538,7 +538,13 @@ export const TicketDashboard = () => {
     setVisibleSections(selectedSections);
   };
   const handleViewDetails = (ticketId: string) => {
-    navigate(`/maintenance/ticket/details/${ticketId}`);
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate(`/tickets/details/${ticketId}`);
+    } else {
+      navigate(`/maintenance/ticket/details/${ticketId}`);
+    }
   };
 
   const handleEditTicket = (ticketNumber: string) => {
@@ -594,7 +600,7 @@ export const TicketDashboard = () => {
     // console.log('TicketDashboard - Golden Ticket action for tickets:', selectedTickets);
     try {
       await ticketManagementAPI.markAsGoldenTicket(selectedTickets);
-      
+
       // Update tickets locally and sort
       setTickets(prevTickets => {
         const updatedTickets = prevTickets.map(ticket =>
@@ -608,24 +614,24 @@ export const TicketDashboard = () => {
           // Flagged tickets always come first
           if (a.is_flagged && !b.is_flagged) return -1;
           if (!a.is_flagged && b.is_flagged) return 1;
-          
+
           // Among non-flagged tickets, golden tickets come first
           if (!a.is_flagged && !b.is_flagged) {
             if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
             if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
           }
-          
+
           return 0; // Maintain original order for same priority
         });
 
         return sortedTickets;
       });
-      
+
       toast({
         title: "Success",
         description: "Tickets marked as Golden Ticket successfully"
       });
-      
+
       setSelectedTickets([]);
       fetchTicketSummary();
     } catch (error) {
@@ -650,15 +656,15 @@ export const TicketDashboard = () => {
 
     try {
       await ticketManagementAPI.markAsFlagged(selectedTickets);
-      
+
       // Refresh from API to get proper positioning after flag toggle
       await fetchTickets(currentPage);
-      
+
       toast({
         title: "Success",
         description: `${selectedTickets.length} ticket(s) flag status updated successfully`
       });
-      
+
       setSelectedTickets([]);
       fetchTicketSummary();
     } catch (error) {
@@ -701,7 +707,7 @@ export const TicketDashboard = () => {
           // Find the newly flagged ticket and move it to the very top
           const newlyFlaggedTicket = updatedTickets.find(ticket => ticket.id === ticketId);
           const otherTickets = updatedTickets.filter(ticket => ticket.id !== ticketId);
-          
+
           return [newlyFlaggedTicket, ...otherTickets];
         });
       } else {
@@ -743,11 +749,11 @@ export const TicketDashboard = () => {
         if (!currentGoldenStatus) {
           const newlyGoldenTicket = updatedTickets.find(ticket => ticket.id === ticketId);
           const otherTickets = updatedTickets.filter(ticket => ticket.id !== ticketId);
-          
+
           // Find the position after all flagged tickets but before regular tickets
           const flaggedTickets = otherTickets.filter(ticket => ticket.is_flagged);
           const nonFlaggedTickets = otherTickets.filter(ticket => !ticket.is_flagged);
-          
+
           // Put golden ticket at the top of non-flagged tickets
           return [...flaggedTickets, newlyGoldenTicket, ...nonFlaggedTickets];
         } else {
@@ -756,13 +762,13 @@ export const TicketDashboard = () => {
             // Flagged tickets always come first
             if (a.is_flagged && !b.is_flagged) return -1;
             if (!a.is_flagged && b.is_flagged) return 1;
-            
+
             // Among non-flagged tickets, golden tickets come first
             if (!a.is_flagged && !b.is_flagged) {
               if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
               if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
             }
-            
+
             return 0; // Maintain original order for same priority
           });
         }
@@ -874,9 +880,9 @@ export const TicketDashboard = () => {
     if (cardType === 'total') return false;
 
     if (cardType === 'open') {
-      return filters.complaint_status_fixed_state_not_eq === 'closed' && 
-             filters.complaint_status_fixed_state_null === '1' && 
-             filters.m === 'or';
+      return filters.complaint_status_fixed_state_not_eq === 'closed' &&
+        filters.complaint_status_fixed_state_null === '1' &&
+        filters.m === 'or';
     } else if (cardType === 'pending') {
       return filters.complaint_status_fixed_state_eq === 'Pending';
     } else if (cardType === 'in_progress') {
@@ -1015,7 +1021,14 @@ export const TicketDashboard = () => {
   );
 
   const handleAddButton = () => {
-    navigate('/maintenance/ticket/add');
+    // navigate('/maintenance/ticket/add');
+    const currentPath = window.location.pathname;
+
+    if (currentPath.includes("tickets")) {
+      navigate("/tickets/add");
+    } else {
+      navigate("/maintenance/ticket/add");
+    }
   }
 
 

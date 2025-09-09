@@ -124,7 +124,7 @@ const UtilitySTPDashboard = () => {
       queryParams.append('per_page', '15');
 
       // Add STP specific filters
-      queryParams.append('type', 'STP'); // Filter for STP assets
+      queryParams.append('type', 'Recycle'); // Filter for Recycle assets
 
       // Apply additional filters
       Object.entries(appliedFilters).forEach(([key, value]) => {
@@ -188,7 +188,7 @@ const UtilitySTPDashboard = () => {
   };
 
   const handleAdd = () => {
-    navigate('/utility/stp/add-asset?type=STP');
+    navigate('/utility/stp/add-asset?type=Recycle');
   };
 
   const handleAddSchedule = () => {

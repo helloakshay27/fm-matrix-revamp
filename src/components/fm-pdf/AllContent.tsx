@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     BarChart,
     Bar,
@@ -24,6 +25,27 @@ import axios from 'axios';
 
 
 const AllContent = () => {
+    const location = useLocation();
+    const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const startDate = params.get('start_date') || '2025-01-15';
+    const endDate = params.get('end_date') || '2025-02-15';
+
+    const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+    const dateRangeLabel = useMemo(() => {
+        if (!startDate || !endDate) return '';
+        try {
+            const s = new Date(startDate);
+            const e = new Date(endDate);
+            const fmt = (d: Date) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+            // If within same month, show e.g., "Jan 2025"
+            if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+                return fmt(e);
+            }
+            return `${fmt(s)} to ${fmt(e)}`;
+        } catch {
+            return `${startDate} to ${endDate}`;
+        }
+    }, [startDate, endDate]);
 
 
     const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
@@ -40,7 +62,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/helpdesk_management_snapshot?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/helpdesk_management_snapshot${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -54,7 +76,7 @@ const AllContent = () => {
         };
 
         fetchHelpdeskSnapshot();
-    }, []);
+    }, [dateQuery]);
 
 
     useEffect(() => {
@@ -63,7 +85,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/meeting_room_day_pass_performance?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/meeting_room_day_pass_performance${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const response = await axios.get(url, { headers });
@@ -77,7 +99,7 @@ const AllContent = () => {
         };
 
         fetchMeetingRoomReport();
-    }, []);
+    }, [dateQuery]);
 
     const [loadingUtilization, setLoadingUtilization] = useState<boolean>(true);
     useEffect(() => {
@@ -86,7 +108,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const utilEndpoint = '/api/pms/reports/center_wise_meeting_room_utilization?start_date=2025-01-15&end_date=2025-02-15';
+                const utilEndpoint = `/api/pms/reports/center_wise_meeting_room_utilization${dateQuery}`;
                 const utilUrl = `https://${baseUrl}${utilEndpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const utilResp = await axios.get(utilUrl, { headers });
@@ -100,7 +122,7 @@ const AllContent = () => {
         };
 
         fetchUtilization();
-    }, []);
+    }, [dateQuery]);
 
     // Separate effect to fetch site-wise adoption rate
     useEffect(() => {
@@ -109,7 +131,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/site_wise_adoption_rate?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/site_wise_adoption_rate${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -123,7 +145,7 @@ const AllContent = () => {
         };
 
         fetchSiteAdoption();
-    }, []);
+    }, [dateQuery]);
 
     // Asset Overview - fetch and log separately
     const [assetOverviewData, setAssetOverviewData] = useState<any>(null);
@@ -134,7 +156,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/asset_overview?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/asset_overview${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -148,7 +170,7 @@ const AllContent = () => {
         };
 
         fetchAssetOverview();
-    }, []);
+    }, [dateQuery]);
 
     console.log("Meeting Room Data:", meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? null);
     console.log('Asset Overview Data:', assetOverviewData ?? null);
@@ -163,7 +185,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/ticket_aging_closure_efficiency?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/ticket_aging_closure_efficiency${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -176,7 +198,7 @@ const AllContent = () => {
             }
         };
         fetchTicketAgingClosure();
-    }, []);
+    }, [dateQuery]);
 
     const [ticketPerformanceMetricsData, setTicketPerformanceMetricsData] = useState<any>(null);
     const [loadingTicketPerformanceMetrics, setLoadingTicketPerformanceMetrics] = useState<boolean>(true);
@@ -187,7 +209,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/ticket_performance_metrics?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/ticket_performance_metrics${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -200,7 +222,7 @@ const AllContent = () => {
             }
         };
         fetchTicketPerformanceMetrics();
-    }, []);
+    }, [dateQuery]);
 
     const [customerExperienceFeedbackData, setCustomerExperienceFeedbackData] = useState<any>(null);
     const [loadingCustomerExperienceFeedback, setLoadingCustomerExperienceFeedback] = useState<boolean>(true);
@@ -211,7 +233,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/customer_experience_feedback?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/customer_experience_feedback${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -224,7 +246,7 @@ const AllContent = () => {
             }
         };
         fetchCustomerExperienceFeedback();
-    }, []);
+    }, [dateQuery]);
 
     // Response TAT Quarterly - fetch and log separately
     const [responseTATQuarterlyData, setResponseTATQuarterlyData] = useState<any>(null);
@@ -310,7 +332,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/parking_date_site_wise';
+                const endpoint = `/api/pms/reports/parking_date_site_wise${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -324,7 +346,7 @@ const AllContent = () => {
         };
 
         fetchParkingDateSiteWise();
-    }, []);
+    }, [dateQuery]);
 
     // Visitor Trend Analysis - fetch separately and log
     const [visitorTrendAnalysisData, setVisitorTrendAnalysisData] = useState<any>(null);
@@ -335,7 +357,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/visitor_trend_analysis';
+                const endpoint = `/api/pms/reports/visitor_trend_analysis${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -349,7 +371,7 @@ const AllContent = () => {
         };
 
         fetchVisitorTrendAnalysis();
-    }, []);
+    }, [dateQuery]);
 
     // Consumable Inventory Comparison - fetch separately and log
     const [consumableInventoryComparisonData, setConsumableInventoryComparisonData] = useState<any>(null);
@@ -360,7 +382,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/consumable_inventory_comparison';
+                const endpoint = `/api/pms/reports/consumable_inventory_comparison${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -374,7 +396,7 @@ const AllContent = () => {
         };
 
         fetchConsumableInventoryComparison();
-    }, []);
+    }, [dateQuery]);
 
     // Center-wise Consumables - fetch separately and log
     const [centerWiseConsumablesData, setCenterWiseConsumablesData] = useState<any>(null);
@@ -385,7 +407,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/center_wise_consumables';
+                const endpoint = `/api/pms/reports/center_wise_consumables${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -399,7 +421,7 @@ const AllContent = () => {
         };
 
         fetchCenterWiseConsumables();
-    }, []);
+    }, [dateQuery]);
 
     // Parking Management – derive chart rows from API
     const parkingSummary = useMemo(() => {
@@ -448,7 +470,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/inventory_overstock_report';
+                const endpoint = `/api/pms/reports/inventory_overstock_report${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -461,7 +483,7 @@ const AllContent = () => {
             }
         };
         fetchInventoryOverstockReport();
-    }, []);
+    }, [dateQuery]);
 
     // Site-wise Checklist - fetch separately and log
     const [siteWiseChecklistData, setSiteWiseChecklistData] = useState<any>(null);
@@ -472,7 +494,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/site_wise_checklist';
+                const endpoint = `/api/pms/reports/site_wise_checklist${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -485,7 +507,7 @@ const AllContent = () => {
             }
         };
         fetchSiteWiseChecklist();
-    }, []);
+    }, [dateQuery]);
 
     // AMC Contract Summary - fetch separately and log
     const [amcContractSummaryData, setAmcContractSummaryData] = useState<any>(null);
@@ -496,7 +518,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/amc_contract_summary';
+                const endpoint = `/api/pms/reports/amc_contract_summary${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -510,7 +532,7 @@ const AllContent = () => {
         };
 
         fetchAmcContractSummary();
-    }, []);
+    }, [dateQuery]);
 
     // Highest Maintenance Assets - fetch separately and log
     const [highestMaintenanceAssetsData, setHighestMaintenanceAssetsData] = useState<any>(null);
@@ -521,7 +543,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/highest_maintenance_assets?start_date=2018-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/highest_maintenance_assets${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -535,7 +557,7 @@ const AllContent = () => {
         };
 
         fetchHighestMaintenanceAssets();
-    }, []);
+    }, [dateQuery]);
 
     // Asset Overview derived selections (support both {data: {...}} and flat JSON)
     const assetOverview = useMemo(() => assetOverviewData?.data ?? assetOverviewData ?? null, [assetOverviewData]);
@@ -1325,7 +1347,15 @@ const AllContent = () => {
         loadingResponseTATQuarterly ||
         loadingResolutionTATQuarterly ||
         loadingDevicePlatformStats ||
-        loadingAssetOverview
+        loadingAssetOverview ||
+        loadingParkingDateSiteWise ||
+        loadingVisitorTrendAnalysis ||
+        loadingConsumableInventoryComparison ||
+        loadingCenterWiseConsumables ||
+        loadingInventoryOverstockReport ||
+        loadingSiteWiseChecklist ||
+        loadingAmcContractSummary ||
+        loadingHighestMaintenanceAssets
     );
 
     if (isGlobalLoading) {
@@ -1410,6 +1440,50 @@ const AllContent = () => {
         background-color: #bf0c0c !important;
         color: white !important;
       }     
+            /* Compact vertical header labels for dense tables in print */
+            .rotate-header-print {
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+                white-space: nowrap;
+                text-align: center;
+            }
+            .print-th-vertical {
+                width: 28px !important;
+                min-width: 28px !important;
+                max-width: 28px !important;
+                padding: 2px !important;
+            }
+            .print-th-site {
+                width: 90px !important;
+                min-width: 90px !important;
+                max-width: 120px !important;
+            }
+            .print-td-narrow {
+                width: 28px !important;
+                min-width: 28px !important;
+                max-width: 28px !important;
+                padding: 2px !important;
+                font-size: 9px !important;
+            }
+                    /* Keep grouped sections on the same printed page */
+                    .print-keep-together {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    .print-avoid-before {
+                        break-before: avoid !important;
+                        page-break-before: avoid !important;
+                    }
+                    .print-avoid-after {
+                        break-after: avoid !important;
+                        page-break-after: avoid !important;
+                    }
+                    .print-tight {
+                        margin-top: 0 !important;
+                        margin-bottom: 8px !important;
+                        padding-top: 8px !important;
+                        padding-bottom: 8px !important;
+                    }
 }
 `}</style>
 
@@ -1451,7 +1525,7 @@ const AllContent = () => {
                 print:ml-[50%] print:w-[50%] print:h-[100%] print:border print:border-gray-400 print:bg-white print:justify-center print:px-10 print:py-20">
 
                         {/* Overlaid Report Letters */}
-                        <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[40.2%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
+                        <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
                             <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">ERLY</div>
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
@@ -1459,7 +1533,7 @@ const AllContent = () => {
 
                         <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
                             <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
-                                Jan 2025 to Mar 2025
+                                {dateRangeLabel}
                             </p>
                         </div>
                     </div>
@@ -1703,7 +1777,7 @@ const AllContent = () => {
 
                                     return (
                                         <tr key={idx} className="border-t">
-                                            <td className="p-2 border font-medium print:p-1">{row.site_name || row.site || '-'}</td>
+                                            <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
                                             <td className="p-2 border print:p-1">
                                                 {meeting.utilization_rate ?? '-'}{' '}
                                                 <Arrow up={utilTrend === '↑'} />
@@ -2205,17 +2279,16 @@ const AllContent = () => {
                     {/* Table Section 1 */}
                     <div className="table-section w-full overflow-x-auto print:overflow-visible border-gray-300  border py-3 px-3 mb-5 print:p-1 print:mb-5">
                         <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-5 print:pb-1">Ticket Ageing, Closure Efficiency & Feedback Overview by Center</h2>
-                        <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[12px]">
+                        <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[9px]">
                             <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] font-semibold print-bg-red">
                                 <tr>
-                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]">Site Name</th>
+                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[9px] print:px-1 print:py-1 print-th-site print:min-h-[30px]">Site Name</th>
                                     {ticketAgingClosureData?.data?.centers?.map((center, idx) => (
                                         <th
                                             key={idx}
-                                            className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]"
-                                            style={{ wordWrap: "break-word", whiteSpace: "normal" }}
+                                            className="border border-gray-200 px-2 py-3 text-[10px] print:text-[8px] print:px-0 print:py-1 print-th-vertical print:min-h-[120px]"
                                         >
-                                            {center.center_name ?? '-'}
+                                            <div className="rotate-header-print">{center.center_name ?? '-'}</div>
                                         </th>
                                     ))}
                                 </tr>
@@ -2230,13 +2303,13 @@ const AllContent = () => {
                                     { label: "0-10 days", key: "0-10_days" },
                                 ].map((row, idx) => (
                                     <tr key={row.key}>
-                                        <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                        <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                             {row.label}
                                         </td>
                                         {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                             <td
                                                 key={cIdx}
-                                                className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                                className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                             >
                                                 {center.aging_buckets?.[row.key] ?? '-'}
                                             </td>
@@ -2245,13 +2318,13 @@ const AllContent = () => {
                                 ))}
                                 {/* Total Closure % Row */}
                                 <tr className="bg-[#DAD6C9] font-semibold print:bg-[#DAD6C9]">
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         Total Closure %
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.total_closure_efficiency ?? '-'}
                                         </td>
@@ -2259,13 +2332,13 @@ const AllContent = () => {
                                 </tr>
                                 {/* No. of response Row */}
                                 <tr>
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         No. of response
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.feedback_metrics?.response_count ?? '-'}
                                         </td>
@@ -2273,13 +2346,13 @@ const AllContent = () => {
                                 </tr>
                                 {/* % of Response Row */}
                                 <tr>
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         % of Response
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.feedback_metrics?.response_percentage !== undefined ? `${(center.feedback_metrics.response_percentage).toFixed(2)}%` : '-'}
                                         </td>
@@ -2811,37 +2884,36 @@ const AllContent = () => {
             </div>
 
 
-            {/*  Active AMC Contracts */}
-            <div className="print-page break-before-page print:w-[95%] print:m-auto">
-                <div className="bg-white p-2 amc-summary no-break print:p-4 print:px-0 mt-1 print:mt-4 border border-gray-300">
+            {/*  Active AMC Contracts + 90 Days Expiry (kept together) */}
+            <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
+                <div className="bg-white p-2 amc-summary no-break print:px-2 print:py-2 mt-1 print:mt-2 border border-gray-300 print-keep-together print-avoid-after print-tight">
                     <h2 className="text-lg font-semibold px-4 py-3 border-gray-400 print:text-[15px] print:py-2">
                         AMC Contract Summary
                     </h2>
 
-                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold">
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
+                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Active AMC Contracts<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.active.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Contract Expiry in 90 Days<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                        <div className="px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Contract Expired<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expired.toLocaleString() : '-')}
                             </span>
                         </div>
                     </div>
                 </div>
 
-
-                <div className="border print:border py-3 px-3 mb-6 break-inside-avoid print:break-inside-avoid">
+                <div className="border print:border py-3 px-3 mb-6 print:mb-2 break-inside-avoid print:break-inside-avoid print-avoid-before print-keep-together print-tight">
                     <h2 className="bg-white text-lg font-bold print:text-2xl p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
                         AMC Contract Summary – Expiry in 90 Days
                     </h2>
@@ -2871,13 +2943,13 @@ const AllContent = () => {
                                 ) : (
                                     amcExpiringContracts.map((row: any, i: number) => (
                                         <tr key={i} className="bg-white">
-                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:border print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:border text-center print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.vendor_contact ?? '-'}</td>
                                         </tr>
                                     ))
                                 )}
@@ -2921,13 +2993,13 @@ const AllContent = () => {
                                 ) : (
                                     amcExpiredContracts.map((row: any, i: number) => (
                                         <tr key={i} className={"bg-white"}>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 font-semibold print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 font-semibold text-center print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
                                         </tr>
                                     ))
                                 )}

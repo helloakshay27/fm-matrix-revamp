@@ -181,14 +181,14 @@ export const EditGRNDashboard = () => {
         const response = await dispatch(fetchSingleGRN({ baseUrl, token, id: Number(id) })).unwrap();
         const grn = response.grn;
         setGrnDetails({
-          purchaseOrder: grn.purchase_order,
+          purchaseOrder: grn.purchase_order_id,
           supplier: grn.supplier?.id,
           invoiceNumber: grn.invoice_no,
           relatedTo: grn.related_to,
           invoiceAmount: grn.invoice_amount,
-          paymentMode: grn.payment_mod,
-          invoiceDate: grn.bill_date,
-          postingDate: grn.posting_date,
+          paymentMode: grn.payment_mod_id,
+          invoiceDate: grn.bill_date ? grn.bill_date.split("T")[0] : "",
+          postingDate: grn.posting_date ? grn.posting_date.split("T")[0] : "",
           otherExpense: grn.other_expenses,
           loadingExpense: grn.loading_expense,
           adjustmentAmount: grn.adj_amount,
@@ -197,7 +197,7 @@ export const EditGRNDashboard = () => {
 
         setInventoryDetails(
           grn.grn_inventories.map((item: any) => ({
-            inventoryType: item.inventory?.name,
+            inventoryType: item.inventory_id,
             expectedQuantity: item.expected_quantity,
             receivedQuantity: item.received_quantity,
             approvedQuantity: item.approved_qty,

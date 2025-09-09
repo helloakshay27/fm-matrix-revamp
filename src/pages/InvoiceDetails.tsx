@@ -17,6 +17,7 @@ import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import axios from "axios";
 
 // Define interfaces for data structures
 interface BillingAddress {
@@ -282,13 +283,32 @@ export const InvoiceDetails = () => {
         }
     }, [dispatch, baseUrl, token, id]);
 
-    const handlePrint = () => {
-        window.print();
+    const handlePrint = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/work_order_invoices/${id}/print_pdf.pdf`, {
+                responseType: 'blob',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                }
+            })
+
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const downloadUrl = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = 'work_order_invoice.pdf';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+        } catch (error) {
+            console.log(error)
+        }
     };
 
     const handleFeeds = () => {
         if (id) {
-            navigate(`/finance/po/feeds/${id}`);
+            navigate(`/finance/invoice/feeds/${id}`);
         }
     };
 

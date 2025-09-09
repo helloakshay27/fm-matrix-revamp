@@ -89,6 +89,7 @@ export const EditPODashboard = () => {
             id: 1,
             itemDetails: "",
             sacHsnCode: "",
+            sacHsnCodeId: "",
             quantity: "",
             unit: "",
             expectedDate: "",
@@ -202,6 +203,7 @@ export const EditPODashboard = () => {
                         id: item.id,
                         itemDetails: item.inventory?.id || "",
                         sacHsnCode: item.sac_hsn_code || "",
+                        sacHsnCodeId: item.hsn_id || "",
                         quantity: item.quantity || "",
                         unit: item.unit || "",
                         expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
@@ -216,7 +218,7 @@ export const EditPODashboard = () => {
                         tcsAmount: item.tcs_amount || "",
                         taxAmount: item.taxable_value || "",
                         amount: item.total_value || "",
-                        totalAmount: item.total_value || "",
+                        totalAmount: Number(item.taxable_value) + Number(item.total_value),
                     })) || []
                 );
 
@@ -283,7 +285,7 @@ export const EditPODashboard = () => {
                 pms_po_inventories_attributes: items.map((item) => ({
                     id: item.id,
                     pms_inventory_id: item.itemDetails,
-                    sac_hsn_code: item.sacHsnCode,
+                    sac_hsn_code: item.sacHsnCodeId,
                     quantity: item.quantity,
                     unit: item.unit,
                     unit_type: "Each",
@@ -298,7 +300,8 @@ export const EditPODashboard = () => {
                     tcs_rate: item.tcsRate,
                     tcs_amount: item.tcsAmount,
                     taxable_value: item.taxAmount,
-                    total_value: item.totalAmount,
+                    total_value: item.amount,
+                    total_amount: item.totalAmount,
                 })),
             },
             attachments: formData.attachments,
@@ -343,6 +346,7 @@ export const EditPODashboard = () => {
             id: items.length + 1,
             itemDetails: "",
             sacHsnCode: "",
+            sacHsnCodeId: "",
             quantity: "",
             unit: "",
             expectedDate: "",
@@ -392,6 +396,7 @@ export const EditPODashboard = () => {
                     id: index + 1,
                     itemDetails: inv?.inventory?.id || "",
                     sacHsnCode: "",
+                    sacHsnCodeId: "",
                     quantity: inv?.quantity || "",
                     unit: "",
                     expectedDate: "",
@@ -441,6 +446,7 @@ export const EditPODashboard = () => {
                         ? calculateItem({
                             ...item,
                             sacHsnCode: response.data.hsn?.code || "",
+                            sacHsnCodeId: response.data.hsn?.id || "",
                             rate: response.data.rate || "",
                         })
                         : item
@@ -457,7 +463,7 @@ export const EditPODashboard = () => {
     };
 
     return (
-        <div className="p-6 mx-auto max-w-7xl">
+        <div className="p-6 mx-auto">
             <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back

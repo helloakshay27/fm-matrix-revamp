@@ -12,7 +12,6 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
-  Autocomplete,
 } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -204,7 +203,7 @@ export const EditServicePRPage = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: item.total_amount,
+            totalAmount: Number(item.total_value) + Number(item.tax_amount),
             wbsCode: "",
           }))
         );
@@ -375,10 +374,6 @@ export const EditServicePRPage = () => {
       toast.error("Contractor is required");
       return false;
     }
-    if (!formData.plantDetail) {
-      toast.error("Plant Detail is required");
-      return false;
-    }
     if (!formData.woDate) {
       toast.error("WO Date is required");
       return false;
@@ -457,7 +452,7 @@ export const EditServicePRPage = () => {
           igst_amount: item.igstAmt,
           tcs_rate: item.tcsRate,
           tcs_amount: item.tcsAmt,
-          tax_amount: item.taxAmount,
+          taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
@@ -480,7 +475,7 @@ export const EditServicePRPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
@@ -524,9 +519,9 @@ export const EditServicePRPage = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   value={formData.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty
@@ -697,30 +692,25 @@ export const EditServicePRPage = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <Autocomplete
-                  options={wbsCodes}
-                  getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
-                  onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.wbs_code : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="WBS Code*"
-                      variant="outlined"
-                      sx={{
-                        height: { xs: 28, sm: 36 },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: { xs: "8px", sm: "10px" },
-                        },
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder="Search WBS Code"
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>WBS Code*</InputLabel>
+                  <MuiSelect
+                    label="WBS Code*"
+                    value={overallWbs}
+                    onChange={(e) => setOverallWbs(e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               )}
             </div>
           </div>
@@ -988,7 +978,7 @@ export const EditServicePRPage = () => {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
                         backgroundColor: "#f5f5f5",
                       },
-                      height: { xs: 28, sm: 36, md: 45 },
+                      height: { xs: 28, sm: 36, md: 45 }
                     }}
                   />
 
@@ -1027,30 +1017,27 @@ export const EditServicePRPage = () => {
                   />
 
                   {wbsSelection === "individual" && (
-                    <Autocomplete
-                      options={wbsCodes}
-                      getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.wbs_code === detailsData.wbsCode) || null}
-                      onChange={(event, newValue) => {
-                        handleDetailsChange(detailsData.id, "wbsCode", newValue ? newValue.wbs_code : "");
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="WBS Code*"
-                          variant="outlined"
-                          sx={{
-                            height: { xs: 28, sm: 36 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px" },
-                            },
-                          }}
-                          InputLabelProps={{ shrink: true }}
-                          placeholder="Search WBS Code"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={detailsData.wbsCode}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   )}
                 </div>
               </div>
@@ -1071,83 +1058,6 @@ export const EditServicePRPage = () => {
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
             Total Amount: {grandTotal}
           </Button>
-        </div>
-
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Kind Attention"
-                placeholder="Kind Attention"
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("kindAttention", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                value={formData.kindAttention}
-                sx={fieldStyles}
-              />
-
-              <TextField
-                label="Subject"
-                placeholder="Subject"
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("subject", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                value={formData.subject}
-              />
-
-              <TextField
-                label="Description"
-                placeholder="Enter description here..."
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                multiline
-                rows={3}
-                InputLabelProps={{ shrink: true }}
-                value={formData.description}
-                sx={{
-                  mt: 1,
-                  "& .MuiOutlinedInput-root": {
-                    height: "auto !important",
-                    padding: "2px !important",
-                  },
-                }}
-              />
-
-              <TextField
-                label="Terms & Conditions"
-                placeholder="Enter terms and conditions here..."
-                fullWidth
-                variant="outlined"
-                onChange={(e) =>
-                  handleInputChange("termsConditions", e.target.value)
-                }
-                multiline
-                rows={3}
-                InputLabelProps={{ shrink: true }}
-                value={formData.termsConditions}
-                sx={{
-                  mt: 1,
-                  "& .MuiOutlinedInput-root": {
-                    height: "auto !important",
-                    padding: "2px !important",
-                  },
-                }}
-              />
-            </div>
-          </div>
         </div>
 
         <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">

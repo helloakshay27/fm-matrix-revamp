@@ -179,7 +179,7 @@ export const EditWODashboard: React.FC = () => {
                         tcsAmt: item.tcs_amount,
                         taxAmount: item.tax_amount,
                         amount: item.total_amount,
-                        totalAmount: item.total_value,
+                        totalAmount: Number(item.tax_amount) + Number(item.total_amount),
                     })))
 
                 setExistingAttachments(
@@ -337,7 +337,7 @@ export const EditWODashboard: React.FC = () => {
                     unit: item.uom,
                     expected_date: item.expectedDate,
                     rate: item.rate,
-                    total_value: item.totalAmount,
+                    total_value: item.amount,
                     cgst_rate: item.cgstRate,
                     cgst_amount: item.cgstAmt,
                     sgst_rate: item.sgstRate,
@@ -347,6 +347,7 @@ export const EditWODashboard: React.FC = () => {
                     tcs_rate: item.tcsRate,
                     tcs_amount: item.tcsAmt,
                     tax_amount: item.taxAmount,
+                    total_amount: item.totalAmount,
                 })),
             },
             attachments: formData.attachments,

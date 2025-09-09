@@ -178,7 +178,7 @@ export const MultipleUserDeletePage = () => {
             const isEmail = raw.includes('@');
             const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
             const paramKey = isEmail ? 'email' : 'mobile_number';
-            const url = `https://${baseUrl}/pms/users/external_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}`;
+            const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=external`;
             const resp = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',

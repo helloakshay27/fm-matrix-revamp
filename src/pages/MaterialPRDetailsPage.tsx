@@ -338,7 +338,7 @@ export const MaterialPRDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
+    <div className="p-6 mx-auto">
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}

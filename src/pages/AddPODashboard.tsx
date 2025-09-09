@@ -189,7 +189,7 @@ export const AddPODashboard = () => {
             materialPR: "",
             supplier: response.pms_supplier_id || "",
             plantDetail: response.plant_detail?.id || "",
-            poDate: response.po_date || "",
+            poDate: response.po_date ? response.po_date.split("T")[0] : "",
             billingAddress: response.billing_address_id || "",
             deliveryAddress: response.shipping_address_id || "",
             relatedTo: response.related_to || "",
@@ -207,9 +207,10 @@ export const AddPODashboard = () => {
               id: index + 1,
               itemDetails: item.inventory?.id || "",
               sacHsnCode: item.sac_hsn_code || "",
+              sacHsnCodeId: item.hsn_id || "",
               quantity: item.quantity || "",
               unit: item.unit || "",
-              expectedDate: item.expected_date || "",
+              expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
               rate: item.rate || "",
               cgstRate: item.cgst_rate || "",
               cgstAmount: item.cgst_amount || "",
@@ -221,7 +222,7 @@ export const AddPODashboard = () => {
               tcsAmount: item.tcs_amount || "",
               taxAmount: item.taxable_value || "",
               amount: item.total_value || "",
-              totalAmount: item.total_value || "",
+              totalAmount: Number(item.taxable_value) + Number(item.total_value),
             }))
           );
         } catch (error) {
@@ -260,8 +261,32 @@ export const AddPODashboard = () => {
     };
   };
 
+  const calculateTotalAmount = () => {
+    return items.reduce((total, item) => total + (parseFloat(item.totalAmount) || 0), 0).toFixed(2);
+  };
+
+  const validateForm = () => {
+    if (!formData.supplier) {
+      toast.error("Please select a supplier");
+      return false;
+    } else if (!formData.poDate) {
+      toast.error("Please select a po date");
+      return false;
+    } else if (!formData.billingAddress) {
+      toast.error("Please select a billing address");
+      return false;
+    } else if (!formData.deliveryAddress) {
+      toast.error("Please select a delivery address");
+      return false;
+    }
+    return true;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateForm()) {
+      return;
+    }
     setSubmitting(true);
     const payload = {
       pms_purchase_order: {
@@ -456,7 +481,7 @@ export const AddPODashboard = () => {
   };
 
   return (
-    <div className="p-6 mx-auto max-w-7xl">
+    <div className="p-6 mx-auto">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -519,9 +544,9 @@ export const AddPODashboard = () => {
                 </FormControl>
 
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Plant Detail*</InputLabel>
+                  <InputLabel shrink>Plant Detail</InputLabel>
                   <MuiSelect
-                    label="Plant Detail*"
+                    label="Plant Detail"
                     value={formData.plantDetail}
                     onChange={(e) =>
                       setFormData({
@@ -997,6 +1022,12 @@ export const AddPODashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center justify-end">
+              <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
+                Total Amount: {calculateTotalAmount()}
+              </Button>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow border">

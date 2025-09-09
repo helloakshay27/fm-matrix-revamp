@@ -3,8 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box, Autocomplete, Chip } from '@mui/material';
-import { Camera } from 'lucide-react';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Box } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
 import { fetchAllowedSites } from '@/store/slices/siteSlice';
@@ -32,7 +31,7 @@ export const AddOccupantUserPage: React.FC = () => {
     altMobileNumber: '',
     designation: '',
   });
-  const [showAdditional, setShowAdditional] = useState(true);
+  const [showAdditional, setShowAdditional] = useState(false);
   const dispatch = useAppDispatch();
   const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
   const { sites } = useAppSelector((state) => state.site);
@@ -43,7 +42,6 @@ export const AddOccupantUserPage: React.FC = () => {
 
   useEffect(() => {
     dispatch(fetchEntities());
-    // Access Level dependencies (sites/companies)
     try {
       const userStr = localStorage.getItem('user');
       const userId = userStr ? JSON.parse(userStr)?.id : undefined;
@@ -52,7 +50,6 @@ export const AddOccupantUserPage: React.FC = () => {
     dispatch(fetchAllowedCompanies());
   }, [dispatch]);
 
-  // Fetch departments using selectedCompanyId from localStorage
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
@@ -98,38 +95,58 @@ export const AddOccupantUserPage: React.FC = () => {
   };
 
   const handleCancel = () => navigate('/master/user/occupant-users');
-  const handleSubmit = async () => {
-    // Basic required validations mirroring style in Service Add page
-    const hasFirstName = formData.firstName.trim() !== '';
-    const hasLastName = formData.lastName.trim() !== '';
-    const hasMobile = formData.mobileNumber.trim() !== '';
-    const hasEmail = formData.email.trim() !== '';
-    const hasUserType = formData.userType !== '';
-    const hasAccess = formData.accessLevel !== '';
 
-    const needSites = formData.accessLevel === 'Site' && formData.selectedSites.length === 0;
-    const needCompanies = formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0;
+  const validateForm = () => {
+    const mobileRegex = /^[0-9]{10}$/;
 
-    setErrors({
-      firstName: !hasFirstName,
-      lastName: !hasLastName,
-      mobileNumber: !hasMobile,
-      email: !hasEmail,
-      userType: !hasUserType,
-      accessLevel: !hasAccess,
-      selectedSites: needSites,
-      selectedCompanies: needCompanies,
-    });
-
-    if (!hasFirstName || !hasLastName || !hasMobile || !hasEmail || !hasUserType || !hasAccess || needSites || needCompanies) {
-      return;
+    if (!formData.firstName) {
+      toast.error("First Name is required.");
+      return false;
+    }
+    if (!formData.lastName) {
+      toast.error("Last Name is required.");
+      return false;
+    }
+    if (!formData.mobileNumber) {
+      toast.error("Mobile Number is required.");
+      return false;
+    } else if (!mobileRegex.test(formData.mobileNumber)) {
+      toast.error("Mobile Number must be 10 digits.");
+      return false;
+    }
+    if (!formData.email) {
+      toast.error("Email is required.");
+      return false;
+    }
+    if (!formData.userType) {
+      toast.error("User Type is required.");
+      return false;
+    }
+    if (!formData.accessLevel) {
+      toast.error("Access Level is required.");
+      return false;
     }
 
+    if (formData.accessLevel === 'Company' && formData.selectedCompanies.length === 0) {
+      toast.error("Select at least one company.");
+      return false;
+    }
+
+    if (formData.accessLevel === 'Site' && formData.selectedSites.length === 0) {
+      toast.error("Select at least one site.");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+
     try {
-      const token = localStorage.getItem('token') || '';
-      const siteId = localStorage.getItem('selectedSiteId') || '';
-      const baseUrl = localStorage.getItem('baseUrl') || 'app.gophygital.work';
-      // Prefer selectedCompany from Redux; fallback to localStorage selectedCompanyId
+      const token = localStorage.getItem('token');
+      const siteId = localStorage.getItem('selectedSiteId');
+      const baseUrl = localStorage.getItem('baseUrl');
       const accountId = (selectedCompany as any)?.id || localStorage.getItem('selectedCompanyId') || undefined;
 
       const payload = {
@@ -145,6 +162,7 @@ export const AddOccupantUserPage: React.FC = () => {
               user_type: formData.userType,
               access_level: formData.accessLevel,
               access_to: formData.accessLevel === 'Company' ? formData.selectedCompanies : formData.selectedSites,
+              status: "pending"
             },
           ],
           firstname: formData.firstName,
@@ -184,26 +202,8 @@ export const AddOccupantUserPage: React.FC = () => {
   return (
     <div className="p-6 relative">
       <div className="mb-6">
-        <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-          <span>Setup</span>
-          <span>&gt;</span>
-          <span>Occupant Users</span>
-        </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">CREATE OCCUPANT USER</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">Add Occupant User</h1>
       </div>
-
-      {/* Profile Picture Section */}
-      {/* <div className="flex justify-center mb-6">
-        <div className="relative">
-          <div className="w-24 h-24 rounded-full bg-yellow-400" />
-          <Button 
-            size="sm" 
-            className="absolute -bottom-2 -right-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-full w-8 h-8 p-0"
-          >
-            <Camera className="w-4 h-4" />
-          </Button>
-        </div>
-      </div> */}
 
       {/* Basic Details */}
       <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
@@ -361,66 +361,64 @@ export const AddOccupantUserPage: React.FC = () => {
               )}
             </FormControl>
             {formData.accessLevel === 'Site' && (
-              <div>
-                <Autocomplete
+              <FormControl fullWidth variant="outlined" error={errors.selectedSites} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select Sites<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
                   multiple
-                  options={sites || []}
-                  getOptionLabel={(option: any) => option.name || option.full_name || ''}
-                  value={(sites || []).filter((site: any) => formData.selectedSites.includes(String(site.id)))}
-                  onChange={(event, newValue: any[]) => {
-                    handleInputChange('selectedSites', newValue.map((site: any) => String(site.id)));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={<span>Select Sites<span className='text-red-600'>*</span></span>}
-                      placeholder="Search and select sites..."
-                      variant="outlined"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      error={errors.selectedSites}
-                      helperText={errors.selectedSites ? 'Please select at least one site' : ''}
-                    />
-                  )}
-                  renderTags={(tagValue, getTagProps) =>
-                    tagValue.map((option: any, index: number) => (
-                      <Chip key={option.id} label={option.name || option.full_name || ''} size="small" {...getTagProps({ index })} />
-                    ))
+                  value={formData.selectedSites}
+                  onChange={(e) => handleInputChange('selectedSites', e.target.value as string[])}
+                  label="Select Sites"
+                  displayEmpty
+                  notched
+                  renderValue={(selected) =>
+                    selected.length > 0
+                      ? sites?.filter(site => selected.includes(site.id.toString())).map(site => site.name).join(', ')
+                      : 'Select Sites'
                   }
-                  isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
-                  filterSelectedOptions
-                />
-              </div>
+                >
+                  {sites?.map((site) => (
+                    <MenuItem key={site.id} value={site.id.toString()}>
+                      {site.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+                {errors.selectedSites && (
+                  <p className="text-red-600 text-xs mt-1">At least one site is required</p>
+                )}
+              </FormControl>
             )}
             {formData.accessLevel === 'Company' && (
-              <div>
-                <Autocomplete
+              <FormControl fullWidth variant="outlined" error={errors.selectedCompanies} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select Companies<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
                   multiple
-                  options={selectedCompany ? [selectedCompany] : []}
-                  getOptionLabel={(option: any) => option.name || ''}
-                  value={selectedCompany && formData.selectedCompanies.includes(String(selectedCompany.id)) ? [selectedCompany] : []}
-                  onChange={(event, newValue: any[]) => {
-                    handleInputChange('selectedCompanies', newValue.map((company: any) => String(company.id)));
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={<span>Select Companies<span className='text-red-600'>*</span></span>}
-                      placeholder="Search and select companies..."
-                      variant="outlined"
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      error={errors.selectedCompanies}
-                      helperText={errors.selectedCompanies ? 'Please select at least one company' : ''}
-                    />
-                  )}
-                  renderTags={(tagValue, getTagProps) =>
-                    tagValue.map((option: any, index: number) => (
-                      <Chip key={option.id} label={option.name || ''} size="small" {...getTagProps({ index })} />
-                    ))
+                  value={formData.selectedCompanies}
+                  onChange={(e) => handleInputChange('selectedCompanies', e.target.value as string[])}
+                  label="Select Companies"
+                  displayEmpty
+                  notched
+                  renderValue={(selected) =>
+                    selected.length > 0
+                      ? selectedCompany && selected.includes(selectedCompany.id.toString())
+                        ? selectedCompany.name
+                        : 'Select Companies'
+                      : 'Select Companies'
                   }
-                  isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
-                  filterSelectedOptions
-                />
-              </div>
+                >
+                  {selectedCompany && (
+                    <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                      {selectedCompany.name}
+                    </MenuItem>
+                  )}
+                </MuiSelect>
+                {errors.selectedCompanies && (
+                  <p className="text-red-600 text-xs mt-1">At least one company is required</p>
+                )}
+              </FormControl>
             )}
           </Box>
         </CardContent>

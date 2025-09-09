@@ -11,8 +11,6 @@ import {
   FormControl,
   InputLabel,
   Box,
-  Autocomplete,
-  Chip,
 } from '@mui/material';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { Entity, fetchEntities } from '@/store/slices/entitiesSlice';
@@ -94,8 +92,8 @@ export const AddFMUserPage = () => {
     selectRole: '',
     selectAccessLevel: '',
     selectEmailPreference: '',
-    selectedSites: [], // Store multiple selected site IDs
-    selectedCompanies: []
+    selectedSites: [] as string[],
+    selectedCompanies: [] as string[]
   });
 
   const handleInputChange = (field: string, value: string | string[]) => {
@@ -510,6 +508,9 @@ export const AddFMUserPage = () => {
                         if (e.target.value !== 'Site') {
                           handleInputChange('selectedSites', []);
                         }
+                        if (e.target.value !== 'Company') {
+                          handleInputChange('selectedCompanies', []);
+                        }
                       }}
                       label="Select Access Level"
                       displayEmpty
@@ -525,82 +526,54 @@ export const AddFMUserPage = () => {
                 {/* Multiple Site Selection */}
                 {formData.selectAccessLevel === 'Site' && (
                   <div>
-                    <Autocomplete
-                      multiple
-                      options={sites || []}
-                      getOptionLabel={(option) => option.name || option.full_name || ''}
-                      value={sites?.filter((site) => formData.selectedSites.includes(site.id.toString())) || []}
-                      onChange={(event, newValue) => {
-                        handleInputChange('selectedSites', newValue.map((site) => site.id.toString()));
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={
-                            <span>
-                              Select Sites<span className='text-red-500'>*</span>
-                            </span>
-                          }
-                          placeholder="Search and select sites..."
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      )}
-                      renderTags={(tagValue, getTagProps) =>
-                        tagValue.map((option, index) => (
-                          <Chip
-                            key={option.id}
-                            label={option.name || option.full_name || ''}
-                            size="small"
-                            {...getTagProps({ index })}
-                          />
-                        ))
-                      }
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                      filterSelectedOptions
-                    />
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Select Sites<span className='text-red-500'>*</span></InputLabel>
+                      <Select
+                        multiple
+                        value={formData.selectedSites}
+                        onChange={(e) => handleInputChange('selectedSites', e.target.value as string[])}
+                        label="Select Sites"
+                        displayEmpty
+                        renderValue={(selected) =>
+                          selected.length > 0
+                            ? sites?.filter(site => selected.includes(site.id.toString())).map(site => site.name || site.full_name).join(', ')
+                            : 'Select Sites'
+                        }
+                      >
+                        {sites?.map((site) => (
+                          <MenuItem key={site.id} value={site.id.toString()}>
+                            {site.name || site.full_name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </div>
                 )}
                 {formData.selectAccessLevel === 'Company' && (
                   <div>
-                    <Autocomplete
-                      multiple
-                      options={selectedCompany ? [selectedCompany] : []} // Wrap single selectedCompany in an array
-                      getOptionLabel={(option) => option.name || ''} // Display the company name
-                      value={
-                        selectedCompany && formData.selectedCompanies.includes(selectedCompany.id.toString())
-                          ? [selectedCompany]
-                          : []
-                      } // Set the value to the selected company if its ID is in selectedCompanies
-                      onChange={(event, newValue) => {
-                        handleInputChange('selectedCompanies', newValue.map((company) => company.id.toString()));
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={
-                            <span>
-                              Select Companies<span className='text-red-500'>*</span>
-                            </span>
-                          }
-                          placeholder="Search and select companies..."
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      )}
-                      renderTags={(tagValue, getTagProps) =>
-                        tagValue.map((option, index) => (
-                          <Chip
-                            key={option.id}
-                            label={option.name || ''}
-                            size="small"
-                            {...getTagProps({ index })}
-                          />
-                        ))
-                      }
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                      filterSelectedOptions
-                    />
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>Select Companies<span className='text-red-500'>*</span></InputLabel>
+                      <Select
+                        multiple
+                        value={formData.selectedCompanies}
+                        onChange={(e) => handleInputChange('selectedCompanies', e.target.value as string[])}
+                        label="Select Companies"
+                        displayEmpty
+                        renderValue={(selected) =>
+                          selected.length > 0
+                            ? selectedCompany && selected.includes(selectedCompany.id.toString())
+                              ? selectedCompany.name
+                              : 'Select Companies'
+                            : 'Select Companies'
+                        }
+                      >
+                        {selectedCompany && (
+                          <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                            {selectedCompany.name}
+                          </MenuItem>
+                        )}
+                      </Select>
+                    </FormControl>
                   </div>
                 )}
               </div>

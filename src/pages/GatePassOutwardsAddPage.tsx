@@ -9,13 +9,15 @@ import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { useToast } from '@/hooks/use-toast';
 import { API_CONFIG } from '@/config/apiConfig';
+import { useSelector } from 'react-redux';
 
 // Define DropdownOption type
-type DropdownOption = {
+interface DropdownOption {
   id: number;
   name: string;
-  [key: string]: any;
-};
+  quantity?: number;
+  unit?: string;
+}
 
 
 interface AttachmentFile {
@@ -31,7 +33,7 @@ interface MaterialRow {
   itemCategoryId: number | null;
   itemNameId: number | null;
   quantity: string;
-  unit: string;
+  unit: string | null;
   description: string;
   maxQuantity: number | null;
 }
@@ -79,6 +81,10 @@ export const GatePassOutwardsAddPage = () => {
   const [itemNameOptions, setItemNameOptions] = useState<{ [key: number]: DropdownOption[] }>({});
   const [gateNumbers, setGateNumbers] = useState<DropdownOption[]>([]);
 
+  const selectedSite = useSelector((state: any) => state.site.selectedSite);
+  const selectedBuilding = useSelector((state: any) => state.project.selectedBuilding);
+  const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
+
   useEffect(() => {
     gateNumberService.getCompanies().then(setCompanies);
     gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
@@ -97,12 +103,12 @@ export const GatePassOutwardsAddPage = () => {
   }, []);
 
   useEffect(() => {
-    if (gatePassDetails.siteId) {
-      gateNumberService.getProjectsBySite(gatePassDetails.siteId).then(setBuildings);
+    if (selectedSite?.id) {
+      gateNumberService.getProjectsBySite(selectedSite?.id).then(setBuildings);
     } else {
       setBuildings([]);
     }
-  }, [gatePassDetails.siteId]);
+  }, [selectedSite?.id]);
 
   const handleVisitorChange = (field: keyof typeof visitorDetails, value: any) => {
     setVisitorDetails(prev => ({ ...prev, [field]: value }));
@@ -129,7 +135,7 @@ export const GatePassOutwardsAddPage = () => {
     const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit:'' } : row);
       setMaterialRows(updatedRows);
       setItemNameOptions(prev => ({ ...prev, [id]: [] }));
 
@@ -140,7 +146,7 @@ export const GatePassOutwardsAddPage = () => {
         setItemCategoryOptions(prev => ({ ...prev, [id]: [] }));
       }
     } else if (field === 'itemCategoryId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '', unit:'' } : row);
       setMaterialRows(updatedRows);
 
       const currentItemTypeId = newRows.find(row => row.id === id)?.itemTypeId;
@@ -152,7 +158,14 @@ export const GatePassOutwardsAddPage = () => {
       }
     } else if (field === 'itemNameId') {
       const selectedItem = (itemNameOptions[id] || []).find(item => item.id === value);
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, maxQuantity: selectedItem?.quantity ?? null, quantity: '' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? {
+        ...row,
+        maxQuantity: selectedItem?.quantity ?? null,
+        quantity: '',
+        unit: selectedItem?.unit ?? '' // Ensure unit is set from selected item
+      } : row);
+      console.log("Selected Item:", selectedItem);
+      
       setMaterialRows(updatedRows);
     } else if (field === 'quantity') {
       const currentRow = newRows.find(row => row.id === id);
@@ -285,7 +298,22 @@ export const GatePassOutwardsAddPage = () => {
       });
     }
   };
-
+useEffect(() => {
+    if (gatePassDetails.buildingId) {
+      fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${gatePassDetails.buildingId}`, {
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        },
+      })
+        .then(res => res.json())
+        .then(data => setGateNumbers(data.gate_numbers || data))
+        .catch(() => setGateNumbers([]));
+    } else {
+      setGateNumbers([]);
+    }
+  }, [gatePassDetails.buildingId]);
+  
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -329,29 +357,51 @@ export const GatePassOutwardsAddPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6 border border-gray-200 rounded-lg p-10 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Row 1 */}
-          <Autocomplete
-            options={gatePassTypes}
-            getOptionLabel={(option) => option.name}
-            value={gatePassTypes.find(c => c.id === gatePassDetails.gatePassTypeId) || null}
-            onChange={(_, newValue) => handleGatePassChange('gatePassTypeId', newValue ? newValue.id : null)}
-            renderInput={(params) => <TextField {...params} label="Gate Pass Type" placeholder="Select Type" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-          />
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Gate Pass Type</InputLabel>
+            <MuiSelect
+              label="Gate Pass Type"
+              notched
+              displayEmpty
+              value={gatePassDetails.gatePassTypeId || ''}
+              onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
+            >
+              <MenuItem value="">Select Type</MenuItem>
+              {gatePassTypes.map((option) => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
           <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <Autocomplete
-            options={sites}
-            getOptionLabel={(option) => option.name}
-            value={sites.find(c => c.id === gatePassDetails.siteId) || null}
-            onChange={(_, newValue) => handleGatePassChange('siteId', newValue ? newValue.id : null)}
-            renderInput={(params) => <TextField {...params} label="Site" placeholder="Select Site" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-          />
-          <Autocomplete
-            options={buildings}
-            getOptionLabel={(option) => option.name}
-            value={buildings.find(c => c.id === gatePassDetails.buildingId) || null}
-            onChange={(_, newValue) => handleGatePassChange('buildingId', newValue ? newValue.id : null)}
-            disabled={!gatePassDetails.siteId}
-            renderInput={(params) => <TextField {...params} label="Building" placeholder="Select Building" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-          />
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Site</InputLabel>
+            <MuiSelect
+              label="Site"
+              notched
+              displayEmpty
+              value={selectedSite ? selectedSite.id : ''}
+              disabled
+            >
+              <MenuItem value="">Select Site</MenuItem>
+              {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
+            </MuiSelect>
+          </FormControl>
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Building</InputLabel>
+            <MuiSelect
+              label="Building"
+              notched
+              displayEmpty
+              value={gatePassDetails.buildingId || ''}
+              onChange={e => handleGatePassChange('buildingId', e.target.value)}
+              disabled={!selectedSite}
+            >
+              <MenuItem value="">Select Building</MenuItem>
+              {buildings.map((option) => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
           {returnableStatus === 'returnable' && (
             <TextField
               label="Expected Return Date *"
@@ -363,14 +413,21 @@ export const GatePassOutwardsAddPage = () => {
               InputProps={{ sx: fieldStyles }}
             />
           )}
-          {/* Row 2 */}
-          <Autocomplete
-            options={gateNumbers}
-            getOptionLabel={(option) => option.gate_number}
-            value={gateNumbers.find(g => g.id === visitorDetails.gateNoId) || null}
-            onChange={(_, newValue) => handleVisitorChange('gateNoId', newValue ? newValue.id : null)}
-            renderInput={(params) => <TextField {...params} label="Gate No." placeholder="Select Gate No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-          />
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Gate No.</InputLabel>
+            <MuiSelect
+              label="Gate No."
+              notched
+              displayEmpty
+              value={visitorDetails.gateNoId || ''}
+              onChange={e => handleVisitorChange('gateNoId', e.target.value)}
+            >
+              <MenuItem value="">Select Gate No</MenuItem>
+              {gateNumbers.map((option) => (
+                <MenuItem key={option.id} value={option.id}>{option.gate_number || option.name}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
           <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField
@@ -384,27 +441,19 @@ export const GatePassOutwardsAddPage = () => {
             InputLabelProps={{ shrink: true }}
             InputProps={{ sx: fieldStyles }}
           />
-          <Autocomplete
-            options={companies}
-            getOptionLabel={(option) => option.name}
-            value={companies.find(c => c.id === visitorDetails.companyId) || null}
-            onChange={(_, newValue) => handleVisitorChange('companyId', newValue ? newValue.id : null)}
-            renderInput={(params) => <TextField {...params} label="Company Name" placeholder="Select Company" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiInputBase-root': fieldStyles }} />}
-          />
-          {/* Row 3 */}
           <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-            <InputLabel shrink>Select Mode Of Transport *</InputLabel>
-            <MuiSelect label="Select Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
-              <MenuItem value="">Type here</MenuItem>
-              <MenuItem value="by-hand">By Hand</MenuItem>
-              <MenuItem value="by-vehicle">By Vehicle</MenuItem>
-              <MenuItem value="by-courier">By Courier</MenuItem>
+            <InputLabel shrink>Company Name</InputLabel>
+            <MuiSelect
+              label="Company Name"
+              notched
+              displayEmpty
+              value={selectedCompany ? selectedCompany.id : ''}
+              disabled
+            >
+              <MenuItem value="">Select Company</MenuItem>
+              {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
             </MuiSelect>
           </FormControl>
-          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} label="Vehicle No." placeholder="Enter Vehicle No" fullWidth variant="outlined" InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Remarks" placeholder="Enter remarks" fullWidth variant="outlined" value={gatePassDetails.remarks} onChange={(e) => handleGatePassChange('remarks', e.target.value)} InputLabelProps={{ shrink: true }} multiline rows={2} />
         </div>
 
 
@@ -418,50 +467,74 @@ export const GatePassOutwardsAddPage = () => {
             <table className="w-full text-sm text-left text-gray-500">
               <thead className="text-xs text-white uppercase bg-[#C72030]">
                 <tr>
-                  <th scope="col" className="px-6 py-3">Sr.No.</th>
-                  <th scope="col" className="px-6 py-3">Item Type</th>
-                  <th scope="col" className="px-6 py-3">Item Category</th>
-                  <th scope="col" className="px-6 py-3">Item Name</th>
-                  <th scope="col" className="px-6 py-3">Quantity</th>
-                  <th scope="col" className="px-6 py-3">Unit</th>
-                  <th scope="col" className="px-6 py-3">Description</th>
-                  <th scope="col" className="px-6 py-3">Action</th>
+                  <th scope="col" className="px-4 py-3" style={{ width: '30px' }}>Sr.No.</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Type</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Category</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Name</th>
+                  <th scope="col" className="px-4 py-3" /* Quantity: balance width */>Quantity</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '80px' }}>Unit</th>
+                  <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Description</th>
+                  <th scope="col" className="px-4 py-3" style={{ width: '80px' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {materialRows.map((row, index) => (
                   <tr key={row.id} className="bg-white border-b">
-                    <td className="px-4 py-2">{index + 1}</td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
-                      <Autocomplete
-                        options={itemTypeOptions}
-                        getOptionLabel={(option) => option.name}
-                        value={itemTypeOptions.find(o => o.id === row.itemTypeId) || null}
-                        onChange={(_, newValue) => handleRowChange(row.id, 'itemTypeId', newValue ? newValue.id : null)}
-                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Type" />}
-                      />
+                    <td className="px-4 py-4">{index + 1}</td>
+                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
+                      <FormControl fullWidth variant="outlined" size="small" required>
+                        <InputLabel shrink>Item Type</InputLabel>
+                        <MuiSelect
+                          label="Item Type"
+                          notched
+                          displayEmpty
+                          value={row.itemTypeId || ''}
+                          onChange={e => handleRowChange(row.id, 'itemTypeId', e.target.value)}
+                        >
+                          <MenuItem value="">Select Type</MenuItem>
+                          {itemTypeOptions.map((option) => (
+                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
                     </td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
-                      <Autocomplete
-                        options={itemCategoryOptions[row.id] || []}
-                        getOptionLabel={(option) => option.name}
-                        value={(itemCategoryOptions[row.id] || []).find(o => o.id === row.itemCategoryId) || null}
-                        onChange={(_, newValue) => handleRowChange(row.id, 'itemCategoryId', newValue ? newValue.id : null)}
-                        disabled={!row.itemTypeId}
-                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Category" />}
-                      />
+                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
+                      <FormControl fullWidth variant="outlined" size="small" required>
+                        <InputLabel shrink>Item Category</InputLabel>
+                        <MuiSelect
+                          label="Item Category"
+                          notched
+                          displayEmpty
+                          value={row.itemCategoryId || ''}
+                          onChange={e => handleRowChange(row.id, 'itemCategoryId', e.target.value)}
+                          disabled={!row.itemTypeId}
+                        >
+                          <MenuItem value="">Select Category</MenuItem>
+                          {(itemCategoryOptions[row.id] || []).map((option) => (
+                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
                     </td>
-                    <td className="px-4 py-2" style={{ minWidth: 150 }}>
-                      <Autocomplete
-                        options={itemNameOptions[row.id] || []}
-                        getOptionLabel={(option) => option.name}
-                        value={(itemNameOptions[row.id] || []).find(o => o.id === row.itemNameId) || null}
-                        onChange={(_, newValue) => handleRowChange(row.id, 'itemNameId', newValue ? newValue.id : null)}
-                        disabled={!row.itemCategoryId}
-                        renderInput={(params) => <TextField {...params} variant="outlined" size="small" placeholder="Select Item" />}
-                      />
+                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
+                      <FormControl fullWidth variant="outlined" size="small" required>
+                        <InputLabel shrink>Item Name</InputLabel>
+                        <MuiSelect
+                          label="Item Name"
+                          notched
+                          displayEmpty
+                          value={row.itemNameId || ''}
+                          onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+                          disabled={!row.itemCategoryId}
+                        >
+                          <MenuItem value="">Select Item</MenuItem>
+                          {(itemNameOptions[row.id] || []).map((option) => (
+                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
                     </td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-4">
                       <TextField
                         variant="outlined"
                         size="small"
@@ -472,9 +545,9 @@ export const GatePassOutwardsAddPage = () => {
                       // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
-                    <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
-                    <td className="px-4 py-2"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
-                    <td className="px-4 py-2">
+                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
+                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
+                    <td className="px-4 py-4">
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
                         <Trash2 className="w-4 h-4 text-red-600" />
                       </button>

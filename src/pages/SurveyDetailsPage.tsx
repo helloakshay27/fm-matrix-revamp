@@ -1,33 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, X, Plus, ChevronDown, CheckCircle } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { fetchSnagChecklistById, fetchSnagChecklistCategories, SnagChecklist } from '@/services/snagChecklistAPI';
-import { toast } from 'sonner';
-import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, X, Plus, ChevronDown, CheckCircle } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  fetchSnagChecklistById,
+  fetchSnagChecklistCategories,
+  SnagChecklist,
+} from "@/services/snagChecklistAPI";
+import { toast } from "sonner";
+import { getFullUrl, getAuthHeader } from "@/config/apiConfig";
 export const SurveyDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   // State for API data
-  const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(null);
+  const [snagChecklist, setSnagChecklist] = useState<SnagChecklist | null>(
+    null
+  );
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [buildings, setBuildings] = useState<Array<{id: number, name: string}>>([]);
+  const [buildings, setBuildings] = useState<
+    Array<{ id: number; name: string }>
+  >([]);
   const [loadingBuildings, setLoadingBuildings] = useState(false);
-  const [wings, setWings] = useState<Array<{id: number, name: string}>>([]);
+  const [wings, setWings] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingWings, setLoadingWings] = useState(false);
-  const [floors, setFloors] = useState<Array<{id: number, name: string}>>([]);
+  const [floors, setFloors] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingFloors, setLoadingFloors] = useState(false);
-  const [zones, setZones] = useState<Array<{id: number, name: string}>>([]);
+  const [zones, setZones] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingZones, setLoadingZones] = useState(false);
-  const [rooms, setRooms] = useState<Array<{id: number, name: string}>>([]);
+  const [rooms, setRooms] = useState<Array<{ id: number; name: string }>>([]);
   const [loadingRooms, setLoadingRooms] = useState(false);
-  
+
   // State for location configuration
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [locationMappings, setLocationMappings] = useState([]);
@@ -42,47 +62,51 @@ export const SurveyDetailsPage = () => {
     selectedBuildingIds: [], // Add this to track building IDs
     selectedWingIds: [], // Add this to track wing IDs
     selectedFloorIds: [], // Add this to track floor IDs
-    selectedRoomIds: [] // Add this to track room IDs
+    selectedRoomIds: [], // Add this to track room IDs
   });
 
   const removeSelectedItem = (type, item) => {
     const key = `selected${type.charAt(0).toUpperCase() + type.slice(1)}s`;
-    setLocationConfig(prev => ({
+    setLocationConfig((prev) => ({
       ...prev,
-      [key]: prev[key].filter(selected => selected !== item)
+      [key]: prev[key].filter((selected) => selected !== item),
     }));
-    
+
     // Also remove from corresponding ID arrays
-    if (type === 'room') {
-      const room = rooms.find(r => r.name === item);
+    if (type === "room") {
+      const room = rooms.find((r) => r.name === item);
       if (room) {
-        setLocationConfig(prev => ({
+        setLocationConfig((prev) => ({
           ...prev,
-          selectedRoomIds: prev.selectedRoomIds.filter(id => id !== room.id)
+          selectedRoomIds: prev.selectedRoomIds.filter((id) => id !== room.id),
         }));
       }
-    } else if (type === 'building') {
-      const building = buildings.find(b => b.name === item);
+    } else if (type === "building") {
+      const building = buildings.find((b) => b.name === item);
       if (building) {
-        setLocationConfig(prev => ({
+        setLocationConfig((prev) => ({
           ...prev,
-          selectedBuildingIds: prev.selectedBuildingIds.filter(id => id !== building.id)
+          selectedBuildingIds: prev.selectedBuildingIds.filter(
+            (id) => id !== building.id
+          ),
         }));
       }
-    } else if (type === 'wing') {
-      const wing = wings.find(w => w.name === item);
+    } else if (type === "wing") {
+      const wing = wings.find((w) => w.name === item);
       if (wing) {
-        setLocationConfig(prev => ({
+        setLocationConfig((prev) => ({
           ...prev,
-          selectedWingIds: prev.selectedWingIds.filter(id => id !== wing.id)
+          selectedWingIds: prev.selectedWingIds.filter((id) => id !== wing.id),
         }));
       }
-    } else if (type === 'floor') {
-      const floor = floors.find(f => f.name === item);
+    } else if (type === "floor") {
+      const floor = floors.find((f) => f.name === item);
       if (floor) {
-        setLocationConfig(prev => ({
+        setLocationConfig((prev) => ({
           ...prev,
-          selectedFloorIds: prev.selectedFloorIds.filter(id => id !== floor.id)
+          selectedFloorIds: prev.selectedFloorIds.filter(
+            (id) => id !== floor.id
+          ),
         }));
       }
     }
@@ -90,9 +114,9 @@ export const SurveyDetailsPage = () => {
 
   const addSelectedItem = (type, item) => {
     const key = `selected${type.charAt(0).toUpperCase() + type.slice(1)}s`;
-    setLocationConfig(prev => ({
+    setLocationConfig((prev) => ({
       ...prev,
-      [key]: [...prev[key], item]
+      [key]: [...prev[key], item],
     }));
   };
 
@@ -100,24 +124,26 @@ export const SurveyDetailsPage = () => {
   const fetchBuildings = async () => {
     try {
       setLoadingBuildings(true);
-      const response = await fetch(getFullUrl('/buildings.json'), {
+      const response = await fetch(getFullUrl("/buildings.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch buildings');
+        throw new Error("Failed to fetch buildings");
       }
-      
+
       const buildingsData = await response.json();
-      setBuildings(buildingsData.map((building: any) => ({
-        id: building.id,
-        name: building.name
-      })));
+      setBuildings(
+        buildingsData.map((building: any) => ({
+          id: building.id,
+          name: building.name,
+        }))
+      );
     } catch (error) {
-      console.error('Error fetching buildings:', error);
+      console.error("Error fetching buildings:", error);
     } finally {
       setLoadingBuildings(false);
     }
@@ -127,24 +153,26 @@ export const SurveyDetailsPage = () => {
   const fetchWings = async () => {
     try {
       setLoadingWings(true);
-      const response = await fetch(getFullUrl('/pms/wings.json'), {
+      const response = await fetch(getFullUrl("/pms/wings.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch wings');
+        throw new Error("Failed to fetch wings");
       }
-      
+
       const wingsData = await response.json();
-      setWings(wingsData.wings.map((wing: any) => ({
-        id: wing.id,
-        name: wing.name
-      })));
+      setWings(
+        wingsData.wings.map((wing: any) => ({
+          id: wing.id,
+          name: wing.name,
+        }))
+      );
     } catch (error) {
-      console.error('Error fetching wings:', error);
+      console.error("Error fetching wings:", error);
     } finally {
       setLoadingWings(false);
     }
@@ -154,24 +182,26 @@ export const SurveyDetailsPage = () => {
   const fetchFloors = async () => {
     try {
       setLoadingFloors(true);
-      const response = await fetch(getFullUrl('/pms/floors.json'), {
+      const response = await fetch(getFullUrl("/pms/floors.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch floors');
+        throw new Error("Failed to fetch floors");
       }
-      
+
       const floorsData = await response.json();
-      setFloors(floorsData.floors.map((floor: any) => ({
-        id: floor.id,
-        name: floor.name
-      })));
+      setFloors(
+        floorsData.floors.map((floor: any) => ({
+          id: floor.id,
+          name: floor.name,
+        }))
+      );
     } catch (error) {
-      console.error('Error fetching floors:', error);
+      console.error("Error fetching floors:", error);
     } finally {
       setLoadingFloors(false);
     }
@@ -188,21 +218,21 @@ export const SurveyDetailsPage = () => {
       //     'Content-Type': 'application/json'
       //   }
       // });
-      
+
       // if (!response.ok) {
       //   throw new Error('Failed to fetch zones');
       // }
-      
+
       // const zonesData = await response.json();
       // setZones(zonesData.zones.map((zone: any) => ({
       //   id: zone.id,
       //   name: zone.name
       // })));
-      
+
       // For now, set empty zones array since API endpoint not available
       setZones([]);
     } catch (error) {
-      console.error('Error fetching zones:', error);
+      console.error("Error fetching zones:", error);
       setZones([]);
     } finally {
       setLoadingZones(false);
@@ -213,70 +243,73 @@ export const SurveyDetailsPage = () => {
   const fetchRooms = async () => {
     try {
       setLoadingRooms(true);
-      const response = await fetch(getFullUrl('/pms/rooms.json'), {
+      const response = await fetch(getFullUrl("/pms/rooms.json"), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to fetch rooms');
+        throw new Error("Failed to fetch rooms");
       }
-      
+
       const roomsData = await response.json();
       // Note: Based on the JSON structure provided, it's a direct array, not wrapped in an object
-      setRooms(roomsData.map((room: any) => ({
-        id: room.id,
-        name: room.name
-      })));
+      setRooms(
+        roomsData.map((room: any) => ({
+          id: room.id,
+          name: room.name,
+        }))
+      );
     } catch (error) {
-      console.error('Error fetching rooms:', error);
+      console.error("Error fetching rooms:", error);
     } finally {
       setLoadingRooms(false);
     }
   };
 
-  // Fetch survey mappings
+  // Fetch Question mappings
   const fetchSurveyMappings = async (mappingId?: string) => {
     if (!id) return;
-    
+
     try {
       setLoadingSurveyMappings(true);
-      
+
       // Build API URL based on parameters
       let apiUrl;
       if (mappingId) {
-        // Fetch by specific mapping ID and survey ID
+        // Fetch by specific mapping ID and Question ID
         apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
       } else {
-        // Fetch all mappings for the survey ID
+        // Fetch all mappings for the Question ID
         apiUrl = `/survey_mappings.json?q[survey_id_eq]=${id}`;
       }
-      
-      console.log('Fetching survey mappings from:', getFullUrl(apiUrl));
-      
+
+      console.log("Fetching Question mappings from:", getFullUrl(apiUrl));
+
       const response = await fetch(getFullUrl(apiUrl), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch survey mappings: ${response.status}`);
+        throw new Error(`Failed to fetch Question mappings: ${response.status}`);
       }
-      
+
       const mappingsData = await response.json();
-      console.log('Survey mappings response:', mappingsData);
-      
+      console.log("Question mappings response:", mappingsData);
+
       // Handle the response structure - extract survey_mappings array
-      const surveyMappingsArray = mappingsData.survey_mappings || mappingsData || [];
+      const surveyMappingsArray =
+        mappingsData.survey_mappings || mappingsData || [];
       setSurveyMappings(surveyMappingsArray);
     } catch (error) {
-      console.error('Error fetching survey mappings:', error);
-      toast.error('Failed to Load Survey Mappings', {
-        description: 'Unable to fetch survey mapping data',
+      console.error("Error fetching Question mappings:", error);
+      toast.error("Failed to Load Question Mappings", {
+        description: "Unable to fetch Question mapping data",
         duration: 4000,
       });
     } finally {
@@ -284,35 +317,36 @@ export const SurveyDetailsPage = () => {
     }
   };
 
-  // Fetch survey mapping by specific mapping ID
+  // Fetch Question mapping by specific mapping ID
   const fetchSurveyMappingById = async (mappingId: string) => {
     if (!id) return null;
-    
+
     try {
       const apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
-      console.log('Fetching specific survey mapping from:', getFullUrl(apiUrl));
-      
+      console.log("Fetching specific Question mapping from:", getFullUrl(apiUrl));
+
       const response = await fetch(getFullUrl(apiUrl), {
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
-        }
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        throw new Error(`Failed to fetch survey mapping: ${response.status}`);
+        throw new Error(`Failed to fetch Question mapping: ${response.status}`);
       }
-      
+
       const mappingData = await response.json();
-      console.log('Survey mapping response:', mappingData);
-      
+      console.log("Question mapping response:", mappingData);
+
       // Handle the response structure - extract survey_mappings array
-      const surveyMappingsArray = mappingData.survey_mappings || mappingData || [];
+      const surveyMappingsArray =
+        mappingData.survey_mappings || mappingData || [];
       return surveyMappingsArray.length > 0 ? surveyMappingsArray[0] : null;
     } catch (error) {
-      console.error('Error fetching survey mapping by ID:', error);
-      toast.error('Failed to Load Survey Mapping', {
-        description: 'Unable to fetch specific survey mapping data',
+      console.error("Error fetching Question mapping by ID:", error);
+      toast.error("Failed to Load Question Mapping", {
+        description: "Unable to fetch specific Question mapping data",
         duration: 4000,
       });
       return null;
@@ -323,19 +357,19 @@ export const SurveyDetailsPage = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!id) return;
-      
+
       try {
         setLoading(true);
         const [checklistData, categoriesData] = await Promise.all([
           fetchSnagChecklistById(id),
-          fetchSnagChecklistCategories()
+          fetchSnagChecklistCategories(),
         ]);
-        
+
         setSnagChecklist(checklistData);
         setCategories(categoriesData);
       } catch (error) {
-        toast.error('Failed to Load Survey Data', {
-          description: 'Unable to fetch survey details',
+        toast.error("Failed to Load Question Data", {
+          description: "Unable to fetch Question details",
           duration: 4000,
         });
       } finally {
@@ -354,25 +388,27 @@ export const SurveyDetailsPage = () => {
 
   // Get category name by ID
   const getCategoryName = (categoryId: number) => {
-    const category = categories.find(cat => cat.id === categoryId);
-    return category?.name || 'Unknown Category';
+    const category = categories.find((cat) => cat.id === categoryId);
+    return category?.name || "Unknown Category";
   };
 
   const handleBack = () => {
-    navigate('/maintenance/survey/list');
+    navigate("/maintenance/survey/list");
   };
 
   const handleSubmitLocation = async () => {
     try {
       // Validate that we have some location selected
-      const hasSelection = locationConfig.selectedBuildingIds.length > 0 || 
-                          locationConfig.selectedWingIds.length > 0 || 
-                          locationConfig.selectedFloorIds.length > 0 || 
-                          locationConfig.selectedRoomIds.length > 0;
+      const hasSelection =
+        locationConfig.selectedBuildingIds.length > 0 ||
+        locationConfig.selectedWingIds.length > 0 ||
+        locationConfig.selectedFloorIds.length > 0 ||
+        locationConfig.selectedRoomIds.length > 0;
 
       if (!hasSelection) {
-        toast.error('Validation Error', {
-          description: 'Please select at least one location (building, wing, floor, or room)',
+        toast.error("Validation Error", {
+          description:
+            "Please select at least one location (building, wing, floor, or room)",
           duration: 4000,
         });
         return;
@@ -384,36 +420,36 @@ export const SurveyDetailsPage = () => {
         building_ids: locationConfig.selectedBuildingIds,
         wing_ids: locationConfig.selectedWingIds,
         floor_ids: locationConfig.selectedFloorIds,
-        room_ids: locationConfig.selectedRoomIds
+        room_ids: locationConfig.selectedRoomIds,
       };
 
-      console.log('Submitting survey mapping:', requestData);
+      console.log("Submitting Question mapping:", requestData);
 
       // Make the POST API call
-      const response = await fetch(getFullUrl('/survey_mappings.json'), {
-        method: 'POST',
+      const response = await fetch(getFullUrl("/survey_mappings.json"), {
+        method: "POST",
         headers: {
-          'Authorization': getAuthHeader(),
-          'Content-Type': 'application/json'
+          Authorization: getAuthHeader(),
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(requestData)
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create survey mapping');
+        throw new Error("Failed to create Question mapping");
       }
 
       const result = await response.json();
-      console.log('Survey mapping created successfully:', result);
+      console.log("Question mapping created successfully:", result);
 
       // Show success toast
-      toast.success('Survey Mapping Created Successfully!', {
-        description: 'The location mapping has been added to the survey.',
+      toast.success("Question Mapping Created Successfully!", {
+        description: "The location mapping has been added to the survey.",
         icon: <CheckCircle className="w-4 h-4" />,
         duration: 4000,
       });
 
-      // Immediately refresh survey mappings data to show the new entry
+      // Immediately refresh Question mappings data to show the new entry
       await fetchSurveyMappings();
 
       // Close the dialog
@@ -429,273 +465,449 @@ export const SurveyDetailsPage = () => {
         selectedBuildingIds: [],
         selectedWingIds: [],
         selectedFloorIds: [],
-        selectedRoomIds: []
+        selectedRoomIds: [],
       });
     } catch (error) {
-      console.error('Error creating survey mapping:', error);
-      toast.error('Failed to Create Survey Mapping', {
-        description: error.message || 'An error occurred while creating the mapping',
+      console.error("Error creating Question mapping:", error);
+      toast.error("Failed to Create Question Mapping", {
+        description:
+          error.message || "An error occurred while creating the mapping",
         duration: 5000,
       });
     }
   };
-  return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+  return (
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" onClick={handleBack} className="flex items-center gap-2 text-gray-600 hover:text-gray-800">
+        <Button
+          variant="ghost"
+          onClick={handleBack}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+        >
           <ArrowLeft className="w-4 h-4" />
-          Back to Survey List
+          Back to Question List
         </Button>
       </div>
 
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Survey Details</h1>
-      </div>
+     
 
-      {/* Main Survey Content Card */}
-      <Card className="border border-gray-200 bg-gray-50">
+      {/* Main Question Content Card */}
+      <Card className="border border-gray-200 bg-white shadow-sm">
+        <CardHeader className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg font-semibold text-gray-900">
+              Question Information
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              {!loading && snagChecklist && (
+                <>
+                  {snagChecklist.check_type && (
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                      {snagChecklist.check_type.charAt(0).toUpperCase() +
+                        snagChecklist.check_type.slice(1)}
+                    </span>
+                  )}
+                  {snagChecklist.active !== undefined && (
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        snagChecklist.active
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {snagChecklist.active ? "Active" : "Inactive"}
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        </CardHeader>
         <CardContent className="p-6">
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Loading survey data...</div>
+              <div className="text-gray-500">Loading Question data...</div>
             </div>
           ) : !snagChecklist ? (
             <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Survey not found</div>
+              <div className="text-gray-500">Question not found</div>
             </div>
           ) : (
             <>
-              {/* Top Section - Category and Title */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                <div className="hidden">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category*
-                  </label>
-                  <Select value={snagChecklist.snag_audit_category} disabled>
-                    <SelectTrigger className="w-full bg-gray-50">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories?.map((category) => (
-                        <SelectItem key={category.id} value={category.name}>
-                          {category.name}
-                        </SelectItem>
-                      )) || []}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Title*
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter the title"
-                    className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700 focus-visible:outline-none focus-visible:ring-0 focus-visible:border-gray-300"
-                    value={snagChecklist.name}
-                    disabled
-                    readOnly
-                  />
-                </div>
-              </div>
-
-              {/* Questions Counter Section */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-600">No. of Questions</span>
-                  <span className="text-sm font-medium">{snagChecklist?.questions_count || 0}</span>
+              {/* Question Basic Information */}
+              <div className="mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Question Title
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist.name || "Untitled Survey"}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Total Questions
+                    </label>
+                    <div className="text-base font-medium text-gray-900 bg-gray-50 px-3 py-2 rounded-md border">
+                      {snagChecklist?.questions_count || 0} Questions
+                    </div>
+                  </div>
                 </div>
               </div>
             </>
           )}
 
-          {/* Questions Grid */}
-          {!loading && snagChecklist && (
-            <div className="grid grid-cols-1 gap-6">
-              {snagChecklist.snag_questions?.map((question: any, index) => (
-                <Card key={question.id} className="border border-gray-200 bg-gray-100">
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-                    <CardTitle className="text-base font-medium">
-                      Question {index + 1}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Question Text
-                        </label>
-                        <input 
-                          type="text"
-                          className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700" 
-                          placeholder="Enter your Question"
-                          value={question.descr}
-                          disabled
-                          readOnly
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Answer Type
-                        </label>
-                        <Select value={question.qtype === 'multiple' ? 'Multiple Choice' : question.qtype === 'input' ? 'Input Box' : question.qtype === 'rating' ? 'Rating' : question.qtype === 'emoji' ? 'Emojis' : 'Description Box'} disabled>
-                          <SelectTrigger className="w-full h-10 bg-gray-50">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Multiple Choice">Multiple Choice</SelectItem>
-                            <SelectItem value="Input Box">Input Box</SelectItem>
-                            <SelectItem value="Description Box">Description Box</SelectItem>
-                            <SelectItem value="Rating">Rating</SelectItem>
-                            <SelectItem value="Emojis">Emojis</SelectItem>
-                          </SelectContent>
-                        </Select>
+          {/* Ticket Configuration Section - Shared for all questions */}
+          {!loading && snagChecklist && snagChecklist.snag_questions && snagChecklist.snag_questions.length > 0 && (snagChecklist.snag_questions[0] as any)?.ticket_configs && (
+            <div className="mb-6">
+              <Card className="border border-gray-200 bg-gray-50">
+                <CardHeader className="px-6 py-4 border-b border-gray-200">
+                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      </svg>
+                    </div>
+                    Ticket Configuration
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ticket Category
+                      </label>
+                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                        {(snagChecklist.snag_questions[0] as any)?.ticket_configs?.category || "No Category Assigned"}
                       </div>
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Assigned To
+                      </label>
+                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                        {(snagChecklist.snag_questions[0] as any)?.ticket_configs?.assigned_to || "Not Assigned"}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
-                    {/* Answer Options for Multiple Choice */}
-                    {question.snag_quest_options && question.snag_quest_options.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Answer Options
-                        </label>
-                        <div className="space-y-3">
-                          {question.snag_quest_options.map((option: any) => (
-                            <div key={option.id} className="flex items-center gap-3">
-                              <input 
-                                type="text"
-                                placeholder="Answer Option"
-                                className="flex-1 h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                value={option.qname}
-                                disabled
-                                readOnly
-                              />
-                              <Select value={option.option_type.toUpperCase()} disabled>
-                                <SelectTrigger className="w-16 h-10 bg-gray-50">
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="P">P</SelectItem>
-                                  <SelectItem value="N">N</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          ))}
+          {/* Questions Section */}
+          {!loading && snagChecklist && (
+            <div>
+              <div className="mb-4 pb-2 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {snagChecklist.check_type.charAt(0).toUpperCase() +
+                    snagChecklist.check_type.slice(1)}                   {" "}
+
+Questions
+                </h3>
+                <p className="text-sm text-gray-600 mt-1">
+                  {snagChecklist.snag_questions?.length || 0} question(s)
+                  configured for this  {snagChecklist.check_type.charAt(0).toUpperCase() +
+                    snagChecklist.check_type.slice(1)}                   {" "}
+
+                </p>
+              </div>
+              <div className="space-y-6">
+                {snagChecklist.snag_questions?.map((question: any, index) => (
+                  <Card
+                    key={question.id}
+                    className="border border-gray-200 bg-white shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <CardHeader className="px-6 py-4 border-b border-gray-200">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-semibold text-gray-600">
+                            {index + 1}
+                          </span>
+                        </div>
+                        <CardTitle className="text-base font-medium text-gray-900">
+                          Question {index + 1}
+                        </CardTitle>
+                        {/* Question Type Badge */}
+                        <span
+                          className={`
+                        px-2 py-1 text-xs font-medium rounded-full
+                        ${
+                          question.qtype === "multiple"
+                            ? "bg-blue-100 text-blue-800"
+                            : question.qtype === "input"
+                            ? "bg-green-100 text-green-800"
+                            : question.qtype === "rating"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : question.qtype === "emoji"
+                            ? "bg-purple-100 text-purple-800"
+                            : question.qtype === "description"
+                            ? "bg-indigo-100 text-indigo-800"
+                            : "bg-gray-100 text-gray-800"
+                        }
+                      `}
+                        >
+                          {question.qtype === "multiple"
+                            ? "Multi Choice"
+                            : question.qtype === "input"
+                            ? "Input"
+                            : question.qtype === "rating"
+                            ? "Rating"
+                            : question.qtype === "emoji"
+                            ? "Emoji"
+                            : question.qtype === "description"
+                            ? "Description"
+                            : question.qtype || "Unknown"}
+                        </span>
+                        {question.quest_mandatory && (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                            Required
+                          </span>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Question Text
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                            placeholder="Enter your Question"
+                            value={question.descr || ""}
+                            disabled
+                            readOnly
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Answer Type
+                          </label>
+                          <Select
+                            value={
+                              question.qtype === "multiple"
+                                ? "Multiple Choice"
+                                : question.qtype === "input"
+                                ? "Input Box"
+                                : question.qtype === "rating"
+                                ? "Rating"
+                                : question.qtype === "emoji"
+                                ? "Emojis"
+                                : question.qtype === "description"
+                                ? "Description Box"
+                                : "Unknown Type"
+                            }
+                            disabled
+                          >
+                            <SelectTrigger className="w-full h-10 bg-gray-50">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Multiple Choice">
+                                Multiple Choice
+                              </SelectItem>
+                              <SelectItem value="Input Box">
+                                Input Box
+                              </SelectItem>
+                              <SelectItem value="Description Box">
+                                Description Box
+                              </SelectItem>
+                              <SelectItem value="Rating">Rating</SelectItem>
+                              <SelectItem value="Emojis">Emojis</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
-                    )}
 
-                    {/* Additional Fields (Generic Tags with Files) */}
-                    {question.generic_tags && question.generic_tags.length > 0 && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Additional Fields for Negative Selection
-                        </label>
-                        <div className="space-y-4">
-                          {question.generic_tags.map((tag: any, tagIndex: number) => (
-                            <div key={tag.id} className="border border-gray-200 rounded-lg p-4 bg-white">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Title
-                                  </label>
-                                  <input 
-                                    type="text"
-                                    className="w-full h-9 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
-                                    value={tag.category_name}
-                                    disabled
-                                    readOnly
-                                  />
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Files Uploaded
-                                  </label>
-                                  <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-md border">
-                                    {tag.icons && tag.icons.length > 0 ? `${tag.icons.length} file(s) uploaded` : 'No files'}
+                      {/* Answer Options for Multiple Choice */}
+                      {question.snag_quest_options &&
+                        question.snag_quest_options.length > 0 && (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                              Answer Options
+                            </label>
+                            <div className="space-y-3">
+                              {question.snag_quest_options.map(
+                                (option: any) => (
+                                  <div
+                                    key={option.id}
+                                    className="flex items-center gap-3"
+                                  >
+                                    <input
+                                      type="text"
+                                      placeholder="Answer Option"
+                                      className="flex-1 h-10 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                      value={option.qname || ""}
+                                      disabled
+                                      readOnly
+                                    />
+                                    <Select
+                                      value={
+                                        option.option_type
+                                          ? option.option_type.toUpperCase()
+                                          : "P"
+                                      }
+                                      disabled
+                                    >
+                                      <SelectTrigger className="w-16 h-10 bg-gray-50">
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="P">P</SelectItem>
+                                        <SelectItem value="N">N</SelectItem>
+                                      </SelectContent>
+                                    </Select>
                                   </div>
-                                </div>
-                              </div>
-                              
-                              {/* Display uploaded files */}
-                              {tag.icons && tag.icons.length > 0 && (
-                                <div className="mt-4">
-                                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Uploaded Files
-                                  </label>
-                                  <div className="space-y-2">
-                                    {tag.icons.map((icon: any) => (
-                                      <div key={icon.id} className="flex items-center justify-between p-2 bg-gray-50 rounded border">
-                                        <div className="flex items-center gap-3">
-                                          <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
-                                            <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                          </div>
-                                          <div>
-                                            <div className="text-sm font-medium text-gray-900">{icon.file_name}</div>
-                                            <div className="text-xs text-gray-500">{(icon.file_size / 1024).toFixed(2)} KB</div>
-                                          </div>
-                                        </div>
-                                        {icon.url && (
-                                          <a 
-                                            href={icon.url} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                          >
-                                            View
-                                          </a>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
+                                )
                               )}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </div>
+                        )}
 
-                    {/* Ticket Configuration */}
-                    {question.ticket_configs && (
-                      <div className="border-t border-gray-200 pt-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-3">
-                          Ticket Configuration
-                        </label>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Additional Fields (Generic Tags with Files) */}
+                      {question.generic_tags &&
+                        question.generic_tags.length > 0 && (
                           <div>
-                            <label className="block text-xs text-gray-600 mb-1">Category</label>
-                            <div className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded border">
-                              {question.ticket_configs.category}
+                            <label className="block text-sm font-medium text-gray-700 mb-3">
+                              Additional Fields for Negative Selection
+                            </label>
+                            <div className="space-y-4">
+                              {question.generic_tags.map(
+                                (tag: any, tagIndex: number) => (
+                                  <div
+                                    key={tag.id}
+                                    className="border border-gray-200 rounded-lg p-4 bg-white"
+                                  >
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                          Title
+                                        </label>
+                                        <input
+                                          type="text"
+                                          className="w-full h-9 px-3 border border-gray-300 rounded-md bg-gray-50 text-gray-700"
+                                          value={tag.category_name}
+                                          disabled
+                                          readOnly
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                          Files Uploaded
+                                        </label>
+                                        <div className="text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-md border">
+                                          {tag.icons && tag.icons.length > 0
+                                            ? `${tag.icons.length} file(s) uploaded`
+                                            : "No files"}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {/* Display uploaded files */}
+                                    {tag.icons && tag.icons.length > 0 && (
+                                      <div className="mt-4">
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                          Uploaded Files
+                                        </label>
+                                        <div className="space-y-2">
+                                          {tag.icons.map((icon: any) => (
+                                            <div
+                                              key={icon.id}
+                                              className="flex items-center justify-between p-2 bg-gray-50 rounded border"
+                                            >
+                                              <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                                                  <svg
+                                                    className="w-4 h-4 text-blue-600"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                  >
+                                                    <path
+                                                      strokeLinecap="round"
+                                                      strokeLinejoin="round"
+                                                      strokeWidth={2}
+                                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                                    />
+                                                  </svg>
+                                                </div>
+                                                <div>
+                                                  <div className="text-sm font-medium text-gray-900">
+                                                    {icon.file_name}
+                                                  </div>
+                                                  <div className="text-xs text-gray-500">
+                                                    {(
+                                                      icon.file_size / 1024
+                                                    ).toFixed(2)}{" "}
+                                                    KB
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              {icon.url && (
+                                                <a
+                                                  href={icon.url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                >
+                                                  View
+                                                </a>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
-                          <div>
-                            <label className="block text-xs text-gray-600 mb-1">Assigned To</label>
-                            <div className="text-sm text-gray-900 bg-gray-50 px-3 py-2 rounded border">
-                              {question.ticket_configs.assigned_to}
-                            </div>
-                          </div>
+                        )}
+
+                      {/* Question Meta Information */}
+                      <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-200">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`mandatory-${question.id}`}
+                            checked={question.quest_mandatory || false}
+                            disabled
+                            className="data-[state=checked]:bg-gray-400"
+                          />
+                          <label
+                            htmlFor={`mandatory-${question.id}`}
+                            className="text-sm text-gray-700"
+                          >
+                            Mandatory
+                          </label>
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`img-mandatory-${question.id}`}
+                            checked={question.img_mandatory || false}
+                            disabled
+                            className="data-[state=checked]:bg-gray-400"
+                          />
+                          <label
+                            htmlFor={`img-mandatory-${question.id}`}
+                            className="text-sm text-gray-700"
+                          >
+                            Image Mandatory
+                          </label>
                         </div>
                       </div>
-                    )}
-
-                    <div className="flex items-center space-x-2">
-                      <Checkbox 
-                        id={`mandatory-${question.id}`} 
-                        checked={question.quest_mandatory} 
-                        disabled 
-                        className="data-[state=checked]:bg-gray-400"
-                      />
-                      <label htmlFor={`mandatory-${question.id}`} className="text-sm text-gray-700">
-                        Mandatory
-                      </label>
-                    </div>
-                  </CardContent>
-                </Card>
-              )) || []}
+                    </CardContent>
+                  </Card>
+                )) || []}
+              </div>
             </div>
           )}
         </CardContent>
@@ -705,7 +917,7 @@ export const SurveyDetailsPage = () => {
         <CardContent className="p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-medium text-gray-900">Survey Mapping List</h3>
+            <h3 className="text-lg font-medium text-gray-900">Question Mapping List</h3>
           </div>
           
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -948,7 +1160,7 @@ export const SurveyDetailsPage = () => {
             <div className="p-8 text-center text-gray-500">
               <div className="flex items-center justify-center space-x-2">
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-600"></div>
-                <span>Loading survey mappings...</span>
+                <span>Loading Question mappings...</span>
               </div>
             </div>
           ) : surveyMappings.length > 0 ? (
@@ -1047,7 +1259,7 @@ export const SurveyDetailsPage = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-gray-500 font-medium">No survey mappings found</p>
+                  <p className="text-gray-500 font-medium">No Question mappings found</p>
                   <p className="text-sm text-gray-400 mt-1">Click "Add" to create a new mapping</p>
                 </div>
               </div>
@@ -1056,5 +1268,6 @@ export const SurveyDetailsPage = () => {
          </div>
         </CardContent>
       </Card> */}
-    </div>;
+    </div>
+  );
 };

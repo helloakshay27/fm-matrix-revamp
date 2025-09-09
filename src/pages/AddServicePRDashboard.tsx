@@ -12,7 +12,6 @@ import {
   RadioGroup,
   Radio,
   FormControlLabel,
-  Autocomplete,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -62,7 +61,7 @@ export const AddServicePRDashboard = () => {
   const [formData, setFormData] = useState({
     contractor: "",
     plantDetail: "",
-    woDate: new Date(),
+    woDate: "",
     billingAddress: "",
     retention: "",
     tds: "",
@@ -83,7 +82,7 @@ export const AddServicePRDashboard = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: "",
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -191,7 +190,7 @@ export const AddServicePRDashboard = () => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, token, baseUrl])
+  }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, token, baseUrl]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
@@ -261,7 +260,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order.plant_detail_id,
-            woDate: data.work_order.wo_date,
+            woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
             billingAddress: data.work_order.billing_address_id,
             retention: data.work_order?.payment_terms?.retention,
             tds: data.work_order?.payment_terms?.tds,
@@ -281,7 +280,7 @@ export const AddServicePRDashboard = () => {
             productDescription: item.product_description,
             quantityArea: item.quantity,
             uom: item.unit,
-            expectedDate: item.expected_date,
+            expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             rate: item.rate,
             cgstRate: item.cgst_rate,
             cgstAmt: item.cgst_amount,
@@ -293,7 +292,7 @@ export const AddServicePRDashboard = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: item.total_amount,
+            totalAmount: Number(item.tax_amount) + Number(item.total_value),
             wbsCode: "",
           })));
         } catch (error) {
@@ -402,7 +401,7 @@ export const AddServicePRDashboard = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: "",
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -460,10 +459,6 @@ export const AddServicePRDashboard = () => {
     // Work Order Details Validation
     if (!formData.contractor) {
       toast.error("Contractor is required");
-      return false;
-    }
-    if (!formData.plantDetail) {
-      toast.error("Plant Detail is required");
       return false;
     }
     if (!formData.woDate) {
@@ -547,7 +542,7 @@ export const AddServicePRDashboard = () => {
           taxable_value: item.taxAmount,
           total_value: item.amount,
           total_amount: item.totalAmount,
-          ...(wbsSelection === "individual" && { wbs_code: overallWbs }),
+          ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
       attachments: attachedFiles,
@@ -568,7 +563,7 @@ export const AddServicePRDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}
@@ -613,9 +608,9 @@ export const AddServicePRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   value={formData.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty
@@ -634,13 +629,9 @@ export const AddServicePRDashboard = () => {
 
               <TextField
                 label="Select WO Date*"
-                value={
-                  formData.woDate instanceof Date
-                    ? formData.woDate.toISOString().split("T")[0]
-                    : ""
-                }
+                value={formData.woDate}
                 onChange={(e) =>
-                  handleInputChange("woDate", new Date(e.target.value))
+                  handleInputChange("woDate", e.target.value)
                 }
                 fullWidth
                 variant="outlined"
@@ -749,7 +740,7 @@ export const AddServicePRDashboard = () => {
                 sx={{
                   mt: 1,
                   "& .MuiOutlinedInput-root": {
-                    height: "auto !important", // textarea height controlled by rows
+                    height: "auto !important",
                     padding: "2px !important",
                   },
                 }}
@@ -790,30 +781,25 @@ export const AddServicePRDashboard = () => {
               )}
 
               {wbsSelection === "overall" && (
-                <Autocomplete
-                  options={wbsCodes}
-                  getOptionLabel={(wbs) => wbs.wbs_code}
-                  value={wbsCodes.find((wbs) => wbs.wbs_code === overallWbs) || null}
-                  onChange={(event, newValue) => {
-                    setOverallWbs(newValue ? newValue.wbs_code : "");
-                  }}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="WBS Code*"
-                      variant="outlined"
-                      sx={{
-                        height: { xs: 28, sm: 36 },
-                        "& .MuiInputBase-input, & .MuiSelect-select": {
-                          padding: { xs: "8px", sm: "10px" },
-                        },
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      placeholder="Search WBS Code"
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                />
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>WBS Code*</InputLabel>
+                  <MuiSelect
+                    label="WBS Code*"
+                    value={overallWbs}
+                    onChange={(e) => setOverallWbs(e.target.value)}
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
               )}
             </div>
           </div>
@@ -921,16 +907,12 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Expected Date*"
-                    value={
-                      detailsData.expectedDate instanceof Date
-                        ? detailsData.expectedDate.toISOString().split("T")[0]
-                        : ""
-                    }
+                    value={detailsData.expectedDate}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
                         "expectedDate",
-                        new Date(e.target.value)
+                        e.target.value
                       )
                     }
                     fullWidth
@@ -1125,30 +1107,27 @@ export const AddServicePRDashboard = () => {
                   />
 
                   {wbsSelection === "individual" && (
-                    <Autocomplete
-                      options={wbsCodes}
-                      getOptionLabel={(wbs) => wbs.wbs_code}
-                      value={wbsCodes.find((wbs) => wbs.wbs_code === detailsData.wbsCode) || null}
-                      onChange={(event, newValue) => {
-                        handleDetailsChange(detailsData.id, "wbsCode", newValue ? newValue.wbs_code : "");
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label="WBS Code*"
-                          variant="outlined"
-                          sx={{
-                            height: { xs: 28, sm: 36 },
-                            "& .MuiInputBase-input, & .MuiSelect-select": {
-                              padding: { xs: "8px", sm: "10px" },
-                            },
-                          }}
-                          InputLabelProps={{ shrink: true }}
-                          placeholder="Search WBS Code"
-                        />
-                      )}
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                    />
+                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <MuiSelect
+                        label="WBS Code*"
+                        value={detailsData.wbsCode}
+                        onChange={(e) =>
+                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                        }
+                        displayEmpty
+                        sx={fieldStyles}
+                      >
+                        <MenuItem value="">
+                          <em>Select WBS Code</em>
+                        </MenuItem>
+                        {wbsCodes.map((wbs) => (
+                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                            {wbs.wbs_code}
+                          </MenuItem>
+                        ))}
+                      </MuiSelect>
+                    </FormControl>
                   )}
                 </div>
               </div>
