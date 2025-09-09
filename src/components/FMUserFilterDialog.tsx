@@ -7,6 +7,10 @@ import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import Autocomplete from '@mui/material/Autocomplete';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import CircularProgress from '@mui/material/CircularProgress';
 import { X } from 'lucide-react';
 import axios from 'axios';
@@ -192,74 +196,130 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                     <TextField label="Mobile Number" variant="outlined" size="small" value={mobile} onChange={e => setMobile(e.target.value)} fullWidth InputLabelProps={shrink(mobile)} />
 
                     {/* Cluster */}
-                    <Autocomplete
-                        size="small"
-                        options={clusters}
-                        value={clusters.find(c => String(c.company_cluster_id) === String(cluster)) || null}
-                        getOptionLabel={(opt: any) => opt.cluster_name || ''}
-                        onChange={(_, val: any) => setCluster(val ? String(val.company_cluster_id) : '')}
-                        loading={loadingLists}
-                        renderInput={(params) => <TextField {...params} label="Cluster" InputLabelProps={shrink(cluster)} />} />
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id="filter-cluster-label">Cluster</InputLabel>
+                        <Select
+                            labelId="filter-cluster-label"
+                            label="Cluster"
+                            value={cluster}
+                            onChange={(e) => setCluster(String(e.target.value || ''))}
+                            disabled={loadingLists}
+                            MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            {clusters.map((c: any) => (
+                                <MenuItem key={c.company_cluster_id} value={String(c.company_cluster_id)}>
+                                    {c.cluster_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     {/* Circle */}
-                    <Autocomplete
-                        size="small"
-                        options={circles}
-                        value={circles.find(c => String(c.id) === String(circle)) || null}
-                        getOptionLabel={(opt: any) => opt.circle_name || opt.name || ''}
-                        onChange={(_, val: any) => setCircle(val ? String(val.id) : '')}
-                        loading={loadingLists}
-                        renderInput={(params) => <TextField {...params} label="Circle" InputLabelProps={shrink(circle)} />} />
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id="filter-circle-label">Circle</InputLabel>
+                        <Select
+                            labelId="filter-circle-label"
+                            label="Circle"
+                            value={circle}
+                            onChange={(e) => setCircle(String(e.target.value || ''))}
+                            disabled={loadingLists}
+                            MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            {circles.map((c: any) => (
+                                <MenuItem key={c.id} value={String(c.id)}>
+                                    {c.circle_name || c.name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     {/* Department */}
-                    <Autocomplete
-                        size="small"
-                        options={departments}
-                        value={departments.find(d => String(d.id) === String(department)) || null}
-                        getOptionLabel={(opt: any) => opt.department_name || ''}
-                        onChange={(_, val: any) => setDepartment(val ? String(val.id) : '')}
-                        loading={loadingLists}
-                        renderInput={(params) => <TextField {...params} label="Department" InputLabelProps={shrink(department)} />} />
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id="filter-dept-label">Department</InputLabel>
+                        <Select
+                            labelId="filter-dept-label"
+                            label="Department"
+                            value={department}
+                            onChange={(e) => setDepartment(String(e.target.value || ''))}
+                            disabled={loadingLists}
+                            MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            {departments.map((d: any) => (
+                                <MenuItem key={d.id} value={String(d.id)}>
+                                    {d.department_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     {/* Role */}
-                    <Autocomplete
-                        size="small"
-                        options={roles}
-                        value={roles.find(r => String(r.id) === String(role)) || null}
-                        getOptionLabel={(opt: any) => opt.name || opt.display_name || ''}
-                        onChange={(_, val: any) => setRole(val ? String(val.id) : '')}
-                        loading={loadingLists}
-                        renderInput={(params) => <TextField {...params} label="Role" InputLabelProps={shrink(role)} />} />
+                    <FormControl size="small" fullWidth>
+                        <InputLabel id="filter-role-label">Role</InputLabel>
+                        <Select
+                            labelId="filter-role-label"
+                            label="Role"
+                            value={role}
+                            onChange={(e) => setRole(String(e.target.value || ''))}
+                            disabled={loadingLists}
+                            MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+                        >
+                            <MenuItem value="">
+                                <em>None</em>
+                            </MenuItem>
+                            {roles.map((r: any) => (
+                                <MenuItem key={r.id} value={String(r.id)}>
+                                    {r.name || r.display_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
 
                     {/* Line Manager email search */}
-                    <Autocomplete
+                    <TextField
                         fullWidth
                         size="small"
-                        options={lmOptions}
-                        loading={lmLoading}
-                        value={selectedLineManager}
-                        isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
-                        getOptionLabel={(option: any) => option.email || ''}
-                        onChange={(_, val: any) => setSelectedLineManager(val || null)}
-                        onInputChange={(_, val) => setLmQuery(val)}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Line Manager (email search)"
-                                placeholder="Type 4+ chars"
-                                InputProps={{
-                                    ...params.InputProps,
-                                    endAdornment: (
-                                        <>
-                                            {lmLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                                            {params.InputProps.endAdornment}
-                                        </>
-                                    )
-                                }}
-                            />
-                        )}
-                        noOptionsText={lmQuery.length < 4 ? 'Type 4+ chars to search' : 'No results'}
+                        label="Line Manager (email search)"
+                        placeholder="Type 4+ chars"
+                        value={lmQuery}
+                        onChange={(e) => setLmQuery(e.target.value)}
+                        InputProps={{
+                            endAdornment: lmLoading ? <CircularProgress color="inherit" size={16} /> : null,
+                        }}
                     />
+                    {lmOptions.length > 0 && (
+                        <FormControl size="small" fullWidth>
+                            <InputLabel id="filter-lm-label">Select Line Manager</InputLabel>
+                            <Select
+                                labelId="filter-lm-label"
+                                label="Select Line Manager"
+                                value={selectedLineManager?.id ? String(selectedLineManager.id) : ''}
+                                onChange={(e) => {
+                                    const id = String(e.target.value || '');
+                                    const found = lmOptions.find((u: any) => String(u.id) === id);
+                                    setSelectedLineManager(found || null);
+                                }}
+                                MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+                            >
+                                <MenuItem value="">
+                                    <em>None</em>
+                                </MenuItem>
+                                {lmOptions.map((u: any) => (
+                                    <MenuItem key={u.id} value={String(u.id)}>
+                                        {u.email || u.name || `User ${u.id}`}
+                                    </MenuItem>
+                                ))}
+                            </Select>
+                        </FormControl>
+                    )}
                 </Stack>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
