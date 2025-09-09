@@ -706,7 +706,7 @@ export const GRNDetailsPage = () => {
         <CardContent>
           {Array.isArray(grnDetails.attachments?.general_attachments) &&
             grnDetails.attachments.general_attachments.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="flex items-center flex-wrap gap-4">
               {grnDetails.attachments.general_attachments.map(
                 (attachment: Attachment) => {
                   const isImage =

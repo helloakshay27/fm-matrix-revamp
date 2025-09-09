@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   TextField,
@@ -28,6 +28,7 @@ import {
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
 import axios from "axios";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -35,6 +36,13 @@ const fieldStyles = {
     padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
+}
 
 export const AddMaterialPRDashboard = () => {
   const dispatch = useAppDispatch();
@@ -89,6 +97,8 @@ export const AddMaterialPRDashboard = () => {
     wbsCode: "",
   });
   const [files, setFiles] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
   const [slid, setSlid] = useState(null);
 
   useEffect(() => {
@@ -964,23 +974,90 @@ export const AddMaterialPRDashboard = () => {
               </div>
 
               {files.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-10 gap-10 my-6">
-                  {files.map((file, index) => (
-                    <div key={index} className="relative w-24 h-24">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                      <Button
-                        onClick={() => removeFile(index)}
-                        size="sm"
-                        className="absolute -top-2 -right-2 p-1 h-7 w-7 rounded-full bg-red-500 hover:bg-red-600"
+                <div className="flex items-center flex-wrap gap-4 my-6">
+                  {files.map((file, index) => {
+                    const isImage = file.type === "image/jpeg" || file.type === "image/png";
+                    const isPdf = file.type === "application/pdf";
+                    const isExcel = file.type === "application/vnd.ms-excel" || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    const isWord = file.type === "application/msword" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+                    return (
+                      <div
+                        key={index}
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                       >
-                        <X className="w-4 h-4 text-white" />
-                      </Button>
-                    </div>
-                  ))}
+                        {isImage ? (
+                          <>
+                            <button
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              type="button"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => removeFile(index)}
+                              type="button"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            />
+                          </>
+                        ) : isPdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <File className="w-6 h-6" />
+                          </div>
+                        )}
+                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                          {file.name || `Document_${file.id}`}
+                        </span>
+                        <button
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => removeFile(index)}
+                          type="button"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )
+                  })}
                 </div>
               )}
             </CardContent>
@@ -998,6 +1075,13 @@ export const AddMaterialPRDashboard = () => {
           </div>
         </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

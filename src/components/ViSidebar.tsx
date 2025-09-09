@@ -30,10 +30,12 @@ const modulesByPackage = {
         //     ],
         // },
         { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Msafe Report', icon: Download, href: '/maintenance/msafe-report' },
+        { name: 'User Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
+        { name: 'Msafe Dashboard Report', icon: Download, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
+
     ],
-};
+}
 
 const ViSidebar: React.FC = () => {
     const navigate = useNavigate();
@@ -62,7 +64,14 @@ const ViSidebar: React.FC = () => {
         return p === href || p.startsWith(href + '/');
     };
 
-    const handleNavigation = (href: string) => navigate(href);
+    const handleNavigation = (href: string) => {
+        if (!href) return;
+        if (/^https?:\/\//i.test(href)) {
+            window.open(href, '_blank', 'noopener,noreferrer');
+        } else {
+            navigate(href);
+        }
+    };
 
     const renderItem = (item: any, level = 0) => {
         const hasSub = Array.isArray(item.subItems) && item.subItems.length > 0;
@@ -165,8 +174,8 @@ const ViSidebar: React.FC = () => {
                                     key={module.name}
                                     onClick={() => module.href && handleNavigation(module.href)}
                                     className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-                                            ? 'bg-[#f0e8dc] shadow-inner'
-                                            : 'hover:bg-[#DBC2A9]'
+                                        ? 'bg-[#f0e8dc] shadow-inner'
+                                        : 'hover:bg-[#DBC2A9]'
                                         }`}
                                     title={module.name}
                                 >

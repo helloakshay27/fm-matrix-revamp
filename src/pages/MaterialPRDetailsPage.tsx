@@ -485,7 +485,7 @@ export const MaterialPRDetailsPage = () => {
           </CardHeader>
           <CardContent>
             {Array.isArray(pr.attachments) && pr.attachments.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
                 {pr.attachments.map((attachment) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
                   const isPdf = /\.pdf$/i.test(attachment.url);

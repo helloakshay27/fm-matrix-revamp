@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { TextField } from '@mui/material';
+import { TextField, MenuItem } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -43,12 +43,13 @@ const CheckHierarchy: React.FC = () => {
   const [treeLoading, setTreeLoading] = useState(false);
   const [treeData, setTreeData] = useState<TreeNode | null>(null);
   const [expandedNodes, setExpandedNodes] = useState<Set<number>>(new Set());
+  const [employeeType, setEmployeeType] = useState<'' | 'external' | 'internal'>('');
 
   const descCount = useMemo(() => countDescendants(treeData), [treeData]);
 
   const fetchHierarchy = useCallback(async () => {
-    const raw = (treeIdentifier || '').trim();
-    if (!raw) return;
+  const raw = (treeIdentifier || '').trim();
+  if (!raw || !employeeType) return;
     try {
       setTreeLoading(true);
       setTreeData(null);
@@ -56,7 +57,7 @@ const CheckHierarchy: React.FC = () => {
       const isEmail = raw.includes('@');
       const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
       const paramKey = isEmail ? 'email' : 'mobile_number';
-      const url = `https://${baseUrl}/pms/users/external_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}`;
+      const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=${employeeType}`;
       const resp = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -95,7 +96,7 @@ const CheckHierarchy: React.FC = () => {
     } finally {
       setTreeLoading(false);
     }
-  }, [treeIdentifier]);
+  }, [treeIdentifier, employeeType]);
 
   const onToggleNode = useCallback((id: number) => {
     setExpandedNodes((prev) => {
@@ -128,7 +129,31 @@ const CheckHierarchy: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+            <TextField
+              select
+              label="Employee Type"
+              value={employeeType}
+              onChange={(e) => setEmployeeType((e.target.value as 'external' | 'internal') || 'external')}
+              fullWidth
+              variant="outlined"
+              slotProps={{ inputLabel: { shrink: true } as any }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  const v = selected as '' | 'external' | 'internal';
+                  if (!v) return 'Select Type';
+                  return v === 'external' ? 'External' : 'Internal';
+                },
+              }}
+              InputProps={{ sx: fieldStyles }}
+            >
+              <MenuItem value="" disabled>
+                Select Type
+              </MenuItem>
+              <MenuItem value="external">External</MenuItem>
+              <MenuItem value="internal">Internal</MenuItem>
+            </TextField>
             <TextField
               label="Email or Mobile Number"
               placeholder="Enter Email or Mobile Number"
@@ -153,7 +178,7 @@ const CheckHierarchy: React.FC = () => {
             <div className="flex gap-3 items-center">
               <Button
                 onClick={fetchHierarchy}
-                disabled={!treeIdentifier.trim() || treeLoading}
+                disabled={!treeIdentifier.trim() || !employeeType || treeLoading}
                 className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
               >
                 {treeLoading ? 'Fetching...' : 'Submit'}
