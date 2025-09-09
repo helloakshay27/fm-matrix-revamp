@@ -461,10 +461,6 @@ export const AddServicePRDashboard = () => {
       toast.error("Contractor is required");
       return false;
     }
-    if (!formData.plantDetail) {
-      toast.error("Plant Detail is required");
-      return false;
-    }
     if (!formData.woDate) {
       toast.error("WO Date is required");
       return false;
@@ -612,9 +608,9 @@ export const AddServicePRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   value={formData.plantDetail}
                   onChange={handlePlantDetailsChange}
                   displayEmpty

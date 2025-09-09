@@ -293,7 +293,7 @@ export const UtilityWaterDashboard = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex flex-wrap gap-3">
+          {/* <div className="flex flex-wrap gap-3">
             <Button
               onClick={handleAdd}
               className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
@@ -335,7 +335,7 @@ export const UtilityWaterDashboard = () => {
             >
               In-Active Assets
             </Button>
-          </div>
+          </div> */}
 
           {/* Water Asset Data Table */}
           <div className="relative">

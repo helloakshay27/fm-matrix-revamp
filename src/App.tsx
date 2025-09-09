@@ -74,79 +74,79 @@ import PermissionsTestPage from "./pages/PermissionsTestPage";
 // import { EditIncidentDetailsPage } from './pages/EditIncidentDetailsPage';
 
 // Import Inventory pages
-import { InventoryDashboard } from './pages/InventoryDashboard';
-import { InventoryDetailsPage } from './pages/InventoryDetailsPage';
-import { InventoryFeedsPage } from './pages/InventoryFeedsPage';
-import { EditInventoryPage } from './pages/EditInventoryPage';
-import InventoryConsumptionDashboard from './pages/InventoryConsumptionDashboard';
-import InventoryConsumptionViewPage from './pages/InventoryConsumptionViewPage';
-import EcoFriendlyListPage from './pages/EcoFriendlyListPage';
+import { InventoryDashboard } from "./pages/InventoryDashboard";
+import { InventoryDetailsPage } from "./pages/InventoryDetailsPage";
+import { InventoryFeedsPage } from "./pages/InventoryFeedsPage";
+import { EditInventoryPage } from "./pages/EditInventoryPage";
+import InventoryConsumptionDashboard from "./pages/InventoryConsumptionDashboard";
+import InventoryConsumptionViewPage from "./pages/InventoryConsumptionViewPage";
+import EcoFriendlyListPage from "./pages/EcoFriendlyListPage";
 
 // Import Task pages
-import { ScheduledTaskDashboard } from './pages/maintenance/ScheduledTaskDashboard';
-import { TaskDetailsPage } from './pages/TaskDetailsPage';
+import { ScheduledTaskDashboard } from "./pages/maintenance/ScheduledTaskDashboard";
+import { TaskDetailsPage } from "./pages/TaskDetailsPage";
 
 // Import Utility pages
-import { UtilityDashboard } from './pages/UtilityDashboard';
-import { AddAssetDashboard } from './pages/AddAssetDashboard';
-import { AddEnergyAssetDashboard } from './pages/AddEnergyAssetDashboard';
-import { UtilityWaterDashboard } from './pages/UtilityWaterDashboard';
-import { AddWaterAssetDashboard } from './pages/AddWaterAssetDashboard';
-import { EditWaterAssetDashboard } from './pages/EditWaterAssetDashboard';
-import UtilitySTPDashboard from './pages/UtilitySTPDashboard';
-import AddSTPAssetDashboard from './pages/AddSTPAssetDashboard';
-import UtilityEVConsumptionDashboard from './pages/UtilityEVConsumptionDashboard';
-import UtilityDailyReadingsDashboard from './pages/UtilityDailyReadingsDashboard';
-import EditMeasurementPage from './pages/EditMeasurementPage';
-import UtilitySolarGeneratorDashboard from './pages/UtilitySolarGeneratorDashboard';
-import { UtilityRequestDashboard } from './pages/UtilityRequestDashboard';
-import { UtilityRequestDetailsPage } from './pages/UtilityRequestDetailsPage';
-import { AddUtilityRequestPage } from './pages/AddUtilityRequestPage';
-import UtilityConsumptionDashboard from './pages/UtilityConsumptionDashboard';
-import { GenerateUtilityBillPage } from './pages/GenerateUtilityBillPage';
+import { UtilityDashboard } from "./pages/UtilityDashboard";
+import { AddAssetDashboard } from "./pages/AddAssetDashboard";
+import { AddEnergyAssetDashboard } from "./pages/AddEnergyAssetDashboard";
+import { UtilityWaterDashboard } from "./pages/UtilityWaterDashboard";
+import { AddWaterAssetDashboard } from "./pages/AddWaterAssetDashboard";
+import { EditWaterAssetDashboard } from "./pages/EditWaterAssetDashboard";
+import UtilitySTPDashboard from "./pages/UtilitySTPDashboard";
+import AddSTPAssetDashboard from "./pages/AddSTPAssetDashboard";
+import UtilityEVConsumptionDashboard from "./pages/UtilityEVConsumptionDashboard";
+import UtilityDailyReadingsDashboard from "./pages/UtilityDailyReadingsDashboard";
+import EditMeasurementPage from "./pages/EditMeasurementPage";
+import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboard";
+import { UtilityRequestDashboard } from "./pages/UtilityRequestDashboard";
+import { UtilityRequestDetailsPage } from "./pages/UtilityRequestDetailsPage";
+import { AddUtilityRequestPage } from "./pages/AddUtilityRequestPage";
+import UtilityConsumptionDashboard from "./pages/UtilityConsumptionDashboard";
+import { GenerateUtilityBillPage } from "./pages/GenerateUtilityBillPage";
 
 // Import Waste Generation pages
-import UtilityWasteGenerationDashboard from './pages/UtilityWasteGenerationDashboard';
-import { UtilityWasteGenerationSetupDashboard } from './pages/UtilityWasteGenerationSetupDashboard';
-import AddWasteGenerationPage from './pages/AddWasteGenerationPage';
-import EditWasteGenerationPage from './pages/EditWasteGenerationPage';
-import { WasteGenerationDetailsPage } from './pages/WasteGenerationDetailsPage';
+import UtilityWasteGenerationDashboard from "./pages/UtilityWasteGenerationDashboard";
+import { UtilityWasteGenerationSetupDashboard } from "./pages/UtilityWasteGenerationSetupDashboard";
+import AddWasteGenerationPage from "./pages/AddWasteGenerationPage";
+import EditWasteGenerationPage from "./pages/EditWasteGenerationPage";
+import { WasteGenerationDetailsPage } from "./pages/WasteGenerationDetailsPage";
 
 // Import Survey pages
-import { SurveyListDashboard } from './pages/SurveyListDashboard';
-import { AddSurveyPage } from './pages/AddSurveyPage';
-import { EditSurveyPage } from './pages/EditSurveyPage';
-import { SurveyDetailsPage } from './pages/SurveyDetailsPage';
-import { SurveyMappingDashboard } from './pages/SurveyMappingDashboard';
-import { AddSurveyMapping } from './pages/AddSurveyMapping';
-import { SurveyMappingDetailsPage } from './pages/SurveyMappingDetailsPage';
-import { SurveyResponseDashboard } from './pages/SurveyResponseDashboard';
-import { SurveyResponsePage } from './pages/SurveyResponsePage';
-import { SurveyResponseDetailPage } from './pages/SurveyResponseDetailPage';
+import { SurveyListDashboard } from "./pages/SurveyListDashboard";
+import { AddSurveyPage } from "./pages/AddSurveyPage";
+import { EditSurveyPage } from "./pages/EditSurveyPage";
+import { SurveyDetailsPage } from "./pages/SurveyDetailsPage";
+import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
+import { AddSurveyMapping } from "./pages/AddSurveyMapping";
+import { SurveyMappingDetailsPage } from "./pages/SurveyMappingDetailsPage";
+import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
+import { SurveyResponsePage } from "./pages/SurveyResponsePage";
+import { SurveyResponseDetailPage } from "./pages/SurveyResponseDetailPage";
 
 // Import Schedule pages
-import { ScheduleListDashboard } from './pages/ScheduleListDashboard';
-import { AddSchedulePage } from './pages/AddSchedulePage';
-import { ScheduleExportPage } from './pages/ScheduleExportPage';
-import { EditSchedulePage } from './pages/EditSchedulePage';
-import { CopySchedulePage } from './pages/CopySchedulePage';
-import { ViewSchedulePage } from './pages/ViewSchedulePage';
+import { ScheduleListDashboard } from "./pages/ScheduleListDashboard";
+import { AddSchedulePage } from "./pages/AddSchedulePage";
+import { ScheduleExportPage } from "./pages/ScheduleExportPage";
+import { EditSchedulePage } from "./pages/EditSchedulePage";
+import { CopySchedulePage } from "./pages/CopySchedulePage";
+import { ViewSchedulePage } from "./pages/ViewSchedulePage";
 
 // Import Visitors pages
-import { VisitorsDashboard } from './pages/VisitorsDashboard';
-import { VisitorsHistoryDashboard } from './pages/VisitorsHistoryDashboard';
-import { VisitorDetailsPage } from './pages/VisitorDetailsPage';
-import { PatrollingDashboard } from './pages/PatrollingDashboard';
-import { PatrollingDetailsPage } from './pages/PatrollingDetailsPage';
-import { PatrollingCreatePage } from './pages/PatrollingCreatePage';
-import { PatrollingEditPage } from './pages/PatrollingEditPage';
-import { VisitorFormPage } from './pages/VisitorFormPage';
-import { VisitorManagementSetup } from './pages/VisitorManagementSetup';
-import { AddVisitorGatePage } from './pages/AddVisitorGatePage';
-import { EditVisitorGatePage } from './pages/EditVisitorGatePage';
-import { SupportStaffPage } from './pages/SupportStaffPage';
-import { EditSupportStaffPage } from './pages/EditSupportStaffPage';
-import { VisitingPurposePage } from './pages/VisitingPurposePage';
+import { VisitorsDashboard } from "./pages/VisitorsDashboard";
+import { VisitorsHistoryDashboard } from "./pages/VisitorsHistoryDashboard";
+import { VisitorDetailsPage } from "./pages/VisitorDetailsPage";
+import { PatrollingDashboard } from "./pages/PatrollingDashboard";
+import { PatrollingDetailsPage } from "./pages/PatrollingDetailsPage";
+import { PatrollingCreatePage } from "./pages/PatrollingCreatePage";
+import { PatrollingEditPage } from "./pages/PatrollingEditPage";
+import { VisitorFormPage } from "./pages/VisitorFormPage";
+import { VisitorManagementSetup } from "./pages/VisitorManagementSetup";
+import { AddVisitorGatePage } from "./pages/AddVisitorGatePage";
+import { EditVisitorGatePage } from "./pages/EditVisitorGatePage";
+import { SupportStaffPage } from "./pages/SupportStaffPage";
+import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
+import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
@@ -226,30 +226,30 @@ import { EditStaffPage } from "./pages/EditStaffPage";
 // Import Add Staff page
 import { AddStaffPage } from "./pages/AddStaffPage";
 
-import { FnBRestaurantDashboard } from './pages/FnBRestaurantDashboard';
-import { FnBRestaurantDetailsPage } from './pages/FnBRestaurantDetailsPage';
-import { ProductSetupDetailPage } from './pages/ProductSetupDetailPage';
-import { ProductEditPage } from './pages/ProductEditPage';
-import { RestaurantOrderDetailPage } from './pages/RestaurantOrderDetailPage';
-import { FnBDiscountsPage } from './pages/FnBDiscountsPage';
-import { AddRestaurantPage } from './pages/AddRestaurantPage';
-import ParkingDashboard from './pages/ParkingDashboard';
-import ParkingDetailsPage from './pages/ParkingDetailsPage';
-import ParkingBookingsDashboard from './pages/ParkingBookingsDashboard';
-import ParkingCreatePage from './pages/ParkingCreatePage';
-import ParkingEditPage from './pages/ParkingEditPage';
-import { ParkingCategoryPage } from './pages/ParkingCategoryPage';
-import { SlotConfigurationPage } from './pages/SlotConfigurationPage';
-import { AddSlotConfigurationPage } from './pages/AddSlotConfigurationPage';
-import { EditSlotConfigurationPage } from './pages/EditSlotConfigurationPage';
-import { TimeSlotSetupPage } from './pages/TimeSlotSetupPage';
+import { FnBRestaurantDashboard } from "./pages/FnBRestaurantDashboard";
+import { FnBRestaurantDetailsPage } from "./pages/FnBRestaurantDetailsPage";
+import { ProductSetupDetailPage } from "./pages/ProductSetupDetailPage";
+import { ProductEditPage } from "./pages/ProductEditPage";
+import { RestaurantOrderDetailPage } from "./pages/RestaurantOrderDetailPage";
+import { FnBDiscountsPage } from "./pages/FnBDiscountsPage";
+import { AddRestaurantPage } from "./pages/AddRestaurantPage";
+import ParkingDashboard from "./pages/ParkingDashboard";
+import ParkingDetailsPage from "./pages/ParkingDetailsPage";
+import ParkingBookingsDashboard from "./pages/ParkingBookingsDashboard";
+import ParkingCreatePage from "./pages/ParkingCreatePage";
+import ParkingEditPage from "./pages/ParkingEditPage";
+import { ParkingCategoryPage } from "./pages/ParkingCategoryPage";
+import { SlotConfigurationPage } from "./pages/SlotConfigurationPage";
+import { AddSlotConfigurationPage } from "./pages/AddSlotConfigurationPage";
+import { EditSlotConfigurationPage } from "./pages/EditSlotConfigurationPage";
+import { TimeSlotSetupPage } from "./pages/TimeSlotSetupPage";
 
 // Import Design Insights pages
-import { DesignInsightsDashboard } from './pages/DesignInsightsDashboard';
-import { AddDesignInsightDashboard } from './pages/AddDesignInsightDashboard';
-import { DesignInsightDetailsDashboard } from './pages/DesignInsightDetailsDashboard';
-import { EditDesignInsightDashboard } from './pages/EditDesignInsightDashboard';
-import { HOTODashboard } from './pages/HOTODashboard';
+import { DesignInsightsDashboard } from "./pages/DesignInsightsDashboard";
+import { AddDesignInsightDashboard } from "./pages/AddDesignInsightDashboard";
+import { DesignInsightDetailsDashboard } from "./pages/DesignInsightDetailsDashboard";
+import { EditDesignInsightDashboard } from "./pages/EditDesignInsightDashboard";
+import { HOTODashboard } from "./pages/HOTODashboard";
 
 // Import Security pages
 import { VehicleParkingDashboard } from "./pages/VehicleParkingDashboard";
@@ -263,13 +263,13 @@ import { GVehiclesDashboard } from "./pages/GVehiclesDashboard";
 import { GVehicleOutDashboard } from "./pages/GVehicleOutDashboard";
 
 // Import Gate Pass pages
-import { GatePassDashboard } from './pages/GatePassDashboard';
-import { GatePassInwardsDashboard } from './pages/GatePassInwardsDashboard';
-import { GatePassInwardsDetailPage } from './pages/GatePassInwardsDetailPage';
-import { AddGatePassInwardPage } from './pages/AddGatePassInwardPage';
-import { GatePassOutwardsDashboard } from './pages/GatePassOutwardsDashboard';
-import { GatePassOutwardsAddPage } from './pages/GatePassOutwardsAddPage';
-import { GatePassOutwardsDetailPage } from './pages/GatePassOutwardsDetailPage';
+import { GatePassDashboard } from "./pages/GatePassDashboard";
+import { GatePassInwardsDashboard } from "./pages/GatePassInwardsDashboard";
+import { GatePassInwardsDetailPage } from "./pages/GatePassInwardsDetailPage";
+import { AddGatePassInwardPage } from "./pages/AddGatePassInwardPage";
+import { GatePassOutwardsDashboard } from "./pages/GatePassOutwardsDashboard";
+import { GatePassOutwardsAddPage } from "./pages/GatePassOutwardsAddPage";
+import { GatePassOutwardsDetailPage } from "./pages/GatePassOutwardsDetailPage";
 
 // Import Space Management pages
 import { SpaceManagementBookingsDashboard } from "./pages/SpaceManagementBookingsDashboard";
@@ -379,34 +379,34 @@ import { RVehiclesInDashboard } from "./pages/RVehiclesInDashboard";
 import { RVehiclesOutDashboard } from "./pages/RVehiclesOutDashboard";
 
 // Import Finance pages
-import { MaterialPRDashboard } from './pages/MaterialPRDashboard';
-import { MaterialPRDetailsPage } from './pages/MaterialPRDetailsPage';
-import { CloneMaterialPRPage } from './pages/CloneMaterialPRPage';
-import { MaterialPRFeedsPage } from './pages/MaterialPRFeedsPage';
-import { ServicePRDashboard } from './pages/ServicePRDashboard';
-import { AddMaterialPRDashboard } from './pages/AddMaterialPRDashboard';
-import { AddServicePRDashboard } from './pages/AddServicePRDashboard';
-import { EditServicePRPage } from './pages/EditServicePRPage';
-import { ServicePRDetailsPage } from './pages/ServicePRDetailsPage';
-import { CloneServicePRPage } from './pages/CloneServicePRPage';
-import { ServicePRFeedsPage } from './pages/ServicePRFeedsPage';
-import { PODashboard } from './pages/PODashboard';
-import { AddPODashboard } from './pages/AddPODashboard';
-import { PODetailsPage } from './pages/PODetailsPage';
-import { POFeedsPage } from './pages/POFeedsPage';
-import { WODashboard } from './pages/WODashboard';
-import { WODetailsPage } from './pages/WODetailsPage';
-import { AutoSavedPRDashboard } from './pages/AutoSavedPRDashboard';
-import { GRNSRNDashboard } from './pages/GRNSRNDashboard';
-import { AddGRNDashboard } from './pages/AddGRNDashboard';
-import { GRNDetailsPage } from './pages/GRNDetailsPage';
-import { GRNFeedsPage } from './pages/GRNFeedsPage';
-import { InvoicesDashboard } from './pages/InvoicesDashboard';
-import { InvoicesSESDashboard } from './pages/InvoicesSESDashboard';
-import { BillBookingDashboard } from './pages/BillBookingDashboard';
-import { AddBillPage } from './pages/AddBillPage';
-import { PendingApprovalsDashboard } from './pages/PendingApprovalsDashboard';
-import InvoiceDashboard from './pages/InvoiceDashboard';
+import { MaterialPRDashboard } from "./pages/MaterialPRDashboard";
+import { MaterialPRDetailsPage } from "./pages/MaterialPRDetailsPage";
+import { CloneMaterialPRPage } from "./pages/CloneMaterialPRPage";
+import { MaterialPRFeedsPage } from "./pages/MaterialPRFeedsPage";
+import { ServicePRDashboard } from "./pages/ServicePRDashboard";
+import { AddMaterialPRDashboard } from "./pages/AddMaterialPRDashboard";
+import { AddServicePRDashboard } from "./pages/AddServicePRDashboard";
+import { EditServicePRPage } from "./pages/EditServicePRPage";
+import { ServicePRDetailsPage } from "./pages/ServicePRDetailsPage";
+import { CloneServicePRPage } from "./pages/CloneServicePRPage";
+import { ServicePRFeedsPage } from "./pages/ServicePRFeedsPage";
+import { PODashboard } from "./pages/PODashboard";
+import { AddPODashboard } from "./pages/AddPODashboard";
+import { PODetailsPage } from "./pages/PODetailsPage";
+import { POFeedsPage } from "./pages/POFeedsPage";
+import { WODashboard } from "./pages/WODashboard";
+import { WODetailsPage } from "./pages/WODetailsPage";
+import { AutoSavedPRDashboard } from "./pages/AutoSavedPRDashboard";
+import { GRNSRNDashboard } from "./pages/GRNSRNDashboard";
+import { AddGRNDashboard } from "./pages/AddGRNDashboard";
+import { GRNDetailsPage } from "./pages/GRNDetailsPage";
+import { GRNFeedsPage } from "./pages/GRNFeedsPage";
+import { InvoicesDashboard } from "./pages/InvoicesDashboard";
+import { InvoicesSESDashboard } from "./pages/InvoicesSESDashboard";
+import { BillBookingDashboard } from "./pages/BillBookingDashboard";
+import { AddBillPage } from "./pages/AddBillPage";
+import { PendingApprovalsDashboard } from "./pages/PendingApprovalsDashboard";
+import InvoiceDashboard from "./pages/InvoiceDashboard";
 
 // Import WBS page
 import { WBSElementDashboard } from "./pages/WBSElementDashboard";
@@ -454,14 +454,14 @@ import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 
 // Import M Safe pages
 
-import { MSafeDashboard } from './pages/MSafeDashboard';
-import { MSafeUserDetail } from './pages/MSafeUserDetail';
-import { ExternalUserDetail } from './pages/ExternalUserDetail';
-import { EditExternalUserPage } from './pages/EditExternalUserPage';
-import { NonFTEUsersDashboard } from './pages/NonFTEUsersDashboard';
-import { ExternalUsersDashboard } from './pages/ExternalUsersDashboard';
-import { KRCCFormListDashboard } from './pages/KRCCFormListDashboard';
-import { KRCCFormDetail } from './pages/KRCCFormDetail';
+import { MSafeDashboard } from "./pages/MSafeDashboard";
+import { MSafeUserDetail } from "./pages/MSafeUserDetail";
+import { ExternalUserDetail } from "./pages/ExternalUserDetail";
+import { EditExternalUserPage } from "./pages/EditExternalUserPage";
+import { NonFTEUsersDashboard } from "./pages/NonFTEUsersDashboard";
+import { ExternalUsersDashboard } from "./pages/ExternalUsersDashboard";
+import { KRCCFormListDashboard } from "./pages/KRCCFormListDashboard";
+import { KRCCFormDetail } from "./pages/KRCCFormDetail";
 
 // Import Edit Roster Template page
 import { EditRosterTemplatePage } from "./pages/setup/EditRosterTemplatePage";
@@ -520,8 +520,8 @@ import CRMPollsPage from "./pages/CRMPollsPage";
 import AddPollPage from "./pages/AddPollPage";
 
 // Import CRM Occupant User Detail page
-import { CRMOccupantUserDetailPage } from './pages/CRMOccupantUserDetailPage';
-import { CRMOccupantUserEditPage } from './pages/CRMOccupantUserEditPage';
+import { CRMOccupantUserDetailPage } from "./pages/CRMOccupantUserDetailPage";
+import { CRMOccupantUserEditPage } from "./pages/CRMOccupantUserEditPage";
 
 // Import Market Place All page
 import MarketPlaceAllPage from "./pages/MarketPlaceAllPage";
@@ -598,21 +598,20 @@ import { AssetGroupsDashboard } from "./pages/setup/AssetGroupsDashboard";
 import ApprovalMatrixSetupPage from "./pages/settings/ApprovalMatrixSetupPage";
 import AddApprovalMatrixPage from "./pages/settings/AddApprovalMatrixPage";
 
-
 import MobileAdminOrderDetailsPage from "./pages/MobileAdminOrderDetailsPage";
 import { MobileSurveyPage } from "./pages/mobile/MobileSurveyPage";
 
 import { MobileOrderPlaced } from "./components/mobile/MobileOrderPlaced";
 import { ExternalFlowTester } from "./components/mobile/ExternalFlowTester";
-import { EmailRuleSetupPage } from './pages/maintenance/EmailRuleSetupPage';
-import { TaskEscalationPage } from './pages/maintenance/TaskEscalationPage';
-import { TicketManagementSetupPage } from './pages/maintenance/TicketManagementSetupPage';
-import { MobileTicketsPage } from './pages/mobile/MobileTicketsPage';
-import { TicketListPage } from './pages/TicketListPage';
-import { MobileRestaurantPage } from './pages/mobile/MobileRestaurantPage';
-import { MobileAssetPage } from './pages/mobile/MobileAssetPage';
-import { MobileOrdersPage } from './components/mobile/MobileOrdersPage';
-import { QRTestPage } from './pages/QRTestPage';
+import { EmailRuleSetupPage } from "./pages/maintenance/EmailRuleSetupPage";
+import { TaskEscalationPage } from "./pages/maintenance/TaskEscalationPage";
+import { TicketManagementSetupPage } from "./pages/maintenance/TicketManagementSetupPage";
+import { MobileTicketsPage } from "./pages/mobile/MobileTicketsPage";
+import { TicketListPage } from "./pages/TicketListPage";
+import { MobileRestaurantPage } from "./pages/mobile/MobileRestaurantPage";
+import { MobileAssetPage } from "./pages/mobile/MobileAssetPage";
+import { MobileOrdersPage } from "./components/mobile/MobileOrdersPage";
+import { QRTestPage } from "./pages/QRTestPage";
 
 import { EscalationMatrixPage } from "./pages/maintenance/EscalationMatrixPage";
 
@@ -621,22 +620,22 @@ import { PermitSetupDashboard } from "./pages/PermitSetupDashboard";
 import { IncidentSetupDashboard } from "./pages/IncidentSetupDashboard";
 
 // Import Holiday Calendar page
-import { HolidayCalendarPage as SettingsHolidayCalendarPage } from './pages/settings/HolidayCalendarPage';
-import { HolidayCalendarPage } from './pages/HolidayCalendarPage';
+import { HolidayCalendarPage as SettingsHolidayCalendarPage } from "./pages/settings/HolidayCalendarPage";
+import { HolidayCalendarPage } from "./pages/HolidayCalendarPage";
 
-import { LoginPage } from '@/pages/LoginPage';
-import { OTPVerificationPage } from '@/pages/OTPVerificationPage';
-import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
-import { ForgotPasswordOTPPage } from '@/pages/ForgotPasswordOTPPage';
-import { NewPasswordPage } from '@/pages/NewPasswordPage';
-import { LoginSuccessPage } from '@/pages/LoginSuccessPage';
-import { PasswordResetSuccessPage } from '@/pages/PasswordResetSuccessPage';
-import { isAuthenticated } from '@/utils/auth';
-import { BookingDetailsPage } from './pages/BookingDetailsPage';
-import { RestaurantOrdersTable } from './components/RestaurantOrdersTable';
-import { useAppDispatch, useAppSelector } from './store/hooks';
-import { useEffect, useState } from 'react';
-import { getCurrency } from './store/slices/currencySlice';
+import { LoginPage } from "@/pages/LoginPage";
+import { OTPVerificationPage } from "@/pages/OTPVerificationPage";
+import { ForgotPasswordPage } from "@/pages/ForgotPasswordPage";
+import { ForgotPasswordOTPPage } from "@/pages/ForgotPasswordOTPPage";
+import { NewPasswordPage } from "@/pages/NewPasswordPage";
+import { LoginSuccessPage } from "@/pages/LoginSuccessPage";
+import { PasswordResetSuccessPage } from "@/pages/PasswordResetSuccessPage";
+import { isAuthenticated } from "@/utils/auth";
+import { BookingDetailsPage } from "./pages/BookingDetailsPage";
+import { RestaurantOrdersTable } from "./components/RestaurantOrdersTable";
+import { useAppDispatch, useAppSelector } from "./store/hooks";
+import { useEffect, useState } from "react";
+import { getCurrency } from "./store/slices/currencySlice";
 import { EditBookingSetupPage } from "./pages/setup/EditBookingSetupPage";
 import { MobileAdminOrdersPage } from "./pages/MobileAdminOrdersPage";
 import DesignInsightsSetupDashboard from "./pages/DesignInsightsSetupDashboard";
@@ -651,16 +650,16 @@ import TrainingDashboard from "./pages/TrainingDashboard";
 import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
-import { RoleConfigList } from './pages/settings/RoleConfigList';
-import { RoleConfigView } from './pages/settings/RoleConfigView';
-import { RoleConfigEdit } from './pages/settings/RoleConfigEdit';
-import { LockFunctionList } from './pages/settings/LockFunctionList';
-import { LockFunctionView } from './pages/settings/LockFunctionView';
-import { LockFunctionEdit } from './pages/settings/LockFunctionEdit';
-import { LockModuleList } from './pages/settings/LockModuleList';
-import { LockSubFunctionList } from './pages/settings/LockSubFunctionList';
-import { LockSubFunctionView } from './pages/settings/LockSubFunctionView';
-import { LockSubFunctionEdit } from './pages/settings/LockSubFunctionEdit';
+import { RoleConfigList } from "./pages/settings/RoleConfigList";
+import { RoleConfigView } from "./pages/settings/RoleConfigView";
+import { RoleConfigEdit } from "./pages/settings/RoleConfigEdit";
+import { LockFunctionList } from "./pages/settings/LockFunctionList";
+import { LockFunctionView } from "./pages/settings/LockFunctionView";
+import { LockFunctionEdit } from "./pages/settings/LockFunctionEdit";
+import { LockModuleList } from "./pages/settings/LockModuleList";
+import { LockSubFunctionList } from "./pages/settings/LockSubFunctionList";
+import { LockSubFunctionView } from "./pages/settings/LockSubFunctionView";
+import { LockSubFunctionEdit } from "./pages/settings/LockSubFunctionEdit";
 import { CrmCustomerDetails } from "./pages/CrmCustomerDetails";
 import { EditCrmCustomer } from "./pages/EditCrmCustomer";
 import MultipleUserDeletePage from "./pages/MultipleUserDeletePage";
@@ -699,22 +698,23 @@ import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 
-
 const queryClient = new QueryClient();
 
 function App() {
   const dispatch = useAppDispatch();
-  const [baseUrl, setBaseUrl] = useState(localStorage.getItem('baseUrl'));
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [baseUrl, setBaseUrl] = useState(localStorage.getItem("baseUrl"));
+  const [token, setToken] = useState(localStorage.getItem("token"));
 
   const hostname = window.location.hostname;
 
   // Check if it's Oman site
-  const isOmanSite = hostname.includes('oig.gophygital.work');
+  const isOmanSite = hostname.includes("oig.gophygital.work");
 
   // Initialize global MUI Select search enhancer
   useEffect(() => {
-    console.log('🚀 Initializing Global MUI Select Search Enhancer from App.tsx');
+    console.log(
+      "🚀 Initializing Global MUI Select Search Enhancer from App.tsx"
+    );
     const cleanup = initializeGlobalMUISelectSearchEnhancer();
 
     return () => {
@@ -730,8 +730,14 @@ function App() {
 
     const fetchCurrency = async () => {
       try {
-        const response = await dispatch(getCurrency({ baseUrl, token, currency: isOmanSite ? "Oman" : "Indian Rupees" })).unwrap();
-        localStorage.setItem('currency', response[0].value);
+        const response = await dispatch(
+          getCurrency({
+            baseUrl,
+            token,
+            currency: isOmanSite ? "Oman" : "Indian Rupees",
+          })
+        ).unwrap();
+        localStorage.setItem("currency", response[0].value);
       } catch (error) {
         console.log(error);
       }
@@ -739,7 +745,6 @@ function App() {
 
     fetchCurrency();
   }, [baseUrl, token]);
-
 
   return (
     <Provider store={store}>
@@ -756,7 +761,10 @@ function App() {
                       isAuthenticated() ? (
                         <Navigate to="/" replace />
                       ) : (
-                        <LoginPage setBaseUrl={setBaseUrl} setToken={setToken} />
+                        <LoginPage
+                          setBaseUrl={setBaseUrl}
+                          setToken={setToken}
+                        />
                       )
                     }
                   />
@@ -764,7 +772,10 @@ function App() {
                     path="/otp-verification"
                     element={<OTPVerificationPage />}
                   />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route
+                    path="/forgot-password"
+                    element={<ForgotPasswordPage />}
+                  />
                   <Route
                     path="/forgot-password-otp"
                     element={<ForgotPasswordOTPPage />}
@@ -775,19 +786,25 @@ function App() {
                     path="/password-reset-success"
                     element={<PasswordResetSuccessPage />}
                   />
-                  <Route path="/dashboard" element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  } />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                  <Route path="/permissions-test" element={
-                    <ProtectedRoute>
-                      <Layout>
-                        <PermissionsTestPage />
-                      </Layout>
-                    </ProtectedRoute>
-                  } />
+                  <Route
+                    path="/permissions-test"
+                    element={
+                      <ProtectedRoute>
+                        <Layout>
+                          <PermissionsTestPage />
+                        </Layout>
+                      </ProtectedRoute>
+                    }
+                  />
 
                   <Route
                     path="/tickets"
@@ -891,9 +908,11 @@ function App() {
                   >
                     <Route index element={<Index />} />
 
-
                     {/* Holiday Calendar Route */}
-                    <Route path="/holiday-calendar" element={<HolidayCalendarPage />} />
+                    <Route
+                      path="/holiday-calendar"
+                      element={<HolidayCalendarPage />}
+                    />
 
                     {/* Rule Engine Routes */}
                     <Route
@@ -906,7 +925,10 @@ function App() {
                     />
 
                     {/* Settings Routes */}
-                    <Route path="/settings/users" element={<FMUsersDashboard />} />
+                    <Route
+                      path="/settings/users"
+                      element={<FMUsersDashboard />}
+                    />
                     <Route
                       path="/settings/users/edit-details/:id"
                       element={<EditFMUserDetailsPage />}
@@ -943,23 +965,74 @@ function App() {
                       path="/settings/roles/role/add"
                       element={<AddRolePage />}
                     />
-                    <Route path="/settings/users/edit-details/:id" element={<EditFMUserDetailsPage />} />
-                    <Route path="/settings/users/clone-role" element={<CloneRolePage />} />
-                    <Route path="/settings/account" element={<AccountDashboard />} />
-                    <Route path="/settings/account/holiday-calendar" element={<SettingsHolidayCalendarPage />} />
-                    <Route path="/settings/account/shift" element={<AccountShiftDashboard />} />
-                    <Route path="/settings/account/roster" element={<AccountRosterDashboard />} />
-                    <Route path="/settings/account/roster/create" element={<RosterCreatePage />} />
-                    <Route path="/roster" element={<AccountRosterDashboard />} />
-                    <Route path="/roster/create" element={<RosterCreatePage />} />
-                    <Route path="/roster/detail/:id" element={<RosterDetailPage />} />
-                    <Route path="/roster/edit/:id" element={<RosterEditPage />} />
-                    <Route path="/settings/approval-matrix" element={<ApprovalMatrixDashboard />} />
-                    <Route path="/settings/approval-matrix/add" element={<AddApprovalMatrixDashboard />} />
-                    <Route path="/settings/approval-matrix/edit/:id" element={<EditApprovalMatrixDashboard />} />
-                    <Route path="/settings/roles/department" element={<DepartmentDashboard />} />
-                    <Route path="/settings/roles/role" element={<RoleDashboard />} />
-                    <Route path="/settings/roles/role/add" element={<AddRolePage />} />
+                    <Route
+                      path="/settings/users/edit-details/:id"
+                      element={<EditFMUserDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/users/clone-role"
+                      element={<CloneRolePage />}
+                    />
+                    <Route
+                      path="/settings/account"
+                      element={<AccountDashboard />}
+                    />
+                    <Route
+                      path="/settings/account/holiday-calendar"
+                      element={<SettingsHolidayCalendarPage />}
+                    />
+                    <Route
+                      path="/settings/account/shift"
+                      element={<AccountShiftDashboard />}
+                    />
+                    <Route
+                      path="/settings/account/roster"
+                      element={<AccountRosterDashboard />}
+                    />
+                    <Route
+                      path="/settings/account/roster/create"
+                      element={<RosterCreatePage />}
+                    />
+                    <Route
+                      path="/roster"
+                      element={<AccountRosterDashboard />}
+                    />
+                    <Route
+                      path="/roster/create"
+                      element={<RosterCreatePage />}
+                    />
+                    <Route
+                      path="/roster/detail/:id"
+                      element={<RosterDetailPage />}
+                    />
+                    <Route
+                      path="/roster/edit/:id"
+                      element={<RosterEditPage />}
+                    />
+                    <Route
+                      path="/settings/approval-matrix"
+                      element={<ApprovalMatrixDashboard />}
+                    />
+                    <Route
+                      path="/settings/approval-matrix/add"
+                      element={<AddApprovalMatrixDashboard />}
+                    />
+                    <Route
+                      path="/settings/approval-matrix/edit/:id"
+                      element={<EditApprovalMatrixDashboard />}
+                    />
+                    <Route
+                      path="/settings/roles/department"
+                      element={<DepartmentDashboard />}
+                    />
+                    <Route
+                      path="/settings/roles/role"
+                      element={<RoleDashboard />}
+                    />
+                    <Route
+                      path="/settings/roles/role/add"
+                      element={<AddRolePage />}
+                    />
 
                     {/* Settings Asset Setup Routes */}
                     <Route
@@ -1028,7 +1101,10 @@ function App() {
                       path="/master/checklist/edit/:id"
                       element={<ChecklistMasterPage />}
                     />
-                    <Route path="/master/address" element={<AddressMasterPage />} />
+                    <Route
+                      path="/master/address"
+                      element={<AddressMasterPage />}
+                    />
                     <Route
                       path="/master/unit-default"
                       element={<UnitMasterByDefaultPage />}
@@ -1054,16 +1130,28 @@ function App() {
                       path="/crm/campaign/details/:id"
                       element={<LeadDetailsPage />}
                     />
-                    <Route path="/crm/customers" element={<CRMCustomersDashboard />} />
-                    <Route path="/crm/fm-users" element={<CRMFMUserDashboard />} />
-                    <Route path="/crm/occupant-users" element={<CRMOccupantUsersDashboard />} />
+                    <Route
+                      path="/crm/customers"
+                      element={<CRMCustomersDashboard />}
+                    />
+                    <Route
+                      path="/crm/fm-users"
+                      element={<CRMFMUserDashboard />}
+                    />
+                    <Route
+                      path="/crm/occupant-users"
+                      element={<CRMOccupantUsersDashboard />}
+                    />
                     <Route path="/crm/events" element={<CRMEventsPage />} />
                     <Route path="/crm/events/add" element={<AddEventPage />} />
                     <Route
                       path="/crm/events/details/:id"
                       element={<CRMEventDetailsPage />}
                     />
-                    <Route path="/crm/broadcast" element={<BroadcastDashboard />} />
+                    <Route
+                      path="/crm/broadcast"
+                      element={<BroadcastDashboard />}
+                    />
                     <Route
                       path="/crm/broadcast/add"
                       element={<AddBroadcastPage />}
@@ -1075,17 +1163,44 @@ function App() {
                     <Route path="/crm/polls" element={<CRMPollsPage />} />
                     <Route path="/crm/polls/add" element={<AddPollPage />} />
                     <Route path="/crm/groups" element={<CRMGroupsPage />} />
-                    <Route path="/crm/groups/details/:id" element={<CRMGroupDetailsPage />} />
-                    <Route path="/crm/occupant-users/:id" element={<CRMOccupantUserDetailPage />} />
-                    <Route path="/crm/occupant-users/:id/edit" element={<CRMOccupantUserEditPage />} />
-                    <Route path="/crm/customers/add" element={<AddCRMCustomerPage />} />
-                    <Route path="/crm/customers/:id" element={<CrmCustomerDetails />} />
-                    <Route path="/crm/customers/edit/:id" element={<EditCrmCustomer />} />
+                    <Route
+                      path="/crm/groups/details/:id"
+                      element={<CRMGroupDetailsPage />}
+                    />
+                    <Route
+                      path="/crm/occupant-users/:id"
+                      element={<CRMOccupantUserDetailPage />}
+                    />
+                    <Route
+                      path="/crm/occupant-users/:id/edit"
+                      element={<CRMOccupantUserEditPage />}
+                    />
+                    <Route
+                      path="/crm/customers/add"
+                      element={<AddCRMCustomerPage />}
+                    />
+                    <Route
+                      path="/crm/customers/:id"
+                      element={<CrmCustomerDetails />}
+                    />
+                    <Route
+                      path="/crm/customers/edit/:id"
+                      element={<EditCrmCustomer />}
+                    />
 
                     {/* Snagging Routes */}
-                    <Route path="/transitioning/snagging" element={<SnaggingDashboard />} />
-                    <Route path="/transitioning/snagging/details/:id" element={<SnaggingDetailsPage />} />
-                    <Route path="/transitioning/hoto" element={<HOTODashboard />} />
+                    <Route
+                      path="/transitioning/snagging"
+                      element={<SnaggingDashboard />}
+                    />
+                    <Route
+                      path="/transitioning/snagging/details/:id"
+                      element={<SnaggingDetailsPage />}
+                    />
+                    <Route
+                      path="/transitioning/hoto"
+                      element={<HOTODashboard />}
+                    />
 
                     {/* Design Insights Routes */}
                     <Route
@@ -1160,14 +1275,35 @@ function App() {
                       path="/maintenance/ticket/:id/tag-vendor"
                       element={<TicketTagVendorPage />}
                     />
-                    <Route path="/maintenance/ticket" element={<TicketDashboard />} />
+                    <Route
+                      path="/maintenance/ticket"
+                      element={<TicketDashboard />}
+                    />
                     <Route path="/tickets" element={<TicketListPage />} />
-                    <Route path="/maintenance/ticket/add" element={<AddTicketDashboard />} />
-                    <Route path="/maintenance/ticket/assign" element={<AssignTicketsPage />} />
-                    <Route path="/maintenance/ticket/update/:id" element={<UpdateTicketsPage />} />
-                    <Route path="/maintenance/ticket/details/:id" element={<TicketDetailsPage />} />
-                    <Route path="/maintenance/ticket/:id/feeds" element={<TicketFeedsPage />} />
-                    <Route path="/maintenance/ticket/:id/tag-vendor" element={<TicketTagVendorPage />} />
+                    <Route
+                      path="/maintenance/ticket/add"
+                      element={<AddTicketDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/ticket/assign"
+                      element={<AssignTicketsPage />}
+                    />
+                    <Route
+                      path="/maintenance/ticket/update/:id"
+                      element={<UpdateTicketsPage />}
+                    />
+                    <Route
+                      path="/maintenance/ticket/details/:id"
+                      element={<TicketDetailsPage />}
+                    />
+                    <Route
+                      path="/maintenance/ticket/:id/feeds"
+                      element={<TicketFeedsPage />}
+                    />
+                    <Route
+                      path="/maintenance/ticket/:id/tag-vendor"
+                      element={<TicketTagVendorPage />}
+                    />
 
                     {/* Task Routes */}
                     <Route
@@ -1200,7 +1336,10 @@ function App() {
                       path="/safety/permit"
                       element={<PermitToWorkDashboard />}
                     />
-                    <Route path="/safety/permit/add" element={<AddPermitPage />} />
+                    <Route
+                      path="/safety/permit/add"
+                      element={<AddPermitPage />}
+                    />
                     <Route
                       path="/safety/permit/checklist"
                       element={<PermitChecklistList />}
@@ -1268,7 +1407,10 @@ function App() {
                     <Route path="/crm/lead" element={<LeadDashboard />} />
 
                     {/* Utility Routes */}
-                    <Route path="/utility/energy" element={<EnergyDashboard />} />
+                    <Route
+                      path="/utility/energy"
+                      element={<EnergyDashboard />}
+                    />
 
                     {/* Security Routes */}
                     <Route
@@ -1397,6 +1539,7 @@ function App() {
                       path="/master/survey/list"
                       element={<SurveyListDashboard />}
                     />
+
                     <Route
                       path="/maintenance/survey/add"
                       element={<AddSurveyPage />}
@@ -1417,16 +1560,51 @@ function App() {
                       path="/maintenance/survey/response/dashboard"
                       element={<SurveyResponseDashboard />}
                     />
-                    <Route path="/maintenance/survey/list" element={<SurveyListDashboard />} />
-                    <Route path="/maintenance/survey/add" element={<AddSurveyPage />} />
-                    <Route path="/maintenance/survey/edit/:id" element={<EditSurveyPage />} />
-                    <Route path="/maintenance/survey/details/:id" element={<SurveyDetailsPage />} />
-                    <Route path="/maintenance/survey/mapping" element={<SurveyMappingDashboard />} />
-                    <Route path="/maintenance/survey/mapping/add" element={<AddSurveyMapping />} />
-                    <Route path="/maintenance/survey/mapping/details/:id" element={<SurveyMappingDetailsPage />} />
-                    <Route path="/maintenance/survey/response" element={<SurveyResponsePage />} />
-                    <Route path="/maintenance/survey/response/details/:surveyId" element={<SurveyResponseDetailPage />} />
-                    <Route path="/maintenance/survey/response/dashboard" element={<SurveyResponseDashboard />} />
+                    <Route
+                      path="/maintenance/survey/list"
+                      element={<SurveyListDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/survey/add"
+                      element={<AddSurveyPage />}
+                    />
+                    <Route
+                      path="/maintenance/survey/edit/:id"
+                      element={<EditSurveyPage />}
+                    />
+                    <Route
+                      path="/maintenance/survey/details/:id"
+                      element={<SurveyDetailsPage />}
+                    />
+                    <Route
+                      path="/master/survey/details/:id"
+                      element={<SurveyDetailsPage />}
+                    />
+
+                    <Route
+                      path="/maintenance/survey/mapping"
+                      element={<SurveyMappingDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/survey/mapping/add"
+                      element={<AddSurveyMapping />}
+                    />
+                    <Route
+                      path="/maintenance/survey/mapping/details/:id"
+                      element={<SurveyMappingDetailsPage />}
+                    />
+                    <Route
+                      path="/maintenance/survey/response"
+                      element={<SurveyResponsePage />}
+                    />
+                    <Route
+                      path="/maintenance/survey/response/details/:surveyId"
+                      element={<SurveyResponseDetailPage />}
+                    />
+                    <Route
+                      path="/maintenance/survey/response/dashboard"
+                      element={<SurveyResponseDashboard />}
+                    />
 
                     {/* Finance Routes */}
                     <Route
@@ -1478,7 +1656,10 @@ function App() {
                       element={<ServicePRFeedsPage />}
                     />
                     <Route path="/finance/po" element={<PODashboard />} />
-                    <Route path="/finance/po/add" element={<AddPODashboard />} />
+                    <Route
+                      path="/finance/po/add"
+                      element={<AddPODashboard />}
+                    />
                     <Route
                       path="/finance/po/details/:id"
                       element={<PODetailsPage />}
@@ -1487,14 +1668,35 @@ function App() {
                       path="/finance/po/edit/:id"
                       element={<EditPODashboard />}
                     />
-                    <Route path="/finance/po/feeds/:id" element={<POFeedsPage />} />
+                    <Route
+                      path="/finance/po/feeds/:id"
+                      element={<POFeedsPage />}
+                    />
                     <Route path="/finance/wo" element={<WODashboard />} />
-                    <Route path="/finance/wo/add" element={<WorkOrderAddPage />} />
-                    <Route path="/finance/wo/details/:id" element={<WODetailsPage />} />
-                    <Route path="/finance/wo/edit/:id" element={<EditWODashboard />} />
-                    <Route path="/finance/wo/feeds/:id" element={<WOFeedsPage />} />
-                    <Route path="/finance/auto-saved-pr" element={<AutoSavedPRDashboard />} />
-                    <Route path="/finance/grn-srn" element={<GRNSRNDashboard />} />
+                    <Route
+                      path="/finance/wo/add"
+                      element={<WorkOrderAddPage />}
+                    />
+                    <Route
+                      path="/finance/wo/details/:id"
+                      element={<WODetailsPage />}
+                    />
+                    <Route
+                      path="/finance/wo/edit/:id"
+                      element={<EditWODashboard />}
+                    />
+                    <Route
+                      path="/finance/wo/feeds/:id"
+                      element={<WOFeedsPage />}
+                    />
+                    <Route
+                      path="/finance/auto-saved-pr"
+                      element={<AutoSavedPRDashboard />}
+                    />
+                    <Route
+                      path="/finance/grn-srn"
+                      element={<GRNSRNDashboard />}
+                    />
                     <Route
                       path="/finance/grn-srn/add"
                       element={<AddGRNDashboard />}
@@ -1535,11 +1737,20 @@ function App() {
                       path="/finance/pending-approvals"
                       element={<PendingApprovalsDashboard />}
                     />
-                    <Route path="/finance/invoice" element={<InvoiceDashboard />} />
-                    <Route path="/finance/wbs" element={<WBSElementDashboard />} />
+                    <Route
+                      path="/finance/invoice"
+                      element={<InvoiceDashboard />}
+                    />
+                    <Route
+                      path="/finance/wbs"
+                      element={<WBSElementDashboard />}
+                    />
 
                     {/* Maintenance Routes */}
-                    <Route path="/maintenance/asset" element={<AssetDashboard />} />
+                    <Route
+                      path="/maintenance/asset"
+                      element={<AssetDashboard />}
+                    />
                     <Route
                       path="/maintenance/asset/details/:id"
                       element={<AssetDetailsPage />}
@@ -1567,7 +1778,10 @@ function App() {
 
                     {/* AMC Routes */}
                     <Route path="/maintenance/amc" element={<AMCDashboard />} />
-                    <Route path="/maintenance/amc/add" element={<AddAMCPage />} />
+                    <Route
+                      path="/maintenance/amc/add"
+                      element={<AddAMCPage />}
+                    />
                     <Route
                       path="/maintenance/amc/details/:id"
                       element={<AMCDetailsPage />}
@@ -1722,7 +1936,10 @@ function App() {
                     />
 
                     {/* Utility Routes */}
-                    <Route path="/utility/energy" element={<UtilityDashboard />} />
+                    <Route
+                      path="/utility/energy"
+                      element={<UtilityDashboard />}
+                    />
                     <Route
                       path="/utility/energy/add-asset"
                       element={<AddWaterAssetDashboard />}
@@ -1739,18 +1956,54 @@ function App() {
                       path="/utility/water/add-asset"
                       element={<AddWaterAssetDashboard />}
                     />
-                    <Route path="/utility/stp" element={<UtilitySTPDashboard />} />
-                    <Route path="/utility/stp/add-asset" element={<AddWaterAssetDashboard />} />
-                    <Route path="/utility/ev-consumption" element={<UtilityEVConsumptionDashboard />} />
-                    <Route path="/utility/daily-readings" element={<UtilityDailyReadingsDashboard />} />
-                    <Route path="/utility/daily-readings/edit/:id" element={<EditMeasurementPage />} />
-                    <Route path="/utility/solar-generator" element={<UtilitySolarGeneratorDashboard />} />
-                    <Route path="/utility/utility-request" element={<UtilityRequestDashboard />} />
-                    <Route path="/utility/utility-request/details/:id" element={<UtilityRequestDetailsPage />} />
-                    <Route path="/utility/utility-request/add" element={<AddUtilityRequestPage />} />
-                    <Route path="/utility/utility-consumption" element={<UtilityConsumptionDashboard />} />
-                    <Route path="/utility/utility-consumption/generate-bill" element={<GenerateUtilityBillPage />} />
-                    <Route path="/utility/add-asset" element={<AddAssetDashboard />} />
+                    <Route
+                      path="/utility/stp"
+                      element={<UtilitySTPDashboard />}
+                    />
+                    <Route
+                      path="/utility/stp/add-asset"
+                      element={<AddWaterAssetDashboard />}
+                    />
+                    <Route
+                      path="/utility/ev-consumption"
+                      element={<UtilityEVConsumptionDashboard />}
+                    />
+                    <Route
+                      path="/utility/daily-readings"
+                      element={<UtilityDailyReadingsDashboard />}
+                    />
+                    <Route
+                      path="/utility/daily-readings/edit/:id"
+                      element={<EditMeasurementPage />}
+                    />
+                    <Route
+                      path="/utility/solar-generator"
+                      element={<UtilitySolarGeneratorDashboard />}
+                    />
+                    <Route
+                      path="/utility/utility-request"
+                      element={<UtilityRequestDashboard />}
+                    />
+                    <Route
+                      path="/utility/utility-request/details/:id"
+                      element={<UtilityRequestDetailsPage />}
+                    />
+                    <Route
+                      path="/utility/utility-request/add"
+                      element={<AddUtilityRequestPage />}
+                    />
+                    <Route
+                      path="/utility/utility-consumption"
+                      element={<UtilityConsumptionDashboard />}
+                    />
+                    <Route
+                      path="/utility/utility-consumption/generate-bill"
+                      element={<GenerateUtilityBillPage />}
+                    />
+                    <Route
+                      path="/utility/add-asset"
+                      element={<AddAssetDashboard />}
+                    />
                     <Route
                       path="/utility/solar-generator"
                       element={<UtilitySolarGeneratorDashboard />}
@@ -1797,27 +2050,87 @@ function App() {
                       path="/security/visitor/history"
                       element={<VisitorsHistoryDashboard />}
                     />
-                    <Route path="/security/gate-pass" element={<GatePassDashboard />} />
-                    <Route path="/security/gate-pass/inwards" element={<GatePassInwardsDashboard />} />
-                    <Route path="/security/gate-pass/inwards/detail/:id" element={<GatePassInwardsDetailPage />} />
-                    <Route path="/security/gate-pass/inwards/add" element={<AddGatePassInwardPage />} />
-                    <Route path="/security/gate-pass/outwards" element={<GatePassOutwardsDashboard />} />
-                    <Route path="/security/gate-pass/outwards/add" element={<GatePassOutwardsAddPage />} />
-                    <Route path="/security/gate-pass/outwards/:id" element={<GatePassOutwardsDetailPage />} />
-                    <Route path="/security/visitor" element={<VisitorsDashboard />} />
+                    <Route
+                      path="/security/gate-pass"
+                      element={<GatePassDashboard />}
+                    />
+                    <Route
+                      path="/security/gate-pass/inwards"
+                      element={<GatePassInwardsDashboard />}
+                    />
+                    <Route
+                      path="/security/gate-pass/inwards/detail/:id"
+                      element={<GatePassInwardsDetailPage />}
+                    />
+                    <Route
+                      path="/security/gate-pass/inwards/add"
+                      element={<AddGatePassInwardPage />}
+                    />
+                    <Route
+                      path="/security/gate-pass/outwards"
+                      element={<GatePassOutwardsDashboard />}
+                    />
+                    <Route
+                      path="/security/gate-pass/outwards/add"
+                      element={<GatePassOutwardsAddPage />}
+                    />
+                    <Route
+                      path="/security/gate-pass/outwards/:id"
+                      element={<GatePassOutwardsDetailPage />}
+                    />
+                    <Route
+                      path="/security/visitor"
+                      element={<VisitorsDashboard />}
+                    />
                     <Route path="/visitor-form" element={<VisitorFormPage />} />
-                    <Route path="/security/visitor/history" element={<VisitorsHistoryDashboard />} />
-                    <Route path="/visitor-details/:id" element={<VisitorDetailsPage />} />
-                    <Route path="/security/visitor-management/setup" element={<VisitorManagementSetup />} />
-                    <Route path="/security/visitor-management/add-gate" element={<AddVisitorGatePage />} />
-                    <Route path="/security/visitor-management/edit/:id" element={<EditVisitorGatePage />} />
-                    <Route path="/security/visitor-management/support-staff" element={<SupportStaffPage />} />
-                    <Route path="/security/visitor-management/support-staff/edit/:id" element={<EditSupportStaffPage />} />
-                    <Route path="/security/visitor-management/visiting-purpose" element={<VisitingPurposePage />} />
-                    <Route path="/security/staff" element={<StaffsDashboard />} />
-                    <Route path="/maintenance/msafe-report" element={<MsafeReportDownload />} />
-                    <Route path="/maintenance/msafe-detail-report" element={<MsafeDetailReportDownload />} />
-                    <Route path="/maintenance/check-hierarchy-levels" element={<CheckHierarchy />} />
+                    <Route
+                      path="/security/visitor/history"
+                      element={<VisitorsHistoryDashboard />}
+                    />
+                    <Route
+                      path="/visitor-details/:id"
+                      element={<VisitorDetailsPage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/setup"
+                      element={<VisitorManagementSetup />}
+                    />
+                    <Route
+                      path="/security/visitor-management/add-gate"
+                      element={<AddVisitorGatePage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/edit/:id"
+                      element={<EditVisitorGatePage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/support-staff"
+                      element={<SupportStaffPage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/support-staff/edit/:id"
+                      element={<EditSupportStaffPage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/visiting-purpose"
+                      element={<VisitingPurposePage />}
+                    />
+                    <Route
+                      path="/security/staff"
+                      element={<StaffsDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/msafe-report"
+                      element={<MsafeReportDownload />}
+                    />
+                    <Route
+                      path="/maintenance/msafe-detail-report"
+                      element={<MsafeDetailReportDownload />}
+                    />
+                    <Route
+                      path="/maintenance/check-hierarchy-levels"
+                      element={<CheckHierarchy />}
+                    />
                     <Route
                       path="/security/staff/details/:id"
                       element={<StaffDetailsPage />}
@@ -1834,12 +2147,30 @@ function App() {
                       path="/security/patrolling/details/:id"
                       element={<PatrollingDetailPage />}
                     />
-                    <Route path="/security/staff/details/:id" element={<StaffDetailsPage />} />
-                    <Route path="/security/staff/edit/:id" element={<EditStaffPage />} />
-                    <Route path="/security/staff/add" element={<AddStaffPage />} />
-                    <Route path="/security/patrolling" element={<PatrollingDashboard />} />
-                    <Route path="/security/patrolling/create" element={<PatrollingCreatePage />} />
-                    <Route path="/security/patrolling/edit/:id" element={<PatrollingEditPage />} />
+                    <Route
+                      path="/security/staff/details/:id"
+                      element={<StaffDetailsPage />}
+                    />
+                    <Route
+                      path="/security/staff/edit/:id"
+                      element={<EditStaffPage />}
+                    />
+                    <Route
+                      path="/security/staff/add"
+                      element={<AddStaffPage />}
+                    />
+                    <Route
+                      path="/security/patrolling"
+                      element={<PatrollingDashboard />}
+                    />
+                    <Route
+                      path="/security/patrolling/create"
+                      element={<PatrollingCreatePage />}
+                    />
+                    <Route
+                      path="/security/patrolling/edit/:id"
+                      element={<PatrollingEditPage />}
+                    />
 
                     {/* Security Vehicle Routes */}
                     <Route
@@ -1864,7 +2195,10 @@ function App() {
                       element={<RVehiclesOutDashboard />}
                     />
                     {/* Value Added Services Routes */}
-                    <Route path="/vas/fnb" element={<RestaurantOrdersTable />} />
+                    <Route
+                      path="/vas/fnb"
+                      element={<RestaurantOrdersTable />}
+                    />
                     {/* <Route path="/vas/fnb/add" element={<AddRestaurantPage />} /> */}
                     <Route
                       path="/vas/fnb/details/:id"
@@ -2077,27 +2411,88 @@ function App() {
                       path="/maintenance/m-safe/krcc-form-list"
                       element={<KRCCFormListDashboard />}
                     />
-                    <Route path="/maintenance/m-safe" element={<Navigate to="/maintenance/m-safe/internal" replace />} />
-                    <Route path="/maintenance/m-safe/internal" element={<MSafeDashboard />} />
-                    <Route path="/maintenance/m-safe/external" element={<ExternalUsersDashboard />} />
-                    <Route path="/maintenance/m-safe/user/:userId" element={<MSafeUserDetail />} />
-                    <Route path="/maintenance/m-safe/external/user/:userId" element={<ExternalUserDetail />} />
-                    <Route path="/maintenance/m-safe/external/user/:userId/edit" element={<EditExternalUserPage />} />
-                    <Route path="/maintenance/m-safe/non-fte-users" element={<NonFTEUsersDashboard />} />
-                    <Route path="/maintenance/m-safe/krcc-list" element={<KRCCFormListDashboard />} />
-                    <Route path="/maintenance/m-safe/krcc-list/:id" element={<KRCCFormDetail />} />
-                    <Route path="/maintenance/m-safe/lmc" element={<LMCDashboard />} />
-                    <Route path="/maintenance/m-safe/lmc/:id" element={<LMCUserDetail />} />
-                    <Route path="/maintenance/m-safe/training-list" element={<TrainingDashboard />} />
-                    <Route path="/maintenance/m-safe/training-list/:id" element={<TrainingDetailPage />} />
-                    <Route path="/maintenance/m-safe/smt" element={<SMTDashboard />} />
-                    <Route path="/maintenance/m-safe/smt/:id" element={<SMTDetailPage />} />
-                    <Route path="/maintenance/m-safe/external-users/multiple-delete" element={<MultipleUserDeletePage />} />
-                    <Route path="/maintenance/m-safe/reportees-reassign" element={<ReporteesReassignPage />} />
-                    <Route path="/maintenance/vi-miles/vehicle-details" element={<VehicleDetails />} />
-                    <Route path="/maintenance/vi-miles/vehicle-check-in" element={<VehicleCheckIn />} />
-                    <Route path="/vehicle-history/update" element={<UpdateVehicleHistoryPage />} />
-
+                    <Route
+                      path="/maintenance/m-safe"
+                      element={
+                        <Navigate to="/maintenance/m-safe/internal" replace />
+                      }
+                    />
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/external"
+                      element={<ExternalUsersDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/user/:userId"
+                      element={<MSafeUserDetail />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/external/user/:userId"
+                      element={<ExternalUserDetail />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/external/user/:userId/edit"
+                      element={<EditExternalUserPage />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/non-fte-users"
+                      element={<NonFTEUsersDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/krcc-list"
+                      element={<KRCCFormListDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/krcc-list/:id"
+                      element={<KRCCFormDetail />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/lmc"
+                      element={<LMCDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/lmc/:id"
+                      element={<LMCUserDetail />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/training-list"
+                      element={<TrainingDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/training-list/:id"
+                      element={<TrainingDetailPage />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/smt"
+                      element={<SMTDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/smt/:id"
+                      element={<SMTDetailPage />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/external-users/multiple-delete"
+                      element={<MultipleUserDeletePage />}
+                    />
+                    <Route
+                      path="/maintenance/m-safe/reportees-reassign"
+                      element={<ReporteesReassignPage />}
+                    />
+                    <Route
+                      path="/maintenance/vi-miles/vehicle-details"
+                      element={<VehicleDetails />}
+                    />
+                    <Route
+                      path="/maintenance/vi-miles/vehicle-check-in"
+                      element={<VehicleCheckIn />}
+                    />
+                    <Route
+                      path="/vehicle-history/update"
+                      element={<UpdateVehicleHistoryPage />}
+                    />
 
                     {/* Market Place Routes */}
                     <Route
@@ -2121,7 +2516,6 @@ function App() {
                       element={<LoyaltyRuleEngineDetailPage />}
                     />
                     <Route
-
                       path="/market-place/cloud-telephony"
                       element={<CloudTelephonyDetailPage />}
                     />
@@ -2154,11 +2548,26 @@ function App() {
                       path="/master/location/building"
                       element={<BuildingPage />}
                     />
-                    <Route path="/master/location/wing" element={<WingPage />} />
-                    <Route path="/master/location/area" element={<AreaPage />} />
-                    <Route path="/master/location/floor" element={<FloorPage />} />
-                    <Route path="/master/location/unit" element={<UnitPage />} />
-                    <Route path="/master/location/room" element={<RoomPage />} />
+                    <Route
+                      path="/master/location/wing"
+                      element={<WingPage />}
+                    />
+                    <Route
+                      path="/master/location/area"
+                      element={<AreaPage />}
+                    />
+                    <Route
+                      path="/master/location/floor"
+                      element={<FloorPage />}
+                    />
+                    <Route
+                      path="/master/location/unit"
+                      element={<UnitPage />}
+                    />
+                    <Route
+                      path="/master/location/room"
+                      element={<RoomPage />}
+                    />
                     <Route
                       path="/master/location/account"
                       element={<LocationAccountPage />}
@@ -2248,7 +2657,10 @@ function App() {
                       path="maintenance/task"
                       element={<ScheduledTaskDashboard />}
                     />
-                    <Route path="task-details/:id" element={<TaskDetailsPage />} />
+                    <Route
+                      path="task-details/:id"
+                      element={<TaskDetailsPage />}
+                    />
                     <Route path="*" element={<NotFound />} />
                   </Route>
 
@@ -2280,42 +2692,150 @@ function App() {
                       path="/settings/design-insights/setup"
                       element={<DesignInsightsSetupDashboard />}
                     />
-                    <Route path="/settings/checklist-setup/group" element={<ChecklistGroupsPage />} />
-                    <Route path="/settings/checklist-setup/email-rule" element={<EmailRuleSetupPage />} />
-                    <Route path="/settings/checklist-setup/task-escalation" element={<TaskEscalationPage />} />
-                    <Route path="/settings/ticket-management/setup" element={<TicketManagementSetupPage />} />
-                    <Route path="/settings/ticket-management/escalation-matrix" element={<EscalationMatrixPage />} />
-                    <Route path="/settings/ticket-management/cost-approval" element={<CostApprovalPage />} />
-                    <Route path="/settings/inventory-management/sac-hsn-code" element={<SacHsn />} />
-                    <Route path="/settings/inventory-management/sac-hsn-code/add" element={<AddSacHsn />} />
-                    <Route path="/settings/inventory-management/sac-hsn-code/:id" element={<DetailPageSacHsn />} />
-                    <Route path="/settings/safety/permit" element={<div>Safety Permit</div>} />
-                    <Route path="/settings/safety/permit-setup" element={<PermitSetupDashboard />} />
-                    <Route path="/settings/safety/incident" element={<IncidentSetupDashboard />} />
-                    <Route path="/settings/safety/setup" element={<IncidentSetupDashboard />} />
-                    <Route path="/settings/vas/fnb/setup" element={<FnBRestaurantDashboard />} />
-                    <Route path="/settings/vas/fnb/add" element={<AddRestaurantPage />} />
-                    <Route path="/settings/vas/fnb/details/:id" element={<FnBRestaurantDetailsPage />} />
-                    <Route path="/settings/vas/booking/setup" element={<BookingSetupDashboard />} />
-                    <Route path="/settings/vas/booking/setup/add" element={<AddBookingSetupPage />} />
-                    <Route path="/settings/vas/booking/setup/details/:id" element={<BookingSetupDetailPage />} />
-                    <Route path="/settings/vas/booking/setup/edit/:id" element={<EditBookingSetupPage />} />
-                    <Route path="/settings/vas/parking-management/parking-category" element={<ParkingCategoryPage />} />
-                    <Route path="/settings/vas/parking-management/slot-configuration" element={<SlotConfigurationPage />} />
-                    <Route path="/settings/vas/parking-management/slot-configuration/add" element={<AddSlotConfigurationPage />} />
-                    <Route path="/settings/vas/parking-management/slot-configuration/edit/:id" element={<EditSlotConfigurationPage />} />
-                    <Route path="/settings/vas/parking-management/time-slot-setup" element={<TimeSlotSetupPage />} />
-                    <Route path="/settings/waste-management/setup" element={<UtilityWasteGenerationSetupDashboard />} />
-                    <Route path="/settings/account/role-config" element={<RoleConfigList />} />
-                    <Route path="/settings/account/role-config/view/:id" element={<RoleConfigView />} />
-                    <Route path="/settings/account/role-config/edit/:id" element={<RoleConfigEdit />} />
-                    <Route path="/settings/account/lock-module" element={<LockModuleList />} />
-                    <Route path="/settings/account/lock-function" element={<LockFunctionList />} />
-                    <Route path="/settings/account/lock-function/view/:id" element={<LockFunctionView />} />
-                    <Route path="/settings/account/lock-function/edit/:id" element={<LockFunctionEdit />} />
-                    <Route path="/settings/account/lock-sub-function" element={<LockSubFunctionList />} />
-                    <Route path="/settings/account/lock-sub-function/view/:id" element={<LockSubFunctionView />} />
-                    <Route path="/settings/account/lock-sub-function/edit/:id" element={<LockSubFunctionEdit />} />
+                    <Route
+                      path="/settings/checklist-setup/group"
+                      element={<ChecklistGroupsPage />}
+                    />
+                    <Route
+                      path="/settings/checklist-setup/email-rule"
+                      element={<EmailRuleSetupPage />}
+                    />
+                    <Route
+                      path="/settings/checklist-setup/task-escalation"
+                      element={<TaskEscalationPage />}
+                    />
+                    <Route
+                      path="/settings/ticket-management/setup"
+                      element={<TicketManagementSetupPage />}
+                    />
+                    <Route
+                      path="/settings/ticket-management/escalation-matrix"
+                      element={<EscalationMatrixPage />}
+                    />
+                    <Route
+                      path="/settings/ticket-management/cost-approval"
+                      element={<CostApprovalPage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/sac-hsn-code"
+                      element={<SacHsn />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/sac-hsn-code/add"
+                      element={<AddSacHsn />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/sac-hsn-code/:id"
+                      element={<DetailPageSacHsn />}
+                    />
+                    <Route
+                      path="/settings/safety/permit"
+                      element={<div>Safety Permit</div>}
+                    />
+                    <Route
+                      path="/settings/safety/permit-setup"
+                      element={<PermitSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/safety/incident"
+                      element={<IncidentSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/safety/setup"
+                      element={<IncidentSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/vas/fnb/setup"
+                      element={<FnBRestaurantDashboard />}
+                    />
+                    <Route
+                      path="/settings/vas/fnb/add"
+                      element={<AddRestaurantPage />}
+                    />
+                    <Route
+                      path="/settings/vas/fnb/details/:id"
+                      element={<FnBRestaurantDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/setup"
+                      element={<BookingSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/setup/add"
+                      element={<AddBookingSetupPage />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/setup/details/:id"
+                      element={<BookingSetupDetailPage />}
+                    />
+                    <Route
+                      path="/settings/vas/booking/setup/edit/:id"
+                      element={<EditBookingSetupPage />}
+                    />
+                    <Route
+                      path="/settings/vas/parking-management/parking-category"
+                      element={<ParkingCategoryPage />}
+                    />
+                    <Route
+                      path="/settings/vas/parking-management/slot-configuration"
+                      element={<SlotConfigurationPage />}
+                    />
+                    <Route
+                      path="/settings/vas/parking-management/slot-configuration/add"
+                      element={<AddSlotConfigurationPage />}
+                    />
+                    <Route
+                      path="/settings/vas/parking-management/slot-configuration/edit/:id"
+                      element={<EditSlotConfigurationPage />}
+                    />
+                    <Route
+                      path="/settings/vas/parking-management/time-slot-setup"
+                      element={<TimeSlotSetupPage />}
+                    />
+                    <Route
+                      path="/settings/waste-management/setup"
+                      element={<UtilityWasteGenerationSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/account/role-config"
+                      element={<RoleConfigList />}
+                    />
+                    <Route
+                      path="/settings/account/role-config/view/:id"
+                      element={<RoleConfigView />}
+                    />
+                    <Route
+                      path="/settings/account/role-config/edit/:id"
+                      element={<RoleConfigEdit />}
+                    />
+                    <Route
+                      path="/settings/account/lock-module"
+                      element={<LockModuleList />}
+                    />
+                    <Route
+                      path="/settings/account/lock-function"
+                      element={<LockFunctionList />}
+                    />
+                    <Route
+                      path="/settings/account/lock-function/view/:id"
+                      element={<LockFunctionView />}
+                    />
+                    <Route
+                      path="/settings/account/lock-function/edit/:id"
+                      element={<LockFunctionEdit />}
+                    />
+                    <Route
+                      path="/settings/account/lock-sub-function"
+                      element={<LockSubFunctionList />}
+                    />
+                    <Route
+                      path="/settings/account/lock-sub-function/view/:id"
+                      element={<LockSubFunctionView />}
+                    />
+                    <Route
+                      path="/settings/account/lock-sub-function/edit/:id"
+                      element={<LockSubFunctionEdit />}
+                    />
                   </Route>
 
                   {/* Setup Routes - Outside of settings parent route */}
@@ -2337,34 +2857,107 @@ function App() {
                   />
 
                   {/* Setup User Management Routes */}
-                  <Route path="/setup/fm-users" element={<ProtectedRoute><FMUserDashboard /></ProtectedRoute>} />
-                  <Route path="/setup/fm-users/add" element={<ProtectedRoute><AddFMUserDashboard /></ProtectedRoute>} />
-                  <Route path="/setup/occupant-users" element={<ProtectedRoute><OccupantUsersDashboard /></ProtectedRoute>} />
-                  <Route path="/setup/occupant-users/add" element={<ProtectedRoute><AddOccupantUserDashboard /></ProtectedRoute>} />
+                  <Route
+                    path="/setup/fm-users"
+                    element={
+                      <ProtectedRoute>
+                        <FMUserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/setup/fm-users/add"
+                    element={
+                      <ProtectedRoute>
+                        <AddFMUserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/setup/occupant-users"
+                    element={
+                      <ProtectedRoute>
+                        <OccupantUsersDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/setup/occupant-users/add"
+                    element={
+                      <ProtectedRoute>
+                        <AddOccupantUserDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* Mobile Routes */}
-                  <Route path="/mobile/tickets" element={<MobileTicketsPage />} />
+                  <Route
+                    path="/mobile/tickets"
+                    element={<MobileTicketsPage />}
+                  />
                   <Route path="/mobile/orders" element={<MobileOrdersPage />} />
-                  <Route path="/mobile/admin/orders" element={<MobileAdminOrdersPage />} />
-                  <Route path="/mobile/admin/orders/:orderId" element={<MobileAdminOrderDetailsPage />} />
+                  <Route
+                    path="/mobile/admin/orders"
+                    element={<MobileAdminOrdersPage />}
+                  />
+                  <Route
+                    path="/mobile/admin/orders/:orderId"
+                    element={<MobileAdminOrderDetailsPage />}
+                  />
                   {/* External Flow Tester */}
-                  <Route path="/test-external" element={<ExternalFlowTester />} />
+                  <Route
+                    path="/test-external"
+                    element={<ExternalFlowTester />}
+                  />
                   {/* Mobile Restaurant Routes */}
-                  <Route path="/mr/:restaurant/:orgId" element={<MobileRestaurantPage />} />
-                  <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
-                  <Route path="/mobile/restaurant/:restaurantId/:action" element={<MobileRestaurantPage />} />
+                  <Route
+                    path="/mr/:restaurant/:orgId"
+                    element={<MobileRestaurantPage />}
+                  />
+                  <Route
+                    path="/mobile/restaurant/:action"
+                    element={<MobileRestaurantPage />}
+                  />
+                  <Route
+                    path="/mobile/restaurant/:restaurantId/:action"
+                    element={<MobileRestaurantPage />}
+                  />
                   {/* Mobile Restaurant Routes */}
-                  <Route path="/mobile/restaurant" element={<MobileRestaurantPage />} />
-                  <Route path="/mobile/restaurant/:action" element={<MobileRestaurantPage />} />
-                  <Route path="/mobile/restaurant/:restaurantId/:action" element={<MobileRestaurantPage />} />
+                  <Route
+                    path="/mobile/restaurant"
+                    element={<MobileRestaurantPage />}
+                  />
+                  <Route
+                    path="/mobile/restaurant/:action"
+                    element={<MobileRestaurantPage />}
+                  />
+                  <Route
+                    path="/mobile/restaurant/:restaurantId/:action"
+                    element={<MobileRestaurantPage />}
+                  />
                   {/* Mobile Survey Routes */}
-                  <Route path="/mobile/survey/:mappingId" element={<MobileSurveyPage />} />
-                  <Route path="/mobile/survey/:mappingId/:action" element={<MobileSurveyPage />} />
-                  <Route path="/survey_mappings/:mappingId/survey" element={<MobileSurveyPage />} />
+                  <Route
+                    path="/mobile/survey/:mappingId"
+                    element={<MobileSurveyPage />}
+                  />
+                  <Route
+                    path="/mobile/survey/:mappingId/:action"
+                    element={<MobileSurveyPage />}
+                  />
+                  <Route
+                    path="/survey_mappings/:mappingId/survey"
+                    element={<MobileSurveyPage />}
+                  />
                   {/* Mobile Asset Routes */}
                   <Route path="/mobile/assets" element={<MobileAssetPage />} />
-                  <Route path="/mobile/assets/:assetId" element={<MobileAssetPage />} />
-                  <Route path="/mobile/assets/:assetId/breakdown" element={<MobileAssetPage />} />
+                  <Route
+                    path="/mobile/assets/:assetId"
+                    element={<MobileAssetPage />}
+                  />
+                  <Route
+                    path="/mobile/assets/:assetId/breakdown"
+                    element={<MobileAssetPage />}
+                  />
                   {/* QR Test Route */}
                   <Route path="/qr-test" element={<QRTestPage />} />
                 </Routes>
@@ -2381,7 +2974,8 @@ function App() {
                       color: "#374151",
                     },
                   }}
-                />              </PermissionsProvider>
+                />{" "}
+              </PermissionsProvider>
             </LayoutProvider>
           </EnhancedSelectProvider>
         </QueryClientProvider>

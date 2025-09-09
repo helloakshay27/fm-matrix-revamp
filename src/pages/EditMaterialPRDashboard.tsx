@@ -61,6 +61,7 @@ export const EditMaterialPRDashboard = () => {
       id: 1,
       itemDetails: "",
       sacHsnCode: "",
+      sacHsnCodeId: "",
       productDescription: "",
       each: "",
       quantity: "",
@@ -142,6 +143,7 @@ export const EditMaterialPRDashboard = () => {
           response.pms_po_inventories.map((item) => ({
             id: item.id,
             itemDetails: item.inventory?.id,
+            sacHsnCodeId: item.hsn_id,
             sacHsnCode: item.sac_hsn_code,
             productDescription: item.prod_desc,
             each: item.rate,
@@ -278,6 +280,7 @@ export const EditMaterialPRDashboard = () => {
         id: items.length + 1,
         itemDetails: "",
         sacHsnCode: "",
+        sacHsnCodeId: "",
         productDescription: "",
         each: "",
         quantity: "",
@@ -308,7 +311,8 @@ export const EditMaterialPRDashboard = () => {
           item.id === itemId
             ? {
               ...item,
-              sacHsnCode: response.data.hsn?.id || "",
+              sacHsnCode: response.data.hsn?.code || "",
+              sacHsnCodeId: response.data.hsn?.id || "",
               each: response.data.rate || "",
               amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
             }
@@ -330,10 +334,6 @@ export const EditMaterialPRDashboard = () => {
   const validateForm = () => {
     if (!supplierDetails.supplier) {
       toast.error("Supplier is required");
-      return false;
-    }
-    if (!supplierDetails.plantDetail) {
-      toast.error("Plant Detail is required");
       return false;
     }
     if (!supplierDetails.prDate) {
@@ -413,7 +413,7 @@ export const EditMaterialPRDashboard = () => {
           rate: item.each,
           total_value: item.amount,
           expected_date: item.expectedDate,
-          hsn_code_name: item.sacHsnCode,
+          sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
@@ -477,9 +477,9 @@ export const EditMaterialPRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
                   onChange={handlePlantDetailsChange}

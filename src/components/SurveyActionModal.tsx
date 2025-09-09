@@ -82,7 +82,7 @@ export const SurveySelectionPanel: React.FC<SurveySelectionPanelProps> = ({
     if (selectedSurveys.length === 1) {
       console.log('SurveySelectionPanel - View clicked for survey:', selectedSurveys[0]);
       setIsViewLoading(true);
-      navigate(`/maintenance/survey/details/${selectedSurveys[0]}`);
+      navigate(`/master/survey/details/${selectedSurveys[0]}`);
     } else {
       toast({
         title: "Single Selection Required",

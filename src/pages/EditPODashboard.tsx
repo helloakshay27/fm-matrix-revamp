@@ -89,6 +89,7 @@ export const EditPODashboard = () => {
             id: 1,
             itemDetails: "",
             sacHsnCode: "",
+            sacHsnCodeId: "",
             quantity: "",
             unit: "",
             expectedDate: "",
@@ -202,6 +203,7 @@ export const EditPODashboard = () => {
                         id: item.id,
                         itemDetails: item.inventory?.id || "",
                         sacHsnCode: item.sac_hsn_code || "",
+                        sacHsnCodeId: item.hsn_id || "",
                         quantity: item.quantity || "",
                         unit: item.unit || "",
                         expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
@@ -283,7 +285,7 @@ export const EditPODashboard = () => {
                 pms_po_inventories_attributes: items.map((item) => ({
                     id: item.id,
                     pms_inventory_id: item.itemDetails,
-                    sac_hsn_code: item.sacHsnCode,
+                    sac_hsn_code: item.sacHsnCodeId,
                     quantity: item.quantity,
                     unit: item.unit,
                     unit_type: "Each",
@@ -344,6 +346,7 @@ export const EditPODashboard = () => {
             id: items.length + 1,
             itemDetails: "",
             sacHsnCode: "",
+            sacHsnCodeId: "",
             quantity: "",
             unit: "",
             expectedDate: "",
@@ -393,6 +396,7 @@ export const EditPODashboard = () => {
                     id: index + 1,
                     itemDetails: inv?.inventory?.id || "",
                     sacHsnCode: "",
+                    sacHsnCodeId: "",
                     quantity: inv?.quantity || "",
                     unit: "",
                     expectedDate: "",
@@ -442,6 +446,7 @@ export const EditPODashboard = () => {
                         ? calculateItem({
                             ...item,
                             sacHsnCode: response.data.hsn?.code || "",
+                            sacHsnCodeId: response.data.hsn?.id || "",
                             rate: response.data.rate || "",
                         })
                         : item

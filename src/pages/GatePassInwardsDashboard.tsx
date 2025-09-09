@@ -37,16 +37,16 @@ export const GatePassInwardsDashboard = () => {
     { key: 'sNo', label: 'Sr No.', sortable: false, hideable: false, draggable: false },
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
-    { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
+    // { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
     { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
     { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },
-    { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
+    // { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
     { key: 'passNo', label: 'Pass No.', sortable: true, hideable: true, draggable: true },
-    { key: 'modeOfTransport', label: 'Mode of Transport', sortable: true, hideable: true, draggable: true },
-    { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
-    { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
+    { key: 'modeOfTransport', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
+    // { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
+    // { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
     { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
-  { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true }
+  // { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true }
   ];
 
   const handleViewDetails = (id: string) => {
