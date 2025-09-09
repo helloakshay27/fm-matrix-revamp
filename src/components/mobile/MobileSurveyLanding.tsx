@@ -89,7 +89,7 @@ export const MobileSurveyLanding: React.FC = () => {
   const [selectedRating, setSelectedRating] = useState<number | null>(null);
   const [selectedTags, setSelectedTags] = useState<GenericTag[]>([]);
   const [showGenericTags, setShowGenericTags] = useState(false);
-  const [pendingNegativeType, setPendingNegativeType] = useState<null | 'emoji' | 'multiple' | 'rating'>(null);
+  const [pendingNegativeType, setPendingNegativeType] = useState<null | 'emoji' | 'smiley' | 'multiple' | 'rating'>(null);
   const [pendingNegativeAnswer, setPendingNegativeAnswer] = useState<
     null | { rating: number; emoji: string; label: string } | SurveyOption[] | number
   >(null);
@@ -211,14 +211,14 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Handle emoji selection
+  // Handle emoji/smiley selection
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
     setSelectedRating(rating);
     const currentQuestion = getCurrentQuestion();
     const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
     
     if (rating <= 3 && currentQuestion?.generic_tags && currentQuestion.generic_tags.length > 0) {
-      setPendingNegativeType('emoji');
+      setPendingNegativeType(currentQuestion.qtype as 'emoji' | 'smiley');
       setPendingNegativeAnswer({ rating, emoji, label });
       setShowGenericTags(true);
     } else {
@@ -282,7 +282,8 @@ export const MobileSurveyLanding: React.FC = () => {
         if (description) answerData.description = description;
         break;
       }
-      case 'emoji': {
+      case 'emoji':
+      case 'smiley': {
         answerData.rating = rating || selectedRating;
         answerData.emoji = emoji;
         answerData.label = label;
@@ -291,7 +292,7 @@ export const MobileSurveyLanding: React.FC = () => {
         answerData.value = emoji && label ? `${emoji} ${label}` : (emoji || label || 'Good');
         if (description) answerData.description = description;
         if (answerData.selectedTags && answerData.selectedTags.length > 0) {
-          console.log(`[Emoji Question ${currentQuestion.id}] Saved tags:`, answerData.selectedTags.map(t => t.category_name));
+          console.log(`[${currentQuestion.qtype} Question ${currentQuestion.id}] Saved tags:`, answerData.selectedTags.map(t => t.category_name));
         }
         break;
       }
@@ -353,6 +354,7 @@ export const MobileSurveyLanding: React.FC = () => {
           break;
           
         case 'emoji':
+        case 'smiley':
           if (currentAnswer.rating !== undefined) {
             surveyResponse.rating = currentAnswer.rating;
           }
@@ -447,6 +449,7 @@ export const MobileSurveyLanding: React.FC = () => {
           break;
           
         case 'emoji':
+        case 'smiley':
           if (answerData.rating !== undefined) {
             surveyResponse.rating = answerData.rating;
           }
@@ -578,6 +581,7 @@ export const MobileSurveyLanding: React.FC = () => {
             break;
             
           case 'emoji':
+          case 'smiley':
             if (answer.rating !== undefined) {
               surveyResponse.rating = answer.rating;
             }
@@ -639,7 +643,7 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Static emoji options
+  // Static emoji/smiley options for emoji and smiley question types
   const getStaticEmojiOptions = () => [
     { rating: 5, emoji: "😄", label: "Amazing" },
     { rating: 4, emoji: "😊", label: "Good" },
@@ -917,8 +921,8 @@ export const MobileSurveyLanding: React.FC = () => {
               </>
             )}
 
-            {/* Emoji Question */}
-            {currentQuestion.qtype === 'emoji' && !showGenericTags && (
+            {/* Emoji/Smiley Question */}
+            {(currentQuestion.qtype === 'emoji' || currentQuestion.qtype === 'smiley') && !showGenericTags && (
               <>
                 <div className="grid grid-cols-5 gap-4 px-4 mb-6">
                   {getStaticEmojiOptions().map((option) => (
@@ -935,7 +939,7 @@ export const MobileSurveyLanding: React.FC = () => {
               </>
             )}
 
-            {/* Generic Tags for Negative (Emoji, Multiple, Rating) */}
+            {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
             {showGenericTags && (
               <>
                 <div className="text-center mb-6">
@@ -1003,7 +1007,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     
                     // Save answer with tags and description, then proceed
                     let answerData;
-                    if (pendingNegativeType === 'emoji' && typeof pendingNegativeAnswer === 'object' && pendingNegativeAnswer !== null && 'rating' in pendingNegativeAnswer) {
+                    if ((pendingNegativeType === 'emoji' || pendingNegativeType === 'smiley') && typeof pendingNegativeAnswer === 'object' && pendingNegativeAnswer !== null && 'rating' in pendingNegativeAnswer) {
                       answerData = saveCurrentAnswer(
                         pendingNegativeAnswer.rating,
                         pendingNegativeAnswer.emoji,
