@@ -631,7 +631,7 @@ export const AddServicePRDashboard = () => {
                 label="Select WO Date*"
                 value={formData.woDate}
                 onChange={(e) =>
-                  handleInputChange("woDate", new Date(e.target.value))
+                  handleInputChange("woDate", e.target.value)
                 }
                 fullWidth
                 variant="outlined"
@@ -912,7 +912,7 @@ export const AddServicePRDashboard = () => {
                       handleDetailsChange(
                         detailsData.id,
                         "expectedDate",
-                        new Date(e.target.value)
+                        e.target.value
                       )
                     }
                     fullWidth
