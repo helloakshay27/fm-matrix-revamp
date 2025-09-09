@@ -222,7 +222,7 @@ export const AddPODashboard = () => {
               tcsAmount: item.tcs_amount || "",
               taxAmount: item.taxable_value || "",
               amount: item.total_value || "",
-              totalAmount: item.total_value || "",
+              totalAmount: Number(item.taxable_value) + Number(item.total_value),
             }))
           );
         } catch (error) {

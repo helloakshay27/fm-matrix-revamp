@@ -260,7 +260,7 @@ export const AddServicePRDashboard = () => {
           setFormData({
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order.plant_detail_id,
-            woDate: data.work_order.wo_date,
+            woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
             billingAddress: data.work_order.billing_address_id,
             retention: data.work_order?.payment_terms?.retention,
             tds: data.work_order?.payment_terms?.tds,
@@ -280,7 +280,7 @@ export const AddServicePRDashboard = () => {
             productDescription: item.product_description,
             quantityArea: item.quantity,
             uom: item.unit,
-            expectedDate: item.expected_date,
+            expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             rate: item.rate,
             cgstRate: item.cgst_rate,
             cgstAmt: item.cgst_amount,
