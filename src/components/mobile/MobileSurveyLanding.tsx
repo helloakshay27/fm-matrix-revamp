@@ -679,15 +679,15 @@ export const MobileSurveyLanding: React.FC = () => {
   const isLastStep = currentQuestionIndex >= surveyData.snag_checklist.questions_count;
 
   return (
-  <div className="min-h-screen flex flex-col" style={{ background: 'url(/9019830 1.png) center top/cover no-repeat, #f9fafb' }}>
+    <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header with Logo */}
-      <div className="bg-white py-8 px-4 text-center">
-        <div className="flex justify-center items-center mb-4">
-          <div className="w-24 h-24 flex items-center justify-center">
+      <div className="bg-white py-4 px-4 text-center shadow-sm">
+        <div className="flex justify-center items-center">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
             <img
               src="/Without bkg.svg"
               alt="OIG Logo"
-              className="w-24 h-24 object-contain"
+              className="w-full h-full object-contain"
             />
           </div>
         </div>
@@ -695,12 +695,12 @@ export const MobileSurveyLanding: React.FC = () => {
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
-        <div className="bg-white px-6 pb-4">
+        <div className="bg-white px-4 sm:px-6 pb-3 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-gray-600">
+            <span className="text-xs sm:text-sm text-gray-600">
               Question {Math.min(currentQuestionIndex + 1, surveyData.snag_checklist.questions_count)} of {surveyData.snag_checklist.questions_count}
             </span>
-            <span className="text-sm text-gray-600">{getProgressPercentage()}%</span>
+            <span className="text-xs sm:text-sm text-gray-600">{getProgressPercentage()}%</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div 
@@ -712,25 +712,27 @@ export const MobileSurveyLanding: React.FC = () => {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 pb-8">
-          <h1 className="text-2xl font-medium text-black mb-4">{surveyData.survey_title}</h1>
+      <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
+        <div className="flex-1 flex flex-col items-center justify-start max-w-md mx-auto w-full">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
+            {surveyData.survey_title}
+          </h1>
 
-        {/* Show image only on first question or single question surveys */}
-        {!showGenericTags && (
-          <div className="text-center mb-8">
-            <img
-              src="/9019830 1.png"
-              alt="Survey Illustration"
-              className="w-full max-w-xs md:max-w-md h-auto object-contain mx-auto"
-              style={{ aspectRatio: '1/1.1' }}
-            />
-          </div>
-        )}
+          {/* Show image only on first question or single question surveys */}
+          {!showGenericTags && (
+            <div className="text-center mb-4 sm:mb-6">
+              <img
+                src="/9019830 1.png"
+                alt="Survey Illustration"
+                className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
+              />
+            </div>
+          )}
 
         {/* Show Final Description Step */}
         {isLastStep && isMultiQuestion && (
-          <div className="w-full max-w-sm">
-            <div className="text-center mb-6">
+          <div className="w-full space-y-4">
+            <div className="text-center">
               <h3 className="text-lg font-semibold text-black mb-2">
                 Any additional comments?
               </h3>
@@ -739,12 +741,12 @@ export const MobileSurveyLanding: React.FC = () => {
               </p>
             </div>
 
-            <div className="mb-6">
+            <div>
               <textarea
                 value={finalDescription}
                 onChange={(e) => setFinalDescription(e.target.value)}
                 placeholder="Please share your thoughts..."
-                className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                 disabled={isSubmitting}
               />
             </div>
@@ -768,9 +770,9 @@ export const MobileSurveyLanding: React.FC = () => {
 
         {/* Show Current Question */}
         {currentQuestion && !isLastStep && (
-          <div className="w-full max-w-sm">
-            <div className="text-center mb-8">
-              <h3 className="text-lg font-semibold text-black mb-2">
+          <div className="w-full space-y-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
                 {currentQuestion.descr}
               </h3>
             </div>
@@ -778,19 +780,19 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Multiple Choice Question */}
             {currentQuestion.qtype === 'multiple' && !showGenericTags && (
               <>
-                <div className="space-y-3 mb-6">
+                <div className="space-y-3">
                   {currentQuestion.snag_quest_options.map((option) => (
                     <button
                       key={option.id}
                       onClick={() => handleOptionSelect(option)}
-                      className={`w-full p-4 rounded-lg border-2 text-left transition-all ${
+                      className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
                         selectedOptions.some(opt => opt.id === option.id)
                           ? 'border-blue-500 bg-blue-50 text-blue-700'
                           : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{option.qname}</span>
+                        <span className="font-medium text-sm sm:text-base">{option.qname}</span>
                         {selectedOptions.some(opt => opt.id === option.id) && (
                           <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                             <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -816,13 +818,13 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Input Question */}
             {currentQuestion.qtype === 'input' && (
               <>
-                <div className="mb-6">
+                <div>
                   <input
                     type="text"
                     value={currentQuestionValue}
                     onChange={(e) => setCurrentQuestionValue(e.target.value)}
                     placeholder="Enter your answer..."
-                    className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full p-3 sm:p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   />
                 </div>
 
@@ -851,12 +853,12 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Description Question */}
             {currentQuestion.qtype === 'description' && (
               <>
-                <div className="mb-6">
+                <div>
                   <textarea
                     value={currentQuestionValue}
                     onChange={(e) => setCurrentQuestionValue(e.target.value)}
                     placeholder="Enter your description..."
-                    className="w-full h-32 p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
                   />
                 </div>
 
@@ -885,12 +887,12 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Rating Question */}
             {currentQuestion.qtype === 'rating' && !showGenericTags && (
               <>
-                <div className="flex justify-center space-x-2 mb-6">
+                <div className="flex justify-center items-center space-x-2 sm:space-x-3">
                   {[1, 2, 3, 4, 5].map((rating) => (
                     <button
                       key={rating}
                       onClick={() => handleRatingSelect(rating)}
-                      className={`w-12 h-12 rounded-full transition-all ${
+                      className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all ${
                         selectedRating !== null && rating <= selectedRating
                           ? 'text-yellow-500'
                           : 'text-gray-300 hover:text-yellow-300'
@@ -904,8 +906,8 @@ export const MobileSurveyLanding: React.FC = () => {
                 </div>
 
                 {selectedRating && (
-                  <div className="text-center mb-6">
-                    <span className="text-lg font-medium text-gray-700">
+                  <div className="text-center">
+                    <span className="text-base sm:text-lg font-medium text-gray-700">
                       {selectedRating} star{selectedRating > 1 ? 's' : ''}
                     </span>
                   </div>
@@ -924,15 +926,15 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Emoji/Smiley Question */}
             {(currentQuestion.qtype === 'emoji' || currentQuestion.qtype === 'smiley') && !showGenericTags && (
               <>
-                <div className="grid grid-cols-5 gap-4 px-4 mb-6">
+                <div className="grid grid-cols-5 gap-2 sm:gap-3 px-2">
                   {getStaticEmojiOptions().map((option) => (
                     <button
                       key={option.rating}
                       onClick={() => handleEmojiSelect(option.rating, option.emoji, option.label)}
-                      className="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-lg hover:bg-gray-100 transition-colors min-h-[80px] sm:min-h-[90px]"
                     >
-                      <span className="text-3xl mb-1">{option.emoji}</span>
-                      <span className="text-xs text-gray-600 text-center">{option.label}</span>
+                      <span className="text-2xl sm:text-3xl mb-1">{option.emoji}</span>
+                      <span className="text-xs sm:text-sm text-gray-600 text-center leading-tight">{option.label}</span>
                     </button>
                   ))}
                 </div>
@@ -942,8 +944,8 @@ export const MobileSurveyLanding: React.FC = () => {
             {/* Generic Tags for Negative (Emoji, Smiley, Multiple, Rating) */}
             {showGenericTags && (
               <>
-                <div className="text-center mb-6">
-                  <h4 className="text-md font-semibold text-black mb-2">
+                <div className="text-center">
+                  <h4 className="text-lg font-semibold text-black mb-2">
                     What specifically needs improvement?
                   </h4>
                   {selectedTags.length > 0 && (
@@ -953,14 +955,14 @@ export const MobileSurveyLanding: React.FC = () => {
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {getCurrentQuestion()?.generic_tags?.map((tag) => {
                     const isSelected = selectedTags.some(selectedTag => selectedTag.id === tag.id);
                     return (
                       <button
                         key={tag.id}
                         onClick={() => handleGenericTagClick(tag)}
-                        className={`p-4 rounded-lg border-2 text-center transition-all ${
+                        className={`p-3 sm:p-4 rounded-lg border-2 text-center transition-all ${
                           isSelected
                             ? 'border-blue-500 bg-blue-50'
                             : 'border-gray-200 bg-white hover:border-gray-300'
@@ -971,15 +973,15 @@ export const MobileSurveyLanding: React.FC = () => {
                             <img
                               src={tag.icons[0].url}
                               alt={tag.category_name}
-                              className="w-12 h-12 mx-auto object-contain"
+                              className="w-10 h-10 sm:w-12 sm:h-12 mx-auto object-contain"
                             />
                           ) : (
-                            <div className="w-12 h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
-                              <span className="text-2xl">🏷️</span>
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 mx-auto bg-gray-200 rounded-full flex items-center justify-center">
+                              <span className="text-lg sm:text-2xl">🏷️</span>
                             </div>
                           )}
                         </div>
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-xs sm:text-sm font-medium text-gray-700 leading-tight">
                           {tag.category_name}
                         </span>
                       </button>
@@ -988,7 +990,7 @@ export const MobileSurveyLanding: React.FC = () => {
                 </div>
 
                 {/* Description Field */}
-                <div className="px-4 mb-6">
+                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Additional Comments (Optional)
                   </label>
@@ -996,7 +998,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     value={finalDescription}
                     onChange={(e) => setFinalDescription(e.target.value)}
                     placeholder="Please describe any specific issues or suggestions..."
-                    className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                     disabled={isSubmitting}
                   />
                 </div>
@@ -1077,12 +1079,17 @@ export const MobileSurveyLanding: React.FC = () => {
             )}
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Footer */}
-      <div className="text-center py-4 text-gray-500 text-sm space-y-1">
-        <div>{surveyData.site_name} - {surveyData.area_name}</div>
+        {/* Footer */}
+        <div className="bg-white border-t border-gray-200 py-3 px-4 text-center">
+          <div className="text-xs sm:text-sm text-gray-500">
+            {surveyData.site_name} - {surveyData.area_name}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
+export default MobileSurveyLanding;
