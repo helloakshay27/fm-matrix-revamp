@@ -1465,6 +1465,25 @@ const AllContent = () => {
                 padding: 2px !important;
                 font-size: 9px !important;
             }
+                    /* Keep grouped sections on the same printed page */
+                    .print-keep-together {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
+                    }
+                    .print-avoid-before {
+                        break-before: avoid !important;
+                        page-break-before: avoid !important;
+                    }
+                    .print-avoid-after {
+                        break-after: avoid !important;
+                        page-break-after: avoid !important;
+                    }
+                    .print-tight {
+                        margin-top: 0 !important;
+                        margin-bottom: 8px !important;
+                        padding-top: 8px !important;
+                        padding-bottom: 8px !important;
+                    }
 }
 `}</style>
 
@@ -1758,7 +1777,7 @@ const AllContent = () => {
 
                                     return (
                                         <tr key={idx} className="border-t">
-                                            <td className="p-2 border font-medium print:p-1">{row.site_name || row.site || '-'}</td>
+                                            <td className="p-2 border font-medium text-left print:p-1">{row.site_name || row.site || '-'}</td>
                                             <td className="p-2 border print:p-1">
                                                 {meeting.utilization_rate ?? '-'}{' '}
                                                 <Arrow up={utilTrend === '↑'} />
@@ -2865,37 +2884,36 @@ const AllContent = () => {
             </div>
 
 
-            {/*  Active AMC Contracts */}
-            <div className="print-page break-before-page print:w-[95%] print:m-auto">
-                <div className="bg-white p-2 amc-summary no-break print:p-4 print:px-0 mt-1 print:mt-4 border border-gray-300">
+            {/*  Active AMC Contracts + 90 Days Expiry (kept together) */}
+            <div className="print-page break-before-page print:w-[95%] print:m-auto print-keep-together">
+                <div className="bg-white p-2 amc-summary no-break print:px-2 print:py-2 mt-1 print:mt-2 border border-gray-300 print-keep-together print-avoid-after print-tight">
                     <h2 className="text-lg font-semibold px-4 py-3 border-gray-400 print:text-[15px] print:py-2">
                         AMC Contract Summary
                     </h2>
 
-                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold">
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                    <div className="grid grid-cols-3  border py-4 text-center bg-[#f2f0eb] text-black font-semibold print:py-2">
+                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Active AMC Contracts<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.active.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="border-r border-gray-300 px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                        <div className="border-r border-gray-300 px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Contract Expiry in 90 Days<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expiry90.toLocaleString() : '-')}
                             </span>
                         </div>
-                        <div className="px-4 py-6 print:py-3 print:px-2 print:text-[12px]">
+                        <div className="px-4 py-6 print:py-2 print:px-2 print:text-[12px]">
                             Contract Expired<br />
-                            <span className="text-4xl text-[#C72030] font-bold print:text-2xl">
+                            <span className="text-4xl text-[#C72030] font-bold print:text-xl">
                                 {loadingAmcContractSummary ? '...' : (amcSummary ? amcSummary.expired.toLocaleString() : '-')}
                             </span>
                         </div>
                     </div>
                 </div>
 
-
-                <div className="border print:border py-3 px-3 mb-6 break-inside-avoid print:break-inside-avoid">
+                <div className="border print:border py-3 px-3 mb-6 print:mb-2 break-inside-avoid print:break-inside-avoid print-avoid-before print-keep-together print-tight">
                     <h2 className="bg-white text-lg font-bold print:text-2xl p-3 border-b border-gray-300 print:text-[13px] print:p-1 print:leading-relaxed">
                         AMC Contract Summary – Expiry in 90 Days
                     </h2>
@@ -2925,13 +2943,13 @@ const AllContent = () => {
                                 ) : (
                                     amcExpiringContracts.map((row: any, i: number) => (
                                         <tr key={i} className="bg-white">
-                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:border print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:border text-center print:border-black print:px-1 print:py-1.5">{row.renewal_reminder ?? '-'}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 print:px-1 text-center print:py-2">{row.vendor_contact ?? '-'}</td>
                                         </tr>
                                     ))
                                 )}
@@ -2975,13 +2993,13 @@ const AllContent = () => {
                                 ) : (
                                     amcExpiredContracts.map((row: any, i: number) => (
                                         <tr key={i} className={"bg-white"}>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
-                                            <td className="border px-4 py-3 font-semibold print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
-                                            <td className="border px-4 py-3 print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2 bg-[#F3F1EB]">{row.site_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.amc_name ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_start_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.contract_end_date ?? '-'}</td>
+                                            <td className="border px-4 py-3 font-semibold text-center print:px-1 print:py-2">{row.status ?? 'Expired'}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">₹{Number(row.projected_renewal_cost ?? 0).toLocaleString()}</td>
+                                            <td className="border px-4 py-3 text-center print:px-1 print:py-2">{row.vendor_contact ?? '-'}</td>
                                         </tr>
                                     ))
                                 )}
