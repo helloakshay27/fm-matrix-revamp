@@ -320,7 +320,7 @@ export const ServicePRDetailsPage = () => {
     boq_details: item.boq_details || "-",
     quantity: item.quantity || 0,
     uom: item.uom || "-",
-    expected_date: item.expected_date ? format(new Date(item.expected_date), 'dd-MM-yyyy') : "-",
+    expected_date: item.expected_date ? item.expected_date : "-",
     product_description: item.product_description || "-",
     rate: item.rate || 0,
     wbs_code: item.wbs_code || "-",
