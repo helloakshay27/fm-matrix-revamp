@@ -698,6 +698,8 @@ import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
+import AllContent from "./components/fm-pdf/AllContent";
+import PDFDownloadPage from "./components/PDFDownloadPage";
 
 const queryClient = new QueryClient();
 
@@ -754,8 +756,11 @@ function App() {
           <EnhancedSelectProvider>
             <LayoutProvider>
               <PermissionsProvider>
+
                 <Routes>
                   {/* Login Route */}
+                  <Route path="/thepdf" element={<AllContent />} />
+
                   <Route
                     path="/login"
                     element={
@@ -815,6 +820,8 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+
 
                   <Route
                     path="/tickets/add"
@@ -953,6 +960,10 @@ function App() {
                     <Route
                       path="/settings/approval-matrix/edit/:id"
                       element={<EditApprovalMatrixDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/pdf-download"
+                      element={<PDFDownloadPage />}
                     />
                     <Route
                       path="/settings/roles/department"

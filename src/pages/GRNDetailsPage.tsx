@@ -70,7 +70,7 @@ const itemsColumns: ColumnConfig[] = [
     sortable: true,
     draggable: true,
   },
-  { key: "unit_type", label: "Unit", sortable: true, draggable: true },
+  // { key: "unit_type", label: "Unit", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   {
     key: "approved_qty",
