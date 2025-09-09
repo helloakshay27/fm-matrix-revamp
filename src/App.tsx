@@ -119,6 +119,7 @@ import { EditSurveyPage } from "./pages/EditSurveyPage";
 import { SurveyDetailsPage } from "./pages/SurveyDetailsPage";
 import { SurveyMappingDashboard } from "./pages/SurveyMappingDashboard";
 import { AddSurveyMapping } from "./pages/AddSurveyMapping";
+import { EditSurveyMapping } from "./pages/EditSurveyMapping";
 import { SurveyMappingDetailsPage } from "./pages/SurveyMappingDetailsPage";
 import { SurveyResponseDashboard } from "./pages/SurveyResponseDashboard";
 import { SurveyResponsePage } from "./pages/SurveyResponsePage";
@@ -1592,6 +1593,10 @@ function App() {
                       path="/master/survey/details/:id"
                       element={<SurveyDetailsPage />}
                     />
+                    <Route
+                      path="/master/survey/edit/:id"
+                      element={<EditSurveyPage />}
+                    />
 
                     <Route
                       path="/maintenance/survey/mapping"
@@ -1600,6 +1605,10 @@ function App() {
                     <Route
                       path="/maintenance/survey/mapping/add"
                       element={<AddSurveyMapping />}
+                    />
+                    <Route
+                      path="/maintenance/survey/mapping/edit/:id"
+                      element={<EditSurveyMapping />}
                     />
                     <Route
                       path="/maintenance/survey/mapping/details/:id"
