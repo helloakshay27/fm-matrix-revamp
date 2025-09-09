@@ -1082,7 +1082,7 @@ export const PODetailsPage = () => {
           <CardContent>
             {Array.isArray(poDetails.attachments) &&
               poDetails.attachments.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
                 {poDetails.attachments.map((attachment: Attachment) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
                     attachment.url

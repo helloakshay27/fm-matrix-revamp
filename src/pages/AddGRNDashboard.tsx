@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -18,9 +18,10 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, File, FileText, FileSpreadsheet, Eye, X } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
-// Define interfaces for type safety
 interface GRNDetails {
   purchaseOrder: number;
   supplier: string;
@@ -67,6 +68,13 @@ interface Inventory {
   name: string;
 }
 
+interface Attachment {
+  id: number;
+  url: string;
+  document_name: string;
+  document_file_name: string;
+}
+
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
   "& .MuiInputBase-input, & .MuiSelect-select": {
@@ -79,6 +87,7 @@ export const AddGRNDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [grnDetails, setGrnDetails] = useState<GRNDetails>({
     purchaseOrder: 0,
@@ -123,40 +132,34 @@ export const AddGRNDashboard = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  console.log(purchaseOrders);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   useEffect(() => {
     const fetchPO = async () => {
       try {
-        const response = await dispatch(
-          getPurchaseOrdersList({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getPurchaseOrdersList({ baseUrl, token })).unwrap();
         setPurchaseOrders(response.p_orders);
       } catch (error: any) {
-        toast.error(error.message || "Failed to fetch purchase orders. Please try again.");
+        toast.error(error.message || "Failed to fetch purchase orders.");
       }
     };
 
     const fetchSupp = async () => {
       try {
-        const response = await dispatch(
-          getSuppliers({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
         setSuppliers(response.suppliers);
       } catch (error: any) {
-        toast.error(error.message || "Failed to fetch suppliers. Please try again.");
+        toast.error(error.message || "Failed to fetch suppliers.");
       }
     };
 
     const fetchInv = async () => {
       try {
-        const response = await dispatch(
-          getInventories({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
         setInventories(response.inventories);
       } catch (error: any) {
-        toast.error(error.message || "Failed to fetch inventories. Please try again.");
+        toast.error(error.message || "Failed to fetch inventories.");
       }
     };
 
@@ -167,69 +170,19 @@ export const AddGRNDashboard = () => {
 
   const fetchSuppliers = async (id: number) => {
     try {
-      const response = await dispatch(
-        fetchSupplierDetails({
-          baseUrl,
-          token,
-          id,
-        })
-      ).unwrap();
-
+      const response = await dispatch(fetchSupplierDetails({ baseUrl, token, id })).unwrap();
       setGrnDetails((prev) => ({
         ...prev,
         supplier: response.id,
       }));
     } catch (error: any) {
-      toast.dismiss();
       toast.error(error.message || "Failed to fetch supplier details.");
     }
   };
 
-  const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
-    const rate = parseFloat(item.rate) || 0;
-    const approvedQty = parseFloat(item.approvedQuantity) || 0;
-    const cgstRate = parseFloat(item.cgstRate) || 0;
-    const sgstRate = parseFloat(item.sgstRate) || 0;
-    const igstRate = parseFloat(item.igstRate) || 0;
-    const tcsRate = parseFloat(item.tcsRate) || 0;
-
-    // Calculate Amount (rate × approved quantity)
-    const amount = rate * approvedQty;
-
-    // Calculate Tax Amounts (rate * qty * %)
-    const cgstAmount = (amount * cgstRate) / 100;
-    const sgstAmount = (amount * sgstRate) / 100;
-    const igstAmount = (amount * igstRate) / 100;
-    const tcsAmount = (amount * tcsRate) / 100;
-
-    // Sum of all taxes
-    const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
-
-    // Total payable
-    const totalAmount = amount + totalTaxes;
-
-    return {
-      ...item,
-      amount: amount.toFixed(2),
-      cgstAmount: cgstAmount.toFixed(2),
-      sgstAmount: sgstAmount.toFixed(2),
-      igstAmount: igstAmount.toFixed(2),
-      tcsAmount: tcsAmount.toFixed(2),
-      totalTaxes: totalTaxes.toFixed(2),
-      totalAmount: totalAmount.toFixed(2),
-    };
-  };
-
   const fetchItem = async (id: number) => {
     try {
-      const response = await dispatch(
-        fetchItemDetails({
-          baseUrl,
-          token,
-          id,
-        })
-      ).unwrap();
-
+      const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,
@@ -254,12 +207,38 @@ export const AddGRNDashboard = () => {
         };
         return calculateInventoryTaxes(inventoryItem);
       });
-
       setInventoryDetails(updatedInventoryDetails);
     } catch (error: any) {
-      toast.dismiss();
       toast.error(error.message || "Failed to fetch item details.");
     }
+  };
+
+  const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
+    const rate = parseFloat(item.rate) || 0;
+    const approvedQty = parseFloat(item.approvedQuantity) || 0;
+    const cgstRate = parseFloat(item.cgstRate) || 0;
+    const sgstRate = parseFloat(item.sgstRate) || 0;
+    const igstRate = parseFloat(item.igstRate) || 0;
+    const tcsRate = parseFloat(item.tcsRate) || 0;
+
+    const amount = rate * approvedQty;
+    const cgstAmount = (amount * cgstRate) / 100;
+    const sgstAmount = (amount * sgstRate) / 100;
+    const igstAmount = (amount * igstRate) / 100;
+    const tcsAmount = (amount * tcsRate) / 100;
+    const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
+    const totalAmount = amount + totalTaxes;
+
+    return {
+      ...item,
+      amount: amount.toFixed(2),
+      cgstAmount: cgstAmount.toFixed(2),
+      sgstAmount: sgstAmount.toFixed(2),
+      igstAmount: igstAmount.toFixed(2),
+      tcsAmount: tcsAmount.toFixed(2),
+      totalTaxes: totalTaxes.toFixed(2),
+      totalAmount: totalAmount.toFixed(2),
+    };
   };
 
   const handleInventoryChange = (
@@ -277,9 +256,7 @@ export const AddGRNDashboard = () => {
       } else {
         newDetails[index] = { ...newDetails[index], [field]: value };
         if (field === "receivedQuantity") {
-          // Set approvedQuantity to match receivedQuantity
           newDetails[index].approvedQuantity = value;
-          // Calculate rejectedQuantity as expectedQuantity - approvedQuantity
           const expected = parseFloat(newDetails[index].expectedQuantity) || 0;
           const approved = parseFloat(value) || 0;
           const rejected = expected - approved;
@@ -300,6 +277,7 @@ export const AddGRNDashboard = () => {
       };
       return newDetails;
     });
+    toast.success("Batch field added successfully");
   };
 
   const removeBatchField = (inventoryIndex: number, batchIndex: number) => {
@@ -321,9 +299,11 @@ export const AddGRNDashboard = () => {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "image/jpeg",
     "image/png",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ];
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) {
       toast.error("No files selected.");
       return;
@@ -335,7 +315,7 @@ export const AddGRNDashboard = () => {
         return false;
       }
       if (file.size > MAX_FILE_SIZE) {
-        toast.error(`File ${file.name} exceeds the 5MB size limit.`);
+        toast.error(`File ${file.size} exceeds the 5MB size limit.`);
         return false;
       }
       if (selectedFiles.some((existing: File) => existing.name === file.name)) {
@@ -346,10 +326,9 @@ export const AddGRNDashboard = () => {
     });
 
     if (validFiles.length > 0) {
-      setSelectedFiles((prev: File[]) => [...prev, ...validFiles]);
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
       toast.success(`${validFiles.length} file(s) uploaded successfully`);
     }
-
     e.target.value = "";
   };
 
@@ -377,7 +356,7 @@ export const AddGRNDashboard = () => {
     });
 
     if (validFiles.length > 0) {
-      setSelectedFiles((prev: File[]) => [...prev, ...validFiles]);
+      setSelectedFiles((prev) => [...prev, ...validFiles]);
       toast.success(`${validFiles.length} file(s) uploaded via drag & drop`);
     }
   };
@@ -387,60 +366,67 @@ export const AddGRNDashboard = () => {
     toast.success("File removed successfully");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
+  };
 
-    // Validation
+  const validateForm = () => {
     if (!grnDetails.purchaseOrder) {
       toast.error("Please select a Purchase Order");
-      return;
+      return false;
     }
     if (!grnDetails.supplier) {
       toast.error("Please select a Supplier");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceNumber) {
       toast.error("Please enter Invoice Number");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceDate || !grnDetails.postingDate) {
       toast.error("Please provide valid Invoice and Posting Dates");
-      return;
+      return false;
     }
     for (const [index, item] of inventoryDetails.entries()) {
+      if (!item.inventoryType) {
+        toast.error(`Please select an Inventory Type for item ${index + 1}`);
+        return false;
+      }
       if (
         !item.expectedQuantity ||
         isNaN(parseFloat(item.expectedQuantity)) ||
         parseFloat(item.expectedQuantity) < 0
       ) {
-        toast.error(
-          `Please enter a valid Expected Quantity for inventory item ${index + 1}`
-        );
-        return;
+        toast.error(`Please enter a valid Expected Quantity for item ${index + 1}`);
+        return false;
       }
       if (
         !item.receivedQuantity ||
         isNaN(parseFloat(item.receivedQuantity)) ||
         parseFloat(item.receivedQuantity) < 0
       ) {
-        toast.error(
-          `Please enter a valid Received Quantity for inventory item ${index + 1}`
-        );
-        return;
+        toast.error(`Please enter a valid Received Quantity for item ${index + 1}`);
+        return false;
       }
       if (
         !item.approvedQuantity ||
         isNaN(parseFloat(item.approvedQuantity)) ||
         parseFloat(item.approvedQuantity) < 0
       ) {
-        toast.error(
-          `Please enter a valid Approved Quantity for inventory item ${index + 1}`
-        );
-        return;
+        toast.error(`Please enter a valid Approved Quantity for item ${index + 1}`);
+        return false;
       }
     }
     if (selectedFiles.length === 0) {
       toast.error("Please upload at least one attachment");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateForm()) {
       return;
     }
 
@@ -475,7 +461,7 @@ export const AddGRNDashboard = () => {
           tcs_amount: item.tcsAmount,
           taxable_value: item.totalTaxes,
           total_value: item.amount,
-          pms_products_attributes: item.batch.map(batch => ({ batch_no: batch })),
+          pms_products_attributes: item.batch.map((batch) => ({ batch_no: batch })),
         })),
       },
       attachments: selectedFiles,
@@ -487,37 +473,31 @@ export const AddGRNDashboard = () => {
       toast.success("GRN submitted successfully!");
       navigate("/finance/grn-srn");
     } catch (error: any) {
-      toast.error(error.message || "Failed to submit GRN. Please try again.");
+      toast.error(error.message || "Failed to submit GRN.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="p-6">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className='p-0'
-      >
+    <div className="p-6 mx-auto">
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
+      <h1 className="text-2xl font-bold mb-6">ADD GRN</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* GRN Details Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">1</span>
-            </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#C72030] flex items-center">
+              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                1
+              </h2>
               GRN DETAILS
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
               <InputLabel shrink>Purchase Order*</InputLabel>
               <MuiSelect
@@ -525,10 +505,7 @@ export const AddGRNDashboard = () => {
                 value={grnDetails.purchaseOrder}
                 onChange={(e) => {
                   const poId = Number(e.target.value);
-                  setGrnDetails({
-                    ...grnDetails,
-                    purchaseOrder: poId,
-                  });
+                  setGrnDetails({ ...grnDetails, purchaseOrder: poId });
                   fetchSuppliers(poId);
                   fetchItem(poId);
                 }}
@@ -551,9 +528,7 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Supplier*"
                 value={grnDetails.supplier}
-                onChange={(e) =>
-                  setGrnDetails({ ...grnDetails, supplier: e.target.value })
-                }
+                onChange={(e) => setGrnDetails({ ...grnDetails, supplier: e.target.value })}
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -570,11 +545,9 @@ export const AddGRNDashboard = () => {
 
             <TextField
               label="Invoice Number*"
-              placeholder="Enter Number"
+              placeholder="Enter Invoice Number"
               value={grnDetails.invoiceNumber}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -584,11 +557,9 @@ export const AddGRNDashboard = () => {
 
             <TextField
               label="Related To"
-              placeholder="Enter Text"
+              placeholder="Enter Related To"
               value={grnDetails.relatedTo}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, relatedTo: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, relatedTo: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -599,16 +570,15 @@ export const AddGRNDashboard = () => {
             <TextField
               label="Invoice Amount"
               type="number"
-              placeholder="Enter Number"
+              placeholder="Enter Invoice Amount"
               value={grnDetails.invoiceAmount}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
+              inputProps={{ min: 0 }}
             />
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -616,9 +586,7 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Payment Mode"
                 value={grnDetails.paymentMode}
-                onChange={(e) =>
-                  setGrnDetails({ ...grnDetails, paymentMode: e.target.value })
-                }
+                onChange={(e) => setGrnDetails({ ...grnDetails, paymentMode: e.target.value })}
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -634,90 +602,77 @@ export const AddGRNDashboard = () => {
               label="Invoice Date*"
               type="date"
               value={grnDetails.invoiceDate}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
+              inputProps={{ max: new Date().toISOString().split("T")[0] }}
             />
 
             <TextField
               label="Posting Date*"
               type="date"
               value={grnDetails.postingDate}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, postingDate: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, postingDate: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
+              inputProps={{ max: new Date().toISOString().split("T")[0] }}
             />
 
             <TextField
               label="Other Expense"
               type="number"
-              placeholder="Other Expense"
+              placeholder="Enter Other Expense"
               value={grnDetails.otherExpense}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, otherExpense: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, otherExpense: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
+              inputProps={{ min: 0 }}
             />
 
             <TextField
               label="Loading Expense"
               type="number"
-              placeholder="Enter Number"
+              placeholder="Enter Loading Expense"
               value={grnDetails.loadingExpense}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
+              inputProps={{ min: 0 }}
             />
 
             <TextField
               label="Adjustment Amount"
               type="number"
-              placeholder="Enter Number"
+              placeholder="Enter Adjustment Amount"
               value={grnDetails.adjustmentAmount}
-              onChange={(e) =>
-                setGrnDetails({
-                  ...grnDetails,
-                  adjustmentAmount: e.target.value,
-                })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, adjustmentAmount: e.target.value })}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-          </div>
 
-          <div className="mt-6">
             <TextField
               label="Notes"
               value={grnDetails.notes}
-              onChange={(e) =>
-                setGrnDetails({ ...grnDetails, notes: e.target.value })
-              }
+              onChange={(e) => setGrnDetails({ ...grnDetails, notes: e.target.value })}
               fullWidth
               variant="outlined"
               multiline
-              rows={2}
+              rows={4}
               placeholder="Enter any additional notes..."
               InputLabelProps={{ shrink: true }}
               sx={{
@@ -728,41 +683,31 @@ export const AddGRNDashboard = () => {
                 },
               }}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        {/* Inventory Details Section */}
         {inventoryDetails.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">2</span>
-                </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
-                  INVENTORY DETAILS {index + 1}
+          <Card key={index}>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  2
                 </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                INVENTORY DETAILS {index + 1}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Inventory Type</InputLabel>
+                <InputLabel shrink>Inventory Type*</InputLabel>
                 <MuiSelect
-                  label="Inventory Type"
+                  label="Inventory Type*"
                   value={item.inventoryType}
-                  onChange={(e) =>
-                    handleInventoryChange(
-                      index,
-                      "inventoryType",
-                      e.target.value
-                    )
-                  }
+                  onChange={(e) => handleInventoryChange(index, "inventoryType", e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>Select</em>
+                    <em>Select Inventory Type</em>
                   </MenuItem>
                   {inventories.map((inventory) => (
                     <MenuItem key={inventory.id} value={inventory.id}>
@@ -775,389 +720,413 @@ export const AddGRNDashboard = () => {
               <TextField
                 label="Expected Quantity*"
                 type="number"
-                placeholder="Expected Quantity"
+                placeholder="Enter Expected Quantity"
                 value={item.expectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "expectedQuantity",
-                    e.target.value
-                  )
-                }
+                onChange={(e) => handleInventoryChange(index, "expectedQuantity", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Received Quantity*"
                 type="number"
-                placeholder="Received Quantity"
+                placeholder="Enter Received Quantity"
                 value={item.receivedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "receivedQuantity",
-                    e.target.value
-                  )
-                }
+                onChange={(e) => handleInventoryChange(index, "receivedQuantity", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Approved Quantity*"
                 type="number"
-                placeholder="Approved Quantity"
+                placeholder="Enter Approved Quantity"
                 value={item.approvedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "approvedQuantity",
-                    e.target.value
-                  )
-                }
+                onChange={(e) => handleInventoryChange(index, "approvedQuantity", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Rejected Quantity"
                 type="number"
-                placeholder="Rejected Quantity"
+                placeholder="Enter Rejected Quantity"
                 value={item.rejectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "rejectedQuantity",
-                    e.target.value
-                  )}
+                onChange={(e) => handleInventoryChange(index, "rejectedQuantity", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles },
-                }}
+                InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Rate"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter Rate"
                 value={item.rate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "rate", e.target.value)
-                }
+                onChange={(e) => handleInventoryChange(index, "rate", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="CGST Rate"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter CGST Rate"
                 value={item.cgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "cgstRate", e.target.value)
-                }
+                onChange={(e) => handleInventoryChange(index, "cgstRate", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="CGST Amount"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Calculated Amount"
                 value={item.cgstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="SGST Rate"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter SGST Rate"
                 value={item.sgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "sgstRate", e.target.value)
-                }
+                onChange={(e) => handleInventoryChange(index, "sgstRate", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="SGST Amount"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Calculated Amount"
                 value={item.sgstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="IGST Rate"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter IGST Rate"
                 value={item.igstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "igstRate", e.target.value)
-                }
+                onChange={(e) => handleInventoryChange(index, "igstRate", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="IGST Amount"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Calculated Amount"
                 value={item.igstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="TCS Rate"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Enter TCS Rate"
                 value={item.tcsRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "tcsRate", e.target.value)
-                }
+                onChange={(e) => handleInventoryChange(index, "tcsRate", e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="TCS Amount"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Calculated Amount"
                 value={item.tcsAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Total Taxes"
                 type="number"
-                placeholder="Total Amount"
+                placeholder="Calculated Total Taxes"
                 value={item.totalTaxes}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Amount"
                 type="number"
-                placeholder="Enter Number"
+                placeholder="Calculated Amount"
                 value={item.amount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Total Amount"
                 type="number"
-                placeholder="Total Amount"
+                placeholder="Calculated Total Amount"
                 value={item.totalAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
+                InputProps={{ sx: fieldStyles, readOnly: true }}
                 sx={{ mt: 1 }}
               />
-            </div>
 
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="col-span-1 md:col-span-4 space-y-4">
                 <h3 className="text-md font-semibold">Batch Numbers</h3>
-              </div>
-              {item.batch.map((batch, batchIndex) => (
-                <div key={batchIndex} className="flex items-center gap-4 mb-2">
-                  <TextField
-                    label={`Batch ${batchIndex + 1}`}
-                    type="text"
-                    placeholder="Enter Batch Number"
-                    value={batch}
-                    onChange={(e) =>
-                      handleInventoryChange(index, "batch", e.target.value, batchIndex)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeBatchField(index, batchIndex)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
-                onClick={() => addBatchField(index)}
-              >
-                Add Batch
-              </Button>
-            </div>
-          </div>
-        ))}
-
-        {/* Attachments Section */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-              <span className="text-white text-sm">3</span>
-            </div>
-            <h2 className="text-lg font-semibold text-[#C72030]">
-              ATTACHMENTS*
-            </h2>
-          </div>
-
-          <div
-            className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onClick={() => document.getElementById("file-upload")?.click()}
-          >
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Drag & Drop</span> or{" "}
-              <button type="button" className="text-[#C72030] underline">
-                Choose File
-              </button>{" "}
-              No file chosen
-            </p>
-          </div>
-
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-          />
-
-          {selectedFiles.length > 0 && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
-              <div className="space-y-2">
-                {selectedFiles.map((file, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <span className="text-xs text-gray-500">
-                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                    </div>
+                {item.batch.map((batch, batchIndex) => (
+                  <div key={batchIndex} className="flex items-center gap-4">
+                    <TextField
+                      label={`Batch ${batchIndex + 1}`}
+                      type="text"
+                      placeholder="Enter Batch Number"
+                      value={batch}
+                      onChange={(e) =>
+                        handleInventoryChange(index, "batch", e.target.value, batchIndex)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeFile(index)}
+                      onClick={() => removeBatchField(index, batchIndex)}
                       className="text-red-600 hover:text-red-700"
                     >
-                      Remove
+                      <X className="w-4 h-4" />
                     </Button>
                   </div>
                 ))}
+                <Button
+                  type="button"
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => addBatchField(index)}
+                >
+                  Add Batch
+                </Button>
               </div>
-            </div>
-          )}
+            </CardContent>
+          </Card>
+        ))}
+
+        <div className="flex items-center justify-end">
+          <Button
+            className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
+            type="button"
+          >
+            Total Amount: {inventoryDetails
+              .reduce((sum, item) => sum + parseFloat(item.totalAmount || "0"), 0)
+              .toFixed(2)}
+          </Button>
         </div>
 
-        {/* Submit Section */}
-        <div className="flex justify-end items-center gap-4">
-          <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
-            Total Amount -{" "}
-            {inventoryDetails
-              .reduce(
-                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
-                0
-              )
-              .toFixed(2)}
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#C72030] flex items-center">
+              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                3
+              </h2>
+              ATTACHMENTS*
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onClick={handleDashedBorderClick}
+            >
+              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Drag & Drop or Click to Upload</span>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                  ref={fileInputRef}
+                  accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
+                />
+                <span className="ml-1">
+                  {selectedFiles.length > 0
+                    ? `${selectedFiles.length} file(s) selected`
+                    : "No files chosen"}
+                </span>
+              </div>
+            </div>
+
+            {selectedFiles.length > 0 && (
+              <div className="flex items-center flex-wrap gap-4 my-6">
+                {selectedFiles.map((file, index) => {
+                  const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                  const isPdf = file.type.match(/application\/pdf/i);
+                  const isExcel = file.type.match(
+                    /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                  );
+                  const isWord = file.type.match(
+                    /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                  );
+
+                  return (
+                    <div
+                      key={`new-${index}`}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    >
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedDoc({
+                                id: index,
+                                url: URL.createObjectURL(file),
+                                document_name: file.name,
+                                document_file_name: file.name,
+                              });
+                              setIsModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedDoc({
+                                id: index,
+                                url: URL.createObjectURL(file),
+                                document_name: file.name,
+                                document_file_name: file.name,
+                              });
+                              setIsModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
+                        </div>
+                      )}
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {file.name}
+                      </span>
+                      <button
+                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        title="Remove"
+                        onClick={() => removeFile(index)}
+                        type="button"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex items-center justify-center gap-4">
           <Button
             type="submit"
-            className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"
+            size="lg"
+            className="bg-[#C72030] hover:bg-[#C72030] text-white"
             disabled={isSubmitting}
           >
-            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit"}
+            {isSubmitting ? <CircularProgress size={24} color="inherit" /> : "Submit GRN"}
+          </Button>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => navigate(-1)}
+            className="px-8"
+          >
+            Cancel
           </Button>
         </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

@@ -574,7 +574,7 @@ export const ServicePRDetailsPage = () => {
           </CardHeader>
           <CardContent>
             {Array.isArray(servicePR.attachments) && servicePR.attachments.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
                 {servicePR.attachments.map((attachment: Attachment) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
                   const isPdf = /\.pdf$/i.test(attachment.url);

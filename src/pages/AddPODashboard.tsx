@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   ArrowLeft,
+  File,
+  FileSpreadsheet,
   FileText,
-  ListChecks,
-  Paperclip,
   Upload,
+  Eye,
   X,
 } from "lucide-react";
 import {
@@ -18,6 +19,7 @@ import {
   MenuItem,
   SelectChangeEvent,
 } from "@mui/material";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useAppDispatch } from "@/store/hooks";
 import {
   getAddresses,
@@ -32,35 +34,33 @@ import {
   materialPRChange,
 } from "@/store/slices/purchaseOrderSlice";
 import axios from "axios";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const fieldStyles = {
-  height: {
-    xs: 28,
-    sm: 36,
-    md: 45,
-  },
+  height: { xs: 28, sm: 36, md: 45 },
   "& .MuiInputBase-input, & .MuiSelect-select": {
-    padding: {
-      xs: "8px",
-      sm: "10px",
-      md: "12px",
-    },
+    padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
+}
 
 export const AddPODashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchParams = new URLSearchParams(location.search);
+  const cloneId = searchParams.get("clone");
+  const shouldFetch = Boolean(cloneId);
 
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
-
-  const location = useLocation();
-  const searchParams = new URLSearchParams(location.search);
-
-  const cloneId = searchParams.get("clone");
-
-  const shouldFetch = Boolean(cloneId);
 
   const [materialPR, setMaterialPR] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
@@ -69,6 +69,8 @@ export const AddPODashboard = () => {
   const [inventories, setInventories] = useState([]);
   const [units, setUnits] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   const [formData, setFormData] = useState({
     materialPR: "",
@@ -114,49 +116,41 @@ export const AddPODashboard = () => {
   useEffect(() => {
     const fetchMaterialPR = async () => {
       try {
-        const response = await dispatch(
-          getMaterialPR({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getMaterialPR({ baseUrl, token })).unwrap();
         setMaterialPR(response.purchase_orders);
       } catch (error) {
         console.log(error);
-        toast.error(error);
+        toast.error(error.message || "Failed to fetch material PRs");
       }
     };
 
     const fetchPlantDetails = async () => {
       try {
-        const response = await dispatch(
-          getPlantDetails({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
         setPlantDetails(response);
       } catch (error) {
         console.log(error);
-        toast.error(error);
+        toast.error(error.message || "Failed to fetch plant details");
       }
     };
 
     const fetchAddresses = async () => {
       try {
-        const response = await dispatch(
-          getAddresses({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
         setAddresses(response.admin_invoice_addresses);
       } catch (error) {
         console.log(error);
-        toast.error(error);
+        toast.error(error.message || "Failed to fetch addresses");
       }
     };
 
     const fetchInventories = async () => {
       try {
-        const response = await dispatch(
-          getInventories({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getInventories({ baseUrl, token })).unwrap();
         setInventories(response.inventories);
       } catch (error) {
         console.log(error);
-        toast.error(error);
+        toast.error(error.message || "Failed to fetch inventories");
       }
     };
 
@@ -167,7 +161,7 @@ export const AddPODashboard = () => {
         setSuppliers(response.pms_suppliers);
       } catch (error) {
         console.log(error);
-        toast.error(error);
+        toast.error(error.message || "Failed to fetch units");
       }
     };
 
@@ -176,15 +170,13 @@ export const AddPODashboard = () => {
     fetchAddresses();
     fetchInventories();
     fetchUnits();
-  }, []);
+  }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
-    if (shouldFetch) {
+    if (shouldFetch && cloneId) {
       const cloneData = async () => {
         try {
-          const response = await dispatch(
-            getMaterialPRById({ baseUrl, token, id: cloneId })
-          ).unwrap();
+          const response = await dispatch(getMaterialPRById({ baseUrl, token, id: cloneId })).unwrap();
           setFormData({
             materialPR: "",
             supplier: response.pms_supplier_id || "",
@@ -222,18 +214,18 @@ export const AddPODashboard = () => {
               tcsAmount: item.tcs_amount || "",
               taxAmount: item.taxable_value || "",
               amount: item.total_value || "",
-              totalAmount: Number(item.taxable_value) + Number(item.total_value),
-            }))
+              totalAmount: (Number(item.taxable_value) + Number(item.total_value)).toFixed(2) || "",
+            })) || []
           );
         } catch (error) {
           console.log(error);
-          toast.error(error);
+          toast.error(error.message || "Failed to clone purchase order");
         }
       };
 
       cloneData();
     }
-  }, [shouldFetch]);
+  }, [shouldFetch, cloneId, dispatch, baseUrl, token]);
 
   const calculateItem = (item) => {
     const quantity = parseFloat(item.quantity) || 0;
@@ -269,18 +261,43 @@ export const AddPODashboard = () => {
     if (!formData.supplier) {
       toast.error("Please select a supplier");
       return false;
-    } else if (!formData.poDate) {
-      toast.error("Please select a po date");
+    }
+    if (!formData.poDate) {
+      toast.error("Please select a PO date");
       return false;
-    } else if (!formData.billingAddress) {
+    }
+    if (!formData.billingAddress) {
       toast.error("Please select a billing address");
       return false;
-    } else if (!formData.deliveryAddress) {
+    }
+    if (!formData.deliveryAddress) {
       toast.error("Please select a delivery address");
       return false;
     }
+    for (const item of items) {
+      if (!item.itemDetails) {
+        toast.error("Item Details is required for all items");
+        return false;
+      }
+      if (!item.quantity || isNaN(parseFloat(item.quantity)) || parseFloat(item.quantity) <= 0) {
+        toast.error("Quantity must be a valid positive number for all items");
+        return false;
+      }
+      if (!item.unit) {
+        toast.error("Unit is required for all items");
+        return false;
+      }
+      if (!item.expectedDate) {
+        toast.error("Expected Date is required for all items");
+        return false;
+      }
+      if (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0) {
+        toast.error("Rate must be a valid positive number for all items");
+        return false;
+      }
+    }
     return true;
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,14 +346,12 @@ export const AddPODashboard = () => {
     };
 
     try {
-      await dispatch(
-        createPurchaseOrder({ baseUrl, token, data: payload })
-      ).unwrap();
+      await dispatch(createPurchaseOrder({ baseUrl, token, data: payload })).unwrap();
       toast.success("Purchase Order created successfully");
       navigate("/finance/po");
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(error.message || "Failed to create purchase order");
     } finally {
       setSubmitting(false);
     }
@@ -355,6 +370,10 @@ export const AddPODashboard = () => {
       ...formData,
       attachments: formData.attachments.filter((_, i) => i !== index),
     });
+  };
+
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
   };
 
   const addItem = () => {
@@ -401,19 +420,18 @@ export const AddPODashboard = () => {
         materialPRChange({ baseUrl, token, id: parseInt(materialPRId) })
       ).unwrap();
 
-      // update formData with supplier
       setFormData({
         ...formData,
         materialPR: materialPRId,
-        supplier: response.supplier?.id,
+        supplier: response.supplier?.id || "",
       });
 
-      // map all items from pms_po_inventories
       const newItems =
         response.pms_po_inventories?.map((inv: any, index: number) => ({
           id: index + 1,
           itemDetails: inv?.inventory?.id || "",
           sacHsnCode: "",
+          sacHsnCodeId: "",
           quantity: inv?.quantity || "",
           unit: "",
           expectedDate: "",
@@ -433,7 +451,6 @@ export const AddPODashboard = () => {
 
       setItems(newItems);
 
-      // optionally call onInventoryChange for each
       if (newItems.length > 0) {
         newItems.forEach((item) => {
           if (item.itemDetails) {
@@ -447,7 +464,7 @@ export const AddPODashboard = () => {
     }
   };
 
-  const onInventoryChange = async (inventoryId, itemId) => {
+  const onInventoryChange = async (inventoryId: string, itemId: number) => {
     try {
       const response = await axios.get(
         `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
@@ -472,12 +489,14 @@ export const AddPODashboard = () => {
       );
     } catch (error) {
       console.log(error);
-      toast.error(error);
+      toast.error(error.message || "Failed to fetch HSN code");
     }
   };
 
   const removeItem = (itemId: number) => {
-    setItems(items.filter((item) => item.id !== itemId));
+    if (items.length > 1) {
+      setItems(items.filter((item) => item.id !== itemId));
+    }
   };
 
   return (
@@ -489,631 +508,655 @@ export const AddPODashboard = () => {
       <h1 className="text-2xl font-bold mb-6">NEW PURCHASE ORDER</h1>
 
       <form onSubmit={handleSubmit}>
-        <div className="">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <FileText className="text-white w-4 h-4" />
-                </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
-                  SUPPLIER DETAILS
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  1
                 </h2>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Select Material PR*</InputLabel>
-                  <MuiSelect
-                    label="Select Material PR*"
-                    value={formData.materialPR}
-                    onChange={handleMaterialPRChange}
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select...</em>
+                SUPPLIER DETAILS
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Material PR*</InputLabel>
+                <MuiSelect
+                  label="Material PR*"
+                  value={formData.materialPR}
+                  onChange={handleMaterialPRChange}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Material PR</em>
+                  </MenuItem>
+                  {materialPR.map((materialPR) => (
+                    <MenuItem key={materialPR.id} value={materialPR.id}>
+                      {materialPR.id}
                     </MenuItem>
-                    {materialPR.map((materialPR) => (
-                      <MenuItem value={materialPR.id}>{materialPR.id}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Supplier*</InputLabel>
-                  <MuiSelect
-                    label="Supplier*"
-                    value={formData.supplier}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        supplier: e.target.value,
-                      })
-                    }
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select...</em>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Supplier*</InputLabel>
+                <MuiSelect
+                  label="Supplier*"
+                  value={formData.supplier}
+                  onChange={(e) =>
+                    setFormData({ ...formData, supplier: e.target.value })
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Supplier</em>
+                  </MenuItem>
+                  {suppliers.map((supplier) => (
+                    <MenuItem key={supplier.id} value={supplier.id}>
+                      {supplier.name}
                     </MenuItem>
-                    {suppliers.map((supplier) => (
-                      <MenuItem value={supplier.id}>{supplier.name}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Plant Detail</InputLabel>
-                  <MuiSelect
-                    label="Plant Detail"
-                    value={formData.plantDetail}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        plantDetail: e.target.value,
-                      })
-                    }
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select...</em>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Plant Detail</InputLabel>
+                <MuiSelect
+                  label="Plant Detail"
+                  value={formData.plantDetail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, plantDetail: e.target.value })
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Plant Detail</em>
+                  </MenuItem>
+                  {plantDetails.map((plantDetail) => (
+                    <MenuItem key={plantDetail.id} value={plantDetail.id}>
+                      {plantDetail.plant_name}
                     </MenuItem>
-                    {plantDetails.map((plantDetail) => (
-                      <MenuItem value={plantDetail.id}>
-                        {plantDetail.plant_name}
-                      </MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-                <TextField
-                  label="PO Date*"
-                  type="date"
-                  value={formData.poDate}
+              <TextField
+                label="PO Date*"
+                type="date"
+                value={formData.poDate}
+                onChange={(e) => setFormData({ ...formData, poDate: e.target.value })}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: new Date().toISOString().split("T")[0] }}
+              />
+
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Billing Address*</InputLabel>
+                <MuiSelect
+                  label="Billing Address*"
+                  value={formData.billingAddress}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      poDate: e.target.value,
-                    })
+                    setFormData({ ...formData, billingAddress: e.target.value })
                   }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
-
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Billing Address*</InputLabel>
-                  <MuiSelect
-                    label="Billing Address*"
-                    value={formData.billingAddress}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        billingAddress: e.target.value,
-                      })
-                    }
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select...</em>
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Billing Address</em>
+                  </MenuItem>
+                  {addresses.map((address) => (
+                    <MenuItem key={address.id} value={address.id}>
+                      {address.title}
                     </MenuItem>
-                    {addresses.map((address) => (
-                      <MenuItem value={address.id}>{address.title}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Delivery Address*</InputLabel>
-                  <MuiSelect
-                    label="Delivery Address*"
-                    value={formData.deliveryAddress}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        deliveryAddress: e.target.value,
-                      })
-                    }
-                    displayEmpty
-                    sx={fieldStyles}
-                  >
-                    <MenuItem value="">
-                      <em>Select...</em>
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Delivery Address*</InputLabel>
+                <MuiSelect
+                  label="Delivery Address*"
+                  value={formData.deliveryAddress}
+                  onChange={(e) =>
+                    setFormData({ ...formData, deliveryAddress: e.target.value })
+                  }
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">
+                    <em>Select Delivery Address</em>
+                  </MenuItem>
+                  {addresses.map((address) => (
+                    <MenuItem key={address.id} value={address.id}>
+                      {address.title}
                     </MenuItem>
-                    {addresses.map((address) => (
-                      <MenuItem value={address.id}>{address.title}</MenuItem>
-                    ))}
-                  </MuiSelect>
-                </FormControl>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-                <TextField
-                  label="Related To"
-                  value={formData.relatedTo}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      relatedTo: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
+              <TextField
+                label="Related To"
+                value={formData.relatedTo}
+                onChange={(e) => setFormData({ ...formData, relatedTo: e.target.value })}
+                placeholder="Enter Related To"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
 
-                <TextField
-                  label="Retention(%)"
-                  value={formData.retention}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      retention: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
+              <TextField
+                label="Retention(%)"
+                value={formData.retention}
+                onChange={(e) => setFormData({ ...formData, retention: e.target.value })}
+                placeholder="Enter Number"
+                fullWidth
+                type="number"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: 0, max: 100 }}
+              />
 
-                <TextField
-                  label="TDS(%)"
-                  value={formData.tds}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      tds: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
+              <TextField
+                label="TDS(%)"
+                value={formData.tds}
+                onChange={(e) => setFormData({ ...formData, tds: e.target.value })}
+                placeholder="Enter Number"
+                fullWidth
+                type="number"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: 0, max: 100 }}
+              />
 
-                <TextField
-                  label="QC(%)"
-                  value={formData.qc}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      qc: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
+              <TextField
+                label="QC(%)"
+                value={formData.qc}
+                onChange={(e) => setFormData({ ...formData, qc: e.target.value })}
+                placeholder="Enter Number"
+                fullWidth
+                type="number"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: 0, max: 100 }}
+              />
 
-                <TextField
-                  label="Payment Tenure(In Days)"
-                  value={formData.paymentTenure}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      paymentTenure: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
+              <TextField
+                label="Payment Tenure(In Days)"
+                value={formData.paymentTenure}
+                onChange={(e) => setFormData({ ...formData, paymentTenure: e.target.value })}
+                placeholder="Enter Number"
+                fullWidth
+                type="number"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
+              />
 
-                <TextField
-                  label="Advance Amount"
-                  value={formData.advanceAmount}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      advanceAmount: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  sx={{ mt: 1 }}
-                />
-              </div>
+              <TextField
+                label="Advance Amount"
+                value={formData.advanceAmount}
+                onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
+                placeholder="Enter Number"
+                fullWidth
+                type="number"
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{ min: 0 }}
+              />
 
-              <div className="mt-6">
-                <TextField
-                  label="Terms & Conditions"
-                  value={formData.termsConditions}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      termsConditions: e.target.value,
-                    })
-                  }
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  minRows={2}
-                  placeholder="Enter..."
-                  InputLabelProps={{ shrink: true }}
-                  sx={{
-                    mt: 1,
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                    },
-                  }}
-                />
-              </div>
-            </div>
+              <TextField
+                label="Terms & Conditions"
+                value={formData.termsConditions}
+                onChange={(e) => setFormData({ ...formData, termsConditions: e.target.value })}
+                placeholder="Enter terms and conditions here..."
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={2}
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
+              />
+            </CardContent>
+          </Card>
 
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 mb-6">
-                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                    <ListChecks className="text-white w-4 h-4" />
-                  </div>
-                  <h2 className="text-lg font-semibold text-[#C72030]">
-                    ITEM DETAILS
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center justify-between">
+                <div className="flex items-center">
+                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                    2
                   </h2>
+                  ITEM DETAILS
                 </div>
-
                 <Button
                   type="button"
                   onClick={addItem}
-                  className="bg-[#C72030] hover:bg-[#A01020] text-white mb-4"
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
                 >
                   Add Item
                 </Button>
-              </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {items.map((item, index) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
+                >
+                  {items.length > 1 && (
+                    <Button
+                      onClick={() => removeItem(item.id)}
+                      size="sm"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
 
-              <div className="space-y-4">
-                {items.map((item, index) => (
-                  <div key={item.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-sm font-medium text-gray-700">
-                        Item {index + 1}
-                      </h3>
-                      {items.length > 1 && (
-                        <Button
-                          onClick={() => removeItem(item.id)}
-                          className="text-red-600 hover:bg-red-100"
-                        >
-                          <X />
-                        </Button>
-                      )}
-                    </div>
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Item Details*</InputLabel>
+                    <MuiSelect
+                      label="Item Details*"
+                      value={item.itemDetails}
+                      onChange={(e) => updateItem(item.id, "itemDetails", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Item Details</em>
+                      </MenuItem>
+                      {inventories.map((inventory) => (
+                        <MenuItem key={inventory.id} value={inventory.id}>
+                          {inventory.inventory_name}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-                    <div className="grid grid-cols-3 gap-4">
-                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                        <InputLabel shrink>Item Details</InputLabel>
-                        <MuiSelect
-                          label="Item Details"
-                          value={item.itemDetails}
-                          onChange={(e) =>
-                            updateItem(item.id, "itemDetails", e.target.value)
-                          }
-                          displayEmpty
-                          sx={fieldStyles}
-                        >
-                          <MenuItem value="">
-                            <em>Select...</em>
-                          </MenuItem>
-                          {inventories.map((inventory) => (
-                            <MenuItem key={inventory.id} value={inventory.id}>
-                              {inventory.inventory_name}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
+                  <TextField
+                    label="SAC/HSN Code"
+                    value={item.sacHsnCode}
+                    onChange={(e) => updateItem(item.id, "sacHsnCode", e.target.value)}
+                    placeholder="Enter SAC/HSN Code"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="SAC/HSN Code"
-                        value={item.sacHsnCode}
-                        onChange={(e) =>
-                          updateItem(item.id, "sacHsnCode", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="Quantity*"
+                    value={item.quantity}
+                    onChange={(e) => updateItem(item.id, "quantity", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="Quantity"
-                        value={item.quantity}
-                        onChange={(e) =>
-                          updateItem(item.id, "quantity", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                    <InputLabel shrink>Unit*</InputLabel>
+                    <MuiSelect
+                      label="Unit*"
+                      value={item.unit}
+                      onChange={(e) => updateItem(item.id, "unit", e.target.value)}
+                      displayEmpty
+                      sx={fieldStyles}
+                    >
+                      <MenuItem value="">
+                        <em>Select Unit</em>
+                      </MenuItem>
+                      {units.map((unit) => (
+                        <MenuItem key={unit[0]} value={unit[0]}>
+                          {unit[0]}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
 
-                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                        <InputLabel shrink>Select Unit</InputLabel>
-                        <MuiSelect
-                          label="Select Unit"
-                          value={item.unit}
-                          onChange={(e) =>
-                            updateItem(item.id, "unit", e.target.value)
-                          }
-                          displayEmpty
-                          sx={fieldStyles}
-                        >
-                          <MenuItem value="">
-                            <em>Select...</em>
-                          </MenuItem>
-                          {units.map((unit) => (
-                            <MenuItem key={unit[0]} value={unit[0]}>
-                              {unit[0]}
-                            </MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
+                  <TextField
+                    label="Expected Date*"
+                    type="date"
+                    value={item.expectedDate}
+                    onChange={(e) => updateItem(item.id, "expectedDate", e.target.value)}
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="Expected Date"
-                        type="date"
-                        value={item.expectedDate}
-                        onChange={(e) =>
-                          updateItem(item.id, "expectedDate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="Rate*"
+                    value={item.rate}
+                    onChange={(e) => updateItem(item.id, "rate", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="Rate"
-                        value={item.rate}
-                        onChange={(e) =>
-                          updateItem(item.id, "rate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="CGST Rate"
+                    value={item.cgstRate}
+                    onChange={(e) => updateItem(item.id, "cgstRate", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="CGST Rate"
-                        value={item.cgstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "cgstRate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="CGST Amount"
+                    value={item.cgstAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="CGST Amt"
-                        value={item.cgstAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="SGST Rate"
+                    value={item.sgstRate}
+                    onChange={(e) => updateItem(item.id, "sgstRate", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="SGST Rate"
-                        value={item.sgstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "sgstRate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="SGST Amount"
+                    value={item.sgstAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="SGST Amount"
-                        value={item.sgstAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="IGST Rate"
+                    value={item.igstRate}
+                    onChange={(e) => updateItem(item.id, "igstRate", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="IGST Rate"
-                        value={item.igstRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "igstRate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="IGST Amount"
+                    value={item.igstAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="IGST Amount"
-                        value={item.igstAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="TCS Rate"
+                    value={item.tcsRate}
+                    onChange={(e) => updateItem(item.id, "tcsRate", e.target.value)}
+                    placeholder="Enter Number"
+                    fullWidth
+                    type="number"
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="TCS Rate"
-                        value={item.tcsRate}
-                        onChange={(e) =>
-                          updateItem(item.id, "tcsRate", e.target.value)
-                        }
-                        fullWidth
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="TCS Amount"
+                    value={item.tcsAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="TCS Amount"
-                        value={item.tcsAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="Tax Amount"
+                    value={item.taxAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="Tax Amount"
-                        value={item.taxAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
+                  <TextField
+                    label="Amount"
+                    value={item.amount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
 
-                      <TextField
-                        label="Amount"
-                        value={item.amount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
-
-                      <TextField
-                        label="Total Amount"
-                        value={item.totalAmount}
-                        fullWidth
-                        disabled
-                        variant="outlined"
-                        InputLabelProps={{ shrink: true }}
-                        InputProps={{ sx: fieldStyles }}
-                        sx={{ mt: 1 }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end">
-              <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
-                Total Amount: {calculateTotalAmount()}
-              </Button>
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow border">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">3</span>
+                  <TextField
+                    label="Total Amount"
+                    value={item.totalAmount}
+                    placeholder="Calculated Amount"
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
+                  />
                 </div>
-                <h2 className="text-lg font-semibold text-gray-800">
-                  ATTACHMENTS
-                </h2>
-              </div>
+              ))}
+            </CardContent>
+          </Card>
 
+          <div className="flex items-center justify-end">
+            <Button
+              className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
+              type="button"
+            >
+              Total Amount: {calculateTotalAmount()}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  3
+                </h2>
+                ATTACHMENTS
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div
-                className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                onClick={() => document.getElementById("file-upload")?.click()}
+                className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+                onClick={handleDashedBorderClick}
               >
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg">
-                  Drag & Drop or Click to Upload{" "}
-                  <span className="text-gray-500">
+                <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Drag & Drop or Click to Upload</span>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                    ref={fileInputRef}
+                    accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
+                  />
+                  <span className="ml-1">
                     {formData.attachments.length > 0
                       ? `${formData.attachments.length} file(s) selected`
                       : "No files chosen"}
                   </span>
-                </p>
-                <input
-                  id="file-upload"
-                  type="file"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  multiple
-                  accept="image/*,.pdf,.doc,.docx"
-                />
+                </div>
               </div>
 
               {formData.attachments.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-4">
-                    Selected Files
-                  </h3>
-                  <div className="grid grid-cols-6 gap-4">
-                    {formData.attachments.map((file, index) => (
+                <div className="flex items-center flex-wrap gap-4 my-6">
+                  {formData.attachments.map((file, index) => {
+                    const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                    const isPdf = file.type.match(/application\/pdf/i);
+                    const isExcel = file.type.match(
+                      /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                    );
+                    const isWord = file.type.match(
+                      /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                    );
+
+                    return (
                       <div
                         key={index}
-                        className="border rounded-lg p-2 flex flex-col items-center relative"
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                       >
-                        {file.type.startsWith("image/") ? (
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={file.name}
-                            className="w-32 h-32 object-cover rounded-lg mb-2"
-                          />
+                        {isImage ? (
+                          <>
+                            <button
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              type="button"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            />
+                          </>
+                        ) : isPdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
                         ) : (
-                          <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                            <Paperclip className="w-8 h-8 text-gray-400" />
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <File className="w-6 h-6" />
                           </div>
                         )}
-                        <p className="text-sm text-gray-600 truncate w-full text-center">
+                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
                           {file.name}
-                        </p>
-                        <Button
+                        </span>
+                        <button
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="Remove"
                           onClick={() => removeFile(index)}
-                          className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1"
+                          type="button"
                         >
                           <X className="w-4 h-4" />
-                        </Button>
+                        </button>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
               )}
-            </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              type="submit"
+              size="lg"
+              className="bg-[#C72030] hover:bg-[#C72030] text-white"
+              disabled={submitting}
+            >
+              Submit
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate(-1)}
+              className="px-8"
+            >
+              Cancel
+            </Button>
           </div>
         </div>
-
-        <div className="mt-6 flex justify-center">
-          <Button
-            type="submit"
-            className="bg-[#C72030] hover:bg-[#A01020] text-white"
-            size="lg"
-            disabled={submitting}
-          >
-            Submit
-          </Button>
-        </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

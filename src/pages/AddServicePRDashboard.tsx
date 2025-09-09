@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, Settings, Trash2, X } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { ArrowLeft, Upload, Eye, File, FileSpreadsheet, FileText, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import {
   TextField,
   FormControl,
@@ -10,8 +11,8 @@ import {
   Box,
   FormLabel,
   RadioGroup,
-  Radio,
   FormControlLabel,
+  Radio,
 } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -26,6 +27,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
 import axios from "axios";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -34,19 +36,25 @@ const fieldStyles = {
   },
 };
 
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
+}
+
 export const AddServicePRDashboard = () => {
   const dispatch = useAppDispatch();
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const { data = [] } = useAppSelector((state) => state.changePlantDetails) as { data: any[] };
 
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-
   const cloneId = searchParams.get("clone");
-
   const shouldFetch = Boolean(cloneId);
 
   const [suppliers, setSuppliers] = useState([]);
@@ -57,6 +65,10 @@ export const AddServicePRDashboard = () => {
   const [overallWbs, setOverallWbs] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [showRadio, setShowRadio] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [slid, setSlid] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   const [formData, setFormData] = useState({
     contractor: "",
@@ -100,8 +112,6 @@ export const AddServicePRDashboard = () => {
   ]);
 
   const [attachedFiles, setAttachedFiles] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [slid, setSlid] = useState(null);
 
   useEffect(() => {
     const createSystemLog = async () => {
@@ -110,9 +120,7 @@ export const AddServicePRDashboard = () => {
           `https://${baseUrl}/pms/work_orders/create_system_log_for_wo.json`,
           {},
           {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
         setSlid(response.data.id);
@@ -121,9 +129,8 @@ export const AddServicePRDashboard = () => {
         toast.error("Failed to create system log");
       }
     };
-
     createSystemLog();
-  }, []);
+  }, [baseUrl, token]);
 
   useEffect(() => {
     if (!slid) return;
@@ -177,11 +184,7 @@ export const AddServicePRDashboard = () => {
         await axios.put(
           `https://${baseUrl}/pms/work_orders/update_temp_records.json`,
           payload,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
         toast.success("Auto saved successfully");
       } catch (error) {
@@ -190,14 +193,12 @@ export const AddServicePRDashboard = () => {
     }, 60000);
 
     return () => clearInterval(interval);
-  }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, token, baseUrl]);
+  }, [slid, formData, detailsForms, attachedFiles, wbsSelection, overallWbs, baseUrl, token]);
 
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
-        const response = await dispatch(
-          getSuppliers({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
         setSuppliers(response.suppliers);
       } catch (error) {
         console.log(error);
@@ -208,9 +209,7 @@ export const AddServicePRDashboard = () => {
 
     const fetchPlantDetails = async () => {
       try {
-        const response = await dispatch(
-          getPlantDetails({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
         setPlantDetails(response);
       } catch (error) {
         console.log(error);
@@ -221,9 +220,7 @@ export const AddServicePRDashboard = () => {
 
     const fetchAddresses = async () => {
       try {
-        const response = await dispatch(
-          getAddresses({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
         setAddresses(response.admin_invoice_addresses);
       } catch (error) {
         console.log(error);
@@ -234,9 +231,7 @@ export const AddServicePRDashboard = () => {
 
     const fetchServices = async () => {
       try {
-        const response = await dispatch(
-          getServices({ baseUrl, token })
-        ).unwrap();
+        const response = await dispatch(getServices({ baseUrl, token })).unwrap();
         setServices(response);
       } catch (error) {
         console.log(error);
@@ -249,7 +244,7 @@ export const AddServicePRDashboard = () => {
     fetchPlantDetails();
     fetchAddresses();
     fetchServices();
-  }, []);
+  }, [dispatch, baseUrl, token]);
 
   useEffect(() => {
     if (shouldFetch) {
@@ -274,6 +269,10 @@ export const AddServicePRDashboard = () => {
             termsConditions: data.work_order.term_condition,
           });
 
+          setWbsSelection(
+            data.inventories?.every(item => item.wbs_code !== null) ? "individual" : "overall"
+          );
+
           setDetailsForms(data.inventories.map((item, index) => ({
             id: index + 1,
             service: item.pms_service_id,
@@ -292,18 +291,17 @@ export const AddServicePRDashboard = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: Number(item.tax_amount) + Number(item.total_value),
-            wbsCode: "",
+            totalAmount: (Number(item.tax_amount) + Number(item.total_value)).toFixed(2),
+            wbsCode: item.wbs_code || "",
           })));
         } catch (error) {
           console.log(error);
           toast.error(error);
         }
       };
-
       cloneData();
     }
-  }, [shouldFetch]);
+  }, [shouldFetch, cloneId, dispatch, baseUrl, token]);
 
   useEffect(() => {
     if (data.length > 0) {
@@ -327,10 +325,7 @@ export const AddServicePRDashboard = () => {
   }, [showRadio, dispatch, baseUrl, token]);
 
   const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const calculateItem = (item) => {
@@ -341,19 +336,12 @@ export const AddServicePRDashboard = () => {
     const igstRate = parseFloat(item.igstRate) || 0;
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
-    // Calculate base amount
     const amount = quantity * rate;
-
-    // Calculate tax amounts
     const cgstAmt = (amount * cgstRate) / 100;
     const sgstAmt = (amount * sgstRate) / 100;
     const igstAmt = (amount * igstRate) / 100;
     const tcsAmt = (amount * tcsRate) / 100;
-
-    // Calculate total tax amount
     const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
-
-    // Calculate total amount including taxes
     const totalAmount = amount + taxAmount;
 
     return {
@@ -373,16 +361,8 @@ export const AddServicePRDashboard = () => {
       prev.map((form) => {
         if (form.id === id) {
           const updatedForm = { ...form, [field]: value };
-          // Recalculate only if relevant fields are changed
           if (
-            [
-              "quantityArea",
-              "rate",
-              "cgstRate",
-              "sgstRate",
-              "igstRate",
-              "tcsRate",
-            ].includes(field)
+            ["quantityArea", "rate", "cgstRate", "sgstRate", "igstRate", "tcsRate"].includes(field)
           ) {
             return calculateItem(updatedForm);
           }
@@ -431,24 +411,17 @@ export const AddServicePRDashboard = () => {
     dispatch(changePlantDetails({ baseUrl, id: value, token }));
   };
 
-  useEffect(() => {
-    if (formData.plantDetail) {
-      handlePlantDetailsChange({ target: { name: "plantDetail", value: formData.plantDetail } });
-    }
-  }, [formData.plantDetail]);
-
-  const handleFileUpload = (event) => {
-    const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      setAttachedFiles((prev) => [...prev, ...newFiles]);
-    }
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setAttachedFiles((prev) => [...prev, ...selectedFiles]);
   };
 
-  const removeFile = (indexToRemove) => {
-    setAttachedFiles((prev) =>
-      prev.filter((_, index) => index !== indexToRemove)
-    );
+  const removeFile = (index) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
   };
 
   const grandTotal = detailsForms
@@ -456,7 +429,6 @@ export const AddServicePRDashboard = () => {
     .toFixed(2);
 
   const validateForm = () => {
-    // Work Order Details Validation
     if (!formData.contractor) {
       toast.error("Contractor is required");
       return false;
@@ -474,7 +446,6 @@ export const AddServicePRDashboard = () => {
       return false;
     }
 
-    // Details Forms Validation
     for (const item of detailsForms) {
       if (!item.service) {
         toast.error("Service is required for all items");
@@ -497,11 +468,11 @@ export const AddServicePRDashboard = () => {
         return false;
       }
     }
-
     return true;
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!validateForm()) {
       return;
     }
@@ -555,42 +526,39 @@ export const AddServicePRDashboard = () => {
       navigate("/finance/service-pr");
     } catch (error) {
       console.log(error);
-      toast.error(error.message);
+      toast.error(error.message || "Failed to create Service PR");
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="p-6 mx-auto">
-        <Button
-          variant="ghost"
-          onClick={() => navigate(-1)}
-          className="p-0 mb-4"
-        >
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Back
-        </Button>
-        {/* Work Order Details Section Card */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
+    <div className="p-6 mx-auto">
+      <Button
+        variant="ghost"
+        onClick={() => navigate(-1)}
+        className="p-0"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Back
+      </Button>
+      <h1 className="text-2xl font-bold mb-6">ADD SERVICE PR</h1>
+      <form onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  1
+                </h2>
                 WORK ORDER DETAILS
-              </h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Select Contractor*</InputLabel>
+                <InputLabel shrink>Contractor*</InputLabel>
                 <MuiSelect
-                  label="Select Contractor*"
+                  label="Contractor*"
                   value={formData.contractor}
                   onChange={(e) => handleInputChange("contractor", e.target.value)}
                   displayEmpty
@@ -617,7 +585,7 @@ export const AddServicePRDashboard = () => {
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>Select Plant Id</em>
+                    <em>Select Plant Detail</em>
                   </MenuItem>
                   {plantDetails.map((plantDetail) => (
                     <MenuItem key={plantDetail.id} value={plantDetail.id}>
@@ -628,26 +596,26 @@ export const AddServicePRDashboard = () => {
               </FormControl>
 
               <TextField
-                label="Select WO Date*"
+                label="WO Date*"
+                type="date"
                 value={formData.woDate}
-                onChange={(e) =>
-                  handleInputChange("woDate", e.target.value)
-                }
+                onChange={(e) => handleInputChange("woDate", e.target.value)}
                 fullWidth
                 variant="outlined"
-                type="date"
                 InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+                inputProps={{
+                  min: new Date().toISOString().split("T")[0],
+                }}
               />
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Select Billing Address*</InputLabel>
+                <InputLabel shrink>Billing Address*</InputLabel>
                 <MuiSelect
-                  label="Select Billing Address*"
+                  label="Billing Address*"
                   value={formData.billingAddress}
-                  onChange={(e) =>
-                    handleInputChange("billingAddress", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange("billingAddress", e.target.value)}
                   displayEmpty
                   sx={fieldStyles}
                 >
@@ -664,78 +632,138 @@ export const AddServicePRDashboard = () => {
 
               <TextField
                 label="Retention(%)"
-                placeholder="Retention"
                 value={formData.retention}
                 onChange={(e) => handleInputChange("retention", e.target.value)}
+                placeholder="Enter Number"
                 fullWidth
-                variant="outlined"
                 type="number"
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
                 inputProps={{ min: 0, max: 100 }}
-                sx={fieldStyles}
               />
 
               <TextField
                 label="TDS(%)"
-                placeholder="TDS"
                 value={formData.tds}
                 onChange={(e) => handleInputChange("tds", e.target.value)}
+                placeholder="Enter Number"
                 fullWidth
-                variant="outlined"
                 type="number"
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
                 inputProps={{ min: 0, max: 100 }}
-                sx={fieldStyles}
               />
 
               <TextField
                 label="QC(%)"
-                placeholder="QC"
                 value={formData.qc}
                 onChange={(e) => handleInputChange("qc", e.target.value)}
+                placeholder="Enter Number"
                 fullWidth
-                variant="outlined"
                 type="number"
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
                 inputProps={{ min: 0, max: 100 }}
-                sx={fieldStyles}
               />
 
               <TextField
                 label="Payment Tenure(In Days)"
-                placeholder="Payment Tenure"
                 value={formData.paymentTenure}
                 onChange={(e) => handleInputChange("paymentTenure", e.target.value)}
+                placeholder="Enter Number"
                 fullWidth
-                variant="outlined"
                 type="number"
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
                 inputProps={{ min: 0 }}
-                sx={fieldStyles}
               />
 
               <TextField
                 label="Advance Amount"
-                placeholder="Advance Amount"
                 value={formData.advanceAmount}
                 onChange={(e) => handleInputChange("advanceAmount", e.target.value)}
+                placeholder="Enter Number"
                 fullWidth
-                variant="outlined"
                 type="number"
+                variant="outlined"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
                 inputProps={{ min: 0 }}
-                sx={fieldStyles}
               />
 
               <TextField
                 label="Related To*"
-                placeholder="Related To"
                 value={formData.relatedTo}
                 onChange={(e) => handleInputChange("relatedTo", e.target.value)}
+                placeholder="Related To"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Kind Attention"
+                value={formData.kindAttention}
+                onChange={(e) => handleInputChange("kindAttention", e.target.value)}
+                placeholder="Kind Attention"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Subject"
+                value={formData.subject}
+                onChange={(e) => handleInputChange("subject", e.target.value)}
+                placeholder="Subject"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
+                label="Description"
+                value={formData.description}
+                onChange={(e) => handleInputChange("description", e.target.value)}
+                placeholder="Enter description here..."
                 fullWidth
                 variant="outlined"
                 multiline
-                rows={2}
+                minRows={2}
+                InputLabelProps={{ shrink: true }}
+                sx={{
+                  mt: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "auto !important",
+                    padding: "2px !important",
+                  },
+                }}
+              />
+
+              <TextField
+                label="Terms & Conditions"
+                value={formData.termsConditions}
+                onChange={(e) => handleInputChange("termsConditions", e.target.value)}
+                placeholder="Enter terms and conditions here..."
+                fullWidth
+                variant="outlined"
+                multiline
+                minRows={2}
                 InputLabelProps={{ shrink: true }}
                 sx={{
                   mt: 1,
@@ -752,13 +780,9 @@ export const AddServicePRDashboard = () => {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "start",
-                    mt: 2,
                   }}
                 >
-                  <FormLabel
-                    component="legend"
-                    sx={{ minWidth: "80px", fontSize: "14px" }}
-                  >
+                  <FormLabel component="legend" sx={{ minWidth: "80px", fontSize: "14px" }}>
                     Apply WBS
                   </FormLabel>
                   <RadioGroup
@@ -766,16 +790,8 @@ export const AddServicePRDashboard = () => {
                     value={wbsSelection}
                     onChange={(e) => setWbsSelection(e.target.value)}
                   >
-                    <FormControlLabel
-                      value="individual"
-                      control={<Radio />}
-                      label="Individual"
-                    />
-                    <FormControlLabel
-                      value="overall"
-                      control={<Radio />}
-                      label="All Items"
-                    />
+                    <FormControlLabel value="individual" control={<Radio />} label="Individual" />
+                    <FormControlLabel value="overall" control={<Radio />} label="All Items" />
                   </RadioGroup>
                 </Box>
               )}
@@ -801,47 +817,48 @@ export const AddServicePRDashboard = () => {
                   </MuiSelect>
                 </FormControl>
               )}
-            </div>
-          </div>
-        </div>
+            </CardContent>
+          </Card>
 
-        {/* Details Section Card */}
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            {detailsForms.map((detailsData, index) => (
-              <div
-                key={detailsData.id}
-                className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-md font-medium text-foreground">
-                    Item {index + 1}
-                  </h3>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center justify-between">
+                <div className="flex items-center">
+                  <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                    2
+                  </h2>
+                  ITEM DETAILS
+                </div>
+                <Button
+                  onClick={addNewDetailsForm}
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700"
+                  type="button"
+                >
+                  Add Item
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {detailsForms.map((detailsData) => (
+                <div
+                  key={detailsData.id}
+                  className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
+                >
                   {detailsForms.length > 1 && (
                     <Button
-                      variant="ghost"
-                      size="sm"
                       onClick={() => removeDetailsForm(detailsData.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      size="sm"
+                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <X className="w-4 h-4" />
                     </Button>
                   )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Select Service*</InputLabel>
+                    <InputLabel shrink>Service*</InputLabel>
                     <MuiSelect
-                      label="Select Service*"
+                      label="Service*"
                       value={detailsData.service}
                       onChange={(e) =>
                         handleDetailsChange(detailsData.id, "service", e.target.value)
@@ -864,33 +881,29 @@ export const AddServicePRDashboard = () => {
                     label="Product Description*"
                     value={detailsData.productDescription}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "productDescription",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "productDescription", e.target.value)
                     }
+                    placeholder="Product Description"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
                     label="Quantity/Area*"
                     value={detailsData.quantityArea}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "quantityArea",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "quantityArea", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -899,27 +912,26 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "uom", e.target.value)
                     }
+                    placeholder="Enter UOM"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
                     label="Expected Date*"
+                    type="date"
                     value={detailsData.expectedDate}
                     onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "expectedDate",
-                        e.target.value
-                      )
+                      handleDetailsChange(detailsData.id, "expectedDate", e.target.value)
                     }
                     fullWidth
                     variant="outlined"
-                    type="date"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -928,11 +940,13 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "rate", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -941,28 +955,24 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "cgstRate", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
-                    label="CGST Amt"
+                    label="CGST Amount"
                     value={detailsData.cgstAmt}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -971,28 +981,24 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "sgstRate", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
-                    label="SGST Amt"
+                    label="SGST Amount"
                     value={detailsData.sgstAmt}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -1001,28 +1007,24 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "igstRate", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
-                    label="IGST Amt"
+                    label="IGST Amount"
                     value={detailsData.igstAmt}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
@@ -1031,79 +1033,57 @@ export const AddServicePRDashboard = () => {
                     onChange={(e) =>
                       handleDetailsChange(detailsData.id, "tcsRate", e.target.value)
                     }
+                    placeholder="Enter Number"
                     fullWidth
-                    variant="outlined"
                     type="number"
+                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
-                    label="TCS Amt"
+                    label="TCS Amount"
                     value={detailsData.tcsAmt}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
                     label="Tax Amount"
                     value={detailsData.taxAmount}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
                     label="Amount"
                     value={detailsData.amount}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   <TextField
                     label="Total Amount"
                     value={detailsData.totalAmount}
+                    placeholder="Calculated Amount"
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
+                    InputProps={{ sx: fieldStyles, readOnly: true }}
+                    sx={{ mt: 1 }}
                   />
 
                   {wbsSelection === "individual" && (
@@ -1130,192 +1110,158 @@ export const AddServicePRDashboard = () => {
                     </FormControl>
                   )}
                 </div>
-              </div>
-            ))}
+              ))}
+            </CardContent>
+          </Card>
 
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button
-                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
-                onClick={addNewDetailsForm}
+          <div className="flex items-center justify-end">
+            <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
+              Total Amount: {grandTotal}
+            </Button>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-[#C72030] flex items-center">
+                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                  3
+                </h2>
+                ATTACHMENTS
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div
+                className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+                onClick={handleDashedBorderClick}
               >
-                Add Items
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-end mt-4">
-          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
-            Total Amount: {grandTotal}
-          </Button>
-        </div>
-
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <TextField
-                label="Kind Attention"
-                placeholder="Kind Attention"
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("kindAttention", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                value={formData.kindAttention}
-                sx={fieldStyles}
-              />
-
-              <TextField
-                label="Subject"
-                placeholder="Subject"
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("subject", e.target.value)}
-                InputLabelProps={{ shrink: true }}
-                sx={fieldStyles}
-                value={formData.subject}
-              />
-
-              <TextField
-                label="Description"
-                placeholder="Enter description here..."
-                fullWidth
-                variant="outlined"
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                multiline
-                rows={3}
-                InputLabelProps={{ shrink: true }}
-                value={formData.description}
-                sx={{
-                  mt: 1,
-                  "& .MuiOutlinedInput-root": {
-                    height: "auto !important",
-                    padding: "2px !important",
-                  },
-                }}
-              />
-
-              <TextField
-                label="Terms & Conditions"
-                placeholder="Enter terms and conditions here..."
-                fullWidth
-                variant="outlined"
-                onChange={(e) =>
-                  handleInputChange("termsConditions", e.target.value)
-                }
-                multiline
-                rows={3}
-                InputLabelProps={{ shrink: true }}
-                value={formData.termsConditions}
-                sx={{
-                  mt: 1,
-                  "& .MuiOutlinedInput-root": {
-                    height: "auto !important",
-                    padding: "2px !important",
-                  },
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">ATTACHMENTS</h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <input
-              type="file"
-              multiple
-              accept="image/*"
-              className="hidden"
-              id="file-upload"
-              onChange={handleFileUpload}
-            />
-            <label htmlFor="file-upload" className="block cursor-pointer">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
-                <span className="text-gray-600">
-                  Drag & Drop or{" "}
-                  <span className="text-red-500 underline">Choose files</span>{" "}
-                  {attachedFiles.length === 0
-                    ? "No file chosen"
-                    : `${attachedFiles.length} file(s) selected`}
-                </span>
-              </div>
-            </label>
-
-            {attachedFiles.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-md font-medium text-foreground mb-4">
-                  Selected Files:
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {attachedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="relative border border-gray-200 rounded-lg overflow-hidden"
-                    >
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="absolute top-1 right-1 z-10 h-6 w-6 p-0 bg-red-500 text-white hover:bg-red-600 rounded-full"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                      {file.type.startsWith("image/") ? (
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="w-full h-24 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
-                          <span className="text-gray-500 text-xs text-center p-2">
-                            {file.name}
-                          </span>
-                        </div>
-                      )}
-                      <div className="p-2">
-                        <p className="text-xs text-gray-600 truncate" title={file.name}>
-                          {file.name}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium">Drag & Drop or Click to Upload</span>
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="file-upload"
+                    ref={fileInputRef}
+                  />
+                  <span className="ml-1">
+                    {attachedFiles.length > 0
+                      ? `${attachedFiles.length} file(s) selected`
+                      : "No files chosen"}
+                  </span>
                 </div>
               </div>
-            )}
+
+              {attachedFiles.length > 0 && (
+                <div className="flex items-center flex-wrap gap-4 my-6">
+                  {attachedFiles.map((file, index) => {
+                    const isImage = file.type.match(/image\/(jpeg|jpg|png)/i);
+                    const isPdf = file.type.match(/application\/pdf/i);
+                    const isExcel = file.type.match(/application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i);
+                    const isWord = file.type.match(/application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i);
+
+                    return (
+                      <div
+                        key={`new-${index}`}
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      >
+                        {isImage ? (
+                          <>
+                            <button
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              type="button"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            />
+                          </>
+                        ) : isPdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <File className="w-6 h-6" />
+                          </div>
+                        )}
+                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                          {file.name}
+                        </span>
+                        <button
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="Remove"
+                          onClick={() => removeFile(index)}
+                          type="button"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              type="submit"
+              size="lg"
+              className="bg-[#C72030] hover:bg-[#C72030] text-white"
+              disabled={submitting}
+            >
+              Save Work Order
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => navigate(-1)}
+              className="px-8"
+            >
+              Cancel
+            </Button>
           </div>
         </div>
+      </form>
 
-        <div className="flex items-center justify-center gap-4 mt-8">
-          <Button
-            onClick={handleSubmit}
-            className="bg-red-600 hover:bg-red-700 text-white px-8"
-            disabled={submitting}
-          >
-            Save Work Order
-          </Button>
-          <Button variant="outline" onClick={() => navigate(-1)} className="px-8">
-            Cancel
-          </Button>
-        </div>
-      </div>
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };
