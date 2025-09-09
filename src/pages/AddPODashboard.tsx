@@ -262,7 +262,7 @@ export const AddPODashboard = () => {
   };
 
   const calculateTotalAmount = () => {
-    return items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0).toFixed(2);
+    return items.reduce((total, item) => total + (parseFloat(item.totalAmount) || 0), 0).toFixed(2);
   };
 
   const validateForm = () => {
