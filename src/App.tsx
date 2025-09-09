@@ -697,6 +697,7 @@ import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
 import { InvoiceFeeds } from "./pages/InvoiceFeeds";
+import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 
 const queryClient = new QueryClient();
 
@@ -2269,7 +2270,10 @@ function App() {
 
                     {/* Value Added Services Routes */}
                     {/* <Route path="/vas/fnb" element={<FnBRestaurantDashboard />} /> */}
-
+                    <Route
+                      path="/settings/approval-matrix/setup/edit/:id"
+                      element={<EditApprovalMatrixPage />}
+                    />
                     <Route
                       path="/vas/fnb/discounts"
                       element={<FnBDiscountsPage />}

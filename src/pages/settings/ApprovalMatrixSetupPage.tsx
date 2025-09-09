@@ -119,7 +119,12 @@ const ApprovalMatrixSetupPage = () => {
               approvalData.map(item => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <Button variant="ghost" size="sm" className="p-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={() => navigate(`/settings/approval-matrix/setup/edit/${item.id}`)}
+                    >
                       <Edit className="w-4 h-4 text-[#1a1a1a]" />
                     </Button>
                   </TableCell>
