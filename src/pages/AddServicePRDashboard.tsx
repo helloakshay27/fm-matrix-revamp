@@ -1173,7 +1173,7 @@ export const AddServicePRDashboard = () => {
           </Button>
         </div>
 
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">

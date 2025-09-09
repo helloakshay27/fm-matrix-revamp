@@ -1072,7 +1072,7 @@ export const EditServicePRPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center justify-end mt-4">
+        <div className="flex items-center justify-end my-4">
           <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
             Total Amount: {grandTotal}
           </Button>

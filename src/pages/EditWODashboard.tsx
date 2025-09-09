@@ -371,7 +371,7 @@ export const EditWODashboard: React.FC = () => {
                     igst_amount: item.igstAmt,
                     tcs_rate: item.tcsRate,
                     tcs_amount: item.tcsAmt,
-                    tax_amount: item.taxAmount,
+                    taxable_value: item.taxAmount,
                     total_amount: item.totalAmount,
                 })),
             },
