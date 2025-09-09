@@ -1191,11 +1191,11 @@ export const AddSchedulePage = () => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {
         const newAttachments: AttachmentFile[] = [];
-        
+
         // Convert each file to base64
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          
+
           try {
             // Convert file to base64
             const base64Content = await new Promise<string>((resolve, reject) => {
@@ -1220,7 +1220,7 @@ export const AddSchedulePage = () => {
             toast.error(`Failed to process file: ${file.name}`);
           }
         }
-        
+
         if (newAttachments.length > 0) {
           // Update the specific task's help text attachments
           setQuestionSections(prevSections =>
@@ -1230,9 +1230,9 @@ export const AddSchedulePage = () => {
                   ...section,
                   tasks: section.tasks.map(task =>
                     task.id === taskId
-                      ? { 
-                        ...task, 
-                        helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments] 
+                      ? {
+                        ...task,
+                        helpTextAttachments: [...(task.helpTextAttachments || []), ...newAttachments]
                       }
                       : task
                   )
@@ -1240,7 +1240,7 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-          
+
           toast.success(`${newAttachments.length} file(s) attached to help text successfully!`);
         }
       }
@@ -1264,8 +1264,8 @@ export const AddSchedulePage = () => {
             ...section,
             tasks: section.tasks.map(task =>
               task.id === taskId
-                ? { 
-                  ...task, 
+                ? {
+                  ...task,
                   helpTextAttachments: (task.helpTextAttachments || []).filter(att => att.id !== attachmentId)
                 }
                 : task
@@ -1289,11 +1289,11 @@ export const AddSchedulePage = () => {
       const files = (e.target as HTMLInputElement).files;
       if (files && files.length > 0) {
         const newAttachments: AttachmentFile[] = [];
-        
+
         // Convert each file to base64
         for (let i = 0; i < files.length; i++) {
           const file = files[i];
-          
+
           try {
             // Convert file to base64
             const base64Content = await new Promise<string>((resolve, reject) => {
@@ -1320,7 +1320,7 @@ export const AddSchedulePage = () => {
             toast.error(`Failed to process file: ${file.name}`);
           }
         }
-        
+
         if (newAttachments.length > 0) {
           setAttachments(prev => [...prev, ...newAttachments]);
           // Show success toast
@@ -2648,14 +2648,14 @@ export const AddSchedulePage = () => {
       const sectionTasks = section.tasks.filter(task => task.task.trim());
       if (sectionTasks.length > 0) {
         customForm[`question_for_${index + 1}`] = sectionTasks.map(task => task.task);
-        
+
         // Add help text attachments for tasks that have them
-        const tasksWithAttachments = sectionTasks.filter(task => 
-          task.helpText && 
-          task.helpTextAttachments && 
+        const tasksWithAttachments = sectionTasks.filter(task =>
+          task.helpText &&
+          task.helpTextAttachments &&
           task.helpTextAttachments.length > 0
         );
-        
+
         if (tasksWithAttachments.length > 0) {
           // Add attachments for each task that has help text attachments
           tasksWithAttachments.forEach(task => {
@@ -2673,7 +2673,7 @@ export const AddSchedulePage = () => {
 
     // Get selected asset IDs or service IDs based on scheduleFor
     const assetIds = formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' ? formData.asset : [];
-    const serviceIds = formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' ? formData.service : []  ;
+    const serviceIds = formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' ? formData.service : [];
 
     // Get assigned people IDs
     const peopleAssignedIds = formData.assignToType === 'user' ? formData.selectedUsers : [];
@@ -2764,7 +2764,7 @@ export const AddSchedulePage = () => {
         start_date: formatDateToISO(formData.startFrom),
         end_date: formatDateToISO(formData.endAt)
       },
-      backup_assigned_to_id:  formData.backupAssignee || "",
+      backup_assigned_to_id: formData.backupAssignee || "",
       people_assigned_to_ids: peopleAssignedIds,
       ppm_rule_ids: formData.emailTriggerRule ? [formData.emailTriggerRule] : [],
       amc_rule_ids: [""],
@@ -2950,85 +2950,85 @@ export const AddSchedulePage = () => {
                   flexWrap: 'wrap'
                 }}>
                   {attachments.map((attachment) => {
-  // Check if the file is an image by extension or mime type if available
-  const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
-  const isReadOnly = stepIndex < activeStep && editingStep !== stepIndex;
-  return (
-    <Box
-      key={attachment.id}
-      sx={{
-        width: '120px',
-        height: '120px',
-        border: '2px dashed #ccc',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'relative',
-        backgroundColor: '#fafafa',
-        '&:hover': {
-          borderColor: '#999'
-        }
-      }}
-    >
-      {/* Close button - only show if not read-only */}
-      {!isReadOnly && (
-        <IconButton
-          size="small"
-          onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
-          sx={{
-            position: 'absolute',
-            top: 4,
-            right: 4,
-            backgroundColor: 'white',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            width: 20,
-            height: 20,
-            '&:hover': {
-              backgroundColor: '#f5f5f5'
-            }
-          }}
-        >
-          <Close sx={{ fontSize: 12 }} />
-        </IconButton>
-      )}
+                    // Check if the file is an image by extension or mime type if available
+                    const isImage = attachment.name.match(/\.(jpg|jpeg|png|gif|bmp|webp)$/i);
+                    const isReadOnly = stepIndex < activeStep && editingStep !== stepIndex;
+                    return (
+                      <Box
+                        key={attachment.id}
+                        sx={{
+                          width: '120px',
+                          height: '120px',
+                          border: '2px dashed #ccc',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          backgroundColor: '#fafafa',
+                          '&:hover': {
+                            borderColor: '#999'
+                          }
+                        }}
+                      >
+                        {/* Close button - only show if not read-only */}
+                        {!isReadOnly && (
+                          <IconButton
+                            size="small"
+                            onClick={() => setAttachments(prev => prev.filter(a => a.id !== attachment.id))}
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              backgroundColor: 'white',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                              width: 20,
+                              height: 20,
+                              '&:hover': {
+                                backgroundColor: '#f5f5f5'
+                              }
+                            }}
+                          >
+                            <Close sx={{ fontSize: 12 }} />
+                          </IconButton>
+                        )}
 
-      {/* Show image preview if image, else file icon and name */}
-      {isImage && attachment.url ? (
-        <img
-          src={attachment.url}
-          alt={attachment.name}
-          style={{
-            maxWidth: '100px',
-            maxHeight: '100px',
-            objectFit: 'contain',
-            marginBottom: 8,
-            borderRadius: 4,
-            opacity: isReadOnly ? 0.5 : 1 // Apply opacity if read-only
-          }}
-        />
-      ) : (
-        <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1, opacity: isReadOnly ? 0.5 : 1 }} />
-      )}
-      {!isImage && (
-        <Typography
-          variant="caption"
-          sx={{
-            textAlign: 'center',
-            px: 1,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            width: '100%',
-            opacity: isReadOnly ? 0.5 : 1
-          }}
-        >
-          {attachment.name}
-        </Typography>
-      )}
-    </Box>
-  );
-})}
+                        {/* Show image preview if image, else file icon and name */}
+                        {isImage && attachment.url ? (
+                          <img
+                            src={attachment.url}
+                            alt={attachment.name}
+                            style={{
+                              maxWidth: '100px',
+                              maxHeight: '100px',
+                              objectFit: 'contain',
+                              marginBottom: 8,
+                              borderRadius: 4,
+                              opacity: isReadOnly ? 0.5 : 1 // Apply opacity if read-only
+                            }}
+                          />
+                        ) : (
+                          <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1, opacity: isReadOnly ? 0.5 : 1 }} />
+                        )}
+                        {!isImage && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              textAlign: 'center',
+                              px: 1,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              width: '100%',
+                              opacity: isReadOnly ? 0.5 : 1
+                            }}
+                          >
+                            {attachment.name}
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
                 </Box>
               )}
 
@@ -3105,9 +3105,9 @@ export const AddSchedulePage = () => {
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               {
-                  formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                Checklist Type
-              </Typography>)}
+                formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Checklist Type
+                </Typography>)}
               {stepIndex < activeStep && (
                 <MuiButton
                   variant="outlined"
@@ -3132,39 +3132,39 @@ export const AddSchedulePage = () => {
             </Box>
             <Box sx={{ mb: 3 }}>
               {
-                  formData.scheduleFor === 'Asset' && (<RadioGroup
-                row
-                value={formData.checklistType}
-                onChange={(e) => handleChecklistTypeChange(e.target.value)}
-              >
-                <FormControlLabel
-                  value="Individual"
-                  control={
-                    <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                    />
-                  }
-                  label="Individual"
-                />
-                
-                    <FormControlLabel
-                  value="Asset Group"
-                  control={
-                    <Radio
-                      sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
-                      disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                    />
-                  }
-                  label="Asset Group"
-                />
-                
-                {/* <FormControlLabel 
+                formData.scheduleFor === 'Asset' && (<RadioGroup
+                  row
+                  value={formData.checklistType}
+                  onChange={(e) => handleChecklistTypeChange(e.target.value)}
+                >
+                  <FormControlLabel
+                    value="Individual"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Individual"
+                  />
+
+                  <FormControlLabel
+                    value="Asset Group"
+                    control={
+                      <Radio
+                        sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
+                        disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                      />
+                    }
+                    label="Asset Group"
+                  />
+
+                  {/* <FormControlLabel 
                     value="Branching" 
                     control={<Radio sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }} />} 
                     label="Branching" 
                   /> */}
-              </RadioGroup>)}
+                </RadioGroup>)}
             </Box>
 
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3 }}>
@@ -3541,15 +3541,15 @@ export const AddSchedulePage = () => {
                   fullWidth
                   value={formData.planDurationValue}
                   onChange={(e) => {
-                      const value = e.target.value;
-                      if (Number(value) < 0) return;
-                      setFormData({ ...formData, planDurationValue: value });
-                    }}
+                    const value = e.target.value;
+                    if (Number(value) < 0) return;
+                    setFormData({ ...formData, planDurationValue: value });
+                  }}
                   placeholder={`Enter number of ${formData.planDuration}`}
                   inputProps={{
-    min: 0,
-    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
-  }}
+                    min: 0,
+                    onWheel: (e) => (e.target as HTMLInputElement).blur(), // Disable wheel input
+                  }}
                 />
               )}
 
@@ -3942,13 +3942,13 @@ export const AddSchedulePage = () => {
                   }}
                   value={formData.startFrom ? new Date(formData.startFrom) : null}
                   onChange={(date) => {
-  const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
-  if (formData.endAt && newStartDate > formData.endAt) {
-    setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
-  } else {
-    setFormData({ ...formData, startFrom: newStartDate });
-  }
-}}
+                    const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
+                    if (formData.endAt && newStartDate > formData.endAt) {
+                      setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
+                    } else {
+                      setFormData({ ...formData, startFrom: newStartDate });
+                    }
+                  }}
 
                   maxDate={formData.endAt ? new Date(formData.endAt) : undefined}
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
@@ -3975,13 +3975,13 @@ export const AddSchedulePage = () => {
                   }}
                   value={formData.endAt ? new Date(formData.endAt) : null}
                   onChange={(date) => {
-  const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
-  if (formData.startFrom && newEndDate < formData.startFrom) {
-    setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
-  } else {
-    setFormData({ ...formData, endAt: newEndDate });
-  }
-}}
+                    const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
+                    if (formData.startFrom && newEndDate < formData.startFrom) {
+                      setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
+                    } else {
+                      setFormData({ ...formData, endAt: newEndDate });
+                    }
+                  }}
 
                   minDate={formData.startFrom ? new Date(formData.startFrom) : undefined}
                   disabled={stepIndex < activeStep && editingStep !== stepIndex}
@@ -3995,7 +3995,7 @@ export const AddSchedulePage = () => {
         function handleTemplateChange(templateId: string) {
           setFormData(prev => ({ ...prev, selectedTemplate: templateId }));
           // if (templateId) {
-            loadTemplateData(templateId);
+          loadTemplateData(templateId);
           // }
         }
 
@@ -4315,7 +4315,7 @@ export const AddSchedulePage = () => {
           <div>
             {/* Header Outside the Box */}
             <div className="flex justify-between items-center p-6">
-              <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold" style={{ textTransform: 'uppercase'}}>
+              <div className="flex items-center gap-2 text-[#C72030] text-lg font-semibold" style={{ textTransform: 'uppercase' }}>
                 <span className="bg-[#C72030] text-white rounded-full w-8 h-8 sm:w-8 sm:h-8 flex items-center justify-center text-xs sm:text-sm">
                   <Cog className="w-6 h-6" />
                 </span>
@@ -4359,7 +4359,7 @@ export const AddSchedulePage = () => {
                   </label>
                   <span className="text-sm text-gray-600 ml-2" style={{ fontFamily: 'Work Sans, sans-serif' }}>Auto Ticket</span>
                 </div>
-                
+
                 {/* Edit button for Question Setup step */}
                 {stepIndex < activeStep && (
                   <MuiButton
@@ -4388,79 +4388,79 @@ export const AddSchedulePage = () => {
             {/* Conditional Sections based on toggles */}
 
             {/* Create New Template Section */}
-{createNew && (
-  <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
-  <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
-    Select Template
-  </Typography>
+            {createNew && (
+              <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+                  Select Template
+                </Typography>
 
-  {(() => {
-    const templateOptions = [
-      { id: '', label: 'None', value: '' }, // Allow unselecting
-      ...(Array.isArray(templates) ? templates : []).map((template) => ({
-        id: String(template?.id ?? ''),
-        label: (template?.form_name ?? '').toString().trim(),
-        value: String(template?.id ?? ''),
-      })),
-    ];
+                {(() => {
+                  const templateOptions = [
+                    { id: '', label: 'None', value: '' }, // Allow unselecting
+                    ...(Array.isArray(templates) ? templates : []).map((template) => ({
+                      id: String(template?.id ?? ''),
+                      label: (template?.form_name ?? '').toString().trim(),
+                      value: String(template?.id ?? ''),
+                    })),
+                  ];
 
-    const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
-    const selectedTemplate =
-      templateOptions.find(
-        (opt) =>
-          opt &&
-          typeof opt.value === 'string' &&
-          opt.value === selectedTemplateValue
-      ) ?? null;
+                  const selectedTemplateValue = String(formData?.selectedTemplate ?? '');
+                  const selectedTemplate =
+                    templateOptions.find(
+                      (opt) =>
+                        opt &&
+                        typeof opt.value === 'string' &&
+                        opt.value === selectedTemplateValue
+                    ) ?? null;
 
-    return (
-      <Autocomplete
-        options={templateOptions}
-        getOptionLabel={(option) => {
-          if (!option || typeof option !== 'object') return '';
-          return typeof option.label === 'string' ? option.label : '';
-        }}
-        isOptionEqualToValue={(option, value) => {
-          if (!option || !value) return false;
-          return String(option.value ?? '') === String(value.value ?? '');
-        }}
-        value={selectedTemplate}
-        onChange={(event, newValue) => {
-          if (newValue && typeof newValue.value !== 'undefined') {
-            handleTemplateChange(newValue.value ?? '');
-          } else {
-            handleTemplateChange(''); // Clear the selection
-          }
-        }}
-        disabled={
-          (stepIndex < activeStep && editingStep !== stepIndex) ||
-          loading.templates
-        }
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label={
-              <span>
-                Template <span style={{ color: 'red' }}>*</span>
-              </span>
-            }
-            fullWidth
-            disabled={stepIndex < activeStep && editingStep !== stepIndex}
-          />
-        )}
-        clearOnEscape
-        clearText="Clear"
-      />
-    );
-  })()}
+                  return (
+                    <Autocomplete
+                      options={templateOptions}
+                      getOptionLabel={(option) => {
+                        if (!option || typeof option !== 'object') return '';
+                        return typeof option.label === 'string' ? option.label : '';
+                      }}
+                      isOptionEqualToValue={(option, value) => {
+                        if (!option || !value) return false;
+                        return String(option.value ?? '') === String(value.value ?? '');
+                      }}
+                      value={selectedTemplate}
+                      onChange={(event, newValue) => {
+                        if (newValue && typeof newValue.value !== 'undefined') {
+                          handleTemplateChange(newValue.value ?? '');
+                        } else {
+                          handleTemplateChange(''); // Clear the selection
+                        }
+                      }}
+                      disabled={
+                        (stepIndex < activeStep && editingStep !== stepIndex) ||
+                        loading.templates
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label={
+                            <span>
+                              Template <span style={{ color: 'red' }}>*</span>
+                            </span>
+                          }
+                          fullWidth
+                          disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                        />
+                      )}
+                      clearOnEscape
+                      clearText="Clear"
+                    />
+                  );
+                })()}
 
-  {loading.templates && (
-    <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-      Loading templates...
-    </Typography>
-  )}
-</SectionCard>
-)}
+                {loading.templates && (
+                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
+                    Loading templates...
+                  </Typography>
+                )}
+              </SectionCard>
+            )}
             {/* Auto Ticket Configuration Section */}
             {autoTicket && (
               <SectionCard style={{ padding: '24px', margin: 0, borderRadius: '3px' }}>
@@ -4831,7 +4831,7 @@ export const AddSchedulePage = () => {
                             <FormControlLabel
                               control={
                                 <Checkbox
-                                disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
                                   checked={task.helpText}
                                   onChange={(e) => updateTaskInSection(section.id, task.id, 'helpText', e.target.checked)}
                                   sx={{ color: '#C72030', '&.Mui-checked': { color: '#C72030' } }}
@@ -4983,7 +4983,7 @@ export const AddSchedulePage = () => {
                               value={task.helpTextValue}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'helpTextValue', e.target.value)}
                             />
-                            
+
                             {/* File attachment for help text */}
                             <Box sx={{ mt: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
@@ -5011,17 +5011,17 @@ export const AddSchedulePage = () => {
                                   Add File
                                 </MuiButton>
                               </Box>
-                              
+
                               {/* Display attached files */}
                               {task.helpTextAttachments && task.helpTextAttachments.length > 0 && (
                                 <Box sx={{ mt: 1 }}>
                                   {task.helpTextAttachments.map((attachment) => (
-                                    <Box 
-                                      key={attachment.id} 
-                                      sx={{ 
-                                        display: 'flex', 
-                                        alignItems: 'center', 
-                                        gap: 1, 
+                                    <Box
+                                      key={attachment.id}
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
                                         mb: 1,
                                         p: 1,
                                         border: '1px solid #E0E0E0',
@@ -5037,7 +5037,7 @@ export const AddSchedulePage = () => {
                                         size="small"
                                         onClick={() => removeHelpTextAttachment(section.id, task.id, attachment.id)}
                                         disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                                        sx={{ 
+                                        sx={{
                                           color: '#ff4444',
                                           padding: '2px',
                                           '&:hover': {
@@ -5055,7 +5055,7 @@ export const AddSchedulePage = () => {
                           </Box>
                         )}
 
-{task.inputType === 'dropdown' && (
+                        {task.inputType === 'dropdown' && (
                           <Box sx={{ mt: 2 }}>
                             <Box sx={{
                               backgroundColor: '#F5F5F5',
@@ -5189,39 +5189,39 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-<FormControl size="small" sx={{ minWidth: 80 }}>
-  <Autocomplete
-    disableClearable
-    options={[
-      { value: 'positive', label: 'P' },
-      { value: 'negative', label: 'N' }
-    ]}
-    getOptionLabel={(option) => option.label}
-    isOptionEqualToValue={(option, value) => option.value === value.value}
-    value={
-      [{ value: 'positive', label: 'P' }, { value: 'negative', label: 'N' }]
-        .find(opt => opt.value === value.type) || { value: '', label: '' }
-    }
-    onChange={(_, newValue) => {
-      if (newValue) updateRadioType(section.id, task.id, valueIndex, newValue.value);
-    }}
-    renderInput={(params) => (
-      <TextField
-        {...params}
-        label={
-          <span>
-            Type <span style={{ color: 'red' }}>*</span>
-          </span>
-        }
-        size="small"
-        sx={{
-          backgroundColor: 'white',
-          '& .MuiInputBase-input': { color: '#666' }
-        }}
-      />
-    )}
-  />
-</FormControl>
+                                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                                    <Autocomplete
+                                      disableClearable
+                                      options={[
+                                        { value: 'positive', label: 'P' },
+                                        { value: 'negative', label: 'N' }
+                                      ]}
+                                      getOptionLabel={(option) => option.label}
+                                      isOptionEqualToValue={(option, value) => option.value === value.value}
+                                      value={
+                                        [{ value: 'positive', label: 'P' }, { value: 'negative', label: 'N' }]
+                                          .find(opt => opt.value === value.type) || { value: '', label: '' }
+                                      }
+                                      onChange={(_, newValue) => {
+                                        if (newValue) updateRadioType(section.id, task.id, valueIndex, newValue.value);
+                                      }}
+                                      renderInput={(params) => (
+                                        <TextField
+                                          {...params}
+                                          label={
+                                            <span>
+                                              Type <span style={{ color: 'red' }}>*</span>
+                                            </span>
+                                          }
+                                          size="small"
+                                          sx={{
+                                            backgroundColor: 'white',
+                                            '& .MuiInputBase-input': { color: '#666' }
+                                          }}
+                                        />
+                                      )}
+                                    />
+                                  </FormControl>
                                   {task.radioValues.length > 1 && (
                                     <IconButton
                                       size="small"
@@ -5407,20 +5407,20 @@ export const AddSchedulePage = () => {
                         )}
 
                         {task.inputType === 'multiline' && (
-  <Box sx={{ mt: 2 }}>
-    <TextField
-      disabled={stepIndex < activeStep && editingStep !== stepIndex}
-      label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
-      placeholder="Enter multiline text"
-      fullWidth
-      multiline
-      rows={4}
-      value={task.textarea || ''}
-      onChange={(e) => updateTaskInSection(section.id, task.id, 'textarea', e.target.value)}
-      sx={{ mb: 3 }}
-    />
-  </Box>
-)}
+                          <Box sx={{ mt: 2 }}>
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
+                              placeholder="Enter multiline text"
+                              fullWidth
+                              multiline
+                              rows={4}
+                              value={task.textarea || ''}
+                              onChange={(e) => updateTaskInSection(section.id, task.id, 'textarea', e.target.value)}
+                              sx={{ mb: 3 }}
+                            />
+                          </Box>
+                        )}
 
                       </Box>
                     </Box>
@@ -5435,22 +5435,22 @@ export const AddSchedulePage = () => {
                       <Add className="w-4 h-4" />
                       Add Question
                     </button>
-                  {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
-  <button
-    onClick={addQuestionSection}
-    className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
-    style={{ fontFamily: 'Work Sans, sans-serif' }}
-  >
-    <Add className="w-4 h-4" />
-    Add Section
-  </button>
-)}
+                    {(questionSections.length === 1 || sectionIndex === questionSections.length - 1) && (
+                      <button
+                        onClick={addQuestionSection}
+                        className="flex items-center gap-1 text-[#C72030] text-sm font-medium bg-[#f6f4ee] px-3 py-1 rounded-md hover:bg-[#f0ebe0] transition-colors"
+                        style={{ fontFamily: 'Work Sans, sans-serif' }}
+                      >
+                        <Add className="w-4 h-4" />
+                        Add Section
+                      </button>
+                    )}
 
                   </div>
-                {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
+                  {sectionIndex < questionSections.length - 1 && <hr className="my-6 border-t border-gray-200" />}
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
 
 
 
@@ -5752,12 +5752,12 @@ export const AddSchedulePage = () => {
                 </button>
               ) : (
                 <button
-  onClick={handleNext}
-  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
-  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
->
-  Next
-</button>
+                  onClick={handleNext}
+                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+                  style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+                >
+                  Next
+                </button>
               )}
             </>
           ) : (
