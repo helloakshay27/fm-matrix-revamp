@@ -393,7 +393,10 @@ const modulesByPackage = {
       name: 'Msafe Detail Report',
       icon: Download,
       href: '/maintenance/msafe-detail-report',
-    }
+    },
+
+        { name: 'PDF Download', icon: Download, href: '/maintenance/pdf-download' },
+
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 

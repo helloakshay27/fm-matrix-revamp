@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
     BarChart,
     Bar,
@@ -24,6 +25,27 @@ import axios from 'axios';
 
 
 const AllContent = () => {
+    const location = useLocation();
+    const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
+    const startDate = params.get('start_date') || '2025-01-15';
+    const endDate = params.get('end_date') || '2025-02-15';
+
+    const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
+    const dateRangeLabel = useMemo(() => {
+        if (!startDate || !endDate) return '';
+        try {
+            const s = new Date(startDate);
+            const e = new Date(endDate);
+            const fmt = (d: Date) => d.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
+            // If within same month, show e.g., "Jan 2025"
+            if (s.getFullYear() === e.getFullYear() && s.getMonth() === e.getMonth()) {
+                return fmt(e);
+            }
+            return `${fmt(s)} to ${fmt(e)}`;
+        } catch {
+            return `${startDate} to ${endDate}`;
+        }
+    }, [startDate, endDate]);
 
 
     const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
@@ -40,7 +62,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/helpdesk_management_snapshot?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/helpdesk_management_snapshot${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -54,7 +76,7 @@ const AllContent = () => {
         };
 
         fetchHelpdeskSnapshot();
-    }, []);
+    }, [dateQuery]);
 
 
     useEffect(() => {
@@ -63,7 +85,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/meeting_room_day_pass_performance?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/meeting_room_day_pass_performance${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const response = await axios.get(url, { headers });
@@ -77,7 +99,7 @@ const AllContent = () => {
         };
 
         fetchMeetingRoomReport();
-    }, []);
+    }, [dateQuery]);
 
     const [loadingUtilization, setLoadingUtilization] = useState<boolean>(true);
     useEffect(() => {
@@ -86,7 +108,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const utilEndpoint = '/api/pms/reports/center_wise_meeting_room_utilization?start_date=2025-01-15&end_date=2025-02-15';
+                const utilEndpoint = `/api/pms/reports/center_wise_meeting_room_utilization${dateQuery}`;
                 const utilUrl = `https://${baseUrl}${utilEndpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const utilResp = await axios.get(utilUrl, { headers });
@@ -100,7 +122,7 @@ const AllContent = () => {
         };
 
         fetchUtilization();
-    }, []);
+    }, [dateQuery]);
 
     // Separate effect to fetch site-wise adoption rate
     useEffect(() => {
@@ -109,7 +131,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/site_wise_adoption_rate?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/site_wise_adoption_rate${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -123,7 +145,7 @@ const AllContent = () => {
         };
 
         fetchSiteAdoption();
-    }, []);
+    }, [dateQuery]);
 
     // Asset Overview - fetch and log separately
     const [assetOverviewData, setAssetOverviewData] = useState<any>(null);
@@ -134,7 +156,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/asset_overview?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/asset_overview${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -148,7 +170,7 @@ const AllContent = () => {
         };
 
         fetchAssetOverview();
-    }, []);
+    }, [dateQuery]);
 
     console.log("Meeting Room Data:", meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? null);
     console.log('Asset Overview Data:', assetOverviewData ?? null);
@@ -163,7 +185,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/ticket_aging_closure_efficiency?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/ticket_aging_closure_efficiency${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -176,7 +198,7 @@ const AllContent = () => {
             }
         };
         fetchTicketAgingClosure();
-    }, []);
+    }, [dateQuery]);
 
     const [ticketPerformanceMetricsData, setTicketPerformanceMetricsData] = useState<any>(null);
     const [loadingTicketPerformanceMetrics, setLoadingTicketPerformanceMetrics] = useState<boolean>(true);
@@ -187,7 +209,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/ticket_performance_metrics?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/ticket_performance_metrics${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -200,7 +222,7 @@ const AllContent = () => {
             }
         };
         fetchTicketPerformanceMetrics();
-    }, []);
+    }, [dateQuery]);
 
     const [customerExperienceFeedbackData, setCustomerExperienceFeedbackData] = useState<any>(null);
     const [loadingCustomerExperienceFeedback, setLoadingCustomerExperienceFeedback] = useState<boolean>(true);
@@ -211,7 +233,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/customer_experience_feedback?start_date=2025-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/customer_experience_feedback${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -224,7 +246,7 @@ const AllContent = () => {
             }
         };
         fetchCustomerExperienceFeedback();
-    }, []);
+    }, [dateQuery]);
 
     // Response TAT Quarterly - fetch and log separately
     const [responseTATQuarterlyData, setResponseTATQuarterlyData] = useState<any>(null);
@@ -310,7 +332,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/parking_date_site_wise';
+                const endpoint = `/api/pms/reports/parking_date_site_wise${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -324,7 +346,7 @@ const AllContent = () => {
         };
 
         fetchParkingDateSiteWise();
-    }, []);
+    }, [dateQuery]);
 
     // Visitor Trend Analysis - fetch separately and log
     const [visitorTrendAnalysisData, setVisitorTrendAnalysisData] = useState<any>(null);
@@ -335,7 +357,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/visitor_trend_analysis';
+                const endpoint = `/api/pms/reports/visitor_trend_analysis${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -349,7 +371,7 @@ const AllContent = () => {
         };
 
         fetchVisitorTrendAnalysis();
-    }, []);
+    }, [dateQuery]);
 
     // Consumable Inventory Comparison - fetch separately and log
     const [consumableInventoryComparisonData, setConsumableInventoryComparisonData] = useState<any>(null);
@@ -360,7 +382,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/consumable_inventory_comparison';
+                const endpoint = `/api/pms/reports/consumable_inventory_comparison${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -374,7 +396,7 @@ const AllContent = () => {
         };
 
         fetchConsumableInventoryComparison();
-    }, []);
+    }, [dateQuery]);
 
     // Center-wise Consumables - fetch separately and log
     const [centerWiseConsumablesData, setCenterWiseConsumablesData] = useState<any>(null);
@@ -385,7 +407,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/center_wise_consumables';
+                const endpoint = `/api/pms/reports/center_wise_consumables${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -399,7 +421,7 @@ const AllContent = () => {
         };
 
         fetchCenterWiseConsumables();
-    }, []);
+    }, [dateQuery]);
 
     // Parking Management – derive chart rows from API
     const parkingSummary = useMemo(() => {
@@ -448,7 +470,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/inventory_overstock_report';
+                const endpoint = `/api/pms/reports/inventory_overstock_report${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -461,7 +483,7 @@ const AllContent = () => {
             }
         };
         fetchInventoryOverstockReport();
-    }, []);
+    }, [dateQuery]);
 
     // Site-wise Checklist - fetch separately and log
     const [siteWiseChecklistData, setSiteWiseChecklistData] = useState<any>(null);
@@ -472,7 +494,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/site_wise_checklist';
+                const endpoint = `/api/pms/reports/site_wise_checklist${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -485,7 +507,7 @@ const AllContent = () => {
             }
         };
         fetchSiteWiseChecklist();
-    }, []);
+    }, [dateQuery]);
 
     // AMC Contract Summary - fetch separately and log
     const [amcContractSummaryData, setAmcContractSummaryData] = useState<any>(null);
@@ -496,7 +518,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/amc_contract_summary';
+                const endpoint = `/api/pms/reports/amc_contract_summary${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -510,7 +532,7 @@ const AllContent = () => {
         };
 
         fetchAmcContractSummary();
-    }, []);
+    }, [dateQuery]);
 
     // Highest Maintenance Assets - fetch separately and log
     const [highestMaintenanceAssetsData, setHighestMaintenanceAssetsData] = useState<any>(null);
@@ -521,7 +543,7 @@ const AllContent = () => {
             try {
                 const baseUrl = localStorage.getItem('baseUrl') || 'oig-api.gophygital.work';
                 const token = localStorage.getItem('token');
-                const endpoint = '/api/pms/reports/highest_maintenance_assets?start_date=2018-01-15&end_date=2025-02-15';
+                const endpoint = `/api/pms/reports/highest_maintenance_assets${dateQuery}`;
                 const url = `https://${baseUrl}${endpoint}`;
                 const headers = token ? { Authorization: `Bearer ${token}` } : {};
                 const resp = await axios.get(url, { headers });
@@ -535,7 +557,7 @@ const AllContent = () => {
         };
 
         fetchHighestMaintenanceAssets();
-    }, []);
+    }, [dateQuery]);
 
     // Asset Overview derived selections (support both {data: {...}} and flat JSON)
     const assetOverview = useMemo(() => assetOverviewData?.data ?? assetOverviewData ?? null, [assetOverviewData]);
@@ -1325,7 +1347,15 @@ const AllContent = () => {
         loadingResponseTATQuarterly ||
         loadingResolutionTATQuarterly ||
         loadingDevicePlatformStats ||
-        loadingAssetOverview
+        loadingAssetOverview ||
+        loadingParkingDateSiteWise ||
+        loadingVisitorTrendAnalysis ||
+        loadingConsumableInventoryComparison ||
+        loadingCenterWiseConsumables ||
+        loadingInventoryOverstockReport ||
+        loadingSiteWiseChecklist ||
+        loadingAmcContractSummary ||
+        loadingHighestMaintenanceAssets
     );
 
     if (isGlobalLoading) {
@@ -1451,7 +1481,7 @@ const AllContent = () => {
                 print:ml-[50%] print:w-[50%] print:h-[100%] print:border print:border-gray-400 print:bg-white print:justify-center print:px-10 print:py-20">
 
                         {/* Overlaid Report Letters */}
-                        <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[40.2%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
+                        <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
                             <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">ERLY</div>
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
@@ -1459,7 +1489,7 @@ const AllContent = () => {
 
                         <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
                             <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
-                                Jan 2025 to Mar 2025
+                                {dateRangeLabel}
                             </p>
                         </div>
                     </div>
