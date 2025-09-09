@@ -493,7 +493,7 @@ export const AddMaterialPRDashboard = () => {
     <div className="p-6 mx-auto">
       <Button
         variant="ghost"
-        onClick={() => navigate("/finance/material-pr")}
+        onClick={() => navigate(-1)}
         className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
@@ -620,6 +620,7 @@ export const AddMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}

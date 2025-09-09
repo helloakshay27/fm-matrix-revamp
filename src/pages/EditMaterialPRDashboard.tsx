@@ -562,6 +562,7 @@ export const EditMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
