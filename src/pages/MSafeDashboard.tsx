@@ -81,7 +81,7 @@ export const MSafeDashboard = () => {
           if (filters.firstname) params.push(`q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`);
           if (filters.lastname) params.push(`q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`);
           if (filters.email) params.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
-            // prefer explicit mobile param
+          // prefer explicit mobile param
           if (filters.mobile) params.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
           if (filters.cluster) params.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
           if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
@@ -434,7 +434,7 @@ export const MSafeDashboard = () => {
 
         <div className="rounded-lg">
           <EnhancedTable data={fmUsers || []} columns={columns} onFilterClick={handleFiltersClick}
-            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport}  exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
+            renderCell={renderCell} renderActions={renderActions} onSelectAll={handleSelectAll} storageKey="msafe-fm-users" searchTerm={searchTerm} onSearchChange={setSearchTerm} searchPlaceholder="Search..." handleExport={handleExport} exportFileName="fm-users" pagination={false} pageSize={10} loading={loading} enableSearch={true} onRowClick={user => console.log('Row clicked:', user)} />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
               <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
@@ -454,7 +454,7 @@ export const MSafeDashboard = () => {
         </div>
 
         <MSafeImportModal isOpen={importModalOpen} onClose={() => setImportModalOpen(false)} onImport={handleImport} />
-  <FMUserFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
+        <FMUserFilterDialog isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)} onApplyFilters={handleApplyFilters} />
       </div>
     </>
   )

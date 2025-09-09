@@ -9,7 +9,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import Autocomplete from '@mui/material/Autocomplete';
+// Autocomplete removed in favor of Select-based controls
 import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
 import axios from 'axios';
@@ -177,7 +177,12 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
           <TextField label="Mobile Number" size="small" value={mobile} onChange={e => setMobile(e.target.value)} fullWidth InputLabelProps={{ shrink: Boolean(mobile) || undefined }} />
           <FormControl fullWidth size="small" disabled={loadingLists}>
             <InputLabel>Cluster</InputLabel>
-            <Select label="Cluster" value={cluster} onChange={e => setCluster(e.target.value as string)}>
+            <Select
+              label="Cluster"
+              value={cluster}
+              onChange={e => setCluster(e.target.value as string)}
+              MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+            >
               <MenuItem value=""><em>All</em></MenuItem>
               {clusters.map(cl => (
                 <MenuItem key={cl.company_cluster_id} value={cl.company_cluster_id}>{cl.cluster_name || `Cluster ${cl.company_cluster_id}`}</MenuItem>
@@ -186,7 +191,12 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
           </FormControl>
           <FormControl fullWidth size="small" disabled={loadingLists}>
             <InputLabel>Circle</InputLabel>
-            <Select label="Circle" value={circle} onChange={e => setCircle(e.target.value as string)}>
+            <Select
+              label="Circle"
+              value={circle}
+              onChange={e => setCircle(e.target.value as string)}
+              MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+            >
               <MenuItem value=""><em>All</em></MenuItem>
               {circles.map(c => (
                 <MenuItem key={c.id} value={c.id}>{c.circle_name || c.name || `Circle ${c.id}`}</MenuItem>
@@ -195,7 +205,12 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
           </FormControl>
           <FormControl fullWidth size="small" disabled={loadingLists}>
             <InputLabel>Department</InputLabel>
-            <Select label="Department" value={department} onChange={e => setDepartment(e.target.value as string)}>
+            <Select
+              label="Department"
+              value={department}
+              onChange={e => setDepartment(e.target.value as string)}
+              MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+            >
               <MenuItem value=""><em>All</em></MenuItem>
               {departments.map(d => (
                 <MenuItem key={d.id} value={d.id}>{d.department_name}</MenuItem>
@@ -204,49 +219,50 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
           </FormControl>
           <FormControl fullWidth size="small" disabled={loadingLists}>
             <InputLabel>Role</InputLabel>
-            <Select label="Role" value={role} onChange={e => setRole(e.target.value as string)}>
+            <Select
+              label="Role"
+              value={role}
+              onChange={e => setRole(e.target.value as string)}
+              MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+            >
               <MenuItem value=""><em>All</em></MenuItem>
               {roles.map(r => (
                 <MenuItem key={r.id} value={r.id}>{r.name || r.display_name || `Role ${r.id}`}</MenuItem>
               ))}
             </Select>
           </FormControl>
-          <Autocomplete
+          {/* Line Manager email search and selection */}
+          <TextField
             fullWidth
             size="small"
-            options={lmOptions}
-            loading={lmLoading}
-            value={selectedLineManager}
-            isOptionEqualToValue={(option: any, value: any) => option.id === value.id}
-            getOptionLabel={(option: any) => option.email || ''}
-            onChange={(_, val: any) => setSelectedLineManager(val || null)}
-            onInputChange={(_, val, reason) => { if (reason === 'input') setLmQuery(val); }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Line Manager (email search)"
-                placeholder="Type 4+ chars"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {lmLoading ? <CircularProgress color="inherit" size={16} /> : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  )
-                }}
-              />
-            )}
-            noOptionsText={lmQuery.length < 4 ? 'Type 4+ chars to search' : 'No results'}
-            renderOption={(props, option: any) => (
-              <li {...props} key={option.id}>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{option.email}</span>
-                  {option.name && <span className="text-xs text-gray-500">{option.name}</span>}
-                </div>
-              </li>
-            )}
+            label="Line Manager (email search)"
+            placeholder="Type 4+ chars"
+            value={lmQuery}
+            onChange={(e) => setLmQuery(e.target.value)}
+            InputProps={{ endAdornment: lmLoading ? <CircularProgress color="inherit" size={16} /> : null }}
           />
+          {lmOptions.length > 0 && (
+            <FormControl fullWidth size="small">
+              <InputLabel>Select Line Manager</InputLabel>
+              <Select
+                label="Select Line Manager"
+                value={selectedLineManager?.id ? String(selectedLineManager.id) : ''}
+                onChange={(e) => {
+                  const id = String(e.target.value || '');
+                  const found = lmOptions.find((u: any) => String(u.id) === id);
+                  setSelectedLineManager(found || null);
+                }}
+                MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
+              >
+                <MenuItem value=""><em>None</em></MenuItem>
+                {lmOptions.map((u: any) => (
+                  <MenuItem key={u.id} value={String(u.id)}>
+                    {u.email || u.name || `User ${u.id}`}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
         </Stack>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
