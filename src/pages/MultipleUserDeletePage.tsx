@@ -423,13 +423,13 @@ export const MultipleUserDeletePage = () => {
             <div className="mb-4">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
                     <TabsList className="grid grid-cols-2 bg-white border border-gray-200">
-                        <TabsTrigger value="single" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">Single User</TabsTrigger>
-                        <TabsTrigger value="tree" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">Hierarchy</TabsTrigger>
+                        <TabsTrigger value="single" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">User Deletion</TabsTrigger>
+                        <TabsTrigger value="tree" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] border-none font-semibold">Multiple User Deletion</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="single">
                         <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">SINGLE USER DELETION</h1>
+                            <h1 className="text-2xl font-bold text-[#1a1a1a]">User Deletion</h1>
                             <p className="text-sm text-gray-600 mt-1">
                                 Enter one or more Email addresses or Mobile numbers. Click "Add User" to add more.
                             </p>
@@ -702,8 +702,8 @@ export const MultipleUserDeletePage = () => {
 
                     <TabsContent value="tree">
                         <div className="mb-6">
-                            <h1 className="text-2xl font-bold text-[#1a1a1a]">USER HIERARCHY</h1>
-                            <p className="text-sm text-gray-600 mt-1">Fetch and display external user hierarchy by Email or Mobile.</p>
+                            <h1 className="text-2xl font-bold text-[#1a1a1a]">Multiple User Deletion</h1>
+                            <p className="text-sm text-gray-600 mt-1">Fetch and display external user deletion by Email or Mobile.</p>
                         </div>
                         <Card className="mb-4 border-[#D9D9D9] bg-[#F6F7F7]">
                             <CardHeader className='bg-[#F6F4EE] mb-5'>
