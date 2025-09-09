@@ -1440,6 +1440,31 @@ const AllContent = () => {
         background-color: #bf0c0c !important;
         color: white !important;
       }     
+            /* Compact vertical header labels for dense tables in print */
+            .rotate-header-print {
+                writing-mode: vertical-rl;
+                transform: rotate(180deg);
+                white-space: nowrap;
+                text-align: center;
+            }
+            .print-th-vertical {
+                width: 28px !important;
+                min-width: 28px !important;
+                max-width: 28px !important;
+                padding: 2px !important;
+            }
+            .print-th-site {
+                width: 90px !important;
+                min-width: 90px !important;
+                max-width: 120px !important;
+            }
+            .print-td-narrow {
+                width: 28px !important;
+                min-width: 28px !important;
+                max-width: 28px !important;
+                padding: 2px !important;
+                font-size: 9px !important;
+            }
 }
 `}</style>
 
@@ -2235,17 +2260,16 @@ const AllContent = () => {
                     {/* Table Section 1 */}
                     <div className="table-section w-full overflow-x-auto print:overflow-visible border-gray-300  border py-3 px-3 mb-5 print:p-1 print:mb-5">
                         <h2 className="text-lg font-semibold mb-4 border-b border-gray-300 pb-2 print:text-sm print:mb-5 print:pb-1">Ticket Ageing, Closure Efficiency & Feedback Overview by Center</h2>
-                        <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[12px]">
+                        <table className="w-full border text-sm text-center break-words print:table-fixed print:w-full print:text-[9px]">
                             <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] font-semibold print-bg-red">
                                 <tr>
-                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]">Site Name</th>
+                                    <th className="border border-gray-200 px-2 py-3 text-[10px] print:text-[9px] print:px-1 print:py-1 print-th-site print:min-h-[30px]">Site Name</th>
                                     {ticketAgingClosureData?.data?.centers?.map((center, idx) => (
                                         <th
                                             key={idx}
-                                            className="border border-gray-200 px-2 py-3 text-[10px] print:text-[10px] print:px-1 print:py-1 print:w-[10%] print:min-h-[30px]"
-                                            style={{ wordWrap: "break-word", whiteSpace: "normal" }}
+                                            className="border border-gray-200 px-2 py-3 text-[10px] print:text-[8px] print:px-0 print:py-1 print-th-vertical print:min-h-[120px]"
                                         >
-                                            {center.center_name ?? '-'}
+                                            <div className="rotate-header-print">{center.center_name ?? '-'}</div>
                                         </th>
                                     ))}
                                 </tr>
@@ -2260,13 +2284,13 @@ const AllContent = () => {
                                     { label: "0-10 days", key: "0-10_days" },
                                 ].map((row, idx) => (
                                     <tr key={row.key}>
-                                        <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                        <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                             {row.label}
                                         </td>
                                         {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                             <td
                                                 key={cIdx}
-                                                className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                                className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                             >
                                                 {center.aging_buckets?.[row.key] ?? '-'}
                                             </td>
@@ -2275,13 +2299,13 @@ const AllContent = () => {
                                 ))}
                                 {/* Total Closure % Row */}
                                 <tr className="bg-[#DAD6C9] font-semibold print:bg-[#DAD6C9]">
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         Total Closure %
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.total_closure_efficiency ?? '-'}
                                         </td>
@@ -2289,13 +2313,13 @@ const AllContent = () => {
                                 </tr>
                                 {/* No. of response Row */}
                                 <tr>
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         No. of response
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.feedback_metrics?.response_count ?? '-'}
                                         </td>
@@ -2303,13 +2327,13 @@ const AllContent = () => {
                                 </tr>
                                 {/* % of Response Row */}
                                 <tr>
-                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px]">
+                                    <td className="border border-gray-200 px-2 py-3 font-medium bg-[#F3F1EB80] print:px-1 print:py-1 print:bg-[#F3F1EB80] print:min-h-[30px] print-th-site">
                                         % of Response
                                     </td>
                                     {ticketAgingClosureData?.data?.centers?.map((center, cIdx) => (
                                         <td
                                             key={cIdx}
-                                            className="border border-gray-200 px-2 py-3 print:px-1 print:py-1 print:min-h-[30px]"
+                                            className="border border-gray-200 px-2 py-3 print:px-0 print:py-1 print:min-h-[30px] print-td-narrow"
                                         >
                                             {center.feedback_metrics?.response_percentage !== undefined ? `${(center.feedback_metrics.response_percentage).toFixed(2)}%` : '-'}
                                         </td>

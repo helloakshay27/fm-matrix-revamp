@@ -292,7 +292,7 @@ export const AddServicePRDashboard = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: item.total_amount,
+            totalAmount: Number(item.tax_amount) + Number(item.total_value),
             wbsCode: "",
           })));
         } catch (error) {
