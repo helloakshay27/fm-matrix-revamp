@@ -790,6 +790,10 @@ function AddWaterAssetDashboard() {
       pms_asset: {
         name: formData.assetName,
         asset_number: formData.assetNo,
+        equipment_id: formData.equipmentId ?? '',
+        consumer_number: formData.consumerNo ?? '',
+        capacity: formData.capacity ?? '',
+        capacity_unit: formData.unit ?? '',
         model_number: formData.modelNo,
         serial_number: formData.serialNo,
         manufacturer: formData.manufacturer,
@@ -944,7 +948,6 @@ function AddWaterAssetDashboard() {
         title: "Asset Created Successfully",
         description: "The asset has been created and saved.",
         duration: 3000,
-        status: "success",
       });
       // No navigation or reload so user can see the response in the network tab
       // Optionally, you can also log the response for debugging:
@@ -954,7 +957,6 @@ function AddWaterAssetDashboard() {
         title: "Upload Failed",
         description: err?.response?.data?.message || err.message || "An error occurred",
         duration: 6000,
-        status: "error",
       });
       console.error("Error creating asset:", err);
     } finally {

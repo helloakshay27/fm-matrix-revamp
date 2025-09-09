@@ -107,23 +107,23 @@ export const VendorPermitForm = () => {
                     ...prev,
                     jobDescription: data.pms_permit?.permit_for || '',
                     location: data.pms_permit?.location_details || '',
-                    permitInitiatedBy: data.pms_permit?.created_by?.full_name || '',
-                    initiatorsDepartment: data.pms_permit?.created_by?.department_name || '',
-                    initiatorsContact: data.pms_permit?.created_by?.mobile || '',
-                    nameOfContractor: data.pms_permit?.vendor?.full_name || '',
-                    addressOfContractor: data.pms_permit?.vendor?.address || '',
-                    contractorsContact: data.pms_permit?.vendor?.mobile || ''
+                    permitInitiatedBy: data.pms_permit?.initiator?.full_name || '',
+                    initiatorsDepartment: data.pms_permit?.initiator?.department || '',
+                    initiatorsContact: data.pms_permit?.initiator?.contact_number || '',
+                    nameOfContractor: data.pms_permit?.contractor?.name || '',
+                    addressOfContractor: data.pms_permit?.contractor?.address || '',
+                    contractorsContact: data.pms_permit?.contractor?.contact_number || ''
                 }));
 
                 // Update persons information with backend data
                 setPersonsInfo(prev => ({
                     ...prev,
-                    permitInitiatorName: data.pms_permit?.created_by?.full_name || '',
-                    permitInitiatorContact: data.pms_permit?.created_by?.mobile || '',
-                    permitIssuerName: data.pms_permit?.permit_issuer?.full_name || '',
-                    permitIssuerContact: data.pms_permit?.permit_issuer?.mobile || '',
-                    safetyOfficerName: data.pms_permit?.safety_officer?.full_name || '',
-                    safetyOfficerContact: data.pms_permit?.safety_officer?.mobile || ''
+                    permitInitiatorName: data.pms_permit?.initiator?.full_name || '',
+                    permitInitiatorContact: data.pms_permit?.initiator?.contact_number || '',
+                    permitIssuerName: data.pms_permit?.permit_issuer?.name || '',
+                    permitIssuerContact: data.pms_permit?.permit_issuer?.contact_number || '',
+                    safetyOfficerName: data.pms_permit?.safety_officer?.name || '',
+                    safetyOfficerContact: data.pms_permit?.safety_officer?.contact_number || ''
                 }));
             } catch (error) {
                 console.error('Error fetching permit data:', error);
@@ -392,7 +392,7 @@ export const VendorPermitForm = () => {
                             Back
                         </Button>
                         <h1 className="text-2xl font-bold text-gray-900">
-                            COLD WORK PERMIT
+                            {permitData?.permit_type || 'WORK PERMIT'}
                             {id && <span className="text-sm text-gray-600 ml-2">(Permit ID: {id})</span>}
                         </h1>
                     </div>
