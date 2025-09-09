@@ -97,8 +97,8 @@ export const AddMaterialPRDashboard = () => {
     wbsCode: "",
   });
   const [files, setFiles] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [slid, setSlid] = useState(null);
 
   useEffect(() => {
@@ -208,6 +208,7 @@ export const AddMaterialPRDashboard = () => {
       const cloneData = async () => {
         try {
           const response = await dispatch(getMaterialPRById({ baseUrl, token, id: cloneId })).unwrap();
+          setWbsSelection("individual");
           setSupplierDetails({
             supplier: response.supplier?.id,
             plantDetail: response.plant_detail?.id,
@@ -235,7 +236,7 @@ export const AddMaterialPRDashboard = () => {
               quantity: item.quantity,
               expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
               amount: item.total_value,
-              wbsCode: "",
+              wbsCode: item.wbs_code,
             }))
           );
         } catch (error) {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Upload, Eye, File, FileSpreadsheet, FileText, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   TextField,
@@ -126,11 +126,7 @@ export const EditMaterialPRDashboard = () => {
       try {
         const response = await dispatch(getMaterialPRById({ baseUrl, token, id: id })).unwrap();
 
-        setWbsSelection(
-          response.pms_po_inventories?.every(item => item.wbs_code !== null)
-            ? "individual"
-            : "overall"
-        );
+        setWbsSelection("individual");
 
         setSupplierDetails({
           supplier: response.supplier?.id,
@@ -160,7 +156,7 @@ export const EditMaterialPRDashboard = () => {
             quantity: item.quantity,
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             amount: item.total_value,
-            wbsCode: "",
+            wbsCode: item.wbs_code,
           }))
         );
 
@@ -429,7 +425,6 @@ export const EditMaterialPRDashboard = () => {
         })),
       },
       attachments: files,
-      attachments_to_delete: attachmentsToDelete,
     };
 
     try {

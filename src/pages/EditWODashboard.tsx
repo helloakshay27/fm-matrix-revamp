@@ -1,16 +1,6 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Paperclip, Settings, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import {
-    ArrowLeft,
-    File,
-    FileSpreadsheet,
-    FileText,
-    Upload,
-    Eye,
-    X,
-} from "lucide-react";
 import {
     TextField,
     FormControl,
@@ -18,23 +8,18 @@ import {
     Select as MuiSelect,
     MenuItem,
 } from "@mui/material";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useAppDispatch } from "@/store/hooks";
+import { useNavigate, useParams } from "react-router-dom";
 import {
     getAddresses,
     getPlantDetails,
     getSuppliers,
 } from "@/store/slices/materialPRSlice";
+import { toast } from "sonner";
+import { useAppDispatch } from "@/store/hooks";
 import { editServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
-
-const fieldStyles = {
-    height: { xs: 28, sm: 36, md: 45 },
-    "& .MuiInputBase-input, & .MuiSelect-select": {
-        padding: { xs: "8px", sm: "10px", md: "12px" },
-    },
-};
 
 interface Attachment {
     id: number;
@@ -49,21 +34,22 @@ export const EditWODashboard: React.FC = () => {
     const token = localStorage.getItem("token");
     const baseUrl = localStorage.getItem("baseUrl");
     const navigate = useNavigate();
-    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [suppliers, setSuppliers] = useState([]);
     const [plantDetails, setPlantDetails] = useState([]);
     const [addresses, setAddresses] = useState([]);
     const [services, setServices] = useState([]);
     const [submitting, setSubmitting] = useState(false);
-    const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+    const [existingAttachments, setExistingAttachments] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         contractor: "",
         plantDetail: "",
-        woDate: "",
+        woDate: new Date(),
         billingAddress: "",
         retention: "",
         tds: "",
@@ -75,7 +61,7 @@ export const EditWODashboard: React.FC = () => {
         subject: "",
         description: "",
         termsConditions: "",
-        attachments: [] as File[],
+        attachments: []
     });
 
     const [detailsForms, setDetailsForms] = useState([
@@ -85,7 +71,7 @@ export const EditWODashboard: React.FC = () => {
             productDescription: "",
             quantityArea: "",
             uom: "",
-            expectedDate: "",
+            expectedDate: new Date(),
             rate: "",
             cgstRate: "",
             cgstAmt: "",
@@ -104,41 +90,53 @@ export const EditWODashboard: React.FC = () => {
     useEffect(() => {
         const fetchSuppliers = async () => {
             try {
-                const response = await dispatch(getSuppliers({ baseUrl, token })).unwrap();
+                const response = await dispatch(
+                    getSuppliers({ baseUrl, token })
+                ).unwrap();
                 setSuppliers(response.suppliers);
             } catch (error) {
                 console.log(error);
-                toast.error(error.message || "Failed to fetch suppliers");
+                toast.dismiss();
+                toast.error(error);
             }
         };
 
         const fetchPlantDetails = async () => {
             try {
-                const response = await dispatch(getPlantDetails({ baseUrl, token })).unwrap();
+                const response = await dispatch(
+                    getPlantDetails({ baseUrl, token })
+                ).unwrap();
                 setPlantDetails(response);
             } catch (error) {
                 console.log(error);
-                toast.error(error.message || "Failed to fetch plant details");
+                toast.dismiss();
+                toast.error(error);
             }
         };
 
         const fetchAddresses = async () => {
             try {
-                const response = await dispatch(getAddresses({ baseUrl, token })).unwrap();
+                const response = await dispatch(
+                    getAddresses({ baseUrl, token })
+                ).unwrap();
                 setAddresses(response.admin_invoice_addresses);
             } catch (error) {
                 console.log(error);
-                toast.error(error.message || "Failed to fetch addresses");
+                toast.dismiss();
+                toast.error(error);
             }
         };
 
         const fetchServices = async () => {
             try {
-                const response = await dispatch(getServices({ baseUrl, token })).unwrap();
+                const response = await dispatch(
+                    getServices({ baseUrl, token })
+                ).unwrap();
                 setServices(response);
             } catch (error) {
                 console.log(error);
-                toast.error(error.message || "Failed to fetch services");
+                toast.dismiss();
+                toast.error(error);
             }
         };
 
@@ -146,92 +144,91 @@ export const EditWODashboard: React.FC = () => {
         fetchPlantDetails();
         fetchAddresses();
         fetchServices();
-    }, [dispatch, baseUrl, token]);
+    }, []);
 
     useEffect(() => {
-        const fetchWorkOrder = async () => {
+        const cloneData = async () => {
             try {
-                const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
-                const data = response.page;
+                const response = await dispatch(
+                    getWorkOrderById({ baseUrl, token, id })
+                ).unwrap();
+
+                const data = response.page
 
                 setFormData({
-                    contractor: data.pms_supplier_id || "",
-                    plantDetail: data.work_order?.plant_detail_id || "",
-                    woDate: data.work_order?.wo_date ? data.work_order.wo_date.split("T")[0] : "",
-                    billingAddress: data.work_order?.billing_address_id || "",
-                    retention: data.work_order?.payment_terms?.retention || "",
-                    tds: data.work_order?.payment_terms?.tds || "",
-                    qc: data.work_order?.payment_terms?.quality_holding || "",
-                    paymentTenure: data.work_order?.payment_terms?.payment_tenure || "",
-                    advanceAmount: data.work_order?.advance_amount || "",
-                    relatedTo: data.work_order?.related_to || "",
-                    kindAttention: data.work_order?.kind_attention || "",
-                    subject: data.work_order?.subject || "",
-                    description: data.work_order?.description || "",
-                    termsConditions: data.work_order?.term_condition || "",
-                    attachments: [],
+                    contractor: data.pms_supplier_id,
+                    plantDetail: data.work_order?.plant_detail_id,
+                    woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
+                    billingAddress: data.work_order?.billing_address_id,
+                    retention: data.work_order?.payment_terms?.retention,
+                    tds: data.work_order?.payment_terms?.tds,
+                    qc: data.work_order?.payment_terms?.quality_holding,
+                    paymentTenure: data.work_order?.payment_terms?.payment_tenure,
+                    advanceAmount: data.work_order.advance_amount,
+                    relatedTo: data.work_order?.related_to,
+                    kindAttention: data.work_order?.kind_attention,
+                    subject: data.work_order.subject,
+                    description: data.work_order.description,
+                    termsConditions: data.work_order.term_condition,
+                    attachments: []
                 });
 
                 setDetailsForms(
-                    data.inventories?.map((item) => ({
+                    data.inventories.map((item) => ({
                         id: item.id,
-                        service: item.pms_service_id || "",
-                        productDescription: item.product_description || "",
-                        quantityArea: item.quantity || "",
-                        uom: item.uom || "",
-                        expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
-                        rate: item.rate || "",
-                        cgstRate: item.cgst_rate || "",
-                        cgstAmt: item.cgst_amount || "",
-                        sgstRate: item.sgst_rate || "",
-                        sgstAmt: item.sgst_amount || "",
-                        igstRate: item.igst_rate || "",
-                        igstAmt: item.igst_amount || "",
-                        tcsRate: item.tcs_rate || "",
-                        tcsAmt: item.tcs_amount || "",
-                        taxAmount: item.tax_amount || "",
-                        amount: item.total_amount || "",
-                        totalAmount: (Number(item.tax_amount) + Number(item.total_amount)).toFixed(2) || "",
-                    })) || [
-                        {
-                            id: 1,
-                            service: "",
-                            productDescription: "",
-                            quantityArea: "",
-                            uom: "",
-                            expectedDate: "",
-                            rate: "",
-                            cgstRate: "",
-                            cgstAmt: "",
-                            sgstRate: "",
-                            sgstAmt: "",
-                            igstRate: "",
-                            igstAmt: "",
-                            tcsRate: "",
-                            tcsAmt: "",
-                            taxAmount: "",
-                            amount: "",
-                            totalAmount: "",
-                        },
-                    ]
-                );
+                        service: item.pms_service_id,
+                        productDescription: item.product_description,
+                        quantityArea: item.quantity,
+                        uom: item.uom,
+                        expectedDate: item.expected_date,
+                        rate: item.rate,
+                        cgstRate: item.cgst_rate,
+                        cgstAmt: item.cgst_amount,
+                        sgstRate: item.sgst_rate,
+                        sgstAmt: item.sgst_amount,
+                        igstRate: item.igst_rate,
+                        igstAmt: item.igst_amount,
+                        tcsRate: item.tcs_rate,
+                        tcsAmt: item.tcs_amount,
+                        taxAmount: item.tax_amount,
+                        amount: item.total_amount,
+                        totalAmount: Number(item.tax_amount) + Number(item.total_amount),
+                    })))
 
                 setExistingAttachments(
                     data.attachments?.map((attachment) => ({
                         id: attachment.id,
                         url: attachment.url,
-                        document_name: attachment.file_name || `Attachment-${attachment.id}`,
-                        document_file_name: attachment.file_name || `Attachment-${attachment.id}`,
+                        name: attachment.file_name || `Attachment-${attachment.id}`,
                     })) || []
                 );
             } catch (error) {
                 console.log(error);
-                toast.error(error.message || "Failed to fetch work order details");
+                toast.error(error);
             }
         };
 
-        fetchWorkOrder();
-    }, [dispatch, baseUrl, token, id]);
+        cloneData();
+    }, []);
+
+    const handleInputChange = (field: string, value: string | Date) => {
+        setFormData((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
+    };
+
+    const handleDashedBorderClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files ? Array.from(event.target.files) : [];
+        setFormData((prev) => ({
+            ...prev,
+            attachments: [...prev.attachments, ...files],
+        }));
+    };
 
     const calculateItem = (item) => {
         const quantity = parseFloat(item.quantityArea) || 0;
@@ -241,12 +238,19 @@ export const EditWODashboard: React.FC = () => {
         const igstRate = parseFloat(item.igstRate) || 0;
         const tcsRate = parseFloat(item.tcsRate) || 0;
 
+        // Calculate base amount
         const amount = quantity * rate;
+
+        // Calculate tax amounts
         const cgstAmt = (amount * cgstRate) / 100;
         const sgstAmt = (amount * sgstRate) / 100;
         const igstAmt = (amount * igstRate) / 100;
         const tcsAmt = (amount * tcsRate) / 100;
+
+        // Calculate total tax amount
         const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
+
+        // Calculate total amount
         const totalAmount = amount + taxAmount;
 
         return {
@@ -261,14 +265,11 @@ export const EditWODashboard: React.FC = () => {
         };
     };
 
-    const handleInputChange = (field: string, value: string) => {
-        setFormData((prev) => ({
-            ...prev,
-            [field]: value,
-        }));
-    };
-
-    const handleDetailsChange = (id: number, field: string, value: string) => {
+    const handleDetailsChange = (
+        id: number,
+        field: string,
+        value: string | Date
+    ) => {
         setDetailsForms((prev) =>
             prev.map((form) =>
                 form.id === id
@@ -279,14 +280,14 @@ export const EditWODashboard: React.FC = () => {
     };
 
     const addNewDetailsForm = () => {
-        const newId = Math.max(...detailsForms.map((form) => form.id), 0) + 1;
+        const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
         const newForm = {
             id: newId,
             service: "",
             productDescription: "",
             quantityArea: "",
             uom: "",
-            expectedDate: "",
+            expectedDate: new Date(),
             rate: "",
             cgstRate: "",
             cgstAmt: "",
@@ -309,12 +310,15 @@ export const EditWODashboard: React.FC = () => {
         }
     };
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files ? Array.from(event.target.files) : [];
-        setFormData((prev) => ({
-            ...prev,
-            attachments: [...prev.attachments, ...files],
-        }));
+    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (files) {
+            const newFiles = Array.from(files);
+            setFormData((prev) => ({
+                ...prev,
+                attachments: [...prev.attachments, ...newFiles],
+            }));
+        }
     };
 
     const removeFile = (index: number, type: string) => {
@@ -328,61 +332,11 @@ export const EditWODashboard: React.FC = () => {
         }
     };
 
-    const handleDashedBorderClick = () => {
-        fileInputRef.current?.click();
-    };
-
     const grandTotal = detailsForms
         .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
         .toFixed(2);
 
-    const validateForm = () => {
-        if (!formData.contractor) {
-            toast.error("Please select a contractor");
-            return false;
-        }
-        if (!formData.woDate) {
-            toast.error("Please select a work order date");
-            return false;
-        }
-        if (!formData.billingAddress) {
-            toast.error("Please select a billing address");
-            return false;
-        }
-        if (!formData.relatedTo) {
-            toast.error("Please enter related to");
-            return false;
-        }
-        for (const item of detailsForms) {
-            if (!item.service) {
-                toast.error("Please select a service for all items");
-                return false;
-            }
-            if (!item.productDescription) {
-                toast.error("Please enter a product description for all items");
-                return false;
-            }
-            if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
-                toast.error("Quantity/Area must be a valid positive number for all items");
-                return false;
-            }
-            if (!item.expectedDate) {
-                toast.error("Please enter an expected date for all items");
-                return false;
-            }
-            if (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0) {
-                toast.error("Rate must be a valid positive number for all items");
-                return false;
-            }
-        }
-        return true;
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!validateForm()) {
-            return;
-        }
+    const handleSubmit = async () => {
         const payload = {
             pms_work_order: {
                 letter_of_indent: false,
@@ -427,44 +381,73 @@ export const EditWODashboard: React.FC = () => {
         try {
             setSubmitting(true);
             await dispatch(editServicePR({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
-            toast.success("Work Order updated successfully");
-            navigate("/finance/wo");
+            toast.success("Work Order created successfully");
+            navigate('/finance/wo');
         } catch (error) {
             console.log(error);
-            toast.error(error.message || "Failed to update work order");
+            toast.error(error);
         } finally {
             setSubmitting(false);
         }
     };
 
     return (
-        <div className="p-6 mx-auto">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-            </Button>
-            <h1 className="text-2xl font-bold mb-6">EDIT WORK ORDER</h1>
-
-            <form onSubmit={handleSubmit}>
-                <div className="space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-[#C72030] flex items-center">
-                                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                                    1
-                                </h2>
+        <div className="min-h-screen bg-background">
+            {/* Form Content */}
+            <div className="p-6 mx-auto">
+                <Button
+                    variant="ghost"
+                    onClick={() => navigate(-1)}
+                    className='p-0 mb-4'
+                >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back
+                </Button>
+                {/* Work Order Details Section Card */}
+                <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                                <Settings className="w-4 h-4 text-white" />
+                            </div>
+                            <h2 className="text-lg font-semibold text-foreground">
                                 WORK ORDER DETAILS
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                                <InputLabel shrink>Contractor*</InputLabel>
+                            </h2>
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* First Row */}
+                            <FormControl
+                                fullWidth
+                                variant="outlined"
+                                sx={{
+                                    mt: 1,
+                                }}
+                            >
+                                <InputLabel shrink>Select Contractor*</InputLabel>
                                 <MuiSelect
-                                    label="Contractor*"
+                                    label="Select Contractor*"
                                     value={formData.contractor}
-                                    onChange={(e) => handleInputChange("contractor", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("contractor", e.target.value)
+                                    }
                                     displayEmpty
-                                    sx={fieldStyles}
+                                    sx={{
+                                        height: {
+                                            xs: 28,
+                                            sm: 36,
+                                            md: 45,
+                                        },
+                                        "& .MuiInputBase-input, & .MuiSelect-select": {
+                                            padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "12px",
+                                            },
+                                        },
+                                    }}
                                 >
                                     <MenuItem value="">
                                         <em>Select Contractor</em>
@@ -477,17 +460,38 @@ export const EditWODashboard: React.FC = () => {
                                 </MuiSelect>
                             </FormControl>
 
-                            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                                <InputLabel shrink>Plant Detail</InputLabel>
+                            <FormControl
+                                fullWidth
+                                variant="outlined"
+                                sx={{
+                                    mt: 1,
+                                }}
+                            >
+                                <InputLabel shrink>Plant Detail*</InputLabel>
                                 <MuiSelect
-                                    label="Plant Detail"
+                                    label="Plant Detail*"
                                     value={formData.plantDetail}
-                                    onChange={(e) => handleInputChange("plantDetail", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("plantDetail", e.target.value)
+                                    }
                                     displayEmpty
-                                    sx={fieldStyles}
+                                    sx={{
+                                        height: {
+                                            xs: 28,
+                                            sm: 36,
+                                            md: 45,
+                                        },
+                                        "& .MuiInputBase-input, & .MuiSelect-select": {
+                                            padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "12px",
+                                            },
+                                        },
+                                    }}
                                 >
                                     <MenuItem value="">
-                                        <em>Select Plant Detail</em>
+                                        <em>Select Plant Id</em>
                                     </MenuItem>
                                     {plantDetails.map((plantDetail) => (
                                         <MenuItem key={plantDetail.id} value={plantDetail.id}>
@@ -498,27 +502,64 @@ export const EditWODashboard: React.FC = () => {
                             </FormControl>
 
                             <TextField
-                                label="WO Date*"
-                                type="date"
+                                label="Select WO Date*"
                                 value={formData.woDate}
-                                onChange={(e) => handleInputChange("woDate", e.target.value)}
-                                placeholder="Select Date"
+                                onChange={(e) =>
+                                    handleInputChange("woDate", new Date(e.target.value))
+                                }
                                 fullWidth
                                 variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                                type="date"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
+                                    },
+                                }}
                             />
 
-                            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                                <InputLabel shrink>Billing Address*</InputLabel>
+                            {/* Second Row */}
+                            <FormControl
+                                fullWidth
+                                variant="outlined"
+                                sx={{
+                                    mt: 1,
+                                }}
+                            >
+                                <InputLabel shrink>Select Billing Address*</InputLabel>
                                 <MuiSelect
-                                    label="Billing Address*"
+                                    label="Select Billing Address*"
                                     value={formData.billingAddress}
-                                    onChange={(e) => handleInputChange("billingAddress", e.target.value)}
+                                    onChange={(e) =>
+                                        handleInputChange("billingAddress", e.target.value)
+                                    }
                                     displayEmpty
-                                    sx={fieldStyles}
+                                    sx={{
+                                        height: {
+                                            xs: 28,
+                                            sm: 36,
+                                            md: 45,
+                                        },
+                                        "& .MuiInputBase-input, & .MuiSelect-select": {
+                                            padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "12px",
+                                            },
+                                        },
+                                    }}
                                 >
                                     <MenuItem value="">
                                         <em>Select Billing Address</em>
@@ -533,200 +574,263 @@ export const EditWODashboard: React.FC = () => {
 
                             <TextField
                                 label="Retention(%)"
+                                placeholder="Retention"
                                 value={formData.retention}
                                 onChange={(e) => handleInputChange("retention", e.target.value)}
-                                placeholder="Enter Number"
                                 fullWidth
-                                type="number"
                                 variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: 0, max: 100 }}
+                                type="number"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    min: 0,
+                                    max: 100,
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
+                                    },
+                                }}
                             />
 
                             <TextField
                                 label="TDS(%)"
+                                placeholder="TDS"
                                 value={formData.tds}
                                 onChange={(e) => handleInputChange("tds", e.target.value)}
-                                placeholder="Enter Number"
                                 fullWidth
-                                type="number"
                                 variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: 0, max: 100 }}
+                                type="number"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    min: 0,
+                                    max: 100,
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
+                                    },
+                                }}
                             />
 
+                            {/* Third Row */}
                             <TextField
                                 label="QC(%)"
+                                placeholder="QC"
                                 value={formData.qc}
                                 onChange={(e) => handleInputChange("qc", e.target.value)}
-                                placeholder="Enter Number"
                                 fullWidth
-                                type="number"
                                 variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: 0, max: 100 }}
+                                type="number"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    min: 0,
+                                    max: 100,
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
+                                    },
+                                }}
                             />
 
                             <TextField
                                 label="Payment Tenure(In Days)"
+                                placeholder="Payment Tenure"
                                 value={formData.paymentTenure}
-                                onChange={(e) => handleInputChange("paymentTenure", e.target.value)}
-                                placeholder="Enter Number"
+                                onChange={(e) =>
+                                    handleInputChange("paymentTenure", e.target.value)
+                                }
                                 fullWidth
-                                type="number"
                                 variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: 0 }}
+                                type="number"
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    min: 0,
+                                }}
+                                sx={{
+                                    mt: 1,
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
+                                    },
+                                }}
                             />
 
                             <TextField
                                 label="Advance Amount"
+                                placeholder="Advance Amount"
                                 value={formData.advanceAmount}
-                                onChange={(e) => handleInputChange("advanceAmount", e.target.value)}
-                                placeholder="Enter Number"
+                                onChange={(e) =>
+                                    handleInputChange("advanceAmount", e.target.value)
+                                }
                                 fullWidth
+                                variant="outlined"
                                 type="number"
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                                inputProps={{ min: 0 }}
-                            />
-
-                            <TextField
-                                label="Related To*"
-                                value={formData.relatedTo}
-                                onChange={(e) => handleInputChange("relatedTo", e.target.value)}
-                                placeholder="Enter Related To"
-                                fullWidth
-                                variant="outlined"
-                                multiline
-                                rows={2}
-                                InputLabelProps={{ shrink: true }}
+                                InputLabelProps={{
+                                    shrink: true,
+                                }}
+                                inputProps={{
+                                    min: 0,
+                                }}
                                 sx={{
                                     mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
+                                    "& .MuiInputBase-input": {
+                                        padding: {
+                                            xs: "8px",
+                                            sm: "10px",
+                                            md: "12px",
+                                        },
+                                    },
+                                    height: {
+                                        xs: 28,
+                                        sm: 36,
+                                        md: 45,
                                     },
                                 }}
                             />
 
-                            <TextField
-                                label="Kind Attention"
-                                value={formData.kindAttention}
-                                onChange={(e) => handleInputChange("kindAttention", e.target.value)}
-                                placeholder="Enter Kind Attention"
-                                fullWidth
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                            />
+                            {/* Full Width Field */}
+                            <div className="md:col-span-3">
+                                <TextField
+                                    label="Related To*"
+                                    placeholder="Related To"
+                                    value={formData.relatedTo}
+                                    onChange={(e) =>
+                                        handleInputChange("relatedTo", e.target.value)
+                                    }
+                                    fullWidth
+                                    variant="outlined"
+                                    multiline
+                                    rows={2}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                            <TextField
-                                label="Subject"
-                                value={formData.subject}
-                                onChange={(e) => handleInputChange("subject", e.target.value)}
-                                placeholder="Enter Subject"
-                                fullWidth
-                                variant="outlined"
-                                InputLabelProps={{ shrink: true }}
-                                InputProps={{ sx: fieldStyles }}
-                                sx={{ mt: 1 }}
-                            />
+                {/* Details Section Card */}
+                <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                                <Settings className="w-4 h-4 text-white" />
+                            </div>
+                            <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+                        </div>
+                    </div>
 
-                            <TextField
-                                label="Description"
-                                value={formData.description}
-                                onChange={(e) => handleInputChange("description", e.target.value)}
-                                placeholder="Enter description here..."
-                                fullWidth
-                                variant="outlined"
-                                multiline
-                                rows={4}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                    },
-                                }}
-                            />
-
-                            <TextField
-                                label="Terms & Conditions"
-                                value={formData.termsConditions}
-                                onChange={(e) => handleInputChange("termsConditions", e.target.value)}
-                                placeholder="Enter terms and conditions here..."
-                                fullWidth
-                                variant="outlined"
-                                multiline
-                                rows={4}
-                                InputLabelProps={{ shrink: true }}
-                                sx={{
-                                    mt: 1,
-                                    "& .MuiOutlinedInput-root": {
-                                        height: "auto !important",
-                                        padding: "2px !important",
-                                    },
-                                }}
-                            />
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-[#C72030] flex items-center justify-between">
-                                <div className="flex items-center">
-                                    <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                                        2
-                                    </h2>
-                                    ITEM DETAILS
-                                </div>
-                                <Button
-                                    type="button"
-                                    onClick={addNewDetailsForm}
-                                    size="sm"
-                                    className="bg-purple-600 hover:bg-purple-700"
-                                >
-                                    Add Item
-                                </Button>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            {detailsForms.map((detailsData, index) => (
-                                <div
-                                    key={detailsData.id}
-                                    className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
-                                >
+                    <div className="p-6">
+                        {detailsForms.map((detailsData, index) => (
+                            <div
+                                key={detailsData.id}
+                                className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-md font-medium text-foreground">
+                                        Item {index + 1}
+                                    </h3>
                                     {detailsForms.length > 1 && (
                                         <Button
-                                            onClick={() => removeDetailsForm(detailsData.id)}
+                                            variant="ghost"
                                             size="sm"
-                                            className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                                            onClick={() => removeDetailsForm(detailsData.id)}
+                                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                                         >
-                                            <X className="w-4 h-4" />
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
                                     )}
-
-                                    <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                                        <InputLabel shrink>Service*</InputLabel>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    {/* First Row */}
+                                    <FormControl
+                                        fullWidth
+                                        variant="outlined"
+                                        sx={{
+                                            mt: 1,
+                                        }}
+                                    >
+                                        <InputLabel shrink>Select Service*</InputLabel>
                                         <MuiSelect
-                                            label="Service*"
+                                            label="Select Service*"
                                             value={detailsData.service}
-                                            onChange={(e) => handleDetailsChange(detailsData.id, "service", e.target.value)}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "service",
+                                                    e.target.value
+                                                )
+                                            }
                                             displayEmpty
-                                            sx={fieldStyles}
+                                            sx={{
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                                "& .MuiInputBase-input, & .MuiSelect-select": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
+                                                },
+                                            }}
                                         >
                                             <MenuItem value="">
                                                 <em>Select Service</em>
@@ -742,429 +846,868 @@ export const EditWODashboard: React.FC = () => {
                                     <TextField
                                         label="Product Description*"
                                         value={detailsData.productDescription}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "productDescription", e.target.value)}
-                                        placeholder="Enter Description"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "productDescription",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="Quantity/Area*"
                                         value={detailsData.quantityArea}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "quantityArea", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "quantityArea",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
+                                    {/* Second Row */}
                                     <TextField
                                         label="UOM"
                                         value={detailsData.uom}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "uom", e.target.value)}
-                                        placeholder="Enter UOM"
+                                        onChange={(e) =>
+                                            handleDetailsChange(detailsData.id, "uom", e.target.value)
+                                        }
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="Expected Date*"
-                                        type="date"
                                         value={detailsData.expectedDate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "expectedDate", e.target.value)}
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "expectedDate",
+                                                new Date(e.target.value)
+                                            )
+                                        }
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: new Date().toISOString().split("T")[0] }}
+                                        type="date"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="Rate*"
                                         value={detailsData.rate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "rate", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "rate",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
+                                    {/* Third Row */}
                                     <TextField
                                         label="CGST Rate"
                                         value={detailsData.cgstRate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "cgstRate", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "cgstRate",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
-                                        label="CGST Amount"
+                                        label="CGST Amt"
                                         value={detailsData.cgstAmt}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="SGST Rate"
                                         value={detailsData.sgstRate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "sgstRate", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "sgstRate",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
+                                    {/* Fourth Row */}
                                     <TextField
-                                        label="SGST Amount"
+                                        label="SGST Amt"
                                         value={detailsData.sgstAmt}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="IGST Rate"
                                         value={detailsData.igstRate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "igstRate", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "igstRate",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
-                                        label="IGST Amount"
+                                        label="IGST Amt"
                                         value={detailsData.igstAmt}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
+                                    {/* Fifth Row */}
                                     <TextField
                                         label="TCS Rate"
                                         value={detailsData.tcsRate}
-                                        onChange={(e) => handleDetailsChange(detailsData.id, "tcsRate", e.target.value)}
-                                        placeholder="Enter Number"
+                                        onChange={(e) =>
+                                            handleDetailsChange(
+                                                detailsData.id,
+                                                "tcsRate",
+                                                e.target.value
+                                            )
+                                        }
                                         fullWidth
-                                        type="number"
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles }}
-                                        sx={{ mt: 1 }}
-                                        inputProps={{ min: 0 }}
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
-                                        label="TCS Amount"
+                                        label="TCS Amt"
                                         value={detailsData.tcsAmt}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="Tax Amount"
                                         value={detailsData.taxAmount}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
+                                    {/* Sixth Row */}
                                     <TextField
                                         label="Amount"
                                         value={detailsData.amount}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
 
                                     <TextField
                                         label="Total Amount"
                                         value={detailsData.totalAmount}
-                                        placeholder="Calculated Amount"
                                         fullWidth
                                         variant="outlined"
-                                        InputLabelProps={{ shrink: true }}
-                                        InputProps={{ sx: fieldStyles, readOnly: true }}
-                                        sx={{ mt: 1 }}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        InputProps={{
+                                            readOnly: true,
+                                        }}
+                                        sx={{
+                                            mt: 1,
+                                            "& .MuiInputBase-input": {
+                                                padding: {
+                                                    xs: "8px",
+                                                    sm: "10px",
+                                                    md: "12px",
+                                                },
+                                                backgroundColor: "#f5f5f5",
+                                            },
+                                            height: {
+                                                xs: 28,
+                                                sm: 36,
+                                                md: 45,
+                                            },
+                                        }}
                                     />
-                                </div>
-                            ))}
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex items-center justify-end">
-                        <Button
-                            className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
-                            type="button"
-                        >
-                            Total Amount: {grandTotal}
-                        </Button>
-                    </div>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-[#C72030] flex items-center">
-                                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                                    3
-                                </h2>
-                                ATTACHMENTS
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div
-                                className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
-                                onClick={handleDashedBorderClick}
-                            >
-                                <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                                <div className="text-sm text-gray-600">
-                                    <span className="font-medium">Drag & Drop or Click to Upload</span>
-                                    <input
-                                        type="file"
-                                        multiple
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                        id="file-upload"
-                                        ref={fileInputRef}
-                                        accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
-                                    />
-                                    <span className="ml-1">
-                                        {formData.attachments.length > 0
-                                            ? `${formData.attachments.length} file(s) selected`
-                                            : "No files chosen"}
-                                    </span>
                                 </div>
                             </div>
+                        ))}
 
-                            {(formData.attachments.length > 0 || existingAttachments.length > 0) && (
-                                <div className="flex items-center flex-wrap gap-4 my-6">
-                                    {existingAttachments.map((attachment, index) => {
-                                        const isImage = attachment.url.match(/\.(jpeg|jpg|png|gif)$/i);
-                                        const isPdf = attachment.url.match(/\.pdf$/i);
-                                        const isExcel = attachment.url.match(/\.(xlsx|xls)$/i);
-                                        const isWord = attachment.url.match(/\.(doc|docx)$/i);
-
-                                        return (
-                                            <div
-                                                key={`existing-${attachment.id}`}
-                                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                                            >
-                                                {isImage ? (
-                                                    <>
-                                                        <button
-                                                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                            title="View"
-                                                            onClick={() => {
-                                                                setSelectedDoc({
-                                                                    id: attachment.id,
-                                                                    url: attachment.url,
-                                                                    document_name: attachment.document_name,
-                                                                    document_file_name: attachment.document_file_name,
-                                                                });
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                            type="button"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        <img
-                                                            src={attachment.url}
-                                                            alt={attachment.document_name}
-                                                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                            onClick={() => {
-                                                                setSelectedDoc({
-                                                                    id: attachment.id,
-                                                                    url: attachment.url,
-                                                                    document_name: attachment.document_name,
-                                                                    document_file_name: attachment.document_file_name,
-                                                                });
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                        />
-                                                    </>
-                                                ) : isPdf ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                                        <FileText className="w-6 h-6" />
-                                                    </div>
-                                                ) : isExcel ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                                        <FileSpreadsheet className="w-6 h-6" />
-                                                    </div>
-                                                ) : isWord ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                                        <FileText className="w-6 h-6" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                                        <File className="w-6 h-6" />
-                                                    </div>
-                                                )}
-                                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                                    {attachment.document_name} (Existing)
-                                                </span>
-                                                <button
-                                                    className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                    title="Remove"
-                                                    onClick={() => removeFile(index, "existing")}
-                                                    type="button"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                    {formData.attachments.map((file, index) => {
-                                        const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
-                                        const isPdf = file.type.match(/application\/pdf/i);
-                                        const isExcel = file.type.match(
-                                            /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
-                                        );
-                                        const isWord = file.type.match(
-                                            /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
-                                        );
-
-                                        return (
-                                            <div
-                                                key={`new-${index}`}
-                                                className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
-                                            >
-                                                {isImage ? (
-                                                    <>
-                                                        <button
-                                                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                            title="View"
-                                                            onClick={() => {
-                                                                setSelectedDoc({
-                                                                    id: index,
-                                                                    url: URL.createObjectURL(file),
-                                                                    document_name: file.name,
-                                                                    document_file_name: file.name,
-                                                                });
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                            type="button"
-                                                        >
-                                                            <Eye className="w-4 h-4" />
-                                                        </button>
-                                                        <img
-                                                            src={URL.createObjectURL(file)}
-                                                            alt={file.name}
-                                                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
-                                                            onClick={() => {
-                                                                setSelectedDoc({
-                                                                    id: index,
-                                                                    url: URL.createObjectURL(file),
-                                                                    document_name: file.name,
-                                                                    document_file_name: file.name,
-                                                                });
-                                                                setIsModalOpen(true);
-                                                            }}
-                                                        />
-                                                    </>
-                                                ) : isPdf ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
-                                                        <FileText className="w-6 h-6" />
-                                                    </div>
-                                                ) : isExcel ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
-                                                        <FileSpreadsheet className="w-6 h-6" />
-                                                    </div>
-                                                ) : isWord ? (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
-                                                        <FileText className="w-6 h-6" />
-                                                    </div>
-                                                ) : (
-                                                    <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
-                                                        <File className="w-6 h-6" />
-                                                    </div>
-                                                )}
-                                                <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                                    {file.name} (New)
-                                                </span>
-                                                <button
-                                                    className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
-                                                    title="Remove"
-                                                    onClick={() => removeFile(index, "new")}
-                                                    type="button"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    <div className="flex items-center justify-center gap-4">
-                        <Button
-                            type="submit"
-                            size="lg"
-                            className="bg-[#C72030] hover:bg-[#C72030] text-white"
-                            disabled={submitting}
-                        >
-                            Save Work Order
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={() => navigate(-1)}
-                            className="px-8"
-                        >
-                            Cancel
-                        </Button>
+                        {/* Add Items Button inside details card */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <Button
+                                className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+                                onClick={addNewDetailsForm}
+                            >
+                                Add Items
+                            </Button>
+                        </div>
                     </div>
                 </div>
-            </form>
+
+                {/* Total Amount Display - Outside the card */}
+                <div className="flex items-center justify-end mt-4">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+                        Total Amount: {grandTotal}
+                    </Button>
+                </div>
+
+                {/* Details Section Card */}
+                <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-4 border-b border-gray-200">
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                                <Settings className="w-4 h-4 text-white" />
+                            </div>
+                            <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+                        </div>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <TextField
+                                    label="Kind Attention"
+                                    placeholder="Kind Attention"
+                                    fullWidth
+                                    variant="outlined"
+                                    onChange={(e) =>
+                                        handleInputChange("kindAttention", e.target.value)
+                                    }
+                                    value={formData.kindAttention}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        "& .MuiInputBase-input": {
+                                            padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "12px",
+                                            },
+                                        },
+                                        height: {
+                                            xs: 28,
+                                            sm: 36,
+                                            md: 45,
+                                        },
+                                    }}
+                                />
+                            </div>
+
+                            <div>
+                                <TextField
+                                    label="Subject"
+                                    placeholder="Subject"
+                                    fullWidth
+                                    value={formData.subject}
+                                    variant="outlined"
+                                    onChange={(e) =>
+                                        handleInputChange("subject", e.target.value)
+                                    }
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        "& .MuiInputBase-input": {
+                                            padding: {
+                                                xs: "8px",
+                                                sm: "10px",
+                                                md: "12px",
+                                            },
+                                        },
+                                        height: {
+                                            xs: 28,
+                                            sm: 36,
+                                            md: 45,
+                                        },
+                                    }}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                            <div>
+                                <TextField
+                                    label="Description"
+                                    placeholder="Enter description here..."
+                                    fullWidth
+                                    value={formData.description}
+                                    variant="outlined"
+                                    onChange={(e) =>
+                                        handleInputChange("description", e.target.value)
+                                    }
+                                    multiline
+                                    rows={3}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
+                                    }}
+                                />
+                            </div>
+
+                            <div>
+                                <TextField
+                                    label="Terms & Conditions"
+                                    placeholder="Enter terms and conditions here..."
+                                    fullWidth
+                                    value={formData.termsConditions}
+                                    variant="outlined"
+                                    onChange={(e) =>
+                                        handleInputChange("termsConditions", e.target.value)
+                                    }
+                                    multiline
+                                    rows={3}
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    sx={{
+                                        mt: 1,
+                                        "& .MuiOutlinedInput-root": {
+                                            height: "auto !important",
+                                            padding: "2px !important",
+                                        },
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Attachments Section Card */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-[#C72030] flex items-center">
+                            <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                                3
+                            </h2>
+                            ATTACHMENTS
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div
+                            className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+                            onClick={handleDashedBorderClick}
+                        >
+                            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                            <div className="text-sm text-gray-600">
+                                <span className="font-medium">Drag & Drop or Click to Upload</span>
+                                <input
+                                    type="file"
+                                    multiple
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                    id="file-upload"
+                                    ref={fileInputRef}
+                                    accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
+                                />
+                                <span className="ml-1">
+                                    {formData.attachments.length > 0
+                                        ? `${formData.attachments.length} file(s) selected`
+                                        : "No files chosen"}
+                                </span>
+                            </div>
+                        </div>
+
+                        {(formData.attachments.length > 0 || existingAttachments.length > 0) && (
+                            <div className="flex items-center flex-wrap gap-4 my-6">
+                                {existingAttachments.map((attachment, index) => {
+                                    const isImage = attachment.url.match(/\.(jpeg|jpg|png|gif)$/i);
+                                    const isPdf = attachment.url.match(/\.pdf$/i);
+                                    const isExcel = attachment.url.match(/\.(xlsx|xls)$/i);
+                                    const isWord = attachment.url.match(/\.(doc|docx)$/i);
+
+                                    return (
+                                        <div
+                                            key={`existing-${attachment.id}`}
+                                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                        >
+                                            {isImage ? (
+                                                <>
+                                                    <button
+                                                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        title="View"
+                                                        onClick={() => {
+                                                            setSelectedDoc({
+                                                                id: attachment.id,
+                                                                url: attachment.url,
+                                                                document_name: attachment.document_name,
+                                                                document_file_name: attachment.document_file_name,
+                                                            });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                        type="button"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <img
+                                                        src={attachment.url}
+                                                        alt={attachment.document_name}
+                                                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelectedDoc({
+                                                                id: attachment.id,
+                                                                url: attachment.url,
+                                                                document_name: attachment.document_name,
+                                                                document_file_name: attachment.document_file_name,
+                                                            });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                    />
+                                                </>
+                                            ) : isPdf ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                            ) : isExcel ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                    <FileSpreadsheet className="w-6 h-6" />
+                                                </div>
+                                            ) : isWord ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                    <File className="w-6 h-6" />
+                                                </div>
+                                            )}
+                                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                {attachment.document_name} (Existing)
+                                            </span>
+                                            <button
+                                                className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                title="Remove"
+                                                onClick={() => removeFile(index, "existing")}
+                                                type="button"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                                {formData.attachments.map((file, index) => {
+                                    const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                                    const isPdf = file.type.match(/application\/pdf/i);
+                                    const isExcel = file.type.match(
+                                        /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                                    );
+                                    const isWord = file.type.match(
+                                        /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                                    );
+
+                                    return (
+                                        <div
+                                            key={`new-${index}`}
+                                            className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                        >
+                                            {isImage ? (
+                                                <>
+                                                    <button
+                                                        className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        title="View"
+                                                        onClick={() => {
+                                                            setSelectedDoc({
+                                                                id: index,
+                                                                url: URL.createObjectURL(file),
+                                                                document_name: file.name,
+                                                                document_file_name: file.name,
+                                                            });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                        type="button"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <img
+                                                        src={URL.createObjectURL(file)}
+                                                        alt={file.name}
+                                                        className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                        onClick={() => {
+                                                            setSelectedDoc({
+                                                                id: index,
+                                                                url: URL.createObjectURL(file),
+                                                                document_name: file.name,
+                                                                document_file_name: file.name,
+                                                            });
+                                                            setIsModalOpen(true);
+                                                        }}
+                                                    />
+                                                </>
+                                            ) : isPdf ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                            ) : isExcel ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                    <FileSpreadsheet className="w-6 h-6" />
+                                                </div>
+                                            ) : isWord ? (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                    <FileText className="w-6 h-6" />
+                                                </div>
+                                            ) : (
+                                                <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                    <File className="w-6 h-6" />
+                                                </div>
+                                            )}
+                                            <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                {file.name} (New)
+                                            </span>
+                                            <button
+                                                className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                title="Remove"
+                                                onClick={() => removeFile(index, "new")}
+                                                type="button"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-4 mt-8">
+                    <Button
+                        onClick={handleSubmit}
+                        className="bg-red-600 hover:bg-red-700 text-white px-8"
+                        disabled={submitting}
+                    >
+                        Save Work Order
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate(-1)}
+                        className="px-8"
+                    >
+                        Cancel
+                    </Button>
+                </div>
+            </div>
 
             <AttachmentPreviewModal
                 isModalOpen={isModalOpen}
