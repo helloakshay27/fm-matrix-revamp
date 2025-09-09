@@ -296,7 +296,9 @@ export const SurveyDetailsPage = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch Question mappings: ${response.status}`);
+        throw new Error(
+          `Failed to fetch Question mappings: ${response.status}`
+        );
       }
 
       const mappingsData = await response.json();
@@ -323,7 +325,10 @@ export const SurveyDetailsPage = () => {
 
     try {
       const apiUrl = `/survey_mappings.json?q[id_eq]=${mappingId}&q[survey_id_eq]=${id}`;
-      console.log("Fetching specific Question mapping from:", getFullUrl(apiUrl));
+      console.log(
+        "Fetching specific Question mapping from:",
+        getFullUrl(apiUrl)
+      );
 
       const response = await fetch(getFullUrl(apiUrl), {
         headers: {
@@ -490,8 +495,6 @@ export const SurveyDetailsPage = () => {
         </Button>
       </div>
 
-     
-
       {/* Main Question Content Card */}
       <Card className="border border-gray-200 bg-white shadow-sm">
         <CardHeader className="px-6 py-4 border-b border-gray-200">
@@ -560,44 +563,59 @@ export const SurveyDetailsPage = () => {
           )}
 
           {/* Ticket Configuration Section - Shared for all questions */}
-          {!loading && snagChecklist && snagChecklist.snag_questions && snagChecklist.snag_questions.length > 0 && (snagChecklist.snag_questions[0] as any)?.ticket_configs && (
-            <div className="mb-6">
-              <Card className="border border-gray-200 bg-gray-50">
-                <CardHeader className="px-6 py-4 border-b border-gray-200">
-                  <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
-                    <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                      </svg>
-                    </div>
-                    Ticket Configuration
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6">
-                
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ticket Category
-                      </label>
-                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                        {(snagChecklist.snag_questions[0] as any)?.ticket_configs?.category || "No Category Assigned"}
+          {!loading &&
+            snagChecklist &&
+            snagChecklist.snag_questions &&
+            snagChecklist.snag_questions.length > 0 &&
+            (snagChecklist.snag_questions[0] as any)?.ticket_configs && (
+              <div className="mb-6">
+                <Card className="border border-gray-200 bg-gray-50">
+                  <CardHeader className="px-6 py-4 border-b border-gray-200">
+                    <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+                      <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center mr-3">
+                        <svg
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                          />
+                        </svg>
+                      </div>
+                      Ticket Configuration
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Ticket Category
+                        </label>
+                        <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                          {(snagChecklist.snag_questions[0] as any)
+                            ?.ticket_configs?.category ||
+                            "No Category Assigned"}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Assigned To
+                        </label>
+                        <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
+                          {(snagChecklist.snag_questions[0] as any)
+                            ?.ticket_configs?.assigned_to || "Not Assigned"}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Assigned To
-                      </label>
-                      <div className="text-base font-medium text-gray-900 bg-white px-4 py-3 rounded-lg border border-gray-200 shadow-sm">
-                        {(snagChecklist.snag_questions[0] as any)?.ticket_configs?.assigned_to || "Not Assigned"}
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+                  </CardContent>
+                </Card>
+              </div>
+            )}
 
           {/* Questions Section */}
           {!loading && snagChecklist && (
@@ -605,15 +623,14 @@ export const SurveyDetailsPage = () => {
               <div className="mb-4 pb-2 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">
                   {snagChecklist.check_type.charAt(0).toUpperCase() +
-                    snagChecklist.check_type.slice(1)}                   {" "}
-
-Questions
+                    snagChecklist.check_type.slice(1)}{" "}
+                  Questions
                 </h3>
                 <p className="text-sm text-gray-600 mt-1">
                   {snagChecklist.snag_questions?.length || 0} question(s)
-                  configured for this  {snagChecklist.check_type.charAt(0).toUpperCase() +
-                    snagChecklist.check_type.slice(1)}                   {" "}
-
+                  configured for this{" "}
+                  {snagChecklist.check_type.charAt(0).toUpperCase() +
+                    snagChecklist.check_type.slice(1)}{" "}
                 </p>
               </div>
               <div className="space-y-6">

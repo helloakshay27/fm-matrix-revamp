@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Square, Check, Plus, FileDown, X, ChevronLeft, ChevronRight, Upload, Download, Loader2 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppDispatch';
 import { 
   fetchBuildings, 
@@ -35,6 +35,10 @@ export const RoomPage = () => {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingRoom, setEditingRoom] = useState<any>(null);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [isImporting, setIsImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -63,6 +67,12 @@ export const RoomPage = () => {
   useEffect(() => {
     dispatch(fetchBuildings());
     dispatch(fetchAllRooms());
+    
+    // Debug localStorage values
+    console.log('=== DEBUG localStorage VALUES ===');
+    console.log('baseUrl:', localStorage.getItem('baseUrl'));
+    console.log('token:', localStorage.getItem('token') ? 'Present' : 'Missing');
+    console.log('================================');
   }, [dispatch]);
 
   // Debug: Log rooms data when it changes
@@ -217,6 +227,131 @@ export const RoomPage = () => {
     console.log('Printing all QR codes...');
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      // Debug all localStorage keys
+      console.log('=== ALL localStorage KEYS ===');
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key) {
+          console.log(`${key}:`, localStorage.getItem(key));
+        }
+      }
+      console.log('============================');
+      
+      // Get baseUrl from localStorage, fallback to default
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      
+      console.log('Original baseUrl from localStorage:', baseUrl);
+      
+      // Remove any protocol if present and ensure https
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const templateUrl = `https://${baseUrl}/assets/import_locations.xlsx`;
+      
+      console.log('Final Template URL:', templateUrl);
+      toast.info('Downloading template...');
+      
+      const response = await fetch(templateUrl, {
+        method: 'GET',
+        mode: 'cors',
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        throw new Error(`Failed to download template: ${response.status} ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      console.log('Downloaded blob size:', blob.size);
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'import_locations.xlsx';
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Template downloaded successfully');
+    } catch (error) {
+      console.error('Error downloading template:', error);
+      toast.error(`Failed to download template: ${error.message}`);
+    }
+  };
+
+  const handleImportRooms = async () => {
+    if (!importFile) {
+      toast.error('Please select a file to import');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+
+      const token = localStorage.getItem('token') || '';
+      let baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
+      
+      console.log('Original baseUrl from localStorage:', baseUrl);
+      
+      // Remove any protocol if present and ensure https
+      baseUrl = baseUrl.replace(/^https?:\/\//, '');
+      const apiUrl = `https://${baseUrl}/pms/buildings/import.json`;
+      
+      console.log('Final Import API URL:', apiUrl);
+      toast.info('Starting import...');
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Import failed: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      toast.success(`Rooms imported successfully! ${result.imported_count || ''} records processed.`);
+      setShowImportDialog(false);
+      setImportFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      dispatch(fetchAllRooms());
+    } catch (error: any) {
+      console.error('Import error:', error);
+      toast.error(error.message || 'Failed to import rooms');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+        'text/csv' // .csv
+      ];
+      
+      if (allowedTypes.includes(file.type)) {
+        setImportFile(file);
+      } else {
+        toast.error('Please select a valid Excel or CSV file');
+        event.target.value = '';
+      }
+    }
+  };
+
   const handleEditRoom = (room: any) => {
     setEditingRoom(room);
     setEditRoom({
@@ -309,6 +444,75 @@ export const RoomPage = () => {
             <h1 className="text-2xl font-bold text-gray-900">ROOM</h1>
             
             <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadTemplate}
+                className="flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Download Template
+              </Button>
+
+              <Dialog open={showImportDialog} onOpenChange={setShowImportDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Upload className="h-4 w-4" />
+                    Import Rooms
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Import Rooms</DialogTitle>
+                    <button
+                      className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                      onClick={() => setShowImportDialog(false)}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Select Excel or CSV file
+                      </label>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".xlsx,.xls,.csv"
+                        onChange={handleFileSelect}
+                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {importFile && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Selected: {importFile.name}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => {
+                          setShowImportDialog(false);
+                          setImportFile(null);
+                          if (fileInputRef.current) {
+                            fileInputRef.current.value = '';
+                          }
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleImportRooms}
+                        disabled={!importFile || isImporting}
+                      >
+                        {isImporting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Import
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-[#C72030] hover:bg-[#B01E2E] text-white flex items-center gap-2">
