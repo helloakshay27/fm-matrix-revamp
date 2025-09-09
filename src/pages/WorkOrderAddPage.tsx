@@ -306,9 +306,6 @@ export const WorkOrderAddPage: React.FC = () => {
     if (!formData.contractor) {
       toast.error("Please select a contractor");
       return false;
-    } else if (!formData.plantDetail) {
-      toast.error("Please select a plant detail");
-      return false;
     } else if (!formData.woDate) {
       toast.error("Please select a work order date");
       return false;
@@ -467,9 +464,9 @@ export const WorkOrderAddPage: React.FC = () => {
                   mt: 1,
                 }}
               >
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   value={formData.plantDetail}
                   onChange={(e) =>
                     handleInputChange("plantDetail", e.target.value)

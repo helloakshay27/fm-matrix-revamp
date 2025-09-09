@@ -219,6 +219,7 @@ export const AddMaterialPRDashboard = () => {
               id: index + 1,
               itemDetails: item.inventory?.id,
               sacHsnCode: item.sac_hsn_code,
+              sacHsnCodeId: item.hsn_id,
               productDescription: item.prod_desc,
               each: item.rate,
               quantity: item.quantity,
@@ -394,10 +395,6 @@ export const AddMaterialPRDashboard = () => {
       toast.error("Supplier is required");
       return false;
     }
-    if (!supplierDetails.plantDetail) {
-      toast.error("Plant Detail is required");
-      return false;
-    }
     if (!supplierDetails.prDate) {
       toast.error("PR Date is required");
       return false;
@@ -538,9 +535,9 @@ export const AddMaterialPRDashboard = () => {
               </FormControl>
 
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Plant Detail*</InputLabel>
+                <InputLabel shrink>Plant Detail</InputLabel>
                 <MuiSelect
-                  label="Plant Detail*"
+                  label="Plant Detail"
                   name="plantDetail"
                   value={supplierDetails.plantDetail}
                   onChange={handlePlantDetailsChange}

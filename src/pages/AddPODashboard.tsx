@@ -207,6 +207,7 @@ export const AddPODashboard = () => {
               id: index + 1,
               itemDetails: item.inventory?.id || "",
               sacHsnCode: item.sac_hsn_code || "",
+              sacHsnCodeId: item.hsn_id || "",
               quantity: item.quantity || "",
               unit: item.unit || "",
               expectedDate: item.expected_date || "",
@@ -260,12 +261,13 @@ export const AddPODashboard = () => {
     };
   };
 
+  const calculateTotalAmount = () => {
+    return items.reduce((total, item) => total + (parseFloat(item.amount) || 0), 0).toFixed(2);
+  };
+
   const validateForm = () => {
     if (!formData.supplier) {
       toast.error("Please select a supplier");
-      return false;
-    } else if (!formData.plantDetail) {
-      toast.error("Please select a plant detail");
       return false;
     } else if (!formData.poDate) {
       toast.error("Please select a po date");
@@ -542,9 +544,9 @@ export const AddPODashboard = () => {
                 </FormControl>
 
                 <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                  <InputLabel shrink>Plant Detail*</InputLabel>
+                  <InputLabel shrink>Plant Detail</InputLabel>
                   <MuiSelect
-                    label="Plant Detail*"
+                    label="Plant Detail"
                     value={formData.plantDetail}
                     onChange={(e) =>
                       setFormData({
@@ -1020,6 +1022,12 @@ export const AddPODashboard = () => {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center justify-end">
+              <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
+                Total Amount: {calculateTotalAmount()}
+              </Button>
             </div>
 
             <div className="bg-white p-6 rounded-lg shadow border">
