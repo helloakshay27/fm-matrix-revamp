@@ -30,7 +30,7 @@ const modulesByPackage = {
         //     ],
         // },
         { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Msafe Report', icon: Download, href: '/maintenance/msafe-report' },
+        { name: 'User Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
     ],
 };
