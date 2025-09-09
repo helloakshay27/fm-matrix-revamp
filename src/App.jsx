@@ -49,7 +49,7 @@ import Organizations from "./pages/Setup/Organizations.jsx";
 import { WebSocketProvider } from "./contexts/WebSocketContext.jsx";
 
 const App = () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
@@ -57,8 +57,11 @@ const App = () => {
       {/* <WebSocketProvider accessToken={token} wsUrl={'wss://uat-tasks.lockated.com/cable'}> */}
       <Toaster />
       <Routes>
+        {/* Login Routes */}
         <Route path="/login" element={<Login />} />
-        
+        <Route path="/cloud-projects-login" element={<Login />} />
+        <Route path="/cloud-minutes-login" element={<Login />} />
+
         {/* All Routes - Layout will conditionally show/hide sidebar and header */}
         <Route
           path="*"
@@ -71,13 +74,25 @@ const App = () => {
                 <Routes>
                   {/* External Portal Routes */}
                   <Route path="/cloud-projects" element={<Projects />} />
-                  <Route path="/cloud-projects/:id" element={<ProjectDetails />} />
-                  <Route path="/cloud-projects/:id/milestones" element={<MileStoneMain />} />
-                  <Route path="/cloud-projects/:id/milestones/:mid/tasks" element={<Tasks />} />
-                  <Route path="/cloud-projects/:id/milestones/:mid/tasks/:tid" element={<TaskDetails />} />
+                  <Route
+                    path="/cloud-projects/:id"
+                    element={<ProjectDetails />}
+                  />
+                  <Route
+                    path="/cloud-projects/:id/milestones"
+                    element={<MileStoneMain />}
+                  />
+                  <Route
+                    path="/cloud-projects/:id/milestones/:mid/tasks"
+                    element={<Tasks />}
+                  />
+                  <Route
+                    path="/cloud-projects/:id/milestones/:mid/tasks/:tid"
+                    element={<TaskDetails />}
+                  />
                   <Route path="/cloud-minutes" element={<MinutesOfMeeting />} />
-                  <Route path="/cloud-mom/:id" element={<MomDetails />} />
-                  <Route path="/cloud-mom/new-mom" element={<MoMAdd />} />
+                  <Route path="/cloud-minutes/:id" element={<MomDetails />} />
+                  <Route path="/cloud-minutes/new-mom" element={<MoMAdd />} />
                   <Route path="/cloud-tasks" element={<Tasks />} />
                   <Route path="/cloud-tasks/:tid" element={<TaskDetails />} />
                   <Route path="/cloud-issues" element={<Issues />} />
@@ -95,7 +110,10 @@ const App = () => {
                   />
                   <Route path="/projects/:id" element={<ProjectDetails />} />
                   <Route path="/sprint" element={<SprintTable />} />
-                  <Route path="/sprint/sprintdetails/:sid" element={<SprintDetails />} />
+                  <Route
+                    path="/sprint/sprintdetails/:sid"
+                    element={<SprintDetails />}
+                  />
                   <Route path="/sprint/:id" element={<Sprints />} />
                   <Route
                     path="/projects/:id/milestones"
@@ -105,12 +123,15 @@ const App = () => {
                     path="/projects/:id/milestones/:mid/tasks/:tid"
                     element={<TaskDetails />}
                   />
+                  <Route path="/tasks/:tid" element={<TaskDetails />} />
                   <Route
-                    path="/tasks/:tid"
-                    element={<TaskDetails />}
+                    path="/tasks"
+                    element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />}
                   />
-                  <Route path="/tasks" element={<Tasks setIsSidebarOpen={setIsSidebarOpen} />} />
-                  <Route path="/issues" element={<Issues setIsSidebarOpen={setIsSidebarOpen} />} />
+                  <Route
+                    path="/issues"
+                    element={<Issues setIsSidebarOpen={setIsSidebarOpen} />}
+                  />
                   <Route path="/issues/:id" element={<IssueDetails />} />
                   <Route path="/mom" element={<MinutesOfMeeting />} />
                   <Route path="/mom/:id" element={<MomDetails />} />
@@ -157,7 +178,10 @@ const App = () => {
                   <Route path="/setup/region" element={<Region />} />
                   <Route path="/setup/country" element={<Country />} />
                   <Route path="/setup/company" element={<Company />} />
-                  <Route path="/setup/organizations" element={<Organizations />} />
+                  <Route
+                    path="/setup/organizations"
+                    element={<Organizations />}
+                  />
                   <Route
                     path="/setup/project-group"
                     element={<ProjectGroup />}
@@ -166,10 +190,7 @@ const App = () => {
                     path="/setup/project-template"
                     element={<ProjectTemplates />}
                   />
-                  <Route
-                    path="/setup/issues/types"
-                    element={<IssuesType />}
-                  />
+                  <Route path="/setup/issues/types" element={<IssuesType />} />
                 </Routes>
               </Layout>
             </ProtectedRoute>

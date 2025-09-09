@@ -53,7 +53,40 @@ export const getMoMPaths = (momId, isCloudRoute = null) => {
     : window.location.pathname.startsWith('/cloud-');
   
   return {
-    mom: isCloud ? `/cloud-mom/${momId}` : `/mom/${momId}`,
-    newMom: isCloud ? `/cloud-mom/new-mom` : `/new-mom`
+    mom: isCloud ? `/cloud-minutes/${momId}` : `/mom/${momId}`,
+    newMom: isCloud ? `/cloud-minutes/new-mom` : `/new-mom`
   };
+};
+
+// Cloud portal configuration
+export const CLOUD_PORTALS = {
+  PROJECTS: {
+    login: '/cloud-projects-login',
+    home: '/cloud-projects',
+    routes: ['/cloud-projects', '/cloud-tasks', '/cloud-issues']
+  },
+  MINUTES: {
+    login: '/cloud-minutes-login', 
+    home: '/cloud-minutes',
+    routes: ['/cloud-minutes', '/cloud-mom']
+  }
+};
+
+// Smart function to determine which cloud portal a route belongs to
+export const getCloudPortalForRoute = (pathname) => {
+  return Object.values(CLOUD_PORTALS).find(portal => 
+    portal.routes.some(route => pathname.startsWith(route))
+  );
+};
+
+// Get the appropriate login route for any cloud route
+export const getCloudLoginRoute = (pathname) => {
+  const portal = getCloudPortalForRoute(pathname);
+  return portal ? portal.login : '/login';
+};
+
+// Get the home route for any cloud portal login
+export const getCloudHomeRoute = (loginPath) => {
+  const portal = Object.values(CLOUD_PORTALS).find(p => p.login === loginPath);
+  return portal ? portal.home : '/projects';
 };

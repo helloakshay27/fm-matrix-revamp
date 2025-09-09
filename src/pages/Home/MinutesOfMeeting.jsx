@@ -177,12 +177,12 @@ const MinutesOfMeeting = () => {
                                                 >
                                                     View
                                                 </Link>
-                                                <Link
+                                                {/* <Link
                                                     to={`${getMoMPaths(item.id, isCloudRoute).mom}?edit=true`}
                                                     className="text-green-600 hover:text-green-800 text-xs px-2 py-1 border border-green-600 rounded hover:bg-green-50"
                                                 >
                                                     Edit
-                                                </Link>
+                                                </Link> */}
                                             </div>
                                         </td>
                                     </tr>
