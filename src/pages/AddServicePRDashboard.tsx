@@ -61,7 +61,7 @@ export const AddServicePRDashboard = () => {
   const [formData, setFormData] = useState({
     contractor: "",
     plantDetail: "",
-    woDate: new Date(),
+    woDate: "",
     billingAddress: "",
     retention: "",
     tds: "",
@@ -82,7 +82,7 @@ export const AddServicePRDashboard = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: "",
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -401,7 +401,7 @@ export const AddServicePRDashboard = () => {
       productDescription: "",
       quantityArea: "",
       uom: "",
-      expectedDate: new Date(),
+      expectedDate: "",
       rate: "",
       cgstRate: "",
       cgstAmt: "",
@@ -629,11 +629,7 @@ export const AddServicePRDashboard = () => {
 
               <TextField
                 label="Select WO Date*"
-                value={
-                  formData.woDate instanceof Date
-                    ? formData.woDate.toISOString().split("T")[0]
-                    : ""
-                }
+                value={formData.woDate}
                 onChange={(e) =>
                   handleInputChange("woDate", new Date(e.target.value))
                 }
@@ -911,11 +907,7 @@ export const AddServicePRDashboard = () => {
 
                   <TextField
                     label="Expected Date*"
-                    value={
-                      detailsData.expectedDate instanceof Date
-                        ? detailsData.expectedDate.toISOString().split("T")[0]
-                        : ""
-                    }
+                    value={detailsData.expectedDate}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
