@@ -475,7 +475,7 @@ export const EditServicePRPage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-6 max-w-7xl mx-auto">
+      <div className="p-6 mx-auto">
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}

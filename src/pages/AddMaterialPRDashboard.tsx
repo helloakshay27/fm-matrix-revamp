@@ -201,7 +201,7 @@ export const AddMaterialPRDashboard = () => {
           setSupplierDetails({
             supplier: response.supplier?.id,
             plantDetail: response.plant_detail?.id,
-            prDate: response.po_date,
+            prDate: response.po_date ? response.po_date.split("T")[0] : "",
             billingAddress: response.billing_address_id,
             deliveryAddress: response.shipping_address_id,
             transportation: response.transportation,
@@ -223,7 +223,7 @@ export const AddMaterialPRDashboard = () => {
               productDescription: item.prod_desc,
               each: item.rate,
               quantity: item.quantity,
-              expectedDate: item.expected_date,
+              expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
               amount: item.total_value,
               wbsCode: "",
             }))

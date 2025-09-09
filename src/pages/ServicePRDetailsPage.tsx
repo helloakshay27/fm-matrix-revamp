@@ -356,7 +356,7 @@ export const ServicePRDetailsPage = () => {
   };
 
   return (
-    <div className="p-6 mx-auto max-w-7xl bg-[#fafafa] min-h-screen">
+    <div className="p-6 mx-auto bg-[#fafafa] min-h-screen">
       <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
