@@ -36,6 +36,9 @@ import {
   AssetDistributionCard
 } from '@/components/asset-analytics';
 // Import individual ticket analytics components from TicketDashboard
+import communityAnalyticsAPI from '@/services/communityAnalyticsAPI';
+import { CommunityEngagementMetricsCard } from '@/components/community/CommunityEngagementMetricsCard';
+import { SiteWiseAdoptionRateCard } from '@/components/community/SiteWiseAdoptionRateCard';
 import {
   TicketStatusOverviewCard,
   ProactiveReactiveCard,
@@ -56,13 +59,21 @@ import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { meetingRoomAnalyticsAPI } from '@/services/meetingRoomAnalyticsAPI';
+import helpdeskAnalyticsAPI from '@/services/helpdeskAnalyticsAPI';
+import { HelpdeskSnapshotCard } from '@/components/helpdesk/HelpdeskSnapshotCard';
+import { TicketAgingClosureFeedbackCard } from '@/components/helpdesk/TicketAgingClosureFeedbackCard';
+import { TicketPerformanceMetricsCard } from '@/components/helpdesk/TicketPerformanceMetricsCard';
+import { CustomerExperienceFeedbackCard } from '@/components/helpdesk/CustomerExperienceFeedbackCard';
+import { CustomerRatingOverviewCard } from '@/components/helpdesk/CustomerRatingOverviewCard';
 import MeetingRoomUtilizationCard from '@/components/meeting-room/MeetingRoomUtilizationCard';
 import { RevenueGenerationOverviewCard } from '@/components/meeting-room/RevenueGenerationOverviewCard';
 import { CenterPerformanceOverviewCard } from '@/components/meeting-room/CenterPerformanceOverviewCard';
+import ResponseTATQuarterlyCard from '@/components/meeting-room/ResponseTATQuarterlyCard';
+import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQuarterlyCard';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk';
   endpoint: string;
   title: string;
 }
@@ -75,6 +86,8 @@ interface DashboardData {
   amc: any;
   assets: any;
   meeting_room?: any;
+  community?: any;
+  helpdesk?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -150,8 +163,8 @@ export const Dashboard = () => {
     schedule: null,
     inventory: null,
     amc: null,
-  assets: null,
-  meeting_room: null,
+    assets: null,
+    meeting_room: null,
   });
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
@@ -355,6 +368,46 @@ export const Dashboard = () => {
                 case 'center_wise_meeting_room_utilization':
                   promises.push(meetingRoomAnalyticsAPI.getCenterWiseMeetingRoomUtilization(dateRange.from!, dateRange.to!));
                   break;
+                case 'response_tat_performance_quarterly':
+                  promises.push(meetingRoomAnalyticsAPI.getResponseTATPerformanceQuarterly());
+                  break;
+                case 'resolution_tat_performance_quarterly':
+                  promises.push(meetingRoomAnalyticsAPI.getResolutionTATPerformanceQuarterly());
+                  break;
+              }
+            }
+            break;
+          case 'community':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'engagement_metrics':
+                  promises.push(communityAnalyticsAPI.getCommunityEngagementMetrics());
+                  break;
+                case 'site_wise_adoption_rate':
+                  promises.push(communityAnalyticsAPI.getSiteWiseAdoptionRate(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'helpdesk':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'snapshot':
+                  promises.push(helpdeskAnalyticsAPI.getHelpdeskSnapshot(dateRange.from!, dateRange.to!));
+                  break;
+                case 'aging_closure_feedback':
+                  promises.push(helpdeskAnalyticsAPI.getAgingClosureFeedbackOverview(dateRange.from!, dateRange.to!));
+                  break;
+                case 'ticket_performance_metrics':
+                  promises.push(helpdeskAnalyticsAPI.getTicketPerformanceMetrics(dateRange.from!, dateRange.to!));
+                  break;
+                case 'customer_experience_feedback':
+                  promises.push(helpdeskAnalyticsAPI.getCustomerExperienceFeedback(dateRange.from!, dateRange.to!));
+                  break;
+                case 'customer_rating_overview':
+                  // Uses the same customer_experience_feedback dataset
+                  promises.push(helpdeskAnalyticsAPI.getCustomerExperienceFeedback(dateRange.from!, dateRange.to!));
+                  break;
               }
             }
             break;
@@ -547,10 +600,10 @@ export const Dashboard = () => {
         switch (analytic.endpoint) {
           case 'ticket_status':
             // Ticket Status Overview
-            const statusData = data && typeof data === 'object' && 'open' in data && 'closed' in data 
-              ? data 
+            const statusData = data && typeof data === 'object' && 'open' in data && 'closed' in data
+              ? data
               : { open: 0, closed: 0, wip: 0 };
-            
+
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <TicketStatusOverviewCard
@@ -563,7 +616,7 @@ export const Dashboard = () => {
           case 'tickets_proactive_reactive':
             // Proactive/Reactive tickets breakdown
             const proactiveReactiveData = Array.isArray(data) && data.length > 0 ? data[0] : null;
-            
+
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ProactiveReactiveCard
@@ -578,7 +631,7 @@ export const Dashboard = () => {
           case 'tickets_categorywise':
             // Category-wise Proactive/Reactive
             const categoryData = Array.isArray(data) ? data : [];
-            
+
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <CategoryWiseProactiveReactiveCard
@@ -595,7 +648,7 @@ export const Dashboard = () => {
           case 'unit_categorywise':
             // Unit Category-wise tickets
             const unitCategoryData = data && typeof data === 'object' ? data : null;
-            
+
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <UnitCategoryWiseCard
@@ -611,7 +664,7 @@ export const Dashboard = () => {
           case 'ticket_aging_matrix':
             // Ticket Aging Matrix - use rawData, not transformed data
             const agingRawData = rawData && typeof rawData === 'object' ? rawData : null;
-            
+
             // Transform API response to expected format - same as TicketDashboard
             const agingMatrixData = agingRawData?.response?.matrix
               ? Object.entries(agingRawData.response.matrix).map(([priority, data]: [string, any]) => ({
@@ -648,7 +701,7 @@ export const Dashboard = () => {
                   T5: 0,
                 }
               ];
-            
+
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <TicketAgingMatrixCard
@@ -995,6 +1048,80 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <MeetingRoomUtilizationCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'response_tat_performance_quarterly': {
+            const rows = Array.isArray(rawData) ? rawData : [];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ResponseTATQuarterlyCard data={rows} />
+              </SortableChartItem>
+            );
+          }
+          case 'resolution_tat_performance_quarterly': {
+            const rows = Array.isArray(rawData) ? rawData : [];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ResolutionTATQuarterlyCard data={rows} />
+              </SortableChartItem>
+            );
+          }
+          default:
+            return null;
+        }
+      case 'community':
+        switch (analytic.endpoint) {
+          case 'engagement_metrics':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CommunityEngagementMetricsCard data={rawData} />
+              </SortableChartItem>
+            );
+          case 'site_wise_adoption_rate':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <SiteWiseAdoptionRateCard data={rawData} />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      case 'helpdesk':
+        switch (analytic.endpoint) {
+          case 'snapshot':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <HelpdeskSnapshotCard data={rawData} />
+              </SortableChartItem>
+            );
+          case 'aging_closure_feedback': {
+            const agingClosureData = rawData?.agingClosure ?? rawData?.aging_closure ?? rawData ?? null;
+            const feedbackData = rawData?.feedback ?? null;
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <TicketAgingClosureFeedbackCard agingClosureData={agingClosureData} feedbackData={feedbackData} />
+              </SortableChartItem>
+            );
+          }
+          case 'ticket_performance_metrics': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <TicketPerformanceMetricsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'customer_experience_feedback': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CustomerExperienceFeedbackCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'customer_rating_overview': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CustomerRatingOverviewCard data={rawData} />
               </SortableChartItem>
             );
           }

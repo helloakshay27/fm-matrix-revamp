@@ -62,6 +62,46 @@ export const meetingRoomAnalyticsAPI = {
     const resp = await apiClient.get(url);
     return resp.data;
   },
+
+  // Quarterly TAT performance by center – Response
+  async getResponseTATPerformanceQuarterly(): Promise<Array<{ site: string; responseLast: number; responseCurrent: number }>> {
+    const url = `/api/pms/reports/response_tat_performance_quarterly`;
+    const resp = await apiClient.get(url);
+    const payload = resp.data;
+    const perf = payload?.data?.performance_data
+      ?? payload?.performance_data
+      ?? [];
+    if (!Array.isArray(perf)) return [];
+
+    return perf.map((row: any) => {
+      const site = row.center_name || row.site_name || row.site || '';
+      const lastNested = row.last_quarter?.response_tat?.achieved_percentage;
+      const currentNested = row.current_quarter?.response_tat?.achieved_percentage;
+      const responseLast = Number(lastNested ?? row.last_quarter?.response_achieved_percentage ?? 0);
+      const responseCurrent = Number(currentNested ?? row.current_quarter?.response_achieved_percentage ?? 0);
+      return { site, responseLast, responseCurrent };
+    });
+  },
+
+  // Quarterly TAT performance by center – Resolution
+  async getResolutionTATPerformanceQuarterly(): Promise<Array<{ site: string; resolutionLast: number; resolutionCurrent: number }>> {
+    const url = `/api/pms/reports/resolution_tat_performance_quarterly`;
+    const resp = await apiClient.get(url);
+    const payload = resp.data;
+    const perf = payload?.data?.performance_data
+      ?? payload?.performance_data
+      ?? [];
+    if (!Array.isArray(perf)) return [];
+
+    return perf.map((row: any) => {
+      const site = row.center_name || row.site_name || row.site || '';
+      const lastNested = row.last_quarter?.resolution_tat?.achieved_percentage;
+      const currentNested = row.current_quarter?.resolution_tat?.achieved_percentage;
+      const resolutionLast = Number(lastNested ?? row.last_quarter?.resolution_achieved_percentage ?? 0);
+      const resolutionCurrent = Number(currentNested ?? row.current_quarter?.resolution_achieved_percentage ?? 0);
+      return { site, resolutionLast, resolutionCurrent };
+    });
+  },
 };
 
 export default meetingRoomAnalyticsAPI;
