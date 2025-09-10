@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management';
   endpoint: string;
   title: string;
 }
@@ -144,6 +144,16 @@ const analyticsOptions = {
       { id: 'am_amc_contract_summary', endpoint: 'amc_contract_summary', label: 'AMC Contract Summary' },
       { id: 'am_amc_contract_expiry_90', endpoint: 'amc_contract_expiry_90', label: 'AMC Contract Summary – Expiry in 90 Days' },
       { id: 'am_amc_contract_expired', endpoint: 'amc_contract_expired', label: 'AMC Contract Summary – Expired' },
+    ]
+  },
+
+  inventory_management: {
+    icon: Package,
+    label: 'Inventory Management',
+    color: '#F59E0B',
+    options: [
+      { id: 'inv_overview_summary', endpoint: 'inventory_overview_summary', label: 'Overview Summary' },
+      { id: 'inv_overstock_top10', endpoint: 'inventory_overstock_top10', label: 'Overstock Analysis – Top 10 Items' },
     ]
   },
 

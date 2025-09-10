@@ -67,6 +67,9 @@ import AmcContractSummaryCard from '@/components/asset-management/AmcContractSum
 import AmcExpiringContractsCard from '@/components/asset-management/AmcExpiringContractsCard';
 import AmcExpiredContractsCard from '@/components/asset-management/AmcExpiredContractsCard';
 import helpdeskAnalyticsAPI from '@/services/helpdeskAnalyticsAPI';
+import inventoryManagementAnalyticsAPI from '@/services/inventoryManagementAnalyticsAPI';
+import InventoryOverviewSummaryCard from '@/components/inventory-management/InventoryOverviewSummaryCard';
+import OverstockTop10ItemsCard from '@/components/inventory-management/OverstockTop10ItemsCard';
 import { HelpdeskSnapshotCard } from '@/components/helpdesk/HelpdeskSnapshotCard';
 import { TicketAgingClosureFeedbackCard } from '@/components/helpdesk/TicketAgingClosureFeedbackCard';
 import { TicketPerformanceMetricsCard } from '@/components/helpdesk/TicketPerformanceMetricsCard';
@@ -80,7 +83,7 @@ import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQ
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management';
   endpoint: string;
   title: string;
 }
@@ -96,6 +99,7 @@ interface DashboardData {
   community?: any;
   helpdesk?: any;
   asset_management?: any;
+  inventory_management?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -434,6 +438,16 @@ export const Dashboard = () => {
                 case 'customer_rating_overview':
                   // Uses the same customer_experience_feedback dataset
                   promises.push(helpdeskAnalyticsAPI.getCustomerExperienceFeedback(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'inventory_management':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'inventory_overview_summary':
+                case 'inventory_overstock_top10':
+                  promises.push(inventoryManagementAnalyticsAPI.getInventoryOverstockReport(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -1155,6 +1169,25 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <AmcExpiredContractsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          default:
+            return null;
+        }
+      case 'inventory_management':
+        switch (analytic.endpoint) {
+          case 'inventory_overview_summary': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <InventoryOverviewSummaryCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'inventory_overstock_top10': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <OverstockTop10ItemsCard data={rawData} />
               </SortableChartItem>
             );
           }
