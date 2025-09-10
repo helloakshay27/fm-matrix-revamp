@@ -4,7 +4,7 @@ import { ENDPOINTS } from '@/config/apiConfig';
 import { Asset } from '@/hooks/useAssets';
 
 interface SearchResponse {
-    assets: Asset[];
+  assets: Asset[];
   pagination: {
     current_page: number;
     total_pages: number;
@@ -17,6 +17,17 @@ export const useAssetSearch = () => {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<{
+    current_page: number;
+    total_pages: number;
+    total_count: number;
+    per_page: number;
+  }>({
+    current_page: 1,
+    total_pages: 1,
+    total_count: 0,
+    per_page: 15, // Assuming 15 items per page, adjust as needed
+  });
 
   const mapAssetData = (apiAsset: any): Asset => {
     return {
@@ -36,9 +47,15 @@ export const useAssetSearch = () => {
     };
   };
 
-  const searchAssets = useCallback(async (searchTerm: string) => {
+  const searchAssets = useCallback(async (searchTerm: string, page: number = 1) => {
     if (!searchTerm.trim()) {
       setAssets([]);
+      setPagination({
+        current_page: 1,
+        total_pages: 1,
+        total_count: 0,
+        per_page: 15,
+      });
       return;
     }
 
@@ -46,44 +63,37 @@ export const useAssetSearch = () => {
     setError(null);
 
     try {
-      console.log('🔍 Starting asset search with term:', searchTerm);
-      console.log('📡 API Base URL:', apiClient.defaults.baseURL);
-      console.log('🔗 Search endpoint:', ENDPOINTS.ASSETS);
-      console.log('🔑 Auth header available:', !!apiClient.defaults.headers.Authorization);
-      
       const response = await apiClient.get<SearchResponse>(ENDPOINTS.ASSETS, {
         params: {
-          'q[name_or_asset_number_cont]': searchTerm
+          'q[name_or_asset_number_cont]': searchTerm,
+          page: page,
+          per_page: 15,
         }
-      });
-
-      console.log(response.data.assets)
-
-      console.log('✅ Search response received:', response.status);
-      console.log('📄 Response data structure:', {
-        hasData: !!response.data,
-        hasDataArray: !!(response.data && Array.isArray(response.data.assets)),
-        dataCount: response.data?.assets?.length || 0
       });
 
       if (response.data && Array.isArray(response.data.assets)) {
         const mappedAssets = response.data.assets.map(mapAssetData);
-        console.log('🎯 Mapped assets count:', mappedAssets.length);
         setAssets(mappedAssets);
+        setPagination(response.data.pagination);
       } else {
         console.log('⚠️ Invalid response structure - no data array found');
         setAssets([]);
+        setPagination({
+          current_page: 1,
+          total_pages: 1,
+          total_count: 0,
+          per_page: 15,
+        });
       }
     } catch (err: any) {
-      console.error('❌ Asset search error:', err);
-      console.error('📝 Error details:', {
-        message: err.message,
-        status: err.response?.status,
-        statusText: err.response?.statusText,
-        responseData: err.response?.data
-      });
       setError('Failed to search assets. Please try again.');
       setAssets([]);
+      setPagination({
+        current_page: 1,
+        total_pages: 1,
+        total_count: 0,
+        per_page: 15,
+      });
     } finally {
       setLoading(false);
     }
@@ -93,6 +103,7 @@ export const useAssetSearch = () => {
     assets,
     loading,
     error,
+    pagination,
     searchAssets,
   };
 };
