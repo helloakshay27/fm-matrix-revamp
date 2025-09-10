@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management';
   endpoint: string;
   title: string;
 }
@@ -164,6 +164,15 @@ const analyticsOptions = {
     options: [
       { id: 'consumables_top_center', endpoint: 'top_consumables_center', label: 'Top Consumables – Centre-wise Overview' },
       { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Quarterly Comparison' },
+    ]
+  },
+
+  parking_management: {
+    icon: BarChart3,
+    label: 'Parking Management',
+    color: '#A0B5C1',
+    options: [
+      { id: 'parking_allocation_overview', endpoint: 'parking_allocation_overview', label: 'Parking Allocation Overview – Paid, Free & Vacant' },
     ]
   },
 

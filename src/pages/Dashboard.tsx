@@ -82,10 +82,12 @@ import { RevenueGenerationOverviewCard } from '@/components/meeting-room/Revenue
 import { CenterPerformanceOverviewCard } from '@/components/meeting-room/CenterPerformanceOverviewCard';
 import ResponseTATQuarterlyCard from '@/components/meeting-room/ResponseTATQuarterlyCard';
 import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQuarterlyCard';
+import parkingManagementAnalyticsAPI from '@/services/parkingManagementAnalyticsAPI';
+import ParkingAllocationOverviewCard from '@/components/parking/ParkingAllocationOverviewCard';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management';
   endpoint: string;
   title: string;
 }
@@ -103,6 +105,7 @@ interface DashboardData {
   asset_management?: any;
   inventory_management?: any;
   consumables_overview?: any;
+  parking_management?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -465,6 +468,15 @@ export const Dashboard = () => {
                   break;
                 case 'consumable_inventory_value_quarterly':
                   promises.push(inventoryManagementAnalyticsAPI.getConsumableInventoryComparison(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'parking_management':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'parking_allocation_overview':
+                  promises.push(parkingManagementAnalyticsAPI.getParkingAllocationOverview(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -1223,6 +1235,17 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id} className="lg:col-span-2">
                 <ConsumableInventoryQuarterlyComparisonCard data={rawData} />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      case 'parking_management':
+        switch (analytic.endpoint) {
+          case 'parking_allocation_overview':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ParkingAllocationOverviewCard data={rawData} />
               </SortableChartItem>
             );
           default:
