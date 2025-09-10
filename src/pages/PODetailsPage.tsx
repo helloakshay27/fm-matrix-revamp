@@ -106,7 +106,7 @@ interface GRNDetail {
   qh_amount?: number;
   bill_date?: string;
   payment_mod?: string;
-  other_expense?: number;
+  other_expenses?: number;
   loading_expense?: number;
   adj_amount?: number;
   qc_approval_status?: string;
@@ -191,18 +191,18 @@ const inventoryTableColumns: ColumnConfig[] = [
   { key: "unit", label: "Unit", sortable: true, draggable: true },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "total_value", label: "Amount", sortable: true, draggable: true },
-  {
-    key: "approved_qty",
-    label: "Approved Qty",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "transfer_qty",
-    label: "Transfer Qty",
-    sortable: true,
-    draggable: true,
-  },
+  // {
+  //   key: "approved_qty",
+  //   label: "Approved Qty",
+  //   sortable: true,
+  //   draggable: true,
+  // },
+  // {
+  //   key: "transfer_qty",
+  //   label: "Transfer Qty",
+  //   sortable: true,
+  //   draggable: true,
+  // },
 ];
 
 const grnDetailsColumns: ColumnConfig[] = [
@@ -248,7 +248,7 @@ const grnDetailsColumns: ColumnConfig[] = [
     draggable: true,
   },
   {
-    key: "other_expense",
+    key: "other_expenses",
     label: "Other Expense",
     sortable: true,
     draggable: true,
@@ -612,7 +612,7 @@ export const PODetailsPage = () => {
         ? format(new Date(item.bill_date), "dd-MM-yyyy")
         : "-",
       payment_mode: item.payment_mod || "-",
-      other_expense: item.other_expense || "-",
+      other_expenses: item.other_expenses || "-",
       loading_expense: item.loading_expense || "-",
       adjustment_amount: item.adj_amount || "-",
       qc_approval_status: item.qc_approval_status || "-",
@@ -1082,7 +1082,7 @@ export const PODetailsPage = () => {
           <CardContent>
             {Array.isArray(poDetails.attachments) &&
               poDetails.attachments.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="flex items-center flex-wrap gap-4">
                 {poDetails.attachments.map((attachment: Attachment) => {
                   const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
                     attachment.url

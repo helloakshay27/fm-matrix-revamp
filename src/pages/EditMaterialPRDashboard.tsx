@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   TextField,
@@ -28,6 +28,7 @@ import {
 } from "@/store/slices/materialPRSlice";
 import { toast } from "sonner";
 import axios from "axios";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -35,6 +36,13 @@ const fieldStyles = {
     padding: { xs: "8px", sm: "10px", md: "12px" },
   },
 };
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name?: string;
+  document_file_name?: string;
+}
 
 export const EditMaterialPRDashboard = () => {
   const { id } = useParams();
@@ -89,6 +97,8 @@ export const EditMaterialPRDashboard = () => {
   const [files, setFiles] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -116,11 +126,7 @@ export const EditMaterialPRDashboard = () => {
       try {
         const response = await dispatch(getMaterialPRById({ baseUrl, token, id: id })).unwrap();
 
-        setWbsSelection(
-          response.pms_po_inventories?.every(item => item.wbs_code !== null)
-            ? "individual"
-            : "overall"
-        );
+        setWbsSelection("individual");
 
         setSupplierDetails({
           supplier: response.supplier?.id,
@@ -150,7 +156,7 @@ export const EditMaterialPRDashboard = () => {
             quantity: item.quantity,
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             amount: item.total_value,
-            wbsCode: "",
+            wbsCode: item.wbs_code,
           }))
         );
 
@@ -900,13 +906,10 @@ export const EditMaterialPRDashboard = () => {
               >
                 <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                 <div className="text-sm text-gray-600">
-                  <span className="font-medium">
-                    Drag & Drop or Click to Upload
-                  </span>
+                  <span className="font-medium">Drag & Drop or Click to Upload</span>
                   <input
                     type="file"
                     multiple
-                    accept="image/*"
                     onChange={handleFileChange}
                     className="hidden"
                     id="file-upload"
@@ -914,45 +917,164 @@ export const EditMaterialPRDashboard = () => {
                   />
                   <span className="ml-1">
                     {(files.length + existingAttachments.length) > 0
-                      ? `${files.length + existingAttachments.length} image(s) selected`
-                      : "No images chosen"}
+                      ? `${files.length + existingAttachments.length} file(s) selected`
+                      : "No files chosen"}
                   </span>
                 </div>
               </div>
 
               {(files.length > 0 || existingAttachments.length > 0) && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-10 gap-10 my-6">
-                  {existingAttachments.map((attachment, index) => (
-                    <div key={`existing-${attachment.id}`} className="relative w-24 h-24">
-                      <img
-                        src={attachment.url}
-                        alt={attachment.name}
-                        className="w-full h-full object-cover rounded-lg bg-gray-50"
-                      />
-                      <div className="text-xs text-gray-600 truncate mt-1" title={attachment.name}>
-                        {attachment.name} (Existing)
-                      </div>
-                    </div>
-                  ))}
-                  {files.map((file, index) => (
-                    <div key={`new-${index}`} className="relative w-24 h-24">
-                      <img
-                        src={URL.createObjectURL(file)}
-                        alt={`Preview ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                      <Button
-                        onClick={() => removeFile(index, "new")}
-                        size="sm"
-                        className="absolute -top-2 -right-2 p-1 h-7 w-7 rounded-full bg-red-500 hover:bg-red-600"
+                <div className="flex items-center flex-wrap gap-4 my-6">
+                  {existingAttachments.map((attachment, index) => {
+                    const isImage = attachment.url.match(/\.(jpeg|jpg|png)$/i);
+                    const isPdf = attachment.url.match(/\.pdf$/i);
+                    const isExcel = attachment.url.match(/\.(xls|xlsx)$/i);
+                    const isWord = attachment.url.match(/\.(doc|docx)$/i);
+
+                    return (
+                      <div
+                        key={`existing-${attachment.id}`}
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                       >
-                        <X className="w-4 h-4 text-white" />
-                      </Button>
-                      <div className="text-xs text-gray-600 truncate mt-1" title={file.name}>
-                        {file.name} (New)
+                        {isImage ? (
+                          <>
+                            <button
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: attachment.id,
+                                  url: attachment.url,
+                                  document_name: attachment.name,
+                                  document_file_name: attachment.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              type="button"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: attachment.id,
+                                  url: attachment.url,
+                                  document_name: attachment.name,
+                                  document_file_name: attachment.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            />
+                          </>
+                        ) : isPdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <File className="w-6 h-6" />
+                          </div>
+                        )}
+                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                          {attachment.name}
+                        </span>
+                        <button
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="Remove"
+                          onClick={() => removeFile(index, "existing")}
+                          type="button"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
+                  {files.map((file, index) => {
+                    const isImage = file.type === "image/jpeg" || file.type === "image/png";
+                    const isPdf = file.type === "application/pdf";
+                    const isExcel = file.type === "application/vnd.ms-excel" || file.type === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+                    const isWord = file.type === "application/msword" || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+                    return (
+                      <div
+                        key={`new-${index}`}
+                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                      >
+                        {isImage ? (
+                          <>
+                            <button
+                              className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                              title="View"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                              type="button"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <img
+                              src={URL.createObjectURL(file)}
+                              alt={file.name}
+                              className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                              onClick={() => {
+                                setSelectedDoc({
+                                  id: index,
+                                  url: URL.createObjectURL(file),
+                                  document_name: file.name,
+                                  document_file_name: file.name,
+                                });
+                                setIsModalOpen(true);
+                              }}
+                            />
+                          </>
+                        ) : isPdf ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : isExcel ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                            <FileSpreadsheet className="w-6 h-6" />
+                          </div>
+                        ) : isWord ? (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                            <FileText className="w-6 h-6" />
+                          </div>
+                        ) : (
+                          <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                            <File className="w-6 h-6" />
+                          </div>
+                        )}
+                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                          {file.name}
+                        </span>
+                        <button
+                          className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="Remove"
+                          onClick={() => removeFile(index, "new")}
+                          type="button"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -970,6 +1092,13 @@ export const EditMaterialPRDashboard = () => {
           </div>
         </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

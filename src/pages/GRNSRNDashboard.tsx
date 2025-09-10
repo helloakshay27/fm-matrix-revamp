@@ -9,6 +9,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getGRN } from "@/store/slices/grnSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const columns: ColumnConfig[] = [
   {
@@ -185,6 +186,21 @@ export const GRNSRNDashboard = () => {
           >
             {item.approved_status}
           </span>
+        );
+      case "inventories_name":
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="max-w-[200px] truncate block cursor-pointer">
+                  {item.inventories_name}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{item.inventories_name}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         );
       default:
         return item[columnKey] || "-";

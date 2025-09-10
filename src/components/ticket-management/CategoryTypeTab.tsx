@@ -659,7 +659,7 @@ export const CategoryTypeTab: React.FC = () => {
                   name="categoryName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category Name</FormLabel>
+                      <FormLabel>Category Name <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="Enter category name" {...field} />
                       </FormControl>

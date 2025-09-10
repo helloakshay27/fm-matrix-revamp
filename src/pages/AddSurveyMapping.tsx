@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { X, Plus, Type, MapPin, List, Loader2, Search, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
-import { CircularProgress } from '@mui/material';
+import { X, Plus, MapPin, List, Loader2, ArrowLeft, ListChecks } from 'lucide-react';
+import { 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem, 
+  Chip, 
+  Box,
+  OutlinedInput,
+  SelectChangeEvent,
+  CircularProgress 
+} from '@mui/material';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+
+interface Question {
+  id: string;
+  task: string;
+  inputType: string;
+  mandatory: boolean;
+  options: string[];
+  optionsText: string;
+}
 
 interface Survey {
   id: number;
@@ -15,6 +33,7 @@ interface Survey {
   questions_count: number;
   active: number;
   check_type: string;
+  snag_questions?: any[];
 }
 
 interface LocationItem {
@@ -24,7 +43,7 @@ interface LocationItem {
 
 interface SurveyMapping {
   id: string;
-  surveyIds: number[];
+  surveyId: number | null;
   buildingIds: number[];
   wingIds: number[];
   floorIds: number[];
@@ -52,7 +71,7 @@ export const AddSurveyMapping = () => {
   // Form state
   const [surveyMappings, setSurveyMappings] = useState<SurveyMapping[]>([{
     id: `sm-${Date.now()}`,
-    surveyIds: [],
+    surveyId: null,
     buildingIds: [],
     wingIds: [],
     floorIds: [],
@@ -63,6 +82,9 @@ export const AddSurveyMapping = () => {
   // Survey data
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loadingSurveys, setLoadingSurveys] = useState(false);
+  
+  // Selected survey questions
+  const [selectedSurveyQuestions, setSelectedSurveyQuestions] = useState<Question[]>([]);
 
   // Location data
   const [buildings, setBuildings] = useState<LocationItem[]>([]);
@@ -78,9 +100,6 @@ export const AddSurveyMapping = () => {
   const [loadingAreas, setLoadingAreas] = useState(false);
   const [loadingRooms, setLoadingRooms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Dropdown state for each mapping and location type
-  const [dropdownStates, setDropdownStates] = useState<Record<string, Record<string, boolean>>>({});
 
   // Fetch surveys and locations on component mount
   useEffect(() => {
@@ -259,6 +278,14 @@ export const AddSurveyMapping = () => {
     }
   };
 
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    "& .MuiInputBase-input, & .MuiSelect-select": {
+      padding: { xs: "8px", sm: "10px", md: "12px" },
+    },
+  };
+
   // Update functions
   const updateSurveyMapping = (index: number, field: keyof SurveyMapping, value: any) => {
     setSurveyMappings(prev => prev.map((item, i) =>
@@ -268,7 +295,7 @@ export const AddSurveyMapping = () => {
 
   const addSurveyMapping = () => setSurveyMappings(prev => [...prev, {
     id: `sm-${Date.now()}`,
-    surveyIds: [],
+    surveyId: null,
     buildingIds: [],
     wingIds: [],
     floorIds: [],
@@ -278,44 +305,61 @@ export const AddSurveyMapping = () => {
 
   const removeSurveyMapping = (idx: number) => setSurveyMappings(prev => prev.filter((_, i) => i !== idx));
 
-  const toggleDropdown = (mappingId: string, locationType: string) => {
-    setDropdownStates(prev => ({
-      ...prev,
-      [mappingId]: {
-        ...prev[mappingId],
-        [locationType]: !prev[mappingId]?.[locationType]
-      }
-    }));
+  const handleSurveyChange = (mappingIndex: number, event: SelectChangeEvent<number>) => {
+    const value = event.target.value as number;
+    updateSurveyMapping(mappingIndex, 'surveyId', value);
+    
+    // Find the selected survey and map its questions
+    const selectedSurvey = surveys.find(survey => survey.id === value);
+    if (selectedSurvey && selectedSurvey.snag_questions) {
+      const mappedQuestions = selectedSurvey.snag_questions.map((q: any) => {
+        // Map API question types to UI input types
+        let inputType = '';
+        switch (q.qtype) {
+          case 'multiple':
+            inputType = 'multiple_choice';
+            break;
+          case 'yesno':
+            inputType = 'yes_no';
+            break;
+          case 'rating':
+            inputType = 'rating';
+            break;
+          case 'input':
+            inputType = 'text_input';
+            break;
+          case 'description':
+            inputType = 'description';
+            break;
+          case 'emoji':
+            inputType = 'emoji';
+            break;
+          default:
+            inputType = '';
+        }
+
+        return {
+          id: q.id.toString(),
+          task: q.descr,
+          inputType,
+          mandatory: !!q.quest_mandatory,
+          options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
+          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
+        };
+      });
+      setSelectedSurveyQuestions(mappedQuestions);
+    } else {
+      setSelectedSurveyQuestions([]);
+    }
   };
 
-  const isDropdownOpen = (mappingId: string, locationType: string) => {
-    return dropdownStates[mappingId]?.[locationType] || false;
-  };
-
-  const handleSurveyToggle = (mappingIndex: number, surveyId: number) => {
-    setSurveyMappings(prev => prev.map((mapping, index) => {
-      if (index === mappingIndex) {
-        const currentIds = mapping.surveyIds;
-        const updatedIds = currentIds.includes(surveyId)
-          ? currentIds.filter(id => id !== surveyId)
-          : [...currentIds, surveyId];
-        return { ...mapping, surveyIds: updatedIds };
-      }
-      return mapping;
-    }));
-  };
-
-  const handleLocationToggle = (mappingIndex: number, locationType: 'buildingIds' | 'wingIds' | 'floorIds' | 'areaIds' | 'roomIds', locationId: number) => {
-    setSurveyMappings(prev => prev.map((mapping, index) => {
-      if (index === mappingIndex) {
-        const currentIds = mapping[locationType];
-        const updatedIds = currentIds.includes(locationId)
-          ? currentIds.filter(id => id !== locationId)
-          : [...currentIds, locationId];
-        return { ...mapping, [locationType]: updatedIds };
-      }
-      return mapping;
-    }));
+  const handleLocationChange = (
+    mappingIndex: number,
+    locationType: 'buildingIds' | 'wingIds' | 'floorIds' | 'areaIds' | 'roomIds',
+    event: SelectChangeEvent<number[]>
+  ) => {
+    const value = event.target.value as number[];
+    updateSurveyMapping(mappingIndex, locationType, value);
   };
 
   const handleSubmit = async () => {
@@ -324,7 +368,7 @@ export const AddSurveyMapping = () => {
 
     // Validation
     const validMappings = surveyMappings.filter(mapping => 
-      mapping.surveyIds.length > 0 && 
+      mapping.surveyId !== null && 
       (mapping.buildingIds.length > 0 || mapping.wingIds.length > 0 || 
        mapping.floorIds.length > 0 || mapping.areaIds.length > 0 || 
        mapping.roomIds.length > 0)
@@ -343,40 +387,37 @@ export const AddSurveyMapping = () => {
       const results = [];
       
       for (const mapping of validMappings) {
-        // Create a separate mapping for each selected survey
-        for (const surveyId of mapping.surveyIds) {
-          const requestData = {
-            survey_id: surveyId,
-            building_ids: mapping.buildingIds,
-            wing_ids: mapping.wingIds,
-            floor_ids: mapping.floorIds,
-            area_ids: mapping.areaIds,
-            room_ids: mapping.roomIds
-          };
+        const requestData = {
+          survey_id: mapping.surveyId,
+          building_ids: mapping.buildingIds,
+          wing_ids: mapping.wingIds,
+          floor_ids: mapping.floorIds,
+          area_ids: mapping.areaIds,
+          room_ids: mapping.roomIds
+        };
 
-          console.log('Submitting survey mapping:', requestData);
+        console.log('Submitting survey mapping:', requestData);
 
-          const response = await fetch(getFullUrl('/survey_mappings.json'), {
-            method: 'POST',
-            headers: {
-              'Authorization': getAuthHeader(),
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(requestData)
-          });
+        const response = await fetch(getFullUrl('/survey_mappings.json'), {
+          method: 'POST',
+          headers: {
+            'Authorization': getAuthHeader(),
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestData)
+        });
 
-          if (!response.ok) {
-            throw new Error('Failed to create survey mapping');
-          }
-
-          const result = await response.json();
-          results.push(result);
+        if (!response.ok) {
+          throw new Error('Failed to create survey mapping');
         }
+
+        const result = await response.json();
+        results.push(result);
       }
 
       console.log('Survey mappings created successfully:', results);
 
-      const totalMappings = validMappings.reduce((sum, mapping) => sum + mapping.surveyIds.length, 0);
+      const totalMappings = validMappings.length;
       toast.success(`${totalMappings} survey mapping(s) created successfully!`, {
         duration: 3000,
       });
@@ -439,91 +480,37 @@ export const AddSurveyMapping = () => {
               <div className="space-y-4">
                 {/* Survey Selection */}
                 <div className="grid grid-cols-1 gap-6">
-                  <div>
-                    <div 
-                      className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => toggleDropdown(mapping.id, 'surveys')}
+                  <FormControl 
+                    fullWidth 
+                    variant="outlined" 
+                    sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  >
+                    <InputLabel>Select Survey</InputLabel>
+                    <Select
+                      value={mapping.surveyId || ''}
+                      onChange={(e) => handleSurveyChange(idx, e as SelectChangeEvent<number>)}
+                      label="Select Survey"
+                      disabled={loadingSurveys}
                     >
-                      <div className="flex items-center space-x-2">
-                        <Label className="text-sm font-medium cursor-pointer">Surveys<span className="text-red-500">*</span></Label>
-                        <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                          {mapping.surveyIds.length} selected
-                        </span>
-                      </div>
-                      {isDropdownOpen(mapping.id, 'surveys') ? (
-                        <ChevronUp className="w-4 h-4 text-gray-400" />
+                      {loadingSurveys ? (
+                        <MenuItem disabled>
+                          <CircularProgress size={20} sx={{ mr: 1 }} />
+                          Loading surveys...
+                        </MenuItem>
                       ) : (
-                        <ChevronDown className="w-4 h-4 text-gray-400" />
-                      )}
-                    </div>
-                    
-                    {isDropdownOpen(mapping.id, 'surveys') && (
-                      <div className="mt-2 max-h-64 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                        {loadingSurveys ? (
-                          <div className="flex items-center justify-center p-6">
-                            <CircularProgress size={20} />
-                            <span className="ml-2 text-sm text-gray-600">Loading surveys...</span>
-                          </div>
-                        ) : surveys.length === 0 ? (
-                          <div className="text-center p-6">
-                            <p className="text-sm text-gray-500">No surveys available</p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {surveys.map((survey) => (
-                              <div 
-                                key={survey.id} 
-                                className={`flex items-start space-x-3 p-3 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                  mapping.surveyIds.includes(survey.id) 
-                                    ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                    : 'bg-white border-gray-200 hover:border-gray-300'
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  id={`survey-${idx}-${survey.id}`}
-                                  checked={mapping.surveyIds.includes(survey.id)}
-                                  onChange={() => handleSurveyToggle(idx, survey.id)}
-                                  className="w-4 h-4 mt-0.5 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                  disabled={isSubmitting}
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <label 
-                                    htmlFor={`survey-${idx}-${survey.id}`}
-                                    className="block text-sm font-medium text-gray-900 cursor-pointer leading-tight"
-                                  >
-                                    {survey.name}
-                                  </label>
-                                  <div className="flex items-center gap-4 mt-1">
-                                    <span className="text-xs text-gray-500">
-                                      {survey.questions_count} questions
-                                    </span>
-                                    {survey.snag_audit_category && (
-                                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
-                                        {survey.snag_audit_category}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
+                        surveys.map((survey) => (
+                          <MenuItem key={survey.id} value={survey.id}>
+                            <Box>
+                              <div className="font-medium">{survey.name}</div>
+                              <div className="text-xs text-gray-500">
+                                Questions: {survey.questions_count} | Type: {survey.check_type}
                               </div>
-                            ))}
-                          </div>
-                        )}
-                        {mapping.surveyIds.length > 0 && (
-                          <div className="mt-3 pt-3 border-t">
-                            <button
-                              type="button"
-                              onClick={() => updateSurveyMapping(idx, 'surveyIds', [])}
-                              className="text-xs text-red-600 hover:text-red-800 underline"
-                              disabled={isSubmitting}
-                            >
-                              Clear all selections
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                            </Box>
+                          </MenuItem>
+                        ))
+                      )}
+                    </Select>
+                  </FormControl>
                 </div>
               </div>
             </div>
@@ -543,396 +530,321 @@ export const AddSurveyMapping = () => {
             <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
               <p className="mb-4 text-sm font-medium text-muted-foreground">
                 Locations for Survey Mapping {mappingIdx + 1}
-                {mapping.surveyIds.length > 0 && (
+                {mapping.surveyId && (
                   <span className="ml-2 text-blue-600">
-                    ({mapping.surveyIds.length} survey{mapping.surveyIds.length > 1 ? 's' : ''} selected)
+                    ({surveys.find(s => s.id === mapping.surveyId)?.name || 'Survey'} selected)
                   </span>
                 )}
               </p>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Buildings */}
-                <div>
-                  <div 
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleDropdown(mapping.id, 'buildings')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium cursor-pointer">Buildings</Label>
-                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                        {mapping.buildingIds.length} selected
-                      </span>
-                    </div>
-                    {isDropdownOpen(mapping.id, 'buildings') ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                <FormControl 
+                  fullWidth 
+                  variant="outlined" 
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel>Buildings</InputLabel>
+                  <Select
+                    multiple
+                    value={mapping.buildingIds}
+                    onChange={(e) => handleLocationChange(mappingIdx, 'buildingIds', e)}
+                    input={<OutlinedInput label="Buildings" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const building = buildings.find(b => b.id === value);
+                          return building ? (
+                            <Chip key={value} label={building.name} size="small" />
+                          ) : null;
+                        })}
+                      </Box>
                     )}
-                  </div>
-                  
-                  {isDropdownOpen(mapping.id, 'buildings') && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                      {loadingBuildings ? (
-                        <div className="flex items-center justify-center p-4">
-                          <CircularProgress size={20} />
-                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
-                        </div>
-                      ) : buildings.length === 0 ? (
-                        <div className="text-center p-4">
-                          <p className="text-sm text-gray-500">No buildings available</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {buildings.map((building) => (
-                            <div 
-                              key={building.id} 
-                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                mapping.buildingIds.includes(building.id) 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`building-${mappingIdx}-${building.id}`}
-                                checked={mapping.buildingIds.includes(building.id)}
-                                onChange={() => handleLocationToggle(mappingIdx, 'buildingIds', building.id)}
-                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                disabled={isSubmitting}
-                              />
-                              <label 
-                                htmlFor={`building-${mappingIdx}-${building.id}`}
-                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
-                              >
-                                {building.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {mapping.buildingIds.length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <button
-                            type="button"
-                            onClick={() => updateSurveyMapping(mappingIdx, 'buildingIds', [])}
-                            className="text-xs text-red-600 hover:text-red-800 underline"
-                            disabled={isSubmitting}
-                          >
-                            Clear selections
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    disabled={loadingBuildings}
+                  >
+                    {loadingBuildings ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading buildings...
+                      </MenuItem>
+                    ) : (
+                      buildings.map((building) => (
+                        <MenuItem key={building.id} value={building.id}>
+                          {building.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
 
                 {/* Wings */}
-                <div>
-                  <div 
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleDropdown(mapping.id, 'wings')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium cursor-pointer">Wings</Label>
-                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                        {mapping.wingIds.length} selected
-                      </span>
-                    </div>
-                    {isDropdownOpen(mapping.id, 'wings') ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                <FormControl 
+                  fullWidth 
+                  variant="outlined" 
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel>Wings</InputLabel>
+                  <Select
+                    multiple
+                    value={mapping.wingIds}
+                    onChange={(e) => handleLocationChange(mappingIdx, 'wingIds', e)}
+                    input={<OutlinedInput label="Wings" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const wing = wings.find(w => w.id === value);
+                          return wing ? (
+                            <Chip key={value} label={wing.name} size="small" />
+                          ) : null;
+                        })}
+                      </Box>
                     )}
-                  </div>
-                  
-                  {isDropdownOpen(mapping.id, 'wings') && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                      {loadingWings ? (
-                        <div className="flex items-center justify-center p-4">
-                          <CircularProgress size={20} />
-                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
-                        </div>
-                      ) : wings.length === 0 ? (
-                        <div className="text-center p-4">
-                          <p className="text-sm text-gray-500">No wings available</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {wings.map((wing) => (
-                            <div 
-                              key={wing.id} 
-                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                mapping.wingIds.includes(wing.id) 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`wing-${mappingIdx}-${wing.id}`}
-                                checked={mapping.wingIds.includes(wing.id)}
-                                onChange={() => handleLocationToggle(mappingIdx, 'wingIds', wing.id)}
-                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                disabled={isSubmitting}
-                              />
-                              <label 
-                                htmlFor={`wing-${mappingIdx}-${wing.id}`}
-                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
-                              >
-                                {wing.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {mapping.wingIds.length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <button
-                            type="button"
-                            onClick={() => updateSurveyMapping(mappingIdx, 'wingIds', [])}
-                            className="text-xs text-red-600 hover:text-red-800 underline"
-                            disabled={isSubmitting}
-                          >
-                            Clear selections
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    disabled={loadingWings}
+                  >
+                    {loadingWings ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading wings...
+                      </MenuItem>
+                    ) : (
+                      wings.map((wing) => (
+                        <MenuItem key={wing.id} value={wing.id}>
+                          {wing.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
 
                 {/* Floors */}
-                <div>
-                  <div 
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleDropdown(mapping.id, 'floors')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium cursor-pointer">Floors</Label>
-                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                        {mapping.floorIds.length} selected
-                      </span>
-                    </div>
-                    {isDropdownOpen(mapping.id, 'floors') ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                <FormControl 
+                  fullWidth 
+                  variant="outlined" 
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel>Floors</InputLabel>
+                  <Select
+                    multiple
+                    value={mapping.floorIds}
+                    onChange={(e) => handleLocationChange(mappingIdx, 'floorIds', e)}
+                    input={<OutlinedInput label="Floors" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const floor = floors.find(f => f.id === value);
+                          return floor ? (
+                            <Chip key={value} label={floor.name} size="small" />
+                          ) : null;
+                        })}
+                      </Box>
                     )}
-                  </div>
-                  
-                  {isDropdownOpen(mapping.id, 'floors') && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                      {loadingFloors ? (
-                        <div className="flex items-center justify-center p-4">
-                          <CircularProgress size={20} />
-                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
-                        </div>
-                      ) : floors.length === 0 ? (
-                        <div className="text-center p-4">
-                          <p className="text-sm text-gray-500">No floors available</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {floors.map((floor) => (
-                            <div 
-                              key={floor.id} 
-                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                mapping.floorIds.includes(floor.id) 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`floor-${mappingIdx}-${floor.id}`}
-                                checked={mapping.floorIds.includes(floor.id)}
-                                onChange={() => handleLocationToggle(mappingIdx, 'floorIds', floor.id)}
-                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                disabled={isSubmitting}
-                              />
-                              <label 
-                                htmlFor={`floor-${mappingIdx}-${floor.id}`}
-                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
-                              >
-                                {floor.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {mapping.floorIds.length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <button
-                            type="button"
-                            onClick={() => updateSurveyMapping(mappingIdx, 'floorIds', [])}
-                            className="text-xs text-red-600 hover:text-red-800 underline"
-                            disabled={isSubmitting}
-                          >
-                            Clear selections
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    disabled={loadingFloors}
+                  >
+                    {loadingFloors ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading floors...
+                      </MenuItem>
+                    ) : (
+                      floors.map((floor) => (
+                        <MenuItem key={floor.id} value={floor.id}>
+                          {floor.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
 
                 {/* Areas */}
-                <div>
-                  <div 
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleDropdown(mapping.id, 'areas')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium cursor-pointer">Areas</Label>
-                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                        {mapping.areaIds.length} selected
-                      </span>
-                    </div>
-                    {isDropdownOpen(mapping.id, 'areas') ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                <FormControl 
+                  fullWidth 
+                  variant="outlined" 
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel>Areas</InputLabel>
+                  <Select
+                    multiple
+                    value={mapping.areaIds}
+                    onChange={(e) => handleLocationChange(mappingIdx, 'areaIds', e)}
+                    input={<OutlinedInput label="Areas" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const area = areas.find(a => a.id === value);
+                          return area ? (
+                            <Chip key={value} label={area.name} size="small" />
+                          ) : null;
+                        })}
+                      </Box>
                     )}
-                  </div>
-                  
-                  {isDropdownOpen(mapping.id, 'areas') && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                      {loadingAreas ? (
-                        <div className="flex items-center justify-center p-4">
-                          <CircularProgress size={20} />
-                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
-                        </div>
-                      ) : areas.length === 0 ? (
-                        <div className="text-center p-4">
-                          <p className="text-sm text-gray-500">No areas available</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {areas.map((area) => (
-                            <div 
-                              key={area.id} 
-                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                mapping.areaIds.includes(area.id) 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`area-${mappingIdx}-${area.id}`}
-                                checked={mapping.areaIds.includes(area.id)}
-                                onChange={() => handleLocationToggle(mappingIdx, 'areaIds', area.id)}
-                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                disabled={isSubmitting}
-                              />
-                              <label 
-                                htmlFor={`area-${mappingIdx}-${area.id}`}
-                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
-                              >
-                                {area.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {mapping.areaIds.length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <button
-                            type="button"
-                            onClick={() => updateSurveyMapping(mappingIdx, 'areaIds', [])}
-                            className="text-xs text-red-600 hover:text-red-800 underline"
-                            disabled={isSubmitting}
-                          >
-                            Clear selections
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    disabled={loadingAreas}
+                  >
+                    {loadingAreas ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading areas...
+                      </MenuItem>
+                    ) : (
+                      areas.map((area) => (
+                        <MenuItem key={area.id} value={area.id}>
+                          {area.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
 
                 {/* Rooms */}
-                <div>
-                  <div 
-                    className="flex items-center justify-between p-3 border rounded-lg bg-white cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleDropdown(mapping.id, 'rooms')}
-                  >
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium cursor-pointer">Rooms</Label>
-                      <span className="text-xs text-gray-500 bg-blue-100 px-2 py-1 rounded-full">
-                        {mapping.roomIds.length} selected
-                      </span>
-                    </div>
-                    {isDropdownOpen(mapping.id, 'rooms') ? (
-                      <ChevronUp className="w-4 h-4 text-gray-400" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                <FormControl 
+                  fullWidth 
+                  variant="outlined" 
+                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                >
+                  <InputLabel>Rooms</InputLabel>
+                  <Select
+                    multiple
+                    value={mapping.roomIds}
+                    onChange={(e) => handleLocationChange(mappingIdx, 'roomIds', e)}
+                    input={<OutlinedInput label="Rooms" />}
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {selected.map((value) => {
+                          const room = rooms.find(r => r.id === value);
+                          return room ? (
+                            <Chip key={value} label={room.name} size="small" />
+                          ) : null;
+                        })}
+                      </Box>
                     )}
-                  </div>
-                  
-                  {isDropdownOpen(mapping.id, 'rooms') && (
-                    <div className="mt-2 max-h-48 overflow-y-auto border rounded-lg p-3 bg-white shadow-sm">
-                      {loadingRooms ? (
-                        <div className="flex items-center justify-center p-4">
-                          <CircularProgress size={20} />
-                          <span className="ml-2 text-sm text-gray-600">Loading...</span>
-                        </div>
-                      ) : rooms.length === 0 ? (
-                        <div className="text-center p-4">
-                          <p className="text-sm text-gray-500">No rooms available</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2">
-                          {rooms.map((room) => (
-                            <div 
-                              key={room.id} 
-                              className={`flex items-center space-x-3 p-2 rounded-md border transition-all duration-200 hover:bg-gray-50 ${
-                                mapping.roomIds.includes(room.id) 
-                                  ? 'bg-blue-50 border-blue-200 shadow-sm' 
-                                  : 'bg-white border-gray-200 hover:border-gray-300'
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                id={`room-${mappingIdx}-${room.id}`}
-                                checked={mapping.roomIds.includes(room.id)}
-                                onChange={() => handleLocationToggle(mappingIdx, 'roomIds', room.id)}
-                                className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 cursor-pointer"
-                                disabled={isSubmitting}
-                              />
-                              <label 
-                                htmlFor={`room-${mappingIdx}-${room.id}`}
-                                className="text-sm text-gray-700 cursor-pointer select-none flex-1 font-medium"
-                              >
-                                {room.name}
-                              </label>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {mapping.roomIds.length > 0 && (
-                        <div className="mt-3 pt-3 border-t">
-                          <button
-                            type="button"
-                            onClick={() => updateSurveyMapping(mappingIdx, 'roomIds', [])}
-                            className="text-xs text-red-600 hover:text-red-800 underline"
-                            disabled={isSubmitting}
-                          >
-                            Clear selections
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                    disabled={loadingRooms}
+                  >
+                    {loadingRooms ? (
+                      <MenuItem disabled>
+                        <CircularProgress size={20} sx={{ mr: 1 }} />
+                        Loading rooms...
+                      </MenuItem>
+                    ) : (
+                      rooms.map((room) => (
+                        <MenuItem key={room.id} value={room.id}>
+                          {room.name}
+                        </MenuItem>
+                      ))
+                    )}
+                  </Select>
+                </FormControl>
               </div>
 
-              {/* Location Summary */}
-           
+            
             </div>
           ))}
         </div>
       </Section>
+
+      {/* Survey Questions Section */}
+      {selectedSurveyQuestions.length > 0 && (
+        <Section title="Survey Questions" icon={<ListChecks className="w-3.5 h-3.5" />}>
+          <div className="space-y-4">
+            <div className="mb-4 text-sm text-gray-600">
+              Displaying questions for the selected survey. These questions will be used during survey mapping.
+            </div>
+            {selectedSurveyQuestions.map((q, idx) => (
+              <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
+                {/* First Row - Mandatory Checkbox */}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`mandatory-${idx}`}
+                      checked={q.mandatory}
+                      className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
+                      disabled
+                    />
+                    <label 
+                      htmlFor={`mandatory-${idx}`}
+                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
+                    >
+                      Mandatory
+                    </label>
+                  </div>
+                </div>
+
+                {/* Second Row - Task and Input Type */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Question</InputLabel>
+                      <Select
+                        value={q.task}
+                        label="Question"
+                        notched
+                        disabled
+                        renderValue={() => q.task}
+                      >
+                        <MenuItem value={q.task}>{q.task}</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                  <div>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Input Type</InputLabel>
+                      <Select
+                        value={q.inputType}
+                        label="Input Type"
+                        notched
+                        disabled
+                      >
+                        <MenuItem value="yes_no">Yes/No</MenuItem>
+                        <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
+                        <MenuItem value="rating">Rating</MenuItem>
+                        <MenuItem value="text_input">Text Input</MenuItem>
+                        <MenuItem value="description">Description</MenuItem>
+                        <MenuItem value="emoji">Emoji</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+
+                {/* Options for multiple choice */}
+                {q.inputType === 'multiple_choice' && (
+                  <div className="mt-4">
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <InputLabel shrink>Options</InputLabel>
+                      <Select
+                        value={q.optionsText || ''}
+                        label="Options"
+                        notched
+                        disabled
+                        renderValue={() => q.optionsText || 'No options'}
+                      >
+                        <MenuItem value={q.optionsText || ''}>{q.optionsText || 'No options'}</MenuItem>
+                      </Select>
+                    </FormControl>
+
+                    {/* Show parsed options preview */}
+                    {q.options && q.options.length > 0 && (
+                      <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
+                        <p className="font-medium text-gray-800 mb-1">
+                          ✅ Multi-Options ({q.options.length}):
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {q.options.map((option, optIdx) => (
+                            <span
+                              key={optIdx}
+                              className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded"
+                            >
+                              {option}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button

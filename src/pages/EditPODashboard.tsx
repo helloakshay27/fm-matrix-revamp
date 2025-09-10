@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
     ArrowLeft,
+    Eye,
+    File,
+    FileSpreadsheet,
     FileText,
     ListChecks,
-    Paperclip,
     Upload,
     X,
 } from "lucide-react";
@@ -33,6 +35,8 @@ import {
     updatePurchaseOrder,
 } from "@/store/slices/purchaseOrderSlice";
 import axios from "axios";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 const fieldStyles = {
     height: {
@@ -48,6 +52,13 @@ const fieldStyles = {
         },
     },
 };
+
+interface Attachment {
+    id: number;
+    url: string;
+    document_name?: string;
+    document_file_name?: string;
+}
 
 export const EditPODashboard = () => {
     const { id } = useParams();
@@ -66,6 +77,10 @@ export const EditPODashboard = () => {
     const [submitting, setSubmitting] = useState(false);
     const [existingAttachments, setExistingAttachments] = useState([]);
     const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         materialPR: "",
@@ -262,6 +277,10 @@ export const EditPODashboard = () => {
             taxAmount: taxAmount.toFixed(2),
             totalAmount: totalAmount.toFixed(2),
         };
+    };
+
+    const handleDashedBorderClick = () => {
+        fileInputRef.current?.click();
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -1007,97 +1026,200 @@ export const EditPODashboard = () => {
                             </div>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow border">
-                            <div className="flex items-center gap-2 mb-6">
-                                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-                                    <span className="text-white font-bold text-sm">3</span>
-                                </div>
-                                <h2 className="text-lg font-semibold text-gray-800">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="text-[#C72030] flex items-center">
+                                    <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                                        3
+                                    </h2>
                                     ATTACHMENTS
-                                </h2>
-                            </div>
-
-                            <div
-                                className="border-2 border-dashed border-yellow-400 rounded-lg p-12 text-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
-                                onClick={() => document.getElementById("file-upload")?.click()}
-                            >
-                                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-600 text-lg">
-                                    Drag & Drop or Click to Upload{" "}
-                                    <span className="text-gray-500">
-                                        {(formData.attachments.length + existingAttachments.length) > 0
-                                            ? `${formData.attachments.length + existingAttachments.length} file(s) selected`
-                                            : "No files chosen"}
-                                    </span>
-                                </p>
-                                <input
-                                    id="file-upload"
-                                    type="file"
-                                    onChange={handleFileChange}
-                                    className="hidden"
-                                    multiple
-                                    accept="image/*,.pdf,.doc,.docx"
-                                />
-                            </div>
-
-                            {(formData.attachments.length > 0 || existingAttachments.length > 0) && (
-                                <div className="mt-6">
-                                    <h3 className="text-sm font-medium text-gray-700 mb-4">
-                                        Selected Files
-                                    </h3>
-                                    <div className="grid grid-cols-6 gap-4">
-                                        {existingAttachments.map((attachment, index) => (
-                                            <div
-                                                key={`existing-${attachment.id}`}
-                                                className="border rounded-lg p-2 flex flex-col items-center relative bg-gray-50"
-                                            >
-                                                {attachment.url.match(/\.(jpeg|jpg|png|gif)$/i) ? (
-                                                    <img
-                                                        src={attachment.url}
-                                                        alt={attachment.name}
-                                                        className="w-32 h-32 object-cover rounded-lg mb-2"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                                                        <Paperclip className="w-8 h-8 text-gray-400" />
-                                                    </div>
-                                                )}
-                                                <p className="text-sm text-gray-600 truncate w-full text-center">
-                                                    {attachment.name} (Existing)
-                                                </p>
-                                            </div>
-                                        ))}
-                                        {formData.attachments.map((file, index) => (
-                                            <div
-                                                key={`new-${index}`}
-                                                className="border rounded-lg p-2 flex flex-col items-center relative"
-                                            >
-                                                {file.type.startsWith("image/") ? (
-                                                    <img
-                                                        src={URL.createObjectURL(file)}
-                                                        alt={file.name}
-                                                        className="w-32 h-32 object-cover rounded-lg mb-2"
-                                                    />
-                                                ) : (
-                                                    <div className="w-full h-32 flex items-center justify-center bg-gray-100 rounded-lg mb-2">
-                                                        <Paperclip className="w-8 h-8 text-gray-400" />
-                                                    </div>
-                                                )}
-                                                <p className="text-sm text-gray-600 truncate w-full text-center">
-                                                    {file.name} (New)
-                                                </p>
-                                                <Button
-                                                    onClick={() => removeFile(index, "new")}
-                                                    className="absolute -top-2 -right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </Button>
-                                            </div>
-                                        ))}
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div
+                                    className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+                                    onClick={handleDashedBorderClick}
+                                >
+                                    <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                    <div className="text-sm text-gray-600">
+                                        <span className="font-medium">Drag & Drop or Click to Upload</span>
+                                        <input
+                                            type="file"
+                                            multiple
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="file-upload"
+                                            ref={fileInputRef}
+                                            accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
+                                        />
+                                        <span className="ml-1">
+                                            {(formData.attachments.length + existingAttachments.length) > 0
+                                                ? `${formData.attachments.length + existingAttachments.length} file(s) selected`
+                                                : "No files chosen"}
+                                        </span>
                                     </div>
                                 </div>
-                            )}
-                        </div>
+
+                                {(formData.attachments.length > 0 || existingAttachments.length > 0) && (
+                                    <div className="flex items-center flex-wrap gap-4 my-6">
+                                        {existingAttachments.map((attachment, index) => {
+                                            const isImage = attachment.url.match(/\.(jpeg|jpg|png|gif)$/i);
+                                            const isPdf = attachment.url.match(/\.pdf$/i);
+                                            const isExcel = attachment.url.match(/\.(xlsx|xls)$/i);
+                                            const isWord = attachment.url.match(/\.(doc|docx)$/i);
+
+                                            return (
+                                                <div
+                                                    key={`existing-${attachment.id}`}
+                                                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                >
+                                                    {isImage ? (
+                                                        <>
+                                                            <button
+                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                title="View"
+                                                                onClick={() => {
+                                                                    setSelectedDoc({
+                                                                        id: attachment.id,
+                                                                        url: attachment.url,
+                                                                        document_name: attachment.document_name,
+                                                                        document_file_name: attachment.document_file_name,
+                                                                    });
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                                type="button"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                            <img
+                                                                src={attachment.url}
+                                                                alt={attachment.document_name}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    setSelectedDoc({
+                                                                        id: attachment.id,
+                                                                        url: attachment.url,
+                                                                        document_name: attachment.document_name,
+                                                                        document_file_name: attachment.document_file_name,
+                                                                    });
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            />
+                                                        </>
+                                                    ) : isPdf ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                            <FileText className="w-6 h-6" />
+                                                        </div>
+                                                    ) : isExcel ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                            <FileSpreadsheet className="w-6 h-6" />
+                                                        </div>
+                                                    ) : isWord ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                            <FileText className="w-6 h-6" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                            <File className="w-6 h-6" />
+                                                        </div>
+                                                    )}
+                                                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                        {attachment.document_name} (Existing)
+                                                    </span>
+                                                    <button
+                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        title="Remove"
+                                                        onClick={() => removeFile(index, "existing")}
+                                                        type="button"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                        {formData.attachments.map((file, index) => {
+                                            const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                                            const isPdf = file.type.match(/application\/pdf/i);
+                                            const isExcel = file.type.match(
+                                                /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                                            );
+                                            const isWord = file.type.match(
+                                                /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                                            );
+
+                                            return (
+                                                <div
+                                                    key={`new-${index}`}
+                                                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                >
+                                                    {isImage ? (
+                                                        <>
+                                                            <button
+                                                                className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                title="View"
+                                                                onClick={() => {
+                                                                    setSelectedDoc({
+                                                                        id: index,
+                                                                        url: URL.createObjectURL(file),
+                                                                        document_name: file.name,
+                                                                        document_file_name: file.name,
+                                                                    });
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                                type="button"
+                                                            >
+                                                                <Eye className="w-4 h-4" />
+                                                            </button>
+                                                            <img
+                                                                src={URL.createObjectURL(file)}
+                                                                alt={file.name}
+                                                                className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                onClick={() => {
+                                                                    setSelectedDoc({
+                                                                        id: index,
+                                                                        url: URL.createObjectURL(file),
+                                                                        document_name: file.name,
+                                                                        document_file_name: file.name,
+                                                                    });
+                                                                    setIsModalOpen(true);
+                                                                }}
+                                                            />
+                                                        </>
+                                                    ) : isPdf ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                            <FileText className="w-6 h-6" />
+                                                        </div>
+                                                    ) : isExcel ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                            <FileSpreadsheet className="w-6 h-6" />
+                                                        </div>
+                                                    ) : isWord ? (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                            <FileText className="w-6 h-6" />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                            <File className="w-6 h-6" />
+                                                        </div>
+                                                    )}
+                                                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                        {file.name} (New)
+                                                    </span>
+                                                    <button
+                                                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                        title="Remove"
+                                                        onClick={() => removeFile(index, "new")}
+                                                        type="button"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
                     </div>
                 </div>
 
@@ -1112,6 +1234,13 @@ export const EditPODashboard = () => {
                     </Button>
                 </div>
             </form>
+
+            <AttachmentPreviewModal
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                selectedDoc={selectedDoc}
+                setSelectedDoc={setSelectedDoc}
+            />
         </div>
     );
 };

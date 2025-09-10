@@ -57,6 +57,8 @@ export const AddGatePassInwardPage = () => {
     contactPerson: '',
     contactPersonNo: '',
     gateNoId: null as number | null,
+    expectedReturnDate: '', // Add expected return date
+    returnable: false, // Add returnable status
   });
 
   const [gatePassDetails, setGatePassDetails] = useState({
@@ -66,6 +68,8 @@ export const AddGatePassInwardPage = () => {
     remarks: '',
     gateNumberId: null as number | null,
     vendorId: null as number | null, // Add vendorId
+    quantity: '', // Add quantity
+    unit: '', // Add unit
   });
 
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
@@ -242,7 +246,6 @@ export const AddGatePassInwardPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
 
     const formData = new FormData();
 
@@ -258,10 +261,15 @@ export const AddGatePassInwardPage = () => {
     if (gatePassDetails.remarks) formData.append('gate_pass[remarks]', gatePassDetails.remarks);
     if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
     if (gatePassDetails.gateNumberId) formData.append('gate_pass[gate_number_id]', gatePassDetails.gateNumberId.toString());
-    // if (visitorDetails.driverName) formData.append('gate_pass[driver_name]', visitorDetails.driverName);
-    // if (visitorDetails.driverContactNo) formData.append('gate_pass[driver_contact_no]', visitorDetails.driverContactNo);
-    // if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
-    // if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
+
+    // Vendor
+    if (gatePassDetails.vendorId) formData.append('gate_pass[pms_supplier_id]', gatePassDetails.vendorId.toString());
+   // Due at (reporting time)
+    if (visitorDetails.reportingTime) formData.append('gate_pass[due_at]', visitorDetails.reportingTime);
+
+    // Quantity and Unit (from GatePassDetails)
+    // if (gatePassDetails.quantity) formData.append('gate_pass[quantity]', gatePassDetails.quantity);
+    // if (gatePassDetails.unit) formData.append('gate_pass[unit]', gatePassDetails.unit);
 
     // Append material details
     materialRows.forEach((row, index) => {
@@ -269,7 +277,8 @@ export const AddGatePassInwardPage = () => {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
         if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_sub_type_id]`, row.itemCategoryId.toString());
-        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, row.quantity);
+        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][quantity]`, row.quantity);
+        if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
         if (row.description) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description);
       }
     });
@@ -281,12 +290,12 @@ export const AddGatePassInwardPage = () => {
 
     try {
       await gatePassInwardService.createGatePassInward(formData);
-      
+
       toast({
         title: "Success",
         description: "Gate pass inward entry created successfully!"
       });
-      
+
       navigate('/security/gate-pass/inwards');
     } catch (error) {
       console.error('Error submitting form:', error);

@@ -8,37 +8,104 @@ import { SurveyAnalyticsCard } from '@/components/SurveyAnalyticsCard';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
+// TypeScript interfaces for the new survey details API response
+interface SurveyOption {
+  option_id: number;
+  option: string;
+  response_count: number;
+}
+
+interface SurveyQuestion {
+  question_id: number;
+  question: string;
+  options: SurveyOption[];
+}
+
+interface SurveyDetail {
+  survey_id: number;
+  survey_name: string;
+  questions: SurveyQuestion[];
+}
+
+interface SurveyDetailsResponse {
+  survey_details: {
+    survey: SurveyDetail[];
+  };
+}
+
+// Chart data interfaces
+interface ChartDataItem {
+  name: string;
+  value: number;
+  color?: string;
+}
+
+interface ProcessedQuestion {
+  question: string;
+  type: string;
+  totalResponses: number;
+  responseRate: string;
+  responses: string[];
+}
+
 export const SurveyResponseDetailPage = () => {
-  const { surveyId } = useParams(); // This is actually a response ID
+  const { surveyId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("summary");
-  const [surveyData, setSurveyData] = useState<any>(null);
+  const [surveyData, setSurveyData] = useState<SurveyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiData, setApiData] = useState<SurveyResponseData | null>(null);
-  const [surveyDetailsData, setSurveyDetailsData] = useState<any>(null);
-  const [currentResponse, setCurrentResponse] = useState<any>(null);
+  const [surveyDetailsData, setSurveyDetailsData] = useState<SurveyDetailsResponse | null>(null);
 
-  // API function to fetch survey details
+  // API function to fetch survey details using the new endpoint
   const fetchSurveyDetails = async (surveyId: string) => {
     try {
-      const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_DETAILS);
-      const options = getAuthenticatedFetchOptions();
+      // Validate survey ID
+      if (!surveyId || surveyId.trim() === '') {
+        throw new Error('Invalid survey ID provided');
+      }
+
+      // Build the URL with proper parameters
+      const baseUrl = getFullUrl('/pms/admin/snag_checklists/survey_details.json');
+      const urlWithParams = new URL(baseUrl);
       
-      // Add query parameters
-      const urlWithParams = new URL(url);
-      urlWithParams.searchParams.append('survey_id', surveyId);
+      // Add survey_id parameter
+      urlWithParams.searchParams.append('survey_id', surveyId.trim());
+      
+      // Add access_token from API_CONFIG if available
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+      }
       
       console.log('🚀 Fetching survey details from:', urlWithParams.toString());
+      console.log('🔍 Survey ID being requested:', surveyId);
       
-      const response = await fetch(urlWithParams.toString(), options);
+      const response = await fetch(urlWithParams.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch survey details: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Survey Details API Error Response:', errorText);
+        
+        if (response.status === 404) {
+          throw new Error(`Survey with ID ${surveyId} not found`);
+        } else if (response.status === 401) {
+          throw new Error('Authentication failed. Please login again.');
+        } else if (response.status === 403) {
+          throw new Error('You do not have permission to access this survey.');
+        } else {
+          throw new Error(`Failed to fetch survey details: ${response.status} ${response.statusText}`);
+        }
       }
       
       const data = await response.json();
       console.log('✅ Survey details response received:', data);
+      console.log('🔍 Survey array length:', data?.survey_details?.survey?.length || 0);
+      
       return data;
     } catch (error) {
       console.error('❌ Error fetching survey details:', error);
@@ -46,128 +113,68 @@ export const SurveyResponseDetailPage = () => {
     }
   };
 
-  // API function to fetch specific survey response by response ID
-  const fetchSurveyResponseById = async (responseId: string) => {
-    try {
-      const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_RESPONSES);
-      const options = getAuthenticatedFetchOptions();
-      
-      console.log('🚀 Fetching survey responses from:', url);
-      
-      const response = await fetch(url, options);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch survey responses: ${response.status} ${response.statusText}`);
-      }
-      
-      const data = await response.json();
-      console.log('✅ All survey responses received:', data);
-      
-      // Find the specific response by ID
-      const specificResponse = data.find((response: any) => 
-        response.id && response.id.toString() === responseId.toString()
-      );
-      
-      if (!specificResponse) {
-        console.warn(`No response found for response ID ${responseId}. Available response IDs:`, 
-          data.map((r: any) => r.id));
-        throw new Error(`Response not found for ID: ${responseId}`);
-      }
-      
-      console.log('✅ Found specific response for ID', responseId, ':', specificResponse);
-      return specificResponse;
-    } catch (error) {
-      console.error('❌ Error fetching survey response:', error);
-      throw error;
-    }
-  };
-
   useEffect(() => {
     const fetchSurveyData = async () => {
       if (!surveyId) {
-        console.error('No response ID provided');
+        console.error('No survey ID provided');
         navigate('/maintenance/survey/response');
         return;
       }
 
       setIsLoading(true);
+      let surveyDetailsResponse = null;
+      
       try {
-        console.log('Fetching survey response data for response ID:', surveyId);
+        console.log('Fetching survey details for survey ID:', surveyId);
         
-        // Fetch the specific survey response by response ID
-        const specificResponse = await fetchSurveyResponseById(surveyId);
+        // Fetch survey details using the new API endpoint
+        surveyDetailsResponse = await fetchSurveyDetails(surveyId);
+        console.log('Fetched survey details:', surveyDetailsResponse);
+        setSurveyDetailsData(surveyDetailsResponse);
         
-        console.log('Fetched specific survey response:', specificResponse);
-        
-        // Set the current response and basic data
-        setCurrentResponse(specificResponse);
-        setApiData(specificResponse);
-        
-        // Try to fetch survey details using the survey_id from the response
-        let detailsData = null;
-        if (specificResponse.survey_id) {
-          try {
-            detailsData = await fetchSurveyDetails(specificResponse.survey_id.toString());
-            console.log('Fetched survey details:', detailsData);
-            setSurveyDetailsData(detailsData);
-          } catch (detailsError) {
-            console.warn('Could not fetch survey details, using basic data only:', detailsError);
-            toast.warning('Survey details not available, showing basic information');
-          }
-        }
-
-        // Process the single response to create question data
-        const questionMap = new Map();
-        
-        console.log('🔍 Processing single response for question mapping...');
-        console.log('🔍 Processing response:', specificResponse);
-        
-        if (specificResponse.parsed_response) {
-          console.log('🔍 Found parsed_response:', specificResponse.parsed_response);
+        // Extract survey data from the new API response
+        if (surveyDetailsResponse?.survey_details?.survey?.length > 0) {
+          const surveyDetail = surveyDetailsResponse.survey_details.survey[0];
           
-          Object.entries(specificResponse.parsed_response).forEach(([questionKey, answerValue]) => {
-            console.log(`🔍 Processing question: ${questionKey} = ${answerValue}`);
-            
-            questionMap.set(questionKey, {
-              id: questionMap.size + 1,
-              question: questionKey.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
-              responses: [String(answerValue)], // Single response
-              responseCount: 1,
-              answer: String(answerValue) // Store the specific answer
-            });
-            console.log(`🔍 Created question entry for: ${questionKey}`);
-          });
+          // Set the survey data directly from the API response
+          setSurveyData(surveyDetail);
+          console.log('Survey data set:', surveyDetail);
         } else {
-          console.log('🔍 No parsed_response found in this response');
+          console.error('No survey data found for survey ID:', surveyId);
+          console.error('API Response:', surveyDetailsResponse);
+          console.error('Available surveys in response:', surveyDetailsResponse?.survey_details?.survey);
+          
+          // Check if the response structure is valid but empty
+          if (surveyDetailsResponse?.survey_details?.survey && Array.isArray(surveyDetailsResponse.survey_details.survey)) {
+            const surveyCount = surveyDetailsResponse.survey_details.survey.length;
+            toast.error(`No survey found with ID: ${surveyId}. Found ${surveyCount} surveys in response.`);
+          } else {
+            toast.error('Invalid response format from survey details API');
+          }
+          
+          // Navigate back to the survey response list
+          navigate('/maintenance/survey/response');
+          return;
         }
-
-        const questions = Array.from(questionMap.values());
-        console.log('🔍 Final questions array:', questions);
-
-        // Get survey title from the response
-        const surveyTitle = specificResponse.survey_title || 'Survey Response';
-
-        const processedData = {
-          id: surveyId, // This is actually the response ID
-          responseId: specificResponse.id,
-          surveyId: specificResponse.survey_id,
-          surveyTitle: surveyTitle,
-          totalResponses: 1, // This is a single response
-          type: "Survey",
-          tickets: 0,
-          expiryDate: new Date(specificResponse.created_at || Date.now()).toLocaleDateString(),
-          location: specificResponse.location || 'Unknown Location',
-          createdBy: specificResponse.created_by?.full_name || 'Unknown',
-          questions: questions
-        };
-
-        setSurveyData(processedData);
-        console.log('Processed survey response data for response ID', surveyId, ':', processedData);
 
       } catch (error) {
-        console.error('Error fetching survey response data:', error);
-        toast.error('Failed to fetch survey response data');
-        navigate('/maintenance/survey/response');
+        console.error('Error fetching survey data:', error);
+        
+        // Provide more specific error messages
+        if (error instanceof Error) {
+          if (error.message.includes('Failed to fetch survey details')) {
+            toast.error('Unable to connect to survey service. Please try again later.');
+          } else {
+            toast.error(error.message);
+          }
+        } else {
+          toast.error('An unexpected error occurred while fetching survey details');
+        }
+        
+        // Only navigate away if there's a real error, not just empty data
+        if (!surveyDetailsResponse) {
+          navigate('/maintenance/survey/response');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -177,9 +184,11 @@ export const SurveyResponseDetailPage = () => {
   }, [surveyId, navigate]);
 
   const handleCopyQuestion = async (questionId: number) => {
-    const question = surveyData?.questions.find((q: any) => q.id === questionId);
+    const question = surveyData?.questions.find((q: SurveyQuestion) => q.question_id === questionId);
     if (question) {
-      const textToCopy = `${question.question}\n${question.responses.join('\n')}`;
+      const responses = question.options?.filter(option => option.response_count > 0)
+        .map(option => `${option.option} (${option.response_count} responses)`) || [];
+      const textToCopy = `${question.question}\n${responses.join('\n')}`;
       try {
         await navigator.clipboard.writeText(textToCopy);
         console.log('Question responses copied to clipboard');
@@ -190,9 +199,11 @@ export const SurveyResponseDetailPage = () => {
   };
 
   const handleDownloadQuestion = (questionId: number) => {
-    const question = surveyData?.questions.find((q: any) => q.id === questionId);
+    const question = surveyData?.questions.find((q: SurveyQuestion) => q.question_id === questionId);
     if (question) {
-      const content = `${question.question}\n${question.responses.join('\n')}`;
+      const responses = question.options?.filter(option => option.response_count > 0)
+        .map(option => `${option.option} (${option.response_count} responses)`) || [];
+      const content = `${question.question}\n${responses.join('\n')}`;
       const blob = new Blob([content], { type: 'text/plain' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -212,11 +223,18 @@ export const SurveyResponseDetailPage = () => {
     
     // For a single response, show the distribution of answers across questions
     if (surveyData?.questions && surveyData.questions.length > 0) {
-      const responseDistribution = surveyData.questions.map((question: any, index: number) => ({
-        name: `${question.question.substring(0, 30)}${question.question.length > 30 ? '...' : ''}`,
-        value: 1, // Each question has one answer in this response
-        color: ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'][index % 8]
-      }));
+      const responseDistribution = surveyData.questions.map((question: SurveyQuestion, index: number) => {
+        // Only count responses for questions that have options
+        const totalResponses = (question.options && question.options.length > 0) 
+          ? question.options.reduce((sum, opt) => sum + opt.response_count, 0) 
+          : 0;
+        
+        return {
+          name: `${question.question.substring(0, 30)}${question.question.length > 30 ? '...' : ''}`,
+          value: totalResponses || 1, // Show at least 1 for visualization
+          color: ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'][index % 8]
+        };
+      });
       
       console.log('🔍 Response distribution from survey data:', responseDistribution);
       return responseDistribution;
@@ -233,87 +251,65 @@ export const SurveyResponseDetailPage = () => {
     return fallbackData;
   };
 
-  // Prepare pie chart data for individual question showing the single answer
+  // Prepare pie chart data for individual question showing option distribution
   const getQuestionOptionsData = (questionId: number) => {
     console.log('🔍 Getting question options data for question ID:', questionId);
-    console.log('🔍 Current response:', currentResponse);
     console.log('🔍 Survey details data:', surveyDetailsData);
     console.log('🔍 Survey data questions:', surveyData?.questions);
     
-    // For individual response, we want to show which option was selected
-    // First try to get data from survey details API to see all available options
-    if (surveyDetailsData?.survey_details?.survey) {
-      const surveyDetail = surveyDetailsData.survey_details.survey.find(
-        (s: any) => s.survey_id && s.survey_id.toString() === surveyData?.surveyId?.toString()
-      );
+    // Get question from survey details API response
+    if (surveyDetailsData?.survey_details?.survey?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.survey[0];
+      const question = surveyDetail.questions?.find(q => q.question_id === questionId);
       
-      console.log('🔍 Found survey detail:', surveyDetail);
+      console.log('🔍 Found question from survey details:', question);
       
-      if (surveyDetail?.questions) {
-        const question = surveyDetail.questions[questionId - 1]; // Questions are 1-indexed in UI
-        console.log('🔍 Found question from survey details:', question);
-        
-        if (question?.options) {
-          // Find which option was selected in this response
-          const selectedQuestion = surveyData?.questions?.find((q: any) => q.id === questionId);
-          const selectedAnswer = selectedQuestion?.answer || selectedQuestion?.responses?.[0];
-          
-          console.log('🔍 Selected answer for this response:', selectedAnswer);
-          
-          const optionsData = question.options.map((option: any, index: number) => {
-            const isSelected = option.option === selectedAnswer || 
-                              option.option.toLowerCase() === String(selectedAnswer).toLowerCase();
-            
-            return {
-              name: option.option || `Option ${index + 1}`,
-              value: isSelected ? 1 : 0, // 1 if selected, 0 if not
-              color: isSelected ? '#C72030' : '#E5E5E5', // Highlight selected option
-              isSelected: isSelected
-            };
-          });
-          
-          console.log('🔍 Options data from survey details:', optionsData);
-          
-          // Return all options, highlighting the selected one
-          const selectedData = optionsData.filter(item => item.value > 0);
-          if (selectedData.length > 0) {
-            return selectedData;
-          }
-          
-          // If no exact match found, show all options with the selected answer
+      // Handle questions with options (could be empty array)
+      if (question?.options && Array.isArray(question.options)) {
+        // If options array is empty, show "No options configured"
+        if (question.options.length === 0) {
           return [{
-            name: selectedAnswer || 'Response',
+            name: 'No options configured',
             value: 1,
-            color: '#C72030'
+            color: '#E5E5E5'
           }];
+        }
+        
+        const optionsData = question.options.map((option: SurveyOption, index: number) => ({
+          name: option.option || `Option ${index + 1}`,
+          value: option.response_count || 0,
+          color: option.response_count > 0 ? 
+            ['#C72030', '#c6b692', '#d8dcdd', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#3B82F6'][index % 8] : 
+            '#E5E5E5'
+        }));
+        
+        console.log('🔍 Options data from survey details:', optionsData);
+        
+        // Only return options that have responses, or all options if none have responses
+        const hasResponses = optionsData.some(item => item.value > 0);
+        if (hasResponses) {
+          return optionsData.filter(item => item.value > 0);
+        } else {
+          // Show all options with 0 values if no responses yet
+          return optionsData;
         }
       }
     }
     
-    // Fallback: Show the actual response value
-    if (surveyData?.questions) {
-      const question = surveyData.questions.find((q: any) => q.id === questionId);
-      console.log('🔍 Found question from survey data:', question);
-      
-      if (question?.answer || question?.responses?.[0]) {
-        const answer = question.answer || question.responses[0];
-        
-        return [{
-          name: answer.length > 30 ? `${answer.substring(0, 30)}...` : answer,
-          value: 1,
-          color: '#C72030'
-        }];
-      }
-    }
-    
+    // Fallback: Show no data message
     console.log('🔍 No data found, returning empty array');
-    return [];
+    return [{
+      name: 'No responses yet',
+      value: 1,
+      color: '#E5E5E5'
+    }];
   };
 
   // Prepare pie chart data for survey summary statistics
   const getSurveyTypeDistributionData = () => {
     console.log('🔍 Getting survey type distribution data');
     console.log('🔍 Survey data for type distribution:', surveyData);
+    console.log('🔍 Survey details data:', surveyDetailsData);
     
     if (!surveyData) {
       return [{
@@ -323,37 +319,62 @@ export const SurveyResponseDetailPage = () => {
       }];
     }
     
-    // Create summary statistics for this specific survey
     const typeDistribution = [];
     
-    // Always add total responses
-    if (surveyData.totalResponses > 0) {
+    // Calculate total responses across all questions (only for questions with options)
+    const totalResponses = surveyData.questions?.reduce((sum, question) => {
+      if (question.options && question.options.length > 0) {
+        return sum + (question.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+      }
+      return sum;
+    }, 0) || 0;
+    
+    // Add total responses across all questions
+    if (totalResponses > 0) {
       typeDistribution.push({
         name: 'Total Responses',
-        value: surveyData.totalResponses,
+        value: totalResponses,
         color: '#C72030'
       });
     }
     
-    // Always add question count
+    // Add question count
     if (surveyData.questions?.length > 0) {
       typeDistribution.push({
-        name: 'Questions Count',
+        name: 'Total Questions',
         value: surveyData.questions.length,
         color: '#c6b692'
       });
     }
     
-    // Add question-specific data if available from survey details
-    if (surveyDetailsData?.survey_details?.survey) {
-      const surveyDetail = surveyDetailsData.survey_details.survey.find(
-        (s: any) => s.survey_id && s.survey_id.toString() === surveyId?.toString()
-      );
+    // Count questions with options vs questions without options
+    const questionsWithOptions = surveyData.questions?.filter(q => q.options && q.options.length > 0).length || 0;
+    const questionsWithoutOptions = (surveyData.questions?.length || 0) - questionsWithOptions;
+    
+    if (questionsWithOptions > 0) {
+      typeDistribution.push({
+        name: 'Questions with Options',
+        value: questionsWithOptions,
+        color: '#10B981'
+      });
+    }
+    
+    if (questionsWithoutOptions > 0) {
+      typeDistribution.push({
+        name: 'Questions without Options',
+        value: questionsWithoutOptions,
+        color: '#F59E0B'
+      });
+    }
+    
+    // Add option-specific data from survey details
+    if (surveyDetailsData?.survey_details?.survey?.[0]) {
+      const surveyDetail = surveyDetailsData.survey_details.survey[0];
       
-      if (surveyDetail?.questions) {
-        // Add total options count across all questions
+      if (surveyDetail.questions) {
+        // Add total options count across all questions (only for questions that have options)
         const totalOptions = surveyDetail.questions.reduce(
-          (sum: number, q: any) => sum + (q.options?.length || 0), 
+          (sum: number, q: SurveyQuestion) => sum + (q.options?.length || 0), 
           0
         );
         
@@ -367,7 +388,7 @@ export const SurveyResponseDetailPage = () => {
         
         // Add total answered options count
         const totalAnsweredOptions = surveyDetail.questions.reduce(
-          (sum: number, q: any) => sum + (q.options?.filter((o: any) => (o.response_count || 0) > 0).length || 0),
+          (sum: number, q: SurveyQuestion) => sum + (q.options?.filter((o: SurveyOption) => (o.response_count || 0) > 0).length || 0),
           0
         );
         
@@ -375,7 +396,7 @@ export const SurveyResponseDetailPage = () => {
           typeDistribution.push({
             name: 'Answered Options',
             value: totalAnsweredOptions,
-            color: '#10B981'
+            color: '#8B5CF6'
           });
         }
       }
@@ -404,13 +425,45 @@ export const SurveyResponseDetailPage = () => {
     toast.success('Survey type chart download initiated');
   };
 
-  if (!surveyData || isLoading) {
+  if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
-        <div className="text-center">
-          <h1 className="text-xl font-semibold text-gray-800 mb-4">
-            {isLoading ? 'Loading survey details...' : 'Survey not found'}
-          </h1>
+        <div className="text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#C72030] mx-auto mb-4"></div>
+          <h1 className="text-xl font-semibold text-gray-800 mb-2">Loading survey details...</h1>
+          <p className="text-gray-600">Please wait while we fetch the survey information.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!surveyData) {
+    return (
+      <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+        <div className="text-center py-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/maintenance/survey/response')}
+            className="mb-6 p-0 h-auto text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Response List
+          </Button>
+          <div className="max-w-md mx-auto">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl text-gray-400">📋</span>
+            </div>
+            <h1 className="text-xl font-semibold text-gray-800 mb-2">Survey not found</h1>
+            <p className="text-gray-600 mb-4">
+              The survey with ID "{surveyId}" could not be found or has no data available.
+            </p>
+            <Button 
+              onClick={() => navigate('/maintenance/survey/response')}
+              className="bg-[#C72030] hover:bg-[#A01B2A] text-white"
+            >
+              Return to Survey List
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -433,79 +486,103 @@ export const SurveyResponseDetailPage = () => {
         
         {/* Tabs wrapper encompasses everything that needs tab context */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="bg-[#F5F3EF] p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  1
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Individual Response</div>
-                  <div className="text-xs text-gray-400">Response ID: {surveyData.responseId}</div>
-                </div>
+        <div className="bg-[#F5F3EF] p-4 mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                S
               </div>
-              
-              <div className="flex items-center gap-8">
-                <TabsList className="bg-transparent border-0 p-0 h-auto">
-                  <TabsTrigger value="summary" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1">Summary</TabsTrigger>
-                  <TabsTrigger value="tabular" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Tabular</TabsTrigger>
-                </TabsList>
+              <div>
+                <div className="text-sm text-gray-500">Survey Details</div>
+                <div className="text-xs text-gray-400">Survey ID: {surveyData.survey_id}</div>
+                <div className="text-xs text-gray-400">Survey: {surveyData.survey_name}</div>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <div className="text-sm text-gray-700">
-                  Type : <span className="text-[#C72030] font-medium">Survey</span>
-                </div>
+            </div>
+            
+            <div className="flex items-center gap-8">
+              <TabsList className="bg-transparent border-0 p-0 h-auto">
+                <TabsTrigger value="summary" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1">Summary</TabsTrigger>
+                <TabsTrigger value="tabular" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Analytics</TabsTrigger>
+              </TabsList>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-700">
+                Total Responses: <span className="text-[#C72030] font-medium">
+                  {surveyData.questions?.reduce((sum, q) => {
+                    if (q.options && q.options.length > 0) {
+                      return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+                    }
+                    return sum;
+                  }, 0) || 0}
+                </span>
               </div>
             </div>
           </div>
-
-
+        </div>
           <TabsContent value="summary" className="space-y-6">
             {/* Questions and Responses */}
-            {surveyData.questions.map((question: any) => (
-              <div key={question.id} className="bg-[#F5F3EF] p-4 rounded-lg border">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="font-medium text-gray-800 mb-1 text-base">{question.question}</h3>
-                    <p className="text-sm text-gray-600">{question.responseCount} Responses</p>
+            {surveyData.questions.map((question: SurveyQuestion) => {
+              const totalResponses = question.options?.reduce((sum, opt) => sum + opt.response_count, 0) || 0;
+              const responseTexts = question.options?.filter(opt => opt.response_count > 0)
+                .map(opt => `${opt.option} (${opt.response_count} responses)`) || [];
+              
+              // Check if question has any options configured
+              const hasOptions = question.options && question.options.length > 0;
+              
+              return (
+                <div key={question.question_id} className="bg-[#F5F3EF] p-4 rounded-lg border">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="font-medium text-gray-800 mb-1 text-base">{question.question}</h3>
+                      <p className="text-sm text-gray-600">
+                        {hasOptions ? `${totalResponses} Responses` : 'No options configured'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Question Response Distribution Pie Chart */}
+                  <div className="mb-4">
+                    <SurveyAnalyticsCard
+                      title={`Response Distribution: ${question.question.substring(0, 50)}${question.question.length > 50 ? '...' : ''}`}
+                      type="statusDistribution"
+                      data={getQuestionOptionsData(question.question_id)}
+                      dateRange={{ 
+                        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
+                        endDate: new Date() 
+                      }}
+                      onDownload={() => {
+                        console.log(`Download chart for question ${question.question_id}`);
+                        toast.success(`Chart for question ${question.question_id} download initiated`);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                    {hasOptions ? (
+                      responseTexts.length > 0 ? (
+                        responseTexts.map((response: string, index: number) => (
+                          <div 
+                            key={index} 
+                            className="bg-white p-3 rounded border border-gray-200 text-gray-700"
+                          >
+                            {response}
+                          </div>
+                        ))
+                      ) : (
+                        <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
+                          No responses yet
+                        </div>
+                      )
+                    ) : (
+                      <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
+                        This question has no configured options
+                      </div>
+                    )}
                   </div>
                 </div>
-                
-                {/* Question Response Distribution Pie Chart */}
-                <div className="mb-4">
-                  <SurveyAnalyticsCard
-                    title={`Response Distribution: ${question.question.substring(0, 50)}${question.question.length > 50 ? '...' : ''}`}
-                    type="statusDistribution"
-                    data={getQuestionOptionsData(question.id)}
-                    dateRange={{ 
-                      startDate: new Date(apiData?.created_at || Date.now()), 
-                      endDate: new Date() 
-                    }}
-                    onDownload={() => {
-                      console.log(`Download chart for question ${question.id}`);
-                      toast.success(`Chart for question ${question.id} download initiated`);
-                    }}
-                  />
-                </div>
-                
-                <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                  {question.responses.map((response: string, index: number) => (
-                    <div 
-                      key={index} 
-                      className="bg-white p-3 rounded border border-gray-200 text-gray-700"
-                    >
-                      {response}
-                    </div>
-                  ))}
-                  {question.responses.length === 0 && (
-                    <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
-                      No responses yet
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* Survey Summary Statistics Pie Chart - Second Last Position */}
             <div className="mt-8">
@@ -514,7 +591,7 @@ export const SurveyResponseDetailPage = () => {
                 type="surveyDistributions"
                 data={getSurveyTypeDistributionData()}
                 dateRange={{ 
-                  startDate: new Date(apiData?.created_at || Date.now()), 
+                  startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
                   endDate: new Date() 
                 }}
                 onDownload={handleDownloadTypeChart}
@@ -528,7 +605,7 @@ export const SurveyResponseDetailPage = () => {
                 type="statusDistribution"
                 data={getResponseDistributionData()}
                 dateRange={{ 
-                  startDate: new Date(apiData?.created_at || Date.now()), 
+                  startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
                   endDate: new Date() 
                 }}
                 onDownload={handleDownloadResponseChart}
@@ -538,67 +615,93 @@ export const SurveyResponseDetailPage = () => {
 
           <TabsContent value="tabular" className="mt-6">
             <div className="bg-white">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Survey Question & Option Analytics</h3>
+                <p className="text-sm text-gray-600">Detailed breakdown of questions and their response distribution</p>
+              </div>
+              
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[180px]">Timestamp</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Name</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Site</th>
-                      {/* <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">What is your role?</th> */}
-                      {/* <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Department</th> */}
-                      {/* Dynamic question columns based on parsed_response */}
-                      {apiData?.parsed_response && Object.keys(apiData.parsed_response).map((questionKey, index) => (
-                        <th key={questionKey} className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">
-                          {questionKey.includes('question') ? 
-                            `Question ${questionKey.replace('question', '')}` : 
-                            questionKey
-                          }
-                        </th>
-                      ))}
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[80px]">Question ID</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[200px]">Question</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Option</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Response Count</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Percentage</th>
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="p-3 text-sm text-gray-700">
-                        {apiData?.created_at ? 
-                          new Date(apiData.created_at).toLocaleString('en-US', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit',
-                            timeZoneName: 'short'
-                          }) : 
-                          surveyData?.expiryDate
-                        }
-                      </td>
-                      <td className="p-3 text-sm text-gray-700">
-                        {apiData?.created_by?.full_name || surveyData?.createdBy || "N/A"}
-                      </td>
-                      <td className="p-3 text-sm text-gray-700">
-                        {apiData?.location?.split('/')[0]?.trim() || 
-                         surveyData?.location?.split('/')[0]?.trim() || 
-                         "N/A"}
-                      </td>
-                      {/* <td className="p-3 text-sm text-gray-700">
-                        Supervisor
-                      </td> */}
-                      {/* <td className="p-3 text-sm text-gray-700">
-                        {apiData?.location?.includes('Technical') ? 'Technical' : 
-                         surveyData?.location?.split('/')[1]?.trim() || 
-                         "Technical"}
-                      </td> */}
-                      {/* Dynamic question answers from parsed_response */}
-                      {apiData?.parsed_response && Object.entries(apiData.parsed_response).map(([questionKey, answer]) => (
-                        <td key={questionKey} className="p-3 text-sm text-gray-700">
-                          {String(answer) || "N/A"}
-                        </td>
-                      ))}
-                    </tr>
+                    {surveyDetailsData?.survey_details?.survey?.[0]?.questions?.map((question: SurveyQuestion) => {
+                      const totalQuestionResponses = question.options?.reduce((sum: number, opt: SurveyOption) => sum + (opt.response_count || 0), 0) || 0;
+                      
+                      // Handle questions with no options
+                      if (!question.options || question.options.length === 0) {
+                        return (
+                          <tr key={`${question.question_id}-no-options`} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="p-3 text-sm text-gray-700">
+                              {question.question_id}
+                            </td>
+                            <td className="p-3 text-sm text-gray-700">
+                              {question.question}
+                            </td>
+                            <td className="p-3 text-sm text-gray-500 italic">
+                              No options configured
+                            </td>
+                            <td className="p-3 text-sm text-gray-700">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                N/A
+                              </span>
+                            </td>
+                            <td className="p-3 text-sm text-gray-700">
+                              N/A
+                            </td>
+                          </tr>
+                        );
+                      }
+                      
+                      return question.options?.map((option: SurveyOption, optionIndex: number) => (
+                        <tr key={`${question.question_id}-${option.option_id}`} className="border-b border-gray-100 hover:bg-gray-50">
+                          {optionIndex === 0 && (
+                            <>
+                              <td className="p-3 text-sm text-gray-700" rowSpan={question.options.length}>
+                                {question.question_id}
+                              </td>
+                              <td className="p-3 text-sm text-gray-700" rowSpan={question.options.length}>
+                                {question.question}
+                              </td>
+                            </>
+                          )}
+                          <td className="p-3 text-sm text-gray-700">
+                            {option.option}
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              option.response_count > 0 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {option.response_count || 0}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            {totalQuestionResponses > 0 
+                              ? `${Math.round(((option.response_count || 0) / totalQuestionResponses) * 100)}%`
+                              : '0%'
+                            }
+                          </td>
+                        </tr>
+                      )) || []
+                    }) || []}
                   </tbody>
                 </table>
+                
+                {(!surveyDetailsData?.survey_details?.survey?.[0]?.questions || 
+                  surveyDetailsData.survey_details.survey[0].questions.length === 0) && (
+                  <div className="text-center py-8 text-gray-500">
+                    No question data available
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>

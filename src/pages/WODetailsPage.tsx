@@ -636,7 +636,7 @@ export const WODetailsPage = () => {
               <span className="text-sm font-medium text-gray-700 w-40">
                 WO Date
               </span>
-              <span className="text-sm">: {workOrder.work_order?.wo_date}</span>
+              <span className="text-sm">: {workOrder.work_order?.wo_date ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy") : "-"}</span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">
@@ -806,6 +806,8 @@ export const WODetailsPage = () => {
             renderCell={(item, columnKey) => {
               if (columnKey === "total_amount") {
                 return <span className="font-medium">{item[columnKey]}</span>;
+              } else if (columnKey === "expected_date") {
+                return <span className="font-medium">{item[columnKey] ? format(item[columnKey], "dd/MM/yyyy") : "-"}</span>;
               }
               return item[columnKey];
             }}
@@ -876,7 +878,7 @@ export const WODetailsPage = () => {
         </CardHeader>
         <CardContent>
           {Array.isArray(workOrder.attachments) && workOrder.attachments.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="flex items-center flex-wrap gap-4">
               {workOrder.attachments.map((attachment: Attachment) => {
                 const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
                 const isPdf = /\.pdf$/i.test(attachment.url);

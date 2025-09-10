@@ -139,7 +139,7 @@ export const SurveyListDashboard = () => {
   const handleAction = (action: string, item: SurveyItem) => {
     console.log(`${action} action for Question ${item.id}`);
     if (action === 'Edit') {
-      navigate(`/maintenance/survey/edit/${item.id}`);
+      navigate(`/master/survey/edit/${item.id}`);
     } else if (action === 'View') {
       navigate(`/master/survey/details/${item.id}`);
     } else {
@@ -165,7 +165,7 @@ export const SurveyListDashboard = () => {
   const handleRowAction = (action: string, surveyId: number) => {
     console.log(`${action} action for Question ${surveyId}`);
     if (action === 'Edit') {
-      navigate(`/maintenance/survey/edit/${surveyId}`);
+      navigate(`/master/survey/edit/${surveyId}`);
     } else if (action === 'View') {
       navigate(`/master/survey/details/${surveyId}`);
     } else {
@@ -205,12 +205,20 @@ export const SurveyListDashboard = () => {
     switch (columnKey) {
       case 'actions':
         return (
-          <div className="flex justify-center items-center">
+          <div className="flex justify-center items-center gap-2">
             <button 
               onClick={() => handleRowAction('View', item.id)}
               className="p-1 text-gray-600 hover:text-gray-800"
+              title="View"
             >
               <Eye className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleRowAction('Edit', item.id)}
+              className="p-1 text-blue-600 hover:text-blue-800"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
             </button>
           </div>
         );

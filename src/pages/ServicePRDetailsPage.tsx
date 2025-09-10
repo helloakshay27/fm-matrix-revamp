@@ -1,16 +1,40 @@
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Edit, Copy, Printer, Rss, ArrowLeft, FileText, FileSpreadsheet, File, Eye } from "lucide-react";
+import {
+  Edit,
+  Copy,
+  Printer,
+  Rss,
+  ArrowLeft,
+  FileText,
+  FileSpreadsheet,
+  File,
+  Eye,
+} from "lucide-react";
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
-import { approveRejectWO, getWorkOrderById } from "@/store/slices/workOrderSlice";
+import {
+  approveRejectWO,
+  getWorkOrderById,
+} from "@/store/slices/workOrderSlice";
 import { numberToIndianCurrencyWords } from "@/utils/amountToText";
 import axios from "axios";
 import type { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import {
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  TextField,
+} from "@mui/material";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
@@ -125,8 +149,18 @@ const serviceColumns: ColumnConfig[] = [
   { key: "boq_details", label: "BOQ Details", sortable: true, draggable: true },
   { key: "quantity", label: "Quantity", sortable: true, draggable: true },
   { key: "uom", label: "UOM", sortable: true, draggable: true },
-  { key: "expected_date", label: "Expected Date", sortable: true, draggable: true },
-  { key: "product_description", label: "Product Description", sortable: true, draggable: true },
+  {
+    key: "expected_date",
+    label: "Expected Date",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "product_description",
+    label: "Product Description",
+    sortable: true,
+    draggable: true,
+  },
   { key: "rate", label: "Rate", sortable: true, draggable: true },
   { key: "wbs_code", label: "Wbs Code", sortable: true, draggable: true },
   { key: "cgst_rate", label: "CGST Rate(%)", sortable: true, draggable: true },
@@ -137,7 +171,12 @@ const serviceColumns: ColumnConfig[] = [
   { key: "igst_amount", label: "IGST Amount", sortable: true, draggable: true },
   { key: "tcs_amount", label: "TCS Amount", sortable: true, draggable: true },
   { key: "tax_amount", label: "Tax Amount", sortable: true, draggable: true },
-  { key: "total_amount", label: "Total Amount", sortable: true, draggable: true },
+  {
+    key: "total_amount",
+    label: "Total Amount",
+    sortable: true,
+    draggable: true,
+  },
 ];
 
 export const ServicePRDetailsPage = () => {
@@ -154,7 +193,8 @@ export const ServicePRDetailsPage = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [rejectComment, setRejectComment] = useState("");
-  const [selectedAttachment, setSelectedAttachment] = useState<Attachment | null>(null);
+  const [selectedAttachment, setSelectedAttachment] =
+    useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
@@ -178,7 +218,9 @@ export const ServicePRDetailsPage = () => {
 
       try {
         setLoading(true);
-        const response = await dispatch(getWorkOrderById({ baseUrl, token, id })).unwrap();
+        const response = await dispatch(
+          getWorkOrderById({ baseUrl, token, id })
+        ).unwrap();
         setServicePR(response.page || {});
         setButtonCondition({
           showSap: response.show_send_sap_yes,
@@ -208,15 +250,15 @@ export const ServicePRDetailsPage = () => {
         `https://${baseUrl}/pms/work_orders/${id}/print_pdf.pdf`,
         {
           headers: { Authorization: `Bearer ${token}` },
-          responseType: 'blob'
+          responseType: "blob",
         }
       );
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: "application/pdf" });
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'service_pr.pdf';
+      link.download = "service_pr.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -264,7 +306,9 @@ export const ServicePRDetailsPage = () => {
     };
 
     try {
-      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("Work Order approved successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
@@ -294,7 +338,9 @@ export const ServicePRDetailsPage = () => {
     };
 
     try {
-      await dispatch(approveRejectWO({ baseUrl, token, id: Number(id), data: payload })).unwrap();
+      await dispatch(
+        approveRejectWO({ baseUrl, token, id: Number(id), data: payload })
+      ).unwrap();
       toast.success("Work Order rejected successfully");
       navigate(`/finance/pending-approvals`);
     } catch (error: any) {
@@ -307,38 +353,46 @@ export const ServicePRDetailsPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case "approved": return "bg-green-100 text-green-800";
-      case "rejected": return "bg-red-100 text-red-800";
-      case "pending": return "bg-yellow-100 text-yellow-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "approved":
+        return "bg-green-100 text-green-800";
+      case "rejected":
+        return "bg-red-100 text-red-800";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const serviceItems: ServiceItem[] = servicePR.inventories?.map((item: any, index: number) => ({
-    id: item.id || index,
-    sno: item.sno || index + 1,
-    boq_details: item.boq_details || "-",
-    quantity: item.quantity || 0,
-    uom: item.uom || "-",
-    expected_date: item.expected_date ? item.expected_date : "-",
-    product_description: item.product_description || "-",
-    rate: item.rate || 0,
-    wbs_code: item.wbs_code || "-",
-    cgst_rate: item.cgst_rate || 0,
-    cgst_amount: item.cgst_amount || 0,
-    sgst_rate: item.sgst_rate || 0,
-    sgst_amount: item.sgst_amount || 0,
-    igst_rate: item.igst_rate || 0,
-    igst_amount: item.igst_amount || 0,
-    tcs_amount: item.tcs_amount || 0,
-    tax_amount: item.tax_amount || 0,
-    total_amount: item.total_amount || 0,
-  })) || [];
+  const serviceItems: ServiceItem[] =
+    servicePR.inventories?.map((item: any, index: number) => ({
+      id: item.id || index,
+      sno: item.sno || index + 1,
+      boq_details: item.boq_details || "-",
+      quantity: item.quantity || 0,
+      uom: item.uom || "-",
+      expected_date: item.expected_date ? format(item.expected_date, "dd/MM/yyyy") : "-",
+      product_description: item.product_description || "-",
+      rate: item.rate || 0,
+      wbs_code: item.wbs_code || "-",
+      cgst_rate: item.cgst_rate || 0,
+      cgst_amount: item.cgst_amount || 0,
+      sgst_rate: item.sgst_rate || 0,
+      sgst_amount: item.sgst_amount || 0,
+      igst_rate: item.igst_rate || 0,
+      igst_amount: item.igst_amount || 0,
+      tcs_amount: item.tcs_amount || 0,
+      tax_amount: item.tax_amount || 0,
+      total_amount: item.total_amount || 0,
+    })) || [];
 
   const renderCell = (item: ServiceItem, columnKey: string) => {
     const value = item[columnKey as keyof ServiceItem] ?? "-";
     if (columnKey === "product_description") {
-      const truncated = typeof value === 'string' && value.length > 30 ? value.slice(0, 30) + "..." : value;
+      const truncated =
+        typeof value === "string" && value.length > 30
+          ? value.slice(0, 30) + "..."
+          : value;
       return (
         <TooltipProvider>
           <Tooltip>
@@ -368,25 +422,39 @@ export const ServicePRDetailsPage = () => {
             <div className="flex items-start gap-3 mt-3">
               {servicePR?.approvals?.map((level: Approval) => (
                 <div className="space-y-2" key={level.level}>
-                  {level.status.toLowerCase() === 'rejected' ? (
+                  {level.status.toLowerCase() === "rejected" ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(level.status)}`}>
+                        <div
+                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                            level.status
+                          )}`}
+                        >
                           {`${level.level} Approval : ${level.status}`}
                         </div>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Rejection Reason: {level.rejection_reason ?? 'No reason provided'}</p>
+                        <p>
+                          Rejection Reason:{" "}
+                          {level.rejection_reason ?? "No reason provided"}
+                        </p>
                       </TooltipContent>
                     </Tooltip>
                   ) : (
-                    <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                    <div
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                        level.status
+                      )}`}
+                    >
                       {`${level.level} Approval : ${level.status}`}
                     </div>
                   )}
                   {level.updated_by && level.updated_at && (
                     <div className="ms-2 w-[190px]">
-                      {`${level.updated_by} (${format(new Date(level.updated_at), "dd/MM/yyyy")})`}
+                      {`${level.updated_by} (${format(
+                        new Date(level.updated_at),
+                        "dd/MM/yyyy"
+                      )})`}
                     </div>
                   )}
                 </div>
@@ -449,19 +517,51 @@ export const ServicePRDetailsPage = () => {
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium text-center">{servicePR.company?.site_name || "Company Details"}</CardTitle>
+            <CardTitle className="text-lg font-medium text-center">
+              {servicePR.company?.site_name || "Company Details"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-24">Phone</span><span className="font-medium">: {servicePR.company?.phone ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">Email</span><span className="font-medium">: {servicePR.company?.email ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">PAN</span><span className="font-medium">: {servicePR.company?.pan ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Phone</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.phone ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Email</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.email ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">PAN</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.pan ?? "-"}
+                  </span>
+                </div>
               </div>
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-24">Fax</span><span className="font-medium">: {servicePR.company?.fax ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">GST</span><span className="font-medium">: {servicePR.company?.gst ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-24">Address</span><span className="font-medium">: {servicePR.company?.address ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Fax</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.fax ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">GST</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.gst ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-24">Address</span>
+                  <span className="font-medium">
+                    : {servicePR.company?.address ?? "-"}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -470,35 +570,169 @@ export const ServicePRDetailsPage = () => {
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium text-center">
-              Service Purchase Request ({servicePR.work_order?.wo_status || "-"})
+              Service Purchase Request ({servicePR.work_order?.wo_status || "-"}
+              )
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-4">
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-40">SPR Number</span><span className="font-medium">: {servicePR.work_order?.number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">SPR Date</span><span className="font-medium">: {servicePR.work_order?.wo_date ? format(new Date(servicePR.work_order.wo_date), 'dd-MM-yyyy') : '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Kind Attention</span><span className="font-medium">: {servicePR.work_order?.kind_attention ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Subject</span><span className="font-medium">: {servicePR.work_order?.subject ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Related To</span><span className="font-medium">: {servicePR.work_order?.related_to ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Payment Tenure(In Days)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.payment_tenure ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Retention(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.retention ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">TDS(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.tds ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">QC(%)</span><span className="font-medium">: {servicePR.work_order?.payment_terms?.qc ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Advance Amount</span><span className="font-medium">: {servicePR.work_order?.advance_amount ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-40">Description</span><span className="font-medium">: {servicePR.work_order?.description ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">SPR Number</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.number ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">SPR Date</span>
+                  <span className="font-medium">
+                    :{" "}
+                    {servicePR.work_order?.wo_date
+                      ? format(
+                        new Date(servicePR.work_order.wo_date),
+                        "dd-MM-yyyy"
+                      )
+                      : "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">
+                    Kind Attention
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.kind_attention ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">Subject</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.subject ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">Related To</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.related_to ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">
+                    Payment Tenure(In Days)
+                  </span>
+                  <span className="font-medium">
+                    :{" "}
+                    {servicePR.work_order?.payment_terms?.payment_tenure ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">
+                    Retention(%)
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.payment_terms?.retention ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">TDS(%)</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.payment_terms?.tds ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">QC(%)</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.payment_terms?.qc ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">
+                    Advance Amount
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.advance_amount ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-40">
+                    Description
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.description ?? "-"}
+                  </span>
+                </div>
               </div>
               <div className="space-y-3">
-                <div className="flex"><span className="text-muted-foreground w-32">Reference No.</span><span className="font-medium">: {servicePR.work_order?.reference_no ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">ID</span><span className="font-medium">: {servicePR.work_order?.id ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Contractor</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.company_name ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Address</span><span className="font-medium">: {servicePR.work_order?.supplier_address?.address ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Phone</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.mobile1 ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Email</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.email ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">GST</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.gstin_number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">PAN</span><span className="font-medium">: {servicePR.work_order?.supplier_details?.pan_number ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Work Category</span><span className="font-medium">: {servicePR.work_order?.work_category ?? '-'}</span></div>
-                <div className="flex"><span className="text-muted-foreground w-32">Plant Detail</span><span className="font-medium">: {servicePR.work_order?.plant_detail ?? '-'}</span></div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">
+                    Reference No.
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.reference_no ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">ID</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.id ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">Contractor</span>
+                  <span className="font-medium">
+                    :{" "}
+                    {servicePR.work_order?.supplier_details?.company_name ??
+                      "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">Address</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.supplier_address?.address ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">Phone</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.supplier_details?.mobile1 ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">Email</span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.supplier_details?.email ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">GST</span>
+                  <span className="font-medium">
+                    :{" "}
+                    {servicePR.work_order?.supplier_details?.gstin_number ??
+                      "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">PAN</span>
+                  <span className="font-medium">
+                    :{" "}
+                    {servicePR.work_order?.supplier_details?.pan_number ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">
+                    Work Category
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.work_category ?? "-"}
+                  </span>
+                </div>
+                <div className="flex">
+                  <span className="text-muted-foreground w-32">
+                    Plant Detail
+                  </span>
+                  <span className="font-medium">
+                    : {servicePR.work_order?.plant_detail ?? "-"}
+                  </span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -506,7 +740,9 @@ export const ServicePRDetailsPage = () => {
 
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-0">
-            <CardTitle className="text-lg font-medium">Service Items Details</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Service Items Details
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <EnhancedTable
@@ -525,24 +761,44 @@ export const ServicePRDetailsPage = () => {
             />
             <div className="mt-6 border-t pt-4">
               <div className="flex justify-between items-center py-2">
-                <span className="font-medium text-gray-700">Net Amount (INR):</span>
-                <span className="font-medium">{servicePR.totals?.net_amount ?? '-'}</span>
+                <span className="font-medium text-gray-700">
+                  Net Amount (INR):
+                </span>
+                <span className="font-medium">
+                  {servicePR.totals?.net_amount ?? "-"}
+                </span>
               </div>
               <div className="flex justify-between items-center py-2">
-                <span className="font-medium text-gray-700">Total Taxable Value Of Service PR:</span>
-                <span className="font-medium">{servicePR.totals?.total_taxable ?? '-'}</span>
+                <span className="font-medium text-gray-700">
+                  Total Taxable Value Of Service PR:
+                </span>
+                <span className="font-medium">
+                  {servicePR.totals?.total_taxable ?? "-"}
+                </span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="font-medium text-gray-700">Taxes (INR):</span>
-                <span className="font-medium">{servicePR.totals?.taxes ?? '-'}</span>
+                <span className="font-medium">
+                  {servicePR.totals?.taxes ?? "-"}
+                </span>
               </div>
               <div className="flex justify-between items-center py-2 border-t">
-                <span className="font-semibold text-gray-900">Total Service PR Value (INR):</span>
-                <span className="font-semibold">{servicePR.totals?.total_value ?? '-'}</span>
+                <span className="font-semibold text-gray-900">
+                  Total Service PR Value (INR):
+                </span>
+                <span className="font-semibold">
+                  {servicePR.totals?.total_value ?? "-"}
+                </span>
               </div>
               <div className="mt-4">
-                <span className="font-medium text-gray-700">Amount In Words: </span>
-                <span className="text-gray-900">{numberToIndianCurrencyWords(servicePR.totals?.total_value ?? 0)}</span>
+                <span className="font-medium text-gray-700">
+                  Amount In Words:{" "}
+                </span>
+                <span className="text-gray-900">
+                  {numberToIndianCurrencyWords(
+                    servicePR.totals?.total_value ?? 0
+                  )}
+                </span>
               </div>
             </div>
           </CardContent>
@@ -550,19 +806,30 @@ export const ServicePRDetailsPage = () => {
 
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-medium">Terms & Conditions</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              Terms & Conditions
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-wrap break-words">
-            <p className="text-muted-foreground">{servicePR.work_order?.term_condition ?? 'No terms and conditions available'}</p>
+            <p className="text-muted-foreground">
+              {servicePR.work_order?.term_condition ??
+                "No terms and conditions available"}
+            </p>
             <div className="mt-6">
-              <p className="font-medium text-gray-900">For {servicePR.contractor || "-"} We Confirm & Accept,</p>
+              <p className="font-medium text-gray-900">
+                For {servicePR.contractor || "-"} We Confirm & Accept,
+              </p>
             </div>
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
-                <p className="font-medium text-gray-900">PREPARED BY: {servicePR.preparedBy || "-"}</p>
+                <p className="font-medium text-gray-900">
+                  PREPARED BY: {servicePR.preparedBy || "-"}
+                </p>
               </div>
               <div>
-                <p className="font-medium text-gray-900">SIGNATURE: {servicePR.signature || "-"}</p>
+                <p className="font-medium text-gray-900">
+                  SIGNATURE: {servicePR.signature || "-"}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -573,10 +840,13 @@ export const ServicePRDetailsPage = () => {
             <CardTitle className="text-lg font-medium">Attachments</CardTitle>
           </CardHeader>
           <CardContent>
-            {Array.isArray(servicePR.attachments) && servicePR.attachments.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            {Array.isArray(servicePR.attachments) &&
+              servicePR.attachments.length > 0 ? (
+              <div className="flex items-center flex-wrap gap-4">
                 {servicePR.attachments.map((attachment: Attachment) => {
-                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                  const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                    attachment.url
+                  );
                   const isPdf = /\.pdf$/i.test(attachment.url);
                   const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
                   const isWord = /\.(doc|docx)$/i.test(attachment.url);
@@ -602,7 +872,10 @@ export const ServicePRDetailsPage = () => {
                           </button>
                           <img
                             src={attachment.url}
-                            alt={attachment.document_name || attachment.document_file_name}
+                            alt={
+                              attachment.document_name ||
+                              attachment.document_file_name
+                            }
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
                               setSelectedAttachment(attachment);
@@ -628,7 +901,9 @@ export const ServicePRDetailsPage = () => {
                         </div>
                       )}
                       <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                        {attachment.document_name ||
+                          attachment.document_file_name ||
+                          `Document_${attachment.id}`}
                       </span>
                       {isDownloadable && (
                         <Button
@@ -670,7 +945,12 @@ export const ServicePRDetailsPage = () => {
           </div>
         )}
 
-        <Dialog open={openRejectDialog} onClose={() => setOpenRejectDialog(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openRejectDialog}
+          onClose={() => setOpenRejectDialog(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>Reject Work Order</DialogTitle>
           <DialogContent>
             <TextField
@@ -687,7 +967,10 @@ export const ServicePRDetailsPage = () => {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenRejectDialog(false)} variant="outline">
+            <Button
+              onClick={() => setOpenRejectDialog(false)}
+              variant="outline"
+            >
               Cancel
             </Button>
             <Button

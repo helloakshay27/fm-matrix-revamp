@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { ArrowLeft, Settings, Trash2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -18,6 +18,15 @@ import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
 import { getWorkOrderById } from "@/store/slices/workOrderSlice";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+
+interface Attachment {
+  id: number;
+  url: string;
+  document_name: string;
+  document_file_name: string;
+}
 
 export const WorkOrderAddPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -37,6 +46,10 @@ export const WorkOrderAddPage: React.FC = () => {
   const [addresses, setAddresses] = useState([]);
   const [services, setServices] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     contractor: "",
@@ -237,6 +250,15 @@ export const WorkOrderAddPage: React.FC = () => {
       taxAmount: taxAmount.toFixed(2),
       totalAmount: totalAmount.toFixed(2),
     };
+  };
+
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    setAttachedFiles((prev) => [...prev, ...files]);
   };
 
   const handleDetailsChange = (
@@ -1370,7 +1392,7 @@ export const WorkOrderAddPage: React.FC = () => {
         </div>
 
         {/* Details Section Card */}
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm mb-6">
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
@@ -1463,6 +1485,10 @@ export const WorkOrderAddPage: React.FC = () => {
                   }}
                   sx={{
                     mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                    },
                   }}
                 />
               </div>
@@ -1484,6 +1510,11 @@ export const WorkOrderAddPage: React.FC = () => {
                   }}
                   sx={{
                     mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      width: "100% !important",
+                      height: "auto !important",
+                      padding: "2px !important",
+                    },
                   }}
                 />
               </div>
@@ -1492,88 +1523,125 @@ export const WorkOrderAddPage: React.FC = () => {
         </div>
 
         {/* Attachments Section Card */}
-        <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
-                <Settings className="w-4 h-4 text-white" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                ATTACHMENTS
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-[#C72030] flex items-center">
+              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
+                3
               </h2>
-            </div>
-          </div>
-
-          <div className="p-6">
-            <input
-              type="file"
-              multiple
-              className="hidden"
-              id="file-upload"
-              onChange={handleFileUpload}
-            />
-            <label htmlFor="file-upload" className="block cursor-pointer">
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
-                <span className="text-gray-600">
-                  Drag & Drop or{" "}
-                  <span className="text-red-500 underline">Choose files</span>{" "}
-                  {attachedFiles.length === 0
-                    ? "No file chosen"
-                    : `${attachedFiles.length} file(s) selected`}
+              ATTACHMENTS
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div
+              className="border-2 border-dashed border-yellow-400 rounded-lg p-8 text-center cursor-pointer"
+              onClick={handleDashedBorderClick}
+            >
+              <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <div className="text-sm text-gray-600">
+                <span className="font-medium">Drag & Drop or Click to Upload</span>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                  ref={fileInputRef}
+                  accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
+                />
+                <span className="ml-1">
+                  {attachedFiles.length > 0
+                    ? `${attachedFiles.length} file(s) selected`
+                    : "No files chosen"}
                 </span>
               </div>
-            </label>
+            </div>
 
-            {/* File Preview Section */}
             {attachedFiles.length > 0 && (
-              <div className="mt-6">
-                <h3 className="text-md font-medium text-foreground mb-4">
-                  Selected Files:
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {attachedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="relative border border-gray-200 rounded-lg overflow-hidden"
-                    >
-                      {/* Remove Button - Top Right */}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        className="absolute top-1 right-1 z-10 h-6 w-6 p-0 bg-red-500 text-white hover:bg-red-600 rounded-full"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
+              <div className="flex items-center flex-wrap gap-4 my-6">
+                {attachedFiles.map((file, index) => {
+                  const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                  const isPdf = file.type.match(/application\/pdf/i);
+                  const isExcel = file.type.match(
+                    /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                  );
+                  const isWord = file.type.match(
+                    /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                  );
 
-                      {file.type.startsWith("image/") ? (
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="w-full h-24 object-cover"
-                        />
+                  return (
+                    <div
+                      key={`new-${index}`}
+                      className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                    >
+                      {isImage ? (
+                        <>
+                          <button
+                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                            title="View"
+                            onClick={() => {
+                              setSelectedDoc({
+                                id: index,
+                                url: URL.createObjectURL(file),
+                                document_name: file.name,
+                                document_file_name: file.name,
+                              });
+                              setIsModalOpen(true);
+                            }}
+                            type="button"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                            onClick={() => {
+                              setSelectedDoc({
+                                id: index,
+                                url: URL.createObjectURL(file),
+                                document_name: file.name,
+                                document_file_name: file.name,
+                              });
+                              setIsModalOpen(true);
+                            }}
+                          />
+                        </>
+                      ) : isPdf ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
+                      ) : isExcel ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                          <FileSpreadsheet className="w-6 h-6" />
+                        </div>
+                      ) : isWord ? (
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                          <FileText className="w-6 h-6" />
+                        </div>
                       ) : (
-                        <div className="w-full h-24 bg-gray-100 flex items-center justify-center">
-                          <span className="text-gray-500 text-xs text-center p-2">
-                            {file.name}
-                          </span>
+                        <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                          <File className="w-6 h-6" />
                         </div>
                       )}
-                      <div className="p-2">
-                        <p
-                          className="text-xs text-gray-600 truncate"
-                          title={file.name}
-                        >
-                          {file.name}
-                        </p>
-                      </div>
+                      <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                        {file.name}
+                      </span>
+                      <button
+                        className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                        title="Remove"
+                        onClick={() => removeFile(index)}
+                        type="button"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  );
+                })}
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Action Buttons */}
         <div className="flex items-center justify-center gap-4 mt-8">
@@ -1593,6 +1661,13 @@ export const WorkOrderAddPage: React.FC = () => {
           </Button>
         </div>
       </div>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

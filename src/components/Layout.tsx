@@ -24,7 +24,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   // Get current domain for backward compatibility
   const hostname = window.location.hostname;
   const isOmanSite = hostname.includes('oig.gophygital.work');
-  const isViSite = hostname.includes('web.gophygital.work');
+  const isViSite = hostname.includes('vi-web.gophygital.work');
 
   // Get layout configuration based on company ID
   const layoutConfig = getLayoutByCompanyId(selectedCompany?.id === 199 ? selectedCompany.id : null);
