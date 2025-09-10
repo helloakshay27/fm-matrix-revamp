@@ -751,7 +751,7 @@ export const MobileSurveyLanding: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       {/* Header with Logo */}
-      <div className="bg-white py-4 px-4 text-center shadow-sm">
+      <div className="bg-gray-50 py-4 px-4 text-center">
         <div className="flex justify-center items-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
             <img
@@ -801,7 +801,7 @@ export const MobileSurveyLanding: React.FC = () => {
               <img
                 src="/9019830 1.png"
                 alt="Survey Illustration"
-                className="w-40 h-40 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
+                className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
               />
             </div>
           )}
