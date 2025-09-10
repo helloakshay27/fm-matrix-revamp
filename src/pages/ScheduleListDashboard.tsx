@@ -1019,7 +1019,7 @@ export const ScheduleListDashboard = () => {
   // Custom export handler for schedules
   const handleScheduleExport = async () => {
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/export_checklist_data.xlsx`;
+      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
