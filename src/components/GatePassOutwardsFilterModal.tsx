@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -9,18 +8,32 @@ import { X } from 'lucide-react';
 interface GatePassOutwardsFilterModalProps {
   isOpen: boolean;
   onClose: () => void;
+  filters: any;
+  setFilters: (filters: any) => void;
 }
 
-export const GatePassOutwardsFilterModal = ({ isOpen, onClose }: GatePassOutwardsFilterModalProps) => {
+export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilters }: GatePassOutwardsFilterModalProps) => {
   const [searchByNameOrId, setSearchByNameOrId] = useState('');
 
+  const handleChange = (field: string, value: string) => {
+    setFilters({ ...filters, [field]: value });
+  };
+
   const handleApply = () => {
-    console.log('Filter applied:', { searchByNameOrId });
+    console.log('Filter applied:', filters);
     // Here you would implement the actual filter logic
     onClose();
   };
 
   const handleReset = () => {
+    setFilters({
+      gateNumber: '',
+      createdBy: '',
+      materialName: '',
+      supplierName: '',
+      materialType: '',
+      expectedReturnDate: '',
+    });
     setSearchByNameOrId('');
     console.log('Filters reset');
   };
@@ -41,21 +54,85 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose }: GatePassOutward
           </Button>
         </DialogHeader>
         
-        <div className="p-6 space-y-6">
-          {/* Search by Name or Id */}
-          <div className="space-y-2">
-            <Label htmlFor="searchByNameOrId" className="text-sm font-medium">
-              Search by Name or Id
+        <div className="">
+          {/* Gate Number Input */}
+          <div className="mb-4">
+            <Label htmlFor="gateNumber" className="text-sm font-medium">
+              Gate Number
             </Label>
             <Input
-              id="searchByNameOrId"
-              placeholder="Search by Name or Id"
-              value={searchByNameOrId}
-              onChange={(e) => setSearchByNameOrId(e.target.value)}
+              id="gateNumber"
+              placeholder="Enter gate number"
+              value={filters.gateNumber}
+              onChange={e => handleChange('gateNumber', e.target.value)}
               className="border-gray-300 rounded-none"
             />
           </div>
-
+          {/* Created By */}
+          <div className="mb-4">
+            <Label htmlFor="createdBy" className="text-sm font-medium">
+              Created By (Full Name)
+            </Label>
+            <Input
+              id="createdBy"
+              placeholder="Enter full name"
+              value={filters.createdBy}
+              onChange={e => handleChange('createdBy', e.target.value)}
+              className="border-gray-300 rounded-none"
+            />
+          </div>
+          {/* Material Name */}
+          <div className="mb-4">
+            <Label htmlFor="materialName" className="text-sm font-medium">
+              Material Name
+            </Label>
+            <Input
+              id="materialName"
+              placeholder="Enter material name"
+              value={filters.materialName}
+              onChange={e => handleChange('materialName', e.target.value)}
+              className="border-gray-300 rounded-none"
+            />
+          </div>
+          {/* Supplier Name */}
+          <div className="mb-4">
+            <Label htmlFor="supplierName" className="text-sm font-medium">
+              Supplier Name
+            </Label>
+            <Input
+              id="supplierName"
+              placeholder="Enter supplier name"
+              value={filters.supplierName}
+              onChange={e => handleChange('supplierName', e.target.value)}
+              className="border-gray-300 rounded-none"
+            />
+          </div>
+          {/* Material Type */}
+          <div className="mb-4">
+            <Label htmlFor="materialType" className="text-sm font-medium">
+              Material Type
+            </Label>
+            <Input
+              id="materialType"
+              placeholder="Enter material type"
+              value={filters.materialType}
+              onChange={e => handleChange('materialType', e.target.value)}
+              className="border-gray-300 rounded-none"
+            />
+          </div>
+          {/* Expected Return Date */}
+          <div className="mb-4">
+            <Label htmlFor="expectedReturnDate" className="text-sm font-medium">
+              Expected Return Date
+            </Label>
+            <Input
+              id="expectedReturnDate"
+              type="date"
+              value={filters.expectedReturnDate}
+              onChange={e => handleChange('expectedReturnDate', e.target.value)}
+              className="border-gray-300 rounded-none"
+            />
+          </div>
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <Button
