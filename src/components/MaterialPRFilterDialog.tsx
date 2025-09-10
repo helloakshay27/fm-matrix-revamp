@@ -152,10 +152,10 @@ export const MaterialPRFilterDialog: React.FC<MaterialPRFilterDialogProps> = ({
               displayEmpty
               sx={fieldStyles}
             >
-              <MenuItem value="Select" disabled><em>Select Status</em></MenuItem>
-              <MenuItem value="">Pending</MenuItem>
-              <MenuItem value="1">Approved</MenuItem>
-              <MenuItem value="0">Rejected</MenuItem>
+              <MenuItem value="" disabled><em>Select Status</em></MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
             </MuiSelect>
           </FormControl>
         </div>

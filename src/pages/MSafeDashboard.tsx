@@ -34,7 +34,7 @@ export const MSafeDashboard = () => {
   const [exportModalOpen, setExportModalOpen] = useState(false);
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
+  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
@@ -83,7 +83,12 @@ export const MSafeDashboard = () => {
           if (filters.email) params.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
           // prefer explicit mobile param
           if (filters.mobile) params.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
-          if (filters.cluster) params.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          // Prefer exact cluster id match when available; fallback to name contains
+          if (filters.cluster_id) {
+            params.push(`q[company_cluster_id_eq]=${encodeURIComponent(String(filters.cluster_id))}`);
+          } else if (filters.cluster) {
+            params.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          }
           if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) params.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) params.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
@@ -380,20 +385,21 @@ export const MSafeDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; cluster_id?: string | number; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
     setFilters({
       firstname: newFilters.firstname || '',
       lastname: newFilters.lastname || '',
       email: newFilters.email || '',
       mobile: newFilters.mobile || '',
       cluster: newFilters.cluster || '',
+      cluster_id: newFilters.cluster_id ? String(newFilters.cluster_id) : '',
       circle: newFilters.circle || '',
       department: newFilters.department || '',
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
     // If all filters are cleared, also clear search to truly reset table
-    if (!(newFilters.firstname || newFilters.lastname || newFilters.email || newFilters.mobile || newFilters.cluster || newFilters.circle || newFilters.department || newFilters.role || newFilters.report_to_id)) {
+    if (!(newFilters.firstname || newFilters.lastname || newFilters.email || newFilters.mobile || newFilters.cluster || newFilters.cluster_id || newFilters.circle || newFilters.department || newFilters.role || newFilters.report_to_id)) {
       setSearchTerm('');
     }
   };

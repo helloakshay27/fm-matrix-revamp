@@ -149,6 +149,11 @@ import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
+// Import Icons pages
+import { IconsDashboard } from "./pages/IconsDashboard";
+import { AddIconPage } from "./pages/AddIconPage";
+import { EditIconPage } from "./pages/EditIconPage";
+
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
@@ -701,6 +706,10 @@ import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
 import PDFDownloadPage from "./components/PDFDownloadPage";
+import PermissionDemo from "./components/PermissionDemo";
+import CRMWalletList from "./pages/CRMWalletList";
+import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
+import CRMWalletDetails from "./pages/CRMWalletDetails";
 
 const queryClient = new QueryClient();
 
@@ -757,7 +766,6 @@ function App() {
           <EnhancedSelectProvider>
             <LayoutProvider>
               <PermissionsProvider>
-
                 <Routes>
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
@@ -812,6 +820,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/PermissionDemo" element={<PermissionDemo />} />
 
                   <Route
                     path="/tickets"
@@ -821,8 +830,6 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-
-
 
                   <Route
                     path="/tickets/add"
@@ -1199,6 +1206,18 @@ function App() {
                     <Route
                       path="/crm/customers/edit/:id"
                       element={<EditCrmCustomer />}
+                    />
+                    <Route
+                      path="/crm/wallet-list"
+                      element={<CRMWalletList />}
+                    />
+                    <Route
+                      path="/crm/wallet-list/:id"
+                      element={<CRMWalletDetails />}
+                    />
+                    <Route
+                      path="/crm/point-expiry"
+                      element={<CRMWalletPointExpiry />}
                     />
 
                     {/* Snagging Routes */}
@@ -2135,6 +2154,18 @@ function App() {
                     <Route
                       path="/security/visitor-management/visiting-purpose"
                       element={<VisitingPurposePage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons"
+                      element={<IconsDashboard />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons/add"
+                      element={<AddIconPage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons/edit/:iconId"
+                      element={<EditIconPage />}
                     />
                     <Route
                       path="/security/staff"

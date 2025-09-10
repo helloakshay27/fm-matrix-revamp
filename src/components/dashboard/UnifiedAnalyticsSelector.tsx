@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room';
   endpoint: string;
   title: string;
 }
@@ -97,6 +97,16 @@ const analyticsOptions = {
       // { id: 'amc_service_tracking', endpoint: 'service_tracking', label: 'Service Tracking' },
       { id: 'amc_coverage_by_location', endpoint: 'coverage_by_location', label: 'Coverage by Location' },
       // { id: 'amc_vendor_performance', endpoint: 'vendor_performance', label: 'Vendor Performance' },
+    ]
+  },
+  meeting_room: {
+    icon: BarChart3,
+    label: 'Meeting Room',
+    color: '#C4B89D',
+    options: [
+      { id: 'mr_revenue_overview', endpoint: 'revenue_generation_overview', label: 'Revenue Generation Overview' },
+  { id: 'mr_center_performance', endpoint: 'center_performance_overview', label: 'Center Wise - Performance Overview' },
+  { id: 'mr_center_wise_utilization', endpoint: 'center_wise_meeting_room_utilization', label: 'Center Wise - Meeting Room Utilization' },
     ]
   },
 

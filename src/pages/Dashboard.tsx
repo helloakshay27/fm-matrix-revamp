@@ -55,10 +55,14 @@ import { scheduleAnalyticsAPI } from '@/services/scheduleAnalyticsAPI';
 import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/DashboardHeader';
+import { meetingRoomAnalyticsAPI } from '@/services/meetingRoomAnalyticsAPI';
+import MeetingRoomUtilizationCard from '@/components/meeting-room/MeetingRoomUtilizationCard';
+import { RevenueGenerationOverviewCard } from '@/components/meeting-room/RevenueGenerationOverviewCard';
+import { CenterPerformanceOverviewCard } from '@/components/meeting-room/CenterPerformanceOverviewCard';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room';
   endpoint: string;
   title: string;
 }
@@ -70,6 +74,7 @@ interface DashboardData {
   inventory: any;
   amc: any;
   assets: any;
+  meeting_room?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -145,7 +150,8 @@ export const Dashboard = () => {
     schedule: null,
     inventory: null,
     amc: null,
-    assets: null,
+  assets: null,
+  meeting_room: null,
   });
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
@@ -333,6 +339,21 @@ export const Dashboard = () => {
                   break;
                 case 'asset_distribution':
                   promises.push(assetAnalyticsAPI.getAssetDistribution(dateRange.from, dateRange.to));
+                  break;
+              }
+            }
+            break;
+          case 'meeting_room':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'revenue_generation_overview':
+                  promises.push(meetingRoomAnalyticsAPI.getMeetingRoomRevenueOverview(dateRange.from, dateRange.to));
+                  break;
+                case 'center_performance_overview':
+                  promises.push(meetingRoomAnalyticsAPI.getMeetingRoomCenterPerformance(dateRange.from, dateRange.to));
+                  break;
+                case 'center_wise_meeting_room_utilization':
+                  promises.push(meetingRoomAnalyticsAPI.getCenterWiseMeetingRoomUtilization(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -950,6 +971,34 @@ export const Dashboard = () => {
 
           default:
             // Fallback for any other asset endpoints - avoid duplication
+            return null;
+        }
+      case 'meeting_room':
+        switch (analytic.endpoint) {
+          case 'revenue_generation_overview': {
+            const totalRevenue = rawData?.total_revenue ?? rawData?.TotalRevenue ?? rawData ?? null;
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <RevenueGenerationOverviewCard totalRevenue={totalRevenue} />
+              </SortableChartItem>
+            );
+          }
+          case 'center_performance_overview': {
+            const rows = Array.isArray(rawData) ? rawData : [];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CenterPerformanceOverviewCard rows={rows} />
+              </SortableChartItem>
+            );
+          }
+          case 'center_wise_meeting_room_utilization': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <MeetingRoomUtilizationCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          default:
             return null;
         }
       default:

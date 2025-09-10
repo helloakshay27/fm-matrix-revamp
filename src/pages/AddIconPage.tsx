@@ -1,0 +1,965 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
+import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X, Image as ImageIcon, Upload, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useLayout } from '@/contexts/LayoutContext';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
+
+interface IconData {
+  id: string;
+  sNo: number;
+  name: string;
+  description: string;
+  category: string;
+  isActive: boolean;
+  createdOn: string;
+  createdBy: string;
+  usageCount: number;
+}
+
+export const AddIconPage = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { setCurrentSection } = useLayout();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingIcon, setEditingIcon] = useState<IconData | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [iconsData, setIconsData] = useState<IconData[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState({
+    sNo: true,
+    actions: true,
+    name: true,
+    description: true,
+    category: true,
+    status: true,
+    usageCount: true,
+    createdOn: true,
+    createdBy: true
+  });
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    isActive: true,
+    iconFile: null as File | null,
+    selectedIcon: '' as string
+  });
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    description: '',
+    category: '',
+    isActive: true,
+    iconFile: null as File | null,
+    selectedIcon: '' as string
+  });
+  const [dragActive, setDragActive] = useState(false);
+
+  // Field styles for Material-UI components
+  const fieldStyles = {
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+    },
+  };
+
+  // Category options
+  const categoryOptions = [
+    'User',
+    'Navigation',
+    'System',
+    'Analytics',
+    'Communication',
+    'Actions',
+    'Status',
+    'Misc'
+  ];
+
+  const [filteredIcons, setFilteredIcons] = useState<IconData[]>([]);
+
+  // Load icons data (mock data for now)
+  const loadIconsData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      console.log('Loading icons data...');
+      
+      // Mock data
+      const mockData: IconData[] = [
+        {
+          id: '1',
+          sNo: 1,
+          name: 'User Profile',
+          description: 'Default user profile icon',
+          category: 'User',
+          isActive: true,
+          createdOn: '2024-01-15',
+          createdBy: 'Admin',
+          usageCount: 245
+        },
+        {
+          id: '2',
+          sNo: 2,
+          name: 'Dashboard',
+          description: 'Dashboard navigation icon',
+          category: 'Navigation',
+          isActive: true,
+          createdOn: '2024-01-20',
+          createdBy: 'Admin',
+          usageCount: 189
+        },
+        {
+          id: '3',
+          sNo: 3,
+          name: 'Settings',
+          description: 'System settings icon',
+          category: 'System',
+          isActive: true,
+          createdOn: '2024-02-01',
+          createdBy: 'Admin',
+          usageCount: 156
+        },
+        {
+          id: '4',
+          sNo: 4,
+          name: 'Reports',
+          description: 'Analytics and reports icon',
+          category: 'Analytics',
+          isActive: false,
+          createdOn: '2024-02-10',
+          createdBy: 'Admin',
+          usageCount: 98
+        },
+        {
+          id: '5',
+          sNo: 5,
+          name: 'Notifications',
+          description: 'Notification bell icon',
+          category: 'Communication',
+          isActive: true,
+          createdOn: '2024-02-15',
+          createdBy: 'Admin',
+          usageCount: 312
+        }
+      ];
+      
+      setIconsData(mockData);
+      setFilteredIcons(mockData);
+    } catch (error) {
+      console.error('Failed to load icons data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load icons data",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  // Pagination calculations
+  const totalRecords = filteredIcons.length;
+  const totalPages = Math.ceil(totalRecords / perPage);
+  const startIndex = (currentPage - 1) * perPage;
+  const endIndex = startIndex + perPage;
+  const currentPageData = filteredIcons.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setCurrentSection('Settings');
+  }, [setCurrentSection]);
+
+  useEffect(() => {
+    loadIconsData();
+  }, [loadIconsData]);
+
+  useEffect(() => {
+    const filtered = iconsData.filter(icon =>
+      icon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      icon.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      icon.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      icon.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredIcons(filtered);
+    setCurrentPage(1); // Reset to first page when filtering
+  }, [searchTerm, iconsData]);
+
+  const iconOptions = [
+    { id: '1', icon: '⭐', name: 'Star' },
+    { id: '2', icon: '🏠', name: 'Home' },
+    { id: '3', icon: '⚙️', name: 'Settings' },
+    { id: '4', icon: '📊', name: 'Chart' },
+    { id: '5', icon: '👤', name: 'User' },
+    { id: '6', icon: '🔔', name: 'Bell' },
+    { id: '7', icon: '📁', name: 'Folder' },
+    { id: '8', icon: '💼', name: 'Briefcase' },
+    { id: '9', icon: '🔍', name: 'Search' },
+    { id: '10', icon: '📧', name: 'Email' },
+    { id: '11', icon: '🔒', name: 'Lock' },
+    { id: '12', icon: '📱', name: 'Phone' },
+    { id: '13', icon: '💻', name: 'Computer' },
+    { id: '14', icon: '🌐', name: 'Globe' },
+    { id: '15', icon: '📈', name: 'Trending' },
+    { id: '16', icon: '💡', name: 'Idea' },
+    { id: '17', icon: '🎯', name: 'Target' },
+    { id: '18', icon: '🚀', name: 'Rocket' },
+    { id: '19', icon: '❤️', name: 'Heart' },
+    { id: '20', icon: '🏆', name: 'Trophy' }
+  ];
+
+  const handleAdd = () => {
+    setIsAddModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setIsAddModalOpen(false);
+    setFormData({
+      name: '',
+      description: '',
+      category: '',
+      isActive: true,
+      iconFile: null,
+      selectedIcon: ''
+    });
+    setDragActive(false);
+  };
+
+  const handleFileUpload = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/gif'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please upload an SVG, PNG, JPEG, or GIF file.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please upload a file smaller than 2MB.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, iconFile: file }));
+    toast({
+      title: "File Uploaded",
+      description: `${file.name} has been uploaded successfully.`
+    });
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileUpload(e.dataTransfer.files[0]);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!formData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an icon name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.category) {
+      toast({
+        title: "Error",
+        description: "Please select a category",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      toast({
+        title: "Success",
+        description: "Icon created successfully",
+      });
+      
+      handleModalClose();
+      // Reload the data
+      await loadIconsData();
+    } catch (error) {
+      console.error('Failed to create icon:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create icon. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = (iconId: string) => {
+    const icon = iconsData.find(i => i.id === iconId);
+    if (icon) {
+      setEditingIcon(icon);
+      setEditFormData({
+        name: icon.name,
+        description: icon.description,
+        category: icon.category,
+        isActive: icon.isActive,
+        iconFile: null,
+        selectedIcon: '1' // Default icon
+      });
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false);
+    setEditingIcon(null);
+    setEditFormData({
+      name: '',
+      description: '',
+      category: '',
+      isActive: true,
+      iconFile: null,
+      selectedIcon: ''
+    });
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editFormData.name.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an icon name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!editFormData.category) {
+      toast({
+        title: "Error",
+        description: "Please select a category",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast({
+        title: "Success",
+        description: "Icon updated successfully",
+      });
+      
+      handleEditModalClose();
+      // Reload the data
+      await loadIconsData();
+    } catch (error) {
+      console.error('Failed to update icon:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update icon. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = (iconId: string) => {
+    const icon = iconsData.find(i => i.id === iconId);
+    console.log(`Deleting icon: ${iconId}`);
+    toast({
+      title: "Delete Icon",
+      description: `Icon "${icon?.name}" deletion requested`,
+    });
+  };
+
+  const handleRefresh = async () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+    await loadIconsData();
+    toast({
+      title: "Refreshed",
+      description: "Data has been refreshed successfully",
+    });
+  };
+
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    setVisibleColumns(prev => ({
+      ...prev,
+      [columnKey]: visible
+    }));
+  };
+
+  // Column definitions for visibility control
+  const columns = [
+    { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
+    { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
+    { key: 'name', label: 'Icon Name', visible: visibleColumns.name },
+    { key: 'description', label: 'Description', visible: visibleColumns.description },
+    { key: 'category', label: 'Category', visible: visibleColumns.category },
+    { key: 'status', label: 'Status', visible: visibleColumns.status },
+    { key: 'usageCount', label: 'Usage Count', visible: visibleColumns.usageCount },
+    { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
+    { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
+  ];
+
+  return (
+    <>
+      <div className="p-6 min-h-screen">
+      {/* Action Bar */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Button 
+            onClick={handleAdd}
+            className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white px-4 py-2"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search icons..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-80"
+            />
+          </div>
+          <ColumnVisibilityDropdown
+            columns={columns}
+            onColumnToggle={handleColumnToggle}
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-lg border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-[#f6f4ee]">
+              {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
+              {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
+              {visibleColumns.name && <TableHead className="w-40">Icon Name</TableHead>}
+              {visibleColumns.description && <TableHead className="w-60">Description</TableHead>}
+              {visibleColumns.category && <TableHead className="w-32">Category</TableHead>}
+              {visibleColumns.status && <TableHead className="w-24">Status</TableHead>}
+              {visibleColumns.usageCount && <TableHead className="w-28">Usage Count</TableHead>}
+              {visibleColumns.createdOn && <TableHead className="w-32">Created On</TableHead>}
+              {visibleColumns.createdBy && <TableHead className="w-32">Created By</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Loading icons...
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : currentPageData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  {searchTerm ? `No icons found matching "${searchTerm}"` : 'No icons found'}
+                  <br />
+                  <span className="text-sm">Click "Add" to create your first icon</span>
+                </TableCell>
+              </TableRow>
+            ) : (
+              currentPageData.map((icon, index) => (
+                <TableRow key={icon.id} className="hover:bg-gray-50">
+                  {visibleColumns.sNo && (
+                    <TableCell className="font-medium">
+                      {startIndex + index + 1}
+                    </TableCell>
+                  )}
+                  {visibleColumns.actions && (
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleEdit(icon.id)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Edit"
+                        >
+                          <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(icon.id)}
+                          className="p-1 hover:bg-gray-100 rounded"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4 text-gray-600 hover:text-red-600" />
+                        </button>
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibleColumns.name && (
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gray-100 rounded border flex items-center justify-center">
+                          <Star className="w-3 h-3 text-gray-400" />
+                        </div>
+                        {icon.name}
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibleColumns.description && (
+                    <TableCell className="text-gray-600 max-w-xs truncate">
+                      {icon.description || '--'}
+                    </TableCell>
+                  )}
+                  {visibleColumns.category && (
+                    <TableCell>
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                        {icon.category}
+                      </span>
+                    </TableCell>
+                  )}
+                  {visibleColumns.status && (
+                    <TableCell>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        icon.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {icon.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
+                  )}
+                  {visibleColumns.usageCount && (
+                    <TableCell className="text-center">
+                      {icon.usageCount}
+                    </TableCell>
+                  )}
+                  {visibleColumns.createdOn && <TableCell>{icon.createdOn}</TableCell>}
+                  {visibleColumns.createdBy && <TableCell>{icon.createdBy}</TableCell>}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
+      </div>
+
+      {/* Add Modal */}
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Add New Icon</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleModalClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Icon Name Input */}
+              <TextField
+                label="Icon Name"
+                placeholder="Enter Icon Name"
+                value={formData.name}
+                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              {/* Category Select */}
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Category</InputLabel>
+                <MuiSelect
+                  value={formData.category}
+                  onChange={(e) => setFormData({...formData, category: e.target.value})}
+                  label="Category"
+                  sx={fieldStyles}
+                >
+                  {categoryOptions.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+
+            {/* Description */}
+            <TextField
+              label="Description"
+              placeholder="Enter Icon Description"
+              value={formData.description}
+              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              fullWidth
+              multiline
+              rows={3}
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+
+            {/* File Upload Area */}
+            <div className="space-y-2">
+              <Label>Icon File Upload</Label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  dragActive 
+                    ? 'border-[#C72030] bg-red-50' 
+                    : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                {formData.iconFile ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center">
+                      <div className="p-3 bg-green-50 rounded-full">
+                        <ImageIcon className="w-6 h-6 text-green-600" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">{formData.iconFile.name}</p>
+                      <p className="text-sm text-gray-500">
+                        {(formData.iconFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setFormData({...formData, iconFile: null})}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Remove File
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-center">
+                      <div className="p-3 bg-gray-50 rounded-full">
+                        <Upload className="w-6 h-6 text-gray-400" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-900">Drop your icon file here</p>
+                      <p className="text-sm text-gray-500">or click to browse</p>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('fileInput')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Choose File
+                    </Button>
+                    <input
+                      id="fileInput"
+                      type="file"
+                      className="hidden"
+                      accept="image/svg+xml,image/png,image/jpeg,image/gif"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          handleFileUpload(e.target.files[0]);
+                        }
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Supported formats: SVG, PNG, JPEG, GIF (max 2MB)</p>
+            </div>
+
+            {/* Icon Selection Grid */}
+            <div className="space-y-2">
+              <Label>Select Icon (Optional)</Label>
+              <div className="grid grid-cols-10 gap-2 max-h-40 overflow-y-auto border rounded-lg p-3">
+                {iconOptions.map((option) => (
+                  <div
+                    key={option.id}
+                    className={`flex flex-col items-center gap-1 p-2 border rounded cursor-pointer transition-colors ${
+                      formData.selectedIcon === option.id 
+                        ? 'border-[#C72030] bg-red-50' 
+                        : 'border-gray-200 hover:bg-gray-50'
+                    }`}
+                    onClick={() => setFormData({...formData, selectedIcon: option.id})}
+                  >
+                    <div className="text-lg">{option.icon}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Active Status */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isActive"
+                checked={formData.isActive}
+                onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+              />
+              <Label htmlFor="isActive">Active Status</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleModalClose}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                {isSubmitting ? 'Creating...' : 'Submit'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Edit Icon</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleEditModalClose}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Icon Name Input */}
+              <TextField
+                label="Icon Name"
+                placeholder="Enter Icon Name"
+                value={editFormData.name}
+                onChange={(e) => setEditFormData({...editFormData, name: e.target.value})}
+                fullWidth
+                variant="outlined"
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
+              />
+
+              {/* Category Select */}
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Category</InputLabel>
+                <MuiSelect
+                  value={editFormData.category}
+                  onChange={(e) => setEditFormData({...editFormData, category: e.target.value})}
+                  label="Category"
+                  sx={fieldStyles}
+                >
+                  {categoryOptions.map((category) => (
+                    <MenuItem key={category} value={category}>
+                      {category}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+
+            {/* Description */}
+            <TextField
+              label="Description"
+              placeholder="Enter Icon Description"
+              value={editFormData.description}
+              onChange={(e) => setEditFormData({...editFormData, description: e.target.value})}
+              fullWidth
+              multiline
+              rows={3}
+              variant="outlined"
+              slotProps={{
+                inputLabel: {
+                  shrink: true,
+                },
+              }}
+              InputProps={{
+                sx: fieldStyles,
+              }}
+            />
+
+            {/* Active Status */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="editIsActive"
+                checked={editFormData.isActive}
+                onChange={(e) => setEditFormData({...editFormData, isActive: e.target.checked})}
+                className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+              />
+              <Label htmlFor="editIsActive">Active Status</Label>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleEditModalClose}
+                className="px-6"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleEditSubmit}
+                disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                {isSubmitting ? 'Updating...' : 'Update'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};

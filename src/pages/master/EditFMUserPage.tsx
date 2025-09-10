@@ -792,94 +792,70 @@ export const EditFMUserPage = () => {
                   </FormControl>
                 </div>
 
-                {/* Multiple Site Selection */}
                 {formData.selectAccessLevel === "Site" && (
                   <div>
-                    <Autocomplete
-                      multiple
-                      options={sites || []}
-                      getOptionLabel={(option: Site) => option.name || ""}
-                      value={
-                        sites?.filter((site: Site) =>
-                          formData.selectedSites.includes(site.id.toString())
-                        ) || []
-                      }
-                      onChange={(event, newValue: Site[]) => {
-                        handleInputChange(
-                          "selectedSites",
-                          newValue.map((site) => site.id.toString())
-                        );
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={<span>Select Sites<span className="text-red-500">*</span></span>}
-                          placeholder="Search and select sites..."
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      )}
-                      renderTags={(tagValue: Site[], getTagProps) =>
-                        tagValue.map((option, index) => (
-                          <Chip
-                            key={option.id}
-                            label={option.name}
-                            size="small"
-                            {...getTagProps({ index })}
-                          />
-                        ))
-                      }
-                      isOptionEqualToValue={(option: Site, value: Site) =>
-                        option.id === value.id
-                      }
-                      filterSelectedOptions
-                    />
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>
+                        Select Sites<span className="text-red-500">*</span>
+                      </InputLabel>
+                      <Select
+                        multiple
+                        value={formData.selectedSites}
+                        onChange={(e) => handleInputChange("selectedSites", e.target.value as string[])}
+                        label="Select Sites"
+                        renderValue={(selected) => (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {selected.map((value) => (
+                              <Chip
+                                key={value}
+                                label={sites?.find((site: Site) => site.id.toString() === value)?.name || value}
+                                size="small"
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      >
+                        {sites?.map((site: Site) => (
+                          <MenuItem key={site.id} value={site.id.toString()}>
+                            {site.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </div>
                 )}
+
+                {/* Multiple Company Selection */}
                 {formData.selectAccessLevel === "Company" && (
                   <div>
-                    <Autocomplete
-                      multiple
-                      options={selectedCompany ? [selectedCompany] : []}
-                      getOptionLabel={(option: Company) => option.name || ""}
-                      value={
-                        selectedCompany &&
-                          formData.selectedCompanies.includes(
-                            selectedCompany.id.toString()
-                          )
-                          ? [selectedCompany]
-                          : []
-                      }
-                      onChange={(event, newValue: Company[]) => {
-                        handleInputChange(
-                          "selectedCompanies",
-                          newValue.map((company) => company.id.toString())
-                        );
-                      }}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={<span>Select Companies<span className="text-red-500">*</span></span>}
-                          placeholder="Search and select companies..."
-                          variant="outlined"
-                          InputLabelProps={{ shrink: true }}
-                        />
-                      )}
-                      renderTags={(tagValue: Company[], getTagProps) =>
-                        tagValue.map((option, index) => (
-                          <Chip
-                            key={option.id}
-                            label={option.name}
-                            size="small"
-                            {...getTagProps({ index })}
-                          />
-                        ))
-                      }
-                      isOptionEqualToValue={(option: Company, value: Company) =>
-                        option.id === value.id
-                      }
-                      filterSelectedOptions
-                    />
+                    <FormControl fullWidth variant="outlined">
+                      <InputLabel shrink>
+                        Select Companies<span className="text-red-500">*</span>
+                      </InputLabel>
+                      <Select
+                        multiple
+                        value={formData.selectedCompanies}
+                        onChange={(e) => handleInputChange("selectedCompanies", e.target.value as string[])}
+                        label="Select Companies"
+                        renderValue={(selected) => (
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                            {selected.map((value) => (
+                              <Chip
+                                key={value}
+                                label={selectedCompany?.id.toString() === value ? selectedCompany.name : value}
+                                size="small"
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      >
+                        {selectedCompany && (
+                          <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                            {selectedCompany.name}
+                          </MenuItem>
+                        )}
+                      </Select>
+                    </FormControl>
                   </div>
                 )}
                 <div>

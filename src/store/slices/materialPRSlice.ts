@@ -143,8 +143,8 @@ export const getMaterialPR = createAsyncThunk(
                 queryParams.append("q[pms_supplier_company_name_cont]", supplier_name);
             }
 
-            if (approval_status !== undefined && approval_status !== null && approval_status !== "Select") {
-                queryParams.append("q[all_level_approved_eq]", approval_status);
+            if (approval_status) {
+                queryParams.append("q[approve_status_cont]", approval_status);
             }
 
             const response = await axios.get(
