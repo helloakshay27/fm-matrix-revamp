@@ -25,6 +25,7 @@ interface FMUserFilterDialogProps {
         email: string;
         mobile: string;
         cluster?: string;
+    cluster_id?: string | number;
         circle?: string;
         department?: string;
         role?: string;
@@ -85,7 +86,14 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                 ]);
                 setDepartments(deptResp.data?.departments || []);
                 setCircles(circleResp.data?.circles || []);
-                setClusters(clusterResp.data?.clusters || []);
+                // Normalize clusters to ensure unique, defined ids and labels
+                const rawClusters = clusterResp.data?.clusters || [];
+                const normalizedClusters = (Array.isArray(rawClusters) ? rawClusters : []).map((c: any) => {
+                    const id = c?.company_cluster_id ?? c?.id ?? c?.company_cluster?.id ?? c?.value ?? c?.key ?? '';
+                    const name = c?.cluster_name ?? c?.name ?? c?.label ?? '';
+                    return { id, name };
+                }).filter((c: any) => c.id !== '' && c.id !== null && typeof c.id !== 'undefined');
+                setClusters(normalizedClusters);
                 setRoles(roleResp.data?.lock_roles || []);
             } catch (e) {
                 console.error('FM filter dropdown fetch error', e);
@@ -136,6 +144,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
             email: '',
             mobile: '',
             cluster: '',
+            cluster_id: '',
             circle: '',
             department: '',
             role: '',
@@ -147,8 +156,8 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
         // Resolve selected names for filters (API expects *_name_cont style fields using actual text values)
         let clusterName = '';
         if (cluster) {
-            const found = clusters.find(cl => String(cl.company_cluster_id) === String(cluster));
-            clusterName = found ? (found.cluster_name || '') : '';
+            const found = clusters.find((cl: any) => String(cl.id) === String(cluster));
+            clusterName = found ? (found.name || '') : '';
         }
         let circleName = '';
         if (circle) {
@@ -171,6 +180,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
             email,
             mobile,
             cluster: clusterName,
+            cluster_id: cluster || '',
             circle: circleName,
             department: departmentName,
             role: roleName,
@@ -210,8 +220,8 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                                 <em>None</em>
                             </MenuItem>
                             {clusters.map((c: any) => (
-                                <MenuItem key={c.company_cluster_id} value={String(c.company_cluster_id)}>
-                                    {c.cluster_name}
+                                <MenuItem key={String(c.id)} value={String(c.id)}>
+                                    {c.name}
                                 </MenuItem>
                             ))}
                         </Select>
