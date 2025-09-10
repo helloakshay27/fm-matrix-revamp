@@ -61,7 +61,7 @@ export const ExternalUsersDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebounce(searchTerm, 500); // debounce like ServiceDashboard
-  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', circle: '', department: '', role: '', report_to_id: '' });
+  const [filters, setFilters] = useState({ firstname: '', lastname: '', email: '', mobile: '', cluster: '', cluster_id: '', circle: '', department: '', role: '', report_to_id: '' });
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [exportModalOpen, setExportModalOpen] = useState(false);
@@ -82,6 +82,7 @@ export const ExternalUsersDashboard = () => {
 
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchExternalUsers = async () => {
       setLoading(true);
       try {
@@ -95,13 +96,19 @@ export const ExternalUsersDashboard = () => {
         let url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
         // If any filter is applied, use the correct param for each filter
         const hasFilters = Object.values(filters).some(v => v && v !== '');
+        const hasSearch = Boolean(debouncedSearch.trim());
         if (hasFilters) {
           const filterParams = [];
           if (filters.firstname) filterParams.push(`q[firstname_cont]=${encodeURIComponent(filters.firstname.trim())}`);
           if (filters.lastname) filterParams.push(`q[lastname_cont]=${encodeURIComponent(filters.lastname.trim())}`);
           if (filters.email) filterParams.push(`q[email_cont]=${encodeURIComponent(filters.email)}`);
           if (filters.mobile) filterParams.push(`q[mobile_cont]=${encodeURIComponent(filters.mobile)}`);
-          if (filters.cluster) filterParams.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          // Prefer exact cluster id filter if present; fallback to name contains
+          if (filters.cluster_id) {
+            filterParams.push(`q[company_cluster_id_eq]=${encodeURIComponent(String(filters.cluster_id))}`);
+          } else if (filters.cluster) {
+            filterParams.push(`q[company_cluster_cluster_name_cont]=${encodeURIComponent(filters.cluster)}`);
+          }
           if (filters.circle) filterParams.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) filterParams.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) filterParams.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
@@ -114,7 +121,7 @@ export const ExternalUsersDashboard = () => {
             url += `&q[email_cont]=${encodeURIComponent(emailQuery)}`;
           }
         }
-        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
         let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
         setExternalUsers(users);
         if (response.data.pagination) {
@@ -127,19 +134,26 @@ export const ExternalUsersDashboard = () => {
           setPagination({ current_page: page, total_pages: 1, total_count: users.length });
         }
       } catch (err) {
-        setExternalUsers([]);
-        console.error('Error fetching external users:', err);
+        if (axios.isCancel?.(err) || (err as any)?.name === 'CanceledError' || (err as any)?.code === 'ERR_CANCELED') {
+          // ignore canceled requests
+        } else {
+          setExternalUsers([]);
+          console.error('Error fetching external users:', err);
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchExternalUsers();
+    return () => controller.abort();
   }, [page, debouncedSearch, filters]);
 
   // Reset to first page when new search or filters applied
+  // Only reset to page 1 when filters/search change, not on page changes
   useEffect(() => {
-    if ((debouncedSearch || Object.values(filters).some(v => v && v !== '')) && page !== 1) setPage(1);
-  }, [debouncedSearch, filters, page]);
+    const hasFilters = Object.values(filters).some(v => v && v !== '');
+    if (debouncedSearch || hasFilters) setPage(1);
+  }, [debouncedSearch, filters]);
 
   const cardData = [
     {
@@ -386,18 +400,22 @@ export const ExternalUsersDashboard = () => {
     setIsFilterModalOpen(true);
   };
 
-  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
+  const handleApplyFilters = (newFilters: { firstname: string; lastname: string; email: string; mobile: string; cluster?: string; cluster_id?: string | number; circle?: string; department?: string; role?: string; report_to_id?: string | number }) => {
     setFilters({
       firstname: newFilters.firstname || '',
       lastname: newFilters.lastname || '',
       email: newFilters.email || '',
       mobile: newFilters.mobile || '',
       cluster: newFilters.cluster || '',
+      cluster_id: newFilters.cluster_id ? String(newFilters.cluster_id) : '',
       circle: newFilters.circle || '',
       department: newFilters.department || '',
       role: newFilters.role || '',
       report_to_id: newFilters.report_to_id ? String(newFilters.report_to_id) : ''
     });
+    // Immediately reset pagination UI to avoid showing stale total pages
+    setPage(1);
+    setPagination({ current_page: 1, total_pages: 1, total_count: 0 });
   }
 
   const handleToggleActive = async (user: ExternalUser) => {
@@ -488,7 +506,7 @@ export const ExternalUsersDashboard = () => {
   const paginationItems = useMemo(() => {
     const items: React.ReactNode[] = [];
     const totalPages = pagination.total_pages;
-    const current = pagination.current_page;
+    const current = page;
     if (totalPages <= 1) return items;
     const pushPage = (p: number) => {
       items.push(
@@ -518,7 +536,7 @@ export const ExternalUsersDashboard = () => {
       pushPage(totalPages);
     }
     return items;
-  }, [pagination]);
+  }, [pagination.total_pages, page]);
 
   return (
     <>
@@ -595,15 +613,21 @@ export const ExternalUsersDashboard = () => {
           />
           {!loading && pagination.total_pages > 1 && (
             <div className="flex flex-col items-center gap-2 mt-6">
-              <div className="text-sm text-gray-600">Page {pagination.current_page} of {pagination.total_pages} | Total {pagination.total_count}</div>
+              <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
-                    <PaginationPrevious className='cursor-pointer' onClick={() => handlePageChange(page - 1)} />
+                    <PaginationPrevious
+                      className={`cursor-pointer ${page <= 1 ? 'pointer-events-none opacity-50' : ''}`}
+                      onClick={() => handlePageChange(page - 1)}
+                    />
                   </PaginationItem>
                   {paginationItems}
                   <PaginationItem>
-                    <PaginationNext className='cursor-pointer' onClick={() => handlePageChange(page + 1)} />
+                    <PaginationNext
+                      className={`cursor-pointer ${page >= pagination.total_pages ? 'pointer-events-none opacity-50' : ''}`}
+                      onClick={() => handlePageChange(page + 1)}
+                    />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>

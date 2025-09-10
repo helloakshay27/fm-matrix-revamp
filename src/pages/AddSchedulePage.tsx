@@ -130,29 +130,29 @@ const RedIcon = styled(Settings)(({ theme }) => ({
 }));
 
 const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
     height: '40px',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    '& .MuiOutlinedInput-root': {
-      height: '40px',
-      fontSize: '14px',
-      '& fieldset': {
-        borderColor: '#ddd',
-      },
-      '&:hover fieldset': {
-        borderColor: '#C72030',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
-      },
+    fontSize: '14px',
+    '& fieldset': {
+      borderColor: '#ddd',
     },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      '&.Mui-focused': {
-        color: '#C72030',
-      },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
     },
-  };
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 interface AttachmentFile {
   id: string;
@@ -2952,17 +2952,33 @@ export const AddSchedulePage = () => {
 
             <TextField
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
-              label={<span>Description <span style={{ color: 'red' }}>*</span></span>}
+              label={
+                <span>
+                  Description <span style={{ color: "red" }}>*</span>
+                </span>
+              }
               placeholder="Enter Description/SOP"
               fullWidth
               multiline
-              rows={4}
+              minRows={4} // better than rows
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              sx={{ mb: 3 }}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              sx={{
+                mb: 3,
+                "& textarea": {
+                  width: "100% !important",   // force full width
+                  resize: "both",             // allow resizing
+                  overflow: "auto",
+                  boxSizing: "border-box",
+                  display: "block",
+                },
+                "& textarea[aria-hidden='true']": {
+                  display: "none !important", // hide shadow textarea
+                },
+              }}
             />
-
             {/* Attachments Section */}
             <Box sx={{ mb: 3 }}>
               {/* Display existing attachments as placeholder boxes */}
@@ -3195,7 +3211,7 @@ export const AddSchedulePage = () => {
               {/* Conditional Asset/Service Dropdown - Show based on scheduleFor */}
               {formData.scheduleFor === 'Asset' && formData.checklistType === 'Individual' && (
                 <Box>
-                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Select Assets <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       multiple
@@ -3229,7 +3245,7 @@ export const AddSchedulePage = () => {
               {/* Service Dropdown - Show when scheduleFor is Service */}
               {formData.scheduleFor === 'Service' && formData.checklistType === 'Individual' && (
                 <Box>
-                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Select Services <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       multiple
@@ -3264,7 +3280,7 @@ export const AddSchedulePage = () => {
               {formData.scheduleFor === 'Asset' && formData.checklistType === 'Asset Group' && (
                 <>
                   <Box>
-                    <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                       <InputLabel shrink>Asset Group <span style={{ color: 'red' }}>*</span></InputLabel>
                       <Select
                         label="Asset Group"
@@ -3328,7 +3344,7 @@ export const AddSchedulePage = () => {
 
               {/* Assign To Type Selection */}
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Assign To <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Assign To"
@@ -3348,7 +3364,7 @@ export const AddSchedulePage = () => {
               {/* Multi-select Users - Show when assignToType is 'user' */}
               {formData.assignToType === 'user' && (
                 <Box>
-                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Select Users <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       multiple
@@ -3412,7 +3428,7 @@ export const AddSchedulePage = () => {
               )}
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Backup Assignee <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Backup Assignee"
@@ -3437,7 +3453,7 @@ export const AddSchedulePage = () => {
 
               {/* Plan Duration with conditional input */}
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Plan Duration <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Plan Duration"
@@ -3480,7 +3496,7 @@ export const AddSchedulePage = () => {
               )}
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Email Trigger Rule <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Email Trigger Rule"
@@ -3535,7 +3551,7 @@ export const AddSchedulePage = () => {
               </Box> */}
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Category"
@@ -3554,7 +3570,7 @@ export const AddSchedulePage = () => {
 
               {/* Submission Time with conditional input */}
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Submission Time <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Submission Time"
@@ -3596,7 +3612,7 @@ export const AddSchedulePage = () => {
               )}
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Supervisors <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Supervisors"
@@ -3620,7 +3636,7 @@ export const AddSchedulePage = () => {
               </Box>
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Lock Overdue Task <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Lock Overdue Task"
@@ -3682,7 +3698,7 @@ export const AddSchedulePage = () => {
 
               {/* Grace Time with conditional input */}
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Grace Time <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Grace Time"
@@ -3727,8 +3743,8 @@ export const AddSchedulePage = () => {
               )}
 
               <Box>
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supplier</InputLabel>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Supplier <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Supplier"
                     notched
@@ -3785,7 +3801,7 @@ export const AddSchedulePage = () => {
 
               <LocalizationProvider dateAdapter={AdapterDateFns}>
                 <DatePicker
-                  label="End Date *"
+                  label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
                   slotProps={{
                     textField: {
                       fullWidth: true,
@@ -4222,7 +4238,7 @@ export const AddSchedulePage = () => {
                   Select Template
                 </Typography>
 
-                <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                   <InputLabel shrink>Template <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     label="Template"
@@ -4283,7 +4299,7 @@ export const AddSchedulePage = () => {
                     </RadioGroup>
                   </Box>
 
-                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Assigned To <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       label="Assigned To"
@@ -4300,7 +4316,7 @@ export const AddSchedulePage = () => {
                     </Select>
                   </FormControl>
 
-                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                     <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
                     <Select
                       label="Category"
@@ -4456,7 +4472,7 @@ export const AddSchedulePage = () => {
                   {/* Section Header with Group/Sub-Group */}
                   <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2, mb: 3 }}>
                     <Box>
-                      <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                         <InputLabel shrink>Group</InputLabel>
                         <Select
                           label="Group"
@@ -4485,7 +4501,7 @@ export const AddSchedulePage = () => {
                     </Box>
 
                     <Box>
-                      <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                      <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                         <InputLabel shrink>Sub-Group</InputLabel>
                         <Select
                           label="Sub-Group"
@@ -4620,7 +4636,7 @@ export const AddSchedulePage = () => {
                             onChange={(e) => updateTaskInSection(section.id, task.id, 'task', e.target.value)}
                           />
 
-                          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
                             <InputLabel shrink>Input Type{task.mandatory && <span style={{ color: 'red' }}>&nbsp;*</span>}</InputLabel>
                             <Select
                               label="Input Type"
@@ -4806,7 +4822,7 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-                                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
                                     <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
                                     <Select
                                       label="Type"
@@ -4900,7 +4916,7 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-                                  <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
                                     <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
                                     <Select
                                       label="Type"
@@ -5101,7 +5117,7 @@ export const AddSchedulePage = () => {
 
                         {task.inputType === 'multiline' && (
                           <Box sx={{ mt: 2 }}>
-                            <TextField
+                            {/* <TextField
                               disabled={stepIndex < activeStep && editingStep !== stepIndex}
                               label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
                               placeholder="Enter multiline text"
@@ -5111,7 +5127,31 @@ export const AddSchedulePage = () => {
                               value={task.textarea || ''}
                               onChange={(e) => updateTaskInSection(section.id, task.id, 'textarea', e.target.value)}
                               sx={{ mb: 3 }}
+                            /> */}
+                            <TextField
+                              disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                              label={<span>Multiline Text <span style={{ color: 'red' }}>*</span></span>}
+                              placeholder="Enter multiline text"
+                              fullWidth
+                              multiline
+                              minRows={4} // better than rows
+                              value={task.textarea || ''}
+                              onChange={(e) => updateTaskInSection(section.id, task.id, 'textarea', e.target.value)}
+                              sx={{
+                                mb: 3,
+                                "& textarea": {
+                                  width: "100% !important",   // force full width
+                                  resize: "both",             // allow resizing
+                                  overflow: "auto",
+                                  boxSizing: "border-box",
+                                  display: "block",
+                                },
+                                "& textarea[aria-hidden='true']": {
+                                  display: "none !important", // hide shadow textarea
+                                },
+                              }}
                             />
+
                           </Box>
                         )}
 

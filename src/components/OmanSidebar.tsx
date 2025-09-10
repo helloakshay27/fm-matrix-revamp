@@ -264,6 +264,10 @@ const navigationStructure = {
             name: "Support Staff",
             href: "/security/visitor-management/support-staff",
           },
+          {
+            name: "Icons",
+            href: "/security/visitor-management/icons",
+          },
         ],
       },
       {

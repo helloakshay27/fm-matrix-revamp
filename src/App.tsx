@@ -149,6 +149,11 @@ import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
+// Import Icons pages
+import { IconsDashboard } from "./pages/IconsDashboard";
+import { AddIconPage } from "./pages/AddIconPage";
+import { EditIconPage } from "./pages/EditIconPage";
+
 // Import new dashboard pages
 import { IncidentDashboard } from "./pages/IncidentDashboard";
 import { PermitToWorkDashboard } from "./pages/PermitToWorkDashboard";
@@ -2135,6 +2140,18 @@ function App() {
                     <Route
                       path="/security/visitor-management/visiting-purpose"
                       element={<VisitingPurposePage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons"
+                      element={<IconsDashboard />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons/add"
+                      element={<AddIconPage />}
+                    />
+                    <Route
+                      path="/security/visitor-management/icons/edit/:iconId"
+                      element={<EditIconPage />}
                     />
                     <Route
                       path="/security/staff"
