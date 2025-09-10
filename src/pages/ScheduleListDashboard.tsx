@@ -26,6 +26,7 @@ import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
+import { saveAs } from 'file-saver';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -945,6 +946,8 @@ export const ScheduleListDashboard = () => {
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
             loading={isGlobalSearching || tableLoading}
+            // onExport={handleScheduleExport}
+            handleExport={handleScheduleExport}
           />
 
           {/* Pagination - only show when not searching globally */}
@@ -1012,6 +1015,37 @@ export const ScheduleListDashboard = () => {
     });
     setShowFilterDialog(false);
   }
+
+  // Custom export handler for schedules
+  const handleScheduleExport = async () => {
+    try {
+      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to export schedule data');
+      const blob = await response.blob();
+      // Use file-saver or fallback
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, 'schedules.xlsx');
+      } else {
+        const link = document.createElement('a');
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'schedules.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }
+    } catch (error) {
+      toast.error('Failed to export schedules.');
+    }
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">
