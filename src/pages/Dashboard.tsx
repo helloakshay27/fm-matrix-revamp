@@ -59,6 +59,13 @@ import { assetAnalyticsAPI } from '@/services/assetAnalyticsAPI';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/DashboardHeader';
 import { meetingRoomAnalyticsAPI } from '@/services/meetingRoomAnalyticsAPI';
+import assetManagementAnalyticsAPI from '@/services/assetManagementAnalyticsAPI';
+import CompanyAssetOverviewCard from '@/components/asset-management/CompanyAssetOverviewCard';
+import CenterAssetsDowntimeMetricsCard from '@/components/asset-management/CenterAssetsDowntimeMetricsCard';
+import HighestMaintenanceAssetsCard from '@/components/asset-management/HighestMaintenanceAssetsCard';
+import AmcContractSummaryCard from '@/components/asset-management/AmcContractSummaryCard';
+import AmcExpiringContractsCard from '@/components/asset-management/AmcExpiringContractsCard';
+import AmcExpiredContractsCard from '@/components/asset-management/AmcExpiredContractsCard';
 import helpdeskAnalyticsAPI from '@/services/helpdeskAnalyticsAPI';
 import { HelpdeskSnapshotCard } from '@/components/helpdesk/HelpdeskSnapshotCard';
 import { TicketAgingClosureFeedbackCard } from '@/components/helpdesk/TicketAgingClosureFeedbackCard';
@@ -73,7 +80,7 @@ import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQ
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management';
   endpoint: string;
   title: string;
 }
@@ -88,6 +95,7 @@ interface DashboardData {
   meeting_room?: any;
   community?: any;
   helpdesk?: any;
+  asset_management?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -385,6 +393,25 @@ export const Dashboard = () => {
                   break;
                 case 'site_wise_adoption_rate':
                   promises.push(communityAnalyticsAPI.getSiteWiseAdoptionRate(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'asset_management':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'company_asset_overview':
+                case 'center_assets_downtime':
+                  // both use asset_overview
+                  promises.push(assetManagementAnalyticsAPI.getAssetOverview(dateRange.from!, dateRange.to!));
+                  break;
+                case 'highest_maintenance_assets':
+                  promises.push(assetManagementAnalyticsAPI.getHighestMaintenanceAssets(dateRange.from!, dateRange.to!));
+                  break;
+                case 'amc_contract_summary':
+                case 'amc_contract_expiry_90':
+                case 'amc_contract_expired':
+                  promises.push(assetManagementAnalyticsAPI.getAmcContractSummary(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -1084,6 +1111,53 @@ export const Dashboard = () => {
                 <SiteWiseAdoptionRateCard data={rawData} />
               </SortableChartItem>
             );
+          default:
+            return null;
+        }
+      case 'asset_management':
+        switch (analytic.endpoint) {
+          case 'company_asset_overview': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CompanyAssetOverviewCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'center_assets_downtime': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <CenterAssetsDowntimeMetricsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'highest_maintenance_assets': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <HighestMaintenanceAssetsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'amc_contract_summary': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AmcContractSummaryCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'amc_contract_expiry_90': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AmcExpiringContractsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          case 'amc_contract_expired': {
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <AmcExpiredContractsCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
           default:
             return null;
         }

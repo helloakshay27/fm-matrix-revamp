@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management';
   endpoint: string;
   title: string;
 }
@@ -130,6 +130,20 @@ const analyticsOptions = {
       { id: 'helpdesk_ticket_performance_metrics', endpoint: 'ticket_performance_metrics', label: 'Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing' },
       { id: 'helpdesk_customer_experience_feedback', endpoint: 'customer_experience_feedback', label: 'Customer Experience Feedback' },
       { id: 'helpdesk_customer_rating_overview', endpoint: 'customer_rating_overview', label: 'Site Performance: Customer Rating Overview' },
+    ]
+  },
+
+  asset_management: {
+    icon: Package,
+    label: 'Asset Management',
+    color: '#06B6D4',
+    options: [
+      { id: 'am_company_asset_overview', endpoint: 'company_asset_overview', label: 'Company Wise Asset Overview' },
+      { id: 'am_center_assets_downtime', endpoint: 'center_assets_downtime', label: 'Center Wise – Assets And Downtime Metrics' },
+      { id: 'am_highest_maintenance_assets', endpoint: 'highest_maintenance_assets', label: 'Assets With Highest Maintenance Spend' },
+      { id: 'am_amc_contract_summary', endpoint: 'amc_contract_summary', label: 'AMC Contract Summary' },
+      { id: 'am_amc_contract_expiry_90', endpoint: 'amc_contract_expiry_90', label: 'AMC Contract Summary – Expiry in 90 Days' },
+      { id: 'am_amc_contract_expired', endpoint: 'amc_contract_expired', label: 'AMC Contract Summary – Expired' },
     ]
   },
 
