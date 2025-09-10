@@ -68,6 +68,8 @@ import AmcExpiringContractsCard from '@/components/asset-management/AmcExpiringC
 import AmcExpiredContractsCard from '@/components/asset-management/AmcExpiredContractsCard';
 import helpdeskAnalyticsAPI from '@/services/helpdeskAnalyticsAPI';
 import inventoryManagementAnalyticsAPI from '@/services/inventoryManagementAnalyticsAPI';
+import TopConsumablesCenterOverviewCard from '@/components/consumables/TopConsumablesCenterOverviewCard';
+import ConsumableInventoryQuarterlyComparisonCard from '@/components/consumables/ConsumableInventoryQuarterlyComparisonCard';
 import InventoryOverviewSummaryCard from '@/components/inventory-management/InventoryOverviewSummaryCard';
 import OverstockTop10ItemsCard from '@/components/inventory-management/OverstockTop10ItemsCard';
 import { HelpdeskSnapshotCard } from '@/components/helpdesk/HelpdeskSnapshotCard';
@@ -83,7 +85,7 @@ import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQ
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview';
   endpoint: string;
   title: string;
 }
@@ -100,15 +102,18 @@ interface DashboardData {
   helpdesk?: any;
   asset_management?: any;
   inventory_management?: any;
+  consumables_overview?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
   id,
-  children
+  children,
+  className,
 }: {
   id: string;
   children: React.ReactNode;
+  className?: string;
 }) => {
   const {
     attributes,
@@ -155,7 +160,7 @@ const SortableChartItem = ({
       style={style}
       {...attributes}
       onPointerDown={handlePointerDown}
-      className="cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group"
+      className={`cursor-grab active:cursor-grabbing transition-all duration-200 hover:shadow-md group ${className ?? ''}`}
     >
       {children}
     </div>
@@ -448,6 +453,18 @@ export const Dashboard = () => {
                 case 'inventory_overview_summary':
                 case 'inventory_overstock_top10':
                   promises.push(inventoryManagementAnalyticsAPI.getInventoryOverstockReport(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'consumables_overview':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'top_consumables_center':
+                  promises.push(inventoryManagementAnalyticsAPI.getCenterWiseConsumables(dateRange.from!, dateRange.to!));
+                  break;
+                case 'consumable_inventory_value_quarterly':
+                  promises.push(inventoryManagementAnalyticsAPI.getConsumableInventoryComparison(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -1191,6 +1208,23 @@ export const Dashboard = () => {
               </SortableChartItem>
             );
           }
+          default:
+            return null;
+        }
+      case 'consumables_overview':
+        switch (analytic.endpoint) {
+          case 'top_consumables_center':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <TopConsumablesCenterOverviewCard data={rawData} />
+              </SortableChartItem>
+            );
+          case 'consumable_inventory_value_quarterly':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id} className="lg:col-span-2">
+                <ConsumableInventoryQuarterlyComparisonCard data={rawData} />
+              </SortableChartItem>
+            );
           default:
             return null;
         }

@@ -16,6 +16,20 @@ export const inventoryManagementAnalyticsAPI = {
     const resp = await apiClient.get(url);
     return resp.data;
   },
+  async getCenterWiseConsumables(fromDate: Date, toDate: Date): Promise<any> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/api/pms/reports/center_wise_consumables?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
+  },
+  async getConsumableInventoryComparison(fromDate: Date, toDate: Date): Promise<any> {
+    const start = fmt(fromDate);
+    const end = fmt(toDate);
+    const url = `/api/pms/reports/consumable_inventory_comparison?start_date=${encodeURIComponent(start)}&end_date=${encodeURIComponent(end)}`;
+    const resp = await apiClient.get(url);
+    return resp.data;
+  },
 };
 
 export default inventoryManagementAnalyticsAPI;

@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview';
   endpoint: string;
   title: string;
 }
@@ -154,6 +154,16 @@ const analyticsOptions = {
     options: [
       { id: 'inv_overview_summary', endpoint: 'inventory_overview_summary', label: 'Overview Summary' },
       { id: 'inv_overstock_top10', endpoint: 'inventory_overstock_top10', label: 'Overstock Analysis – Top 10 Items' },
+    ]
+  },
+
+  consumables_overview: {
+    icon: Package,
+    label: 'Consumables Overview',
+    color: '#C4B89D',
+    options: [
+      { id: 'consumables_top_center', endpoint: 'top_consumables_center', label: 'Top Consumables – Centre-wise Overview' },
+      { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Quarterly Comparison' },
     ]
   },
 
