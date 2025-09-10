@@ -497,7 +497,9 @@ export const ExternalUsersDashboard = () => {
   const handleCancelDelete = () => setConfirmDeleteUser(null);
 
   const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > pagination.total_pages || newPage === page) return;
+    // Relax guard: when server doesn't send total_pages for filtered queries,
+    // allow navigation based on page bounds only; we'll fetch and adjust UI from results.
+    if (newPage < 1 || newPage === page) return;
     setPage(newPage);
   };
 
@@ -611,9 +613,13 @@ export const ExternalUsersDashboard = () => {
             enableSearch={true}
             onRowClick={user => console.log('Row clicked:', user)}
           />
-          {!loading && pagination.total_pages > 1 && (
+          {!loading && (
             <div className="flex flex-col items-center gap-2 mt-6">
-              <div className="text-sm text-gray-600">Page {page} of {pagination.total_pages} | Total {pagination.total_count}</div>
+              <div className="text-sm text-gray-600">
+                Page {page}
+                {pagination.total_pages > 1 ? ` of ${pagination.total_pages}` : ''}
+                {typeof pagination.total_count === 'number' && pagination.total_count > 0 ? ` | Total ${pagination.total_count}` : ''}
+              </div>
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
@@ -622,12 +628,20 @@ export const ExternalUsersDashboard = () => {
                       onClick={() => handlePageChange(page - 1)}
                     />
                   </PaginationItem>
-                  {paginationItems}
+                  {/* Render page numbers only when server provides total_pages > 1 */}
+                  {pagination.total_pages > 1 ? paginationItems : null}
                   <PaginationItem>
-                    <PaginationNext
-                      className={`cursor-pointer ${page >= pagination.total_pages ? 'pointer-events-none opacity-50' : ''}`}
-                      onClick={() => handlePageChange(page + 1)}
-                    />
+                    {(() => {
+                      const hasServerPages = pagination.total_pages > 1;
+                      // If server pagination unknown (==1), allow Next when we received a full page of results.
+                      const canGoNext = hasServerPages ? page < pagination.total_pages : (externalUsers?.length || 0) >= pageSize;
+                      return (
+                        <PaginationNext
+                          className={`cursor-pointer ${!canGoNext ? 'pointer-events-none opacity-50' : ''}`}
+                          onClick={() => canGoNext && handlePageChange(page + 1)}
+                        />
+                      );
+                    })()}
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
