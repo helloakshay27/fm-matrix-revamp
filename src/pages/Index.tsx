@@ -5,7 +5,7 @@ import { MSafeDashboard } from './MSafeDashboard';
 
 const Index = () => {
   const hostname = window.location.hostname;
-  const isViSite = hostname.includes('web.gophygital.work');
+  const isViSite = hostname.includes('vi-web.gophygital.work');
 
   return isViSite ? <MSafeDashboard /> : <AssetDashboard />;
 };

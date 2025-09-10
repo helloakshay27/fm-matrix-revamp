@@ -62,7 +62,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
   // Check if it's Oman site
   const isOmanSite = hostname.includes('oig.gophygital.work');
   // Check if it's VI site
-  const isViSite = hostname.includes('web.gophygital.work');
+  const isViSite = hostname.includes('vi-web.gophygital.work');
 
   const validateEmail = (email: string) => {
     return email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
