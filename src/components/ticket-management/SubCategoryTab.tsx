@@ -228,6 +228,42 @@ export const SubCategoryTab: React.FC = () => {
     }
   };
 
+  const handleCreateSubmit = async () => {
+    // Get form values directly from the form inputs
+    const categorySelect = document.querySelector('select[name="category"]') as HTMLSelectElement;
+    const tagsInput = document.querySelector('input[placeholder="Enter tag"]') as HTMLInputElement;
+    
+    // Check for required fields with specific messages like CategoryTypeTab
+    if (!form.getValues('category')) {
+      toast.error('Please select a category');
+      return;
+    }
+    
+    if (!tagsInput?.value?.trim()) {
+      toast.error('Please enter at least one tag');
+      return;
+    }
+    
+    if (selectedEngineers.length === 0) {
+      toast.error('Please assign at least one engineer');
+      return;
+    }
+
+    // Get the form data
+    const data: SubCategoryFormData = {
+      category: form.getValues('category'),
+      customerEnabled: form.getValues('customerEnabled'),
+      building: form.getValues('building'),
+      wing: form.getValues('wing'),
+      floor: form.getValues('floor'),
+      zone: form.getValues('zone'),
+      room: form.getValues('room'),
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: SubCategoryFormData) => {
     setIsSubmitting(true);
     try {
@@ -325,9 +361,10 @@ export const SubCategoryTab: React.FC = () => {
       case 'wing':
       case 'floor':
       case 'zone':
-      case 'room':
+      case 'room': {
         const key = `${columnKey}_enabled` as keyof typeof item.location_config;
         return item.location_config?.[key] ? 'Yes' : 'No';
+      }
       case 'icon_url':
         return item.icon_url ? (
           <img src={item.icon_url} alt="Icon" className="w-8 h-8 object-cover rounded" />
@@ -382,14 +419,14 @@ export const SubCategoryTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="category"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Category</FormLabel>
+                      <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -448,7 +485,7 @@ export const SubCategoryTab: React.FC = () => {
               {/* Tags Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Subcategory Tags</h3>
+                  <h3 className="text-lg font-semibold">Subcategory Tags <span className="text-red-500">*</span></h3>
                   {/* <Button type="button" onClick={addTag} variant="outline" size="sm">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Tag
@@ -478,7 +515,7 @@ export const SubCategoryTab: React.FC = () => {
 
               {/* Engineer Assignment */}
               <div>
-                <h3 className="text-lg font-semibold mb-2">Engineer Assignment</h3>
+                <h3 className="text-lg font-semibold mb-2">Engineer Assignment <span className="text-red-500">*</span></h3>
                 <Select
                   onValueChange={(value) => {
                     const engineerId = parseInt(value);
@@ -909,11 +946,15 @@ export const SubCategoryTab: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button 
+                  onClick={handleCreateSubmit}
+                  disabled={isSubmitting}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
-            </form>
+            </div>
           </Form>
         </CardContent>
       </Card>

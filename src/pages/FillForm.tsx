@@ -1287,6 +1287,14 @@ interface AttachmentFile {
     sr_no?: number;
 }
 
+interface CheckPoint {
+    id: string;
+    key: string; // This key corresponds to the property name in the API response
+    description: string;
+    req: boolean;
+    checked: boolean;
+}
+
 export const FillForm = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
@@ -1339,28 +1347,46 @@ export const FillForm = () => {
     });
 
     // Check Points
-    const [checkPoints, setCheckPoints] = useState([
+    const [checkPoints, setCheckPoints] = useState<CheckPoint[]>([
         {
             id: '1',
-            description: 'Surrounding area checked, Cleaned and covered. Proper ventilation and lighting provided.',
+            key: 'combustible_material_removed',
+            description: 'Combustible material removed',
             req: false,
             checked: false
         },
         {
             id: '2',
-            description: 'Area Cordoned off & caution boards/tags provided',
+            key: 'fire_extinguisher_provided',
+            description: 'Fire extinguisher provided',
             req: false,
             checked: false
         },
         {
             id: '3',
-            description: "All Lifting tool & tackles of contractor's are inspected & certified.",
+            key: 'close_supervision',
+            description: 'Close supervision',
             req: false,
             checked: false
         },
         {
             id: '4',
-            description: 'Necessary PPEs are provided',
+            key: 'explosion_meter_tested',
+            description: 'Explosion meter tested',
+            req: false,
+            checked: false
+        },
+        {
+            id: '5',
+            key: 'electrical_connection',
+            description: 'Electrical connection',
+            req: false,
+            checked: false
+        },
+        {
+            id: '6',
+            key: 'hazard_consideration',
+            description: 'Hazard consideration',
             req: false,
             checked: false
         }
@@ -1500,34 +1526,17 @@ export const FillForm = () => {
                 const responseCheckPoints = respJson.check_points || {};
                 setCheckPoints(prev =>
                     prev.map(item => {
-                        switch (item.id) {
-                            case '1':
-                                return {
-                                    ...item,
-                                    req: responseCheckPoints.combustible_material_removed?.required === 'Yes',
-                                    checked: responseCheckPoints.combustible_material_removed?.checked === 'Yes'
-                                };
-                            case '2':
-                                return {
-                                    ...item,
-                                    req: responseCheckPoints.fire_extinguisher_provided?.required === 'Yes',
-                                    checked: responseCheckPoints.fire_extinguisher_provided?.checked === 'Yes'
-                                };
-                            case '3':
-                                return {
-                                    ...item,
-                                    req: responseCheckPoints.close_supervision?.required === 'Yes',
-                                    checked: responseCheckPoints.close_supervision?.checked === 'Yes'
-                                };
-                            case '4':
-                                return {
-                                    ...item,
-                                    req: responseCheckPoints.explosion_meter_tested?.required === 'Yes',
-                                    checked: responseCheckPoints.explosion_meter_tested?.checked === 'Yes'
-                                };
-                            default:
-                                return item;
+                        // Use the key property to dynamically map to the corresponding checkpoint in the API response
+                        const checkpointData = responseCheckPoints[item.key];
+                        if (checkpointData) {
+                            return {
+                                ...item,
+                                // Convert the API values (which might be null, "Yes", true, etc.) to boolean values
+                                req: checkpointData.required === 'Yes' || checkpointData.required === true,
+                                checked: checkpointData.checked === 'Yes' || checkpointData.checked === true
+                            };
                         }
+                        return item;
                     })
                 );
 
@@ -1659,15 +1668,12 @@ export const FillForm = () => {
             formData.append('pms_permit_form[energy_isolation_done_by]', detailedInfo.energyIsolationDoneBy || '');
             formData.append('pms_permit_form[energy_deisolation_done_by]', detailedInfo.energyDeisolationDoneBy || '');
 
-            // Check Points
-            formData.append('pms_permit_form[surrounding_area_checked_req_or_not]', checkPoints[0].req ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[surrounding_area_checked_chk]', checkPoints[0].checked ? 'Checked' : 'Not Checked');
-            formData.append('pms_permit_form[area_cordoned_off_req_or_not]', checkPoints[1].req ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[area_cordoned_off_chk]', checkPoints[1].checked ? 'Checked' : 'Not Checked');
-            formData.append('pms_permit_form[all_lifting_tool_req_or_not]', checkPoints[2].req ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[all_lifting_tool_chk]', checkPoints[2].checked ? 'Checked' : 'Not Checked');
-            formData.append('pms_permit_form[necessary_ppes_are_provided_req_or_not]', checkPoints[3].req ? 'Req' : 'Not Req');
-            formData.append('pms_permit_form[necessary_ppes_are_provided_chk]', checkPoints[3].checked ? 'Checked' : 'Not Checked');
+            // Check Points - Dynamically handle all checkpoints
+            checkPoints.forEach(checkpoint => {
+                // Format for the API: check_points[key][required] and check_points[key][checked]
+                formData.append(`pms_permit_form[check_points][${checkpoint.key}][required]`, checkpoint.req ? 'Yes' : 'No');
+                formData.append(`pms_permit_form[check_points][${checkpoint.key}][checked]`, checkpoint.checked ? 'Yes' : 'No');
+            });
 
             formData.append('pms_permit_form[contract_supervisor_name]', personsInfo.contractorSupervisorName || '');
             formData.append('pms_permit_form[contract_supervisor_number]', personsInfo.contractorSupervisorContact || '');
