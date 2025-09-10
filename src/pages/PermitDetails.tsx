@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, memo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -199,6 +199,64 @@ const addPermitComment = async (permitId: string, comment: string): Promise<void
 
     return await response.json();
 };
+
+// Section component for organized layout - defined outside main component to prevent re-renders
+const Section = memo(({
+    title,
+    icon,
+    children,
+    sectionKey,
+    activeSection,
+    setActiveSection
+}: {
+    title: string;
+    icon: React.ReactNode;
+    children: React.ReactNode;
+    sectionKey: string;
+    activeSection: string;
+    setActiveSection: (key: string) => void;
+}) => (
+    <div className="bg-white rounded-lg shadow-sm border mb-6">
+        <div
+            className="p-4 border-b bg-[#f6f4ee] rounded-t-lg cursor-pointer flex items-center justify-between"
+            onClick={() => setActiveSection(activeSection === sectionKey ? "" : sectionKey)}
+        >
+            <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-[#FBEDEC] rounded-full flex items-center justify-center">
+                    {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 text-[#C72030]' })}
+                </div>
+                <h3 className="text-lg font-semibold text-[#C72030]">{title}</h3>
+            </div>
+            <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
+        </div>
+        {(activeSection === sectionKey || activeSection === "details") && (
+            <div className="p-6">
+                {children}
+            </div>
+        )}
+    </div>
+));
+
+// Field component for consistent styling - defined outside main component to prevent re-renders
+const Field = memo(({
+    label,
+    value,
+    fullWidth = false
+}: {
+    label: string;
+    value: React.ReactNode;
+    fullWidth?: boolean
+}) => (
+    <div className={`flex ${fullWidth ? 'flex-col' : 'items-center'} gap-4 ${fullWidth ? 'mb-4' : ''}`}>
+        <label className={`${fullWidth ? 'text-sm' : 'w-32 text-sm'} font-medium text-gray-700`}>
+            {label}
+        </label>
+        {!fullWidth && <span className="text-sm">:</span>}
+        <span className={`text-sm text-gray-900 ${fullWidth ? 'mt-1' : 'flex-1'}`}>
+            {value || '-'}
+        </span>
+    </div>
+));
 
 export const PermitDetails = () => {
     const navigate = useNavigate();
@@ -602,51 +660,7 @@ export const PermitDetails = () => {
         }
     };
 
-    // Section component for organized layout
-    const Section = ({
-        title,
-        icon,
-        children,
-        sectionKey
-    }: {
-        title: string;
-        icon: React.ReactNode;
-        children: React.ReactNode;
-        sectionKey: string;
-    }) => (
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-            <div
-                className="p-4 border-b bg-[#f6f4ee] rounded-t-lg cursor-pointer flex items-center justify-between"
-                onClick={() => setActiveSection(activeSection === sectionKey ? "" : sectionKey)}
-            >
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-[#FBEDEC] rounded-full flex items-center justify-center">
-                        {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4 text-[#C72030]' })}
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#C72030]">{title}</h3>
-                </div>
-                <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
-            </div>
-            {(activeSection === sectionKey || activeSection === "details") && (
-                <div className="p-6">
-                    {children}
-                </div>
-            )}
-        </div>
-    );
-
-    // Field component for consistent styling
-    const Field = ({ label, value, fullWidth = false }: { label: string; value: React.ReactNode; fullWidth?: boolean }) => (
-        <div className={`flex ${fullWidth ? 'flex-col' : 'items-center'} gap-4 ${fullWidth ? 'mb-4' : ''}`}>
-            <label className={`${fullWidth ? 'text-sm' : 'w-32 text-sm'} font-medium text-gray-700`}>
-                {label}
-            </label>
-            {!fullWidth && <span className="text-sm">:</span>}
-            <span className={`text-sm text-gray-900 ${fullWidth ? 'mt-1' : 'flex-1'}`}>
-                {value || '-'}
-            </span>
-        </div>
-    );
+    // Using memoized Section and Field components defined outside the component to avoid re-renders
 
     if (loading) {
         return (
@@ -833,7 +847,13 @@ export const PermitDetails = () => {
             {/* Main Content */}
             <div className="space-y-6">
                 {/* Permit Details Section */}
-                <Section title="PERMIT DETAILS" icon={<FileText />} sectionKey="details">
+                <Section
+                    title="PERMIT DETAILS"
+                    icon={<FileText />}
+                    sectionKey="details"
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <Field label="Permit ID" value={permitData.permit.id} />
@@ -864,7 +884,13 @@ export const PermitDetails = () => {
                 </Section>
 
                 {/* Requestor's Information Section */}
-                <Section title="REQUESTOR'S INFORMATION" icon={<User />} sectionKey="requestor">
+                <Section
+                    title="REQUESTOR'S INFORMATION"
+                    icon={<User />}
+                    sectionKey="requestor"
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             <Field label="Created By" value={permitData.permit.created_by.full_name} />
@@ -880,7 +906,13 @@ export const PermitDetails = () => {
 
                 {/* Approval Levels Section */}
                 {permitData.approval_levels && permitData.approval_levels.length > 0 && (
-                    <Section title="APPROVAL LEVELS" icon={<CheckCircle />} sectionKey="approval-levels">
+                    <Section
+                        title="APPROVAL LEVELS"
+                        icon={<CheckCircle />}
+                        sectionKey="approval-levels"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-3">
                             {permitData.approval_levels.map((level: any, index: number) => (
                                 <div key={index} className="p-4 bg-gray-50 rounded-lg">
@@ -901,17 +933,23 @@ export const PermitDetails = () => {
 
                 {/* Permit Extensions Section */}
                 {permitData.permit_extends && permitData.permit_extends.length > 0 && (
-                    <Section title="PERMIT EXTENSIONS" icon={<Clock />} sectionKey="extensions">
+                    <Section
+                        title="PERMIT EXTENSIONS"
+                        icon={<Clock />}
+                        sectionKey="extensions"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-4">
                             {permitData.permit_extends.map((extension: PermitExtend, index: number) => (
                                 <div key={extension.id || index} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="flex justify-between items-start mb-4">
                                         <h4 className="font-medium text-gray-900">Extension #{extension.id}</h4>
                                         <Badge className={`${extension.extend_approval_levels?.[0]?.status === 'Approved'
-                                                ? 'bg-green-100 text-green-800'
-                                                : extension.extend_approval_levels?.[0]?.status === 'Rejected'
-                                                    ? 'bg-red-100 text-red-800'
-                                                    : 'bg-yellow-100 text-yellow-800'
+                                            ? 'bg-green-100 text-green-800'
+                                            : extension.extend_approval_levels?.[0]?.status === 'Rejected'
+                                                ? 'bg-red-100 text-red-800'
+                                                : 'bg-yellow-100 text-yellow-800'
                                             }`}>
                                             {extension.extend_approval_levels?.[0]?.status || 'Pending'}
                                         </Badge>
@@ -976,7 +1014,13 @@ export const PermitDetails = () => {
 
                 {/* Permit Resume Section */}
                 {permitData.permit_resume && permitData.permit_resume.length > 0 && (
-                    <Section title="PERMIT RESUME" icon={<RefreshCw />} sectionKey="resume">
+                    <Section
+                        title="PERMIT RESUME"
+                        icon={<RefreshCw />}
+                        sectionKey="resume"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-3">
                             {permitData.permit_resume.map((resume: any, index: number) => (
                                 <div key={index} className="p-4 bg-gray-50 rounded-lg">
@@ -999,7 +1043,13 @@ export const PermitDetails = () => {
 
                 {/* Manpower Details Section */}
                 {permitData.manpower_details && permitData.manpower_details.length > 0 && (
-                    <Section title="MANPOWER DETAILS" icon={<User />} sectionKey="manpower">
+                    <Section
+                        title="MANPOWER DETAILS"
+                        icon={<User />}
+                        sectionKey="manpower"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-3">
                             {permitData.manpower_details.map((manpower: any, index: number) => (
                                 <div key={index} className="p-4 bg-gray-50 rounded-lg">
@@ -1025,7 +1075,13 @@ export const PermitDetails = () => {
                 )}
 
                 {/* Activity Details Section */}
-                <Section title="ACTIVITY DETAILS" icon={<Clipboard />} sectionKey="activity">
+                <Section
+                    title="ACTIVITY DETAILS"
+                    icon={<Clipboard />}
+                    sectionKey="activity"
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div className="space-y-4">
                             {permitData.activity_details && permitData.activity_details.length > 0 ? (
@@ -1044,7 +1100,13 @@ export const PermitDetails = () => {
 
                 {/* Attachments Section */}
                 {permitData.main_attachments && permitData.main_attachments.length > 0 && (
-                    <Section title="MAIN ATTACHMENTS" icon={<Upload />} sectionKey="attachments">
+                    <Section
+                        title="MAIN ATTACHMENTS"
+                        icon={<Upload />}
+                        sectionKey="attachments"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         {/* Image Previews Row */}
                         <div className="flex gap-4 overflow-x-auto mb-4">
                             {permitData.main_attachments.filter(att => {
@@ -1118,7 +1180,13 @@ export const PermitDetails = () => {
 
                 {/* Vendor Attachments Section */}
                 {permitData.vendor_attachments && (
-                    <Section title="VENDOR ATTACHMENTS" icon={<Upload />} sectionKey="vendor-attachments">
+                    <Section
+                        title="VENDOR ATTACHMENTS"
+                        icon={<Upload />}
+                        sectionKey="vendor-attachments"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-4">
                             <div>
                                 <h4 className="text-sm font-medium text-gray-700 mb-2">List of People</h4>
@@ -1165,7 +1233,13 @@ export const PermitDetails = () => {
                 )}
 
                 {/* Permit Extension Section */}
-                <Section title="PERMIT EXTENSION" icon={<Clock />} sectionKey="permit-extension">
+                <Section
+                    title="PERMIT EXTENSION"
+                    icon={<Clock />}
+                    sectionKey="permit-extension"
+                    activeSection={activeSection}
+                    setActiveSection={setActiveSection}
+                >
                     <div className="space-y-6">
                         {/* Form Fields */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1287,7 +1361,13 @@ export const PermitDetails = () => {
 
                 {/* Resume Permit Section */}
                 {permitData.show_resume_button && (
-                    <Section title="RESUME PERMIT" icon={<RefreshCw />} sectionKey="resume-permit">
+                    <Section
+                        title="RESUME PERMIT"
+                        icon={<RefreshCw />}
+                        sectionKey="resume-permit"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-6">
                             {/* Resume Form Fields */}
                             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1364,7 +1444,13 @@ export const PermitDetails = () => {
 
                 {/* Permit Closure Details Section */}
                 {permitData.permit_closure && (
-                    <Section title="PERMIT CLOSURE DETAILS" icon={<CheckCircle />} sectionKey="closure">
+                    <Section
+                        title="PERMIT CLOSURE DETAILS"
+                        icon={<CheckCircle />}
+                        sectionKey="closure"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <Field label="Completion Comment" value={permitData.permit_closure.completion_comment || "No comment"} />
@@ -1391,14 +1477,20 @@ export const PermitDetails = () => {
 
                 {/* Comment Log Section */}
                 {permitData.comment_logs && permitData.comment_logs.length > 0 ? (
-                    <Section title="COMMENT LOG" icon={<MessageSquare />} sectionKey="comments">
+                    <Section
+                        title="COMMENT LOG"
+                        icon={<MessageSquare />}
+                        sectionKey="comments"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="space-y-4">
                             {permitData.comment_logs.map((comment: CommentLog, index: number) => (
                                 <div key={comment.id || index} className="p-4 bg-gray-50 rounded-lg">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-start">
                                             <span className="font-medium text-sm text-gray-900">
-                                                <strong>Created By:</strong> {comment.created_by?.full_name || 'Unknown User'}
+                                                <strong>Created By:</strong> {typeof comment.created_by === 'object' ? comment.created_by.full_name : (comment.created_by || 'Unknown User')}
                                             </span>
                                         </div>
                                         <div className="grid grid-cols-1 gap-3 text-sm">
@@ -1434,7 +1526,13 @@ export const PermitDetails = () => {
                         </div>
                     </Section>
                 ) : (
-                    <Section title="COMMENT LOG" icon={<MessageSquare />} sectionKey="comments">
+                    <Section
+                        title="COMMENT LOG"
+                        icon={<MessageSquare />}
+                        sectionKey="comments"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="text-center py-8">
                             <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                             <p className="text-gray-500 mb-4">No comments yet</p>
@@ -1451,7 +1549,13 @@ export const PermitDetails = () => {
 
                 {/* QR Code Section - Only show when all levels are approved */}
                 {permitData.qr_code && permitData.permit.all_level_approved && (
-                    <Section title="QR Code" icon={<QrCode />} sectionKey="qrcode">
+                    <Section
+                        title="QR Code"
+                        icon={<QrCode />}
+                        sectionKey="qrcode"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="text-center">
                             <div className="inline-block p-4 bg-white border-2 border-gray-200 rounded-lg">
                                 <img
@@ -1485,7 +1589,13 @@ export const PermitDetails = () => {
 
                 {/* Safety Check Audits Section */}
                 {permitData.safety_check_audits && permitData.safety_check_audits.length > 0 && (
-                    <Section title="Safety Check Audits" icon={<CheckCircle />} sectionKey="audits">
+                    <Section
+                        title="Safety Check Audits"
+                        icon={<CheckCircle />}
+                        sectionKey="audits"
+                        activeSection={activeSection}
+                        setActiveSection={setActiveSection}
+                    >
                         <div className="overflow-x-auto">
                             <table className="w-full border-collapse border border-gray-200">
                                 <thead>

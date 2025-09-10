@@ -87,7 +87,7 @@ export const AddIncidentPage = () => {
         });
         if (response.ok) {
           const result = await response.json();
-          setBuildings(Array.isArray(result.buildings) ? result.buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
+          setBuildings(Array.isArray(result.pms_buildings) ? result.pms_buildings.map((b: any) => ({ id: b.id, name: b.name })) : []);
         } else {
           setBuildings([]);
         }
