@@ -707,6 +707,9 @@ import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
 import PDFDownloadPage from "./components/PDFDownloadPage";
 import PermissionDemo from "./components/PermissionDemo";
+import CRMWalletList from "./pages/CRMWalletList";
+import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
+import CRMWalletDetails from "./pages/CRMWalletDetails";
 
 const queryClient = new QueryClient();
 
@@ -1203,6 +1206,18 @@ function App() {
                     <Route
                       path="/crm/customers/edit/:id"
                       element={<EditCrmCustomer />}
+                    />
+                    <Route
+                      path="/crm/wallet-list"
+                      element={<CRMWalletList />}
+                    />
+                    <Route
+                      path="/crm/wallet-list/:id"
+                      element={<CRMWalletDetails />}
+                    />
+                    <Route
+                      path="/crm/point-expiry"
+                      element={<CRMWalletPointExpiry />}
                     />
 
                     {/* Snagging Routes */}
