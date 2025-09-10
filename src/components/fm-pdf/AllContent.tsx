@@ -432,17 +432,90 @@ const AllContent = () => {
     }, [parkingDateSiteWiseData]);
 
     const parkingChartData = useMemo(() => {
+        // New shape: { data: { parking_management: { chart_data, site_wise_details, ... } } }
+        const pm = parkingDateSiteWiseData?.data?.parking_management
+            ?? parkingDateSiteWiseData?.parking_management
+            ?? null;
+
+        if (pm) {
+            // Preferred mapping when detailed site-wise breakdown is available
+            const details = Array.isArray(pm.site_wise_details) ? pm.site_wise_details : null;
+            if (details) {
+                return details.map((d: any) => ({
+                    site: d.site_name || d.site || '-',
+                    Free: Number(d.free_parking_available ?? 0),
+                    Paid: Number(d.paid_parking_available ?? 0),
+                    Vacant: Number(d.vacant_spaces ?? 0),
+                }));
+            }
+
+            // Fallback to chart_data series if site_wise_details is not present
+            const categories: any[] = pm?.chart_data?.x_axis?.categories ?? [];
+            const series: any[] = pm?.chart_data?.series ?? [];
+            if (Array.isArray(categories) && Array.isArray(series) && categories.length) {
+                const findSeries = (type: string, namePattern?: RegExp) =>
+                    series.find((s: any) => (s?.type && s.type === type) || (namePattern && s?.name && namePattern.test(String(s.name))));
+
+                const allocated = findSeries('allocated', /alloc/i);
+                const vacant = findSeries('vacant', /vacant/i);
+
+                return categories.map((site: any, idx: number) => ({
+                    site: String(site ?? '-'),
+                    // Without a breakdown, treat allocated as Paid and keep Free as 0 to preserve chart shape
+                    Free: 0,
+                    Paid: Number(allocated?.data?.[idx] ?? 0),
+                    Vacant: Number(vacant?.data?.[idx] ?? 0),
+                }));
+            }
+        }
+
+        // Legacy shape fallback: parking_summary [{ site_name, free_parking, paid_parking, vacant_parking }]
         return parkingSummary.map((r: any) => ({
             site: r.site_name || r.site || '-',
             Free: Number(r.free_parking ?? 0),
             Paid: Number(r.paid_parking ?? 0),
             Vacant: Number(r.vacant_parking ?? 0),
         }));
-    }, [parkingSummary]);
+    }, [parkingDateSiteWiseData, parkingSummary]);
 
     // Visitor Management – derive chart rows from API
     const visitorTrendRows = useMemo(() => {
-        // Support both { data: { visitor_trend_analysis: [...] } } and flat array
+        // New shape: { data: { visitor_management: { chart_data, site_wise_analysis, ... } } }
+        const vm = visitorTrendAnalysisData?.data?.visitor_management
+            ?? visitorTrendAnalysisData?.visitor_management
+            ?? null;
+        if (vm) {
+            // Prefer site_wise_analysis when available: use total_visitors from last/current quarter per site
+            const swa: any[] = Array.isArray(vm.site_wise_analysis) ? vm.site_wise_analysis : [];
+            if (swa.length) {
+                return swa.map((siteRow: any) => ({
+                    site: siteRow.site_name || siteRow.site || '-',
+                    last: Number(siteRow?.last_quarter?.total_visitors ?? 0),
+                    current: Number(siteRow?.current_quarter?.total_visitors ?? 0),
+                }));
+            }
+
+            // Fallback: derive totals from chart_data with side-by-side charts (Last vs Current)
+            const categories: any[] = vm?.chart_data?.x_axis?.categories ?? [];
+            const charts: any[] = Array.isArray(vm?.chart_data?.charts) ? vm.chart_data.charts : [];
+            if (Array.isArray(categories) && categories.length && charts.length) {
+                const lastChart = charts.find((c: any) => /last/i.test(String(c?.title)) || c?.position === 'left');
+                const currentChart = charts.find((c: any) => /current/i.test(String(c?.title)) || c?.position === 'right');
+
+                const sumSeriesAt = (chart: any, idx: number) => {
+                    const seriesArr: any[] = Array.isArray(chart?.series) ? chart.series : [];
+                    return seriesArr.reduce((acc, s) => acc + Number(s?.data?.[idx] ?? 0), 0);
+                };
+
+                return categories.map((site: any, idx: number) => ({
+                    site: String(site ?? '-'),
+                    last: Number(sumSeriesAt(lastChart, idx) || 0),
+                    current: Number(sumSeriesAt(currentChart, idx) || 0),
+                }));
+            }
+        }
+
+        // Legacy shape: { data: { visitor_trend_analysis: [...] } } with last_quarter/current_quarter totals
         const root = visitorTrendAnalysisData?.data?.visitor_trend_analysis
             ?? visitorTrendAnalysisData?.visitor_trend_analysis
             ?? visitorTrendAnalysisData
@@ -450,8 +523,8 @@ const AllContent = () => {
         const arr = Array.isArray(root) ? root : [];
         return arr.map((r: any) => ({
             site: r.site_name || r.site || '-',
-            last: Number(r.last_quarter ?? 0),
-            current: Number(r.current_quarter ?? 0),
+            last: Number(r.last_quarter ?? r?.last_quarter_total ?? 0),
+            current: Number(r.current_quarter ?? r?.current_quarter_total ?? 0),
         }));
     }, [visitorTrendAnalysisData]);
 
@@ -587,6 +660,48 @@ const AllContent = () => {
     // Checklist Progress – normalize site_wise_checklist shape
     const checklistProgress = useMemo(() => {
         const root = siteWiseChecklistData?.data ?? siteWiseChecklistData ?? null;
+
+        // New shape: data.site_wise_breakdown with current_quarter and last_quarter status buckets
+        const swb: any[] = (root?.site_wise_breakdown ?? root?.data?.site_wise_breakdown) as any[];
+        if (Array.isArray(swb) && swb.length) {
+            return swb.map((row: any) => {
+                const site = row?.site_name ?? row?.center_name ?? row?.site ?? '-';
+                const current = row?.current_quarter ?? {};
+                const last = row?.last_quarter ?? {};
+
+                const curOpen = Number(current?.not_completed ?? current?.open ?? 0);
+                const curInProg = Number(current?.in_progress ?? 0);
+                const curOverdue = Number(current?.delayed ?? current?.overdue ?? 0);
+                const curPartial = Number(current?.partial ?? current?.partially_closed ?? 0);
+                const curClosed = Number(current?.completed ?? current?.closed ?? 0);
+
+                const lastOpen = Number(last?.not_completed ?? last?.open ?? 0);
+                const lastInProg = Number(last?.in_progress ?? 0);
+                const lastOverdue = Number(last?.delayed ?? last?.overdue ?? 0);
+                const lastPartial = Number(last?.partial ?? last?.partially_closed ?? 0);
+                const lastClosed = Number(last?.completed ?? last?.closed ?? 0);
+
+                return {
+                    site_name: site,
+                    current: {
+                        open: curOpen,
+                        in_progress: curInProg,
+                        overdue: curOverdue,
+                        partially_closed: curPartial,
+                        closed: curClosed,
+                    },
+                    difference: {
+                        open: curOpen - lastOpen,
+                        in_progress: curInProg - lastInProg,
+                        overdue: curOverdue - lastOverdue,
+                        partially_closed: curPartial - lastPartial,
+                        closed: curClosed - lastClosed,
+                    },
+                };
+            });
+        }
+
+        // Legacy shapes
         const list = root?.checklist_progress ?? root?.progress ?? [];
         return Array.isArray(list) ? list : [];
     }, [siteWiseChecklistData]);
@@ -741,7 +856,7 @@ const AllContent = () => {
                 });
                 try {
                     console.log('overstockTopGrid (new) -> sites:', sites.length, 'items:', items.length);
-                } catch {}
+                } catch { }
                 return { sites, items };
             }
         }
@@ -763,7 +878,7 @@ const AllContent = () => {
             .sort((a, b) => b[1] - a[1])
             .slice(0, 10)
             .map(([name]) => name);
-    const items = itemNames.map((name) => {
+        const items = itemNames.map((name) => {
             const capitalsRaw = sites.map((siteName) => {
                 const site = overstockTopItems.find((s: any) => s?.site_name === siteName);
                 const it = (site?.items || []).find((x: any) => x?.item_name === name);
@@ -785,7 +900,7 @@ const AllContent = () => {
         });
         try {
             console.log('overstockTopGrid (legacy) -> sites:', sites.length, 'items:', items.length);
-        } catch {}
+        } catch { }
         return { sites, items };
     }, [inventoryOverstockReportData, overstockTopItems]);
 
@@ -802,25 +917,103 @@ const AllContent = () => {
 
     // AMC summary derived object
     const amcSummary = useMemo(() => {
-        const src = amcContractSummaryData?.data?.summary ?? amcContractSummaryData?.summary ?? amcContractSummaryData ?? null;
-        if (!src || typeof src !== 'object') return null;
+        // Support multiple shapes:
+        // 1) { data: { summary: { active_amc_contracts, contract_expiry_in_90_days, contract_expired } } }
+        // 2) { card_overview: { active_contracts: {count}, expiring_soon: {count}, expired_contracts: {count} } }
+        // 3) Flat keys as in (1) at root
+        const root = amcContractSummaryData ?? null;
+        if (!root || typeof root !== 'object') return null;
+
+        // Try legacy/summary first
+        const legacy = (root as any)?.data?.summary ?? (root as any)?.summary ?? null;
+        if (legacy && typeof legacy === 'object') {
+            return {
+                active: Number((legacy as any).active_amc_contracts ?? 0),
+                expiry90: Number((legacy as any).contract_expiry_in_90_days ?? 0),
+                expired: Number((legacy as any).contract_expired ?? 0),
+            };
+        }
+
+        // Try new card_overview shape
+        const cards = (root as any)?.card_overview ?? (root as any)?.data?.card_overview ?? null;
+        if (cards && typeof cards === 'object') {
+            const active = Number((cards as any)?.active_contracts?.count ?? 0);
+            const expiry90 = Number((cards as any)?.expiring_soon?.count ?? 0);
+            const expired = Number((cards as any)?.expired_contracts?.count ?? 0);
+            // If totals are present and individual counts are zero, still accept zeros.
+            return { active, expiry90, expired };
+        }
+
+        // Fallback: flat keys on root
         return {
-            active: Number((src as any).active_amc_contracts ?? 0),
-            expiry90: Number((src as any).contract_expiry_in_90_days ?? 0),
-            expired: Number((src as any).contract_expired ?? 0),
+            active: Number((root as any).active_amc_contracts ?? 0),
+            expiry90: Number((root as any).contract_expiry_in_90_days ?? 0),
+            expired: Number((root as any).contract_expired ?? 0),
         };
     }, [amcContractSummaryData]);
 
-    // AMC expiring contracts (90 days) list
+    // AMC expiring contracts (90 days) list – supports new and legacy shapes
     const amcExpiringContracts = useMemo(() => {
-        const arr = amcContractSummaryData?.data?.expiring_contracts ?? amcContractSummaryData?.expiring_contracts ?? [];
-        return Array.isArray(arr) ? arr : [];
+        const root: any = amcContractSummaryData?.data ?? amcContractSummaryData ?? {};
+        let arr: any =
+            root?.expiring_contracts
+            ?? root?.contract_details // new shape
+            ?? root?.expiring_in_90_days
+            ?? [];
+        arr = Array.isArray(arr) ? arr : [];
+
+        // Only include rows explicitly marked as Expiring Soon
+        const filtered = (arr as any[]).filter((row: any) => {
+            const s = String(row?.status ?? row?.contract_status ?? '')
+                .toLowerCase()
+                .replace(/_/g, ' ')
+                .trim();
+            return s === 'expiring soon';
+        });
+
+        // Normalize to the fields our table expects
+        return filtered.map((row: any) => ({
+            site_name: row?.site_name || row?.center_name || row?.site || '-',
+            amc_name: row?.amc_name || row?.contract_name || row?.asset_name || row?.service_name || '-',
+            contract_start_date: row?.contract_start_date || row?.start_date || '',
+            contract_end_date: row?.contract_end_date || row?.end_date || '',
+            renewal_reminder: row?.renewal_reminder || row?.renewal_alert || row?.renewal_status || '',
+            projected_renewal_cost: Number(row?.projected_renewal_cost ?? row?.contract_value ?? row?.projected_value ?? 0),
+            vendor_contact: row?.vendor_contact || row?.vendor_name || row?.vendor_email || row?.vendor_details || '',
+            status: row?.status || row?.contract_status || '',
+        }));
     }, [amcContractSummaryData]);
 
-    // AMC expired contracts list
+    // AMC expired contracts list – supports new and legacy shapes
     const amcExpiredContracts = useMemo(() => {
-        const arr = amcContractSummaryData?.data?.expired_contracts ?? amcContractSummaryData?.expired_contracts ?? [];
-        return Array.isArray(arr) ? arr : [];
+        const root: any = amcContractSummaryData?.data ?? amcContractSummaryData ?? {};
+        let arr: any =
+            root?.expired_contracts
+            ?? root?.expired_contract_details
+            ?? (root?.expired && root?.expired?.contract_details)
+            ?? root?.contract_details // new shape: direct contract_details array for expired
+            ?? [];
+        arr = Array.isArray(arr) ? arr : [];
+
+        // Only include rows explicitly marked as Expired
+        const filtered = (arr as any[]).filter((row: any) => {
+            const s = String(row?.status ?? row?.contract_status ?? '')
+                .toLowerCase()
+                .replace(/_/g, ' ')
+                .trim();
+            return s === 'expired';
+        });
+
+        return filtered.map((row: any) => ({
+            site_name: row?.site_name || row?.center_name || row?.site || '-',
+            amc_name: row?.amc_name || row?.contract_name || row?.asset_name || row?.service_name || '-',
+            contract_start_date: row?.contract_start_date || row?.start_date || '',
+            contract_end_date: row?.contract_end_date || row?.end_date || '',
+            renewal_reminder: row?.renewal_reminder || row?.renewal_alert || row?.renewal_status || '',
+            projected_renewal_cost: Number(row?.projected_renewal_cost ?? row?.contract_value ?? row?.projected_value ?? 0),
+            vendor_contact: row?.vendor_contact || row?.vendor_name || row?.vendor_email || row?.vendor_details || '',
+            status: row?.status || row?.contract_status || 'Expired',
+        }));
     }, [amcContractSummaryData]);
 
 
@@ -1280,24 +1473,53 @@ const AllContent = () => {
 
     // If API provides quarterly response/resolution performance, map it into chart shape
     const dynamicResponseAchieved = useMemo(() => {
-        const perf = responseTATQuarterlyData?.data?.performance_data ?? [];
+        const perf = responseTATQuarterlyData?.data?.performance_data
+            ?? responseTATQuarterlyData?.performance_data
+            ?? [];
         if (!Array.isArray(perf) || perf.length === 0) return [] as any[];
-        return perf.map((row: any) => ({
-            site: row.center_name || '',
-            responseLast: Number(row.last_quarter?.response_achieved_percentage ?? 0),
-            responseCurrent: Number(row.current_quarter?.response_achieved_percentage ?? 0),
-        }));
+
+        return perf.map((row: any) => {
+            const site = row.center_name || row.site_name || row.site || '';
+
+            // Support both legacy flat percentages and new nested structure
+            const lastNested = row.last_quarter?.response_tat?.achieved_percentage;
+            const currentNested = row.current_quarter?.response_tat?.achieved_percentage;
+
+            const responseLast = Number(
+                lastNested ?? row.last_quarter?.response_achieved_percentage ?? 0
+            );
+            const responseCurrent = Number(
+                currentNested ?? row.current_quarter?.response_achieved_percentage ?? 0
+            );
+
+            return { site, responseLast, responseCurrent };
+        });
     }, [responseTATQuarterlyData]);
 
     const dynamicResolutionAchieved = useMemo(() => {
-        // Prefer resolution-specific API if available, otherwise fall back to responseTATQuarterlyData
-        const perf = resolutionTATQuarterlyData?.data?.performance_data ?? responseTATQuarterlyData?.data?.performance_data ?? [];
+        // Prefer resolution-specific API if available, otherwise fall back to response API if it embeds resolution
+        const perf = resolutionTATQuarterlyData?.data?.performance_data
+            ?? resolutionTATQuarterlyData?.performance_data
+            ?? responseTATQuarterlyData?.data?.performance_data
+            ?? responseTATQuarterlyData?.performance_data
+            ?? [];
         if (!Array.isArray(perf) || perf.length === 0) return [] as any[];
-        return perf.map((row: any) => ({
-            site: row.center_name || '',
-            resolutionLast: Number(row.last_quarter?.resolution_achieved_percentage ?? 0),
-            resolutionCurrent: Number(row.current_quarter?.resolution_achieved_percentage ?? 0),
-        }));
+
+        return perf.map((row: any) => {
+            const site = row.center_name || row.site_name || row.site || '';
+
+            const lastNested = row.last_quarter?.resolution_tat?.achieved_percentage;
+            const currentNested = row.current_quarter?.resolution_tat?.achieved_percentage;
+
+            const resolutionLast = Number(
+                lastNested ?? row.last_quarter?.resolution_achieved_percentage ?? 0
+            );
+            const resolutionCurrent = Number(
+                currentNested ?? row.current_quarter?.resolution_achieved_percentage ?? 0
+            );
+
+            return { site, resolutionLast, resolutionCurrent };
+        });
     }, [responseTATQuarterlyData, resolutionTATQuarterlyData]);
 
     // Compute dynamic max for X axis so charts scale to API values (rounded up to nearest 10, minimum 100)
@@ -2435,15 +2657,15 @@ const AllContent = () => {
                                     {/* Grid Box */}
                                     <div className="grid grid-cols-10 gap-[10px] border-l border-b p-1 print:gap-[10px]">
                                         {ticketGridData.map((item, index) => (
-                        <div key={index} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
+                                            <div key={index} className="relative w-[100px] h-16 print:w-[50px] print:h-15 border border-[#C4AE9D] bg-white">
                                                 <div className={`absolute inset-0 clip-triangle-tr ${agingColors[item.agingBand || item.aging] || 'bg-white'}`}></div>
                                                 <div className="absolute inset-0 clip-triangle-bl bg-white"></div>
 
                                                 <div className={`absolute top-1 right-1 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)} print:rotate-print`}>
-                            <span className="font-bold">{displayPercent(item.volume)}</span>
+                                                    <span className="font-bold">{displayPercent(item.volume)}</span>
                                                 </div>
                                                 <div className={`absolute bottom-1 left-2 text-xs print:text-[9px] ${getTextColor(item.agingBand || item.aging)}`}>
-                            <span>{displayPercent(item.closure)}</span>
+                                                    <span>{displayPercent(item.closure)}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -3019,12 +3241,12 @@ const AllContent = () => {
             <div className="print-page break-before-page">
                 <div className="py-6 bg-white min-h-screen text-black print:bg-white print:text-black print:p-2 print:w-[100%] print:mx-auto no-break">
 
-                                        <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
+                    <h1 className="report-title text-2xl font-bold mb-6 text-center bg-[#F6F4EE] py-3 print:text-xl print:mb-1 print:py-2">
                         Checklist Management
                     </h1>
 
-                                        {/* Print-specific styles to improve table fit and prevent header/arrow overflow */}
-                                        <style>{`
+                    {/* Print-specific styles to improve table fit and prevent header/arrow overflow */}
+                    <style>{`
                                             @media print {
                                                 /* General tightening for both checklist tables */
                                                 .checklist-progress-table table,
@@ -3100,14 +3322,12 @@ const AllContent = () => {
                                         const site = row.site_name ?? row.center_name ?? row.site ?? '-';
                                         const cur = row.current ?? {};
                                         const diff = row.difference ?? row.delta ?? {};
-                                        const fmt = (v: any) =>
-                                            typeof v === 'number'
-                                                ? `${v.toFixed(2)}%`
-                                                : typeof v === 'string' && v.match(/%$/)
-                                                    ? v
-                                                    : v != null
-                                                        ? `${v}%`
-                                                        : '0%';
+                                        const fmt = (v: any) => {
+                                            const n = typeof v === 'number' ? v : (typeof v === 'string' ? parseFloat(v.replace(/[^0-9.\-]/g, '')) : 0);
+                                            if (!isFinite(n)) return '0%';
+                                            // Show integer percentages if whole; else show 2 decimals
+                                            return Number.isInteger(n) ? `${n}%` : `${n.toFixed(2)}%`;
+                                        };
                                         const toNum = (v: any) => {
                                             if (typeof v === 'number') return v;
                                             if (typeof v === 'string') {
@@ -3132,7 +3352,7 @@ const AllContent = () => {
                                         return (
                                             <tr key={i} className={i % 2 === 0 ? 'bg-gray-50 print:bg-gray-50' : ''}>
                                                 <td className="py-5 px-4 bg-[#F6F4EE] print:py-2 print:px-2 print:bg-[#F6F4EE]">{site}</td>
-                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open)}</td>
+                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.open ?? cur.not_completed)}</td>
                                                 <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.in_progress ?? cur.inProgress)}</td>
                                                 <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
                                                     {fmt(curOverNum)} | {fmt(lastOverNum)}{' '}
@@ -3140,7 +3360,7 @@ const AllContent = () => {
                                                     {overdueArrowDown && <span className="text-green-600 arrow-print">▼</span>}
                                                     {!overdueArrowUp && !overdueArrowDown && <span className="text-gray-400">—</span>}
                                                 </td>
-                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed)}</td>
+                                                <td className="py-5 px-4 print:py-2 print:px-2">{fmt(cur.partially_closed ?? cur.partiallyClosed ?? cur.partial)}</td>
                                                 <td className="py-5 px-4 flex items-center gap-1 print:py-2 print:px-2">
                                                     {fmt(curClosedNum)} | {fmt(lastClosedNum)}{' '}
                                                     {closedArrowUp && <span className="text-green-600 arrow-print">▲</span>}
@@ -3315,11 +3535,11 @@ const AllContent = () => {
                                                     >
                                                         {item.name}
                                                     </td>
-                            {item.capital.map((cap, colIdx) => (
+                                                    {item.capital.map((cap, colIdx) => (
                                                         <Block
                                                             key={colIdx}
-                                capital={cap}
-                                capitalText={item.capitalText ? item.capitalText[colIdx] : undefined}
+                                                            capital={cap}
+                                                            capitalText={item.capitalText ? item.capitalText[colIdx] : undefined}
                                                             stock={item.stock[colIdx]}
                                                         />
                                                     ))}

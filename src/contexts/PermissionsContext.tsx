@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { UserRoleResponse, permissionService } from '@/services/permissionService';
+import { permissionCache } from '@/services/simplePermissionCache';
 import { isAuthenticated } from '@/utils/auth';
 
 interface PermissionsContextType {
@@ -47,7 +48,11 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
     
     try {
       const role = await permissionService.getUserRole();
-      setUserRole(role);
+      if (role) {
+        setUserRole(role);
+        // Store in cache for fast access
+        permissionCache.store(role);
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch user permissions';
       setError(errorMessage);
@@ -74,14 +79,29 @@ export const PermissionsProvider: React.FC<PermissionsProviderProps> = ({ childr
   }, [fetchUserPermissions]);
 
   const isModuleEnabled = useCallback((moduleName: string): boolean => {
+    // Try cache first for better performance
+    const cached = permissionCache.isModuleEnabled(moduleName);
+    if (cached !== false || !userRole) return cached;
+    
+    // Fallback to service
     return permissionService.isModuleEnabled(userRole, moduleName);
   }, [userRole]);
 
   const isFunctionEnabled = useCallback((moduleName: string, functionName: string): boolean => {
+    // Try cache first for better performance
+    const cached = permissionCache.isFunctionEnabled(moduleName, functionName);
+    if (cached !== false || !userRole) return cached;
+    
+    // Fallback to service
     return permissionService.isFunctionEnabled(userRole, moduleName, functionName);
   }, [userRole]);
 
   const isSubFunctionEnabled = useCallback((moduleName: string, functionName: string, subFunctionName: string): boolean => {
+    // Try cache first for better performance
+    const cached = permissionCache.isSubFunctionEnabled(moduleName, functionName, subFunctionName);
+    if (cached !== false || !userRole) return cached;
+    
+    // Fallback to service
     return permissionService.isSubFunctionEnabled(userRole, moduleName, functionName, subFunctionName);
   }, [userRole]);
 

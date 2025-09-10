@@ -706,6 +706,10 @@ import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
 import PDFDownloadPage from "./components/PDFDownloadPage";
+import PermissionDemo from "./components/PermissionDemo";
+import CRMWalletList from "./pages/CRMWalletList";
+import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
+import CRMWalletDetails from "./pages/CRMWalletDetails";
 
 const queryClient = new QueryClient();
 
@@ -762,7 +766,6 @@ function App() {
           <EnhancedSelectProvider>
             <LayoutProvider>
               <PermissionsProvider>
-
                 <Routes>
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
@@ -817,6 +820,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/PermissionDemo" element={<PermissionDemo />} />
 
                   <Route
                     path="/tickets"
@@ -826,8 +830,6 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-
-
 
                   <Route
                     path="/tickets/add"
@@ -1204,6 +1206,18 @@ function App() {
                     <Route
                       path="/crm/customers/edit/:id"
                       element={<EditCrmCustomer />}
+                    />
+                    <Route
+                      path="/crm/wallet-list"
+                      element={<CRMWalletList />}
+                    />
+                    <Route
+                      path="/crm/wallet-list/:id"
+                      element={<CRMWalletDetails />}
+                    />
+                    <Route
+                      path="/crm/point-expiry"
+                      element={<CRMWalletPointExpiry />}
                     />
 
                     {/* Snagging Routes */}
