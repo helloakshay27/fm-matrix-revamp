@@ -25,6 +25,7 @@ interface MSafeFilterDialogProps {
     email: string;
     mobile: string;
     cluster?: string;
+    cluster_id?: string | number;
     circle?: string;
     department?: string;
     role?: string;
@@ -79,7 +80,14 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
         ]);
         setDepartments(deptResp.data?.departments || []);
         setCircles(circleResp.data?.circles || []);
-        setClusters(clusterResp.data?.clusters || []);
+        // Normalize clusters to ensure unique ids and labels
+        const rawClusters = clusterResp.data?.clusters || [];
+        const normalizedClusters = (Array.isArray(rawClusters) ? rawClusters : []).map((c: any) => {
+          const id = c?.company_cluster_id ?? c?.id ?? c?.company_cluster?.id ?? c?.value ?? c?.key ?? '';
+          const name = c?.cluster_name ?? c?.name ?? c?.label ?? '';
+          return { id, name };
+        }).filter((c: any) => c.id !== '' && c.id !== null && typeof c.id !== 'undefined');
+        setClusters(normalizedClusters);
         setRoles(roleResp.data?.lock_roles || []);
       } catch (err) {
         console.error('Filter dropdown fetch error', err);
@@ -117,7 +125,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
   }, [lmQuery, isOpen]);
 
   const handleSubmit = () => {
-    const clusterName = cluster ? (clusters.find(cl => String(cl.company_cluster_id) === String(cluster))?.cluster_name || '') : '';
+    const clusterName = cluster ? (clusters.find((cl: any) => String(cl.id) === String(cluster))?.name || '') : '';
     const circleName = circle ? (circles.find(c => String(c.id) === String(circle))?.circle_name || circles.find(c => String(c.id) === String(circle))?.name || '') : '';
     const departmentName = department ? (departments.find(d => String(d.id) === String(department))?.department_name || '') : '';
     const roleName = role ? (roles.find(r => String(r.id) === String(role))?.name || roles.find(r => String(r.id) === String(role))?.display_name || '') : '';
@@ -128,6 +136,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
       email,
       mobile,
       cluster: clusterName,
+      cluster_id: cluster || '',
       circle: circleName,
       department: departmentName,
       role: roleName,
@@ -154,6 +163,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
       email: '',
       mobile: '',
       cluster: '',
+      cluster_id: '',
       circle: '',
       department: '',
       role: '',
@@ -184,8 +194,8 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
               MenuProps={{ disablePortal: true, PaperProps: { sx: { zIndex: 2000 } } }}
             >
               <MenuItem value=""><em>All</em></MenuItem>
-              {clusters.map(cl => (
-                <MenuItem key={cl.company_cluster_id} value={cl.company_cluster_id}>{cl.cluster_name || `Cluster ${cl.company_cluster_id}`}</MenuItem>
+              {clusters.map((cl: any) => (
+                <MenuItem key={String(cl.id)} value={String(cl.id)}>{cl.name || `Cluster ${cl.id}`}</MenuItem>
               ))}
             </Select>
           </FormControl>
