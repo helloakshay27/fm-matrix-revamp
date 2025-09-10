@@ -62,6 +62,7 @@ export const GatePassOutwardsAddPage = () => {
     contactPerson: '',
     contactPersonNo: '',
     gateNoId: null as number | null,
+    expectedReturnDate: '',
   });
 
   const [gatePassDetails, setGatePassDetails] = useState({
@@ -70,6 +71,9 @@ export const GatePassOutwardsAddPage = () => {
     siteId: null as number | null,
     buildingId: null as number | null,
     remarks: '',
+    vendorId: null as number | null,
+    quantity: '', // Add quantity field
+    unit: '', // Add unit field
   });
 
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
@@ -86,7 +90,17 @@ export const GatePassOutwardsAddPage = () => {
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
 
   useEffect(() => {
-    gateNumberService.getCompanies().then(setCompanies);
+    // Fetch suppliers for Company Name dropdown
+    fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => setCompanies(Array.isArray(data) ? data : []))
+      .catch(() => setCompanies([]));
+
     gatePassInwardService.getInventoryTypes().then(setItemTypeOptions);
     gatePassTypeService.getGatePassTypes().then(data => setGatePassTypes(data.map(d => ({ id: d.id, name: d.name }))));
     gateNumberService.getSites().then(setSites);
@@ -135,7 +149,7 @@ export const GatePassOutwardsAddPage = () => {
     const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit:'' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
       setMaterialRows(updatedRows);
       setItemNameOptions(prev => ({ ...prev, [id]: [] }));
 
@@ -146,7 +160,7 @@ export const GatePassOutwardsAddPage = () => {
         setItemCategoryOptions(prev => ({ ...prev, [id]: [] }));
       }
     } else if (field === 'itemCategoryId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '', unit:'' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
       setMaterialRows(updatedRows);
 
       const currentItemTypeId = newRows.find(row => row.id === id)?.itemTypeId;
@@ -165,7 +179,7 @@ export const GatePassOutwardsAddPage = () => {
         unit: selectedItem?.unit ?? '' // Ensure unit is set from selected item
       } : row);
       console.log("Selected Item:", selectedItem);
-      
+
       setMaterialRows(updatedRows);
     } else if (field === 'quantity') {
       const currentRow = newRows.find(row => row.id === id);
@@ -227,8 +241,9 @@ export const GatePassOutwardsAddPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+
     // Basic validation (can be expanded as needed)
-    if (!gatePassDetails.gatePassTypeId || !gatePassDetails.gatePassDate || !gatePassDetails.siteId) {
+    if (!gatePassDetails.gatePassTypeId || !gatePassDetails.gatePassDate) {
       toast({
         title: "Validation Error",
         description: "Please fill all required fields.",
@@ -244,9 +259,10 @@ export const GatePassOutwardsAddPage = () => {
     formData.append('gate_pass[gate_pass_type_id]', gatePassDetails.gatePassTypeId?.toString() ?? '');
     formData.append('gate_pass[gate_pass_date]', gatePassDetails.gatePassDate);
     formData.append('gate_pass[status]', 'pending');
-    formData.append('gate_pass[site_id]', gatePassDetails.siteId?.toString() ?? '');
-    formData.append('gate_pass[company_id]', visitorDetails.companyId ? visitorDetails.companyId.toString() : '');
+    formData.append('gate_pass[site_id]', selectedSite?.id?.toString() ?? '');
+    formData.append('gate_pass[company_id]', selectedCompany?.id?.toString() ?? '');
     formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo ? visitorDetails.vehicleNo : '');
+    formData.append('gate_pass[due_at]', visitorDetails.reportingTime ? visitorDetails.reportingTime : '');
     formData.append('gate_pass[remarks]', gatePassDetails.remarks ? gatePassDetails.remarks : '');
     formData.append('gate_pass[building_id]', gatePassDetails.buildingId?.toString() ?? '');
     if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
@@ -254,6 +270,15 @@ export const GatePassOutwardsAddPage = () => {
     if (visitorDetails.driverContactNo) formData.append('gate_pass[driver_contact_no]', visitorDetails.driverContactNo);
     if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
     if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
+    // Vendor
+    if (gatePassDetails.vendorId) formData.append('gate_pass[pms_supplier_id]', gatePassDetails.vendorId.toString());
+    // Returnable: pass 'true' if returnable, 'false' if non-returnable
+    formData.append('gate_pass[returnable]', returnableStatus === 'returnable' ? 'true' : 'false');
+    // Expected Return Date
+    if (visitorDetails.expectedReturnDate) formData.append('gate_pass[expected_return_date]', visitorDetails.expectedReturnDate);
+    // Quantity and Unit
+    // if (gatePassDetails.quantity) formData.append('gate_pass[quantity]', gatePassDetails.quantity);
+    // if (gatePassDetails.unit) formData.append('gate_pass[unit]', gatePassDetails.unit);
 
     // Append material details
     materialRows.forEach((row, index) => {
@@ -261,9 +286,8 @@ export const GatePassOutwardsAddPage = () => {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
         if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_sub_type_id]`, row.itemCategoryId.toString());
-        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, row.quantity);
-        // Add other_material_name, other_material_description, remarks as per payload
-        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_name]`, row.unit ?? '');
+        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][quantity]`, row.quantity);
+        if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description ?? '');
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][remarks]`, gatePassDetails.remarks ?? '');
       }
@@ -298,7 +322,7 @@ export const GatePassOutwardsAddPage = () => {
       });
     }
   };
-useEffect(() => {
+  useEffect(() => {
     if (gatePassDetails.buildingId) {
       fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${gatePassDetails.buildingId}`, {
         headers: {
@@ -307,13 +331,13 @@ useEffect(() => {
         },
       })
         .then(res => res.json())
-        .then(data => setGateNumbers(data.gate_numbers || data))
+  .then(data => setGateNumbers(data.gate_numbers || data))
         .catch(() => setGateNumbers([]));
     } else {
       setGateNumbers([]);
     }
   }, [gatePassDetails.buildingId]);
-  
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -409,6 +433,8 @@ useEffect(() => {
               fullWidth
               variant="outlined"
               required
+              value={visitorDetails.expectedReturnDate}
+              onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
             />
@@ -430,12 +456,28 @@ useEffect(() => {
           </FormControl>
           <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Mode Of Transport </InputLabel>
+            <MuiSelect label="Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
+              <MenuItem value="">Select Transport</MenuItem>
+              <MenuItem value="car">Car</MenuItem>
+              <MenuItem value="bike">Bike</MenuItem>
+              <MenuItem value="truck">Truck</MenuItem>
+              <MenuItem value="walk">Walking</MenuItem>
+              <MenuItem value="self">Self</MenuItem>
+            </MuiSelect>
+          </FormControl>
+          {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
+            <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          )}
           <TextField
             label="Reporting Time *"
             type="time"
             fullWidth
             variant="outlined"
-            required
             value={visitorDetails.reportingTime}
             onChange={(e) => handleVisitorChange('reportingTime', e.target.value)}
             InputLabelProps={{ shrink: true }}
@@ -454,6 +496,45 @@ useEffect(() => {
               {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
             </MuiSelect>
           </FormControl>
+
+          {/* Vendor Dropdown */}
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Vendor</InputLabel>
+            <MuiSelect
+              label="Vendor"
+              notched
+              displayEmpty
+              value={gatePassDetails.vendorId || ''}
+              onChange={e => handleGatePassChange('vendorId', e.target.value)}
+            >
+              <MenuItem value="">Select Vendor</MenuItem>
+              {companies.map((option) => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
+
+          {/* Quantity and Unit fields */}
+          {/* <TextField
+            label="Quantity"
+            placeholder="Enter Quantity"
+            fullWidth
+            variant="outlined"
+            value={gatePassDetails.quantity}
+            onChange={e => handleGatePassChange('quantity', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+          />
+          <TextField
+            label="Unit"
+            placeholder="Enter Unit"
+            fullWidth
+            variant="outlined"
+            value={gatePassDetails.unit}
+            onChange={e => handleGatePassChange('unit', e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+          /> */}
         </div>
 
 
