@@ -84,10 +84,12 @@ import ResponseTATQuarterlyCard from '@/components/meeting-room/ResponseTATQuart
 import ResolutionTATQuarterlyCard from '@/components/meeting-room/ResolutionTATQuarterlyCard';
 import parkingManagementAnalyticsAPI from '@/services/parkingManagementAnalyticsAPI';
 import ParkingAllocationOverviewCard from '@/components/parking/ParkingAllocationOverviewCard';
+import visitorManagementAnalyticsAPI from '@/services/visitorManagementAnalyticsAPI';
+import VisitorTrendAnalysisCard from '@/components/visitor/VisitorTrendAnalysisCard';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management';
   endpoint: string;
   title: string;
 }
@@ -106,6 +108,7 @@ interface DashboardData {
   inventory_management?: any;
   consumables_overview?: any;
   parking_management?: any;
+  visitor_management?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -477,6 +480,15 @@ export const Dashboard = () => {
               switch (analytic.endpoint) {
                 case 'parking_allocation_overview':
                   promises.push(parkingManagementAnalyticsAPI.getParkingAllocationOverview(dateRange.from!, dateRange.to!));
+                  break;
+              }
+            }
+            break;
+          case 'visitor_management':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'visitor_trend_analysis':
+                  promises.push(visitorManagementAnalyticsAPI.getVisitorTrendAnalysis(dateRange.from!, dateRange.to!));
                   break;
               }
             }
@@ -1246,6 +1258,17 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <ParkingAllocationOverviewCard data={rawData} />
+              </SortableChartItem>
+            );
+          default:
+            return null;
+        }
+      case 'visitor_management':
+        switch (analytic.endpoint) {
+          case 'visitor_trend_analysis':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <VisitorTrendAnalysisCard data={rawData} />
               </SortableChartItem>
             );
           default:

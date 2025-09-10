@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management';
   endpoint: string;
   title: string;
 }
@@ -173,6 +173,15 @@ const analyticsOptions = {
     color: '#A0B5C1',
     options: [
       { id: 'parking_allocation_overview', endpoint: 'parking_allocation_overview', label: 'Parking Allocation Overview – Paid, Free & Vacant' },
+    ]
+  },
+
+  visitor_management: {
+    icon: BarChart3,
+    label: 'Visitor Management',
+    color: '#B8C4D9',
+    options: [
+      { id: 'visitor_trend_analysis', endpoint: 'visitor_trend_analysis', label: 'Visitor Trend Analysis' },
     ]
   },
 
