@@ -11,11 +11,33 @@ import { Plus, Search, Edit, RefreshCw, Star, Grid3X3, Trash2, X, Image, Upload 
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
+import { API_CONFIG } from '@/config/apiConfig';
 
+// API Response Interface
+interface ApiIconResponse {
+  id: number;
+  icon_type: string;
+  image_file_name: string;
+  image_content_type: string;
+  image_file_size: string;
+  created_by_id: number;
+  image_updated_at: string;
+  active: boolean;
+  resource_id: number | null;
+  resource_type: string | null;
+  image_url: string | null;
+  created_by: {
+    id: number;
+    name: string;
+  };
+}
+
+// UI Interface for table display
 interface IconItem {
   id: string;
   sNo: number;
   name: string;
+  iconType: string;
   description: string;
   category: string;
   iconPath: string;
@@ -23,7 +45,26 @@ interface IconItem {
   createdOn: string;
   createdBy: string;
   usageCount: number;
+  fileSize: string;
+  contentType: string;
 }
+
+// Field styles for Material-UI components
+const fieldStyles = {
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+};
 
 export const IconsDashboard = () => {
   const navigate = useNavigate();
@@ -45,29 +86,29 @@ export const IconsDashboard = () => {
   
   // Form data
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
+    iconType: '',
     file: null as File | null,
     isActive: true
   });
   
   const [editFormData, setEditFormData] = useState({
-    name: '',
-    description: '',
-    category: '',
+    iconType: '',
     file: null as File | null,
-    isActive: true
+    isActive: true,
+    currentImageUrl: null as string | null
   });
   const [visibleColumns, setVisibleColumns] = useState({
     sNo: true,
     actions: true,
     icon: true,
     name: true,
-    description: true,
+    iconType: true,
+    description: false,
     category: true,
     status: true,
-    usageCount: true,
+    fileSize: false,
+    contentType: false,
+    usageCount: false,
     createdOn: true,
     createdBy: true
   });
@@ -94,102 +135,97 @@ export const IconsDashboard = () => {
     },
   };
 
-  // Category options
+  // Category options - Dynamic based on actual API data
   const categoryOptions = [
-    'User',
-    'Navigation',
-    'System',
-    'Analytics',
-    'Communication',
-    'Actions',
-    'Status',
-    'Media',
-    'Forms',
-    'Tools'
+    { value: 'support_staff_category', label: 'Support Staff Category' },
+    { value: 'delivery_service_provider', label: 'Delivery Service Provider' },
+    { value: 'navigation', label: 'Navigation' },
+    { value: 'system', label: 'System' },
+    { value: 'user_interface', label: 'User Interface' },
+    { value: 'action', label: 'Action' },
+    { value: 'analytics', label: 'Analytics' },
+    { value: 'communication', label: 'Communication' },
+    { value: 'status', label: 'Status' },
+    { value: 'media', label: 'Media' },
+    { value: 'forms', label: 'Forms' },
+    { value: 'tools', label: 'Tools' }
   ];
 
   const [filteredIcons, setFilteredIcons] = useState<IconItem[]>([]);
 
-  // Load icons data from API (mock for now)
+  // Load icons data from API
   const loadIcons = useCallback(async () => {
     try {
       setIsLoading(true);
-      console.log('Loading icons...');
+      console.log('Loading icons from API...');
       
-      // Mock data for now - replace with actual API call
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ICONS}`;
+      console.log('Fetching from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const apiData: ApiIconResponse[] = await response.json();
+      console.log('API Response:', apiData);
+
+      // Transform API data to UI format
+      const transformedIcons: IconItem[] = apiData.map((apiIcon, index) => ({
+        id: apiIcon.id.toString(),
+        sNo: index + 1,
+        name: apiIcon.image_file_name.replace(/\.[^/.]+$/, ""), // Remove file extension for display
+        iconType: apiIcon.icon_type,
+        description: `${apiIcon.icon_type.replace(/_/g, ' ').toUpperCase()} icon`,
+        category: apiIcon.icon_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        iconPath: apiIcon.image_url || `/icons/${apiIcon.image_file_name}`,
+        isActive: apiIcon.active,
+        createdOn: new Date(apiIcon.image_updated_at).toLocaleDateString('en-IN'),
+        createdBy: apiIcon.created_by.name,
+        usageCount: Math.floor(Math.random() * 500) + 50, // Mock usage count as API doesn't provide it
+        fileSize: apiIcon.image_file_size || '0',
+        contentType: apiIcon.image_content_type
+      }));
+      
+      console.log('Transformed data:', transformedIcons);
+      setIconsData(transformedIcons);
+      setFilteredIcons(transformedIcons);
+    } catch (error) {
+      console.error('Failed to load icons:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load icons from server",
+        variant: "destructive"
+      });
+      
+      // Fallback to mock data if API fails
+      console.log('Falling back to mock data...');
       const mockIcons: IconItem[] = [
         {
           id: '1',
           sNo: 1,
           name: 'User Profile',
+          iconType: 'user_profile',
           description: 'Default user profile icon',
           category: 'User',
           iconPath: '/icons/user-profile.svg',
           isActive: true,
-          createdOn: '2024-01-15',
+          createdOn: '15/01/2024',
           createdBy: 'Admin User',
-          usageCount: 245
-        },
-        {
-          id: '2',
-          sNo: 2,
-          name: 'Dashboard',
-          description: 'Dashboard navigation icon',
-          category: 'Navigation',
-          iconPath: '/icons/dashboard.svg',
-          isActive: true,
-          createdOn: '2024-01-20',
-          createdBy: 'Admin User',
-          usageCount: 189
-        },
-        {
-          id: '3',
-          sNo: 3,
-          name: 'Settings',
-          description: 'System settings icon',
-          category: 'System',
-          iconPath: '/icons/settings.svg',
-          isActive: true,
-          createdOn: '2024-02-01',
-          createdBy: 'System Admin',
-          usageCount: 156
-        },
-        {
-          id: '4',
-          sNo: 4,
-          name: 'Reports',
-          description: 'Analytics and reports icon',
-          category: 'Analytics',
-          iconPath: '/icons/reports.svg',
-          isActive: false,
-          createdOn: '2024-02-10',
-          createdBy: 'Admin User',
-          usageCount: 98
-        },
-        {
-          id: '5',
-          sNo: 5,
-          name: 'Notifications',
-          description: 'Notification bell icon',
-          category: 'Communication',
-          iconPath: '/icons/notifications.svg',
-          isActive: true,
-          createdOn: '2024-02-15',
-          createdBy: 'System Admin',
-          usageCount: 312
+          usageCount: 245,
+          fileSize: '5410',
+          contentType: 'image/png'
         }
       ];
-      
-      console.log('Received data:', mockIcons);
       setIconsData(mockIcons);
       setFilteredIcons(mockIcons);
-    } catch (error) {
-      console.error('Failed to load icons:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load icons",
-        variant: "destructive"
-      });
     } finally {
       setIsLoading(false);
     }
@@ -213,9 +249,11 @@ export const IconsDashboard = () => {
   useEffect(() => {
     const filtered = iconsData.filter(icon =>
       icon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      icon.iconType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       icon.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       icon.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      icon.createdBy.toLowerCase().includes(searchTerm.toLowerCase())
+      icon.createdBy.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      icon.contentType.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredIcons(filtered);
     setCurrentPage(1); // Reset to first page when filtering
@@ -225,9 +263,7 @@ export const IconsDashboard = () => {
     setShowAddModal(true);
     setEditMode(false);
     setFormData({
-      name: '',
-      description: '',
-      category: '',
+      iconType: '',
       file: null,
       isActive: true
     });
@@ -237,59 +273,47 @@ export const IconsDashboard = () => {
     setShowAddModal(false);
     setEditMode(false);
     setFormData({
-      name: '',
-      description: '',
-      category: '',
+      iconType: '',
       file: null,
       isActive: true
     });
     setEditFormData({
-      name: '',
-      description: '',
-      category: '',
+      iconType: '',
       file: null,
-      isActive: true
+      isActive: true,
+      currentImageUrl: null
     });
   };
 
   const handleModalClose = () => {
     setIsAddModalOpen(false);
     setFormData({
-      name: '',
-      description: '',
-      category: '',
+      iconType: '',
       file: null,
       isActive: true
     });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
     
     const currentFormData = editMode ? editFormData : formData;
     
-    if (!currentFormData.name.trim()) {
+    if (!currentFormData.iconType.trim()) {
       toast({
         title: "Error",
-        description: "Please enter an icon name",
+        description: "Please enter an icon type",
         variant: "destructive"
       });
       return;
     }
 
-    if (!formData.description.trim()) {
+    if (!currentFormData.file && !editMode) {
       toast({
         title: "Error",
-        description: "Please enter an icon description",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!formData.category) {
-      toast({
-        title: "Error",
-        description: "Please select a category",
+        description: "Please select an icon file",
         variant: "destructive"
       });
       return;
@@ -298,22 +322,61 @@ export const IconsDashboard = () => {
     try {
       setIsSubmitting(true);
       
-      // Mock API call - replace with actual implementation
-      console.log('Creating icon:', formData);
+      // Prepare FormData for API
+      const apiFormData = new FormData();
+      
+      // Add form fields according to API specification
+      apiFormData.append('icon[icon_type]', currentFormData.iconType);
+      
+      if (currentFormData.file) {
+        apiFormData.append('icon[image_file_name]', currentFormData.file.name);
+        apiFormData.append('icon[image_content_type]', currentFormData.file.type);
+        apiFormData.append('icon[image]', currentFormData.file);
+      }
+      
+      apiFormData.append('icon[active]', currentFormData.isActive.toString());
+
+      // API URL
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ICONS}`;
+      console.log('Creating icon at:', url);
+      console.log('FormData contents:', {
+        'icon[icon_type]': currentFormData.iconType,
+        'icon[image_file_name]': currentFormData.file?.name,
+        'icon[image_content_type]': currentFormData.file?.type,
+        'icon[active]': 'true'
+      });
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          // Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: apiFormData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Icon created successfully:', result);
 
       toast({
         title: "Success",
         description: "Icon created successfully",
       });
       
-      handleModalClose();
+      handleCloseAddModal();
       // Reload the data
       await loadIcons();
     } catch (error) {
       console.error('Failed to create icon:', error);
       toast({
         title: "Error",
-        description: "Failed to create icon. Please try again.",
+        description: `Failed to create icon: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -325,15 +388,48 @@ export const IconsDashboard = () => {
     const icon = iconsData.find(i => i.id === iconId);
     if (icon) {
       setEditingIcon(icon);
-      setEditFormData({
-        name: icon.name,
-        description: icon.description,
-        category: icon.category,
-        file: null,
-        isActive: icon.isActive
-      });
+      // Fetch detailed icon data by ID
+      fetchIconById(iconId);
       setEditMode(true);
       setShowAddModal(true);
+    }
+  };
+
+  // Fetch icon data by ID for editing
+  const fetchIconById = async (iconId: string) => {
+    try {
+      const url = `${API_CONFIG.BASE_URL}/pms/icons/${iconId}.json`;
+      console.log('Fetching icon by ID from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const iconData: ApiIconResponse = await response.json();
+      console.log('Icon data by ID:', iconData);
+
+      // Set form data with fetched icon details
+      setEditFormData({
+        iconType: iconData.icon_type,
+        file: null,
+        isActive: iconData.active,
+        currentImageUrl: iconData.image_url || null // Store current image URL for preview
+      });
+    } catch (error) {
+      console.error('Failed to fetch icon by ID:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load icon details",
+        variant: "destructive"
+      });
     }
   };
 
@@ -341,37 +437,18 @@ export const IconsDashboard = () => {
     setIsEditModalOpen(false);
     setEditingIcon(null);
     setEditFormData({
-      name: '',
-      description: '',
-      category: '',
+      iconType: '',
       file: null,
-      isActive: true
+      isActive: true,
+      currentImageUrl: null
     });
   };
 
   const handleEditSubmit = async () => {
-    if (!editFormData.name.trim()) {
+    if (!editFormData.iconType.trim()) {
       toast({
         title: "Error",
-        description: "Please enter an icon name",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!editFormData.description.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter an icon description",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!editFormData.category) {
-      toast({
-        title: "Error",
-        description: "Please select a category",
+        description: "Please enter an icon type",
         variant: "destructive"
       });
       return;
@@ -384,22 +461,61 @@ export const IconsDashboard = () => {
         throw new Error('No icon selected for editing');
       }
       
-      // Mock API call - replace with actual implementation
-      console.log('Updating icon:', editFormData);
+      // Prepare FormData for API
+      const apiFormData = new FormData();
+      
+      // Add form fields according to API specification
+      apiFormData.append('icon[icon_type]', editFormData.iconType);
+      
+      if (editFormData.file) {
+        apiFormData.append('icon[image_file_name]', editFormData.file.name);
+        apiFormData.append('icon[image_content_type]', editFormData.file.type);
+        apiFormData.append('icon[image]', editFormData.file);
+      }
+      
+      apiFormData.append('icon[active]', editFormData.isActive.toString());
+
+      // API URL for updating - using the specified format
+      const url = `${API_CONFIG.BASE_URL}/pms/icons/${editingIcon.id}.json`;
+      console.log('Updating icon at:', url);
+      console.log('FormData contents:', {
+        'icon[icon_type]': editFormData.iconType,
+        'icon[image_file_name]': editFormData.file?.name,
+        'icon[image_content_type]': editFormData.file?.type,
+        'icon[active]': editFormData.isActive.toString()
+      });
+
+      const response = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          // Don't set Content-Type for FormData, let browser set it with boundary
+        },
+        body: apiFormData
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+      }
+
+      const result = await response.json();
+      console.log('Icon updated successfully:', result);
       
       toast({
         title: "Success",
         description: "Icon updated successfully",
       });
       
-      handleEditModalClose();
+      handleCloseAddModal();
       // Reload the data
       await loadIcons();
     } catch (error) {
       console.error('Failed to update icon:', error);
       toast({
         title: "Error",
-        description: "Failed to update icon. Please try again.",
+        description: `Failed to update icon: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive"
       });
     } finally {
@@ -435,6 +551,34 @@ export const IconsDashboard = () => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Error",
+          description: "Please select a valid image file (PNG, JPG, or SVG)",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (2MB max)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
+        toast({
+          title: "Error",
+          description: "File size must be less than 2MB",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Selected file:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
       if (editMode) {
         setEditFormData(prev => ({
           ...prev,
@@ -454,10 +598,13 @@ export const IconsDashboard = () => {
     { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
     { key: 'icon', label: 'Icon', visible: visibleColumns.icon },
-    { key: 'name', label: 'Name', visible: visibleColumns.name },
+    { key: 'name', label: 'Image Name', visible: visibleColumns.name },
+    { key: 'iconType', label: 'Icon Type', visible: visibleColumns.iconType },
     { key: 'description', label: 'Description', visible: visibleColumns.description },
     { key: 'category', label: 'Category', visible: visibleColumns.category },
     { key: 'status', label: 'Status', visible: visibleColumns.status },
+    { key: 'fileSize', label: 'File Size', visible: visibleColumns.fileSize },
+    { key: 'contentType', label: 'Content Type', visible: visibleColumns.contentType },
     { key: 'usageCount', label: 'Usage Count', visible: visibleColumns.usageCount },
     { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
     { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
@@ -503,10 +650,13 @@ export const IconsDashboard = () => {
               {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
               {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
               {visibleColumns.icon && <TableHead className="w-20">Icon</TableHead>}
-              {visibleColumns.name && <TableHead className="w-40">Name</TableHead>}
+              {visibleColumns.name && <TableHead className="w-40">Image Name</TableHead>}
+              {visibleColumns.iconType && <TableHead className="w-40">Icon Type</TableHead>}
               {visibleColumns.description && <TableHead className="w-60">Description</TableHead>}
-              {visibleColumns.category && <TableHead className="w-32">Category</TableHead>}
+              {/* {visibleColumns.category && <TableHead className="w-32">Category</TableHead>} */}
               {visibleColumns.status && <TableHead className="w-24">Status</TableHead>}
+              {visibleColumns.fileSize && <TableHead className="w-24">File Size</TableHead>}
+              {visibleColumns.contentType && <TableHead className="w-32">Content Type</TableHead>}
               {visibleColumns.usageCount && <TableHead className="w-32">Usage Count</TableHead>}
               {visibleColumns.createdOn && <TableHead className="w-40">Created On</TableHead>}
               {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
@@ -515,7 +665,7 @@ export const IconsDashboard = () => {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8">
+                <TableCell colSpan={12} className="text-center py-8">
                   <div className="flex items-center justify-center">
                     <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     Loading icons...
@@ -524,7 +674,7 @@ export const IconsDashboard = () => {
               </TableRow>
             ) : currentPageData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={12} className="text-center py-8 text-gray-500">
                   {searchTerm ? `No icons found matching "${searchTerm}"` : 'No icons found'}
                   <br />
                   <span className="text-sm">Click "Add" to create your first icon</span>
@@ -551,8 +701,22 @@ export const IconsDashboard = () => {
                   )}
                   {visibleColumns.icon && (
                     <TableCell>
-                      <div className="w-8 h-8 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
-                        <Star className="w-4 h-4 text-gray-400" />
+                      <div className="w-10 h-10 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                        {icon.iconPath && icon.iconPath !== '/icons/undefined' && icon.iconPath !== '/icons/null' ? (
+                          <img 
+                            src={icon.iconPath} 
+                            alt={icon.name}
+                            className="w-8 h-8 object-contain"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                              if (nextElement) {
+                                nextElement.style.display = 'flex';
+                              }
+                            }}
+                          />
+                        ) : null}
+                        <Image className="w-5 h-5 text-gray-400" style={{display: icon.iconPath && icon.iconPath !== '/icons/undefined' && icon.iconPath !== '/icons/null' ? 'none' : 'flex'}} />
                       </div>
                     </TableCell>
                   )}
@@ -561,24 +725,30 @@ export const IconsDashboard = () => {
                       {icon.name}
                     </TableCell>
                   )}
+                  {visibleColumns.iconType && (
+                    <TableCell className="font-medium">
+                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                        {icon.iconType}
+                      </span>
+                    </TableCell>
+                  )}
                   {visibleColumns.description && (
                     <TableCell className="text-gray-600">
                       {icon.description}
                     </TableCell>
                   )}
-                  {visibleColumns.category && (
+                  {/* {visibleColumns.category && (
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        icon.category === 'User' ? 'bg-blue-100 text-blue-700' : 
-                        icon.category === 'Navigation' ? 'bg-green-100 text-green-700' :
-                        icon.category === 'System' ? 'bg-purple-100 text-purple-700' :
-                        icon.category === 'Analytics' ? 'bg-orange-100 text-orange-700' :
+                        icon.category.includes('Support Staff') ? 'bg-blue-100 text-blue-700' : 
+                        icon.category.includes('Delivery') ? 'bg-green-100 text-green-700' :
+                        icon.category.includes('Provider') ? 'bg-purple-100 text-purple-700' :
                         'bg-gray-100 text-gray-700'
                       }`}>
                         {icon.category}
                       </span>
                     </TableCell>
-                  )}
+                  )} */}
                   {visibleColumns.status && (
                     <TableCell>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -586,6 +756,16 @@ export const IconsDashboard = () => {
                       }`}>
                         {icon.isActive ? 'Active' : 'Inactive'}
                       </span>
+                    </TableCell>
+                  )}
+                  {visibleColumns.fileSize && (
+                    <TableCell className="text-gray-500">
+                      {icon.fileSize ? `${Math.round(parseInt(icon.fileSize) / 1024)} KB` : 'N/A'}
+                    </TableCell>
+                  )}
+                  {visibleColumns.contentType && (
+                    <TableCell className="text-gray-500 text-xs">
+                      {icon.contentType}
                     </TableCell>
                   )}
                   {visibleColumns.usageCount && (
@@ -663,131 +843,262 @@ export const IconsDashboard = () => {
 
       </div>
 
-      {/* Add/Edit Modal */}
-      <Dialog open={showAddModal} onOpenChange={(open) => !open && handleCloseAddModal()}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editMode ? 'Edit Icon' : 'Add New Icon'}</DialogTitle>
+      {/* Add Modal */}
+      <Dialog open={showAddModal && !editMode} onOpenChange={(open) => !open && handleCloseAddModal()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Create Icon</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseAddModal}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Icon Name
-              </label>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Icon Type Input */}
               <TextField
+                label="Icon Type"
+                placeholder="Enter Icon Type (e.g., support_staff_category)"
+                value={formData.iconType}
+                onChange={(e) => setFormData({...formData, iconType: e.target.value})}
                 fullWidth
-                size="small"
-                placeholder="Enter icon name"
-                value={editMode ? editFormData.name : formData.name}
-                onChange={(e) => editMode 
-                  ? setEditFormData({...editFormData, name: e.target.value})
-                  : setFormData({...formData, name: e.target.value})
-                }
                 variant="outlined"
-                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Active/Inactive Checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="active-checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({...formData, isActive: e.target.checked})}
+                  className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                />
+                <label htmlFor="active-checkbox" className="text-sm font-medium text-gray-700">
+                  Active
+                </label>
+                <span className="text-xs text-gray-500">
+                  ({formData.isActive ? 'Icon will be active' : 'Icon will be inactive'})
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
+            {/* File Upload Section */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Icon File *
               </label>
+              
+              {/* New File Preview */}
+              {formData.file && (
+                <div className="mb-4 p-4 border rounded-lg bg-green-50">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Icon Preview:</p>
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={URL.createObjectURL(formData.file)} 
+                      alt="Icon preview"
+                      className="w-16 h-16 object-contain border rounded"
+                    />
+                    <div className="text-sm text-green-600">
+                      <p>✓ Selected: {formData.file.name}</p>
+                      <p className="text-xs text-gray-600">
+                        Size: {(formData.file.size / 1024).toFixed(1)} KB | Type: {formData.file.type}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label htmlFor="file-upload" className="cursor-pointer">
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600">
+                    Click to upload or drag and drop
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, JPEG, SVG files only. Max size: 2MB
+                  </p>
+                </label>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
+              >
+                {isSubmitting ? 'Creating...' : 'Submit'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={showAddModal && editMode} onOpenChange={(open) => !open && handleCloseAddModal()}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader className="flex flex-row items-center justify-between">
+            <DialogTitle className="text-lg font-semibold">Edit Icon</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleCloseAddModal}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Icon Type Input */}
               <TextField
+                label="Icon Type"
+                placeholder="Enter Icon Type (e.g., support_staff_category)"
+                value={editFormData.iconType}
+                onChange={(e) => setEditFormData({...editFormData, iconType: e.target.value})}
                 fullWidth
-                size="small"
-                placeholder="Enter description"
-                value={editMode ? editFormData.description : formData.description}
-                onChange={(e) => editMode 
-                  ? setEditFormData({...editFormData, description: e.target.value})
-                  : setFormData({...formData, description: e.target.value})
-                }
                 variant="outlined"
-                multiline
-                rows={3}
-                required
+                slotProps={{
+                  inputLabel: {
+                    shrink: true,
+                  },
+                }}
+                InputProps={{
+                  sx: fieldStyles,
+                }}
               />
+
+              {/* Active/Inactive Checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="active-checkbox-edit"
+                  checked={editFormData.isActive}
+                  onChange={(e) => setEditFormData({...editFormData, isActive: e.target.checked})}
+                  className="w-4 h-4 text-[#C72030] border-gray-300 rounded focus:ring-[#C72030]"
+                />
+                <label htmlFor="active-checkbox-edit" className="text-sm font-medium text-gray-700">
+                  Active
+                </label>
+                <span className="text-xs text-gray-500">
+                  ({editFormData.isActive ? 'Icon will be active' : 'Icon will be inactive'})
+                </span>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Category
+            {/* Current Icon Preview and File Upload Section */}
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">
+                Icon File (Optional)
               </label>
-              <FormControl fullWidth size="small">
-                <TextField
-                  select
-                  value={editMode ? editFormData.category : formData.category}
-                  onChange={(e) => editMode 
-                    ? setEditFormData({...editFormData, category: e.target.value})
-                    : setFormData({...formData, category: e.target.value})
-                  }
-                  SelectProps={{
-                    native: true,
-                  }}
-                  variant="outlined"
-                  required
-                >
-                  <option value="">Select Category</option>
-                  <option value="User">User</option>
-                  <option value="Navigation">Navigation</option>
-                  <option value="System">System</option>
-                  <option value="Analytics">Analytics</option>
-                  <option value="Action">Action</option>
-                </TextField>
-              </FormControl>
+              
+              {/* Current Icon Preview */}
+              {editFormData.currentImageUrl && !editFormData.file && (
+                <div className="mb-4 p-4 border rounded-lg bg-gray-50">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Current Icon:</p>
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={editFormData.currentImageUrl} 
+                      alt="Current icon"
+                      className="w-16 h-16 object-contain border rounded"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                    <div className="text-sm text-gray-600">
+                      <p>Current icon will be kept if no new file is uploaded</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* New File Preview */}
+              {editFormData.file && (
+                <div className="mb-4 p-4 border rounded-lg bg-green-50">
+                  <p className="text-sm font-medium text-gray-700 mb-2">New Icon Preview:</p>
+                  <div className="flex items-center gap-4">
+                    <img 
+                      src={URL.createObjectURL(editFormData.file)} 
+                      alt="New icon preview"
+                      className="w-16 h-16 object-contain border rounded"
+                    />
+                    <div className="text-sm text-green-600">
+                      <p>✓ Selected: {editFormData.file.name}</p>
+                      <p className="text-xs text-gray-600">
+                        Size: {(editFormData.file.size / 1024).toFixed(1)} KB | Type: {editFormData.file.type}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* File Upload Area */}
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="file-upload-edit"
+                />
+                <label htmlFor="file-upload-edit" className="cursor-pointer">
+                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-sm text-gray-600">
+                    Click to upload or drag and drop new icon
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    PNG, JPG, JPEG, SVG files only. Max size: 2MB
+                  </p>
+                  {editFormData.currentImageUrl && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      Leave empty to keep current icon
+                    </p>
+                  )}
+                </label>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Icon File
-              </label>
-              <input
-                type="file"
-                accept="image/*,.svg"
-                onChange={handleFileChange}
-                className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-[#00B4D8] file:text-white hover:file:bg-[#00B4D8]/90"
-                required={!editMode}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Supports PNG, JPG, SVG files. Max size: 2MB
-              </p>
-            </div>
-
-            <div className="flex items-center">
-              <input
-                type="checkbox"
-                id="isActive"
-                checked={editMode ? editFormData.isActive : formData.isActive}
-                onChange={(e) => editMode 
-                  ? setEditFormData({...editFormData, isActive: e.target.checked})
-                  : setFormData({...formData, isActive: e.target.checked})
-                }
-                className="mr-2"
-              />
-              <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
-                Active Icon
-              </label>
-            </div>
-
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleCloseAddModal}>
+            {/* Submit Button */}
+            <div className="flex justify-end gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleCloseAddModal}
+                className="px-6"
+              >
                 Cancel
               </Button>
               <Button 
-                type="submit" 
-                className="bg-[#00B4D8] hover:bg-[#00B4D8]/90 text-white"
+                onClick={handleEditSubmit}
                 disabled={isSubmitting}
+                className="bg-green-500 hover:bg-green-600 text-white px-6"
               >
-                {isSubmitting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                    {editMode ? 'Updating...' : 'Adding...'}
-                  </>
-                ) : (
-                  editMode ? 'Update Icon' : 'Add Icon'
-                )}
+                {isSubmitting ? 'Updating...' : 'Update'}
               </Button>
-            </DialogFooter>
-          </form>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

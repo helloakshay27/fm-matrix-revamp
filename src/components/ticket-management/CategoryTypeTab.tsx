@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -112,7 +112,11 @@ export const CategoryTypeTab: React.FC = () => {
   const [vendorEmails, setVendorEmails] = useState<string[]>(['']);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [vendorEmailEnabled, setVendorEmailEnabled] = useState(false);
-  const [accountData, setAccountData] = useState<any>(null);
+  const [accountData, setAccountData] = useState<{
+    id?: string;
+    company_id?: number;
+    site_id?: number;
+  } | null>(null);
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryApiResponse['helpdesk_categories'][0] | null>(null);
@@ -132,12 +136,7 @@ export const CategoryTypeTab: React.FC = () => {
     },
   });
 
-  useEffect(() => {
-    fetchCategories();
-    fetchAccountData();
-  }, []);
-
-  const fetchAccountData = async () => {
+  const fetchAccountData = useCallback(async () => {
     try {
       const response = await fetch(getFullUrl('/api/users/account.json'), {
         headers: {
@@ -175,9 +174,9 @@ export const CategoryTypeTab: React.FC = () => {
       console.error('Error fetching account data:', error);
       toast.error('Failed to fetch account data');
     }
-  };
+  }, [form]);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await ticketManagementAPI.getCategories();
@@ -188,7 +187,12 @@ export const CategoryTypeTab: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchAccountData();
+  }, [fetchCategories, fetchAccountData]);
 
   const fetchSites = async () => {
     try {
@@ -216,7 +220,46 @@ export const CategoryTypeTab: React.FC = () => {
     }
   };
 
+  const handleCreateSubmit = async () => {
+    // Get form values directly from the form inputs
+    const categoryNameInput = document.querySelector('input[name="categoryName"]') as HTMLInputElement;
+    const responseTimeInput = document.querySelector('input[name="responseTime"]') as HTMLInputElement;
+    
+    // Check for required fields with specific messages like ParkingCategoryPage
+    if (!categoryNameInput?.value?.trim()) {
+      toast.error('Please enter a category name');
+      return;
+    }
+    
+    if (!responseTimeInput?.value?.trim()) {
+      toast.error('Please enter response time');
+      return;
+    }
+    
+    if (!iconFile) {
+      toast.error('Please select an icon');
+      return;
+    }
+    
+    if (!selectedSite) {
+      toast.error('Please select a site');
+      return;
+    }
+
+    // Get the form data
+    const data: CategoryFormData = {
+      categoryName: categoryNameInput.value.trim(),
+      responseTime: responseTimeInput.value.trim(),
+      customerEnabled: false, // or get from checkbox if needed
+      siteId: selectedSite.id.toString(),
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: CategoryFormData) => {
+
     // Check for duplicate category name
     const existingCategory = categories.find(
       category => category.name.toLowerCase() === data.categoryName.toLowerCase()
@@ -234,6 +277,24 @@ export const CategoryTypeTab: React.FC = () => {
         toast.error('Please enter valid email addresses for all vendor emails.');
         return;
       }
+      
+      // Check if at least one email is provided when vendor email is enabled
+      const validEmails = vendorEmails.filter(email => email.trim());
+      if (validEmails.length === 0) {
+        toast.error('Please provide at least one vendor email when vendor email is enabled.');
+        return;
+      }
+    }
+
+    // Validate FAQ items - if a question is provided, answer must be provided and vice versa
+    const incompleteFaqItems = faqItems.filter(item => 
+      (item.question.trim() && !item.answer.trim()) || 
+      (!item.question.trim() && item.answer.trim())
+    );
+    
+    if (incompleteFaqItems.length > 0) {
+      toast.error('Please complete all FAQ items. Both question and answer are required for each FAQ.');
+      return;
     }
 
     setIsSubmitting(true);
@@ -386,8 +447,27 @@ export const CategoryTypeTab: React.FC = () => {
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = async (formData: any) => {
+  const handleEditSubmit = async (formData: object) => {
     if (!editingCategory) return;
+    
+    // Check for required fields with specific messages like ParkingCategoryPage
+    const categoryNameInput = document.querySelector('#edit-category-name') as HTMLInputElement;
+    const responseTimeInput = document.querySelector('#edit-response-time') as HTMLInputElement;
+    
+    if (!categoryNameInput?.value?.trim()) {
+      toast.error('Please enter a category name');
+      return;
+    }
+    
+    if (!responseTimeInput?.value?.trim()) {
+      toast.error('Please enter response time');
+      return;
+    }
+    
+    if (!editSelectedSiteId) {
+      toast.error('Please select a site');
+      return;
+    }
     
     // Validate vendor emails if enabled
     if (editVendorEmailEnabled) {
@@ -396,6 +476,26 @@ export const CategoryTypeTab: React.FC = () => {
         toast.error('Please enter valid email addresses for all vendor emails.');
         return;
       }
+      
+      // Check if at least one email is provided when vendor email is enabled
+      const validEmails = editVendorEmails.filter(email => email.trim());
+      if (validEmails.length === 0) {
+        toast.error('Please provide at least one vendor email when vendor email is enabled.');
+        return;
+      }
+    }
+
+    // Validate FAQ items - if a question is provided, answer must be provided and vice versa
+    const incompleteFaqItems = editFaqItems.filter(item => 
+      !item._destroy && (
+        (item.question.trim() && !item.answer.trim()) || 
+        (!item.question.trim() && item.answer.trim())
+      )
+    );
+    
+    if (incompleteFaqItems.length > 0) {
+      toast.error('Please complete all FAQ items. Both question and answer are required for each FAQ.');
+      return;
     }
     
     setIsSubmitting(true);
@@ -652,7 +752,7 @@ export const CategoryTypeTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -673,7 +773,7 @@ export const CategoryTypeTab: React.FC = () => {
                   name="responseTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Response Time (hours)</FormLabel>
+                      <FormLabel>Response Time (hours) <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="Enter response time" {...field} />
                       </FormControl>
@@ -682,49 +782,41 @@ export const CategoryTypeTab: React.FC = () => {
                   )}
                 />
 
-                <div className="flex items-center gap-2">
-                  <label htmlFor="icon-upload" className="cursor-pointer">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                      <span>
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Icon
-                      </span>
-                    </Button>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Upload Icon <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    id="icon-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleIconChange}
-                  />
-                  {iconFile && (
-                    <span className="text-sm text-gray-600">{iconFile.name}</span>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="icon-upload" className="cursor-pointer">
+                      <Button type="button" variant="outline" size="sm" asChild>
+                        <span>
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Icon
+                        </span>
+                      </Button>
+                    </label>
+                    <input
+                      id="icon-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleIconChange}
+                    />
+                    {iconFile && (
+                      <span className="text-sm text-gray-600">{iconFile.name}</span>
+                    )}
+                  </div>
+                  {!iconFile && (
+                    <p className="text-sm text-red-500">Icon is required</p>
                   )}
                 </div>
-
-                {/* <FormField
-                  control={form.control}
-                  name="customerEnabled"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4">
-                      <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <FormLabel>Customer Enabled</FormLabel>
-                    </FormItem>
-                  )}
-                /> */}
 
                 <FormField
                   control={form.control}
                   name="siteId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Enable Sites</FormLabel>
+                      <FormLabel>Enable Sites <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input 
                           value={selectedSite?.name || ''} 
@@ -807,20 +899,37 @@ export const CategoryTypeTab: React.FC = () => {
                 {faqItems.map((item, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Question</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Question {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                      </label>
                       <Input
                         placeholder="Enter question"
                         value={item.question}
                         onChange={(e) => updateFaqItem(index, 'question', e.target.value)}
+                        className={`${
+                          item.answer.trim() && !item.question.trim() 
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                            : ''
+                        }`}
                       />
+                      {item.answer.trim() && !item.question.trim() && (
+                        <p className="text-red-500 text-xs mt-1">Question is required when answer is provided</p>
+                      )}
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1">Answer</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Answer {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                      </label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="Enter answer"
                           value={item.answer}
                           onChange={(e) => updateFaqItem(index, 'answer', e.target.value)}
+                          className={`${
+                            item.question.trim() && !item.answer.trim() 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : ''
+                          }`}
                         />
                         {faqItems.length > 1 && (
                           <Button
@@ -833,17 +942,24 @@ export const CategoryTypeTab: React.FC = () => {
                           </Button>
                         )}
                       </div>
+                      {item.question.trim() && !item.answer.trim() && (
+                        <p className="text-red-500 text-xs mt-1">Answer is required when question is provided</p>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting}>
+                <Button 
+                  onClick={handleCreateSubmit}
+                  disabled={isSubmitting}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
                   {isSubmitting ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
-            </form>
+            </div>
           </Form>
         </CardContent>
       </Card>
@@ -888,7 +1004,9 @@ export const CategoryTypeTab: React.FC = () => {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Category</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
                   <Input
                     id="edit-category-name"
                     defaultValue={editingCategory.name}
@@ -898,7 +1016,9 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Selected Site</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Selected Site <span className="text-red-500">*</span>
+                  </label>
                   <Select value={editSelectedSiteId} onValueChange={setEditSelectedSiteId}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Site" />
@@ -914,7 +1034,9 @@ export const CategoryTypeTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Response Time(min)</label>
+                  <label className="block text-sm font-medium mb-2">
+                    Response Time(min) <span className="text-red-500">*</span>
+                  </label>
                   <Input
                     id="edit-response-time"
                     defaultValue={editingCategory.tat}
@@ -1044,22 +1166,37 @@ export const CategoryTypeTab: React.FC = () => {
                   !item._destroy && (
                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                       <div>
-                        <label className="block text-sm font-medium mb-1">Question</label>
+                        <label className="block text-sm font-medium mb-1">
+                          Question {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                        </label>
                         <textarea
                           placeholder="Question"
                           value={item.question}
                           onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
-                          className="w-full p-2 border rounded-md resize-none h-20"
+                          className={`w-full p-2 border rounded-md resize-none h-20 ${
+                            item.answer.trim() && !item.question.trim() 
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                              : ''
+                          }`}
                         />
+                        {item.answer.trim() && !item.question.trim() && (
+                          <p className="text-red-500 text-xs mt-1">Question is required when answer is provided</p>
+                        )}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Answer</label>
+                        <label className="block text-sm font-medium mb-1">
+                          Answer {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                        </label>
                         <div className="flex gap-2">
                           <textarea
                             placeholder="Answer"
                             value={item.answer}
                             onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
-                            className="w-full p-2 border rounded-md resize-none h-20"
+                            className={`w-full p-2 border rounded-md resize-none h-20 ${
+                              item.question.trim() && !item.answer.trim() 
+                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
+                                : ''
+                            }`}
                           />
                           {(editFaqItems.filter(faq => !faq._destroy).length > 1 || !item.id) && (
                             <Button
@@ -1073,6 +1210,9 @@ export const CategoryTypeTab: React.FC = () => {
                             </Button>
                           )}
                         </div>
+                        {item.question.trim() && !item.answer.trim() && (
+                          <p className="text-red-500 text-xs mt-1">Answer is required when question is provided</p>
+                        )}
                       </div>
                     </div>
                   )

@@ -11,7 +11,27 @@ import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast';
 import { useLayout } from '@/contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
-import { createSupportStaffCategory, fetchSupportStaffCategories, updateSupportStaffCategory, SupportStaffCategory } from '@/services/supportStaffAPI';
+import { createSupportStaffCategory, fetchSupportStaffCategories, fetchSupportStaffCategoryById, updateSupportStaffCategory, SupportStaffCategory } from '@/services/supportStaffAPI';
+import { API_CONFIG } from '@/config/apiConfig';
+
+// API Icon Response Interface
+interface ApiIconResponse {
+  id: number;
+  icon_type: string;
+  image_file_name: string;
+  image_content_type: string;
+  image_file_size: string | null;
+  created_by_id: number;
+  image_updated_at: string;
+  active: boolean;
+  resource_id: number | null;
+  resource_type: string | null;
+  image_url: string | null;
+  created_by: {
+    id: number;
+    name: string;
+  };
+}
 
 interface SupportStaffData {
   id: string;
@@ -35,6 +55,8 @@ export const SupportStaffPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [supportStaffData, setSupportStaffData] = useState<SupportStaffCategory[]>([]);
+  const [iconsData, setIconsData] = useState<ApiIconResponse[]>([]);
+  const [isLoadingIcons, setIsLoadingIcons] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState({
     sNo: true,
     actions: true,
@@ -48,14 +70,14 @@ export const SupportStaffPage = () => {
     days: '0',
     hours: '0',
     minutes: '0',
-    selectedIcon: '' as string
+    selectedIcon: '' as string  // This will store the icon ID
   });
   const [editFormData, setEditFormData] = useState({
     categoryName: '',
     days: '0',
     hours: '0',
     minutes: '0',
-    selectedIcon: '' as string
+    selectedIcon: '' as string  // This will store the icon ID
   });
 
   // Field styles for Material-UI components
@@ -117,6 +139,57 @@ export const SupportStaffPage = () => {
     }
   }, [toast]);
 
+  // Load icons from API
+  const loadIcons = useCallback(async () => {
+    try {
+      setIsLoadingIcons(true);
+      console.log('🔄 Loading icons from API...');
+      
+      const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ICONS}`;
+      console.log('📡 Fetching icons from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const apiData: ApiIconResponse[] = await response.json();
+      console.log('📊 Icons API Response:', apiData);
+      console.log(`📈 Total icons received: ${apiData.length}`);
+      
+      // Log icon types for debugging
+      const iconTypes = [...new Set(apiData.map(icon => icon.icon_type))];
+      console.log('🏷️ Available icon types:', iconTypes);
+      
+      // For debugging, let's be more inclusive and show all active icons
+      const activeIcons = apiData.filter(icon => icon.active);
+      console.log(`✅ Active icons: ${activeIcons.length} out of ${apiData.length}`);
+      console.log('🎯 Active icon types:', [...new Set(activeIcons.map(icon => icon.icon_type))]);
+      
+      setIconsData(activeIcons);
+      console.log('💾 Icons data set in state:', activeIcons.length);
+    } catch (error) {
+      console.error('❌ Failed to load icons:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load icons from server",
+        variant: "destructive"
+      });
+      
+      // Keep empty array as fallback
+      setIconsData([]);
+    } finally {
+      setIsLoadingIcons(false);
+    }
+  }, [toast]);
+
   // Pagination calculations
   const totalRecords = filteredStaff.length;
   const totalPages = Math.ceil(totalRecords / perPage);
@@ -133,6 +206,10 @@ export const SupportStaffPage = () => {
   }, [loadSupportStaffCategories]);
 
   useEffect(() => {
+    loadIcons();
+  }, [loadIcons]);
+
+  useEffect(() => {
     const filtered = supportStaffData.filter(staff =>
       staff.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       staff.created_by.toLowerCase().includes(searchTerm.toLowerCase())
@@ -140,29 +217,6 @@ export const SupportStaffPage = () => {
     setFilteredStaff(filtered);
     setCurrentPage(1); // Reset to first page when filtering
   }, [searchTerm, supportStaffData]);
-
-  const iconOptions = [
-    { id: '1', icon: '📦', name: 'Delivery' },
-    { id: '2', icon: '🚛', name: 'Logistics' },
-    { id: '3', icon: '🏥', name: 'Medical' },
-    { id: '4', icon: '🏪', name: 'Shop' },
-    { id: '5', icon: '👨‍⚕️', name: 'Doctor' },
-    { id: '6', icon: '🧑‍🔧', name: 'Technician' },
-    { id: '7', icon: '🧳', name: 'Travel' },
-    { id: '8', icon: '💺', name: 'Haircut' },
-    { id: '9', icon: '🧊', name: 'Appliance' },
-    { id: '10', icon: '🏦', name: 'Banking' },
-    { id: '11', icon: '🔧', name: 'Maintenance' },
-    { id: '12', icon: '👨‍💼', name: 'Business' },
-    { id: '13', icon: '👩‍⚕️', name: 'Nurse' },
-    { id: '14', icon: '📋', name: 'Admin' },
-    { id: '15', icon: '🛠️', name: 'Tools' },
-    { id: '16', icon: '👨‍🍳', name: 'Chef' },
-    { id: '17', icon: '👩‍💻', name: 'IT Support' },
-    { id: '18', icon: '📦', name: 'Package' },
-    { id: '19', icon: '👮‍♂️', name: 'Security' },
-    { id: '20', icon: '🧹', name: 'Cleaning' }
-  ];
 
   const handleAdd = () => {
     setIsAddModalOpen(true);
@@ -202,6 +256,15 @@ export const SupportStaffPage = () => {
       return;
     }
 
+    if (!formData.selectedIcon) {
+      toast({
+        title: "Error",
+        description: "Please select an icon",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -209,7 +272,8 @@ export const SupportStaffPage = () => {
         name: formData.categoryName.trim(),
         days,
         hours,
-        minutes
+        minutes,
+        iconId: parseInt(formData.selectedIcon) // Pass the selected icon ID as iconId
       });
 
       toast({
@@ -232,31 +296,67 @@ export const SupportStaffPage = () => {
     }
   };
 
-  const handleEdit = (staffId: string) => {
-    const staff = supportStaffData.find(s => s.id.toString() === staffId);
-    if (staff) {
+  const handleEdit = async (staffId: string) => {
+    try {
+      console.log(`🎯 Starting edit for staff ID: ${staffId}`);
+      
+      // Fetch detailed data from API
+      const staffDetails = await fetchSupportStaffCategoryById(parseInt(staffId));
+      console.log('📊 Fetched staff details:', staffDetails);
+      
+      // Convert to the local SupportStaffCategory format for editing
+      const staff: SupportStaffCategory = {
+        id: staffDetails.id,
+        name: staffDetails.name,
+        estimated_time: staffDetails.estimated_time,
+        created_on: new Date(staffDetails.created_at).toLocaleString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        created_by: staffDetails.created_by.name || 'Admin',
+        active: staffDetails.active === 1,
+        icon_id: staffDetails.icon_id
+      };
+      
       setEditingStaff(staff);
-      // Parse the estimated time to extract days, hours, minutes
-      const timeString = staff.estimated_time;
-      let days = '0', hours = '0', minutes = '0';
       
-      // Parse patterns like "1 hours, ", "2 hours, 55 minutes ", etc.
-      const hourMatch = timeString.match(/(\d+)\s*hours?/);
-      const minuteMatch = timeString.match(/(\d+)\s*minutes?/);
-      const dayMatch = timeString.match(/(\d+)\s*days?/);
+      // Use the support_staff_estimated_time_hash for accurate parsing
+      const timeHash = staffDetails.support_staff_estimated_time_hash;
+      const days = timeHash.dd.toString();
+      const hours = timeHash.hh.toString();
+      const minutes = timeHash.mm.toString();
       
-      if (dayMatch) days = dayMatch[1];
-      if (hourMatch) hours = hourMatch[1];
-      if (minuteMatch) minutes = minuteMatch[1];
+      console.log('⏰ Parsed time:', { days, hours, minutes });
+      console.log('🖼️ Icon ID from API:', staffDetails.icon_id);
       
       setEditFormData({
         categoryName: staff.name,
         days,
         hours,
         minutes,
-        selectedIcon: '1' // Default icon, you might want to store this in the API
+        selectedIcon: staffDetails.icon_id ? staffDetails.icon_id.toString() : ''
       });
+      
+      // Load icons if not already loaded for the edit modal
+      if (iconsData.length === 0) {
+        console.log('🔄 Icons not loaded, fetching icons for edit modal...');
+        await loadIcons();
+      } else {
+        console.log(`✅ Icons already loaded (${iconsData.length} icons available)`);
+      }
+      
       setIsEditModalOpen(true);
+    } catch (error) {
+      console.error('❌ Failed to fetch support staff category details:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load category details. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
@@ -295,6 +395,15 @@ export const SupportStaffPage = () => {
       return;
     }
 
+    if (!editFormData.selectedIcon) {
+      toast({
+        title: "Error",
+        description: "Please select an icon",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -306,7 +415,8 @@ export const SupportStaffPage = () => {
         name: editFormData.categoryName.trim(),
         days,
         hours,
-        minutes
+        minutes,
+        iconId: parseInt(editFormData.selectedIcon) // Pass the selected icon ID as iconId
       });
       
       toast({
@@ -633,31 +743,87 @@ export const SupportStaffPage = () => {
             </div>
 
             {/* Icon Selection Grid */}
-            <div className="grid grid-cols-6 gap-3">
-              {iconOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    setFormData({...formData, selectedIcon: option.id});
-                  }}
+            <div className="space-y-3">
+              {/* <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Select Icon {iconsData.length > 0 && `(${iconsData.length} available)`}
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={loadIcons}
+                  disabled={isLoadingIcons}
+                  className="px-3 py-1 text-xs"
                 >
-                  <input
-                    type="radio"
-                    checked={formData.selectedIcon === option.id}
-                    onChange={() => {}}
-                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-                    style={{
-                      accentColor: '#dc2626'
-                    }}
-                  />
-                  <div className="text-lg">{option.icon}</div>
+                  <RefreshCw className={`w-3 h-3 mr-1 ${isLoadingIcons ? 'animate-spin' : ''}`} />
+                  Refresh Icons
+                </Button>
+              </div> */}
+              
+              {isLoadingIcons ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Loading icons...
                 </div>
-              ))}
+              ) : iconsData.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No icons available</p>
+                  <p className="text-sm">Please contact administrator to add icons</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadIcons}
+                    className="mt-2"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-3 max-h-64 overflow-y-auto">
+                  {iconsData.map((iconItem) => (
+                    <div
+                      key={iconItem.id}
+                      className={`flex flex-col items-center gap-2 p-2 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
+                        formData.selectedIcon === iconItem.id.toString() 
+                          ? 'border-[#C72030] bg-red-50' 
+                          : 'border-gray-200'
+                      }`}
+                      onClick={() => {
+                        setFormData({...formData, selectedIcon: iconItem.id.toString()});
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        checked={formData.selectedIcon === iconItem.id.toString()}
+                        onChange={() => {}}
+                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                      />
+                      {iconItem.image_url ? (
+                        <img 
+                          src={iconItem.image_url}
+                          alt={iconItem.icon_type}
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextElement) {
+                              nextElement.style.display = 'block';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div className="text-xs text-gray-400 hidden">No Image</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-center">
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -769,31 +935,87 @@ export const SupportStaffPage = () => {
             </div>
 
             {/* Icon Selection Grid */}
-            <div className="grid grid-cols-6 gap-3">
-              {iconOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className="flex items-center gap-2 p-2 border border-gray-200 rounded hover:bg-gray-50 cursor-pointer"
-                  onClick={() => {
-                    setEditFormData({...editFormData, selectedIcon: option.id});
-                  }}
+            <div className="space-y-3">
+              {/* <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Select Icon {iconsData.length > 0 && `(${iconsData.length} available)`}
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={loadIcons}
+                  disabled={isLoadingIcons}
+                  className="px-3 py-1 text-xs"
                 >
-                  <input
-                    type="radio"
-                    checked={editFormData.selectedIcon === option.id}
-                    onChange={() => {}}
-                    className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
-                    style={{
-                      accentColor: '#dc2626'
-                    }}
-                  />
-                  <div className="text-lg">{option.icon}</div>
+                  <RefreshCw className={`w-3 h-3 mr-1 ${isLoadingIcons ? 'animate-spin' : ''}`} />
+                  Refresh Icons
+                </Button>
+              </div> */}
+              
+              {isLoadingIcons ? (
+                <div className="flex items-center justify-center py-8">
+                  <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                  Loading icons...
                 </div>
-              ))}
+              ) : iconsData.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No icons available</p>
+                  <p className="text-sm">Please contact administrator to add icons</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={loadIcons}
+                    className="mt-2"
+                  >
+                    <RefreshCw className="w-3 h-3 mr-1" />
+                    Try Again
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-3 max-h-64 overflow-y-auto">
+                  {iconsData.map((iconItem) => (
+                    <div
+                      key={iconItem.id}
+                      className={`flex flex-col items-center gap-2 p-2 border-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors ${
+                        editFormData.selectedIcon === iconItem.id.toString() 
+                          ? 'border-[#C72030] bg-red-50' 
+                          : 'border-gray-200'
+                      }`}
+                      onClick={() => {
+                        setEditFormData({...editFormData, selectedIcon: iconItem.id.toString()});
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        checked={editFormData.selectedIcon === iconItem.id.toString()}
+                        onChange={() => {}}
+                        className="w-4 h-4 text-[#C72030] border-gray-300 focus:ring-[#C72030]"
+                      />
+                      {iconItem.image_url ? (
+                        <img 
+                          src={iconItem.image_url}
+                          alt={iconItem.icon_type}
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextElement) {
+                              nextElement.style.display = 'block';
+                            }
+                          }}
+                        />
+                      ) : null}
+                      <div className="text-xs text-gray-400 hidden">No Image</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end gap-3">
+            <div className="flex justify-center gap-3">
               <Button 
                 variant="outline"
                 onClick={handleEditModalClose}

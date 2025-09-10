@@ -7,6 +7,7 @@ export interface SupportStaffCategoryRequest {
     resource_id: number;
     resource_type: string;
     active: boolean;
+    icon_id?: number; // Add icon_id as optional parameter
   };
 }
 
@@ -57,6 +58,31 @@ export interface SupportStaffCategory {
   created_on: string;
   created_by: string;
   active: boolean;
+  icon_id?: number; // Add icon_id to track the associated icon
+}
+
+// Single support staff category response interface (for GET by ID)
+export interface SupportStaffCategoryDetailResponse {
+  id: number;
+  icon_id: number;
+  resource_id: number;
+  resource_type: string;
+  name: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  estimated_time: string;
+  support_staff_estimated_time_hash: {
+    mt: number;
+    dd: number;
+    hh: number;
+    mm: number;
+  };
+  icon_image_url: string;
+  created_by: {
+    id: number | null;
+    name: string | null;
+  };
 }
 
 // Create a new support staff category
@@ -66,6 +92,7 @@ export const createSupportStaffCategory = async (
     days: number;
     hours: number;
     minutes: number;
+    iconId?: number; // Add iconId parameter
   }
 ): Promise<SupportStaffCategoryCreateResponse> => {
   const { BASE_URL, TOKEN } = API_CONFIG;
@@ -83,7 +110,8 @@ export const createSupportStaffCategory = async (
       estimated_time: totalMinutes,
       resource_id: 2189, // This should ideally come from user context/site selection
       resource_type: "Pms::Site",
-      active: true
+      active: true,
+      ...(categoryData.iconId && { icon_id: categoryData.iconId }) // Include icon_id if provided
     }
   };
 
@@ -121,6 +149,7 @@ export const updateSupportStaffCategory = async (
     days: number;
     hours: number;
     minutes: number;
+    iconId?: number; // Add iconId parameter
   }
 ): Promise<SupportStaffCategoryCreateResponse> => {
   const { BASE_URL, TOKEN } = API_CONFIG;
@@ -138,7 +167,8 @@ export const updateSupportStaffCategory = async (
       estimated_time: totalMinutes,
       resource_id: 2189, // This should ideally come from user context/site selection
       resource_type: "Pms::Site",
-      active: true
+      active: true,
+      ...(categoryData.iconId && { icon_id: categoryData.iconId }) // Include icon_id if provided
     }
   };
 
@@ -166,6 +196,39 @@ export const updateSupportStaffCategory = async (
 
   const data: SupportStaffCategoryCreateResponse = await response.json();
   console.log('Support staff category updated successfully:', data);
+  return data;
+};
+
+// Fetch a single support staff category by ID
+export const fetchSupportStaffCategoryById = async (id: number): Promise<SupportStaffCategoryDetailResponse> => {
+  const { BASE_URL, TOKEN } = API_CONFIG;
+  
+  if (!TOKEN) {
+    throw new Error('Authentication token is required');
+  }
+
+  console.log(`Fetching support staff category with ID: ${id}`);
+
+  const response = await fetch(`${BASE_URL}/pms/admin/support_staff_categories/${id}.json`, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${TOKEN}`,
+      'Content-Type': 'application/json',
+    }
+  });
+
+  if (!response.ok) {
+    const errorData = await response.text();
+    console.error('Failed to fetch support staff category:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
+    throw new Error(`Failed to fetch support staff category: ${response.status} ${response.statusText}`);
+  }
+
+  const data: SupportStaffCategoryDetailResponse = await response.json();
+  console.log('Support staff category fetched successfully:', data);
   return data;
 };
 
