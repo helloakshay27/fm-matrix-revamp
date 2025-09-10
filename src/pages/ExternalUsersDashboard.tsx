@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Shield, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -150,9 +150,18 @@ export const ExternalUsersDashboard = () => {
 
   // Reset to first page when new search or filters applied
   // Only reset to page 1 when filters/search change, not on page changes
+  // Reset to first page only when the search or filters value actually changes
+  const prevSearchRef = useRef<string>('');
+  const prevFiltersRef = useRef<typeof filters>(filters);
   useEffect(() => {
     const hasFilters = Object.values(filters).some(v => v && v !== '');
-    if (debouncedSearch || hasFilters) setPage(1);
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
+    const searchChanged = debouncedSearch !== prevSearchRef.current;
+    if ((searchChanged && debouncedSearch) || (filtersChanged && hasFilters)) {
+      setPage(1);
+    }
+    prevSearchRef.current = debouncedSearch;
+    prevFiltersRef.current = filters;
   }, [debouncedSearch, filters]);
 
   const cardData = [
@@ -327,9 +336,9 @@ export const ExternalUsersDashboard = () => {
       >
         <Eye className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
+      {/* <Button variant="ghost" size="sm" onClick={() => handleDeleteClick(user)} className="h-8 w-8 p-0">
         <Trash2 className="h-4 w-4" />
-      </Button>
+      </Button> */}
     </div>
   );
 
