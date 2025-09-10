@@ -188,7 +188,7 @@ export const ComplaintModeTab: React.FC = () => {
                 name="complaintMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Complaint Mode</FormLabel>
+                    <FormLabel>Complaint Mode <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Enter complaint mode" {...field} />
                     </FormControl>

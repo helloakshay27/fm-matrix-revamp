@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Eye, Upload, Filter, Download, Search, RotateCcw, Activity, ThumbsUp, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 import { SurveyResponseAnalytics } from '@/components/SurveyResponseAnalytics';
+import { SurveyAnalyticsContent } from '@/components/SurveyAnalyticsContent';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
 import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
@@ -20,32 +22,140 @@ interface FilterState {
 }
 
 interface AnalyticsData {
-  statistics?: any;
-  status?: any;
-  distributions?: any;
-  typeWise?: any;
-  categoryWise?: any;
-  dateRange?: any;
+  statistics?: {
+    active_surveys?: number;
+    total_surveys?: number;
+    [key: string]: unknown;
+  };
+  status?: {
+    info?: {
+      total_active_surveys?: number;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  distributions?: {
+    info?: {
+      total_feedback_surveys?: number;
+      total_feedback_count?: number;
+      total_assessment_surveys?: number;
+      total_survey_count?: number;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  typeWise?: {
+    [key: string]: unknown;
+  };
+  categoryWise?: {
+    [key: string]: unknown;
+  };
+  dateRange?: {
+    startDate?: Date;
+    endDate?: Date;
+    [key: string]: unknown;
+  };
+}
+
+// New interfaces for the response list API
+interface Complaint {
+  complaint_id: number;
+  ticket_number: string;
+  heading: string;
+  assigned_to: number | null;
+  assignee: string;
+  created_at: string;
+}
+
+interface Response {
+  answer_id: number;
+  question_id: number | null;
+  option_id: number | null;
+  option_type: string | null;
+  created_at: string;
+  complaints: Complaint[];
+}
+
+interface SurveyMapping {
+  id: number;
+  site_id: number;
+  building_id: number;
+  wing_id: number | null;
+  floor_id: number | null;
+  area_id: number | null;
+  room_id: number | null;
+  site_name: string;
+  building_name: string;
+  wing_name: string | null;
+  floor_name: string | null;
+  area_name: string | null;
+  room_name: string | null;
+  responses: Response[];
+}
+
+interface Survey {
+  survey_id: number;
+  survey_name: string;
+  survey_mappings: SurveyMapping[];
+}
+
+interface SurveyResponseApiResponse {
+  surveys: Survey[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+}
+
+// Transformed interface for table display
+interface TransformedSurveyResponse {
+  id: number;
+  survey_name: string;
+  survey_id: number;
+  mapping_id?: number;
+  site_name: string;
+  building_name: string;
+  wing_name: string;
+  floor_name: string;
+  area_name: string;
+  room_name: string;
+  total_responses: number;
+  total_complaints: number;
+  latest_response_date: string;
 }
 
 export const SurveyResponsePage = () => {
   console.log('SurveyResponsePage component loaded successfully with EnhancedTable');
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Note: survey_id filtering has been removed as requested
+  console.log('🔍 Fetching all survey responses without survey_id filter');
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
-  const [selectedItems, setSelectedItems] = useState<any[]>([]);
-  const [responseData, setResponseData] = useState<SurveyResponseData[]>([]);
+  const [selectedItems, setSelectedItems] = useState<TransformedSurveyResponse[]>([]);
+  const [responseData, setResponseData] = useState<TransformedSurveyResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    per_page: 10,
+    total_count: 0,
+    total_pages: 1
+  });
   const [summaryStats, setSummaryStats] = useState({
-    total_active_surveys: 20,
-    total_feedback_count: 10,
-    total_survey_count: 10,
+    total_active_surveys: 0,
+    total_feedback_count: 0,
+    total_survey_count: 0,
   });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyTitle: '',
-    surveyMappingId: '',
+    surveyMappingId: '', // Remove default survey_id
     surveyType: '',
     startDate: null,
     endDate: null
@@ -65,21 +175,116 @@ export const SurveyResponsePage = () => {
     }
   };
 
-  // Fetch survey responses on component mount
-  useEffect(() => {
-    fetchSurveyResponses();
-    fetchSummaryStats();
-  }, []);
-
-  // Update summary stats when response data changes
-  useEffect(() => {
-    if (responseData.length > 0) {
-      fetchSummaryStats();
+  // New function to fetch survey response list from the API
+  const fetchSurveyResponseList = async (page: number = 1) => {
+    try {
+      const url = getFullUrl('/survey_mappings/response_list.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      const urlWithParams = new URL(url);
+      
+      // Add access_token parameter
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+        console.log('🔑 Adding access_token to request');
+      }
+      
+      // Add page parameter
+      urlWithParams.searchParams.append('page', page.toString());
+      
+      // Note: survey_id parameter removed as requested
+      console.log('🚀 Calling survey response list API (without survey_id filter):', urlWithParams.toString());
+      
+      const response = await fetch(urlWithParams.toString(), options);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Survey Response List API Error Response:', errorText);
+        
+        if (response.status === 401) {
+          throw new Error('Authentication failed. Please check your access token and try again.');
+        } else if (response.status === 403) {
+          throw new Error('Access denied. You do not have permission to access this survey data.');
+        } else if (response.status === 404) {
+          throw new Error('Survey data not found.');
+        } else {
+          throw new Error(`Failed to fetch survey responses: ${response.status} ${response.statusText}`);
+        }
+      }
+      
+      const data: SurveyResponseApiResponse = await response.json();
+      console.log('✅ Survey response list fetched successfully:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Error fetching survey response list:', error);
+      throw error;
     }
-  }, [responseData]);
+  };
+
+  // Transform API data to table format
+  const transformSurveyData = (surveys: Survey[]): TransformedSurveyResponse[] => {
+    const transformedData: TransformedSurveyResponse[] = [];
+    
+    surveys.forEach(survey => {
+      if (survey.survey_mappings.length === 0) {
+        // Survey with no mappings
+        transformedData.push({
+          id: survey.survey_id,
+          survey_name: survey.survey_name,
+          survey_id: survey.survey_id,
+          site_name: 'No Mapping',
+          building_name: 'No Mapping',
+          wing_name: 'No Mapping',
+          floor_name: 'No Mapping',
+          area_name: 'No Mapping',
+          room_name: 'No Mapping',
+          total_responses: 0,
+          total_complaints: 0,
+          latest_response_date: 'No Responses'
+        });
+      } else {
+        // Survey with mappings
+        survey.survey_mappings.forEach(mapping => {
+          const totalComplaints = mapping.responses.reduce((total, response) => {
+            return total + response.complaints.length;
+          }, 0);
+          
+          const latestResponseDate = mapping.responses.length > 0 
+            ? new Date(Math.max(...mapping.responses.map(r => new Date(r.created_at).getTime())))
+                .toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })
+            : 'No Responses';
+          
+          transformedData.push({
+            id: mapping.id,
+            survey_name: survey.survey_name,
+            survey_id: survey.survey_id,
+            mapping_id: mapping.id,
+            site_name: mapping.site_name || 'N/A',
+            building_name: mapping.building_name || 'N/A',
+            wing_name: mapping.wing_name || 'N/A',
+            floor_name: mapping.floor_name || 'N/A',
+            area_name: mapping.area_name || 'N/A',
+            room_name: mapping.room_name || 'N/A',
+            total_responses: mapping.responses.length,
+            total_complaints: totalComplaints,
+            latest_response_date: latestResponseDate
+          });
+        });
+      }
+    });
+    
+    return transformedData;
+  };
 
   // Fetch summary statistics from API
-  const fetchSummaryStats = async () => {
+  const fetchSummaryStats = useCallback(async () => {
     try {
       // Fetch from the survey details API with analytics flag
       const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_DETAILS);
@@ -99,7 +304,7 @@ export const SurveyResponsePage = () => {
         
         const feedbackCount = data.distributions?.info?.total_feedback_surveys ||
                             data.analytics?.total_feedback_count ||
-                            data.survey_details?.surveys?.filter((s: any) => s.survey_type === 'feedback')?.length ||
+                            data.survey_details?.surveys?.filter((s: { survey_type: string }) => s.survey_type === 'feedback')?.length ||
                             10;
                             
         const surveyCount = data.distributions?.info?.total_assessment_surveys ||
@@ -121,28 +326,56 @@ export const SurveyResponsePage = () => {
         total_active_surveys: responseData.length || 20
       }));
     }
-  };
+  }, [responseData.length]);
 
   const fetchSurveyResponses = async (filters?: FilterState) => {
     setIsLoading(true);
     try {
-      let data;
-      if (filters && (filters.surveyTitle || filters.surveyMappingId)) {
-        // Use filter API when filters are applied
-        data = await fetchFilteredSurveyResponses(filters);
-      } else {
-        // Use default API when no filters
-        data = await surveyApi.getAllSurveyResponses();
-      }
-      console.log('Fetched survey responses:', data);
-      setResponseData(data);
+      console.log('📡 Fetching survey responses for page:', currentPage);
       
-      // Fetch summary stats after getting response data
-      setTimeout(() => fetchSummaryStats(), 100);
+      const data = await fetchSurveyResponseList(currentPage);
+      const transformedData = transformSurveyData(data.surveys);
+      
+      console.log('Fetched and transformed survey responses:', transformedData);
+      console.log('Pagination data from API:', data.pagination);
+      
+      setResponseData(transformedData);
+      setPagination({
+        current_page: data.pagination.current_page,
+        per_page: data.pagination.per_page,
+        total_count: data.pagination.total_count,
+        total_pages: data.pagination.total_pages
+      });
+      
+      // Update summary stats from the transformed data
+      const totalSurveys = data.surveys.length;
+      const totalResponses = transformedData.reduce((sum, item) => sum + item.total_responses, 0);
+      const totalComplaints = transformedData.reduce((sum, item) => sum + item.total_complaints, 0);
+      
+      setSummaryStats({
+        total_active_surveys: totalSurveys,
+        total_feedback_count: totalResponses,
+        total_survey_count: totalComplaints,
+      });
+      
+      console.log('✅ Pagination updated:', {
+        current_page: data.pagination.current_page,
+        per_page: data.pagination.per_page,
+        total_count: data.pagination.total_count,
+        total_pages: data.pagination.total_pages
+      });
+      
     } catch (error) {
       console.error('Error fetching survey responses:', error);
       toast.error('Failed to fetch survey responses');
       setResponseData([]);
+      // Reset pagination on error
+      setPagination({
+        current_page: 1,
+        per_page: 10,
+        total_count: 0,
+        total_pages: 1
+      });
     } finally {
       setIsLoading(false);
     }
@@ -154,19 +387,34 @@ export const SurveyResponsePage = () => {
       let url = '/survey_mapping_responses/all_responses.json?';
       const params = new URLSearchParams();
       
-      if (filters.surveyTitle) {
-        params.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
-      } else {
-        params.append('q[survey_mapping_survey_name_cont]', '');
+      // Add access_token parameter first
+      if (API_CONFIG.TOKEN) {
+        params.append('access_token', API_CONFIG.TOKEN);
+        console.log('🔑 Adding access_token to filtered request');
       }
       
-      if (filters.surveyMappingId) {
-        params.append('q[survey_mapping_id_eq]', filters.surveyMappingId);
-      } else {
-        params.append('q[survey_mapping_id_eq]', '');
+      // Note: survey_id parameter removed as requested
+      console.log('🔍 Filtering responses without survey_id restriction');
+      
+      if (filters.surveyTitle) {
+        params.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
+      }
+      
+      if (filters.surveyType) {
+        params.append('q[survey_type_eq]', filters.surveyType);
+      }
+      
+      if (filters.startDate) {
+        params.append('q[created_at_gteq]', filters.startDate.toISOString());
+      }
+      
+      if (filters.endDate) {
+        params.append('q[created_at_lteq]', filters.endDate.toISOString());
       }
       
       url += params.toString();
+      
+      console.log('🚀 Calling filtered survey responses API:', url);
       
       const response = await apiClient.get(url);
       return response.data || [];
@@ -176,9 +424,11 @@ export const SurveyResponsePage = () => {
     }
   };
 
-  const handleViewDetails = (item: any) => {
+  const handleViewDetails = (item: TransformedSurveyResponse) => {
     console.log('Eye button clicked - item data:', JSON.stringify(item, null, 2));
-    navigate(`/maintenance/survey/response/details/${item.id}`, {
+    console.log('🔍 Navigating to survey details with survey_id:', item.survey_id);
+    console.log('🔍 Using survey_id instead of mapping_id (item.id):', item.id);
+    navigate(`/maintenance/survey/response/details/${item.survey_id}`, {
       state: { surveyData: item }
     });
   };
@@ -194,32 +444,41 @@ export const SurveyResponsePage = () => {
   const handleApplyFilters = (filters: FilterState) => {
     console.log('Applied filters:', filters);
     setAppliedFilters(filters);
-    // Fetch filtered data from API
-    fetchSurveyResponses(filters);
+    // Reset to page 1 when filters are applied
+    setCurrentPage(1);
+    // Data will be fetched automatically by useEffect when currentPage changes
   };
 
   const handleResetFilters = () => {
-    setAppliedFilters({
+    const resetFilters = {
       surveyTitle: '',
-      surveyMappingId: '',
+      surveyMappingId: '', // Remove survey_id from reset filters
       surveyType: '',
       startDate: null,
       endDate: null
-    });
-    // Fetch all data without filters
-    fetchSurveyResponses();
+    };
+    setAppliedFilters(resetFilters);
+    // Reset to page 1 when filters are reset
+    setCurrentPage(1);
+    // Data will be fetched automatically by useEffect when currentPage changes
   };
 
   const columns = [
     { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    { key: 'id', label: 'ID', sortable: true, draggable: true },
-    { key: 'surveyTitle', label: 'Survey Title', sortable: true, draggable: true },
-    { key: 'responses', label: 'No. Of Responses', sortable: true, draggable: true },
-    // { key: 'tickets', label: 'No. Of Tickets', sortable: true, draggable: true },
-    // { key: 'expiryDate', label: 'Expiry Date', sortable: true, draggable: true }
+    // { key: 'survey_id', label: 'Survey ID', sortable: true, draggable: true },
+    { key: 'survey_name', label: 'Survey Name', sortable: true, draggable: true },
+    { key: 'site_name', label: 'Site Name', sortable: true, draggable: true },
+    { key: 'building_name', label: 'Building Name', sortable: true, draggable: true },
+    { key: 'wing_name', label: 'Wing Name', sortable: true, draggable: true },
+    { key: 'floor_name', label: 'Floor Name', sortable: true, draggable: true },
+    { key: 'area_name', label: 'Area Name', sortable: true, draggable: true },
+    { key: 'room_name', label: 'Room Name', sortable: true, draggable: true },
+    { key: 'total_responses', label: 'Total Responses', sortable: true, draggable: true },
+    { key: 'total_complaints', label: 'Total Complaints', sortable: true, draggable: true },
+    { key: 'latest_response_date', label: 'Latest Response', sortable: true, draggable: true }
   ];
 
-  const renderCell = (item: SurveyResponseData, columnKey: string) => {
+  const renderCell = (item: TransformedSurveyResponse, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -230,28 +489,68 @@ export const SurveyResponsePage = () => {
             <Eye className="w-4 h-4" />
           </button>
         );
-      case 'id':
-        return item.id;
-      case 'surveyTitle':
-        return item.survey_title || 'N/A';
-      case 'responses':
-        return item.response_count || 0;
-      case 'tickets':
-        return String(item[columnKey as keyof SurveyResponseData] || '');
-      default:
-        const value = item[columnKey as keyof SurveyResponseData];
+      // case 'survey_id':
+      //   return item.survey_id;
+      case 'survey_name':
+        return item.survey_name || 'N/A';
+      case 'site_name':
+        return item.site_name || 'N/A';
+      case 'building_name':
+        return item.building_name || 'N/A';
+      case 'wing_name':
+        return item.wing_name || 'N/A';
+      case 'floor_name':
+        return item.floor_name || 'N/A';
+      case 'area_name':
+        return item.area_name || 'N/A';
+      case 'room_name':
+        return item.room_name || 'N/A';
+      case 'total_responses':
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            item.total_responses > 0 
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            {item.total_responses}
+          </span>
+        );
+      case 'total_complaints':
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            item.total_complaints > 0 
+              ? 'bg-red-100 text-red-800' 
+              : 'bg-gray-100 text-gray-800'
+          }`}>
+            {item.total_complaints}
+          </span>
+        );
+      case 'latest_response_date':
+        return item.latest_response_date || 'No Responses';
+      default: {
+        const value = item[columnKey as keyof TransformedSurveyResponse];
         return typeof value === 'object' ? JSON.stringify(value) : String(value || '');
+      }
     }
   };
 
 
   // Filter responses based on search term
   const filteredResponses = responseData.filter(item =>
-    item.survey_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.toString().includes(searchTerm)
+    item.survey_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.survey_id.toString().includes(searchTerm) ||
+    item.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.building_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Get dynamic counts from analytics data and summary stats
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    console.log('📄 Page changed to:', page);
+    setCurrentPage(page);
+    // Data will be fetched automatically by useEffect when currentPage changes
+  };
+
+  // Get dynamic counts from summary stats
   const getTotalActiveCount = () => {
     return summaryStats.total_active_surveys;
   };
@@ -264,10 +563,118 @@ export const SurveyResponsePage = () => {
     return summaryStats.total_survey_count;
   };
 
+  // Fetch survey responses when currentPage changes
+  useEffect(() => {
+    console.log('🔄 useEffect triggered for currentPage:', currentPage);
+    
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        console.log('📡 Fetching survey responses for page:', currentPage);
+        
+        const data = await fetchSurveyResponseList(currentPage);
+        const transformedData = transformSurveyData(data.surveys);
+        
+        console.log('Fetched and transformed survey responses:', transformedData);
+        console.log('Pagination data from API:', data.pagination);
+        
+        setResponseData(transformedData);
+        setPagination({
+          current_page: data.pagination.current_page,
+          per_page: data.pagination.per_page,
+          total_count: data.pagination.total_count,
+          total_pages: data.pagination.total_pages
+        });
+        
+        // Update summary stats from the transformed data
+        const totalSurveys = data.surveys.length;
+        const totalResponses = transformedData.reduce((sum, item) => sum + item.total_responses, 0);
+        const totalComplaints = transformedData.reduce((sum, item) => sum + item.total_complaints, 0);
+        
+        setSummaryStats({
+          total_active_surveys: totalSurveys,
+          total_feedback_count: totalResponses,
+          total_survey_count: totalComplaints,
+        });
+        
+        console.log('✅ Pagination updated:', {
+          current_page: data.pagination.current_page,
+          per_page: data.pagination.per_page,
+          total_count: data.pagination.total_count,
+          total_pages: data.pagination.total_pages
+        });
+        
+      } catch (error) {
+        console.error('Error fetching survey responses:', error);
+        toast.error('Failed to fetch survey responses');
+        setResponseData([]);
+        // Reset pagination on error
+        setPagination({
+          current_page: 1,
+          per_page: 10,
+          total_count: 0,
+          total_pages: 1
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [currentPage]); // Only depend on currentPage
+  
+  // Fetch summary stats separately
+  useEffect(() => {
+    fetchSummaryStats();
+  }, [fetchSummaryStats]);
+
+  // Update summary stats when response data changes
+  useEffect(() => {
+    if (responseData.length > 0) {
+      fetchSummaryStats();
+    }
+  }, [responseData.length, fetchSummaryStats]);
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Breadcrumb */}
       <div className="mb-6">
+        {/* API Status Display */}
+        {/* <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-blue-800">API Endpoint:</span>
+              <span className="text-sm font-bold text-blue-900">/survey_mappings/response_list.json</span>
+              <span className="text-xs text-blue-600">
+                (fetching all survey responses)
+              </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-blue-600">Page:</span>
+                <span className="text-xs font-bold text-blue-900">
+                  {pagination.current_page} of {pagination.total_pages}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-blue-600">Total:</span>
+                <span className="text-xs font-bold text-blue-900">
+                  {pagination.total_count} records
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-blue-600">Access Token:</span>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${
+                  API_CONFIG.TOKEN 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-red-100 text-red-800'
+                }`}>
+                  {API_CONFIG.TOKEN ? 'Active' : 'Missing'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div> */}
         {/* <nav className="flex items-center text-sm text-gray-600 mb-4">
           <span>Survey</span>
           <span className="mx-2">{'>'}</span>
@@ -379,33 +786,79 @@ export const SurveyResponsePage = () => {
                 <div className="text-gray-500">Loading survey responses...</div>
               </div>
             ) : (
-              <EnhancedTable
-                data={filteredResponses}
-                columns={columns}
-                // selectable={true}
-                renderCell={renderCell}
-                storageKey="survey-response-table"
-                enableExport={true}
-                exportFileName="survey-response-data"
-                searchTerm={searchTerm}
-                onSearchChange={setSearchTerm}
-                searchPlaceholder="Search responses..."
-                pagination={true}
-                pageSize={10}
-                leftActions={
-                  <div className="flex flex-wrap gap-2">
-                    {/* Filter button is now positioned next to search input in EnhancedTable */}
+              <>
+                <EnhancedTable
+                  data={filteredResponses}
+                  columns={columns}
+                  renderCell={renderCell}
+                  storageKey="survey-response-table"
+                  enableExport={true}
+                  exportFileName="survey-response-data"
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  searchPlaceholder="Search responses..."
+                  pagination={false}
+                  leftActions={
+                    <div className="flex flex-wrap gap-2">
+                      {/* Filter button is now positioned next to search input in EnhancedTable */}
+                    </div>
+                  }
+                  onFilterClick={handleFilterClick}
+                />
+                
+                {/* Custom API-based Pagination */}
+                {pagination.total_pages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => {
+                              if (pagination.current_page > 1) handlePageChange(pagination.current_page - 1);
+                            }}
+                            className={pagination.current_page === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        {Array.from(
+                          { length: Math.min(pagination.total_pages, 10) },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={pagination.current_page === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        {pagination.total_pages > 10 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => {
+                              if (pagination.current_page < pagination.total_pages) handlePageChange(pagination.current_page + 1);
+                            }}
+                            className={pagination.current_page === pagination.total_pages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                    <div className="text-center mt-2 text-sm text-gray-600">
+                      Showing page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total records)
+                    </div>
                   </div>
-                }
-                onFilterClick={handleFilterClick}
-              />
+                )}
+              </>
             )}
           </div>
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-0">
-          {/* Survey Response Analytics */}
-          <SurveyResponseAnalytics onAnalyticsChange={handleAnalyticsChange} />
+          <SurveyAnalyticsContent />
         </TabsContent>
       </Tabs>
 

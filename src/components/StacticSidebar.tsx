@@ -176,7 +176,8 @@ const navigationStructure = {
         subItems: [
           { name: 'Setup', href: '/security/visitor-management/setup' },
           { name: 'Visiting Purpose', href: '/security/visitor-management/visiting-purpose' },
-          { name: 'Support Staff', href: '/security/visitor-management/support-staff' }
+          { name: 'Support Staff', href: '/security/visitor-management/support-staff' },
+          { name: 'Icons', href: '/security/visitor-management/icons' }
         ]
       },
       {
@@ -682,7 +683,8 @@ const modulesByPackage = {
           subItems: [
             { name: 'Setup', href: '/security/visitor-management/setup' },
             { name: 'Visiting Purpose', href: '/security/visitor-management/visiting-purpose' },
-            { name: 'Support Staff', href: '/security/visitor-management/support-staff' }
+            { name: 'Support Staff', href: '/security/visitor-management/support-staff' },
+            { name: 'Icons', href: '/security/visitor-management/icons' }
           ]
         },
         {
