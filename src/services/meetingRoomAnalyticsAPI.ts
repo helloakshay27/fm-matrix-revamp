@@ -70,6 +70,8 @@ export const meetingRoomAnalyticsAPI = {
     const payload = resp.data;
     const perf = payload?.data?.performance_data
       ?? payload?.performance_data
+      ?? payload?.data?.response_performance_data
+      ?? payload?.response_performance_data
       ?? [];
     if (!Array.isArray(perf)) return [];
 
@@ -90,6 +92,8 @@ export const meetingRoomAnalyticsAPI = {
     const payload = resp.data;
     const perf = payload?.data?.performance_data
       ?? payload?.performance_data
+      ?? payload?.data?.resolution_performance_data
+      ?? payload?.resolution_performance_data
       ?? [];
     if (!Array.isArray(perf)) return [];
 
