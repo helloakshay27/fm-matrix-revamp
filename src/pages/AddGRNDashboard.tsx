@@ -485,19 +485,20 @@ export const AddGRNDashboard = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <h1 className="text-2xl font-bold mb-6">ADD GRN</h1>
+      <h1 className="text-2xl font-bold mb-6">Add GRN</h1>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-[#C72030] flex items-center">
-              <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                1
-              </h2>
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+              <span className="text-white text-sm">1</span>
+            </div>
+            <h2 className="text-lg font-semibold text-[#C72030]">
               GRN DETAILS
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
               <InputLabel shrink>Purchase Order*</InputLabel>
               <MuiSelect
@@ -505,7 +506,10 @@ export const AddGRNDashboard = () => {
                 value={grnDetails.purchaseOrder}
                 onChange={(e) => {
                   const poId = Number(e.target.value);
-                  setGrnDetails({ ...grnDetails, purchaseOrder: poId });
+                  setGrnDetails({
+                    ...grnDetails,
+                    purchaseOrder: poId,
+                  });
                   fetchSuppliers(poId);
                   fetchItem(poId);
                 }}
@@ -528,7 +532,9 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Supplier*"
                 value={grnDetails.supplier}
-                onChange={(e) => setGrnDetails({ ...grnDetails, supplier: e.target.value })}
+                onChange={(e) =>
+                  setGrnDetails({ ...grnDetails, supplier: e.target.value })
+                }
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -545,9 +551,11 @@ export const AddGRNDashboard = () => {
 
             <TextField
               label="Invoice Number*"
-              placeholder="Enter Invoice Number"
+              placeholder="Enter Number"
               value={grnDetails.invoiceNumber}
-              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceNumber: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -557,9 +565,11 @@ export const AddGRNDashboard = () => {
 
             <TextField
               label="Related To"
-              placeholder="Enter Related To"
+              placeholder="Enter Text"
               value={grnDetails.relatedTo}
-              onChange={(e) => setGrnDetails({ ...grnDetails, relatedTo: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, relatedTo: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -570,15 +580,16 @@ export const AddGRNDashboard = () => {
             <TextField
               label="Invoice Amount"
               type="number"
-              placeholder="Enter Invoice Amount"
+              placeholder="Enter Number"
               value={grnDetails.invoiceAmount}
-              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceAmount: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-              inputProps={{ min: 0 }}
             />
 
             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
@@ -586,7 +597,9 @@ export const AddGRNDashboard = () => {
               <MuiSelect
                 label="Payment Mode"
                 value={grnDetails.paymentMode}
-                onChange={(e) => setGrnDetails({ ...grnDetails, paymentMode: e.target.value })}
+                onChange={(e) =>
+                  setGrnDetails({ ...grnDetails, paymentMode: e.target.value })
+                }
                 displayEmpty
                 sx={fieldStyles}
               >
@@ -602,77 +615,90 @@ export const AddGRNDashboard = () => {
               label="Invoice Date*"
               type="date"
               value={grnDetails.invoiceDate}
-              onChange={(e) => setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, invoiceDate: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-              inputProps={{ max: new Date().toISOString().split("T")[0] }}
             />
 
             <TextField
               label="Posting Date*"
               type="date"
               value={grnDetails.postingDate}
-              onChange={(e) => setGrnDetails({ ...grnDetails, postingDate: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, postingDate: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-              inputProps={{ max: new Date().toISOString().split("T")[0] }}
             />
 
             <TextField
               label="Other Expense"
               type="number"
-              placeholder="Enter Other Expense"
+              placeholder="Other Expense"
               value={grnDetails.otherExpense}
-              onChange={(e) => setGrnDetails({ ...grnDetails, otherExpense: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, otherExpense: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-              inputProps={{ min: 0 }}
             />
 
             <TextField
               label="Loading Expense"
               type="number"
-              placeholder="Enter Loading Expense"
+              placeholder="Enter Number"
               value={grnDetails.loadingExpense}
-              onChange={(e) => setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, loadingExpense: e.target.value })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
-              inputProps={{ min: 0 }}
             />
 
             <TextField
               label="Adjustment Amount"
               type="number"
-              placeholder="Enter Adjustment Amount"
+              placeholder="Enter Number"
               value={grnDetails.adjustmentAmount}
-              onChange={(e) => setGrnDetails({ ...grnDetails, adjustmentAmount: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({
+                  ...grnDetails,
+                  adjustmentAmount: e.target.value,
+                })
+              }
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
+          </div>
 
+          <div className="mt-6">
             <TextField
               label="Notes"
               value={grnDetails.notes}
-              onChange={(e) => setGrnDetails({ ...grnDetails, notes: e.target.value })}
+              onChange={(e) =>
+                setGrnDetails({ ...grnDetails, notes: e.target.value })
+              }
               fullWidth
               variant="outlined"
               multiline
-              rows={4}
+              rows={2}
               placeholder="Enter any additional notes..."
               InputLabelProps={{ shrink: true }}
               sx={{
@@ -683,31 +709,41 @@ export const AddGRNDashboard = () => {
                 },
               }}
             />
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
+        {/* Inventory Details Section */}
         {inventoryDetails.map((item, index) => (
-          <Card key={index}>
-            <CardHeader>
-              <CardTitle className="text-[#C72030] flex items-center">
-                <h2 className="bg-[#C72030] text-white rounded-full w-6 h-6 flex items-center justify-center text-lg font-semibold mr-2">
-                  2
+          <div key={index} className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between gap-2 mb-6">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm">2</span>
+                </div>
+                <h2 className="text-lg font-semibold text-[#C72030]">
+                  INVENTORY DETAILS {index + 1}
                 </h2>
-                INVENTORY DETAILS {index + 1}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Inventory Type*</InputLabel>
+                <InputLabel shrink>Inventory Type</InputLabel>
                 <MuiSelect
-                  label="Inventory Type*"
+                  label="Inventory Type"
                   value={item.inventoryType}
-                  onChange={(e) => handleInventoryChange(index, "inventoryType", e.target.value)}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "inventoryType",
+                      e.target.value
+                    )
+                  }
                   displayEmpty
                   sx={fieldStyles}
                 >
                   <MenuItem value="">
-                    <em>Select Inventory Type</em>
+                    <em>Select</em>
                   </MenuItem>
                   {inventories.map((inventory) => (
                     <MenuItem key={inventory.id} value={inventory.id}>
@@ -720,264 +756,302 @@ export const AddGRNDashboard = () => {
               <TextField
                 label="Expected Quantity*"
                 type="number"
-                placeholder="Enter Expected Quantity"
+                placeholder="Expected Quantity"
                 value={item.expectedQuantity}
-                onChange={(e) => handleInventoryChange(index, "expectedQuantity", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "expectedQuantity",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Received Quantity*"
                 type="number"
-                placeholder="Enter Received Quantity"
+                placeholder="Received Quantity"
                 value={item.receivedQuantity}
-                onChange={(e) => handleInventoryChange(index, "receivedQuantity", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "receivedQuantity",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Approved Quantity*"
                 type="number"
-                placeholder="Enter Approved Quantity"
+                placeholder="Approved Quantity"
                 value={item.approvedQuantity}
-                onChange={(e) => handleInventoryChange(index, "approvedQuantity", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "approvedQuantity",
+                    e.target.value
+                  )
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Rejected Quantity"
                 type="number"
-                placeholder="Enter Rejected Quantity"
+                placeholder="Rejected Quantity"
                 value={item.rejectedQuantity}
-                onChange={(e) => handleInventoryChange(index, "rejectedQuantity", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(
+                    index,
+                    "rejectedQuantity",
+                    e.target.value
+                  )}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
+                InputProps={{
+                  sx: { ...fieldStyles },
+                }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="Rate"
                 type="number"
-                placeholder="Enter Rate"
+                placeholder="Enter Number"
                 value={item.rate}
-                onChange={(e) => handleInventoryChange(index, "rate", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(index, "rate", e.target.value)
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="CGST Rate"
                 type="number"
-                placeholder="Enter CGST Rate"
+                placeholder="Enter Number"
                 value={item.cgstRate}
-                onChange={(e) => handleInventoryChange(index, "cgstRate", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(index, "cgstRate", e.target.value)
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="CGST Amount"
                 type="number"
-                placeholder="Calculated Amount"
+                placeholder="Enter Number"
                 value={item.cgstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="SGST Rate"
                 type="number"
-                placeholder="Enter SGST Rate"
+                placeholder="Enter Number"
                 value={item.sgstRate}
-                onChange={(e) => handleInventoryChange(index, "sgstRate", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(index, "sgstRate", e.target.value)
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="SGST Amount"
                 type="number"
-                placeholder="Calculated Amount"
+                placeholder="Enter Number"
                 value={item.sgstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="IGST Rate"
                 type="number"
-                placeholder="Enter IGST Rate"
+                placeholder="Enter Number"
                 value={item.igstRate}
-                onChange={(e) => handleInventoryChange(index, "igstRate", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(index, "igstRate", e.target.value)
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="IGST Amount"
                 type="number"
-                placeholder="Calculated Amount"
+                placeholder="Enter Number"
                 value={item.igstAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="TCS Rate"
                 type="number"
-                placeholder="Enter TCS Rate"
+                placeholder="Enter Number"
                 value={item.tcsRate}
-                onChange={(e) => handleInventoryChange(index, "tcsRate", e.target.value)}
+                onChange={(e) =>
+                  handleInventoryChange(index, "tcsRate", e.target.value)
+                }
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
                 sx={{ mt: 1 }}
-                inputProps={{ min: 0 }}
               />
 
               <TextField
                 label="TCS Amount"
                 type="number"
-                placeholder="Calculated Amount"
+                placeholder="Enter Number"
                 value={item.tcsAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Total Taxes"
                 type="number"
-                placeholder="Calculated Total Taxes"
+                placeholder="Total Amount"
                 value={item.totalTaxes}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Amount"
                 type="number"
-                placeholder="Calculated Amount"
+                placeholder="Enter Number"
                 value={item.amount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
 
               <TextField
                 label="Total Amount"
                 type="number"
-                placeholder="Calculated Total Amount"
+                placeholder="Total Amount"
                 value={item.totalAmount}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles, readOnly: true }}
+                InputProps={{
+                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                  readOnly: true,
+                }}
                 sx={{ mt: 1 }}
               />
+            </div>
 
-              <div className="col-span-1 md:col-span-4 space-y-4">
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-4">
                 <h3 className="text-md font-semibold">Batch Numbers</h3>
-                {item.batch.map((batch, batchIndex) => (
-                  <div key={batchIndex} className="flex items-center gap-4">
-                    <TextField
-                      label={`Batch ${batchIndex + 1}`}
-                      type="text"
-                      placeholder="Enter Batch Number"
-                      value={batch}
-                      onChange={(e) =>
-                        handleInventoryChange(index, "batch", e.target.value, batchIndex)
-                      }
-                      fullWidth
-                      variant="outlined"
-                      InputLabelProps={{ shrink: true }}
-                      InputProps={{ sx: fieldStyles }}
-                      sx={{ mt: 1 }}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeBatchField(index, batchIndex)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  className="bg-purple-600 hover:bg-purple-700 text-white"
-                  onClick={() => addBatchField(index)}
-                >
-                  Add Batch
-                </Button>
               </div>
-            </CardContent>
-          </Card>
+              {item.batch.map((batch, batchIndex) => (
+                <div key={batchIndex} className="flex items-center gap-4 mb-2">
+                  <TextField
+                    label={`Batch ${batchIndex + 1}`}
+                    type="text"
+                    placeholder="Enter Batch Number"
+                    value={batch}
+                    onChange={(e) =>
+                      handleInventoryChange(index, "batch", e.target.value, batchIndex)
+                    }
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => removeBatchField(index, batchIndex)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Remove
+                  </Button>
+                </div>
+              ))}
+              <Button
+                type="button"
+                className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
+                onClick={() => addBatchField(index)}
+              >
+                Add Batch
+              </Button>
+            </div>
+          </div>
         ))}
-
-        <div className="flex items-center justify-end">
-          <Button
-            className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed"
-            type="button"
-          >
-            Total Amount: {inventoryDetails
-              .reduce((sum, item) => sum + parseFloat(item.totalAmount || "0"), 0)
-              .toFixed(2)}
-          </Button>
-        </div>
 
         <Card>
           <CardHeader>

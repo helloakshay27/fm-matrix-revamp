@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { X, Plus, MapPin, List, Loader2, ArrowLeft, ListChecks } from 'lucide-react';
+import { X, Plus, MapPin, List, Loader2, ArrowLeft } from 'lucide-react';
 import { 
   FormControl, 
   InputLabel, 
@@ -16,15 +16,6 @@ import {
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 
-interface Question {
-  id: string;
-  task: string;
-  inputType: string;
-  mandatory: boolean;
-  options: string[];
-  optionsText: string;
-}
-
 interface Survey {
   id: number;
   name: string;
@@ -33,7 +24,6 @@ interface Survey {
   questions_count: number;
   active: number;
   check_type: string;
-  snag_questions?: any[];
 }
 
 interface LocationItem {
@@ -82,9 +72,6 @@ export const AddSurveyMapping = () => {
   // Survey data
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loadingSurveys, setLoadingSurveys] = useState(false);
-  
-  // Selected survey questions
-  const [selectedSurveyQuestions, setSelectedSurveyQuestions] = useState<Question[]>([]);
 
   // Location data
   const [buildings, setBuildings] = useState<LocationItem[]>([]);
@@ -308,49 +295,6 @@ export const AddSurveyMapping = () => {
   const handleSurveyChange = (mappingIndex: number, event: SelectChangeEvent<number>) => {
     const value = event.target.value as number;
     updateSurveyMapping(mappingIndex, 'surveyId', value);
-    
-    // Find the selected survey and map its questions
-    const selectedSurvey = surveys.find(survey => survey.id === value);
-    if (selectedSurvey && selectedSurvey.snag_questions) {
-      const mappedQuestions = selectedSurvey.snag_questions.map((q: any) => {
-        // Map API question types to UI input types
-        let inputType = '';
-        switch (q.qtype) {
-          case 'multiple':
-            inputType = 'multiple_choice';
-            break;
-          case 'yesno':
-            inputType = 'yes_no';
-            break;
-          case 'rating':
-            inputType = 'rating';
-            break;
-          case 'input':
-            inputType = 'text_input';
-            break;
-          case 'description':
-            inputType = 'description';
-            break;
-          case 'emoji':
-            inputType = 'emoji';
-            break;
-          default:
-            inputType = '';
-        }
-
-        return {
-          id: q.id.toString(),
-          task: q.descr,
-          inputType,
-          mandatory: !!q.quest_mandatory,
-          options: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname) : [],
-          optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: any) => opt.qname).join(', ') : ''
-        };
-      });
-      setSelectedSurveyQuestions(mappedQuestions);
-    } else {
-      setSelectedSurveyQuestions([]);
-    }
   };
 
   const handleLocationChange = (
@@ -734,117 +678,21 @@ export const AddSurveyMapping = () => {
                 </FormControl>
               </div>
 
-            
+              {/* Location Summary */}
+              <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-700 mb-2">Selected Locations Summary:</p>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <div>Buildings: {mapping.buildingIds.length}</div>
+                  <div>Wings: {mapping.wingIds.length}</div>
+                  <div>Floors: {mapping.floorIds.length}</div>
+                  <div>Areas: {mapping.areaIds.length}</div>
+                  <div>Rooms: {mapping.roomIds.length}</div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
       </Section>
-
-      {/* Survey Questions Section */}
-      {selectedSurveyQuestions.length > 0 && (
-        <Section title="Survey Questions" icon={<ListChecks className="w-3.5 h-3.5" />}>
-          <div className="space-y-4">
-            <div className="mb-4 text-sm text-gray-600">
-              Displaying questions for the selected survey. These questions will be used during survey mapping.
-            </div>
-            {selectedSurveyQuestions.map((q, idx) => (
-              <div key={q.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-                {/* First Row - Mandatory Checkbox */}
-                <div className="mb-6">
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id={`mandatory-${idx}`}
-                      checked={q.mandatory}
-                      className="w-4 h-4 text-[#C72030] bg-white border-gray-300 rounded focus:ring-[#C72030] focus:ring-2 accent-[#C72030]"
-                      disabled
-                    />
-                    <label 
-                      htmlFor={`mandatory-${idx}`}
-                      className="text-sm font-medium text-gray-700 cursor-pointer select-none"
-                    >
-                      Mandatory
-                    </label>
-                  </div>
-                </div>
-
-                {/* Second Row - Task and Input Type */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Question</InputLabel>
-                      <Select
-                        value={q.task}
-                        label="Question"
-                        notched
-                        disabled
-                        renderValue={() => q.task}
-                      >
-                        <MenuItem value={q.task}>{q.task}</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                  <div>
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Input Type</InputLabel>
-                      <Select
-                        value={q.inputType}
-                        label="Input Type"
-                        notched
-                        disabled
-                      >
-                        <MenuItem value="yes_no">Yes/No</MenuItem>
-                        <MenuItem value="multiple_choice">Multiple Choice</MenuItem>
-                        <MenuItem value="rating">Rating</MenuItem>
-                        <MenuItem value="text_input">Text Input</MenuItem>
-                        <MenuItem value="description">Description</MenuItem>
-                        <MenuItem value="emoji">Emoji</MenuItem>
-                      </Select>
-                    </FormControl>
-                  </div>
-                </div>
-
-                {/* Options for multiple choice */}
-                {q.inputType === 'multiple_choice' && (
-                  <div className="mt-4">
-                    <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                      <InputLabel shrink>Options</InputLabel>
-                      <Select
-                        value={q.optionsText || ''}
-                        label="Options"
-                        notched
-                        disabled
-                        renderValue={() => q.optionsText || 'No options'}
-                      >
-                        <MenuItem value={q.optionsText || ''}>{q.optionsText || 'No options'}</MenuItem>
-                      </Select>
-                    </FormControl>
-
-                    {/* Show parsed options preview */}
-                    {q.options && q.options.length > 0 && (
-                      <div className="mt-2 p-2 bg-gray-50 border border-gray-200 rounded text-xs">
-                        <p className="font-medium text-gray-800 mb-1">
-                          ✅ Multi-Options ({q.options.length}):
-                        </p>
-                        <div className="flex flex-wrap gap-1">
-                          {q.options.map((option, optIdx) => (
-                            <span
-                              key={optIdx}
-                              className="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-800 rounded"
-                            >
-                              {option}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
 
       <div className="flex items-center gap-3 justify-center pt-2">
         <Button

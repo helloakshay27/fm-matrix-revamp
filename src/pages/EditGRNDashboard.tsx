@@ -37,6 +37,11 @@ interface GRNDetails {
   notes: string;
 }
 
+interface Batch {
+  batch_no: string;
+  id: number;
+}
+
 interface InventoryItem {
   id: string;
   inventoryType: string;
@@ -56,7 +61,7 @@ interface InventoryItem {
   totalTaxes: string;
   amount: string;
   totalAmount: string;
-  batch: string[];
+  batch: Batch[];
 }
 
 interface Supplier {
@@ -214,7 +219,10 @@ export const EditGRNDashboard = () => {
             totalTaxes: item.taxable_value,
             amount: item.total_value,
             totalAmount: (parseFloat(item.total_value) + parseFloat(item.taxable_value)).toFixed(2),
-            batch: [],
+            batch: item.products.map((product: any) => ({
+              batch_no: product.batch_no,
+              id: product.id,
+            })) || [],
           }))
         );
 
@@ -319,7 +327,7 @@ export const EditGRNDashboard = () => {
           receivedQuantity: "",
           approvedQuantity: "",
           rejectedQuantity: "",
-          batch: item.batch || [],
+          batch: [],
         };
         return calculateInventoryTaxes(inventoryItem);
       });
@@ -341,7 +349,10 @@ export const EditGRNDashboard = () => {
       const newDetails = [...prev];
       if (field === "batch" && batchIndex !== undefined) {
         const newBatch = [...newDetails[index].batch];
-        newBatch[batchIndex] = value;
+        newBatch[batchIndex] = {
+          ...newBatch[batchIndex],
+          batch_no: value
+        };
         newDetails[index] = { ...newDetails[index], batch: newBatch };
       } else {
         newDetails[index] = { ...newDetails[index], [field]: value };
@@ -365,7 +376,7 @@ export const EditGRNDashboard = () => {
       const newDetails = [...prev];
       newDetails[index] = {
         ...newDetails[index],
-        batch: [...newDetails[index].batch, ""],
+        batch: [...newDetails[index].batch, { batch_no: "", id: 0 }],
       };
       return newDetails;
     });
@@ -550,7 +561,10 @@ export const EditGRNDashboard = () => {
           tcs_amount: item.tcsAmount,
           taxable_value: item.totalTaxes,
           total_value: item.amount,
-          pms_products_attributes: item.batch.map(batch => ({ batch_no: batch })),
+          pms_products_attributes: item.batch.map(batch => ({
+            batch_no: batch.batch_no,
+            id: batch.id,
+          })),
         })),
       },
       attachments: selectedFiles, // Only send new files
@@ -1115,7 +1129,7 @@ export const EditGRNDashboard = () => {
                     label={`Batch ${batchIndex + 1}`}
                     type="text"
                     placeholder="Enter Batch Number"
-                    value={batch}
+                    value={batch.batch_no}
                     onChange={(e) =>
                       handleInventoryChange(index, "batch", e.target.value, batchIndex)
                     }

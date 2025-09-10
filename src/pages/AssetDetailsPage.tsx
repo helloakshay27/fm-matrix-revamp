@@ -95,7 +95,7 @@ export const AssetDetailsPage = () => {
 
   const handleEditDetails = () => {
     // Navigate to the appropriate edit page based on asset type
-    if (assetType === 'WaterAsset') {
+    if (assetType === 'Water') {
       navigate(`/utility/water/edit/${id}?type=Water`);
     } else if (assetType === 'Energy') {
       navigate(`/utility/water/edit/${id}?type=Energy`);

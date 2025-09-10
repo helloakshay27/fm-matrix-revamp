@@ -109,7 +109,7 @@ export const AutoSavedPRDashboard = () => {
       <h1 className="text-2xl font-bold mb-3">Temp Requests</h1>
 
       <EnhancedTable
-        data={savedPR}
+        data={[...savedPR].reverse()}
         columns={columns}
         renderCell={renderCell}
         renderActions={renderActions}

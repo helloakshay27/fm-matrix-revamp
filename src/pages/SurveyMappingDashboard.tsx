@@ -146,6 +146,11 @@ export const SurveyMappingDashboard = () => {
     navigate(`/maintenance/survey/mapping/details/${item.id}`);
   };
 
+  const handleEditClick = (item: SurveyMapping) => {
+    console.log('Edit clicked for item:', item.id);
+    navigate(`/maintenance/survey/mapping/edit/${item.id}`);
+  };
+
   const handleAddMapping = () => {
     navigate('/maintenance/survey/mapping/add');
   };
@@ -180,6 +185,13 @@ export const SurveyMappingDashboard = () => {
               title="View"
             >
               <Eye className="w-4 h-4" />
+            </button>
+            <button 
+              onClick={() => handleEditClick(item)}
+              className="p-1 text-green-600 hover:text-green-800"
+              title="Edit"
+            >
+              <Edit className="w-4 h-4" />
             </button>
           </div>
         );

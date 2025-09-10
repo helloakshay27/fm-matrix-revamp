@@ -16,17 +16,30 @@ interface CreateShiftDialogProps {
 
 export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
   const { toast } = useToast();
-  const [fromHour, setFromHour] = useState<string>("04");
+  const [fromHour, setFromHour] = useState<string>("12");
   const [fromMinute, setFromMinute] = useState<string>("00");
+  const [fromAmPm, setFromAmPm] = useState<string>("AM");
   const [toHour, setToHour] = useState<string>("12");
   const [toMinute, setToMinute] = useState<string>("00");
+  const [toAmPm, setToAmPm] = useState<string>("AM");
   const [checkInMargin, setCheckInMargin] = useState<boolean>(false);
   const [hourMargin, setHourMargin] = useState<string>("00");
   const [minMargin, setMinMargin] = useState<string>("00");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+  // Convert 12-hour to 24-hour format
+  const convertTo24Hour = (hour: string, ampm: string) => {
+    let hourNum = parseInt(hour);
+    if (ampm === 'AM' && hourNum === 12) {
+      hourNum = 0;
+    } else if (ampm === 'PM' && hourNum !== 12) {
+      hourNum += 12;
+    }
+    return String(hourNum).padStart(2, '0');
+  };
 
   const validateForm = () => {
     if (!fromHour || !fromMinute || !toHour || !toMinute) {
@@ -38,10 +51,12 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
       return false;
     }
 
-    const fromTime = parseInt(fromHour) * 60 + parseInt(fromMinute);
-    const toTime = parseInt(toHour) * 60 + parseInt(toMinute);
+    const fromTime24 = convertTo24Hour(fromHour, fromAmPm);
+    const toTime24 = convertTo24Hour(toHour, toAmPm);
+    const fromTimeMinutes = parseInt(fromTime24) * 60 + parseInt(fromMinute);
+    const toTimeMinutes = parseInt(toTime24) * 60 + parseInt(toMinute);
 
-    if (fromTime >= toTime) {
+    if (fromTimeMinutes >= toTimeMinutes) {
       toast({
         title: "Validation Error",
         description: "End time must be after start time",
@@ -58,18 +73,24 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
     
     setIsSubmitting(true);
 
-    // Build API payload similar to AddShiftModal
+    // Convert to 24-hour format for API
+    const startHour24 = convertTo24Hour(fromHour, fromAmPm);
+    const endHour24 = convertTo24Hour(toHour, toAmPm);
+
+    // Build API payload
     const payload = {
       user_shift: {
-        start_hour: fromHour,
+        start_hour: startHour24,
         start_min: fromMinute,
-        end_hour: toHour,
+        end_hour: endHour24,
         end_min: toMinute,
         hour_margin: checkInMargin ? hourMargin : '00',
         min_margin: checkInMargin ? minMargin : '00'
       },
       check_in_margin: checkInMargin
     };
+
+    console.log('Create shift payload:', payload);
 
     try {
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts.json`, {
@@ -110,10 +131,12 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   };
 
   const resetForm = () => {
-    setFromHour("04");
+    setFromHour("12");
     setFromMinute("00");
+    setFromAmPm("AM");
     setToHour("12");
     setToMinute("00");
+    setToAmPm("AM");
     setCheckInMargin(false);
     setHourMargin("00");
     setMinMargin("00");
@@ -153,7 +176,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
                 <SelectContent className="bg-white max-h-60 rounded-none">
-                  {hours.map((hour) => (
+                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
                     </SelectItem>
@@ -173,7 +196,15 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
                   ))}
                 </SelectContent>
               </Select>
-       
+              <Select value={fromAmPm} onValueChange={setFromAmPm}>
+                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                  <SelectValue placeholder="AM" />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-none">
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -188,7 +219,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
                 <SelectContent className="bg-white max-h-60 rounded-none">
-                  {hours.map((hour) => (
+                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
                     </SelectItem>
@@ -208,7 +239,15 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
                   ))}
                 </SelectContent>
               </Select>
-            
+              <Select value={toAmPm} onValueChange={setToAmPm}>
+                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                  <SelectValue placeholder="AM" />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-none">
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -229,36 +268,38 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
             </div>
             
             {checkInMargin && (
-              <div className="flex gap-4 ml-6">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Hour Margin</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Margin Time
+                </label>
+                <div className="flex gap-2 items-center">
                   <Select value={hourMargin} onValueChange={setHourMargin}>
                     <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                      <SelectValue />
+                      <SelectValue placeholder="0" />
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-60 rounded-none">
-                      {hours.map((hour) => (
+                      {Array.from({ length: 13 }, (_, i) => String(i)).map((hour) => (
                         <SelectItem key={hour} value={hour}>
                           {hour}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-1">Minute Margin</label>
+                  <span className="text-sm text-gray-500">hours</span>
+                  
                   <Select value={minMargin} onValueChange={setMinMargin}>
                     <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                      <SelectValue />
+                      <SelectValue placeholder="0" />
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-60 rounded-none">
-                      {minutes.map((minute) => (
+                      {Array.from({ length: 60 }, (_, i) => String(i)).map((minute) => (
                         <SelectItem key={minute} value={minute}>
                           {minute}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  <span className="text-sm text-gray-500">minutes</span>
                 </div>
               </div>
             )}

@@ -17,7 +17,8 @@ import {
   BarChart,
   UserRoundPen, DoorOpen,
   Ticket, PackagePlus,
-  FolderTree
+  FolderTree,
+  Wallet
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -395,7 +396,7 @@ const modulesByPackage = {
       href: '/maintenance/msafe-detail-report',
     },
 
-        { name: 'PDF Download', icon: Download, href: '/maintenance/pdf-download' },
+    { name: 'PDF Download', icon: Download, href: '/maintenance/pdf-download' },
 
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
@@ -474,7 +475,13 @@ const modulesByPackage = {
     { name: 'Broadcast', icon: Bell, href: '/crm/broadcast' },
     { name: 'Groups', icon: Users, href: '/crm/groups' },
     { name: 'Polls', icon: BarChart3, href: '/crm/polls' },
-    { name: 'Campaign', icon: Target, href: '/crm/campaign' }
+    { name: 'Campaign', icon: Target, href: '/crm/campaign' },
+    {
+      name: 'Wallet', icon: Wallet, subItems: [
+        { name: 'Wallet List', href: '/crm/wallet-list' },
+        { name: 'Point Expiry', href: '/crm/point-expiry' },
+      ]
+    },
   ],
   'Utility': [
     { name: 'Energy', icon: Zap, href: '/utility/energy' },

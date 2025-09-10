@@ -27,15 +27,42 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
   const { toast } = useToast();
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
+  const [fromAmPm, setFromAmPm] = useState<string>("AM");
   const [toHour, setToHour] = useState<string>("");
   const [toMinute, setToMinute] = useState<string>("");
+  const [toAmPm, setToAmPm] = useState<string>("AM");
   const [checkInMargin, setCheckInMargin] = useState<boolean>(false);
   const [hourMargin, setHourMargin] = useState<string>("0");
-  const [minMargin, setMinMargin] = useState<string>("30");
+  const [minMargin, setMinMargin] = useState<string>("0");
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const hours = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'));
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
   const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+
+  // Convert 24-hour to 12-hour format for display
+  const convertTo12Hour = (hour24: string) => {
+    const hourNum = parseInt(hour24);
+    if (hourNum === 0) {
+      return { hour: '12', ampm: 'AM' };
+    } else if (hourNum === 12) {
+      return { hour: '12', ampm: 'PM' };
+    } else if (hourNum < 12) {
+      return { hour: String(hourNum).padStart(2, '0'), ampm: 'AM' };
+    } else {
+      return { hour: String(hourNum - 12).padStart(2, '0'), ampm: 'PM' };
+    }
+  };
+
+  // Convert 12-hour to 24-hour format for API
+  const convertTo24Hour = (hour: string, ampm: string) => {
+    let hourNum = parseInt(hour);
+    if (ampm === 'AM' && hourNum === 12) {
+      hourNum = 0;
+    } else if (ampm === 'PM' && hourNum !== 12) {
+      hourNum += 12;
+    }
+    return String(hourNum).padStart(2, '0');
+  };
 
   // Parse shift timings when dialog opens
   useEffect(() => {
@@ -46,22 +73,29 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
         const fromTime = timingParts[0].trim();
         const toTime = timingParts[1].trim();
         
-        // Convert from 12-hour to 24-hour format
+        // Parse time with AM/PM
         const parseTime = (timeStr: string) => {
-          const [time, period] = timeStr.split(' ');
-          const [hours, minutes] = time.split(':');
-          let hour24 = parseInt(hours);
-          
-          if (period === 'PM' && hour24 !== 12) {
-            hour24 += 12;
-          } else if (period === 'AM' && hour24 === 12) {
-            hour24 = 0;
+          const parts = timeStr.split(' ');
+          if (parts.length === 2) {
+            // Format: "08:00 AM"
+            const [time, period] = parts;
+            const [hours, minutes] = time.split(':');
+            return {
+              hour: hours.padStart(2, '0'),
+              minute: minutes,
+              ampm: period
+            };
+          } else {
+            // Format: "08:00" (assume 24-hour format)
+            const [hours, minutes] = timeStr.split(':');
+            const hour24 = hours.padStart(2, '0');
+            const converted = convertTo12Hour(hour24);
+            return {
+              hour: converted.hour,
+              minute: minutes,
+              ampm: converted.ampm
+            };
           }
-          
-          return {
-            hour: String(hour24).padStart(2, '0'),
-            minute: minutes
-          };
         };
         
         const fromParsed = parseTime(fromTime);
@@ -69,24 +103,26 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
         
         setFromHour(fromParsed.hour);
         setFromMinute(fromParsed.minute);
+        setFromAmPm(fromParsed.ampm);
         setToHour(toParsed.hour);
         setToMinute(toParsed.minute);
+        setToAmPm(toParsed.ampm);
       }
       
-      // Set check in margin based on the value
-      const hasMargin = shift.checkInMargin !== "0h0m";
+      // Parse check in margin - handle formats like "3h:0m", "3h0m", "0h:0m"
+      const hasMargin = shift.checkInMargin && shift.checkInMargin !== "0h:0m" && shift.checkInMargin !== "0h0m";
       setCheckInMargin(hasMargin);
       
-      // Parse margin if it exists (e.g., "3h0m" -> hour: "3", min: "0")
       if (hasMargin && shift.checkInMargin) {
-        const marginMatch = shift.checkInMargin.match(/(\d+)h(\d+)m/);
+        // Handle multiple formats: "3h:0m", "3h0m", "1h:30m"
+        const marginMatch = shift.checkInMargin.match(/(\d+)h:?(\d+)m?/);
         if (marginMatch) {
           setHourMargin(marginMatch[1]);
           setMinMargin(marginMatch[2]);
         }
       } else {
         setHourMargin("0");
-        setMinMargin("30");
+        setMinMargin("0");
       }
     }
   }, [shift, open]);
@@ -101,17 +137,19 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
       return false;
     }
 
-    const fromTime = parseInt(fromHour) * 60 + parseInt(fromMinute);
-    const toTime = parseInt(toHour) * 60 + parseInt(toMinute);
+    const fromTime24 = convertTo24Hour(fromHour, fromAmPm);
+    const toTime24 = convertTo24Hour(toHour, toAmPm);
+    const fromTimeMinutes = parseInt(fromTime24) * 60 + parseInt(fromMinute);
+    const toTimeMinutes = parseInt(toTime24) * 60 + parseInt(toMinute);
 
-    if (fromTime >= toTime) {
-      toast({
-        title: "Validation Error",
-        description: "End time must be after start time",
-        variant: "destructive",
-      });
-      return false;
-    }
+    // if (fromTimeMinutes >= toTimeMinutes) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "End time must be after start time",
+    //     variant: "destructive",
+    //   });
+    //   return false;
+    // }
 
     return true;
   };
@@ -121,21 +159,25 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
     
     setIsLoading(true);
 
+    // Convert to 24-hour format for API
+    const startHour24 = convertTo24Hour(fromHour, fromAmPm);
+    const endHour24 = convertTo24Hour(toHour, toAmPm);
+
     try {
       // Prepare the payload according to the API format
       const payload = {
         user_shift: {
-          start_hour: fromHour.padStart(2, '0'),
+          start_hour: startHour24,
           start_min: fromMinute.padStart(2, '0'),
-          end_hour: toHour.padStart(2, '0'),
+          end_hour: endHour24,
           end_min: toMinute.padStart(2, '0'),
-          hour_margin: checkInMargin ? (hourMargin === "0" ? "" : hourMargin.padStart(2, '0')) : "",
-          min_margin: checkInMargin ? minMargin.padStart(2, '0') : ""
+          hour_margin: checkInMargin ? hourMargin.padStart(2, '0') : "00",
+          min_margin: checkInMargin ? minMargin.padStart(2, '0') : "00"
         },
-        check_in_margin: checkInMargin ? "true" : "false"
+        check_in_margin: checkInMargin
       };
 
-      console.log('🎯 API Payload:', JSON.stringify(payload, null, 2));
+      console.log('🎯 Edit API Payload:', JSON.stringify(payload, null, 2));
 
       // Make the API call
       const response = await fetch(`${API_CONFIG.BASE_URL}/pms/admin/user_shifts/${shift.id}.json`, {
@@ -186,11 +228,13 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
     // Reset form when closing
     setFromHour("");
     setFromMinute("");
+    setFromAmPm("AM");
     setToHour("");
     setToMinute("");
+    setToAmPm("AM");
     setCheckInMargin(false);
     setHourMargin("0");
-    setMinMargin("30");
+    setMinMargin("0");
   };
 
   return (
@@ -222,7 +266,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
                 <SelectContent className="bg-white max-h-60 rounded-none">
-                  {hours.map((hour) => (
+                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
                     </SelectItem>
@@ -242,7 +286,15 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                   ))}
                 </SelectContent>
               </Select>
-             
+              <Select value={fromAmPm} onValueChange={setFromAmPm} disabled={isLoading}>
+                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                  <SelectValue placeholder="AM" />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-none">
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -257,7 +309,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                   <SelectValue placeholder="HH" />
                 </SelectTrigger>
                 <SelectContent className="bg-white max-h-60 rounded-none">
-                  {hours.map((hour) => (
+                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
                     <SelectItem key={hour} value={hour}>
                       {hour}
                     </SelectItem>
@@ -277,7 +329,15 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                   ))}
                 </SelectContent>
               </Select>
-           
+              <Select value={toAmPm} onValueChange={setToAmPm} disabled={isLoading}>
+                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
+                  <SelectValue placeholder="AM" />
+                </SelectTrigger>
+                <SelectContent className="bg-white rounded-none">
+                  <SelectItem value="AM">AM</SelectItem>
+                  <SelectItem value="PM">PM</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -310,10 +370,9 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                       <SelectValue placeholder="0" />
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-60 rounded-none">
-                      <SelectItem value="0">0</SelectItem>
-                      {hours.slice(0, 12).map((hour) => (
+                      {Array.from({ length: 13 }, (_, i) => String(i)).map((hour) => (
                         <SelectItem key={hour} value={hour}>
-                          {parseInt(hour)}
+                          {hour}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -322,10 +381,10 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
                   
                   <Select value={minMargin} onValueChange={setMinMargin} disabled={isLoading}>
                     <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                      <SelectValue placeholder="30" />
+                      <SelectValue placeholder="0" />
                     </SelectTrigger>
                     <SelectContent className="bg-white max-h-60 rounded-none">
-                      {['0', '15', '30', '45'].map((minute) => (
+                      {Array.from({ length: 60 }, (_, i) => String(i)).map((minute) => (
                         <SelectItem key={minute} value={minute}>
                           {minute}
                         </SelectItem>

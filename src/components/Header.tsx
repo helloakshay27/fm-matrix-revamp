@@ -66,7 +66,7 @@ export const Header = () => {
 
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
-  const isViSite = hostname.includes('web.gophygital.work');
+  const isViSite = hostname.includes('vi-web.gophygital.work');
 
 
   const navigate = useNavigate();

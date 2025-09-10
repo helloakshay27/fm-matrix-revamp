@@ -119,7 +119,7 @@ const columns: ColumnConfig[] = [
   { key: 'rate', label: 'Rate', sortable: true, defaultVisible: true },
   { key: 'amount', label: 'Amount', sortable: true, defaultVisible: true },
   { key: 'approved_qty', label: 'Approved Qty', sortable: true, defaultVisible: true },
-  { key: 'transfer_qty', label: 'Transfer Qty', sortable: true, defaultVisible: true },
+  // { key: 'transfer_qty', label: 'Transfer Qty', sortable: true, defaultVisible: true },
   { key: 'wbs_code', label: 'Wbs Code', sortable: true, defaultVisible: true },
 ];
 
