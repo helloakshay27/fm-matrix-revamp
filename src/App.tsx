@@ -706,6 +706,7 @@ import { InvoiceFeeds } from "./pages/InvoiceFeeds";
 import EditApprovalMatrixPage from "./pages/settings/EditApprovalMatrixPage";
 import AllContent from "./components/fm-pdf/AllContent";
 import PDFDownloadPage from "./components/PDFDownloadPage";
+import PermissionDemo from "./components/PermissionDemo";
 
 const queryClient = new QueryClient();
 
@@ -762,7 +763,6 @@ function App() {
           <EnhancedSelectProvider>
             <LayoutProvider>
               <PermissionsProvider>
-
                 <Routes>
                   {/* Login Route */}
                   <Route path="/thepdf" element={<AllContent />} />
@@ -817,6 +817,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+                  <Route path="/PermissionDemo" element={<PermissionDemo />} />
 
                   <Route
                     path="/tickets"
@@ -826,8 +827,6 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-
-
 
                   <Route
                     path="/tickets/add"
