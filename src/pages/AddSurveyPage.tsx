@@ -442,6 +442,46 @@ export const AddSurveyPage = () => {
       }
     }
 
+    // Validate questions
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+      if (!question.text.trim()) {
+        toast.error("Validation Error", {
+          description: `Please enter text for Question ${i + 1}`,
+          duration: 3000,
+        });
+        return;
+      }
+      if (!question.answerType) {
+        toast.error("Validation Error", {
+          description: `Please select an answer type for Question ${i + 1}`,
+          duration: 3000,
+        });
+        return;
+      }
+      
+      // Check if multiple choice questions have at least one option with text
+      if (question.answerType === "multiple-choice") {
+        if (!question.answerOptions || question.answerOptions.length === 0) {
+          toast.error("Validation Error", {
+            description: `Please add at least one option for Question ${i + 1}`,
+            duration: 3000,
+          });
+          return;
+        }
+        // Check if all options have text
+        for (let j = 0; j < question.answerOptions.length; j++) {
+          if (!question.answerOptions[j].text.trim()) {
+            toast.error("Validation Error", {
+              description: `Please enter text for option ${j + 1} in Question ${i + 1}`,
+              duration: 3000,
+            });
+            return;
+          }
+        }
+      }
+    }
+
     // if (questions.some(q => !q.text.trim())) {
     //   alert('Please fill in all question texts');
     //   return;
@@ -671,7 +711,7 @@ export const AddSurveyPage = () => {
               >
                 <ClipboardList size={16} color="#C72030" />
               </span>
-              Question Details
+              Question Setup
             </h2>
           </div>
           <div className="p-6">
@@ -694,13 +734,17 @@ export const AddSurveyPage = () => {
               </FormControl> */}
 
               <TextField
-                label="Title *"
+                label="Title"
                 placeholder="Enter the title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 fullWidth
                 variant="outlined"
-                InputLabelProps={{ shrink: true }}
+                required
+                InputLabelProps={{ 
+                  shrink: true,
+                  sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                }}
                 InputProps={{ sx: fieldStyles }}
               />
 
@@ -708,7 +752,10 @@ export const AddSurveyPage = () => {
                 fullWidth
                 variant="outlined"
                 required
-                sx={{ "& .MuiInputBase-root": fieldStyles }}
+                sx={{ 
+                  "& .MuiInputBase-root": fieldStyles,
+                  "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                }}
               >
                 <InputLabel shrink>Check Type</InputLabel>
                 <MuiSelect
@@ -751,7 +798,10 @@ export const AddSurveyPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  sx={{ 
+                    "& .MuiInputBase-root": fieldStyles,
+                    "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                  }}
                 >
                   <InputLabel shrink>Ticket Category</InputLabel>
                   <MuiSelect
@@ -780,7 +830,10 @@ export const AddSurveyPage = () => {
                   fullWidth
                   variant="outlined"
                   required
-                  sx={{ "& .MuiInputBase-root": fieldStyles }}
+                  sx={{ 
+                    "& .MuiInputBase-root": fieldStyles,
+                    "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                  }}
                 >
                   <InputLabel shrink>Assign To</InputLabel>
                   <MuiSelect
@@ -833,13 +886,13 @@ export const AddSurveyPage = () => {
                   : "grid-cols-1 md:grid-cols-2"
               }`}
             >
-              {questions.map((question) => (
+              {questions.map((question, index) => (
                 <div
                   key={question.id}
                   className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-800">New Question</h3>
+                    <h3 className="font-medium text-gray-800">Question {index + 1}</h3>
                     {questions.length > 1 && (
                       <Button
                         onClick={() => handleRemoveQuestion(question.id)}
@@ -861,15 +914,23 @@ export const AddSurveyPage = () => {
                     }
                     fullWidth
                     variant="outlined"
-                    multiline
-                    InputLabelProps={{ shrink: true }}
+                    
+                    required
+                    InputLabelProps={{ 
+                      shrink: true,
+                      sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                    }}
                     InputProps={{ sx: textareaStyles }}
                   />
 
                   <FormControl
                     fullWidth
                     variant="outlined"
-                    sx={{ "& .MuiInputBase-root": fieldStyles }}
+                    required
+                    sx={{ 
+                      "& .MuiInputBase-root": fieldStyles,
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    }}
                   >
                     <InputLabel shrink>Answer Type</InputLabel>
                     <MuiSelect
@@ -1174,28 +1235,78 @@ export const AddSurveyPage = () => {
                                   </>
                                 )}
 
-                                {/* File names list with remove option */}
+                                {/* File thumbnails and names list */}
                                 {field.files.length > 0 && (
-                                  <div className="col-span-full space-y-1 mt-2">
-                                    {field.files.map((file, fileIndex) => (
-                                      <div
-                                        key={`${file.name}-${file.lastModified}`}
-                                        className="flex items-center justify-between p-2 bg-gray-100 rounded text-xs"
-                                      >
-                                        <span className="truncate flex-1 mr-2">{file.name}</span>
-                                        <span className="text-gray-500 mr-2">
-                                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                                        </span>
-                                        <button
-                                          type="button"
-                                          className="text-gray-600 hover:text-red-600"
-                                          onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
-                                          disabled={isSubmitting}
-                                        >
-                                          <X className="w-3 h-3" />
-                                        </button>
-                                      </div>
-                                    ))}
+                                  <div className="col-span-full space-y-2 mt-2">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                                      {field.files.map((file, fileIndex) => {
+                                        const isImage = file.type.startsWith('image/');
+                                        const isPdf = file.type === 'application/pdf';
+                                        const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                                        const fileURL = isImage ? URL.createObjectURL(file) : null;
+                                        
+                                        return (
+                                          <div
+                                            key={`${file.name}-${file.lastModified}`}
+                                            className="relative group border border-gray-200 rounded-lg p-2 bg-gray-50 hover:bg-gray-100 transition-colors"
+                                          >
+                                            {/* Thumbnail */}
+                                            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-2">
+                                              {isImage && fileURL ? (
+                                                <img
+                                                  src={fileURL}
+                                                  alt={file.name}
+                                                  className="w-full h-full object-cover rounded border"
+                                                  onLoad={() => URL.revokeObjectURL(fileURL)}
+                                                />
+                                              ) : isPdf ? (
+                                                <div className="w-full h-full flex items-center justify-center border rounded text-red-600 bg-white">
+                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
+                                                    <path d="M14 2v6h6"/>
+                                                  </svg>
+                                                </div>
+                                              ) : isExcel ? (
+                                                <div className="w-full h-full flex items-center justify-center border rounded text-green-600 bg-white">
+                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                    <rect width="20" height="20" x="2" y="2" rx="2"/>
+                                                    <path d="M8 11h8M8 15h8"/>
+                                                  </svg>
+                                                </div>
+                                              ) : (
+                                                <div className="w-full h-full flex items-center justify-center border rounded text-gray-600 bg-white">
+                                                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                                    <path d="M4 4v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6H6c-1.1 0-2 .9-2 2z"/>
+                                                    <path d="M14 2v6h6"/>
+                                                  </svg>
+                                                </div>
+                                              )}
+                                            </div>
+                                            
+                                            {/* File info */}
+                                            <div className="text-center">
+                                              <p className="text-xs text-gray-700 truncate" title={file.name}>
+                                                {file.name}
+                                              </p>
+                                              <p className="text-xs text-gray-500">
+                                                {(file.size / 1024 / 1024).toFixed(2)} MB
+                                              </p>
+                                            </div>
+                                            
+                                            {/* Remove button */}
+                                            <button
+                                              type="button"
+                                              className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                                              onClick={() => removeAdditionalFieldFile(question.id, fieldIndex, fileIndex)}
+                                              disabled={isSubmitting}
+                                              title="Remove file"
+                                            >
+                                              <X className="w-3 h-3" />
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
                                   </div>
                                 )}
                               </div>
