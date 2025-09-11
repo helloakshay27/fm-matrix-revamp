@@ -245,7 +245,7 @@ export const ExternalUsersDashboard = () => {
     { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true },
     { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
-    { key: 'department', label: 'Department', sortable: true, hideable: true },
+    { key: 'department', label: 'Department/Function', sortable: true, hideable: true },
     { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
     { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
     { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
