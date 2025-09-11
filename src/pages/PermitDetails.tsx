@@ -278,6 +278,11 @@ export const PermitDetails = () => {
     const [extendReason, setExtendReason] = useState("");
     const [extendDate, setExtendDate] = useState("");
     const [extendAttachments, setExtendAttachments] = useState<FileList | null>(null);
+
+    // Upload JSA form states
+    const [jsaUploadModalOpen, setJsaUploadModalOpen] = useState(false);
+    const [jsaAttachments, setJsaAttachments] = useState<File[]>([]);
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Check if we came from pending approvals page
@@ -510,6 +515,85 @@ export const PermitDetails = () => {
         }
     };
 
+    // Handle JSA file upload
+    const handleJsaUpload = async (e) => {
+        e.stopPropagation();
+        if (jsaAttachments.length === 0) {
+            toast.error("Please attach at least one file.");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const formData = new FormData();
+            jsaAttachments.forEach((file, index) => {
+                formData.append(`attachments[]`, file);
+
+            });
+            formData.append('pms_permit[id]', id || '');
+            // Use API_CONFIG to ensure consistent URL construction
+            // This avoids path issues by using the full base URL
+            // const baseUrl = API_CONFIG.BASE_URL;
+            // const token = API_CONFIG.TOKEN;
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+
+            if (!baseUrl || !token) {
+                throw new Error('Base URL or token not found');
+            }
+
+            // Construct the full URL using the base URL to avoid path concatenation issues
+            const url = `https://${baseUrl}/pms/permits/${id}.json`;
+            console.log('Uploading JSA to URL:', url);
+
+            const response = await fetch(url, {
+                method: 'PUT',
+                headers: {
+                    Authorization: `Bearer ${token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to upload attachments: ${response.status} ${response.statusText}`);
+            }
+
+            // const result = await response.json();
+            toast.success('JSA/Form uploaded successfully');
+            setJsaUploadModalOpen(false);
+            setJsaAttachments([]);
+
+            // Refresh permit data to show updated attachments
+            if (id) {
+                try {
+                    // Call handleRefresh instead to use the established refresh logic
+                    await handleRefresh();
+                    console.log("Permit data refreshed successfully after upload");
+                } catch (refreshError) {
+                    console.error('Error refreshing permit data after upload:', refreshError);
+                }
+            }
+        } catch (error) {
+            console.error('Error uploading JSA:', error);
+            toast.error('Failed to upload files. Please try again.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    // Handle file selection for JSA uploads
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setJsaAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    // Handle removing a file from the list
+    const handleRemoveFile = (index: number) => {
+        setJsaAttachments(prev => prev.filter((_, i) => i !== index));
+    };
+
     // Fetch permit details on component mount
     useEffect(() => {
         if (!id) {
@@ -625,6 +709,54 @@ export const PermitDetails = () => {
         }
     };
 
+    // Handle print JSA
+    const handlePrintJSA = async () => {
+        if (!id) {
+            toast.error('Permit ID is required');
+            return;
+        }
+
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            if (!baseUrl || !token) {
+                throw new Error("Base URL or token not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permits/${id}/print_pdf`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `permit-${id}-jsa.pdf`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                toast.success('JSA PDF downloaded successfully');
+            } else {
+                console.error('Failed to download JSA PDF:', response.status, response.statusText);
+                toast.error('Failed to download JSA PDF');
+            }
+        } catch (error) {
+            console.error('Error downloading JSA PDF:', error);
+            toast.error('Error downloading JSA PDF');
+        }
+    };
+
     // Handle refresh
     const handleRefresh = async () => {
         if (!id) return;
@@ -722,6 +854,17 @@ export const PermitDetails = () => {
                             Edit
                         </Button>
                     )}
+                    {permitData.show_extend_button && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setActiveSection("permit-extension")}
+                            className="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+                        >
+                            <Clock className="w-4 h-4 mr-2" />
+                            Extend Permit
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -757,7 +900,7 @@ export const PermitDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/safety/permit/upload-jsa/${id}`)}
+                            onClick={() => setJsaUploadModalOpen(true)}
                             className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
                         >
                             <Upload className="w-4 h-4 mr-2" />
@@ -779,7 +922,7 @@ export const PermitDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {/* Add print JSA functionality */ }}
+                            onClick={handlePrintJSA}
                             className="bg-green-700 hover:bg-green-800 text-white border-green-700"
                         >
                             <FileText className="w-4 h-4 mr-2" />
@@ -1687,6 +1830,86 @@ export const PermitDetails = () => {
                 title={`Add Comment to Permit ${permitData?.permit.reference_number || permitData?.permit.id}`}
                 isSubmitting={isAddingComment}
             />
+
+            {/* Upload JSA/Form Modal */}
+            <Dialog open={jsaUploadModalOpen} onOpenChange={setJsaUploadModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex justify-between items-center">
+                            Upload JSA/Form
+                            <button
+                                onClick={() => setJsaUploadModalOpen(false)}
+                                className="rounded-full p-1 hover:bg-gray-200"
+                            >
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium mb-1">
+                                Attachment<span className="text-red-500">*</span>
+                            </label>
+
+                            <div className="space-y-2 mb-4">
+                                {jsaAttachments.map((file, index) => (
+                                    <div key={index} className="flex items-center justify-between p-2 border rounded">
+                                        <span className="text-sm truncate">{file.name}</span>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-red-500 h-8 w-8 p-0"
+                                            onClick={() => handleRemoveFile(index)}
+                                        >
+                                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                            </svg>
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="mt-2">
+                                <Button
+                                    variant="outline"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
+                                >
+                                    <label className="cursor-pointer flex items-center">
+                                        <Upload className="w-4 h-4 mr-2" />
+                                        <span>+ Attach file</span>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            onChange={handleFileChange}
+                                        />
+                                    </label>
+                                </Button>
+                                <div className="mt-1 text-xs text-gray-500">
+                                    {jsaAttachments.length > 0 ? `${jsaAttachments.length} file(s) selected` : 'No file chosen'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            onClick={() => setJsaUploadModalOpen(false)}
+                            variant="outline"
+                            className="mr-2"
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleJsaUpload}
+                            className="bg-purple-600 hover:bg-purple-700"
+                            disabled={jsaAttachments.length === 0 || isUploading}
+                        >
+                            {isUploading ? 'Uploading...' : 'Submit'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
             {/* Reject Permit Dialog */}
             <Dialog open={openRejectDialog} onOpenChange={setOpenRejectDialog}>
