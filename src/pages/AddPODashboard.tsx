@@ -676,6 +676,7 @@ export const AddPODashboard = () => {
                     })
                   }
                   fullWidth
+                  type="number"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -692,6 +693,7 @@ export const AddPODashboard = () => {
                     })
                   }
                   fullWidth
+                  type="number"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -708,6 +710,7 @@ export const AddPODashboard = () => {
                     })
                   }
                   fullWidth
+                  type="number"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -725,6 +728,7 @@ export const AddPODashboard = () => {
                   }
                   fullWidth
                   variant="outlined"
+                  type="number"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
                   sx={{ mt: 1 }}
@@ -740,6 +744,7 @@ export const AddPODashboard = () => {
                     })
                   }
                   fullWidth
+                  type="number"
                   variant="outlined"
                   InputLabelProps={{ shrink: true }}
                   InputProps={{ sx: fieldStyles }}
@@ -855,6 +860,7 @@ export const AddPODashboard = () => {
                         }
                         fullWidth
                         variant="outlined"
+                        type="number"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -904,6 +910,7 @@ export const AddPODashboard = () => {
                         }
                         fullWidth
                         variant="outlined"
+                        type="number"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -917,6 +924,7 @@ export const AddPODashboard = () => {
                         }
                         fullWidth
                         variant="outlined"
+                        type="number"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -935,6 +943,7 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="SGST Rate"
+                        type="number"
                         value={item.sgstRate}
                         onChange={(e) =>
                           updateItem(item.id, "sgstRate", e.target.value)
@@ -959,6 +968,7 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="IGST Rate"
+                        type="number"
                         value={item.igstRate}
                         onChange={(e) =>
                           updateItem(item.id, "igstRate", e.target.value)
@@ -983,6 +993,7 @@ export const AddPODashboard = () => {
 
                       <TextField
                         label="TCS Rate"
+                        type="number"
                         value={item.tcsRate}
                         onChange={(e) =>
                           updateItem(item.id, "tcsRate", e.target.value)

@@ -139,6 +139,50 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
     loadStatusData();
   }, [status, open, form]);
 
+  const handleUpdateSubmit = async () => {
+    if (!status) return;
+
+    // Get form values directly from the form inputs
+    const statusNameInput = document.querySelector('#edit-status-name') as HTMLInputElement;
+    const positionInput = document.querySelector('#edit-position') as HTMLInputElement;
+    const colorCodeInput = document.querySelector('#edit-color-code') as HTMLInputElement;
+    const fixedStateValue = form.getValues('fixedState');
+    const emailValue = form.getValues('email');
+    
+    // Check for required fields with specific messages
+    if (!statusNameInput?.value?.trim()) {
+      toast.error('Please enter a status name');
+      return;
+    }
+    
+    if (!fixedStateValue) {
+      toast.error('Please select a fixed state');
+      return;
+    }
+    
+    if (!colorCodeInput?.value?.trim()) {
+      toast.error('Please enter a color code');
+      return;
+    }
+    
+    if (!positionInput?.value?.trim()) {
+      toast.error('Please enter an order number');
+      return;
+    }
+
+    // Get the form data
+    const data: StatusFormData = {
+      name: statusNameInput.value.trim(),
+      fixedState: fixedStateValue,
+      colorCode: colorCodeInput.value.trim(),
+      position: parseInt(positionInput.value) || 0,
+      email: emailValue || false,
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: StatusFormData) => {
     if (!status) return;
 
@@ -189,7 +233,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -198,7 +242,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
                     <FormItem>
                       <FormLabel>Status<span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter status name" {...field} />
+                        <Input id="edit-status-name" placeholder="Enter status name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -213,6 +257,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
                       <FormLabel>Order<span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input
+                          id="edit-position"
                           type="number"
                           placeholder="Enter order"
                           {...field}
@@ -265,6 +310,7 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
                           className="w-16 h-10 border border-gray-300 rounded cursor-pointer"
                         />
                         <Input
+                          id="edit-color-code"
                           placeholder="#000000"
                           {...field}
                           className="flex-1"
@@ -302,14 +348,14 @@ export const EditStatusModal: React.FC<EditStatusModalProps> = ({
                   Cancel
                 </Button>
                 <Button 
-                  type="submit" 
+                  onClick={handleUpdateSubmit}
                   disabled={isSubmitting || isLoading}
                   className="bg-[#C72030] hover:bg-[#C72030]/90"
                 >
                   {isSubmitting ? 'Updating...' : 'Update'}
                 </Button>
               </div>
-            </form>
+            </div>
           </Form>
         )}
       </DialogContent>

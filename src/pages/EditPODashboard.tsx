@@ -659,6 +659,7 @@ export const EditPODashboard = () => {
                                         })
                                     }
                                     fullWidth
+                                    type="number"
                                     variant="outlined"
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}
@@ -675,6 +676,7 @@ export const EditPODashboard = () => {
                                         })
                                     }
                                     fullWidth
+                                    type="number"
                                     variant="outlined"
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}
@@ -691,6 +693,7 @@ export const EditPODashboard = () => {
                                         })
                                     }
                                     fullWidth
+                                    type="number"
                                     variant="outlined"
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}
@@ -707,6 +710,7 @@ export const EditPODashboard = () => {
                                         })
                                     }
                                     fullWidth
+                                    type="number"
                                     variant="outlined"
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}
@@ -723,6 +727,7 @@ export const EditPODashboard = () => {
                                         })
                                     }
                                     fullWidth
+                                    type="number"
                                     variant="outlined"
                                     InputLabelProps={{ shrink: true }}
                                     InputProps={{ sx: fieldStyles }}
@@ -837,6 +842,7 @@ export const EditPODashboard = () => {
                                                     updateItem(item.id, "quantity", e.target.value)
                                                 }
                                                 fullWidth
+                                                type="number"
                                                 variant="outlined"
                                                 InputLabelProps={{ shrink: true }}
                                                 InputProps={{ sx: fieldStyles }}
@@ -894,6 +900,7 @@ export const EditPODashboard = () => {
 
                                             <TextField
                                                 label="CGST Rate"
+                                                type="number"
                                                 value={item.cgstRate}
                                                 onChange={(e) =>
                                                     updateItem(item.id, "cgstRate", e.target.value)
@@ -918,6 +925,7 @@ export const EditPODashboard = () => {
 
                                             <TextField
                                                 label="SGST Rate"
+                                                type="number"
                                                 value={item.sgstRate}
                                                 onChange={(e) =>
                                                     updateItem(item.id, "sgstRate", e.target.value)
@@ -942,6 +950,7 @@ export const EditPODashboard = () => {
 
                                             <TextField
                                                 label="IGST Rate"
+                                                type="number"
                                                 value={item.igstRate}
                                                 onChange={(e) =>
                                                     updateItem(item.id, "igstRate", e.target.value)
@@ -966,6 +975,7 @@ export const EditPODashboard = () => {
 
                                             <TextField
                                                 label="TCS Rate"
+                                                type="number"
                                                 value={item.tcsRate}
                                                 onChange={(e) =>
                                                     updateItem(item.id, "tcsRate", e.target.value)

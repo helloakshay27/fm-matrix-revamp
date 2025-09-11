@@ -118,7 +118,7 @@ const historyData = [
 // Column configuration for the enhanced table
 const columns: ColumnConfig[] = [
   { key: 'actions', label: 'Action', sortable: false, hideable: false, draggable: false },
-  { key: 'id', label: 'Staff ID', sortable: true, hideable: true, draggable: true },
+  // { key: 'id', label: 'Staff ID', sortable: true, hideable: true, draggable: true },
   { key: 'name', label: 'Name', sortable: true, hideable: true, draggable: true },
   { key: 'unit', label: 'Unit', sortable: true, hideable: true, draggable: true },
   { key: 'department', label: 'Department', sortable: true, hideable: true, draggable: true },
@@ -598,7 +598,7 @@ export const StaffsDashboard = () => {
       {!loading && !error && (
         <Tabs defaultValue="all" className="w-full">
         {/* Tab Navigation */}
-        <div className="mb-4 pb-4">
+        {/* <div className="mb-4 pb-4">
           <TabsList className="grid w-full grid-cols-4 bg-white border border-gray-200">
             <TabsTrigger
               value="history"
@@ -625,7 +625,7 @@ export const StaffsDashboard = () => {
               Out
             </TabsTrigger>
           </TabsList>
-        </div>
+        </div> */}
 
         {/* History Tab Content */}
         <TabsContent value="history">

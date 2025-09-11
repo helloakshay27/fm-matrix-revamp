@@ -710,6 +710,7 @@ import PermissionDemo from "./components/PermissionDemo";
 import CRMWalletList from "./pages/CRMWalletList";
 import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
 import CRMWalletDetails from "./pages/CRMWalletDetails";
+import EditCRMWalletPointExpiry from "./pages/EditCRMWalletPointExpiry";
 
 const queryClient = new QueryClient();
 
@@ -1218,6 +1219,10 @@ function App() {
                     <Route
                       path="/crm/point-expiry"
                       element={<CRMWalletPointExpiry />}
+                    />
+                    <Route
+                      path="/crm/point-expiry/edit"
+                      element={<EditCRMWalletPointExpiry />}
                     />
 
                     {/* Snagging Routes */}
