@@ -120,6 +120,7 @@ export const GatePassOutwardsDetailPage = () => {
   const vehicleNo = gatePassData.vehicle_no || '--';
   const passDate = gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleString() : '--';
   const modeOfTransport = gatePassData.mode_of_transport || vehicleNo;
+  const mobileNo = gatePassData.driver_contact_no || gatePassData.contact_person_no || '--';
 
   // Prepare itemsData from gatePassData.gate_pass_materials
   const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
@@ -195,7 +196,7 @@ export const GatePassOutwardsDetailPage = () => {
                     
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                        <span className="text-sm text-gray-900">086907860</span>
+                        <span className="text-sm text-gray-900"></span>
                     </div>
                     
                     <div className="flex justify-between items-center">

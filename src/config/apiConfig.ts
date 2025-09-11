@@ -233,6 +233,8 @@ export const API_CONFIG = {
     PARKING_BOOKINGS: '/pms/admin/parking_bookings/parking_booking_list.json',
     // Parking booking details endpoint (append /{id}/customer_booking_show.json)
     PARKING_BOOKING_DETAILS: '/pms/admin/parking_bookings',
+    // Icons endpoint
+    ICONS: '/pms/icons.json',
   },
 } as const
 

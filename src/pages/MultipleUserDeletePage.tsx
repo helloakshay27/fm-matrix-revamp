@@ -65,6 +65,42 @@ export const MultipleUserDeletePage = () => {
         return count;
     };
 
+    // Validation helpers
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i;
+    const isValidEmail = (v: string): boolean => emailRegex.test(v.trim());
+    const isValidMobile = (v: string): boolean => {
+        const digitsOnly = v.replace(/\D/g, '');
+        // Accept 10-15 digits (min 10 as requested)
+        return digitsOnly.length >= 10 && digitsOnly.length <= 15;
+    };
+    const isValidIdentifier = (v: string): boolean => {
+        const t = (v || '').trim();
+        if (!t) return false;
+        return t.includes('@') ? isValidEmail(t) : isValidMobile(t);
+    };
+    const getIdentifierError = (v: string): string | null => {
+        const t = (v || '').trim();
+        if (!t) return null;
+        if (t.includes('@')) return isValidEmail(t) ? null : 'Enter a valid email address';
+        return isValidMobile(t) ? null : 'Enter a valid mobile number (min 10 digits)';
+    };
+
+    // Sanitize input to allow only valid characters for email/phone
+    const sanitizeIdentifierInput = (val: string): string => {
+        if (!val) return '';
+        let t = val.replace(/\s+/g, '');
+        const hasLettersOrAt = /[a-zA-Z@]/.test(t);
+        if (hasLettersOrAt) {
+            // Email-like: keep as-is (sans spaces) and lowercase
+            return t.toLowerCase();
+        }
+        // phone-like: only allow + at start and digits thereafter
+        const hasPlus = t.startsWith('+');
+        let digits = t.replace(/\D/g, '');
+        if (digits.length > 15) digits = digits.slice(0, 15);
+        return hasPlus ? `+${digits}` : digits;
+    };
+
     const normalizeIdentifier = (val: string): string => {
         const v = val.trim();
         if (v.includes('@')) return v.toLowerCase();
@@ -133,7 +169,8 @@ export const MultipleUserDeletePage = () => {
     };
 
     const handleChange = (id: number, value: string) => {
-        setEntries(prev => prev.map(e => (e.id === id ? { ...e, value } : e)));
+        const sanitized = sanitizeIdentifierInput(value);
+        setEntries(prev => prev.map(e => (e.id === id ? { ...e, value: sanitized } : e)));
     };
 
     const handleAddField = () => {
@@ -159,10 +196,14 @@ export const MultipleUserDeletePage = () => {
                     .map(e => e.value)
                     .map(v => v.trim())
                     .filter(Boolean)
+                    .filter(isValidIdentifier)
                     .map(normalizeIdentifier)
             )
         );
-        if (values.length === 0) return;
+        if (values.length === 0) {
+            toast.error('Enter at least one valid email or mobile number');
+            return;
+        }
         setPendingIds(values);
         setConfirmOpen(true);
     };
@@ -171,6 +212,10 @@ export const MultipleUserDeletePage = () => {
     const fetchHierarchy = async () => {
         const raw = (treeIdentifier || '').trim();
         if (!raw) return;
+        if (!isValidIdentifier(raw)) {
+            toast.error('Enter a valid email or mobile number');
+            return;
+        }
         try {
             setTreeLoading(true);
             setTreeData(null);
@@ -224,7 +269,7 @@ export const MultipleUserDeletePage = () => {
 
     const handleTreeDelete = async () => {
         const raw = (treeIdentifier || '').trim();
-        if (!raw || !raw.includes('@')) {
+        if (!raw || !isValidEmail(raw)) {
             toast.error('Enter a valid email to delete with reportees');
             return;
         }
@@ -443,7 +488,10 @@ export const MultipleUserDeletePage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {entries.map((entry, idx) => (
+                                    {entries.map((entry, idx) => {
+                                        const errorMsg = getIdentifierError(entry.value);
+                                        const isEmailType = (entry.value || '').includes('@');
+                                        return (
                                         <TextField
                                             key={entry.id}
                                             label={
@@ -457,6 +505,8 @@ export const MultipleUserDeletePage = () => {
                                             fullWidth
                                             variant="outlined"
                                             autoComplete="off"
+                                            error={Boolean(errorMsg)}
+                                            helperText={errorMsg || ' '}
                                             slotProps={{ inputLabel: { shrink: true } as any }}
                                             InputProps={{
                                                 sx: fieldStyles,
@@ -478,9 +528,10 @@ export const MultipleUserDeletePage = () => {
                                                 autoCorrect: 'off',
                                                 autoCapitalize: 'none',
                                                 spellCheck: 'false',
+                                                inputMode: isEmailType ? 'email' : 'tel',
                                             }}
                                         />
-                                    ))}
+                                    );})}
                                 </div>
 
                                 <div className="mt-4">
@@ -496,14 +547,20 @@ export const MultipleUserDeletePage = () => {
                         </Card>
 
                         <div className="flex gap-4 flex-wrap justify-center">
+                            {(() => {
+                                const hasAny = entries.some(e => e.value.trim() !== '');
+                                const hasInvalid = entries.some(e => e.value.trim() !== '' && !isValidIdentifier(e.value));
+                                return (
                             <Button
                                 onClick={handleSubmit}
                                 style={{ backgroundColor: '#C72030' }}
                                 className="text-white hover:bg-[#C72030]/90 flex items-center"
-                                disabled={!entries.some(e => e.value.trim() !== '') || submitting}
+                                disabled={!hasAny || hasInvalid || submitting}
                             >
                                 {submitting ? 'Submitting...' : 'Submit'}
                             </Button>
+                                );
+                            })()}
                         </div>
 
                         {confirmOpen && (
@@ -714,17 +771,24 @@ export const MultipleUserDeletePage = () => {
                             </CardHeader>
                             <CardContent>
                                 <div className="grid grid-cols-1 gap-4">
+                                    {(() => {
+                                        const err = getIdentifierError(treeIdentifier);
+                                        const isEmailType = (treeIdentifier || '').includes('@');
+                                        return (
                                     <TextField
                                         label="Email or Mobile Number"
                                         placeholder="Enter Email or Mobile Number"
                                         value={treeIdentifier}
                                         onChange={(e) => {
-                                            setTreeIdentifier(e.target.value);
-                                            if (!e.target.value?.trim()) setTreeData(null);
+                                            const sanitized = sanitizeIdentifierInput(e.target.value);
+                                            setTreeIdentifier(sanitized);
+                                            if (!sanitized?.trim()) setTreeData(null);
                                         }}
                                         fullWidth
                                         variant="outlined"
                                         autoComplete="off"
+                                        error={Boolean(err)}
+                                        helperText={err || ' '}
                                         slotProps={{ inputLabel: { shrink: true } as any }}
                                         InputProps={{ sx: fieldStyles }}
                                         inputProps={{
@@ -733,12 +797,15 @@ export const MultipleUserDeletePage = () => {
                                             autoCorrect: 'off',
                                             autoCapitalize: 'none',
                                             spellCheck: 'false',
+                                            inputMode: isEmailType ? 'email' : 'tel',
                                         }}
                                     />
+                                        );
+                                    })()}
                                     <div className="flex gap-3 items-center">
                                         <Button
                                             onClick={fetchHierarchy}
-                                            disabled={!treeIdentifier.trim() || treeLoading}
+                                            disabled={!treeIdentifier.trim() || !!getIdentifierError(treeIdentifier) || treeLoading}
                                             className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
                                         >
                                             {treeLoading ? 'Fetching...' : 'Submit'}

@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react';
 import { staffService, StaffFormData, ScheduleData, StaffAttachments, Unit, Department, WorkType } from '@/services/staffService';
 import { toast } from 'sonner';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { getUser } from '@/utils/auth';
 
 // Field styles for Material-UI components
 const fieldStyles = {
@@ -130,6 +131,13 @@ export const AddStaffPage = () => {
       return;
     }
 
+    // Get current user ID
+    const currentUser = getUser();
+    if (!currentUser || !currentUser.id) {
+      toast.error('Unable to get current user information. Please try logging in again.');
+      return;
+    }
+
     // If validTill is not provided, calculate it from validFrom + 90 days
     let validTill = formData.validTill;
     if (!validTill && formData.validFrom) {
@@ -143,7 +151,8 @@ export const AddStaffPage = () => {
       const staffDataWithCalculated = {
         ...formData,
         validTill,
-        status: formData.status || 'active'
+        status: formData.status || 'active',
+        userId: currentUser.id // Add current user ID
       };
       
       await staffService.createSocietyStaff(staffDataWithCalculated, schedule, {

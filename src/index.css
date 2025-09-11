@@ -14,7 +14,7 @@
 /* Force apply to any MUI component that might not be caught - EXCLUDE TEXTAREA */
 [class*="MuiFormControl"] [class*="MuiOutlinedInput-root"]:not(.MuiInputBase-multiline):not([class*="multiline"]) {
   height: 36px !important;
-  background-color: white !important;
+  background-color: transparent !important;
 }
 
 @media (min-width: 640px) {

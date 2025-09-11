@@ -16,15 +16,15 @@ interface CreateShiftDialogProps {
 
 export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
   const { toast } = useToast();
-  const [fromHour, setFromHour] = useState<string>("12");
-  const [fromMinute, setFromMinute] = useState<string>("00");
-  const [fromAmPm, setFromAmPm] = useState<string>("AM");
-  const [toHour, setToHour] = useState<string>("12");
-  const [toMinute, setToMinute] = useState<string>("00");
-  const [toAmPm, setToAmPm] = useState<string>("AM");
+  const [fromHour, setFromHour] = useState<string>("");
+  const [fromMinute, setFromMinute] = useState<string>("");
+  const [fromAmPm, setFromAmPm] = useState<string>("");
+  const [toHour, setToHour] = useState<string>("");
+  const [toMinute, setToMinute] = useState<string>("");
+  const [toAmPm, setToAmPm] = useState<string>("");
   const [checkInMargin, setCheckInMargin] = useState<boolean>(false);
-  const [hourMargin, setHourMargin] = useState<string>("00");
-  const [minMargin, setMinMargin] = useState<string>("00");
+  const [hourMargin, setHourMargin] = useState<string>("0");
+  const [minMargin, setMinMargin] = useState<string>("0");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -131,15 +131,15 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
   };
 
   const resetForm = () => {
-    setFromHour("12");
-    setFromMinute("00");
-    setFromAmPm("AM");
-    setToHour("12");
-    setToMinute("00");
-    setToAmPm("AM");
+    setFromHour("");
+    setFromMinute("");
+    setFromAmPm("");
+    setToHour("");
+    setToMinute("");
+    setToAmPm("");
     setCheckInMargin(false);
-    setHourMargin("00");
-    setMinMargin("00");
+    setHourMargin("0");
+    setMinMargin("0");
   };
 
   const handleClose = () => {
@@ -198,7 +198,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
               </Select>
               <Select value={fromAmPm} onValueChange={setFromAmPm}>
                 <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="AM" />
+                  <SelectValue placeholder="AM/PM" />
                 </SelectTrigger>
                 <SelectContent className="bg-white rounded-none">
                   <SelectItem value="AM">AM</SelectItem>
@@ -241,7 +241,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
               </Select>
               <Select value={toAmPm} onValueChange={setToAmPm}>
                 <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="AM" />
+                  <SelectValue placeholder="AM/PM" />
                 </SelectTrigger>
                 <SelectContent className="bg-white rounded-none">
                   <SelectItem value="AM">AM</SelectItem>

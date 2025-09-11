@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
@@ -123,9 +123,19 @@ export const MSafeDashboard = () => {
     fetchUsers();
   }, [page, debouncedSearch, filters]);
 
+  // Reset to first page only when search/filters values actually change (not on page clicks)
+  const prevSearchRef = useRef<string>('');
+  const prevFiltersRef = useRef<typeof filters>(filters);
   useEffect(() => {
-    if ((debouncedSearch || Object.values(filters).some(v => v && v !== '')) && page !== 1) setPage(1);
-  }, [debouncedSearch, filters, page]);
+    const hasFilters = Object.values(filters).some(v => v && v !== '');
+    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current);
+    const searchChanged = debouncedSearch !== prevSearchRef.current;
+    if ((searchChanged && debouncedSearch) || (filtersChanged && hasFilters)) {
+      setPage(1);
+    }
+    prevSearchRef.current = debouncedSearch;
+    prevFiltersRef.current = filters;
+  }, [debouncedSearch, filters]);
   const getStatusBadge = (status: string) => {
     if (!status) {
       return <Badge className="bg-gray-500 text-white hover:bg-gray-600">Unknown</Badge>;
@@ -232,7 +242,7 @@ export const MSafeDashboard = () => {
       case 'work_location':
         return user.work_location || '-';
       case 'company_name':
-        return user.company_name || '-';
+        return user.user_company_name || '-';
       case 'role_name':
         return user.lock_user_permission?.role_name || user.role_name || user.lock_role?.name || user.lock_role?.display_name || '-';
       case 'employee_type':

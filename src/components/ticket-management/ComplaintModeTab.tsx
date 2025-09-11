@@ -89,6 +89,22 @@ export const ComplaintModeTab: React.FC = () => {
     }
   };
 
+  const handleCreateSubmit = async () => {
+    // Check for required fields with specific messages like CategoryTypeTab
+    if (!form.getValues('complaintMode')?.trim()) {
+      toast.error('Please enter complaint mode');
+      return;
+    }
+
+    // Get the form data
+    const data: ComplaintModeFormData = {
+      complaintMode: form.getValues('complaintMode'),
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: ComplaintModeFormData) => {
     if (!userAccount?.company_id) {
       toast.error('Unable to determine company ID. Please refresh and try again.');
@@ -182,7 +198,7 @@ export const ComplaintModeTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <FormField
                 control={form.control}
                 name="complaintMode"
@@ -197,11 +213,15 @@ export const ComplaintModeTab: React.FC = () => {
                 )}
               />
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting || loading}>
+                <Button 
+                  onClick={handleCreateSubmit}
+                  disabled={isSubmitting || loading}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
                   {isSubmitting || loading ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
-            </form>
+            </div>
           </Form>
           {error && <div className="text-red-500 mt-2">{error}</div>}
         </CardContent>

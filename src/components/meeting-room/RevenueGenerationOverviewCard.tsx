@@ -9,6 +9,17 @@ export const RevenueGenerationOverviewCard: React.FC<RevenueGenerationOverviewCa
   title = 'Revenue Generation Overview',
   totalRevenue,
 }) => {
+  const [companyName, setCompanyName] = React.useState<string>('');
+
+  React.useEffect(() => {
+    try {
+      const name = typeof window !== 'undefined' ? localStorage.getItem('selectedCompany') : null;
+      if (name) setCompanyName(name);
+    } catch {
+      // ignore read errors
+    }
+  }, []);
+
   return (
     <div className="bg-white rounded-lg border border-analytics-border">
       <div className="px-4 py-3 border-b border-analytics-border">
@@ -19,7 +30,7 @@ export const RevenueGenerationOverviewCard: React.FC<RevenueGenerationOverviewCa
           <div className="flex items-end justify-between">
             <div>
               <p className="text-sm italic text-analytics-muted">Total Revenue from</p>
-              <p className="text-xl font-bold">UrbanWrk</p>
+              <p className="text-xl font-bold">{companyName || '—'}</p>
             </div>
             <div className="text-3xl font-bold text-red-600">
               {totalRevenue ?? '-'}

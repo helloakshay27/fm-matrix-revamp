@@ -26,6 +26,7 @@ import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
+import { saveAs } from 'file-saver';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -131,6 +132,14 @@ export const ScheduleListDashboard = () => {
   
   console.log('Transformed schedules:', schedules);
   console.log('Custom forms raw data:', customFormsData?.custom_forms);
+
+  function formatDateDDMMYYYY(dateString: string): string {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+}
   
   const handleAddSchedule = () => navigate('/maintenance/schedule/add');
   
@@ -735,13 +744,13 @@ export const ScheduleListDashboard = () => {
               type: item.schedule_type || '',
               scheduleType,
               noOfAssociation: item.no_of_associations?.toString() || '',
-              validFrom: item.start_date ? new Date(item.start_date).toLocaleDateString() : '',
-              validTill: item.end_date ? new Date(item.end_date).toLocaleDateString() : '',
               category: item.category_name
                 ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
                 : '',
               active: item.active,
-              createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+              validFrom: item.start_date ? formatDateDDMMYYYY(item.start_date) : '',
+              validTill: item.end_date ? formatDateDDMMYYYY(item.end_date) : '',
+              createdOn: item.created_at ? formatDateDDMMYYYY(item.created_at) : '',
               custom_form_code: item.custom_form_code,
               // Add any other fields you need
             };
@@ -835,13 +844,13 @@ export const ScheduleListDashboard = () => {
             type: item.schedule_type || '',
             scheduleType,
             noOfAssociation: item.no_of_associations?.toString() || '',
-            validFrom: item.start_date ? new Date(item.start_date).toLocaleDateString() : '',
-            validTill: item.end_date ? new Date(item.end_date).toLocaleDateString() : '',
             category: item.category_name
               ? (item.category_name.charAt(0).toUpperCase() + item.category_name.slice(1).toLowerCase())
               : '',
             active: item.active,
-            createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+            validFrom: item.start_date ? formatDateDDMMYYYY(item.start_date) : '',
+                validTill: item.end_date ? formatDateDDMMYYYY(item.end_date) : '',
+                createdOn: item.created_at ? formatDateDDMMYYYY(item.created_at) : '',
             custom_form_code: item.custom_form_code,
           };
         });
@@ -945,6 +954,8 @@ export const ScheduleListDashboard = () => {
             leftActions={renderCustomActions()}
             onFilterClick={() => setShowFilterDialog(true)}
             loading={isGlobalSearching || tableLoading}
+            // onExport={handleScheduleExport}
+            handleExport={handleScheduleExport}
           />
 
           {/* Pagination - only show when not searching globally */}
@@ -1012,6 +1023,37 @@ export const ScheduleListDashboard = () => {
     });
     setShowFilterDialog(false);
   }
+
+  // Custom export handler for schedules
+  const handleScheduleExport = async () => {
+    try {
+      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        },
+      });
+      if (!response.ok) throw new Error('Failed to export schedule data');
+      const blob = await response.blob();
+      // Use file-saver or fallback
+      if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+        window.navigator.msSaveOrOpenBlob(blob, 'schedules.xlsx');
+      } else {
+        const link = document.createElement('a');
+        const url = window.URL.createObjectURL(blob);
+        link.href = url;
+        link.download = 'schedules.xlsx';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(() => {
+          document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }, 100);
+      }
+    } catch (error) {
+      toast.error('Failed to export schedules.');
+    }
+  };
 
   return (
     <div className="p-2 sm:p-4 lg:p-6">

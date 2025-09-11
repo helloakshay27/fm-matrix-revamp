@@ -2250,8 +2250,11 @@ const AllContent = () => {
                     Community Programs Dashboard
                 </h1>
                 <div className="bg-white p-8 border print:border print:border-gray-300 print:p-2 print:w-[95%] print:mx-auto no-break">
+                    <h2 className="text-lg font-semibold text-gray-700 mb-4 print:text-black print:text-sm ">Community Engagement Metrics</h2>
+
                     <div className="grid grid-cols-2 gap-4 mb-8 print:gap-1 print:mb-2">
                         {/* Total Active Users Block */}
+
                         <div className="bg-[#DAD6C9] p-6 rounded shadow print:p-2 print:shadow-none">
                             {/* Top section: 450 + Total Active Users */}
                             <div className="flex items-center justify-center gap-4 mb-6 print:mb-2">

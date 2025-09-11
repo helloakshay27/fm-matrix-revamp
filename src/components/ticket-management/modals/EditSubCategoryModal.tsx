@@ -293,6 +293,39 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
     }
   };
 
+  const handleUpdateSubmit = async () => {
+    // Check for required fields with specific messages like SubCategoryTab
+    if (!form.getValues('category')) {
+      toast.error('Please select a category');
+      return;
+    }
+    
+    if (!form.getValues('name')?.trim()) {
+      toast.error('Please enter subcategory name');
+      return;
+    }
+    
+    if (selectedEngineers.length === 0) {
+      toast.error('Please assign at least one engineer');
+      return;
+    }
+
+    // Get the form data
+    const data: SubCategoryFormData = {
+      category: form.getValues('category'),
+      name: form.getValues('name'),
+      customerEnabled: form.getValues('customerEnabled'),
+      building: form.getValues('building'),
+      wing: form.getValues('wing'),
+      floor: form.getValues('floor'),
+      zone: form.getValues('zone'),
+      room: form.getValues('room'),
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: SubCategoryFormData) => {
     const currentSubCategory = loadedSubCategory || subCategory;
     if (!currentSubCategory) return;
@@ -407,14 +440,14 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
           </div>
         ) : (
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Category <span className="text-red-500">*</span></FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
@@ -533,7 +566,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Subcategory Name</FormLabel>
+                  <FormLabel>Subcategory Name <span className="text-red-500">*</span></FormLabel>
                   <FormControl>
                     <Input placeholder="Enter subcategory name" {...field} />
                   </FormControl>
@@ -544,7 +577,7 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
 
             {/* Engineer Assignment */}
             <div>
-              <h3 className="text-lg font-semibold mb-2">Engineer Assignment</h3>
+              <h3 className="text-lg font-semibold mb-2">Engineer Assignment <span className="text-red-500">*</span></h3>
               <Select
                 onValueChange={(value) => {
                   const engineerId = parseInt(value);
@@ -978,12 +1011,16 @@ export const EditSubCategoryModal: React.FC<EditSubCategoryModalProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting}>
+              <Button 
+                onClick={handleUpdateSubmit}
+                disabled={isSubmitting}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+              >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>
             </div>
-          </form>
-        </Form>
+            </div>
+          </Form>
         )}
       </DialogContent>
     </Dialog>

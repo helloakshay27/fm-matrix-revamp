@@ -2395,9 +2395,37 @@ export const AddSchedulePage = () => {
       case 1:
         isValid = validateScheduleSetup().length === 0;
         break;
-      case 2:
+      case 2: {
         isValid = validateQuestionSetup().length === 0;
+        // Additional validation for help text and attachments
+        if (isValid) {
+          let helpError = false;
+          questionSections.forEach((section, sectionIndex) => {
+            section.tasks.forEach((task, taskIndex) => {
+              if (task.helpText) {
+                if (!task.helpTextValue || !task.helpTextValue.trim()) {
+                  setFieldErrors(prev => ({
+                    ...prev,
+                    [`section_${sectionIndex}_task_${taskIndex}_helpTextValue`]: 'Help Text is required if Help Text is checked.'
+                  }));
+                  helpError = true;
+                }
+                if (!task.helpTextAttachments || task.helpTextAttachments.length === 0) {
+                  setFieldErrors(prev => ({
+                    ...prev,
+                    [`section_${sectionIndex}_task_${taskIndex}_helpTextAttachments`]: 'Help Attachment is required if Help Text is checked.'
+                  }));
+                  helpError = true;
+                }
+              }
+            });
+          });
+          if (helpError) {
+            isValid = false;
+          }
+        }
         break;
+      }
       case 3:
         isValid = validateTimeSetup();
         break;
@@ -2669,30 +2697,29 @@ export const AddSchedulePage = () => {
     // Build custom_form object
     const customForm: any = {};
     questionSections.forEach((section, index) => {
+      // Only include question_for_{index+1} if at least one task has helpText checked
       const sectionTasks = section.tasks.filter(task => task.task.trim());
-      if (sectionTasks.length > 0) {
-        customForm[`question_for_${index + 1}`] = sectionTasks.map(task => task.task);
-
-        // Add help text attachments for tasks that have them
-        const tasksWithAttachments = sectionTasks.filter(task =>
-          task.helpText &&
-          task.helpTextAttachments &&
-          task.helpTextAttachments.length > 0
-        );
-
-        if (tasksWithAttachments.length > 0) {
-          // Add attachments for each task that has help text attachments
-          tasksWithAttachments.forEach(task => {
-            if (task.helpTextAttachments && task.helpTextAttachments.length > 0) {
-              customForm[`question_for_${index + 1}`] = task.helpTextAttachments.map(attachment => ({
-                filename: attachment.name,
-                content: attachment.content,
-                content_type: attachment.content_type
-              }));
-            }
-          });
+      const helpTextTasks = sectionTasks.filter(task => task.helpText);
+      if (helpTextTasks.length > 0) {
+        // Validation: All helpText tasks must have helpTextValue and helpTextAttachments
+        const missingHelpText = helpTextTasks.some(task => !task.helpTextValue || !task.helpTextValue.trim());
+        const missingHelpAttachments = helpTextTasks.some(task => !task.helpTextAttachments || task.helpTextAttachments.length === 0);
+        if (missingHelpText) {
+          throw new Error('Please enter Help Text for all tasks where Help Text is checked.');
         }
+        if (missingHelpAttachments) {
+          throw new Error('Please attach a help file for all tasks where Help Text is checked.');
+        }
+        // Only include question_for_{index+1} if helpText is checked
+        customForm[`question_for_${index + 1}`] = helpTextTasks.map(task => ({
+          attachments: task.helpTextAttachments.map(attachment => ({
+            filename: attachment.name,
+            content: attachment.content,
+            content_type: attachment.content_type
+          })),
+        }));
       }
+      // If no helpText checked, do not include question_for_{index+1}
     });
 
     // Get selected asset IDs or service IDs based on scheduleFor
@@ -2953,7 +2980,7 @@ export const AddSchedulePage = () => {
             <TextField
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
               label={
-                <span>
+                <span style={{ fontSize:'16px' }}>
                   Description <span style={{ color: "red" }}>*</span>
                 </span>
               }

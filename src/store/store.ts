@@ -56,7 +56,7 @@ import { fetchPendingApprovalsReducer } from './slices/pendingApprovalSlice'
 import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer, getGRNReducer, fetchSingleGRNReducer, approveGRNReducer, rejectGrnReducer, getGRNFeedsReducer, editGRNReducer } from './slices/grnSlice'
 import { createCustomerReducer, editCustomerReducer, getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, getInvoincesReducer } from './slices/invoicesSlice'
-import { fetchCardCountReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletListReducer } from './slices/walletListSlice'
+import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
 
 export const store = configureStore({
   reducer: {
@@ -245,6 +245,11 @@ export const store = configureStore({
     fetchWalletList: fetchWalletListReducer,
     fetchTransactionHistory: fetchTransactionHistoryReducer,
     fetchWalletDetails: fetchWalletDetailsReducer,
+    fetchRecurringRules: fetchRecurringRulesReducer,
+    fetchCustomers: fetchCustomersReducer,
+    createRule: createRuleReducer,
+    fetchWalletDetailsTransactionHistory: fetchWalletDetailsTransactionHistoryReducer,
+    topupWallet: topupWalletReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

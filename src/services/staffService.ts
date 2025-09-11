@@ -21,6 +21,7 @@ export interface StaffFormData {
   typeId?: string;
   expiryType?: string;
   expiryValue?: string;
+  userId?: number;
 }
 
 export interface ScheduleData {
@@ -235,6 +236,7 @@ export const staffService = {
     attachments: StaffAttachments = {}
   ) => {
     try {
+      console.log('Creating society staff with user_id:', staffData.userId);
       const formData = new FormData();
 
       // Basic staff information
@@ -243,6 +245,14 @@ export const staffService = {
       formData.append('society_staff[mobile]', staffData.mobile);
       formData.append('society_staff[email]', staffData.email);
       formData.append('society_staff[password]', staffData.password);
+      
+      // User ID - current user creating the staff
+      if (staffData.userId) {
+        formData.append('society_staff[user_id]', staffData.userId.toString());
+        console.log('Added user_id to FormData:', staffData.userId);
+      } else {
+        console.warn('No user_id provided in staffData');
+      }
       
       // Resource and type information
       formData.append('society_staff[resource_id]', staffData.resourceId || '12');

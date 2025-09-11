@@ -89,6 +89,7 @@ export const VisitorDetailsPage = () => {
   const [expandedSections, setExpandedSections] = useState({
     basicInformation: true, // Typically expanded by default for details
     additionalVisitors: true,
+    goodsInwardInfo: true,
     passInformation: true,
     qrCode: true,
   });
@@ -602,13 +603,13 @@ export const VisitorDetailsPage = () => {
               </div>
             )}
 
-            {hasData(visitorData.otp_string) && (
+            {/* {hasData(visitorData.otp_string) && (
               <div className="flex items-start">
                 <span className="text-gray-500 w-40 flex-shrink-0 font-medium">OTP</span>
                 <span className="text-gray-500 mx-3">:</span>
                 <span className="text-gray-900 font-semibold flex-1">{visitorData.otp_string}</span>
               </div>
-            )}
+            )} */}
           </div>
 
           <div className="space-y-4">
@@ -714,7 +715,77 @@ export const VisitorDetailsPage = () => {
         )}
       </ExpandableSection>
 
-      {/* Section 3: Pass Information */}
+      {/* Section 3: Goods Inward Info */}
+      <ExpandableSection
+        title="GOODS INWARD INFO"
+        icon={ClipboardList}
+        isExpanded={expandedSections.goodsInwardInfo}
+        onToggle={() => toggleSection('goodsInwardInfo')}
+        hasData={visitorData.item_movements && visitorData.item_movements.length > 0}
+      >
+        {visitorData.item_movements && visitorData.item_movements.length > 0 ? (
+          <div className="space-y-6">
+            {visitorData.item_movements.map((movement: ItemMovement, index: number) => (
+              <div key={movement.item_movement.id || index} className="border rounded-lg p-4 bg-white">
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-700 text-lg">Item Movement {index + 1}</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Movement ID</span>
+                      <span className="text-gray-500 mx-3">:</span>
+                      <span className="text-gray-900 font-semibold flex-1">{movement.item_movement.id}</span>
+                    </div>
+                    {movement.item_movement.movement_type && (
+                      <div className="flex items-start">
+                        <span className="text-gray-500 w-32 flex-shrink-0 font-medium">Movement Type</span>
+                        <span className="text-gray-500 mx-3">:</span>
+                        <span className="text-gray-900 font-semibold flex-1">{movement.item_movement.movement_type}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {movement.item_movement.item_details && movement.item_movement.item_details.length > 0 && (
+                  <div>
+                    <h5 className="font-medium text-gray-600 mb-3">Item Details:</h5>
+                    <div className="space-y-3">
+                      {movement.item_movement.item_details.map((item, itemIndex) => (
+                        <div key={item.item_detail.id || itemIndex} className="bg-gray-50 rounded-md p-3">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                            <div className="flex items-start">
+                              <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Item ID</span>
+                              <span className="text-gray-500 mx-2">:</span>
+                              <span className="text-gray-900 font-semibold flex-1">{item.item_detail.id}</span>
+                            </div>
+                            {item.item_detail.name && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Name</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-semibold flex-1">{item.item_detail.name}</span>
+                              </div>
+                            )}
+                            {item.item_detail.number && (
+                              <div className="flex items-start">
+                                <span className="text-gray-500 w-20 flex-shrink-0 font-medium">Number</span>
+                                <span className="text-gray-500 mx-2">:</span>
+                                <span className="text-gray-900 font-semibold flex-1">{item.item_detail.number}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-8">No goods inward information found</p>
+        )}
+      </ExpandableSection>
+
+      {/* Section 4: Pass Information */}
       <ExpandableSection
         title="PASS INFORMATION"
         icon={ClipboardList}
@@ -793,7 +864,7 @@ export const VisitorDetailsPage = () => {
         </div>
       </ExpandableSection>
 
-      {/* Section 4: QR Code */}
+      {/* Section 5: QR Code */}
       <ExpandableSection
         title="QR CODE"
         icon={QrCode}

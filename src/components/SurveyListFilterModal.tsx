@@ -49,11 +49,24 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   const fetchCategories = async () => {
     try {
       setLoadingCategories(true);
-      const response = await apiClient.get('/snag_audit_categories.json');
-      setCategories(response.data || []);
+      const response = await apiClient.get('/pms/admin/helpdesk_categories.json');
+      console.log('Categories API response:', response.data);
+      
+      // Handle different response structures
+      let categoriesData = [];
+      if (Array.isArray(response.data)) {
+        categoriesData = response.data;
+      } else if (response.data && Array.isArray(response.data.helpdesk_categories)) {
+        categoriesData = response.data.helpdesk_categories;
+      } else if (response.data && Array.isArray(response.data.categories)) {
+        categoriesData = response.data.categories;
+      }
+      
+      setCategories(categoriesData || []);
     } catch (error: any) {
-      console.error('Error fetching categories:', error);
-      toast.error('Failed to fetch categories');
+      console.error('Error fetching ticket categories:', error);
+      toast.error('Failed to fetch ticket categories');
+      setCategories([]); // Ensure it's always an array
     } finally {
       setLoadingCategories(false);
     }
@@ -65,11 +78,13 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
       categoryId: 'all'
     });
     onResetFilters();
+    toast.success('Filters reset successfully');
     onClose();
   };
 
   const handleApply = () => {
     onApplyFilters(filters);
+    toast.success('Filters applied successfully');
     onClose();
   };
 
@@ -129,7 +144,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
                         Loading categories...
                       </div>
                     ) : (
-                      categories.map((category) => (
+                      Array.isArray(categories) && categories.map((category) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                         </SelectItem>
