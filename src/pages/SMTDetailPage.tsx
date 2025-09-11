@@ -129,6 +129,16 @@ const SMTDetailPage = () => {
     );
   }
 
+  const formatDate = (val: string | null | undefined) => {
+    if (!val) return '-';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header with back button */}
@@ -208,7 +218,7 @@ const SMTDetailPage = () => {
           <h2 className="text-lg font-bold text-gray-900">SMT Date</h2>
         </div>
         <div className="p-6">
-          <p className="text-gray-900 font-medium">{(smtDetails.smt_done_date || smtDetails.created_at) ? new Date((smtDetails.smt_done_date || smtDetails.created_at) as string).toLocaleDateString() : '-'}</p>
+          <p className="text-gray-900 font-medium">{formatDate(smtDetails.smt_done_date || smtDetails.created_at)}</p>
         </div>
       </div>
 
