@@ -102,7 +102,12 @@ export const MSafeDashboard = () => {
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = response.data;
-        const users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
+        let users = Array.isArray(data.users) ? data.users : (Array.isArray(data) ? data : data.users || []);
+        // Derive a stable full name field used for sorting
+        users = users.map((u: any) => ({
+          ...u,
+          name: `${u.firstname || ''} ${u.lastname || ''}`.trim() || u.email || '-'
+        }));
         setFmUsers(users);
         if (data.pagination) {
           setPagination({

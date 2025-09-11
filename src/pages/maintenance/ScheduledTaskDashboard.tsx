@@ -134,6 +134,9 @@ interface ApiTaskResponse {
 interface ApiTaskOccurrence {
   id: number;
   checklist: string;
+  supplier: string | null;
+  duration: string;
+  percentage: number;
   asset: string;
   asset_id: number;
   asset_code: string;
@@ -305,10 +308,10 @@ export const ScheduledTaskDashboard = () => {
       assetsServices: task.asset,
       site: task.site_name,
       location: task.asset_path,
-      supplier: '', // Not available in API
+      supplier: task.supplier || '', // Map supplier field from API
       graceTime: task.grace_time,
-      duration: '', // Not available in API
-      percentage: '', // Not available in API
+      duration: task.duration || '', // Map duration field from API
+      percentage: task.percentage ? `${task.percentage}%` : '', // Map percentage field from API with % symbol
       active: task.active !== false
     }));
   };

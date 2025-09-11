@@ -1508,20 +1508,20 @@ export const ChecklistMasterPage = () => {
 
         <div className="flex justify-center space-x-4 p-6 bg-white">
           <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate('/settings/masters/checklist')}
-            className="text-gray-700 border-gray-300"
-          >
-            Cancel
-          </Button>
-          <Button
             type="submit"
             onClick={handleSubmit}
             className="bg-red-600 text-white hover:bg-red-700"
             disabled={createChecklistMutation.isPending}
           >
             {createChecklistMutation.isPending ? 'Creating...' : 'Create Checklist'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/settings/masters/checklist')}
+            className="text-gray-700 border-gray-300"
+          >
+            Cancel
           </Button>
         </div>
       </div>
