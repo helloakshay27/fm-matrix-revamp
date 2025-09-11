@@ -62,9 +62,12 @@ export const EditExternalUserPage = () => {
   const [lmMenuId] = useState(() => `lm-menu-${Math.random().toString(36).slice(2)}`);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Name sanitization: allow only alphanumeric characters
-  const sanitizeName = (v: string) => (v || '').replace(/[^A-Za-z0-9]/g, '');
-  const isValidName = (v: string) => /^[A-Za-z0-9]{2,}$/.test(v);
+  // Name sanitization: allow alphanumeric plus internal spaces; collapse multiple spaces and trim
+  const sanitizeName = (v: string) => (v || '')
+    .replace(/[^A-Za-z0-9\s]/g, '') // remove non alphanumeric & non-space
+    .replace(/\s+/g, ' ')            // collapse whitespace
+    .trim();                          // trim ends
+  const isValidName = (v: string) => /^[A-Za-z0-9 ]{2,}$/.test(v); // allow spaces between words
 
   // Email format validator
   const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
@@ -195,7 +198,19 @@ export const EditExternalUserPage = () => {
     return errors;
   };
 
-  const saveBlocked = useMemo(() => Object.keys(getErrors()).length > 0, [formData]);
+  // Memoize current validation errors
+  const validationErrors = useMemo(() => getErrors(), [formData]);
+  const saveBlocked = Object.keys(validationErrors).length > 0;
+
+  // Debug: log blocking errors so it's easy to see why the Save button is disabled
+  useEffect(() => {
+    if (saveBlocked) {
+      // Only log a concise list
+      const keys = Object.keys(validationErrors);
+      // eslint-disable-next-line no-console
+      console.log('[EditExternalUserPage] Save disabled. Blocking fields:', keys, validationErrors);
+    }
+  }, [saveBlocked, validationErrors]);
 
   const handleSubmit = async () => {
     const errors = getErrors();
@@ -292,11 +307,17 @@ export const EditExternalUserPage = () => {
         const url = `https://${baseUrl}/pms/users/${userId}/user_show.json`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = resp.data?.user || resp.data;
+        // Normalize date values to strict YYYY-MM-DD to satisfy validation regex
+        const normalizeDate = (val: any) => {
+          if (!val) return '';
+            const d = dayjs(val);
+            return d.isValid() ? d.format('YYYY-MM-DD') : '';
+        };
         setFormData((prev: any) => ({
           ...prev,
           company_id: data.company_id || data.lock_user_permission?.company_id || prev.company_id || '',
-          firstname: data.firstname || '',
-          lastname: data.lastname || '',
+          firstname: sanitizeName(data.firstname || ''),
+            lastname: sanitizeName(data.lastname || ''),
           email: data.email || '',
           mobile: data.mobile || '',
           gender: normalizeGender(data.gender || ''),
@@ -312,8 +333,8 @@ export const EditExternalUserPage = () => {
           role_name: data.lock_user_permission?.lock_role_name || data.role_name || data.role?.name || '',
           ext_company_name: data.ext_company_name || '',
           org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
-          birth_date: (data.birth_date ? String(data.birth_date).slice(0, 10) : ''),
-          joining_date: (data.lock_user_permission?.joining_date || data.joining_date || '') ? String(data.lock_user_permission?.joining_date || data.joining_date).slice(0, 10) : ''
+          birth_date: normalizeDate(data.birth_date),
+          joining_date: normalizeDate(data.lock_user_permission?.joining_date || data.joining_date)
         }));
         setOriginalUser(data);
         const existingManager = data.report_to || (data.report_to_id ? { id: data.report_to_id, email: data.report_to_email, name: data.report_to_name } : null);

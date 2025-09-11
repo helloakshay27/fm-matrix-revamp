@@ -452,15 +452,16 @@ export const EditCrmCustomer = () => {
                                                     onChange={(e) => handleLeaseChange(index, "paidParking", e.target.value)}
                                                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: "8px" } }}
                                                 />
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    className="p-2 h-10"
-                                                    onClick={() => removeLease(index)}
-                                                    disabled={leases.length === 1}
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                {lease.id === undefined && leases.length > 1 && (
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="sm"
+                                                        className="p-2 h-10"
+                                                        onClick={() => removeLease(index)}
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
