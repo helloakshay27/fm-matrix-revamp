@@ -17,7 +17,7 @@ const columns = [
   { key: 'attachment', label: 'Attachment', sortable: false, defaultVisible: true },
 ];
 
-// API types
+// API typess
 interface TrainingAttachment {
   id: number;
   url: string;
@@ -135,8 +135,8 @@ const TrainingDashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
-      const effectivePage = (emailSearch || dialogFilterActive) ? 1 : page; // force first page when searching / filtering
+  const dialogFilterActive = filterEmail.trim() || filterTrainingName.trim();
+  const effectivePage = page; // honor requested page; we already reset page elsewhere when search/filter changes
       let url = `https://${baseUrl}/trainings.json?approval=true&page=${effectivePage}`;
       // If dialog filter active, append each provided field separately (no combined OR param)
       if (dialogFilterActive) {
@@ -174,13 +174,12 @@ const TrainingDashboard = () => {
       }));
       setTrainings(mapped);
       if (json.pagination) {
-        setCurrentPage((emailSearch || dialogFilterActive) ? 1 : json.pagination.current_page);
+        setCurrentPage(json.pagination.current_page);
         setTotalPages(json.pagination.total_pages);
         setTotalCount(json.pagination.total_count);
       } else {
         setTotalPages(1);
         setTotalCount(mapped.length);
-        if (emailSearch || dialogFilterActive) setCurrentPage(1);
       }
     } catch (e: any) {
       console.error('Training fetch error', e);
@@ -300,6 +299,8 @@ const TrainingDashboard = () => {
       setSearchTerm('');
       setDebouncedSearch('');
     }
+    // Go to first page when filters change
+    setCurrentPage(1);
   };
 
   const handleSelectAll = (checked: boolean) => {

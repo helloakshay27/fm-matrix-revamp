@@ -110,6 +110,12 @@ export const MultipleUserDeletePage = () => {
         return hasPlus ? `+${digits}` : digits;
     };
 
+    // Normalize backend/validation error text to preferred UX copy
+    const normalizeErrorMessage = (msg: string): string => {
+        if (!msg) return msg;
+        return /not\s*-?\s*found/i.test(msg) ? 'User Not Exist' : msg;
+    };
+
     // Helpers to merge results without duplicates
     const mergeUniqueUsers = (prev: UserRow[], next: UserRow[]): UserRow[] => {
         const map = new Map<string, UserRow>();
@@ -261,7 +267,7 @@ export const MultipleUserDeletePage = () => {
             toast.success('Hierarchy fetched');
         } catch (e: any) {
             console.error('Hierarchy fetch error', e);
-            toast.error(e.message || 'Failed to fetch hierarchy');
+            toast.error(normalizeErrorMessage(e.message || 'Failed to fetch hierarchy'));
         } finally {
             setTreeLoading(false);
         }
@@ -312,7 +318,7 @@ export const MultipleUserDeletePage = () => {
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
             if (skipped.length) parts.push(`Skipped: ${skipped.length}`);
-            if (nf.length) parts.push(`Not found: ${nf.length}`);
+            if (nf.length) parts.push(`User Not Exist: ${nf.length}`);
             const summary = parts.length ? parts.join(' | ') : (result?.message || 'Processed');
             toast.success(summary);
 
@@ -322,7 +328,7 @@ export const MultipleUserDeletePage = () => {
             setExpandedNodes(new Set());
         } catch (e: any) {
             console.error('Tree delete error', e);
-            toast.error(e.message || 'Failed to delete');
+            toast.error(normalizeErrorMessage(e.message || 'Failed to delete'));
         } finally {
             setTreeDeleteLoading(false);
         }
@@ -418,7 +424,7 @@ export const MultipleUserDeletePage = () => {
                     try { message = (await response.text()) || message; } catch { }
                 }
                 message = message.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-                toast.error(message);
+                toast.error(normalizeErrorMessage(message));
                 return;
             }
 
@@ -432,7 +438,7 @@ export const MultipleUserDeletePage = () => {
             const parts: string[] = [];
             if (deleted.length) parts.push(`Deleted: ${deleted.length}`);
             if (skipped.length) parts.push(`Skipped: ${skipped.length}`);
-            if (notFound.length) parts.push(`Not found: ${notFound.length}`);
+            if (notFound.length) parts.push(`User Not Exist: ${notFound.length}`);
             const summary = parts.length ? parts.join(' | ') : (result?.message || 'Processed');
             toast.success(summary);
             setResultMessage(result?.message || summary);
@@ -449,7 +455,7 @@ export const MultipleUserDeletePage = () => {
             setPendingIds([]);
             setConfirmOpen(false);
         } catch (err: any) {
-            toast.error(err.message || 'An error occurred while deleting users');
+            toast.error(normalizeErrorMessage(err.message || 'An error occurred while deleting users'));
             // Keep previous results on error
         } finally {
             setSubmitting(false);
@@ -674,10 +680,10 @@ export const MultipleUserDeletePage = () => {
                                     <Card className="border-[#D9D9D9] bg-white">
                                         <CardHeader className="bg-[#F6F4EE]">
                                             <CardTitle className="text-base flex items-center justify-between">
-                                                <span>Not Found</span>
-                                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{notFoundUsers.length}</span>
-                                            </CardTitle>
-                                        </CardHeader>
+                                                    <span>User Not Exist</span>
+                                                    <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full">{notFoundUsers.length}</span>
+                                                </CardTitle>
+                                            </CardHeader>
                                         <CardContent>
                                             {notFoundUsers.length ? (
                                                 <div className="overflow-x-auto mt-2">
