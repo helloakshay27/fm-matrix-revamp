@@ -286,10 +286,9 @@ export const CategoryTypeTab: React.FC = () => {
       }
     }
 
-    // Validate FAQ items - if a question is provided, answer must be provided and vice versa
+    // Validate FAQ items - both question and answer are required for each FAQ
     const incompleteFaqItems = faqItems.filter(item => 
-      (item.question.trim() && !item.answer.trim()) || 
-      (!item.question.trim() && item.answer.trim())
+      !item.question.trim() || !item.answer.trim()
     );
     
     if (incompleteFaqItems.length > 0) {
@@ -485,12 +484,9 @@ export const CategoryTypeTab: React.FC = () => {
       }
     }
 
-    // Validate FAQ items - if a question is provided, answer must be provided and vice versa
+    // Validate FAQ items - both question and answer are required for each FAQ
     const incompleteFaqItems = editFaqItems.filter(item => 
-      !item._destroy && (
-        (item.question.trim() && !item.answer.trim()) || 
-        (!item.question.trim() && item.answer.trim())
-      )
+      !item._destroy && (!item.question.trim() || !item.answer.trim())
     );
     
     if (incompleteFaqItems.length > 0) {
@@ -900,36 +896,23 @@ export const CategoryTypeTab: React.FC = () => {
                   <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Question {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                        Question <span className="text-red-500">*</span>
                       </label>
                       <Input
                         placeholder="Enter question"
                         value={item.question}
                         onChange={(e) => updateFaqItem(index, 'question', e.target.value)}
-                        className={`${
-                          item.answer.trim() && !item.question.trim() 
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                            : ''
-                        }`}
                       />
-                      {item.answer.trim() && !item.question.trim() && (
-                        <p className="text-red-500 text-xs mt-1">Question is required when answer is provided</p>
-                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">
-                        Answer {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                        Answer <span className="text-red-500">*</span>
                       </label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="Enter answer"
                           value={item.answer}
                           onChange={(e) => updateFaqItem(index, 'answer', e.target.value)}
-                          className={`${
-                            item.question.trim() && !item.answer.trim() 
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                              : ''
-                          }`}
                         />
                         {faqItems.length > 1 && (
                           <Button
@@ -942,9 +925,6 @@ export const CategoryTypeTab: React.FC = () => {
                           </Button>
                         )}
                       </div>
-                      {item.question.trim() && !item.answer.trim() && (
-                        <p className="text-red-500 text-xs mt-1">Answer is required when question is provided</p>
-                      )}
                     </div>
                   </div>
                 ))}
@@ -1167,36 +1147,25 @@ export const CategoryTypeTab: React.FC = () => {
                     <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg">
                       <div>
                         <label className="block text-sm font-medium mb-1">
-                          Question {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                          Question <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           placeholder="Question"
                           value={item.question}
                           onChange={(e) => updateEditFaqItem(index, 'question', e.target.value)}
-                          className={`w-full p-2 border rounded-md resize-none h-20 ${
-                            item.answer.trim() && !item.question.trim() 
-                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                              : ''
-                          }`}
+                          className="w-full p-2 border rounded-md resize-none h-20"
                         />
-                        {item.answer.trim() && !item.question.trim() && (
-                          <p className="text-red-500 text-xs mt-1">Question is required when answer is provided</p>
-                        )}
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-1">
-                          Answer {(item.question.trim() || item.answer.trim()) && <span className="text-red-500">*</span>}
+                          Answer <span className="text-red-500">*</span>
                         </label>
                         <div className="flex gap-2">
                           <textarea
                             placeholder="Answer"
                             value={item.answer}
                             onChange={(e) => updateEditFaqItem(index, 'answer', e.target.value)}
-                            className={`w-full p-2 border rounded-md resize-none h-20 ${
-                              item.question.trim() && !item.answer.trim() 
-                                ? 'border-red-500 focus:border-red-500 focus:ring-red-500' 
-                                : ''
-                            }`}
+                            className="w-full p-2 border rounded-md resize-none h-20"
                           />
                           {(editFaqItems.filter(faq => !faq._destroy).length > 1 || !item.id) && (
                             <Button
@@ -1210,9 +1179,6 @@ export const CategoryTypeTab: React.FC = () => {
                             </Button>
                           )}
                         </div>
-                        {item.question.trim() && !item.answer.trim() && (
-                          <p className="text-red-500 text-xs mt-1">Answer is required when question is provided</p>
-                        )}
                       </div>
                     </div>
                   )

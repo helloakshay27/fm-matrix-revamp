@@ -94,6 +94,27 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
     loadComplaintModeData();
   }, [complaintMode, open, form]);
 
+  const handleUpdateSubmit = async () => {
+    if (!complaintMode) return;
+
+    // Get form values directly from the form input
+    const complaintModeInput = document.querySelector('#edit-complaint-mode') as HTMLInputElement;
+    
+    // Check for required field with specific message
+    if (!complaintModeInput?.value?.trim()) {
+      toast.error('Please enter a complaint mode');
+      return;
+    }
+
+    // Get the form data
+    const data: ComplaintModeFormData = {
+      complaintMode: complaintModeInput.value.trim(),
+    };
+
+    // Continue with the rest of the submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: ComplaintModeFormData) => {
     if (!complaintMode) return;
 
@@ -128,7 +149,7 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <div className="space-y-4">
             {isLoading ? (
               <div className="flex items-center justify-center py-4">
                 <div className="text-gray-500">Loading complaint mode data...</div>
@@ -139,9 +160,9 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
                 name="complaintMode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Complaint Mode</FormLabel>
+                    <FormLabel>Complaint Mode <span className="text-red-500">*</span></FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter complaint mode" {...field} />
+                      <Input id="edit-complaint-mode" placeholder="Enter complaint mode" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,11 +174,14 @@ export const EditComplaintModeModal: React.FC<EditComplaintModeModalProps> = ({
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || isLoading}>
+              <Button 
+                onClick={handleUpdateSubmit}
+                disabled={isSubmitting || isLoading}
+              >
                 {isSubmitting ? 'Updating...' : 'Update'}
               </Button>
             </div>
-          </form>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>
