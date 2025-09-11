@@ -21,6 +21,9 @@ export const AddCRMCustomerPage = () => {
         customerName: "",
         email: "",
         mobile: "",
+        customerType: "",
+        customerCode: "",
+        companyCode: "",
         colorCode: "#000",
         ssid: "",
     });
@@ -75,12 +78,50 @@ export const AddCRMCustomerPage = () => {
         }
     };
 
+    const validateForm = () => {
+        if (!formData.customerName) {
+            toast.error("Customer name is required");
+            return false;
+        }
+        if (!formData.email) {
+            toast.error("Email is required");
+            return false;
+        }
+        if (!formData.mobile) {
+            toast.error("Mobile number is required");
+            return false;
+        }
+        for (const lease of leases) {
+            if (!lease.leaseStartDate) {
+                toast.error("Lease start date is required");
+                return false;
+            }
+            if (!lease.leaseEndDate) {
+                toast.error("Lease end date is required");
+                return false;
+            }
+            if (!lease.freeParking) {
+                toast.error("Free parking is required");
+                return false;
+            }
+            if (!lease.paidParking) {
+                toast.error("Paid parking is required");
+                return false;
+            }
+        }
+        return true
+    }
+
     const handleSave = async () => {
+        if (!validateForm()) return;
         const payload = {
             entity: {
                 name: formData.customerName,
                 email: formData.email,
                 mobile: formData.mobile,
+                customer_type: formData.customerType,
+                ext_customer_code: formData.customerCode,
+                company_code: formData.companyCode,
                 color_code: formData.colorCode,
                 ssid: formData.ssid,
                 customer_leases_attributes: leases.map((lease) => ({
@@ -162,7 +203,7 @@ export const AddCRMCustomerPage = () => {
                             </div>
                             <div>
                                 <TextField
-                                    label="Email"
+                                    label="Email*"
                                     variant="outlined"
                                     fullWidth
                                     size="small"
@@ -185,7 +226,7 @@ export const AddCRMCustomerPage = () => {
                             </div>
                             <div>
                                 <TextField
-                                    label="Mobile"
+                                    label="Mobile*"
                                     variant="outlined"
                                     fullWidth
                                     size="small"
@@ -199,6 +240,60 @@ export const AddCRMCustomerPage = () => {
                                     inputProps={{
                                         maxLength: 10,
                                         inputMode: "numeric",
+                                    }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "8px",
+                                        },
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <TextField
+                                    label="Customer Type"
+                                    variant="outlined"
+                                    fullWidth
+                                    size="small"
+                                    value={formData.customerType}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleInputChange("customerType", value);
+                                    }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "8px",
+                                        },
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <TextField
+                                    label="Customer Code"
+                                    variant="outlined"
+                                    fullWidth
+                                    size="small"
+                                    value={formData.customerCode}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleInputChange("customerCode", value);
+                                    }}
+                                    sx={{
+                                        "& .MuiOutlinedInput-root": {
+                                            borderRadius: "8px",
+                                        },
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <TextField
+                                    label="Company Code*"
+                                    variant="outlined"
+                                    fullWidth
+                                    size="small"
+                                    value={formData.companyCode}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        handleInputChange("companyCode", value);
                                     }}
                                     sx={{
                                         "& .MuiOutlinedInput-root": {
@@ -306,7 +401,7 @@ export const AddCRMCustomerPage = () => {
 
                                         <div>
                                             <TextField
-                                                label="Lease End Date"
+                                                label="Lease End Date*"
                                                 variant="outlined"
                                                 fullWidth
                                                 size="small"
@@ -362,7 +457,7 @@ export const AddCRMCustomerPage = () => {
                                         <div>
                                             <div className="flex items-end gap-2">
                                                 <TextField
-                                                    label="Paid Parking"
+                                                    label="Paid Parking*"
                                                     variant="outlined"
                                                     fullWidth
                                                     size="small"

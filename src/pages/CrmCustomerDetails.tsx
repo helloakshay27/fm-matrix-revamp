@@ -89,72 +89,6 @@ const leaseColumns: ColumnConfig[] = [
     }
 ];
 
-const transactionColumns: ColumnConfig[] = [
-    {
-        key: 'transactionId',
-        label: 'Transaction ID',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'bookingId',
-        label: 'Booking Id',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'facilityName',
-        label: 'Facility Name',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'personName',
-        label: 'Person Name',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'transactionDate',
-        label: 'Transaction Date',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'transactionTime',
-        label: 'Transaction Time',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'amount',
-        label: 'Amount',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'transactionType',
-        label: 'Transaction Type',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    },
-    {
-        key: 'ccAvenueId',
-        label: 'Transaction ID (CC Avenue)',
-        sortable: true,
-        draggable: true,
-        defaultVisible: true
-    }
-];
-
 export const CrmCustomerDetails = () => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -190,10 +124,6 @@ export const CrmCustomerDetails = () => {
         setCurrentSection('CRM');
     }, [setCurrentSection]);
 
-    const handleTopUpClick = () => {
-        setTopUpDialogOpen(true);
-    };
-
     const handleTopUpClose = () => {
         setTopUpDialogOpen(false);
         setTopUpAmount('');
@@ -201,34 +131,6 @@ export const CrmCustomerDetails = () => {
 
     const handleTopUpSubmit = () => {
         handleTopUpClose();
-    };
-
-    const walletTransactions: WalletTransaction[] = [
-        {
-            transactionId: '1220',
-            bookingId: '',
-            facilityName: '',
-            personName: '',
-            transactionDate: 'June 30, 2025',
-            transactionTime: '23:50:23',
-            amount: '100.0',
-            transactionType: 'Debit',
-            ccAvenueId: '',
-        },
-    ];
-
-    const renderTransactionCell = (item: WalletTransaction, columnKey: keyof WalletTransaction) => {
-        if (columnKey === 'transactionType') {
-            return (
-                <span
-                    className={`px-2 py-1 rounded text-xs ${item.transactionType === 'Credit' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                        }`}
-                >
-                    {item.transactionType}
-                </span>
-            );
-        }
-        return item[columnKey] || '-';
     };
 
     const renderCell = (item: Lease, columnKey: keyof Lease) => {
@@ -326,19 +228,6 @@ export const CrmCustomerDetails = () => {
                     hideTableSearch={true}
                 />
             </div>
-
-            {/* <div className="bg-white rounded-lg p-6 shadow-sm">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Wallet Transactions</h3>
-                <EnhancedTable
-                    data={walletTransactions}
-                    columns={transactionColumns}
-                    renderCell={renderTransactionCell}
-                    pagination={true}
-                    pageSize={5}
-                    hideColumnsButton={true}
-                    hideTableSearch={true}
-                />
-            </div> */}
 
             <Dialog
                 open={topUpDialogOpen}
