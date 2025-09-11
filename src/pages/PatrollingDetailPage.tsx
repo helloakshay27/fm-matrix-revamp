@@ -710,17 +710,77 @@ export const PatrollingDetailPage: React.FC = () => {
               patrolling.checkpoints.some((cp) => cp.qr_code_available) && (
                 <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                   <CardHeader className="bg-[#F6F4EE] mb-6">
-                    <CardTitle className="text-lg flex items-center">
-                      <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                        <QrCode className="h-4 w-4" />
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                          <QrCode className="h-4 w-4" />
+                        </div>
+                        QR CODES (
+                        {
+                          patrolling.checkpoints.filter(
+                            (cp) => cp.qr_code_available
+                          ).length
+                        }
+                        )
                       </div>
-                      QR CODES (
-                      {
-                        patrolling.checkpoints.filter(
-                          (cp) => cp.qr_code_available
-                        ).length
-                      }
-                      )
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            const baseUrl = API_CONFIG.BASE_URL;
+                            const token = API_CONFIG.TOKEN;
+
+                            if (!baseUrl || !token) {
+                              throw new Error("API configuration is missing");
+                            }
+
+                            // Get all checkpoint IDs that have QR codes
+                            const qrCodeCheckpoints = patrolling.checkpoints.filter(
+                              (cp) => cp.qr_code_available
+                            );
+                            
+                            if (qrCodeCheckpoints.length === 0) {
+                              toast.error('No QR codes available to download');
+                              return;
+                            }
+
+                            const checkpointIds = qrCodeCheckpoints.map(cp => cp.id).join(',');
+                            const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpointIds}]`);
+
+                            const response = await fetch(apiUrl, {
+                              method: "GET",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Accept: "application/json",
+                                Authorization: getAuthHeader(),
+                              },
+                            });
+
+                            if (!response.ok) {
+                              throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `patrolling_${patrolling.id}_all_qr_codes.zip`;
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                            toast.success(`Downloaded ${qrCodeCheckpoints.length} QR codes successfully!`);
+                          } catch (error: any) {
+                            console.error('Error downloading QR Codes:', error);
+                            toast.error(`Failed to download QR codes: ${error.message}`);
+                          }
+                        }}
+                        className="text-xs border-[#C72030] text-[#C72030] hover:bg-[#C72030] hover:text-white"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Download All QR Codes
+                      </Button>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -788,31 +848,54 @@ export const PatrollingDetailPage: React.FC = () => {
                                       <Eye className="w-3 h-3 mr-1" />
                                       View
                                     </Button>
-                                    {/* <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={async () => {
-                                      try {
-                                        const response = await fetch(checkpoint.qr_code_url!);
-                                        const blob = await response.blob();
-                                        const url = window.URL.createObjectURL(blob);
-                                        const a = document.createElement('a');
-                                        a.href = url;
-                                        a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
-                                        document.body.appendChild(a);
-                                        a.click();
-                                        window.URL.revokeObjectURL(url);
-                                        document.body.removeChild(a);
-                                        toast.success('QR Code downloaded successfully!');
-                                      } catch (error) {
-                                        toast.error('Failed to download QR Code');
-                                      }
-                                    }}
-                                    className="text-xs"
-                                  >
-                                    <Download className="w-3 h-3 mr-1" />
-                                    Download
-                                  </Button> */}
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={async () => {
+                                        try {
+                                          const baseUrl = API_CONFIG.BASE_URL;
+                                          const token = API_CONFIG.TOKEN;
+
+                                          if (!baseUrl || !token) {
+                                            throw new Error("API configuration is missing");
+                                          }
+
+                                          // Use the new API endpoint for downloading QR codes
+                                          const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpoint.id}]`);
+
+                                          const response = await fetch(apiUrl, {
+                                            method: "GET",
+                                            headers: {
+                                              "Content-Type": "application/json",
+                                              Accept: "application/json",
+                                              Authorization: getAuthHeader(),
+                                            },
+                                          });
+
+                                          if (!response.ok) {
+                                            throw new Error(`HTTP error! status: ${response.status}`);
+                                          }
+
+                                          const blob = await response.blob();
+                                          const url = window.URL.createObjectURL(blob);
+                                          const a = document.createElement('a');
+                                          a.href = url;
+                                          a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          window.URL.revokeObjectURL(url);
+                                          document.body.removeChild(a);
+                                          toast.success('QR Code downloaded successfully!');
+                                        } catch (error: any) {
+                                          console.error('Error downloading QR Code:', error);
+                                          toast.error(`Failed to download QR Code: ${error.message}`);
+                                        }
+                                      }}
+                                      className="text-xs"
+                                    >
+                                      <Download className="w-3 h-3 mr-1" />
+                                      Download
+                                    </Button>
                                   </div>
                                 </div>
                               ) : (
@@ -1374,17 +1457,32 @@ export const PatrollingDetailPage: React.FC = () => {
                                           size="sm"
                                           onClick={async () => {
                                             try {
-                                              const response = await fetch(
-                                                checkpoint.qr_code_url!
-                                              );
-                                              const blob =
-                                                await response.blob();
-                                              const url =
-                                                window.URL.createObjectURL(
-                                                  blob
-                                                );
-                                              const a =
-                                                document.createElement("a");
+                                              const baseUrl = API_CONFIG.BASE_URL;
+                                              const token = API_CONFIG.TOKEN;
+
+                                              if (!baseUrl || !token) {
+                                                throw new Error("API configuration is missing");
+                                              }
+
+                                              // Use the new API endpoint for downloading QR codes
+                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpoint.id}]`);
+
+                                              const response = await fetch(apiUrl, {
+                                                method: "GET",
+                                                headers: {
+                                                  "Content-Type": "application/json",
+                                                  Accept: "application/json",
+                                                  Authorization: getAuthHeader(),
+                                                },
+                                              });
+
+                                              if (!response.ok) {
+                                                throw new Error(`HTTP error! status: ${response.status}`);
+                                              }
+
+                                              const blob = await response.blob();
+                                              const url = window.URL.createObjectURL(blob);
+                                              const a = document.createElement("a");
                                               a.href = url;
                                               a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
                                               document.body.appendChild(a);
@@ -1394,9 +1492,10 @@ export const PatrollingDetailPage: React.FC = () => {
                                               toast.success(
                                                 "QR Code downloaded successfully!"
                                               );
-                                            } catch (error) {
+                                            } catch (error: any) {
+                                              console.error('Error downloading QR Code:', error);
                                               toast.error(
-                                                "Failed to download QR Code"
+                                                `Failed to download QR Code: ${error.message}`
                                               );
                                             }
                                           }}
