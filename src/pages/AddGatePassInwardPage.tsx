@@ -244,9 +244,12 @@ export const AddGatePassInwardPage = () => {
     },
   };
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const formData = new FormData();
 
     // Append gate pass details
@@ -266,18 +269,18 @@ export const AddGatePassInwardPage = () => {
     if (gatePassDetails.vendorId) formData.append('gate_pass[pms_supplier_id]', gatePassDetails.vendorId.toString());
    // Due at (reporting time)
     if (visitorDetails.reportingTime) formData.append('gate_pass[due_at]', visitorDetails.reportingTime);
-
-    // Quantity and Unit (from GatePassDetails)
-    // if (gatePassDetails.quantity) formData.append('gate_pass[quantity]', gatePassDetails.quantity);
-    // if (gatePassDetails.unit) formData.append('gate_pass[unit]', gatePassDetails.unit);
+    if(visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
+    if(visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
 
     // Append material details
     materialRows.forEach((row, index) => {
+      console.log("row", row);
+      
       if (row.itemNameId) {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
-        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_sub_type_id]`, row.itemCategoryId.toString());
-        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][quantity]`, row.quantity);
+        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString());
+        if (row.quantity || row.maxQuantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, String(Number(row.quantity || row.maxQuantity)));
         if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
         if (row.description) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description);
       }
@@ -287,15 +290,14 @@ export const AddGatePassInwardPage = () => {
     attachments.forEach(attachment => {
       formData.append('gate_pass[attachments][]', attachment.file);
     });
+    console.log("formData", JSON.stringify(Object.fromEntries(formData)));
 
     try {
       await gatePassInwardService.createGatePassInward(formData);
-
       toast({
         title: "Success",
         description: "Gate pass inward entry created successfully!"
       });
-
       navigate('/security/gate-pass/inwards');
     } catch (error) {
       console.error('Error submitting form:', error);
@@ -304,6 +306,8 @@ export const AddGatePassInwardPage = () => {
         description: "Failed to create entry. Please try again.",
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -329,8 +333,14 @@ export const AddGatePassInwardPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <TextField label={<span>Visitor Name <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Name" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label={<span>Mobile No. <span style={{ color: 'red' }}>*</span></span>} placeholder="+91" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label={<span>Visitor Name <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Name" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
+              const value = e.target.value;
+              if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
+            }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} inputProps={{ maxLength: 50, pattern: '[a-zA-Z\s]*' }} />
+            <TextField label={<span>Mobile No. <span style={{ color: 'red' }}>*</span></span>} placeholder="+91" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
+            }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} inputProps={{ maxLength: 10, pattern: '\\d{10}' }} />
             <TextField
               label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
               value={selectedCompany ? selectedCompany.name : ''}
@@ -407,21 +417,6 @@ export const AddGatePassInwardPage = () => {
               </MuiSelect>
             </FormControl>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Gate Pass Type"
-                notched
-                displayEmpty
-                value={gatePassDetails.gatePassTypeId || ''}
-                onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
-              >
-                <MenuItem value="">Select Type</MenuItem>
-                {gatePassTypes.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
               <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Gate Number"
@@ -436,6 +431,22 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Gate Pass Type"
+                notched
+                displayEmpty
+                value={gatePassDetails.gatePassTypeId || ''}
+                onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
+              >
+                <MenuItem value="">Select Type</MenuItem>
+                {gatePassTypes.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+            </FormControl>
+            
             <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <div className="lg:col-span-3">
               <TextField
@@ -541,7 +552,18 @@ export const AddGatePassInwardPage = () => {
                         // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
-                    <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
+                    <td className="px-4 py-2 pt-4">
+                      <TextField
+                        variant="outlined"
+                        size="small"
+                        value={row.unit}
+                        onChange={e => {
+                          const value = e.target.value;
+                          if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
+                        }}
+                        inputProps={{ maxLength: 20, pattern: '[a-zA-Z\s]*' }}
+                      />
+                    </td>
                     <td className="px-4 py-2 pt-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-2 pt-4" style={{ width: '80px' }}>
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
@@ -557,73 +579,121 @@ export const AddGatePassInwardPage = () => {
 
         {/* Document Attachment Section */}
         <div>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
-            {attachments.map((attachment) => {
-              const isImage = attachment.file.type.startsWith('image/');
-              return (
-                <>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
-                  <Box
-                    key={attachment.id}
-                    sx={{
-                      width: '120px',
-                    height: '120px',
-                    border: '2px dashed #ccc',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    backgroundColor: '#fafafa',
-                    '&:hover': { borderColor: '#999' }
-                  }}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveAttachment(attachment.id)}
-                    sx={{
-                      position: 'absolute', top: 4, right: 4,
-                      backgroundColor: 'white', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      width: 20, height: 20,
-                      '&:hover': { backgroundColor: '#f5f5f5' }
-                    }}
-                  >
-                    <Close sx={{ fontSize: 12 }} />
-                  </IconButton>
-                  {isImage ? (
-                    <img src={attachment.url} alt={attachment.name} style={{ maxWidth: '100px', maxHeight: '100px', objectFit: 'contain', marginBottom: 8, borderRadius: 4 }} />
-                  ) : (
-                    <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                  )}
-                  {!isImage && (
-                    <Typography variant="caption" sx={{ textAlign: 'center', px: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
-                      {attachment.name}
-                    </Typography>
-                  )}
-                </Box>
-                </>
-              );
-            })}
-          </Box>
-          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <MuiButton
-              variant="outlined"
-              onClick={() => fileInputRef.current?.click()}
-              sx={{
-                borderColor: '#C72030', color: '#C72030', textTransform: 'none',
-                fontWeight: 500, padding: '8px 16px',
-                '&:hover': { borderColor: '#B8252F', backgroundColor: 'rgba(199, 32, 48, 0.04)' },
-              }}
-            >
-              Add Attachment
-            </MuiButton>
-            <input type="file" ref={fileInputRef} multiple onChange={handleFileChange} className="hidden" />
-          </Box> */}
-        </div>
+                  <Box sx={{ gap: 2, mb: 2 }}>
+                    {attachments.length > 0 && (
+                      <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
+                    )}
+                    <div className="flex gap-4" >
+        
+                    {attachments.map((attachment) => {
+                      const isImage = attachment.file.type.startsWith('image/');
+                      return (
+                        <Box
+                          key={attachment.id}
+                          sx={{
+                            width: '120px',
+                            height: '120px',
+                            border: '2px dashed #ccc',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            position: 'relative',
+                            backgroundColor: '#fafafa',
+                            '&:hover': {
+                              borderColor: '#999'
+                            }
+                          }}
+                        >
+                          <IconButton
+                            size="small"
+                            onClick={() => handleRemoveAttachment(attachment.id)}
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              backgroundColor: 'white',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                              width: 20,
+                              height: 20,
+                              '&:hover': {
+                                backgroundColor: '#f5f5f5'
+                              }
+                            }}
+                          >
+                            <Close sx={{ fontSize: 12 }} />
+                          </IconButton>
+        
+                          {isImage ? (
+                            <img
+                              src={attachment.url}
+                              alt={attachment.name}
+                              style={{
+                                maxWidth: '100px',
+                                maxHeight: '100px',
+                                objectFit: 'contain',
+                                marginBottom: 8,
+                                borderRadius: 4,
+                              }}
+                            />
+                          ) : (
+                            <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                          )}
+                          {!isImage && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                textAlign: 'center',
+                                px: 1,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                width: '100%',
+                              }}
+                            >
+                              {attachment.name}
+                            </Typography>
+                          )}
+                        </Box>
+                      );
+                    })}
+                    </div>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <MuiButton
+                      variant="outlined"
+                      onClick={() => fileInputRef.current?.click()}
+                      sx={{
+                        borderColor: '#C72030',
+                        color: '#C72030',
+                        textTransform: 'none',
+                        fontFamily: 'Work Sans, sans-serif',
+                        fontWeight: 500,
+                        borderRadius: '0',
+                        padding: '8px 16px',
+                        '&:hover': {
+                          borderColor: '#B8252F',
+                          backgroundColor: 'rgba(199, 32, 48, 0.04)',
+                        },
+                      }}
+                    >
+                      Add Attachment
+                    </MuiButton>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </Box>
+                </div>
 
         {/* Footer */}
         <div className="flex items-center justify-center gap-4 pt-4">
-          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2">Submit</Button>
+          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2" disabled={isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/inwards')}>Cancel</Button>
         </div>
       </form>

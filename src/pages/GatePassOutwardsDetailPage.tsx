@@ -21,6 +21,7 @@ export const GatePassOutwardsDetailPage = () => {
   const [receivedDate, setReceivedDate] = useState('');
   const [remarks, setRemarks] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [receivedItems, setReceivedItems] = useState<number[]>([]);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -74,16 +75,15 @@ export const GatePassOutwardsDetailPage = () => {
         body: formData
       });
       if (res.ok) {
-        // Optionally refresh data
         setIsReceiveModalOpen(false);
         setSelectedItemIndex(null);
         setHandoverTo('');
         setReceivedDate('');
         setRemarks('');
         setAttachments([]);
+        setReceivedItems(prev => [...prev, selectedItemIndex]);
         // Optionally show toast
         // Optionally reload gatePassData
-        // You can add a toast here
       } else {
         // Handle error
         // Optionally show error toast
@@ -122,16 +122,23 @@ export const GatePassOutwardsDetailPage = () => {
   const modeOfTransport = gatePassData.mode_of_transport || vehicleNo;
   const mobileNo = gatePassData.driver_contact_no || gatePassData.contact_person_no || '--';
 
+  console.log('Gate Pass Data:', gatePassData);
+
+  // Prepare itemsData from gatePassData.gate_pass_materials
+  const attachmentLinks = (gatePassData.attachments || []).map((att: any) =>
+    att.document ? `<a href="${att.document}" target="_blank" rel="noopener noreferrer">📎</a>` : ''
+  ).filter(Boolean).join(', ');
+  
   // Prepare itemsData from gatePassData.gate_pass_materials
   const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
     sNo: String(idx + 1).padStart(2, '0'),
     itemName: mat.material_type || '--',
-    itemCategory: mat.material_sub_type || '--',
+    itemCategory: mat.item_category || '--',
     itemNameDetail: mat.material || mat.other_material_name || '--',
-    unit: mat.uom || '--',
+    unit: mat.unit || '--',
     quantity: mat.gate_pass_qty ?? '--',
     description: mat.other_material_description || mat.remarks || '--',
-    attachment: mat.attachment ? '📎' : '',
+    attachment: attachmentLinks || '--',
     updates: 'Receive',
   }));
 
@@ -193,32 +200,26 @@ export const GatePassOutwardsDetailPage = () => {
                         <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
                         <span className="text-sm text-gray-900">{personName}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                        <span className="text-sm text-gray-900"></span>
+                        <span className="text-sm text-gray-900">{mobileNo}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Department:</span>
-                        <span className="text-sm text-gray-900">UI/UX Designer</span>
+                        <span className="text-sm font-medium text-gray-700">Site:</span>
+                        <span className="text-sm text-gray-900">{siteName}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Company Name:</span>
                         <span className="text-sm text-gray-900">{companyName}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Date/Time:</span>
                         <span className="text-sm text-gray-900">{passDate}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
-                        <span className="text-sm text-gray-900">{modeOfTransport || "By Hand"}</span>
+                        <span className="text-sm font-medium text-gray-700">Vehicle Number:</span>
+                        <span className="text-sm text-gray-900">{vehicleNo}</span>
                     </div>
-                    
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Expected Date:</span>
                         <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
@@ -261,11 +262,20 @@ export const GatePassOutwardsDetailPage = () => {
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">
+                          <span dangerouslySetInnerHTML={{ __html: item.attachment }} />
+                        </TableCell>
                         <TableCell className="px-4 py-3 text-sm">
-                        <button className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium" onClick={() => handleReceiveClick(index)}>
-                            {item.updates}
-                        </button>
+                          {receivedItems.includes(index) ? (
+                            <span className="text-green-600 font-medium">Received</span>
+                          ) : (
+                            <button
+                              className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
+                              onClick={() => handleReceiveClick(index)}
+                            >
+                              {item.updates}
+                            </button>
+                          )}
                         </TableCell>
                     </TableRow>)}
                 </TableBody>
