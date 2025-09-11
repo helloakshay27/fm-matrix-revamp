@@ -1020,7 +1020,6 @@ export const ScheduleListDashboard = () => {
       type: '',
       category: ''
     });
-    setShowFilterDialog(false);
   }
 
   // Custom export handler for schedules
