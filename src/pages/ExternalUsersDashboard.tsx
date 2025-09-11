@@ -18,6 +18,7 @@ interface ExternalUser {
   id: number;
   firstname: string;
   lastname: string;
+  name?: string; // derived full name for sorting/display
   gender: string;
   mobile: string;
   email: string;
@@ -123,6 +124,11 @@ export const ExternalUsersDashboard = () => {
         }
         const response = await axios.get(url, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal });
         let users = Array.isArray(response.data.users) ? response.data.users : (response.data.users || []);
+        // Add derived full name for sorting (trim to avoid double spaces)
+        users = users.map((u: any) => ({
+          ...u,
+          name: `${u.firstname || ''} ${u.lastname || ''}`.trim()
+        }));
         setExternalUsers(users);
         if (response.data.pagination) {
           setPagination({
@@ -239,7 +245,7 @@ export const ExternalUsersDashboard = () => {
     { key: 'joining_date', label: 'Joining Date', sortable: true, hideable: true },
     { key: 'status', label: 'Status', sortable: true, hideable: true },
     { key: 'cluster_name', label: 'Cluster', sortable: true, hideable: true },
-    { key: 'department', label: 'Department', sortable: true, hideable: true },
+    { key: 'department', label: 'Department/Function', sortable: true, hideable: true },
     { key: 'circle_name', label: 'Circle', sortable: true, hideable: true },
     { key: 'work_location', label: 'Work Location', sortable: true, hideable: true },
     { key: 'company_name', label: 'Company Name', sortable: true, hideable: true },
