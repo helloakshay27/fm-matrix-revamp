@@ -110,13 +110,14 @@ export const LockModuleList = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
+                                <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
+
                 <TableHead className="font-semibold text-gray-700">Name</TableHead>
                 <TableHead className="font-semibold text-gray-700">Display Name</TableHead>
                 <TableHead className="font-semibold text-gray-700">Abbreviation</TableHead>
                 <TableHead className="font-semibold text-gray-700">Module Type</TableHead>
                 <TableHead className="font-semibold text-gray-700">Status</TableHead>
                 <TableHead className="font-semibold text-gray-700">Rate</TableHead>
-                <TableHead className="font-semibold text-gray-700 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -138,23 +139,7 @@ export const LockModuleList = () => {
               ) : (
                 filteredModules.map((module) => (
                   <TableRow key={module.id} className="hover:bg-gray-50">
-                    <TableCell className="font-medium">{module.name}</TableCell>
-                    <TableCell>{module.show_name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {module.abbreviation}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{module.module_type || '-'}</TableCell>
-                    <TableCell>
-                      <Badge variant={module.active ? "default" : "secondary"}>
-                        {module.active ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {module.rate ? `${module.rate} (${module.rate_type})` : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
+                      <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
@@ -174,6 +159,23 @@ export const LockModuleList = () => {
                         </Button>
                       </div>
                     </TableCell>
+                    <TableCell className="font-medium">{module.name}</TableCell>
+                    <TableCell>{module.show_name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs">
+                        {module.abbreviation}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{module.module_type || '-'}</TableCell>
+                    <TableCell>
+                      <Badge variant={module.active ? "default" : "secondary"}>
+                        {module.active ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {module.rate ? `${module.rate} (${module.rate_type})` : '-'}
+                    </TableCell>
+                  
                   </TableRow>
                 ))
               )}

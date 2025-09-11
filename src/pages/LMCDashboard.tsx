@@ -9,9 +9,12 @@ import TextField from '@mui/material/TextField';
 import Stack from '@mui/material/Stack';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Eye, Plus, Users, CheckCircle2, Clock, ListChecks } from 'lucide-react';
+import { Eye, Download, Users, CheckCircle2, Clock, ListChecks } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import formSchema from './lmc_form.json';
 
 const columns = [
     { key: 'actions', label: 'Actions', sortable: false },
@@ -71,6 +74,8 @@ const LMCDashboard = () => {
     // Applied values used for server query
     const [appliedUserEmail, setAppliedUserEmail] = useState('');
     const [appliedCreatedByEmail, setAppliedCreatedByEmail] = useState('');
+    // Track which row is currently generating a PDF (disable its button)
+    const [generatingId, setGeneratingId] = useState<number | null>(null);
 
     // Format date to DD/MM/YYYY HH:MM
     const formatDateTime = (iso?: string | null) => {
@@ -142,18 +147,261 @@ const LMCDashboard = () => {
         { title: 'In Progress', count: rows.filter(r => r.status?.toLowerCase().includes('progress')).length, icon: ListChecks }
     ];
 
-    const navigate = useNavigate();
-    const renderCell = (row, columnKey) => {
+        const navigate = useNavigate();
+
+    const downloadPdf = async (row: LMCTableRow) => {
+                const baseUrl = localStorage.getItem('baseUrl');
+                const token = localStorage.getItem('token');
+                if (!baseUrl || !token) {
+                        setError('Missing base URL or token');
+                        console.error('[LMC][PDF] Missing baseUrl or token in localStorage');
+                        setGeneratingId(null);
+                        return;
+                }
+                setGeneratingId(row.id);
+                try {
+                        console.log('[LMC][PDF] Start generation for id', row.id);
+                        // Fetch full detail for this LMC (similar to detail page)
+                        const res = await fetch(`https://${baseUrl}/lmcs/${row.id}.json`, { headers: { Authorization: `Bearer ${token}` } });
+                        if (!res.ok) throw new Error('Failed to fetch detail');
+            const detail: any = await res.json();
+            console.log('[LMC][PDF] Detail fetched keys:', Object.keys(detail));
+
+            // Normalize weird key if present
+            if (detail && detail['selected_krcc_categories='] && !detail.selected_krcc_categories) {
+                detail.selected_krcc_categories = detail['selected_krcc_categories='];
+            }
+
+            // Section title mapping (subset identical to detail page)
+            const SECTION_TITLE_MAP: Record<string,string> = {
+                'KrccRequirementComingFrom.car': 'Drive a 4 Wheeler',
+                'KrccRequirementComingFrom.bike': 'Ride a 2 Wheeler',
+                'KrccRequirementComingFrom.electrical': 'Work on Electrical System',
+                'KrccRequirementComingFrom.height': 'Work at Height',
+                'KrccRequirementComingFrom.workUnderground': 'Work underground',
+                'KrccRequirementComingFrom.rideBicycle': 'Ride a Bicycle',
+                'KrccRequirementComingFrom.operateMHE': 'Operate MHE',
+                'KrccRequirementComingFrom.liftMaterialManually': 'Lift Material Manually',
+                'KrccRequirementComingFrom.noneOfTheAbove': 'None of the above',
+                'form': 'LMC Form',
+                'final_page_form': 'Common LMC Form'
+            };
+
+            const alwaysInclude = ['form', 'final_page_form'];
+            const selectedRaw: any[] = Array.isArray(detail?.selected_krcc_categories) ? detail.selected_krcc_categories : [];
+            const normalizedSelected = selectedRaw
+                .map(c => (typeof c === 'string' ? c.trim() : c))
+                .filter(Boolean) as string[];
+            const orderedKeys: string[] = [];
+            const seen = new Set<string>();
+            alwaysInclude.forEach(k => { if (!seen.has(k)) { seen.add(k); orderedKeys.push(k); } });
+            normalizedSelected.forEach(k => { if (!seen.has(k)) { seen.add(k); orderedKeys.push(k); } });
+
+            const formDetails = detail?.form_details || {};
+            const groups = orderedKeys.map(sectionKey => {
+                const section = formSchema[sectionKey];
+                if (!section) return { key: sectionKey, items: [] as { q: string; a: string }[] };
+                const items = Object.entries(section).map(([fieldKey, meta]: any) => {
+                    const rawAns = formDetails[fieldKey];
+                    const answer = (rawAns === undefined || rawAns === null || rawAns === '') ? '—' : String(rawAns);
+                    return { q: meta.question, a: answer };
+                });
+                return { key: sectionKey, items };
+            });
+
+            const formatDate = (iso?: string) => {
+                if (!iso) return '—';
+                try { return new Date(iso).toLocaleDateString('en-GB'); } catch { return '—'; }
+            };
+            const lmcDate = formatDate(detail?.created_at);
+
+                        // Build HTML snapshot replicating LMCUserDetail UI (cards, headers, layout)
+                        const container = document.createElement('div');
+                        container.style.padding = '24px';
+                        container.style.fontFamily = 'Arial, sans-serif';
+                        container.style.width = '1000px';
+                        container.style.background = '#f3f4f6';
+                        container.style.position = 'absolute';
+                        container.style.left = '-10000px'; // keep offscreen to avoid layout shift
+
+                        const firstName = (detail?.lmc_user?.name || '').split(' ')[0] || '—';
+                        const lastName = (detail?.lmc_user?.name || '').split(' ').slice(1).join(' ') || '—';
+
+                        const sectionCard = (title: string, bodyHtml: string, withDate = false) => `
+                            <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
+                                <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
+                                    <div style='width:32px;height:32px;background:#C72030;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;'>${title.charAt(0)}</div>
+                                    <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${withDate ? title + ': ' + lmcDate : title}</h2>
+                                </div>
+                                <div style='padding:24px;'>${bodyHtml}</div>
+                            </div>`;
+
+                        const labelVal = (label: string, value: string) => `
+                            <div style='display:flex;flex-direction:column;gap:4px;'>
+                                <span style='color:#6b7280;font-size:12px;'>${label}</span>
+                                <span style='color:#111;font-size:13px;font-weight:600;'>${value || '—'}</span>
+                            </div>`;
+
+                        const grid2 = (items: string[]) => `
+                            <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 48px;'>${items.join('')}</div>`;
+
+                        // PERSONAL DETAILS card
+                        const personalHtml = grid2([
+                            labelVal('First Name', firstName),
+                            labelVal('Last Name', lastName),
+                            labelVal('Email ID', detail?.lmc_user?.email || '—'),
+                        ]);
+
+                        // LMC DETAILS card (Done By)
+                        const lmcDetailsHtml = grid2([
+                            labelVal('LMC Done By (Unique ID)', String(detail?.created_by?.id || '—')),
+                            labelVal('Name', detail?.created_by?.name || '—'),
+                            labelVal('Email', detail?.created_by?.email || '—'),
+                            labelVal('Mobile Number', detail?.created_by?.mobile || '—'),
+                            labelVal('Circle', '—'),
+                            labelVal('Function', '—'),
+                            labelVal('Role', '—'),
+                        ]);
+
+                        // LMC DONE ON card
+                        const lmcDoneOnHtml = grid2([
+                            labelVal('Name', detail?.lmc_user?.name || '—'),
+                            labelVal('Vendor Name', '—'),
+                            labelVal('Email', detail?.lmc_user?.email || '—'),
+                            labelVal('Mobile Number', detail?.lmc_user?.mobile || '—'),
+                            labelVal('Unique Number', String(detail?.id || '—')),
+                        ]);
+
+                        // CHECKPOINTS card
+                        const checkpointsGroupsHtml = groups.map(g => {
+                            const title = SECTION_TITLE_MAP[g.key] || g.key.replace(/KrccRequirementComingFrom\./,'').replace(/_/g,' ').toUpperCase();
+                            const items = g.items.length > 0 ? g.items.map(it => `
+                                <li style='margin-bottom:12px;'>
+                                    <div style='font-weight:600;font-size:13px;'>- ${it.q}</div>
+                                    <div style='color:#374151;font-size:12px;'>Ans: ${it.a}</div>
+                                </li>`).join('') : `<div style='color:#6b7280;font-size:12px;'>No questions defined.</div>`;
+                            return `
+                                <div style='border:1px solid #e5e7eb;border-radius:8px;margin-bottom:20px;'>
+                                    <div style='padding:8px 12px;border-bottom:1px solid #e5e7eb;background:#f3f4f6;font-size:12px;font-weight:600;color:#C72030;'>${title}</div>
+                                    <div style='padding:12px;'>${g.items.length ? `<ul style='list-style:none;padding:0;margin:0;'>${items}</ul>` : items}</div>
+                                </div>`;
+                        }).join('');
+
+                        const checkpointsHtml = `
+                            <div style='font-weight:600;margin:0 0 16px;font-size:14px;'>Checkpoints:</div>
+                            ${checkpointsGroupsHtml || `<div style='color:#6b7280;font-size:12px;'>No checkpoints available.</div>`}
+                        `;
+
+                        container.innerHTML = `
+                            ${sectionCard('PERSONAL DETAILS', personalHtml)}
+                            ${sectionCard('LMC DETAILS', lmcDetailsHtml)}
+                            ${sectionCard('LMC DONE ON', lmcDoneOnHtml)}
+                            ${sectionCard('LMC DATE', checkpointsHtml, true)}
+                            <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+                        `;
+                        document.body.appendChild(container);
+                        console.log('[LMC][PDF] Offscreen container appended, starting html2canvas');
+                        const canvas = await html2canvas(container, { scale: 2 });
+                        console.log('[LMC][PDF] Canvas rendered', canvas.width, canvas.height);
+                        const imgData = canvas.toDataURL('image/png');
+                        const pdf = new jsPDF('p', 'pt', 'a4');
+                        const pageWidth = pdf.internal.pageSize.getWidth();
+                        const pageHeight = pdf.internal.pageSize.getHeight();
+                        const marginX = 20;
+                        const marginY = 20;
+                        const usableWidth = pageWidth - marginX * 2;
+                        const ratio = usableWidth / canvas.width;
+                        const fullHeightPt = canvas.height * ratio; // total height if single page
+
+                        const saveWithFallback = (pdfInst: any, filename: string) => {
+                            try {
+                                pdfInst.save(filename);
+                            } catch (err) {
+                                console.warn('[LMC][PDF] pdf.save failed, using blob fallback', err);
+                                try {
+                                    const blob = pdfInst.output('blob');
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+                                    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
+                                } catch (inner) {
+                                    console.error('[LMC][PDF] Blob fallback failed', inner);
+                                    setError('PDF download blocked by browser');
+                                }
+                            }
+                        };
+
+                        if (fullHeightPt <= pageHeight - marginY * 2) {
+                            pdf.addImage(imgData, 'PNG', marginX, marginY, usableWidth, fullHeightPt, undefined, 'FAST');
+                        } else {
+                            // Multi-page: slice canvas vertically per page
+                            const pageUsableHeightPt = pageHeight - marginY * 2;
+                            const sliceHeightPx = Math.floor(pageUsableHeightPt / ratio); // height in original canvas pixels per page
+                            let renderedPx = 0;
+                            let pageIndex = 0;
+                            while (renderedPx < canvas.height) {
+                                const sliceCanvas = document.createElement('canvas');
+                                sliceCanvas.width = canvas.width;
+                                sliceCanvas.height = Math.min(sliceHeightPx, canvas.height - renderedPx);
+                                const ctx = sliceCanvas.getContext('2d');
+                                ctx?.drawImage(
+                                    canvas,
+                                    0,
+                                    renderedPx,
+                                    canvas.width,
+                                    sliceCanvas.height,
+                                    0,
+                                    0,
+                                    canvas.width,
+                                    sliceCanvas.height
+                                );
+                                const sliceData = sliceCanvas.toDataURL('image/png');
+                                if (pageIndex > 0) pdf.addPage();
+                                const sliceHeightPt = sliceCanvas.height * ratio;
+                                pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+                                renderedPx += sliceCanvas.height;
+                                pageIndex++;
+                            }
+                        }
+                        saveWithFallback(pdf, `lmc_${row.id}.pdf`);
+                        document.body.removeChild(container);
+                        console.log('[LMC][PDF] PDF saved for id', row.id);
+                } catch (e:any) {
+                        setError(e.message || 'Failed to generate PDF');
+                        console.error('[LMC][PDF] Generation error', e);
+        } finally {
+            setGeneratingId(null);
+                }
+        };
+
+        const renderCell = (row, columnKey) => {
         if (columnKey === 'actions') {
             return (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => navigate(`/maintenance/m-safe/lmc/${row.id}`, { state: { row } })}
-                >
-                    <Eye className="h-4 w-4" />
-                </Button>
+                                <div className="flex gap-1">
+                                        <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-8 w-8 p-0"
+                                                title="View"
+                                                onClick={() => navigate(`/maintenance/m-safe/lmc/${row.id}`, { state: { row } })}
+                                        >
+                                                <Eye className="h-4 w-4" />
+                                        </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 disabled:opacity-50"
+                        title={generatingId === row.id ? 'Generating PDF...' : 'Download PDF'}
+                        disabled={generatingId === row.id}
+                        onClick={() => downloadPdf(row)}
+                    >
+                        {generatingId === row.id ? (
+                            <span className="animate-pulse text-xs">...</span>
+                        ) : (
+                            <Download className="h-4 w-4" />
+                        )}
+                    </Button>
+                                </div>
             );
         }
         // Defensive: fallback to empty string if value is undefined/null
