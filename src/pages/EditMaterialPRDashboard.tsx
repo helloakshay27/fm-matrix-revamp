@@ -819,6 +819,7 @@ export const EditMaterialPRDashboard = () => {
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
@@ -833,6 +834,7 @@ export const EditMaterialPRDashboard = () => {
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}

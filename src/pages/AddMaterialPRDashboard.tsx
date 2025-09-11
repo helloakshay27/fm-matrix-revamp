@@ -2024,6 +2024,7 @@ export const AddMaterialPRDashboard = () => {
                     onChange={(e) => handleItemChange(item.id, "each", e.target.value)}
                     placeholder="Enter Number"
                     fullWidth
+                    type="number"
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
@@ -2037,6 +2038,7 @@ export const AddMaterialPRDashboard = () => {
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
