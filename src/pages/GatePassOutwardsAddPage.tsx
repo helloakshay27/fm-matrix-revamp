@@ -285,8 +285,8 @@ export const GatePassOutwardsAddPage = () => {
       if (row.itemNameId) {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
-        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_sub_type_id]`, row.itemCategoryId.toString());
-        if (row.quantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][quantity]`, row.quantity);
+        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString());
+        if (row.quantity || row.maxQuantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, String(Number(row.quantity || row.maxQuantity)));
         if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description ?? '');
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][remarks]`, gatePassDetails.remarks ?? '');
@@ -382,22 +382,6 @@ export const GatePassOutwardsAddPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Row 1 */}
           <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-            <InputLabel shrink>Gate Pass Type</InputLabel>
-            <MuiSelect
-              label="Gate Pass Type"
-              notched
-              displayEmpty
-              value={gatePassDetails.gatePassTypeId || ''}
-              onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
-            >
-              <MenuItem value="">Select Type</MenuItem>
-              {gatePassTypes.map((option) => (
-                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-              ))}
-            </MuiSelect>
-          </FormControl>
-          <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
             <InputLabel shrink>Site</InputLabel>
             <MuiSelect
               label="Site"
@@ -426,19 +410,6 @@ export const GatePassOutwardsAddPage = () => {
               ))}
             </MuiSelect>
           </FormControl>
-          {returnableStatus === 'returnable' && (
-            <TextField
-              label="Expected Return Date *"
-              type="date"
-              fullWidth
-              variant="outlined"
-              required
-              value={visitorDetails.expectedReturnDate}
-              onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
-              InputLabelProps={{ shrink: true }}
-              InputProps={{ sx: fieldStyles }}
-            />
-          )}
           <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
             <InputLabel shrink>Gate No.</InputLabel>
             <MuiSelect
@@ -454,11 +425,54 @@ export const GatePassOutwardsAddPage = () => {
               ))}
             </MuiSelect>
           </FormControl>
-          <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
+            <InputLabel shrink>Gate Pass Type</InputLabel>
+            <MuiSelect
+              label="Gate Pass Type"
+              notched
+              displayEmpty
+              value={gatePassDetails.gatePassTypeId || ''}
+              onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
+            >
+              <MenuItem value="">Select Type</MenuItem>
+              {gatePassTypes.map((option) => (
+                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+              ))}
+            </MuiSelect>
+          </FormControl>
+          <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           
+          {returnableStatus === 'returnable' && (
+            <TextField
+              label="Expected Return Date *"
+              type="date"
+              fullWidth
+              variant="outlined"
+              required
+              value={visitorDetails.expectedReturnDate}
+              onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
+          )}
+          
+          <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
+            const value = e.target.value;
+            if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Contact No" placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) =>{
+            const value = e.target.value;
+            if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
+            const value = e.target.value;
+            if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('driverName', value);
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => {
+            const value = e.target.value;
+            if (/^\d{0,10}$/.test(value)) handleVisitorChange('driverContactNo', value);
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+
           <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
             <InputLabel shrink>Mode Of Transport </InputLabel>
             <MuiSelect label="Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
@@ -626,7 +640,12 @@ export const GatePassOutwardsAddPage = () => {
                       // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
-                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => handleRowChange(row.id, 'unit', e.target.value)} /></td>
+                    <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => {
+                      const value = e.target.value;
+                      if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
+                    }}
+                    inputProps={{ pattern: "[a-zA-Z\s]*" }}
+                    /></td>
                     <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-4">
                       <button type="button" onClick={() => handleDeleteRow(row.id)}>
@@ -643,84 +662,86 @@ export const GatePassOutwardsAddPage = () => {
         {/* Document Attachment Section */}
         <div>
           <Box sx={{ gap: 2, mb: 2 }}>
+            {attachments.length > 0 && (
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
+            )}
+            <div className="flex gap-4" >
+
             {attachments.map((attachment) => {
               const isImage = attachment.file.type.startsWith('image/');
               return (
-                <>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Attachments</h2>
-
-                  <Box
-                    key={attachment.id}
+                <Box
+                  key={attachment.id}
+                  sx={{
+                    width: '120px',
+                    height: '120px',
+                    border: '2px dashed #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    backgroundColor: '#fafafa',
+                    '&:hover': {
+                      borderColor: '#999'
+                    }
+                  }}
+                >
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveAttachment(attachment.id)}
                     sx={{
-                      width: '120px',
-                      height: '120px',
-                      border: '2px dashed #ccc',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      backgroundColor: '#fafafa',
+                      position: 'absolute',
+                      top: 4,
+                      right: 4,
+                      backgroundColor: 'white',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                      width: 20,
+                      height: 20,
                       '&:hover': {
-                        borderColor: '#999'
+                        backgroundColor: '#f5f5f5'
                       }
                     }}
                   >
-                    <IconButton
-                      size="small"
-                      onClick={() => handleRemoveAttachment(attachment.id)}
+                    <Close sx={{ fontSize: 12 }} />
+                  </IconButton>
+
+                  {isImage ? (
+                    <img
+                      src={attachment.url}
+                      alt={attachment.name}
+                      style={{
+                        maxWidth: '100px',
+                        maxHeight: '100px',
+                        objectFit: 'contain',
+                        marginBottom: 8,
+                        borderRadius: 4,
+                      }}
+                    />
+                  ) : (
+                    <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                  )}
+                  {!isImage && (
+                    <Typography
+                      variant="caption"
                       sx={{
-                        position: 'absolute',
-                        top: 4,
-                        right: 4,
-                        backgroundColor: 'white',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                        width: 20,
-                        height: 20,
-                        '&:hover': {
-                          backgroundColor: '#f5f5f5'
-                        }
+                        textAlign: 'center',
+                        px: 1,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        width: '100%',
                       }}
                     >
-                      <Close sx={{ fontSize: 12 }} />
-                    </IconButton>
-
-                    {isImage ? (
-                      <img
-                        src={attachment.url}
-                        alt={attachment.name}
-                        style={{
-                          maxWidth: '100px',
-                          maxHeight: '100px',
-                          objectFit: 'contain',
-                          marginBottom: 8,
-                          borderRadius: 4,
-                        }}
-                      />
-                    ) : (
-                      <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                    )}
-                    {!isImage && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          textAlign: 'center',
-                          px: 1,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          width: '100%',
-                        }}
-                      >
-                        {attachment.name}
-                      </Typography>
-                    )}
-                  </Box>
-                </>
+                      {attachment.name}
+                    </Typography>
+                  )}
+                </Box>
               );
             })}
+            </div>
           </Box>
-          {/* <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
             <MuiButton
               variant="outlined"
               onClick={() => fileInputRef.current?.click()}
@@ -747,7 +768,7 @@ export const GatePassOutwardsAddPage = () => {
               onChange={handleFileChange}
               className="hidden"
             />
-          </Box> */}
+          </Box>
         </div>
 
         {/* Footer */}

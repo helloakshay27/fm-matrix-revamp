@@ -610,7 +610,7 @@ export const InventoryDashboard = () => {
     { key: "group", label: "Group", sortable: true },
     { key: "subGroup", label: "Sub Group", sortable: true },
     { key: "category", label: "Category", sortable: true },
-    { key: "manufacturer", label: "Manufacturer", sortable: true },
+    // { key: "manufacturer", label: "Manufacturer", sortable: true },
     { key: "criticality", label: "Criticality", sortable: true },
     { key: "quantity", label: "Quantity", sortable: true },
     { key: "expiryDate", label: "Expiry Date", sortable: true },

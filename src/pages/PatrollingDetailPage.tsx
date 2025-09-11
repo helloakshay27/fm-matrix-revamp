@@ -746,7 +746,7 @@ export const PatrollingDetailPage: React.FC = () => {
                             }
 
                             const checkpointIds = qrCodeCheckpoints.map(cp => cp.id).join(',');
-                            const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpointIds}]`);
+                            const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpointIds}]`);
 
                             const response = await fetch(apiUrl, {
                               method: "GET",
@@ -765,7 +765,7 @@ export const PatrollingDetailPage: React.FC = () => {
                             const url = window.URL.createObjectURL(blob);
                             const a = document.createElement('a');
                             a.href = url;
-                            a.download = `patrolling_${patrolling.id}_all_qr_codes.zip`;
+                            a.download = `patrolling_${patrolling.id}_all_qr_codes.pdf`;
                             document.body.appendChild(a);
                             a.click();
                             window.URL.revokeObjectURL(url);
@@ -861,7 +861,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                           }
 
                                           // Use the new API endpoint for downloading QR codes
-                                          const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpoint.id}]`);
+                                          const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpoint.id}]`);
 
                                           const response = await fetch(apiUrl, {
                                             method: "GET",
@@ -880,7 +880,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                           const url = window.URL.createObjectURL(blob);
                                           const a = document.createElement('a');
                                           a.href = url;
-                                          a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
+                                          a.download = `checkpoint_${checkpoint.id}_qr_code.pdf`;
                                           document.body.appendChild(a);
                                           a.click();
                                           window.URL.revokeObjectURL(url);
@@ -1465,7 +1465,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                               }
 
                                               // Use the new API endpoint for downloading QR codes
-                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes?checkpoint_ids=[${checkpoint.id}]`);
+                                              const apiUrl = getFullUrl(`/patrolling_setups/patrolling_qr_codes.pdf?checkpoint_ids=[${checkpoint.id}]`);
 
                                               const response = await fetch(apiUrl, {
                                                 method: "GET",
@@ -1484,7 +1484,7 @@ export const PatrollingDetailPage: React.FC = () => {
                                               const url = window.URL.createObjectURL(blob);
                                               const a = document.createElement("a");
                                               a.href = url;
-                                              a.download = `checkpoint_${checkpoint.id}_qr_code.png`;
+                                              a.download = `checkpoint_${checkpoint.id}_qr_code.pdf`;
                                               document.body.appendChild(a);
                                               a.click();
                                               window.URL.revokeObjectURL(url);
