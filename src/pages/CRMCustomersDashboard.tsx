@@ -8,6 +8,7 @@ import { useAppDispatch } from "@/store/hooks";
 import { getCustomerList } from "@/store/slices/cusomerSlice";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
+import axios from "axios";
 
 const columns: ColumnConfig[] = [
   {
@@ -164,8 +165,29 @@ const CRMCustomersDashboard = () => {
 
   console.log(customers)
 
-  const handleExport = () => {
-    alert("Exporting customer data...");
+  const handleExport = async () => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/entities/export.xlsx`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], { type: "application/vnd.ms-excel" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "customers.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Exported successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error(error.message);
+    }
   };
 
   const renderCell = (item: any, columnKey: string) => {

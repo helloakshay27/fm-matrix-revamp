@@ -942,6 +942,8 @@ export const AddSchedulePage = () => {
         id: group.id,
         name: group.name
       }));
+      console.log('Extracted groups:', groupsArray);
+
 
       setGroups(groupsArray);
     } catch (error) {
@@ -2980,7 +2982,7 @@ export const AddSchedulePage = () => {
             <TextField
               disabled={stepIndex < activeStep && editingStep !== stepIndex}
               label={
-                <span style={{ fontSize:'16px' }}>
+                <span style={{ fontSize: '16px' }}>
                   Description <span style={{ color: "red" }}>*</span>
                 </span>
               }
@@ -3247,12 +3249,15 @@ export const AddSchedulePage = () => {
                       displayEmpty
                       value={formData.asset}
                       onChange={e => handleAutocompleteChange('asset', assets.filter(asset => e.target.value.includes(asset.id.toString())))}
-                      renderValue={(selected) =>
-                        assets
+                      renderValue={(selected) => {
+                        if (!selected || selected.length === 0) {
+                          return <span style={{ color: '#aaa' }}>Select Assets</span>;
+                        }
+                        return assets
                           .filter(asset => selected.includes(asset.id.toString()))
                           .map(asset => asset.name)
-                          .join(', ')
-                      }
+                          .join(', ');
+                      }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.assets}
                     >
                       <MenuItem value="">Select Assets</MenuItem>
@@ -3400,12 +3405,15 @@ export const AddSchedulePage = () => {
                       displayEmpty
                       value={formData.selectedUsers}
                       onChange={e => handleAutocompleteChange('selectedUsers', users.filter(user => e.target.value.includes(user.id.toString())))}
-                      renderValue={(selected) =>
-                        users
+                      renderValue={(selected) => {
+                        if (!selected || selected.length === 0) {
+                          return <span style={{ color: '#aaa' }}>Select Users</span>;
+                        }
+                        return users
                           .filter(user => selected.includes(user.id.toString()))
                           .map(user => user.full_name)
-                          .join(', ')
-                      }
+                          .join(', ');
+                      }}
                       disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.users}
                     >
                       <MenuItem value="">Select Users</MenuItem>
@@ -3419,27 +3427,27 @@ export const AddSchedulePage = () => {
 
               {/* Multi-select Groups - Show when assignToType is 'group' */}
               {formData.assignToType === 'group' && (
-                <FormControl fullWidth>
-                  <InputLabel>
-                    Select Groups <span style={{ color: 'red' }}>*</span>
-                  </InputLabel>
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Groups <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
                     multiple
+                    label="Select Groups"
+                    notched
+                    displayEmpty
                     value={formData.selectedGroups}
                     onChange={(e) => handleMultiSelectChange('selectedGroups', e)}
-                    input={<OutlinedInput label="Select Groups" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const group = groups.find(g => g.id.toString() === value);
-                          return (
-                            <Chip key={value} label={group?.name || value} size="small" />
-                          );
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (!selected || selected.length === 0) {
+                        return <span style={{ color: '#aaa' }}>Select Groups</span>;
+                      }
+                      return groups
+                        .filter(group => selected.includes(group.id.toString()))
+                        .map(group => group.name)
+                        .join(', ');
+                    }}
                     disabled={loading.groups}
                   >
+                    <MenuItem value="">Select Groups</MenuItem>
                     {groups.map((group) => (
                       <MenuItem key={group.id} value={group.id.toString()}>
                         {group.name}
@@ -3793,71 +3801,60 @@ export const AddSchedulePage = () => {
                 )}
               </Box>
 
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label={
-                    <span>
-                      Start Date <span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: 'outlined',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      }
-                    }
-                  }}
-                  value={formData.startFrom ? new Date(formData.startFrom) : null}
-                  onChange={(date) => {
-                    const newStartDate = date ? format(date, 'yyyy-MM-dd') : '';
-                    if (formData.endAt && newStartDate > formData.endAt) {
-                      setFormData({ ...formData, startFrom: newStartDate, endAt: '' });
-                    } else {
-                      setFormData({ ...formData, startFrom: newStartDate });
-                    }
-                  }}
+              {/* Start Date */}
+<div>
+  <label htmlFor="startFrom" className="text-sm font-medium" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+    Start Date<span className="text-red-500">*</span>
+  </label>
+  <TextField
+    id="startFrom"
+    type="date"
+    value={formData.startFrom}
+    onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 1 }}
+    placeholder="Select Start Date"
+    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+    inputProps={{
+      max: formData.endAt || undefined,
+    }}
+    error={Boolean(fieldErrors.startFrom)}
+    helperText={fieldErrors.startFrom}
+  />
+</div>
 
-                  maxDate={formData.endAt ? new Date(formData.endAt) : undefined}
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                />
-              </LocalizationProvider>
-
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <DatePicker
-                  label={<span>End Date <span style={{ color: 'red' }}>*</span></span>}
-                  slotProps={{
-                    textField: {
-                      fullWidth: true,
-                      variant: 'outlined',
-                      sx: {
-                        '& .MuiOutlinedInput-root': {
-                          height: { xs: '36px', md: '45px' }
-                        }
-                      },
-                      error: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom,
-                      helperText: formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-                        ? "End date cannot be before start date"
-                        : ""
-                    }
-                  }}
-                  value={formData.endAt ? new Date(formData.endAt) : null}
-                  onChange={(date) => {
-                    const newEndDate = date ? format(date, 'yyyy-MM-dd') : '';
-                    if (formData.startFrom && newEndDate < formData.startFrom) {
-                      setFormData({ ...formData, endAt: newEndDate, startFrom: '' });
-                    } else {
-                      setFormData({ ...formData, endAt: newEndDate });
-                    }
-                  }}
-
-                  minDate={formData.startFrom ? new Date(formData.startFrom) : undefined}
-                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
-                />
-              </LocalizationProvider>
+{/* End Date */}
+<div>
+  <label htmlFor="endAt" className="text-sm font-medium" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+    End Date<span className="text-red-500">*</span>
+  </label>
+  <TextField
+    id="endAt"
+    type="date"
+    value={formData.endAt}
+    onChange={e => setFormData({ ...formData, endAt: e.target.value })}
+    fullWidth
+    variant="outlined"
+    InputLabelProps={{ shrink: true }}
+    InputProps={{ sx: fieldStyles }}
+    sx={{ mt: 1 }}
+    placeholder="Select End Date"
+    disabled={stepIndex < activeStep && editingStep !== stepIndex}
+    inputProps={{
+      min: formData.startFrom || undefined,
+    }}
+    error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
+    helperText={
+      fieldErrors.endAt ||
+      (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+        ? "End date cannot be before start date"
+        : "")
+    }
+  />
+</div>
             </Box>
           </SectionCard>
         );
