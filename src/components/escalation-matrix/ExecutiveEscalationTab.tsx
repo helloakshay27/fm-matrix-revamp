@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -8,11 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, Loader2 } from 'lucide-react';
-import { AppDispatch, RootState } from '@/store/store';
-import { fetchFMUsers } from '@/store/slices/fmUserSlice';
-import { FMUserDropdown } from '@/types/escalationMatrix';
 import ReactSelect from 'react-select';
 import { apiClient } from '@/utils/apiClient';
+import { ticketManagementAPI } from '@/services/ticketManagementAPI';
 import { toast } from 'sonner';
 
 interface EscalationLevel {
@@ -73,9 +70,12 @@ interface ExecutiveEscalationResponse {
   }[];
 }
 
+interface EscalationUser {
+  id: number;
+  full_name: string;
+}
+
 export const ExecutiveEscalationTab: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  
   const [escalationData, setEscalationData] = useState<EscalationLevel[]>([
     { level: 'E1', escalationTo: [], days: '', hours: '', minutes: '' },
     { level: 'E2', escalationTo: [], days: '', hours: '', minutes: '' },
@@ -89,24 +89,34 @@ export const ExecutiveEscalationTab: React.FC = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('all');
-
-  // Redux selectors
-  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers);
-
-  // Process FM Users data for display
-  const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users?.map(user => ({
-    ...user,
-    displayName: `${user.firstname} ${user.lastname}`,
-  })) || [];
+  
+  // Local state for escalation users
+  const [escalationUsers, setEscalationUsers] = useState<EscalationUser[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
 
   // Options for react-select
-  const userOptions = fmUsers?.map(user => ({ value: user.id, label: user.displayName })) || [];
+  const userOptions = escalationUsers?.map(user => ({ value: user.id, label: user.full_name })) || [];
 
-  // Fetch FM users on component mount
+  // Load escalation users
+  const loadEscalationUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await ticketManagementAPI.getEscalationUsers();
+      setEscalationUsers(response.users || []);
+      console.log('Escalation users loaded:', response.users);
+    } catch (error) {
+      console.error('Error loading escalation users:', error);
+      toast.error('Failed to load escalation users');
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // Fetch escalation users and executive rules on component mount
   useEffect(() => {
-    dispatch(fetchFMUsers());
+    loadEscalationUsers();
     fetchExecutiveRules();
-  }, [dispatch]);
+  }, []);
 
   const fetchExecutiveRules = async () => {
     try {
@@ -180,8 +190,8 @@ export const ExecutiveEscalationTab: React.FC = () => {
   const getUserNames = (userIds: number[]): string => {
     if (!userIds || userIds.length === 0) return '';
     return userIds.map(id => {
-      const user = fmUsers.find(u => u.id === id);
-      return user ? user.displayName : 'Unknown User';
+      const user = escalationUsers.find(u => u.id === id);
+      return user ? user.full_name : 'Unknown User';
     }).join(', ');
   };
 
@@ -314,8 +324,8 @@ export const ExecutiveEscalationTab: React.FC = () => {
                   }}
                   value={userOptions.filter(option => item.escalationTo.includes(option.value))}
                   placeholder="Select up to 15 users..."
-                  isLoading={fmUsersLoading}
-                  isDisabled={fmUsersLoading}
+                  isLoading={loadingUsers}
+                  isDisabled={loadingUsers}
                   className="min-w-[250px]"
                   styles={{
                     control: (base) => ({
@@ -391,7 +401,7 @@ export const ExecutiveEscalationTab: React.FC = () => {
           <div className="flex justify-center pt-6">
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting || fmUsersLoading}
+              disabled={isSubmitting || loadingUsers}
               className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
@@ -400,66 +410,25 @@ export const ExecutiveEscalationTab: React.FC = () => {
         </div>
       </div>
 
-      {/* <div className="bg-white rounded-lg border border-gray-200 p-8">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Rule</h3>
-        
-        <div className="space-y-4">
-          <div className="grid grid-cols-3 gap-8 font-medium text-gray-700 text-sm border-b border-gray-200 pb-3">
-            <div>Levels</div>
-            <div>Escalation To</div>
-            <div>P1</div>
-          </div>
-
-                            {['E1', 'E2', 'E3'].map((level) => {
-            const rule = savedRules.find(r => r.level === level);
-            return (
-              <div key={level} className="grid grid-cols-3 gap-8 text-sm py-2">
-                <div className="font-medium text-gray-800">{level}</div>
-                <div className="text-gray-700">{rule?.escalationTo || ''}</div>
-                <div className="text-gray-700">{rule?.timing || ''}</div>
-              </div>
-            );
-          })}
-        </div>
-      </div> */}
-
       {/* Executive Escalation Rules Card */}
       <Card className="border border-gray-200">
         <CardHeader className="border-b border-gray-200 bg-white">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-gray-900">Executive Escalation Rules</CardTitle>
-            {/* <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="escalation-filter" className="text-sm font-medium text-gray-700">
-                  Filter by Type
-                </Label>
-                <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                  <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="Executive Escalation">Executive Escalation</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button 
-                variant="default"
-                size="sm" 
-                className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-4"
-                onClick={() => setSelectedCategoryFilter('all')}
-              >
-                Apply
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold px-4"
-                onClick={() => setSelectedCategoryFilter('all')}
-              >
-                Reset
-              </Button>
-            </div> */}
+            <div className="flex items-center gap-3">
+              <Label htmlFor="escalation-filter" className="text-sm font-medium text-gray-700">
+                Filter by Type
+              </Label>
+              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
+                <SelectTrigger className="w-48 border-gray-200 focus:border-[#C72030] focus:ring-[#C72030]">
+                  <SelectValue placeholder="Select Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="Executive Escalation">Executive Escalation</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
