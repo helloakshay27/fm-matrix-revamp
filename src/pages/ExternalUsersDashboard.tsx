@@ -622,7 +622,7 @@ export const ExternalUsersDashboard = () => {
                   className="text-white bg-red-500 hover:bg-red-600"
                 >
                   <Trash2 className="w-4 h-4" />
-                  Multiple User Delete
+                   User Deletion
                 </Button>
               </div>
             }
