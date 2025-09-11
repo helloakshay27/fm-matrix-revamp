@@ -205,7 +205,8 @@ export const PODashboard = () => {
   const [filters, setFilters] = useState({
     referenceNumber: '',
     poNumber: '',
-    supplierName: ''
+    supplierName: '',
+    approvalStatus: ''
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
@@ -271,12 +272,14 @@ export const PODashboard = () => {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    approvalStatus: string;
   }) => {
     setFilters(newFilters); // Update filter state
     fetchData({
       reference_number: newFilters.referenceNumber,
       external_id: newFilters.poNumber,
       supplier_name: newFilters.supplierName,
+      approval_status: newFilters.approvalStatus
     }); // Fetch data with filters
   };
 
@@ -424,6 +427,7 @@ export const PODashboard = () => {
         reference_number: filters.referenceNumber,
         external_id: filters.poNumber,
         supplier_name: filters.supplierName,
+        approval_status: filters.approvalStatus,
         search: searchQuery,
       });
     } catch (error) {

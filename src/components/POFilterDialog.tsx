@@ -21,11 +21,13 @@ interface POFilterDialogProps {
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    approvalStatus: string;
   };
   setFilters: React.Dispatch<React.SetStateAction<{
     referenceNumber: string;
     poNumber: string;
     supplierName: string;
+    approvalStatus: string;
   }>>;
   onApplyFilters: (filters: {
     referenceNumber: string;
@@ -71,7 +73,8 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
     setFilters({
       referenceNumber: '',
       poNumber: '',
-      supplierName: ''
+      supplierName: '',
+      approvalStatus: ''
     });
   };
 
@@ -130,6 +133,22 @@ export const POFilterDialog: React.FC<POFilterDialogProps> = ({
               {suppliers.map((supplier: any) => (
                 <MenuItem key={supplier.id} value={supplier.name.split('-')[0]}>{supplier.name.split('-')[0]}</MenuItem>
               ))}
+            </MuiSelect>
+          </FormControl>
+
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Approval Status</InputLabel>
+            <MuiSelect
+              label="Approval Status"
+              value={filters.approvalStatus}
+              onChange={(e) => setFilters({ ...filters, approvalStatus: e.target.value })}
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="" disabled><em>Select Status</em></MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="approved">Approved</MenuItem>
+              <MenuItem value="rejected">Rejected</MenuItem>
             </MuiSelect>
           </FormControl>
 

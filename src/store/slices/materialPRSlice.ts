@@ -144,7 +144,7 @@ export const getMaterialPR = createAsyncThunk(
             }
 
             if (approval_status) {
-                queryParams.append("q[approve_status_cont]", approval_status);
+                queryParams.append("q[approve_status_eq]", approval_status);
             }
 
             const response = await axios.get(

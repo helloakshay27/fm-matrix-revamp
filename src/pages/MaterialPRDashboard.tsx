@@ -107,7 +107,7 @@ export const MaterialPRDashboard = () => {
     referenceNumber: "",
     prNumber: "",
     supplierName: "",
-    approvalStatus: "Select",
+    approvalStatus: "",
   });
   const [pagination, setPagination] = useState({
     current_page: 1,
