@@ -17,47 +17,6 @@ interface ScheduleFilterDialogProps {
   onResetFilters?: () => void;
 }
 
-const fieldStyles = {
-  width: '100%',
-  '& .MuiOutlinedInput-root': {
-    height: { xs: '36px', md: '45px' },
-    borderRadius: '8px',
-    backgroundColor: '#FFFFFF',
-    '& fieldset': {
-      borderColor: '#E0E0E0',
-    },
-    '&:hover fieldset': {
-      borderColor: '#1A1A1A',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-      borderWidth: 2,
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: '#666666',
-    fontSize: '14px',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-    '&.MuiInputLabel-shrink': {
-      transform: 'translate(14px, -9px) scale(0.75)',
-      backgroundColor: '#FFFFFF',
-      padding: '0 4px',
-    },
-  },
-  '& .MuiOutlinedInput-input, & .MuiSelect-select': {
-    color: '#1A1A1A',
-    fontSize: '14px',
-    padding: { xs: '8px 14px', md: '12px 14px' },
-    height: 'auto',
-    '&::placeholder': {
-      color: '#999999',
-      opacity: 1,
-    },
-  },
-};
-
 export const ScheduleFilterDialog = ({ 
   open, 
   onOpenChange, 
@@ -74,6 +33,7 @@ export const ScheduleFilterDialog = ({
 
   const handleApply = () => {
     onApplyFilters(localFilters);
+    onOpenChange(false);
   };
 
   const handleReset = () => {
@@ -83,92 +43,128 @@ export const ScheduleFilterDialog = ({
       category: ''
     });
     onResetFilters();
+  };
+
+  const handleClose = () => {
     onOpenChange(false);
   };
 
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    backgroundColor: 'white',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      backgroundColor: 'white',
+    },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white',
+    }
+  };
+
+  const menuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: 200,
+        backgroundColor: 'white',
+        zIndex: 9999,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      },
+    },
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+    <Dialog open={open} onOpenChange={(open) => { if (!open) handleClose(); }} modal={false}>
+      <DialogContent className="max-w-2xl bg-white [&>button]:hidden" aria-describedby="filter-dialog-description">
+        <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+          <DialogTitle className="text-xl font-semibold">FILTER BY</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="h-6 w-6 p-0"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </DialogHeader>
         
-        <div className="space-y-4">
-          {/* Activity Name */}
-          <div className="flex flex-col">
-            <TextField
-              label="Enter Activity"
-              placeholder="Enter Name"
-              value={localFilters.activityName}
-              onChange={(e) => setLocalFilters(prev => ({ ...prev, activityName: e.target.value }))}
-              variant="outlined"
-              InputLabelProps={{
-                shrink: true,
-              }}
-              sx={fieldStyles}
-            />
+        <div className="p-6 space-y-6">
+          {/* Activity Search Section */}
+          <div>
+            <h3 className="text-[14px] text-[#C72030] font-medium mb-4">Activity Information</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <TextField
+                label="Enter Activity"
+                placeholder="Enter Name"
+                value={localFilters.activityName}
+                onChange={(e) => setLocalFilters(prev => ({ ...prev, activityName: e.target.value }))}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              />
+            </div>
           </div>
 
-          {/* Select Type */}
-          <div className="flex flex-col">
-            <FormControl variant="outlined" sx={fieldStyles}>
-              <InputLabel id="type-label" shrink>Select Type</InputLabel>
-              <MuiSelect
-                labelId="type-label"
-                label="Select Type"
-                displayEmpty
-                value={localFilters.type}
-                onChange={(e) => setLocalFilters(prev => ({ ...prev, type: e.target.value }))}
-              >
-                <MenuItem value=""><em>Select Type</em></MenuItem>
-                <MenuItem value="PPM">PPM</MenuItem>
-                <MenuItem value="Routine">Routine</MenuItem>
-                <MenuItem value="AMC">AMC</MenuItem>
-              </MuiSelect>
-            </FormControl>
-          </div>
+          {/* Filter Options */}
+          <div>
+            <h3 className="text-[14px] text-[#C72030] font-medium mb-4">Filter Options</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Select Type */}
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Select Type</InputLabel>
+                <MuiSelect
+                  value={localFilters.type}
+                  onChange={(e) => setLocalFilters(prev => ({ ...prev, type: e.target.value }))}
+                  label="Select Type"
+                  notched
+                  displayEmpty
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Type</em>
+                  </MenuItem>
+                  <MenuItem value="PPM">PPM</MenuItem>
+                  <MenuItem value="Routine">Routine</MenuItem>
+                  <MenuItem value="AMC">AMC</MenuItem>
+                </MuiSelect>
+              </FormControl>
 
-          {/* Select Category */}
-          <div className="flex flex-col">
-            <FormControl variant="outlined" sx={fieldStyles}>
-              <InputLabel id="category-label" shrink>Select Category</InputLabel>
-              <MuiSelect
-                labelId="category-label"
-                label="Select Category"
-                displayEmpty
-                value={localFilters.category}
-                onChange={(e) => setLocalFilters(prev => ({ ...prev, category: e.target.value }))}
-              >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="Technical">Technical</MenuItem>
-                <MenuItem value="Non Technical">Non Technical</MenuItem>
-              </MuiSelect>
-            </FormControl>
+              {/* Select Category */}
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Select Category</InputLabel>
+                <MuiSelect
+                  value={localFilters.category}
+                  onChange={(e) => setLocalFilters(prev => ({ ...prev, category: e.target.value }))}
+                  label="Select Category"
+                  notched
+                  displayEmpty
+                  MenuProps={menuProps}
+                >
+                  <MenuItem value="">
+                    <em>Select Category</em>
+                  </MenuItem>
+                  <MenuItem value="Technical">Technical</MenuItem>
+                  <MenuItem value="Non Technical">Non Technical</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex justify-between pt-6">
             <Button 
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 border-0"
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              Apply
+              Apply Filters
             </Button>
             <Button 
-              onClick={handleReset}
               variant="outline"
-              className="flex-1"
+              className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+              onClick={handleReset}
             >
               Reset
             </Button>
