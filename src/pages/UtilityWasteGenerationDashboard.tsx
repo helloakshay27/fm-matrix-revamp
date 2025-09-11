@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,13 +8,22 @@ import { WasteGenerationFilterDialog } from '../components/WasteGenerationFilter
 import { WasteGenerationBulkDialog } from '../components/WasteGenerationBulkDialog';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { fetchWasteGenerations, WasteGeneration, WasteGenerationFilters } from '../services/wasteGenerationAPI';
+import { useLayout } from '@/contexts/LayoutContext';
+import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
+import { toast } from 'sonner';
 
 const UtilityWasteGenerationDashboard = () => {
   const navigate = useNavigate();
+  const { isSidebarCollapsed } = useLayout();
+  const panelRef = useRef<HTMLDivElement>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [showActionPanel, setShowActionPanel] = useState(false);
+  
+  // Selection state
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   
   // Filter state
   const [activeFilters, setActiveFilters] = useState<WasteGenerationFilters>({});
@@ -70,13 +79,70 @@ const UtilityWasteGenerationDashboard = () => {
     loadWasteGenerations(currentPage, activeFilters);
   }, [currentPage, activeFilters]);
 
-  const handleAdd = () => navigate('/maintenance/waste/generation/add');
-  const handleImport = () => setIsImportOpen(true);
-  const handleUpdate = () => setIsUpdateOpen(true);
-  const handleFilters = () => setIsFilterOpen(true);
+  const handleAdd = () => {
+    navigate('/maintenance/waste/generation/add');
+    setShowActionPanel(false);
+  };
+
+  const handleImport = () => {
+    setIsImportOpen(true);
+    setShowActionPanel(false);
+  };
+
+  const handleUpdate = () => {
+    setIsUpdateOpen(true);
+  };
+
+  const handleFilters = () => {
+    setIsFilterOpen(true);
+  };
+
+  const handleActionClick = () => {
+    setShowActionPanel(!showActionPanel);
+  };
+
+  const handleClearSelection = () => {
+    setShowActionPanel(false);
+  };
+
+  // Click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+        setShowActionPanel(false);
+      }
+    };
+    
+    if (showActionPanel) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActionPanel]);
+
   const handleView = (id: number) => navigate(`/maintenance/waste/generation/${id}`);
   const handleEdit = (id: number) => console.log('Edit waste generation record:', id);
   const handleDelete = (id: number) => console.log('Delete waste generation record:', id);
+
+  // Selection handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = filteredData.map(item => item.id.toString());
+      setSelectedItems(allIds);
+    } else {
+      setSelectedItems([]);
+    }
+  };
+
+  const handleSelectItem = (itemId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedItems(prev => [...prev, itemId]);
+    } else {
+      setSelectedItems(prev => prev.filter(id => id !== itemId));
+    }
+  };
+
+  const getItemId = (item: WasteGeneration) => item.id.toString();
 
   // Filter handlers
   const handleApplyFilters = (filters: WasteGenerationFilters) => {
@@ -85,15 +151,130 @@ const UtilityWasteGenerationDashboard = () => {
     setCurrentPage(1); // Reset to first page when applying filters
   };
 
-  const handleExportFiltered = (filters: WasteGenerationFilters) => {
-    console.log('Exporting with filters:', filters);
-    // Implement export logic here
-    // You can use the same API endpoint with filters to get the data for export
+  const handleExportFiltered = async (filters: WasteGenerationFilters) => {
+    try {
+      console.log('Exporting with filters:', filters);
+      
+      // Build query parameters from filters
+      const queryParams = new URLSearchParams();
+      queryParams.append('format', 'xlsx');
+      
+      if (filters.commodity_id_eq) {
+        queryParams.append('q[commodity_id_eq]', filters.commodity_id_eq.toString());
+      }
+      if (filters.category_id_eq) {
+        queryParams.append('q[category_id_eq]', filters.category_id_eq.toString());
+      }
+      if (filters.operational_landlord_id_in) {
+        queryParams.append('q[operational_landlord_id_in]', filters.operational_landlord_id_in.toString());
+      }
+      if (filters.date_range) {
+        queryParams.append('q[date_range]', `"${filters.date_range}"`);
+      }
+
+      const exportUrl = getFullUrl(`/pms/waste_generations?${queryParams.toString()}`);
+      
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      // Get the blob data
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      link.download = `waste-generation-export-${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Export completed successfully!');
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export data. Please try again.');
+    }
   };
 
   const handleClearFilters = () => {
     setActiveFilters({});
     setCurrentPage(1);
+  };
+
+  // Custom export handler for waste generation data
+  const handleTableExport = async () => {
+    try {
+      console.log('Exporting waste generation data with current filters:', activeFilters);
+      
+      // Build query parameters from active filters
+      const queryParams = new URLSearchParams();
+      queryParams.append('format', 'xlsx');
+      
+      if (activeFilters.commodity_id_eq) {
+        queryParams.append('q[commodity_id_eq]', activeFilters.commodity_id_eq.toString());
+      }
+      if (activeFilters.category_id_eq) {
+        queryParams.append('q[category_id_eq]', activeFilters.category_id_eq.toString());
+      }
+      if (activeFilters.operational_landlord_id_in) {
+        queryParams.append('q[operational_landlord_id_in]', activeFilters.operational_landlord_id_in.toString());
+      }
+      if (activeFilters.date_range) {
+        queryParams.append('q[date_range]', `"${activeFilters.date_range}"`);
+      }
+
+      const exportUrl = getFullUrl(`/pms/waste_generations?${queryParams.toString()}`);
+      
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+
+      // Get the blob data
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      link.download = `waste-generation-export-${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Waste generation data exported successfully!');
+      
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export waste generation data. Please try again.');
+    }
   };
 
   const columns = [
@@ -262,10 +443,15 @@ const UtilityWasteGenerationDashboard = () => {
             data={filteredData}
             columns={columns}
             // selectable={true}
+            selectedItems={selectedItems}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            getItemId={getItemId}
             renderCell={renderCell}
             storageKey="waste-generation-table"
             enableExport={true}
             exportFileName="waste-generation-data"
+            handleExport={handleTableExport}
             pagination={true}
             pageSize={10}
             searchTerm={searchTerm}
@@ -275,13 +461,16 @@ const UtilityWasteGenerationDashboard = () => {
             emptyMessage={
               hasActiveFilters 
                 ? `No waste generation records found with the current filters${getActiveFiltersDescription()}. Try adjusting your filter criteria or click 'Clear' to view all records.`
-                : "No waste generation data available. Click 'Add' to create a new record."
+                : "No waste generation data available. Click 'Action' to create a new record."
             }
             leftActions={
               <div className="flex flex-wrap items-center gap-2">
-                <Button onClick={handleAdd} style={{ backgroundColor: '#C72030' }} className="hover:bg-[#A01B26] text-white">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add
+                <Button 
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
+                  onClick={handleActionClick}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Action
                 </Button>
                 {hasActiveFilters && (
                   <div className="flex items-center gap-2">
@@ -299,14 +488,6 @@ const UtilityWasteGenerationDashboard = () => {
                     </Button>
                   </div>
                 )}
-                {/* <Button onClick={handleImport} variant="outline" style={{ borderColor: '#C72030', color: '#C72030' }} className="hover:bg-[#C72030] hover:text-white">
-                  <Download className="mr-2 h-4 w-4" />
-                  Import
-                </Button>
-                <Button onClick={handleUpdate} variant="outline" style={{ borderColor: '#C72030', color: '#C72030' }} className="hover:bg-[#C72030] hover:text-white">
-                  <Upload className="mr-2 h-4 w-4" />
-                  Update
-                </Button> */}
               </div>
             }
           />
@@ -339,6 +520,57 @@ const UtilityWasteGenerationDashboard = () => {
           )}
         </CardContent>
       </div>
+
+      {/* Action Panel */}
+      {showActionPanel && (
+        <div
+          className={`fixed z-50 flex items-end justify-center pb-8 sm:pb-[16rem] pointer-events-none transition-all duration-300 ${
+            isSidebarCollapsed ? 'left-16' : 'left-64'
+          } right-0 bottom-0`}
+        >
+          {/* Main panel + right bar container */}
+          <div className="flex max-w-full pointer-events-auto bg-white border border-gray-200 rounded-lg shadow-lg mx-4 overflow-hidden">
+            {/* Right vertical bar */}
+            <div className="hidden sm:flex w-8 bg-[#C4B89D54] items-center justify-center text-red-600 font-semibold text-sm">
+            </div>
+
+            {/* Main content */}
+            <div ref={panelRef} className="p-4 sm:p-6 w-full sm:w-auto">
+              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-6 sm:gap-12">
+                {/* Add Waste Generation */}
+                <button
+                  onClick={handleAdd}
+                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
+                >
+                  <Plus className="w-6 h-6 mb-1" />
+                  <span className="text-sm font-medium text-center">Add</span>
+                </button>
+
+                {/* Import */}
+                <button
+                  onClick={handleImport}
+                  className="flex flex-col items-center justify-center cursor-pointer text-[#374151] hover:text-black w-16 sm:w-auto"
+                >
+                  <Upload className="w-6 h-6 mb-1" />
+                  <span className="text-sm font-medium text-center">Import</span>
+                </button>
+
+                {/* Vertical divider */}
+                <div className="w-px h-8 bg-black opacity-20 mx-2 sm:mx-4" />
+
+                {/* Close icon */}
+                <div
+                  onClick={handleClearSelection}
+                  className="flex flex-col items-center justify-center cursor-pointer text-gray-400 hover:text-gray-600 w-16 sm:w-auto"
+                >
+                  <X className="w-6 h-6 mb-1" />
+                  <span className="text-sm font-medium text-center">Close</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Dialogs */}
       <WasteGenerationFilterDialog 

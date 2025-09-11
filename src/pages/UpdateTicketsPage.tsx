@@ -63,10 +63,7 @@ interface ComplaintStatus {
 
 interface FMUser {
   id: number;
-  email: string;
-  firstname: string;
-  lastname: string;
-  login: string;
+  full_name: string;
 }
 
 interface SubCategory {
@@ -216,7 +213,7 @@ const UpdateTicketsPage: React.FC = () => {
         ticketData.responsible_person
       );
       const matchingResponsiblePerson = fmUsers.find((user) => {
-        const fullName = `${user.firstname} ${user.lastname}`;
+        const fullName = user.full_name;
         const apiResponsiblePerson =
           ticketData.responsible_person?.trim() || "";
         console.log(
@@ -251,7 +248,7 @@ const UpdateTicketsPage: React.FC = () => {
       console.log("👤 Looking for assigned_to match:", ticketData.assigned_to);
       console.log("👥 Available fmUsers:", fmUsers);
       const matchingUser = fmUsers.find((user) => {
-        const fullName = `${user.firstname} ${user.lastname}`;
+        const fullName = user.full_name;
         const apiAssignedTo = ticketData.assigned_to?.trim() || "";
         console.log("🔍 Comparing:", fullName, "with:", apiAssignedTo);
 
@@ -476,12 +473,12 @@ const UpdateTicketsPage: React.FC = () => {
         const [statusResponse, usersResponse, complaintModesResponse] =
           await Promise.all([
             apiClient.get("/pms/admin/complaint_statuses.json"),
-            apiClient.get("/pms/account_setups/fm_users.json"),
+            apiClient.get("/pms/users/get_escalate_to_users.json"),
             apiClient.get("/pms/admin/complaint_modes.json"),
           ]);
 
         setComplaintStatuses(statusResponse.data || []);
-        setFmUsers(usersResponse.data.fm_users || []);
+        setFmUsers(usersResponse.data.users || []);
         setComplaintModes(complaintModesResponse.data || []);
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -830,7 +827,7 @@ const UpdateTicketsPage: React.FC = () => {
     // Get current user information
     const currentUser = getUser();
     const currentUserName = currentUser
-      ? `${currentUser.firstname} ${currentUser.lastname}`
+      ? currentUser.full_name
       : "Current User";
     console.log("👤 Current user for cost approval:", currentUserName);
 
@@ -1363,7 +1360,7 @@ const UpdateTicketsPage: React.FC = () => {
                         value={user.id.toString()}
                         className="text-gray-900 hover:bg-gray-100"
                       >
-                        {user.firstname} {user.lastname}
+                        {user.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1525,7 +1522,7 @@ const UpdateTicketsPage: React.FC = () => {
                         value={user.id.toString()}
                         className="text-gray-900 hover:bg-gray-100"
                       >
-                        {user.firstname} {user.lastname}
+                        {user.full_name}
                       </SelectItem>
                     ))}
                   </SelectContent>
