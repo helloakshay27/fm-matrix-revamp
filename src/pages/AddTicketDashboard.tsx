@@ -70,7 +70,7 @@ export const AddTicketDashboard = () => {
   // Dropdown data states
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategoryResponse[]>([]);
-  const [fmUsers, setFmUsers] = useState<any[]>([]);
+  const [fmUsers, setFmUsers] = useState<{id: number; full_name: string}[]>([]);
   const [occupantUsers, setOccupantUsers] = useState<OccupantUserResponse[]>([]);
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
   const [complaintModes, setComplaintModes] = useState<ComplaintModeResponse[]>([]);
@@ -172,7 +172,7 @@ export const AddTicketDashboard = () => {
   const loadFMUsers = async () => {
     try {
       const response = await ticketManagementAPI.getEngineers();
-      setFmUsers(response.fm_users || []);
+      setFmUsers(response.users || []);
     } catch (error) {
       console.error('Error loading FM users:', error);
     }
@@ -251,7 +251,7 @@ export const AddTicketDashboard = () => {
       if (selectedFmUser) {
         setFormData(prev => ({
           ...prev,
-          name: `${selectedFmUser.firstname} ${selectedFmUser.lastname}`,
+          name: selectedFmUser.full_name,
           contactNumber: selectedFmUser.mobile || '',
           department: selectedFmUser.lock_user_permission?.designation || selectedFmUser.designation || '',
           unit: `Unit ${selectedFmUser.unit_id || ''}`,
@@ -428,7 +428,7 @@ export const AddTicketDashboard = () => {
     } else if (onBehalfOf === 'fm-user') {
       return fmUsers.map(user => ({
         id: user.id.toString(),
-        name: `${user.firstname} ${user.lastname}`,
+        name: user.full_name,
         type: 'fm'
       }));
     }
@@ -693,7 +693,7 @@ export const AddTicketDashboard = () => {
                   <MenuItem value="">Select Assigned To</MenuItem>
                   {fmUsers.map((user) => (
                     <MenuItem key={user.id} value={user.id.toString()}>
-                      {user.firstname} {user.lastname}
+                      {user.full_name}
                     </MenuItem>
                   ))}
                 </MuiSelect>

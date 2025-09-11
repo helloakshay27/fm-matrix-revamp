@@ -120,6 +120,16 @@ const SMTDashboard = () => {
     }));
   }, [serverData]);
 
+  const formatDate = (val: string | null | undefined) => {
+    if (!val) return '-';
+    const d = new Date(val);
+    if (isNaN(d.getTime())) return '-';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const renderCell = (item, columnKey) => {
     switch (columnKey) {
       case 'actions':
@@ -136,7 +146,7 @@ const SMTDashboard = () => {
           </div>
         );
       case 'smt_done_date':
-        return item.smt_done_date ? new Date(item.smt_done_date).toLocaleDateString() : '-';
+        return formatDate(item.smt_done_date);
       default:
         return item[columnKey] || '';
     }

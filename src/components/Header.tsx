@@ -33,6 +33,7 @@ import {
   clearSites,
 } from "@/store/slices/siteSlice";
 import { getUser, clearAuth } from "@/utils/auth";
+import { is } from "date-fns/locale";
 
 export interface Company {
   id: number;
@@ -289,11 +290,12 @@ export const Header = () => {
           </DropdownMenu>
 
           {/* Site Dropdown */}
-          <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
-              <MapPin className="w-4 h-4" />
-              {siteLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+          {!isViSite && (
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
+                <MapPin className="w-4 h-4" />
+                {siteLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
                 <span className="text-sm font-medium">
                   {selectedSite?.name || "Select Site"}
@@ -325,6 +327,8 @@ export const Header = () => {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
+          )}
+
 
           <div className="relative">
             <button className="p-2 hover:bg-[#f6f4ee] rounded-lg transition-colors">

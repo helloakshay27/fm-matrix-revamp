@@ -15,7 +15,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { X, Plus, Loader2, Edit, Trash2, Filter, Eye, EyeOff, ChevronDown, ChevronUp } from 'lucide-react'
 import { AppDispatch, RootState } from '@/store/store'
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice'
-import { fetchFMUsers } from '@/store/slices/fmUserSlice'
 import { createResponseEscalation, clearState, fetchResponseEscalations, updateResponseEscalation, deleteResponseEscalation } from '@/store/slices/responseEscalationSlice'
 import { ResponseEscalationApiFormData, FMUserDropdown, EscalationMatrixPayload, ResponseEscalationGetResponse, UpdateResponseEscalationPayload } from '@/types/escalationMatrix'
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI'
@@ -39,7 +38,7 @@ type ResponseEscalationFormData = z.infer<typeof responseEscalationSchema>
 
 export const ResponseEscalationTab: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>()
-  
+
   // Local state
   const [selectedCategories, setSelectedCategories] = useState<number[]>([])
   const [selectedUsers, setSelectedUsers] = useState<{
@@ -60,10 +59,11 @@ export const ResponseEscalationTab: React.FC = () => {
   const [editingRule, setEditingRule] = useState<ResponseEscalationGetResponse | null>(null)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null)
+  const [escalationUsers, setEscalationUsers] = useState<{ id: number; full_name: string }[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
 
   // Redux selectors
   const { data: categoriesData, loading: categoriesLoading } = useSelector((state: RootState) => state.helpdeskCategories)
-  const { data: fmUsersData, loading: fmUsersLoading } = useSelector((state: RootState) => state.fmUsers)
   const { loading: submissionLoading, success, error, data: escalationRules, fetchLoading, updateLoading, deleteLoading } = useSelector((state: RootState) => state.responseEscalation)
 
   // Form setup
@@ -81,22 +81,17 @@ export const ResponseEscalationTab: React.FC = () => {
     },
   })
 
-  // Process FM Users data for display
-  const fmUsers: FMUserDropdown[] = fmUsersData?.fm_users?.map(user => ({
-    ...user,
-    displayName: `${user.firstname} ${user.lastname}`,
-  })) || []
 
   // Options for react-select
   const categoryOptions = categoriesData?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || []
-  const userOptions = fmUsers?.map(user => ({ value: user.id, label: user.displayName })) || []
+  const userOptions = escalationUsers?.map(user => ({ value: user.id, label: user.full_name })) || []
 
   // Fetch data on component mount
   useEffect(() => {
     dispatch(fetchHelpdeskCategories())
-    dispatch(fetchFMUsers())
     dispatch(fetchResponseEscalations())
     loadUserAccount()
+    loadEscalationUsers()
   }, [dispatch])
 
   // Load user account to get site_id
@@ -108,6 +103,21 @@ export const ResponseEscalationTab: React.FC = () => {
     } catch (error) {
       console.error('Error loading user account:', error)
       toast.error('Failed to load user account')
+    }
+  }
+
+  // Load escalation users
+  const loadEscalationUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const response = await ticketManagementAPI.getEscalationUsers()
+      setEscalationUsers(response.users || [])
+      console.log('Escalation users loaded:', response.users)
+    } catch (error) {
+      console.error('Error loading escalation users:', error)
+      toast.error('Failed to load escalation users')
+    } finally {
+      setLoadingUsers(false)
     }
   }
 
@@ -134,12 +144,12 @@ export const ResponseEscalationTab: React.FC = () => {
   }
 
   const getUserName = (id: number) => {
-    return fmUsers.find(user => user.id === id)?.displayName || 'Unknown User'
+    return escalationUsers.find(user => user.id === id)?.full_name || 'Unknown User'
   }
 
   const getUserNames = (userIds: string | number[] | null): string => {
     if (!userIds) return ''
-    
+
     let ids: number[] = []
     if (typeof userIds === 'string') {
       try {
@@ -150,12 +160,12 @@ export const ResponseEscalationTab: React.FC = () => {
     } else {
       ids = userIds
     }
-    
+
     if (!Array.isArray(ids) || ids.length === 0) return ''
-    
+
     return ids.map(id => {
-      const user = fmUsers.find(u => u.id === id)
-      return user ? user.displayName : `User ${id}`
+      const user = escalationUsers.find(u => u.id === id)
+      return user ? user.full_name : `User ${id}`
     }).join(', ')
   }
 
@@ -164,7 +174,7 @@ export const ResponseEscalationTab: React.FC = () => {
   ) || []
 
   const getAvailableUsers = (level: keyof typeof selectedUsers) => {
-    return fmUsers.filter(user => !selectedUsers[level].includes(user.id))
+    return escalationUsers.filter(user => !selectedUsers[level].includes(user.id))
   }
 
   // Category selection handlers
@@ -173,7 +183,7 @@ export const ResponseEscalationTab: React.FC = () => {
       toast.error('Maximum 15 categories allowed')
       return
     }
-    
+
     const newCategories = [...selectedCategories, categoryId]
     setSelectedCategories(newCategories)
     form.setValue('categoryIds', newCategories)
@@ -215,8 +225,8 @@ export const ResponseEscalationTab: React.FC = () => {
   }
 
   // Filter rules based on category
-  const filteredRules = selectedCategoryFilter === 'all' 
-    ? escalationRules 
+  const filteredRules = selectedCategoryFilter === 'all'
+    ? escalationRules
     : escalationRules.filter(rule => {
         const categoryName = getCategoryName(rule.category_id)
         return categoryName.toLowerCase().includes(selectedCategoryFilter.toLowerCase())
@@ -225,7 +235,7 @@ export const ResponseEscalationTab: React.FC = () => {
   // Handle edit rule
   const handleEditRule = (rule: ResponseEscalationGetResponse) => {
     setEditingRule(rule)
-    
+
     // Pre-populate form with existing data
     const formData = {
       categoryIds: [rule.category_id],
@@ -285,8 +295,9 @@ export const ResponseEscalationTab: React.FC = () => {
       setEditingRule(null)
       dispatch(fetchResponseEscalations())
       dispatch(clearState())
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update response escalation rule')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update response escalation rule'
+      toast.error(errorMessage)
     }
   }
 
@@ -296,8 +307,9 @@ export const ResponseEscalationTab: React.FC = () => {
       await dispatch(deleteResponseEscalation(ruleId)).unwrap()
       toast.success('Response escalation rule deleted successfully!')
       dispatch(clearState())
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete response escalation rule')
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete response escalation rule'
+      toast.error(errorMessage)
     }
   }
 
@@ -337,7 +349,7 @@ export const ResponseEscalationTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Form Section */}``
+      {/* Form Section */}
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader>
@@ -422,8 +434,8 @@ export const ResponseEscalationTab: React.FC = () => {
                             }}
                             value={userOptions.filter(option => selectedUsers[level].includes(option.value))}
                             placeholder="Select up to 15 users..."
-                            isLoading={fmUsersLoading}
-                            isDisabled={fmUsersLoading}
+                            isLoading={loadingUsers}
+                            isDisabled={loadingUsers}
                             className="min-w-[250px]"
                             styles={{
                               control: (base) => ({
@@ -458,7 +470,7 @@ export const ResponseEscalationTab: React.FC = () => {
           <Button 
             type="submit" 
             className="bg-[#C72030] hover:bg-[#A61B29] text-white border-none font-semibold px-8 py-2" 
-            disabled={submissionLoading || categoriesLoading || fmUsersLoading}
+            disabled={submissionLoading || categoriesLoading || loadingUsers}
           >
             {submissionLoading ? (
               <>
@@ -672,8 +684,8 @@ export const ResponseEscalationTab: React.FC = () => {
                         form.setValue('escalationLevels', updatedUsers);
                       }}
                       placeholder="Select up to 15 users..."
-                      isLoading={fmUsersLoading}
-                      isDisabled={fmUsersLoading}
+                      isLoading={loadingUsers}
+                      isDisabled={loadingUsers}
                       className="min-w-[250px]"
                     />
                   </div>

@@ -94,7 +94,7 @@ export const EditExternalUserPage = () => {
         ...prev,
         [field]: cleaned.length === 0 ? (field === 'firstname' ? 'First Name is required' : 'Last Name is required')
           : cleaned.length < 2 ? (field === 'firstname' ? 'First Name must be at least 2 characters' : 'Last Name must be at least 2 characters')
-          : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters or numbers' : 'Last Name must contain only letters or numbers')
+          : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters, numbers, or spaces' : 'Last Name must contain only letters, numbers, or spaces')
           : ''
       }));
       return;
@@ -167,16 +167,17 @@ export const EditExternalUserPage = () => {
       const fn = String(formData.firstname);
       if (fn.length < 2) {
         errors.firstname = errors.firstname || 'First Name must be at least 2 characters';
-      } else if (!/^[A-Za-z0-9]+$/.test(fn)) {
-        errors.firstname = errors.firstname || 'First Name must contain only letters or numbers';
+      } else if (!/^[A-Za-z0-9 ]+$/.test(fn)) {
+        // Allow internal spaces (e.g., "Vinayak T") but block other characters
+        errors.firstname = errors.firstname || 'First Name must contain only letters, numbers, or spaces';
       }
     }
     if (!isEmpty(formData.lastname)) {
       const ln = String(formData.lastname);
       if (ln.length < 2) {
         errors.lastname = errors.lastname || 'Last Name must be at least 2 characters';
-      } else if (!/^[A-Za-z0-9]+$/.test(ln)) {
-        errors.lastname = errors.lastname || 'Last Name must contain only letters or numbers';
+      } else if (!/^[A-Za-z0-9 ]+$/.test(ln)) {
+        errors.lastname = errors.lastname || 'Last Name must contain only letters, numbers, or spaces';
       }
     }
     if (!isEmpty(formData.mobile) && !isValidMobile(formData.mobile)) {

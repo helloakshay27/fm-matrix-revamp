@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Switch } from '../components/ui/switch';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../components/ui/alert-dialog';
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../components/ui/pagination';
 import { Plus, Search, RefreshCw, Grid3X3, Edit, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useLayout } from '../contexts/LayoutContext';
 import { ColumnVisibilityDropdown } from '../components/ColumnVisibilityDropdown';
+import { ticketManagementAPI } from '../services/ticketManagementAPI';
 
 interface VisitorGateData {
   id: number;
@@ -20,6 +22,26 @@ interface VisitorGateData {
   status: boolean;
   active: boolean;
   createdBy: string;
+}
+
+interface SocietyGateAPIResponse {
+  id: number;
+  gate_name: string;
+  gate_device: string;
+  approve: number;
+  active: number;
+  society?: {
+    name: string;
+  };
+  building?: {
+    name: string;
+  };
+  user?: {
+    name: string;
+  };
+  created_by?: {
+    name: string;
+  };
 }
 
 export const VisitorManagementSetup = () => {
@@ -39,113 +61,66 @@ export const VisitorManagementSetup = () => {
     createdBy: true
   });
   const [activeTab, setActiveTab] = useState<'smartsecure' | 'quikgate'>('smartsecure');
+  
+  // API data state
+  const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const perPage = 20;
 
   useEffect(() => {
     setCurrentSection('Settings');
   }, [setCurrentSection]);
-  
-  // Sample data with state management
-  const [visitorGateData, setVisitorGateData] = useState<VisitorGateData[]>([
-    {
-      id: 1256,
-      society: 'Zycus Infotech - Zycus Infotech Pvt Ltd',
-      tower: 'GJ 07',
-      gateName: 'Main Gate',
-      gateDevice: '65e4bb21a04c149',
-      userName: 'Security Tab 1',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1220,
-      society: 'Arvog - Arvog Finance',
-      tower: 'Trade World',
-      gateName: 'Reception',
-      gateDevice: '31fc5f03222bf7c5',
-      userName: 'Security Tab',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1205,
-      society: 'Jamshedpur - CJ Darcl Logistic Ltd',
-      tower: '',
-      gateName: 'Main Gate',
-      gateDevice: '1ceb64e5c443a00a',
-      userName: 'Tech Secure',
-      status: true,
-      active: true,
-      createdBy: 'Deepak Gupta'
-    },
-    {
-      id: 1202,
-      society: 'Sai Radhe, Bund Garden - Lockated HO',
-      tower: 'Jyoti Tower',
-      gateName: 'Main Gate',
-      gateDevice: '4a0e3ebdcf2c3e6c',
-      userName: 'Demo Site2',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1200,
-      society: 'Lockated - Lockated HO',
-      tower: 'Jyoti Tower',
-      gateName: 'Main Gate',
-      gateDevice: '2ebdc58958ff42f8',
-      userName: 'Lockated New Security',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1194,
-      society: 'Sai Radhe, Bund Garden - Lockated HO',
-      tower: 'Jyoti Tower',
-      gateName: 'Main Gate',
-      gateDevice: '45f799580cd85cf8a',
-      userName: 'Demo Site2',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1175,
-      society: 'Arvog - Arvog Finance',
-      tower: 'Trade World',
-      gateName: 'Reception',
-      gateDevice: '920d4c797c161915',
-      userName: 'Security Tab',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1174,
-      society: 'Koncord, Bund Garden - UrbanWrk',
-      tower: 'Koncord',
-      gateName: 'Main Gate',
-      gateDevice: '021854263974268',
-      userName: 'Koncord Tab 4',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
-    },
-    {
-      id: 1165,
-      society: 'MontClaire, Baner - UrbanWrk',
-      tower: 'UrbanWrk@Montclair',
-      gateName: 'Main Gate',
-      gateDevice: '64c1dd8ca8005bd2',
-      userName: 'Security 10th',
-      status: true,
-      active: true,
-      createdBy: 'Mahendra Lungare'
+
+  // Fetch society gates from API
+  const fetchSocietyGates = useCallback(async (page: number = 1) => {
+    try {
+      setLoading(true);
+      const response = await ticketManagementAPI.getSocietyGates(page, perPage);
+      
+      console.log('Society gates API response:', response);
+      
+      if (response && response.smart_secure_society_gates) {
+        // Map API response to component data structure
+        const mappedData = response.smart_secure_society_gates.map((gate: SocietyGateAPIResponse) => ({
+          id: gate.id,
+          society: gate.society?.name || 'N/A',
+          tower: gate.building?.name || 'N/A',
+          gateName: gate.gate_name,
+          gateDevice: gate.gate_device,
+          userName: gate.user?.name || 'N/A',
+          status: gate.approve === 1,
+          active: gate.active === 1,
+          createdBy: gate.created_by?.name || 'N/A'
+        }));
+        
+        setVisitorGateData(mappedData);
+        
+        // Update pagination info
+        if (response.smart_secure_pagination) {
+          setCurrentPage(response.smart_secure_pagination.current_page);
+          setTotalPages(response.smart_secure_pagination.total_pages);
+          setTotalEntries(response.smart_secure_pagination.total_entries);
+        }
+      } else {
+        console.error('Invalid society gates response format:', response);
+        setVisitorGateData([]);
+      }
+    } catch (error) {
+      console.error('Error fetching society gates:', error);
+      toast.error('Failed to load society gates. Please try again.');
+      setVisitorGateData([]);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  }, [perPage]);
+
+  useEffect(() => {
+    fetchSocietyGates(currentPage);
+  }, [fetchSocietyGates, currentPage]);
+
 
   const filteredData = visitorGateData.filter(item =>
     item.society.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -216,6 +191,15 @@ export const VisitorManagementSetup = () => {
         </Button>
 
         <div className="flex items-center gap-3">
+          {/* <Button
+            onClick={() => fetchSocietyGates(currentPage)}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button> */}
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <Input
@@ -238,7 +222,7 @@ export const VisitorManagementSetup = () => {
           <TableHeader>
             <TableRow className="bg-[#f6f4ee]">
               {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-              {visibleColumns.id && <TableHead className="w-16">ID</TableHead>}
+              {/* {visibleColumns.id && <TableHead className="w-16">ID</TableHead>} */}
               {visibleColumns.society && <TableHead className="min-w-[300px]">Society</TableHead>}
               {visibleColumns.tower && <TableHead className="w-32">Tower</TableHead>}
               {visibleColumns.gateName && <TableHead className="w-32">Gate Name</TableHead>}
@@ -250,55 +234,132 @@ export const VisitorManagementSetup = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredData.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50">
-                {visibleColumns.actions && (
-                  <TableCell>
-                    <button
-                      onClick={() => handleEdit(item.id)}
-                      className="p-1 hover:bg-gray-100 rounded"
-                      title="Edit"
-                    >
-                      <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
-                    </button>
-                  </TableCell>
-                )}
-                {visibleColumns.id && <TableCell className="font-medium">{item.id}</TableCell>}
-                {visibleColumns.society && (
-                  <TableCell className="max-w-[300px]">
-                    <div className="truncate" title={item.society}>
-                      {item.society}
-                    </div>
-                  </TableCell>
-                )}
-                {visibleColumns.tower && <TableCell>{item.tower || '--'}</TableCell>}
-                {visibleColumns.gateName && <TableCell>{item.gateName}</TableCell>}
-                {visibleColumns.gateDevice && <TableCell className="font-mono text-sm">{item.gateDevice}</TableCell>}
-                {visibleColumns.userName && <TableCell>{item.userName}</TableCell>}
-                {visibleColumns.status && (
-                  <TableCell className="text-center">
-                    <Switch
-                      checked={item.status}
-                      onCheckedChange={() => handleStatusToggle(item.id, 'status')}
-                      className="data-[state=checked]:bg-green-500"
-                    />
-                  </TableCell>
-                )}
-                {visibleColumns.active && (
-                  <TableCell className="text-center">
-                    <span className={`px-2 py-1 text-xs font-medium ${
-                      item.active ? 'text-green-700' : 'text-gray-500'
-                    }`}>
-                      {item.active ? 'Yes' : 'No'}
-                    </span>
-                  </TableCell>
-                )}
-                {visibleColumns.createdBy && <TableCell>{item.createdBy}</TableCell>}
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="text-center py-8">
+                  <div className="flex items-center justify-center">
+                    <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                    Loading society gates...
+                  </div>
+                </TableCell>
               </TableRow>
-            ))}
+            ) : filteredData.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={Object.values(visibleColumns).filter(Boolean).length} className="text-center py-8 text-gray-500">
+                  No society gates found
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredData.map((item) => (
+                <TableRow key={item.id} className="hover:bg-gray-50">
+                  {visibleColumns.actions && (
+                    <TableCell>
+                      <button
+                        onClick={() => handleEdit(item.id)}
+                        className="p-1 hover:bg-gray-100 rounded"
+                        title="Edit"
+                      >
+                        <Edit className="w-4 h-4 text-gray-600 hover:text-[#C72030]" />
+                      </button>
+                    </TableCell>
+                  )}
+                  {/* {visibleColumns.id && <TableCell className="font-medium">{item.id}</TableCell>} */}
+                  {visibleColumns.society && (
+                    <TableCell className="max-w-[300px]">
+                      <div className="truncate" title={item.society}>
+                        {item.society}
+                      </div>
+                    </TableCell>
+                  )}
+                  {visibleColumns.tower && <TableCell>{item.tower || '--'}</TableCell>}
+                  {visibleColumns.gateName && <TableCell>{item.gateName}</TableCell>}
+                  {visibleColumns.gateDevice && <TableCell className="font-mono text-sm">{item.gateDevice}</TableCell>}
+                  {visibleColumns.userName && <TableCell>{item.userName}</TableCell>}
+                  {visibleColumns.status && (
+                    <TableCell className="text-center">
+                      <Switch
+                        checked={item.status}
+                        onCheckedChange={() => handleStatusToggle(item.id, 'status')}
+                        className="data-[state=checked]:bg-green-500"
+                      />
+                    </TableCell>
+                  )}
+                  {visibleColumns.active && (
+                    <TableCell className="text-center">
+                      <span className={`px-2 py-1 text-xs font-medium ${
+                        item.active ? 'text-green-700' : 'text-gray-500'
+                      }`}>
+                        {item.active ? 'Yes' : 'No'}
+                      </span>
+                    </TableCell>
+                  )}
+                  {visibleColumns.createdBy && <TableCell>{item.createdBy}</TableCell>}
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) {
+                      setCurrentPage(currentPage - 1);
+                    }
+                  }}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) {
+                      setCurrentPage(currentPage + 1);
+                    }
+                  }}
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
+
     </div>
   );
 };

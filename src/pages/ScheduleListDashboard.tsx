@@ -910,7 +910,7 @@ export const ScheduleListDashboard = () => {
       {showActionPanel && (
         <SelectionPanel
           actions={selectionActions}
-          onAdd={handleAddSchedule}
+          // onAdd={handleAddSchedule}
           onClearSelection={() => setShowActionPanel(false)}
           onImport={() => setShowImportModal(true)}
         />
@@ -1020,7 +1020,6 @@ export const ScheduleListDashboard = () => {
       type: '',
       category: ''
     });
-    setShowFilterDialog(false);
   }
 
   // Custom export handler for schedules
