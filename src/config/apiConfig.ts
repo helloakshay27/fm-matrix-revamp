@@ -70,7 +70,7 @@ export const API_CONFIG = {
     UPDATE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
     DELETE_ROLE_CONFIG: '/lock_roles', // Base path, will append /:id.json
     EMAIL_RULES: '/pms/email_rule_setups.json',
-    FM_USERS: '/pms/account_setups/fm_users.json',
+    FM_USERS: '/pms/users/get_escalate_to_users.json',
     ALLOWED_COMPANIES: '/allowed_companies.json',
     CHANGE_COMPANY: '/change_company.json',
     ALLOWED_SITES: '/pms/sites/allowed_sites.json',
@@ -235,6 +235,11 @@ export const API_CONFIG = {
     PARKING_BOOKING_DETAILS: '/pms/admin/parking_bookings',
     // Icons endpoint
     ICONS: '/pms/icons.json',
+    // Society gates endpoint
+    SOCIETY_GATES: '/admin/society_gates.json',
+    // Society gate by ID endpoints
+    SOCIETY_GATE_BY_ID: '/admin/society_gates', // Base path, will append /{id}.json
+    UPDATE_SOCIETY_GATE: '/admin/society_gates', // Base path, will append /{id}.json
   },
 } as const
 
