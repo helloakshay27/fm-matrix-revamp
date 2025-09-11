@@ -219,7 +219,7 @@ export const EditGRNDashboard = () => {
             totalTaxes: item.taxable_value,
             amount: item.total_value,
             totalAmount: (parseFloat(item.total_value) + parseFloat(item.taxable_value)).toFixed(2),
-            batch: item.products.map((product: any) => ({
+            batch: item.products && item.products.map((product: any) => ({
               batch_no: product.batch_no,
               id: product.id,
             })) || [],
