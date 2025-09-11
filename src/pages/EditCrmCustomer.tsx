@@ -476,7 +476,7 @@ export const EditCrmCustomer = () => {
                             </Button>
                         </div>
                     </div>
-                    <div className="flex justify-end pt-4 border-t border-gray-200">
+                    <div className="flex justify-center pt-4 border-t border-gray-200">
                         <Button
                             onClick={handleSave}
                             className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-2 rounded-lg"
