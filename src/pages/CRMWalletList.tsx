@@ -10,10 +10,12 @@ import {
     fetchTransactionHistory,
     fetchWalletList,
 } from "@/store/slices/walletListSlice";
+import axios from "axios";
 import { format } from "date-fns";
 import { Coins, Download, Eye, Plus, Star, Users, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const columns: ColumnConfig[] = [
     { key: "entity_name", label: "Entity Name", sortable: true, draggable: true },
@@ -224,6 +226,28 @@ const CRMWalletList = () => {
         setShowTopupModal(true);
     };
 
+    const handleExport = async () => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/admin_wallet_transactions.xlsx`, {
+                responseType: 'blob',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement("a");
+            link.href = url;
+            link.setAttribute("download", "transactions.xlsx");
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            console.log(error);
+            toast.error(error.message)
+        }
+    }
+
     const selectedActions = [
         {
             label: "Topup Wallet",
@@ -233,7 +257,7 @@ const CRMWalletList = () => {
         {
             label: "Export",
             icon: Download,
-            // onClick: handleOpenRoleDialog,
+            onClick: handleExport,
         },
     ];
 

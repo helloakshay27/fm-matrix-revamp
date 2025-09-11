@@ -22,28 +22,28 @@ import { toast } from "sonner";
 
 const transactionColumns: ColumnConfig[] = [
     {
-        key: "id",
+        key: "transactionId",
         label: "Transaction Id",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "company_name",
+        key: "meeting_room",
         label: "Facility Name",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "transaction_type",
+        key: "transactionType",
         label: "Transaction Type",
         sortable: true,
         draggable: true,
         defaultVisible: true,
     },
     {
-        key: "transaction_points",
+        key: "transactionPoints",
         label: "Transaction Points",
         sortable: true,
         draggable: true,
@@ -57,7 +57,7 @@ const transactionColumns: ColumnConfig[] = [
         defaultVisible: true,
     },
     {
-        key: "transaction_id",
+        key: "ccavenue_transaction_id",
         label: "Transaction Id (CCAVENUE)",
         sortable: true,
         draggable: true,
@@ -207,6 +207,13 @@ const CRMWalletDetails = () => {
             fetchRules();
         } catch (error) {
             console.log(error);
+        }
+    };
+
+    const renderCell = (item: any, columnKey: string) => {
+        switch (columnKey) {
+            default:
+                return item[columnKey] || "-";
         }
     };
 
@@ -490,6 +497,7 @@ const CRMWalletDetails = () => {
             <EnhancedTable
                 data={transactionHistory}
                 columns={transactionColumns}
+                renderCell={renderCell}
                 storageKey="wallet-details-transactions"
                 hideTableSearch={true}
                 hideTableExport={true}
