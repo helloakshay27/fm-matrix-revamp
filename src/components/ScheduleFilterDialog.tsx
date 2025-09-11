@@ -74,6 +74,7 @@ export const ScheduleFilterDialog = ({
 
   const handleApply = () => {
     onApplyFilters(localFilters);
+    onOpenChange(false);
   };
 
   const handleReset = () => {
@@ -83,7 +84,36 @@ export const ScheduleFilterDialog = ({
       category: ''
     });
     onResetFilters();
+  };
+
+  const handleClose = () => {
     onOpenChange(false);
+  };
+
+  const fieldStyles = {
+    height: { xs: 28, sm: 36, md: 45 },
+    backgroundColor: 'white',
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+      padding: { xs: '8px', sm: '10px', md: '12px' },
+      backgroundColor: 'white',
+    },
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: 'white',
+    }
+  };
+
+  const menuProps = {
+    PaperProps: {
+      style: {
+        maxHeight: 200,
+        backgroundColor: 'white',
+        zIndex: 9999,
+        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      },
+    },
+    disablePortal: false,
+    disableAutoFocus: true,
+    disableEnforceFocus: true,
   };
 
   return (
@@ -167,18 +197,16 @@ export const ScheduleFilterDialog = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               onClick={handleApply}
-              style={{ backgroundColor: '#C72030' }}
-              className="text-white hover:bg-[#C72030]/90 flex-1"
             >
-              Apply
+              Apply Filters
             </Button>
             <Button
               onClick={handleReset}
               variant="outline"
-              className="flex-1"
+              className="px-8 border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
             >
               Reset
             </Button>
