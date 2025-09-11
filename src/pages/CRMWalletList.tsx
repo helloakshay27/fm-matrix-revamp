@@ -102,7 +102,8 @@ const CRMWalletList = () => {
     const baseUrl = localStorage.getItem("baseUrl");
 
     const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
-    const [isTransactionHistoryVisible, setIsTransactionHistoryVisible] = useState(false);
+    const [isTransactionHistoryVisible, setIsTransactionHistoryVisible] =
+        useState(false);
     const [walletList, setWalletList] = useState([]);
     const [transactionHistory, setTransactionHistory] = useState([]);
     const [showTopupModal, setShowTopupModal] = useState(false);
@@ -154,7 +155,12 @@ const CRMWalletList = () => {
     }, []);
 
     const renderActions = (item: any) => (
-        <Button variant="ghost" size="sm" className="hover:bg-gray-100" onClick={() => navigate(`/crm/wallet-list/${item.entity_id}`)}>
+        <Button
+            variant="ghost"
+            size="sm"
+            className="hover:bg-gray-100"
+            onClick={() => navigate(`/crm/wallet-list/${item.entity_id}`)}
+        >
             <Eye className="w-4 h-4" />
         </Button>
     );
@@ -171,7 +177,9 @@ const CRMWalletList = () => {
     const renderTransactionCell = (item: any, columnKey: string) => {
         switch (columnKey) {
             case "created_at":
-                return item[columnKey] ? format(item[columnKey], "dd/MM/yyyy hh:mm a") : "-";
+                return item[columnKey]
+                    ? format(item[columnKey], "dd/MM/yyyy hh:mm a")
+                    : "-";
             case "amount":
                 if (!item[columnKey]) return "-";
                 const isCredit = item.transaction_type?.toLowerCase() === "credit";
@@ -282,7 +290,7 @@ const CRMWalletList = () => {
                     renderCell={renderTransactionCell}
                     storageKey="wallet-list-transactions-table"
                     searchPlaceholder="Search..."
-                    enableExport={true}
+                    hideTableExport={true}
                     leftActions={leftActions}
                     selectable={false}
                     pagination={true}
@@ -298,7 +306,7 @@ const CRMWalletList = () => {
                     renderCell={renderCell}
                     storageKey="wallet-list-table"
                     searchPlaceholder="Search..."
-                    enableExport={true}
+                    hideTableExport={true}
                     leftActions={leftActions}
                     selectable={false}
                     pagination={true}
