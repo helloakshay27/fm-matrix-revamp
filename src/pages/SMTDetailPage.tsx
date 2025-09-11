@@ -284,7 +284,7 @@ const SMTDetailPage = () => {
                   <button
                     type="button"
                     onClick={() => { setImgPreviewUrl(thankYouCardUrl); setImgPreviewOpen(true); }}
-                    className="group border border-gray-200 rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+                    className="group rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
                     aria-label="Open thank you card image"
                   >
                     <img
@@ -308,7 +308,7 @@ const SMTDetailPage = () => {
                       key={idx}
                       type="button"
                       onClick={() => { setImgPreviewUrl(img); setImgPreviewOpen(true); }}
-                      className="group border border-gray-200 rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
+                      className="group rounded-md overflow-hidden hover:shadow focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C72030]"
                       aria-label={`Open attachment ${idx + 1}`}
                     >
                       <img
