@@ -37,6 +37,7 @@ import {
   Chip,
   OutlinedInput,
   SelectChangeEvent,
+  Autocomplete,
 } from '@mui/material';
 import {
   Settings,
@@ -1267,13 +1268,29 @@ export const AddSchedulePage = () => {
             )
           );
 
-          toast.success(`${newAttachments.length} file(s) attached to help text successfully!`);
+          toast.success(`${newAttachments.length} file(s) attached to help text successfully!`, {
+            position: 'top-right',
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+            },
+          });
         }
       }
     };
 
     input.onerror = () => {
-      toast.error("Failed to attach files. Please try again.");
+      toast.error("Failed to attach files. Please try again.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     };
 
     document.body.appendChild(input);
@@ -1350,14 +1367,30 @@ export const AddSchedulePage = () => {
         if (newAttachments.length > 0) {
           setAttachments(prev => [...prev, ...newAttachments]);
           // Show success toast
-          toast.success(`${newAttachments.length} file(s) attached successfully!`);
+          toast.success(`${newAttachments.length} file(s) attached successfully!`, {
+            position: 'top-right',
+            duration: 4000,
+            style: {
+              background: '#fff',
+              color: 'black',
+              border: 'none',
+            },
+          });
         }
       }
     };
 
     input.onerror = () => {
       // Show error toast
-      toast.error("Failed to attach files. Please try again.");
+      toast.error("Failed to attach files. Please try again.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     };
 
     document.body.appendChild(input);
@@ -1484,27 +1517,6 @@ export const AddSchedulePage = () => {
     );
   };
 
-  const removeDropdownValue = (sectionId: string, taskId: string, valueIndex: number) => {
-    setQuestionSections(prevSections =>
-      prevSections.map(section =>
-        section.id === sectionId
-          ? {
-            ...section,
-            tasks: section.tasks.map(task =>
-              task.id === taskId
-                ? {
-                  ...task,
-                  dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
-                }
-                : task
-            )
-          }
-          : section
-      )
-    );
-  };
-
-  // Helper functions for managing radio values
   const updateRadioValue = (sectionId: string, taskId: string, valueIndex: number, value: string) => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
@@ -1569,6 +1581,26 @@ export const AddSchedulePage = () => {
     );
   };
 
+  const removeDropdownValue = (sectionId: string, taskId: string, valueIndex: number) => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  dropdownValues: task.dropdownValues.filter((_, idx) => idx !== valueIndex)
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
   const removeRadioValue = (sectionId: string, taskId: string, valueIndex: number) => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
@@ -1589,8 +1621,8 @@ export const AddSchedulePage = () => {
     );
   };
 
-  // Helper functions for managing checkbox values
-  const updateCheckboxValue = (sectionId: string, taskId: string, valueIndex: number, value: string) => {
+  // Add helper functions for checkbox values
+  const addCheckboxValue = (sectionId: string, taskId: string): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
@@ -1600,8 +1632,29 @@ export const AddSchedulePage = () => {
               task.id === taskId
                 ? {
                   ...task,
-                  checkboxValues: task.checkboxValues.map((val, idx) =>
-                    idx === valueIndex ? value : val
+                  checkboxValues: [...task.checkboxValues, ''],
+                  checkboxSelectedStates: [...task.checkboxSelectedStates, false]
+                }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateCheckboxValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? {
+                  ...task,
+                  checkboxValues: task.checkboxValues.map((v, idx) =>
+                    idx === valueIndex ? value : v
                   )
                 }
                 : task
@@ -1612,7 +1665,7 @@ export const AddSchedulePage = () => {
     );
   };
 
-  const updateCheckboxSelectedState = (sectionId: string, taskId: string, valueIndex: number, checked: boolean) => {
+  const updateCheckboxSelectedState = (sectionId: string, taskId: string, valueIndex: number, checked: boolean): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
@@ -1634,28 +1687,7 @@ export const AddSchedulePage = () => {
     );
   };
 
-  const addCheckboxValue = (sectionId: string, taskId: string) => {
-    setQuestionSections(prevSections =>
-      prevSections.map(section =>
-        section.id === sectionId
-          ? {
-            ...section,
-            tasks: section.tasks.map(task =>
-              task.id === taskId
-                ? {
-                  ...task,
-                  checkboxValues: [...task.checkboxValues, ''],
-                  checkboxSelectedStates: [...task.checkboxSelectedStates, false]
-                }
-                : task
-            )
-          }
-          : section
-      )
-    );
-  };
-
-  const removeCheckboxValue = (sectionId: string, taskId: string, valueIndex: number) => {
+  const removeCheckboxValue = (sectionId: string, taskId: string, valueIndex: number): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
@@ -1676,8 +1708,25 @@ export const AddSchedulePage = () => {
     );
   };
 
-  // Helper functions for managing options-inputs values
-  const updateOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number, value: string) => {
+  // Add helper functions for options & inputs values
+  const addOptionsInputsValue = (sectionId: string, taskId: string): void => {
+    setQuestionSections(prevSections =>
+      prevSections.map(section =>
+        section.id === sectionId
+          ? {
+            ...section,
+            tasks: section.tasks.map(task =>
+              task.id === taskId
+                ? { ...task, optionsInputsValues: [...task.optionsInputsValues, ''] }
+                : task
+            )
+          }
+          : section
+      )
+    );
+  };
+
+  const updateOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
@@ -1687,8 +1736,8 @@ export const AddSchedulePage = () => {
               task.id === taskId
                 ? {
                   ...task,
-                  optionsInputsValues: task.optionsInputsValues.map((val, idx) =>
-                    idx === valueIndex ? value : val
+                  optionsInputsValues: task.optionsInputsValues.map((v, idx) =>
+                    idx === valueIndex ? value : v
                   )
                 }
                 : task
@@ -1699,27 +1748,7 @@ export const AddSchedulePage = () => {
     );
   };
 
-  const addOptionsInputsValue = (sectionId: string, taskId: string) => {
-    setQuestionSections(prevSections =>
-      prevSections.map(section =>
-        section.id === sectionId
-          ? {
-            ...section,
-            tasks: section.tasks.map(task =>
-              task.id === taskId
-                ? {
-                  ...task,
-                  optionsInputsValues: [...task.optionsInputsValues, '']
-                }
-                : task
-            )
-          }
-          : section
-      )
-    );
-  };
-
-  const removeOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number) => {
+  const removeOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number): void => {
     setQuestionSections(prevSections =>
       prevSections.map(section =>
         section.id === sectionId
@@ -1839,8 +1868,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1872,8 +1901,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1966,8 +1995,8 @@ export const AddSchedulePage = () => {
       position: 'top-right',
       duration: 4000,
       style: {
-        background: '#10b981',
-        color: 'white',
+        background: '#fff',
+        color: 'black',
         border: 'none',
       },
     });
@@ -2105,14 +2134,38 @@ export const AddSchedulePage = () => {
           scheduleFor: prev.scheduleFor
         }));
 
-        toast(`Template "${templateData.form_name}" loaded successfully!`);
+        toast.success(`Template \"${templateData.form_name}\" loaded successfully!`, {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#fff',
+            color: 'black',
+            border: 'none',
+          },
+        });
       } else {
         // Handle case when template data is empty or invalid
-        toast("Template data is empty or invalid.");
+        toast.error("Template data is empty or invalid.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+          },
+        });
       }
     } catch (error) {
       console.error('Failed to load template data:', error);
-      toast("Failed to load template data.");
+      toast.error("Failed to load template data.", {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#ef4444',
+          color: 'white',
+          border: 'none',
+        },
+      });
     } finally {
       setLoading(prev => ({ ...prev, templates: false }));
     }
@@ -2477,8 +2530,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -2528,8 +2581,8 @@ export const AddSchedulePage = () => {
             position: 'top-right',
             duration: 4000,
             style: {
-              background: '#10b981',
-              color: 'white',
+              background: '#fff',
+              color: 'black',
               border: 'none',
             },
           });
@@ -3171,7 +3224,6 @@ export const AddSchedulePage = () => {
                 Schedule Setup
               </Typography>
             </Box>
-
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
               {
                 formData.scheduleFor === 'Asset' && (<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
@@ -3992,7 +4044,7 @@ export const AddSchedulePage = () => {
           );
         }
 
-        function removeDropdownValue(sectionId: string, taskId: string, valueIndex: number): void {
+        const removeDropdownValue = (sectionId: string, taskId: string, valueIndex: number): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4010,9 +4062,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function removeRadioValue(sectionId: string, taskId: string, valueIndex: number): void {
+        const removeRadioValue = (sectionId: string, taskId: string, valueIndex: number): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4030,10 +4082,10 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
         // Add helper functions for checkbox values
-        function addCheckboxValue(sectionId: string, taskId: string): void {
+        const addCheckboxValue = (sectionId: string, taskId: string): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4052,9 +4104,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function updateCheckboxValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+        const updateCheckboxValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4074,9 +4126,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function updateCheckboxSelectedState(sectionId: string, taskId: string, valueIndex: number, checked: boolean): void {
+        const updateCheckboxSelectedState = (sectionId: string, taskId: string, valueIndex: number, checked: boolean): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4096,9 +4148,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function removeCheckboxValue(sectionId: string, taskId: string, valueIndex: number): void {
+        const removeCheckboxValue = (sectionId: string, taskId: string, valueIndex: number): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4117,10 +4169,10 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
         // Add helper functions for options & inputs values
-        function addOptionsInputsValue(sectionId: string, taskId: string): void {
+        const addOptionsInputsValue = (sectionId: string, taskId: string): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4135,9 +4187,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function updateOptionsInputsValue(sectionId: string, taskId: string, valueIndex: number, value: string): void {
+        const updateOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number, value: string): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4157,9 +4209,9 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
-        function removeOptionsInputsValue(sectionId: string, taskId: string, valueIndex: number): void {
+        const removeOptionsInputsValue = (sectionId: string, taskId: string, valueIndex: number): void => {
           setQuestionSections(prevSections =>
             prevSections.map(section =>
               section.id === sectionId
@@ -4177,7 +4229,7 @@ export const AddSchedulePage = () => {
                 : section
             )
           );
-        }
+        };
 
         return (
           <div>
@@ -4273,7 +4325,7 @@ export const AddSchedulePage = () => {
                     disabled={(stepIndex < activeStep && editingStep !== stepIndex) || loading.templates}
                   >
                     <MenuItem value="">None</MenuItem>
-                    {Array.isArray(templates) && templates.map(template => (
+                    {Array.isDefined(templates) && templates.map(template => (
                       <MenuItem key={template.id} value={String(template.id)}>{template.form_name}</MenuItem>
                     ))}
                   </Select>
@@ -4846,7 +4898,7 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                                  <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
                                     <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
                                     <Select
                                       label="Type"
@@ -4940,7 +4992,7 @@ export const AddSchedulePage = () => {
                                     }}
                                   />
 
-                                  <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
+                                  <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
                                     <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
                                     <Select
                                       label="Type"
@@ -5019,7 +5071,6 @@ export const AddSchedulePage = () => {
 
                                   <TextField
                                     disabled={stepIndex < activeStep && editingStep !== stepIndex}
-
                                     fullWidth
                                     size="small"
                                     placeholder="Enter option value"
@@ -5288,8 +5339,8 @@ export const AddSchedulePage = () => {
           ) : (
             <button
               onClick={handleNext}
-              className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] text-sm sm:text-base"
-              style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              style={{ fontFamily: 'Work Sans, sans-serif' }}
             >
               Next
             </button>
@@ -5487,7 +5538,7 @@ export const AddSchedulePage = () => {
           {activeStep > 0 && (
             <button
               onClick={handleBack}
-              className="border border-[#C72030] text-[#C72030] px-6 py-2 hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
+              className="border border-[#C72030] text-[#C72030] px-6 py-2 rounded-md hover:bg-[#C72030] hover:text-white transition-colors text-sm sm:text-base"
               style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
               Back
@@ -5502,7 +5553,7 @@ export const AddSchedulePage = () => {
                 <button
                   onClick={handleSave}
                   disabled={isSubmitting}
-                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
                 >
                   {isSubmitting ? 'Saving...' : 'Save & Continue'}
@@ -5510,7 +5561,7 @@ export const AddSchedulePage = () => {
               ) : (
                 <button
                   onClick={handleNext}
-                  className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+                  className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
                   style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
                 >
                   Next
@@ -5520,7 +5571,7 @@ export const AddSchedulePage = () => {
           ) : (
             <button
               onClick={handleFinish}
-              className="bg-[#C72030] text-white px-6 py-2 hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
+              className="bg-[#C72030] text-white px-6 py-2 rounded-md hover:bg-[#B8252F] transition-colors text-sm sm:text-base"
               style={{ fontFamily: 'Work Sans, sans-serif', borderRadius: 0 }}
             >
               Finish

@@ -516,7 +516,8 @@ export const PermitDetails = () => {
     };
 
     // Handle JSA file upload
-    const handleJsaUpload = async () => {
+    const handleJsaUpload = async (e) => {
+        e.stopPropagation();
         if (jsaAttachments.length === 0) {
             toast.error("Please attach at least one file.");
             return;
@@ -532,19 +533,22 @@ export const PermitDetails = () => {
             formData.append('pms_permit[id]', id || '');
             // Use API_CONFIG to ensure consistent URL construction
             // This avoids path issues by using the full base URL
-            const baseUrl = API_CONFIG.BASE_URL;
-            const token = API_CONFIG.TOKEN;
+            // const baseUrl = API_CONFIG.BASE_URL;
+            // const token = API_CONFIG.TOKEN;
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
 
             if (!baseUrl || !token) {
                 throw new Error('Base URL or token not found');
             }
 
             // Construct the full URL using the base URL to avoid path concatenation issues
-            const url = `${baseUrl}/pms/permits/${id}`;
+            const url = `https://${baseUrl}/pms/permits/${id}.json`;
             console.log('Uploading JSA to URL:', url);
 
             const response = await fetch(url, {
-                method: 'PATCH',
+                method: 'PUT',
                 headers: {
                     Authorization: `Bearer ${token}`
                 },
