@@ -87,7 +87,7 @@ export const lockFunctionService = {
   async fetchLockFunction(id: number): Promise<LockFunction> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTIONS}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTION_DETAILS}/${id}.json`),
         {
           method: 'GET',
           headers: {
@@ -141,7 +141,7 @@ export const lockFunctionService = {
   async updateLockFunction(id: number, payload: UpdateLockFunctionPayload): Promise<LockFunction> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.UPDATE_FUNCTION}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTION_DETAILS}/${id}.json`),
         {
           method: 'PATCH',
           headers: {
@@ -169,7 +169,7 @@ export const lockFunctionService = {
   async deleteLockFunction(id: number): Promise<void> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.DELETE_FUNCTION}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.FUNCTION_DETAILS}/${id}.json`),
         {
           method: 'DELETE',
           headers: {
