@@ -57,6 +57,7 @@ import { createGRNReducer, fetchItemDetailsReducer, fetchSupplierDetailsReducer,
 import { createCustomerReducer, editCustomerReducer, getCustomerByIdReducer, getCustomerListReducer } from './slices/cusomerSlice'
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, getInvoincesReducer } from './slices/invoicesSlice'
 import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
+import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
 
 export const store = configureStore({
   reducer: {
@@ -250,6 +251,12 @@ export const store = configureStore({
     createRule: createRuleReducer,
     fetchWalletDetailsTransactionHistory: fetchWalletDetailsTransactionHistoryReducer,
     topupWallet: topupWalletReducer,
+
+    // Point Expiry
+    fetchWalletRule: fetchWalletRuleReducer,
+    createExpiryRule: createExpiryRuleReducer,
+    editExpiryRule: editExpiryRuleReducer,
+    fetchLogs: fetchLogsReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

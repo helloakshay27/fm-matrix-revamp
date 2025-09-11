@@ -1794,6 +1794,7 @@ export const AddMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -1807,6 +1808,7 @@ export const AddMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -1816,6 +1818,7 @@ export const AddMaterialPRDashboard = () => {
               <TextField
                 label="QC(%)"
                 name="qc"
+                type="number"
                 value={supplierDetails.qc}
                 onChange={handleSupplierChange}
                 placeholder="Enter number"
@@ -1833,6 +1836,7 @@ export const AddMaterialPRDashboard = () => {
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
                 fullWidth
+                type="number"
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
@@ -1842,6 +1846,7 @@ export const AddMaterialPRDashboard = () => {
               <TextField
                 label="Advance Amount"
                 name="advanceAmount"
+                type="number"
                 value={supplierDetails.advanceAmount}
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
@@ -2019,6 +2024,7 @@ export const AddMaterialPRDashboard = () => {
                     onChange={(e) => handleItemChange(item.id, "each", e.target.value)}
                     placeholder="Enter Number"
                     fullWidth
+                    type="number"
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
@@ -2032,6 +2038,7 @@ export const AddMaterialPRDashboard = () => {
                     placeholder="Enter Number"
                     fullWidth
                     variant="outlined"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}

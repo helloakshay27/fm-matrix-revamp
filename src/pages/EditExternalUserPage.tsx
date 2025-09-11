@@ -2,15 +2,26 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TextField, Select, MenuItem, FormControl, InputLabel, CircularProgress, FormHelperText } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs from 'dayjs';
+import minMax from 'dayjs/plugin/minMax'; // Import minMax plugin
 import { toast } from 'sonner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import axios from 'axios';
+
+// Extend dayjs with minMax plugin
+dayjs.extend(minMax);
 
 export const EditExternalUserPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Today's date (YYYY-MM-DD) for date constraints
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
 
   // Keep only required fields
   const initialUser = location.state?.user || {
@@ -20,60 +31,71 @@ export const EditExternalUserPage = () => {
     email: '',
     mobile: '',
     gender: '',
-    // renamed to report_to_id for payload requirement
     report_to_id: '',
     department_id: '',
     circle_id: '',
     company_cluster_id: '',
     cluster_name: '',
-    work_location: '', // added explicit work_location field to sync with dropdown storing name
+    work_location: '',
     role_id: '',
-    // newly added editable fields
-    ext_company_name: '', // Company Name
-    org_user_id: '',      // Employer Code
-    birth_date: '',       // Birth Date (YYYY-MM-DD)
-    joining_date: ''      // Joining Date (YYYY-MM-DD)
+    ext_company_name: '',
+    org_user_id: '',
+    birth_date: '',
+    joining_date: ''
   };
 
   const [formData, setFormData] = useState<any>(initialUser);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [originalUser, setOriginalUser] = useState<any>(null); // full fetched user for extra fields
+  const [originalUser, setOriginalUser] = useState<any>(null);
   const [saving, setSaving] = useState(false);
   const [departments, setDepartments] = useState<any[]>([]);
   const [roles, setRoles] = useState<any[]>([]);
   const [circles, setCircles] = useState<any[]>([]);
   const [workLocations, setWorkLocations] = useState<any[]>([]);
   const [clusters, setClusters] = useState<any[]>([]);
-  // line manager async search states
   const [lmQuery, setLmQuery] = useState('');
   const [lmOptions, setLmOptions] = useState<any[]>([]);
   const [lmLoading, setLmLoading] = useState(false);
   const [selectedLineManager, setSelectedLineManager] = useState<any>(null);
-  // Local search input ref for focusing when the menu opens
   const lmSearchInputRef = useRef<HTMLInputElement | null>(null);
   const [lmMenuId] = useState(() => `lm-menu-${Math.random().toString(36).slice(2)}`);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  // Simple email format validator
+  // Name sanitization: allow only alphanumeric characters
+  const sanitizeName = (v: string) => (v || '').replace(/[^A-Za-z0-9]/g, '');
+  const isValidName = (v: string) => /^[A-Za-z0-9]{2,}$/.test(v);
+
+  // Email format validator
   const isValidEmail = (val: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val).trim());
 
   // Mobile helpers: digits only and 10-digit validator
   const normalizeDigits = (v: any) => String(v ?? '').replace(/\D/g, '');
   const isValidMobile = (v: any) => normalizeDigits(v).length === 10;
 
-  // Normalize gender coming from API (M/F/male/female) to lowercase 'male' | 'female'
+  // Normalize gender
   const normalizeGender = (g: string) => {
     if (!g) return '';
     const lower = g.toLowerCase();
     if (lower === 'm') return 'male';
     if (lower === 'f') return 'female';
     if (lower === 'male' || lower === 'female') return lower;
-    return g; // fallback
+    return g;
   };
 
   const handleChange = (field: string, value: any) => {
-    // Live mobile sanitization + validation
+    if (field === 'firstname' || field === 'lastname') {
+      const cleaned = sanitizeName(String(value));
+      setFormData((prev: any) => ({ ...prev, [field]: cleaned }));
+      setFieldErrors(prev => ({
+        ...prev,
+        [field]: cleaned.length === 0 ? (field === 'firstname' ? 'First Name is required' : 'Last Name is required')
+          : cleaned.length < 2 ? (field === 'firstname' ? 'First Name must be at least 2 characters' : 'Last Name must be at least 2 characters')
+          : !isValidName(cleaned) ? (field === 'firstname' ? 'First Name must contain only letters or numbers' : 'Last Name must contain only letters or numbers')
+          : ''
+      }));
+      return;
+    }
     if (field === 'mobile') {
       const digits = normalizeDigits(value).slice(0, 10);
       setFormData((prev: any) => ({ ...prev, mobile: digits }));
@@ -83,8 +105,16 @@ export const EditExternalUserPage = () => {
       }));
       return;
     }
+    if (field === 'birth_date' || field === 'joining_date') {
+      const val = String(value || '');
+      setFormData((prev: any) => ({ ...prev, [field]: val }));
+      setFieldErrors(prev => ({
+        ...prev,
+        [field]: val && val > todayISO ? `${field === 'birth_date' ? 'Birth' : 'Joining'} Date cannot be in the future` : ''
+      }));
+      return;
+    }
     setFormData((prev: any) => ({ ...prev, [field]: value }));
-    // Field-specific validations (live)
     if (field === 'email') {
       const v = String(value || '');
       setFieldErrors(prev => ({
@@ -93,16 +123,13 @@ export const EditExternalUserPage = () => {
       }));
       return;
     }
-    // Clear existing field error on change for other fields
     if (fieldErrors[field]) {
       setFieldErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
-  // Helper to treat various empties consistently
   const isEmpty = (v: any) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
 
-  // Build validation errors without side effects
   const getErrors = () => {
     const errors: Record<string, string> = {};
     const requiredFields: Array<[string, string]> = [
@@ -130,26 +157,44 @@ export const EditExternalUserPage = () => {
       }
     });
 
-    // Email format
     if (!isEmpty(formData.email) && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(formData.email))) {
       errors.email = 'Enter a valid email address';
     }
-    // Mobile: require exactly 10 digits
+    if (!isEmpty(formData.firstname)) {
+      const fn = String(formData.firstname);
+      if (fn.length < 2) {
+        errors.firstname = errors.firstname || 'First Name must be at least 2 characters';
+      } else if (!/^[A-Za-z0-9]+$/.test(fn)) {
+        errors.firstname = errors.firstname || 'First Name must contain only letters or numbers';
+      }
+    }
+    if (!isEmpty(formData.lastname)) {
+      const ln = String(formData.lastname);
+      if (ln.length < 2) {
+        errors.lastname = errors.lastname || 'Last Name must be at least 2 characters';
+      } else if (!/^[A-Za-z0-9]+$/.test(ln)) {
+        errors.lastname = errors.lastname || 'Last Name must contain only letters or numbers';
+      }
+    }
     if (!isEmpty(formData.mobile) && !isValidMobile(formData.mobile)) {
       errors.mobile = errors.mobile || 'Enter a valid 10-digit mobile number';
     }
-    // Date format YYYY-MM-DD (HTML date inputs generally ensure this, but validate anyway)
     const dateRe = /^\d{4}-\d{2}-\d{2}$/;
     if (!isEmpty(formData.birth_date) && !dateRe.test(String(formData.birth_date))) {
       errors.birth_date = 'Birth Date must be YYYY-MM-DD';
     }
+    if (!errors.birth_date && !isEmpty(formData.birth_date) && String(formData.birth_date) > todayISO) {
+      errors.birth_date = 'Birth Date cannot be in the future';
+    }
     if (!isEmpty(formData.joining_date) && !dateRe.test(String(formData.joining_date))) {
       errors.joining_date = 'Joining Date must be YYYY-MM-DD';
+    }
+    if (!errors.joining_date && !isEmpty(formData.joining_date) && String(formData.joining_date) > todayISO) {
+      errors.joining_date = 'Joining Date cannot be in the future';
     }
     return errors;
   };
 
-  // Disable Save when there are validation errors
   const saveBlocked = useMemo(() => Object.keys(getErrors()).length > 0, [formData]);
 
   const handleSubmit = async () => {
@@ -164,11 +209,9 @@ export const EditExternalUserPage = () => {
       } else {
         toast.info('Please fix the highlighted fields');
       }
-      // Optional: scroll to top so the user sees errors immediately on long forms
       try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
       return;
     }
-    // Determine a valid user id after validation so errors are still shown even if id is missing
     const idForUpdate = userId || formData?.id || originalUser?.id;
     if (!idForUpdate) {
       toast.error('Missing user id');
@@ -187,35 +230,28 @@ export const EditExternalUserPage = () => {
           email: formData.email || '',
           mobile: formData.mobile || '',
           gender: (formData.gender || '').toLowerCase(),
-          // send the selected work location NAME (stored in formData.work_location)
           work_location: formData.work_location || null,
           role_id: formData.role_id || permission.lock_role_id || null,
           report_to_id: formData.report_to_id || selectedLineManager?.id || null,
           company_cluster_id: formData.company_cluster_id || null,
-          // newly added direct user fields
           ext_company_name: formData.ext_company_name || null,
           org_user_id: formData.org_user_id || null,
           birth_date: formData.birth_date || null,
-          // keep a top-level joining_date for safety if API accepts it
-          // joining_date: formData.joining_date || null,
-
           lock_user_permissions_attributes: permission?.id ? [
             {
               id: permission.id,
               department_id: formData.department_id || null,
               lock_role_id: formData.role_id || null,
               circle_id: formData.circle_id || null,
-              // include joining_date inside permission object (source of truth in listings)
               joining_date: formData.joining_date || null,
-
             }
           ] : []
         }
       };
-  const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
+      const url = `https://${baseUrl}/pms/users/${idForUpdate}/update_vi_user`;
       await axios.put(url, payload, { headers: { Authorization: `Bearer ${token}` } });
       toast.success('External user updated');
-  navigate(`/maintenance/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
+      navigate(`/maintenance/m-safe/external/user/${idForUpdate}`, { state: { user: { ...originalUser, ...formData } } });
     } catch (e: any) {
       console.error('Update external user error', e);
       const respData = e?.response?.data;
@@ -245,7 +281,6 @@ export const EditExternalUserPage = () => {
 
   const handleCancel = () => navigate(`/maintenance/m-safe/external/user/${userId}`, { state: { user: location.state?.user || initialUser } });
 
-
   useEffect(() => {
     const fetchUser = async () => {
       if (!userId) return;
@@ -268,23 +303,19 @@ export const EditExternalUserPage = () => {
           report_to_id: data.report_to?.id || data.report_to_id || '',
           department_id: data.lock_user_permission?.department_id || '',
           circle_id: data.lock_user_permission?.circle_id || data.circle_id || '',
-          // keep names to show as fallback labels in selects
           department_name: data.lock_user_permission?.department_name || data.department_name || data.department?.department_name || '',
           circle_name: data.circle_name || data.lock_user_permission?.circle_name || data.circle?.circle_name || '',
           cluster_name: data.cluster_name || '',
           company_cluster_id: data.company_cluster_id || data.lock_user_permission?.company_cluster_id || '',
-          // if API returns an object, pick its name; else keep string
           work_location: (typeof data.work_location === 'object' && data.work_location !== null) ? (data.work_location.name || data.work_location.work_location_name || '') : (data.work_location || ''),
           role_id: data.lock_user_permission?.lock_role_id || data.lock_role_id || '',
           role_name: data.lock_user_permission?.lock_role_name || data.role_name || data.role?.name || '',
-          // new fields populate from either user or lock_user_permission where applicable
           ext_company_name: data.ext_company_name || '',
           org_user_id: data.org_user_id || data.lock_user_permission?.employee_id || '',
           birth_date: (data.birth_date ? String(data.birth_date).slice(0, 10) : ''),
           joining_date: (data.lock_user_permission?.joining_date || data.joining_date || '') ? String(data.lock_user_permission?.joining_date || data.joining_date).slice(0, 10) : ''
         }));
         setOriginalUser(data);
-        // Inject existing line manager into Autocomplete options so it displays even before any search
         const existingManager = data.report_to || (data.report_to_id ? { id: data.report_to_id, email: data.report_to_email, name: data.report_to_name } : null);
         if (existingManager && existingManager.id) {
           setSelectedLineManager(existingManager);
@@ -298,15 +329,13 @@ export const EditExternalUserPage = () => {
     fetchUser();
   }, [userId]);
 
-  console.log('formData', formData);
-
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15; // fallback
+        const companyId = formData.company_id || 15;
         const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.departments || [];
@@ -318,7 +347,6 @@ export const EditExternalUserPage = () => {
     fetchDepartments();
   }, []);
 
-  // Ensure current department appears in dropdown even if API list lacks it
   useEffect(() => {
     const id = formData.department_id;
     if (!id || !departments || departments.length === 0) return;
@@ -335,7 +363,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyIdForRoles = formData.company_id; // use provided company 145 as default
+        const companyIdForRoles = formData.company_id;
         const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.lock_roles || [];
@@ -347,7 +375,6 @@ export const EditExternalUserPage = () => {
     fetchRoles();
   }, []);
 
-  // Ensure current role appears in dropdown even if missing in options
   useEffect(() => {
     const id = formData.role_id;
     if (!id || !roles || roles.length === 0) return;
@@ -373,7 +400,6 @@ export const EditExternalUserPage = () => {
     fetchCircles();
   }, []);
 
-  // Ensure current circle appears in dropdown even if missing in options
   useEffect(() => {
     const id = formData.circle_id;
     if (!id || !circles || circles.length === 0) return;
@@ -390,7 +416,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 145; // given API uses 145
+        const companyId = formData.company_id || 145;
         const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setClusters(resp.data?.clusters || []);
@@ -399,7 +425,6 @@ export const EditExternalUserPage = () => {
     fetchClusters();
   }, []);
 
-  // Ensure current cluster appears in dropdown even if missing in options
   useEffect(() => {
     const id = formData.company_cluster_id;
     if (!id || !clusters || clusters.length === 0) return;
@@ -425,7 +450,6 @@ export const EditExternalUserPage = () => {
     fetchWorkLocations();
   }, []);
 
-  // Ensure current work location name appears even if not in list
   useEffect(() => {
     const name = formData.work_location;
     if (!name || !workLocations) return;
@@ -436,7 +460,6 @@ export const EditExternalUserPage = () => {
     }
   }, [workLocations.length, formData.work_location]);
 
-  // Clear LM options/loading when query is below threshold
   useEffect(() => {
     if (lmQuery.length < 3) {
       setLmOptions([]);
@@ -444,7 +467,6 @@ export const EditExternalUserPage = () => {
     }
   }, [lmQuery]);
 
-  // Debounced Line Manager search (also triggered via global enhancer events)
   useEffect(() => {
     if (lmQuery.length < 3) { return; }
     let active = true;
@@ -454,8 +476,7 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setLmLoading(true);
-    // Prefer company from user/permission; fallback to 145 then 15
-    const companyId = (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
+        const companyId = (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
         const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
@@ -470,8 +491,6 @@ export const EditExternalUserPage = () => {
     return () => { active = false; clearTimeout(handler); };
   }, [lmQuery, formData.company_id, originalUser?.company_id]);
 
-  // No global enhancer dependency: all LM search handled locally in this component
-  // Bridge to global enhancer's search input: listen for input events in this menu only
   useEffect(() => {
     const onInput = (e: Event) => {
       const target = e.target as HTMLElement | null;
@@ -484,8 +503,6 @@ export const EditExternalUserPage = () => {
     document.addEventListener('input', onInput, true);
     return () => document.removeEventListener('input', onInput, true);
   }, [lmMenuId]);
-
-  console.log('formData', formData.company_id);
 
   if (loading) {
     return (
@@ -510,7 +527,6 @@ export const EditExternalUserPage = () => {
 
   return (
     <div className="p-6">
-      {/* Page Header */}
       <div className="mb-6">
         <div className="flex items-center mb-2">
           <Button variant="ghost" size="sm" onClick={handleCancel} className="p-1 hover:bg-gray-100 mr-2">
@@ -520,7 +536,6 @@ export const EditExternalUserPage = () => {
         <h1 className="text-2xl font-bold text-[#1A1A1A]">EDIT EXTERNAL USER - ID: {userId}</h1>
       </div>
 
-      {/* Card 1: Basic Details (combined with Contact & Personal) */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -533,9 +548,7 @@ export const EditExternalUserPage = () => {
             <TextField label={<>First Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.firstname} onChange={e => handleChange('firstname', e.target.value)} size="small" fullWidth error={!!fieldErrors.firstname} helperText={fieldErrors.firstname || ''} />
             <TextField label={<>Last Name<span style={{ color: '#C72030' }}>*</span></>} value={formData.lastname} onChange={e => handleChange('lastname', e.target.value)} size="small" fullWidth error={!!fieldErrors.lastname} helperText={fieldErrors.lastname || ''} />
             <TextField
-              label={<>
-                Email<span style={{ color: '#C72030' }}>*</span>
-              </>}
+              label={<>Email<span style={{ color: '#C72030' }}>*</span></>}
               type="email"
               value={formData.email}
               onChange={e => handleChange('email', e.target.value)}
@@ -547,9 +560,7 @@ export const EditExternalUserPage = () => {
               inputProps={{ inputMode: 'email', autoComplete: 'email' }}
             />
             <TextField
-              label={<>
-                Mobile<span style={{ color: '#C72030' }}>*</span>
-              </>}
+              label={<>Mobile Number<span style={{ color: '#C72030' }}>*</span></>}
               value={formData.mobile}
               onChange={e => handleChange('mobile', e.target.value)}
               onBlur={e => handleChange('mobile', e.target.value)}
@@ -569,7 +580,6 @@ export const EditExternalUserPage = () => {
               </Select>
               {fieldErrors.gender && <FormHelperText>{fieldErrors.gender}</FormHelperText>}
             </FormControl>
-            {/* Line Manager Select with remote search via global enhancer */}
             <FormControl fullWidth size="small" error={!!fieldErrors.report_to_id}>
               <InputLabel>Line Manager<span style={{ color: '#C72030' }}>*</span></InputLabel>
               <Select
@@ -585,7 +595,6 @@ export const EditExternalUserPage = () => {
                     style: { maxHeight: 48 * 6.5, width: 360, paddingTop: 4, paddingBottom: 4 }
                   } as any,
                   MenuListProps: {
-                    // prevent MUI from auto-focusing the first item so typing goes to our input
                     autoFocusItem: false,
                   } as any,
                 }}
@@ -620,7 +629,6 @@ export const EditExternalUserPage = () => {
         </CardContent>
       </Card>
 
-      {/* Card 2: Organizational */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="text-lg text-[#C72030] flex items-center">
@@ -679,16 +687,105 @@ export const EditExternalUserPage = () => {
               </Select>
               {fieldErrors.role_id && <FormHelperText>{fieldErrors.role_id}</FormHelperText>}
             </FormControl>
-            <TextField label={<>Birth Date<span style={{ color: '#C72030' }}>*</span></>} type="date" value={formData.birth_date} onChange={e => handleChange('birth_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} error={!!fieldErrors.birth_date} helperText={fieldErrors.birth_date || ''} />
-            <TextField label={<>Joining Date<span style={{ color: '#C72030' }}>*</span></>} type="date" value={formData.joining_date} onChange={e => handleChange('joining_date', e.target.value)} size="small" fullWidth InputLabelProps={{ shrink: true }} error={!!fieldErrors.joining_date} helperText={fieldErrors.joining_date || ''} />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label={<>Birth Date<span style={{ color: '#C72030' }}>*</span></>}
+                value={formData.birth_date ? dayjs(formData.birth_date) : null}
+                onChange={(val) => {
+                  const d = val ? dayjs(val) : null;
+                  if (!d || !d.isValid()) {
+                    handleChange('birth_date', '');
+                    setFieldErrors(prev => ({ ...prev, birth_date: 'Invalid date' }));
+                    return;
+                  }
+                  const today = dayjs();
+                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
+                    ? dayjs.min(dayjs(formData.birth_date), today)
+                    : today;
+                  if (d.isAfter(maxDate, 'day')) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      birth_date: `Birth Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
+                    }));
+                    return;
+                  }
+                  handleChange('birth_date', d.format('YYYY-MM-DD'));
+                }}
+                maxDate={formData.birth_date && dayjs(formData.birth_date).isValid()
+                  ? dayjs.min(dayjs(formData.birth_date), dayjs())
+                  : dayjs()}
+                shouldDisableDate={(date) => {
+                  const today = dayjs();
+                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
+                    ? dayjs.min(dayjs(formData.birth_date), today)
+                    : today;
+                  return dayjs(date).isAfter(maxDate, 'day');
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!fieldErrors.birth_date,
+                    helperText: fieldErrors.birth_date || '',
+                    InputLabelProps: { shrink: true }
+                  }
+                }}
+                format="YYYY-MM-DD"
+              />
+            </LocalizationProvider>
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label={<>Joining Date<span style={{ color: '#C72030' }}>*</span></>}
+                value={formData.joining_date ? dayjs(formData.joining_date) : null}
+                onChange={(val) => {
+                  const d = val ? dayjs(val) : null;
+                  if (!d || !d.isValid()) {
+                    handleChange('joining_date', '');
+                    setFieldErrors(prev => ({ ...prev, joining_date: 'Invalid date' }));
+                    return;
+                  }
+                  const today = dayjs();
+                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
+                    ? dayjs.min(dayjs(formData.joining_date), today)
+                    : today;
+                  if (d.isAfter(maxDate, 'day')) {
+                    setFieldErrors(prev => ({
+                      ...prev,
+                      joining_date: `Joining Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
+                    }));
+                    return;
+                  }
+                  handleChange('joining_date', d.format('YYYY-MM-DD'));
+                }}
+                maxDate={formData.joining_date && dayjs(formData.joining_date).isValid()
+                  ? dayjs.min(dayjs(formData.joining_date), dayjs())
+                  : dayjs()}
+                shouldDisableDate={(date) => {
+                  const today = dayjs();
+                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
+                    ? dayjs.min(dayjs(formData.joining_date), today)
+                    : today;
+                  return dayjs(date).isAfter(maxDate, 'day');
+                }}
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!fieldErrors.joining_date,
+                    helperText: fieldErrors.joining_date || '',
+                    InputLabelProps: { shrink: true }
+                  }
+                }}
+                format="YYYY-MM-DD"
+              />
+            </LocalizationProvider>
           </div>
         </CardContent>
       </Card>
 
-      {/* Actions */}
       <div className="flex gap-4 flex-wrap justify-center pt-4">
-  <Button onClick={handleCancel} variant="outline" className="px-8 py-2" disabled={saving}>Cancel</Button>
-  <Button onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 px-8 py-2" disabled={saving || saveBlocked}>
+        <Button onClick={handleCancel} variant="outline" className="px-8 py-2" disabled={saving}>Cancel</Button>
+        <Button onClick={handleSubmit} style={{ backgroundColor: '#C72030' }} className="text-white hover:bg-[#C72030]/90 px-8 py-2" disabled={saving || saveBlocked}>
           <Save className="h-4 w-4 mr-2" />
           {saving ? 'Saving...' : 'Save Changes'}
         </Button>
