@@ -58,12 +58,12 @@ const fieldStyles = {
   },
 };
 
-export const ScheduleFilterDialog = ({ 
-  open, 
-  onOpenChange, 
-  filters, 
-  onApplyFilters, 
-  onResetFilters 
+export const ScheduleFilterDialog = ({
+  open,
+  onOpenChange,
+  filters,
+  onApplyFilters,
+  onResetFilters
 }: ScheduleFilterDialogProps) => {
   const { toast } = useToast();
   const [localFilters, setLocalFilters] = useState(filters);
@@ -88,7 +88,7 @@ export const ScheduleFilterDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" id="schedule-filter-modal-root">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
@@ -102,7 +102,7 @@ export const ScheduleFilterDialog = ({
             </Button>
           </div>
         </DialogHeader>
-        
+
         <div className="space-y-4">
           {/* Activity Name */}
           <div className="flex flex-col">
@@ -124,16 +124,21 @@ export const ScheduleFilterDialog = ({
             <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel id="type-label" shrink>Select Type</InputLabel>
               <MuiSelect
+                native
                 labelId="type-label"
                 label="Select Type"
                 displayEmpty
                 value={localFilters.type}
                 onChange={(e) => setLocalFilters(prev => ({ ...prev, type: e.target.value }))}
+                MenuProps={{
+                  disablePortal: true,
+                  container: () => document.getElementById('schedule-filter-modal-root') || document.body
+                }}
               >
-                <MenuItem value=""><em>Select Type</em></MenuItem>
-                <MenuItem value="PPM">PPM</MenuItem>
-                <MenuItem value="Routine">Routine</MenuItem>
-                <MenuItem value="AMC">AMC</MenuItem>
+                <option value="">Select Type</option>
+                <option value="PPM">PPM</option>
+                <option value="Routine">Routine</option>
+                <option value="AMC">AMC</option>
               </MuiSelect>
             </FormControl>
           </div>
@@ -143,29 +148,34 @@ export const ScheduleFilterDialog = ({
             <FormControl variant="outlined" sx={fieldStyles}>
               <InputLabel id="category-label" shrink>Select Category</InputLabel>
               <MuiSelect
+                native
                 labelId="category-label"
                 label="Select Category"
                 displayEmpty
                 value={localFilters.category}
                 onChange={(e) => setLocalFilters(prev => ({ ...prev, category: e.target.value }))}
+                MenuProps={{
+                  disablePortal: true,
+                  container: () => document.getElementById('schedule-filter-modal-root') || document.body
+                }}
               >
-                <MenuItem value=""><em>Select Category</em></MenuItem>
-                <MenuItem value="Technical">Technical</MenuItem>
-                <MenuItem value="Non Technical">Non Technical</MenuItem>
+                <option value="">Select Category</option>
+                <option value="Technical">Technical</option>
+                <option value="Non Technical">Non Technical</option>
               </MuiSelect>
             </FormControl>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-3 pt-4">
-            <Button 
+            <Button
               onClick={handleApply}
               style={{ backgroundColor: '#C72030' }}
               className="text-white hover:bg-[#C72030]/90 flex-1"
             >
               Apply
             </Button>
-            <Button 
+            <Button
               onClick={handleReset}
               variant="outline"
               className="flex-1"
