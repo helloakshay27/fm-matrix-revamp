@@ -110,6 +110,46 @@ export const StatusTab: React.FC = () => {
     }
   };
 
+  const handleCreateSubmit = async () => {
+    // Get form values directly from the form inputs
+    const statusNameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+    const colorCodeInput = document.querySelector('input[placeholder="#000000"]') as HTMLInputElement;
+    const positionInput = document.querySelector('input[type="number"]') as HTMLInputElement;
+    const fixedStateValue = form.getValues('fixedState');
+    
+    // Check for required fields with specific messages
+    if (!statusNameInput?.value?.trim()) {
+      toast.error('Please enter a status name');
+      return;
+    }
+    
+    if (!fixedStateValue) {
+      toast.error('Please select a fixed state');
+      return;
+    }
+    
+    if (!colorCodeInput?.value?.trim()) {
+      toast.error('Please enter a color code');
+      return;
+    }
+    
+    if (!positionInput?.value?.trim()) {
+      toast.error('Please enter an order number');
+      return;
+    }
+
+    // Get the form data
+    const data: StatusFormData = {
+      name: statusNameInput.value.trim(),
+      fixedState: fixedStateValue as 'closed' | 'reopen' | 'complete',
+      colorCode: colorCodeInput.value.trim(),
+      position: parseInt(positionInput.value) || 0,
+    };
+
+    // Continue with the rest of the validation and submission logic
+    await handleSubmit(data);
+  };
+
   const handleSubmit = async (data: StatusFormData) => {
     if (!userAccount?.company_id) {
       toast.error('Unable to determine company ID. Please refresh and try again.');
@@ -247,14 +287,14 @@ export const StatusTab: React.FC = () => {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
+                      <FormLabel>Status <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input placeholder="Enter status" {...field} />
                       </FormControl>
@@ -268,7 +308,7 @@ export const StatusTab: React.FC = () => {
                   name="fixedState"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Fixed State</FormLabel>
+                      <FormLabel>Fixed State <span className="text-red-500">*</span></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -293,7 +333,7 @@ export const StatusTab: React.FC = () => {
                   name="colorCode"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Color Code</FormLabel>
+                      <FormLabel>Color Code <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <div className="flex gap-2">
                           <Input
@@ -317,7 +357,7 @@ export const StatusTab: React.FC = () => {
                   name="position"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Order</FormLabel>
+                      <FormLabel>Order <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -333,11 +373,15 @@ export const StatusTab: React.FC = () => {
               </div>
 
               <div className="flex justify-end">
-                <Button type="submit" disabled={isSubmitting || loading}>
+                <Button 
+                  onClick={handleCreateSubmit}
+                  disabled={isSubmitting || loading}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-8"
+                >
                   {isSubmitting || loading ? 'Saving...' : 'Submit'}
                 </Button>
               </div>
-            </form>
+            </div>
           </Form>
 
           <div className="mt-6 pt-6 border-t">
