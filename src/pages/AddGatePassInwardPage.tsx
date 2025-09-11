@@ -329,8 +329,8 @@ export const AddGatePassInwardPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <TextField label="Visitor Name" placeholder="Enter Name" fullWidth variant="outlined" required value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-            <TextField label="Mobile No." placeholder="+91" fullWidth variant="outlined" required value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label={<span>Visitor Name <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Name" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label={<span>Mobile No. <span style={{ color: 'red' }}>*</span></span>} placeholder="+91" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField
               label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
               value={selectedCompany ? selectedCompany.name : ''}
@@ -340,8 +340,8 @@ export const AddGatePassInwardPage = () => {
               InputLabelProps={{ shrink: true }}
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             />
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Vendor</InputLabel>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Vendor"
                 notched
@@ -355,9 +355,9 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Mode Of Transport </InputLabel>
-              <MuiSelect label="Mode Of Transport *" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
                 <MenuItem value="">Select Transport</MenuItem>
                 <MenuItem value="car">Car</MenuItem>
                 <MenuItem value="bike">Bike</MenuItem>
@@ -369,7 +369,7 @@ export const AddGatePassInwardPage = () => {
             {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
               <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             )}
-            <TextField label="Reporting Time" type="time" fullWidth variant="outlined" required value={visitorDetails.reportingTime} onChange={(e) => handleVisitorChange('reportingTime', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label={<span>Reporting Time <span style={{ color: 'red' }}>*</span></span>} type="time" fullWidth variant="outlined" value={visitorDetails.reportingTime} onChange={(e) => handleVisitorChange('reportingTime', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Driver Contact No." placeholder="Enter Driver Contact No." fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
@@ -391,8 +391,8 @@ export const AddGatePassInwardPage = () => {
               InputLabelProps={{ shrink: true }}
               sx={{ '& .MuiInputBase-root': fieldStyles }}
             />
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Building</InputLabel>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Building"
                 notched
@@ -406,8 +406,8 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Gate Pass Type</InputLabel>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Gate Pass Type"
                 notched
@@ -421,8 +421,8 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
-            <FormControl fullWidth variant="outlined" required sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Gate Number</InputLabel>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+              <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Gate Number"
                 notched
@@ -436,7 +436,7 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
             </FormControl>
-            <TextField label="Gate Pass Date" type="date" fullWidth variant="outlined" required value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <div className="lg:col-span-3">
               <TextField
                 label="Remarks"
@@ -478,8 +478,8 @@ export const AddGatePassInwardPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-2 pt-4" style={{ width: '30px' }}>{index + 1}</td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Type</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
                           notched
@@ -495,8 +495,8 @@ export const AddGatePassInwardPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Category</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
                           notched
@@ -513,8 +513,8 @@ export const AddGatePassInwardPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Name</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Name"
                           notched
