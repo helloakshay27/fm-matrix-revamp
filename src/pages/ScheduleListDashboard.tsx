@@ -26,7 +26,6 @@ import { apiClient } from '@/utils/apiClient';
 import { toast, Toaster } from "sonner";
 import { Pagination, PaginationItem, PaginationContent, PaginationPrevious, PaginationLink, PaginationEllipsis, PaginationNext } from '@/components/ui/pagination';
 import axios from 'axios';
-import { saveAs } from 'file-saver';
 
 export const ScheduleListDashboard = () => {
   const navigate = useNavigate();
@@ -167,8 +166,8 @@ export const ScheduleListDashboard = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -229,8 +228,8 @@ export const ScheduleListDashboard = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#10b981',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
