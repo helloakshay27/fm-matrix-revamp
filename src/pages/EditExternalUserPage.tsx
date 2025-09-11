@@ -462,10 +462,13 @@ export const EditExternalUserPage = () => {
 
   useEffect(() => {
     if (lmQuery.length < 3) {
-      setLmOptions([]);
+      // Keep the selected line manager in options even when query is cleared
+      const selectedManager = selectedLineManager || 
+        (formData.report_to_id && lmOptions.find(opt => opt.id?.toString() === formData.report_to_id?.toString()));
+      setLmOptions(selectedManager ? [selectedManager] : []);
       setLmLoading(false);
     }
-  }, [lmQuery]);
+  }, [lmQuery, selectedLineManager, formData.report_to_id]);
 
   useEffect(() => {
     if (lmQuery.length < 3) { return; }
@@ -481,7 +484,16 @@ export const EditExternalUserPage = () => {
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
         const users = resp.data?.users || [];
-        setLmOptions(users);
+        
+        // Always include the currently selected manager if it exists
+        const selectedManager = selectedLineManager || 
+          (formData.report_to_id && lmOptions.find(opt => opt.id?.toString() === formData.report_to_id?.toString()));
+        
+        if (selectedManager && !users.some((u: any) => u.id?.toString() === selectedManager.id?.toString())) {
+          setLmOptions([selectedManager, ...users]);
+        } else {
+          setLmOptions(users);
+        }
       } catch (e) {
         console.error('Line manager search error', e);
       } finally {
@@ -585,10 +597,44 @@ export const EditExternalUserPage = () => {
               <Select
                 value={formData.report_to_id || ''}
                 label="Line Manager"
+                displayEmpty
+                renderValue={(value) => {
+                  if (!value) return 'Select';
+                  // Find the selected manager to display their email/name
+                  const selected = lmOptions.find(opt => opt.id?.toString() === value?.toString()) || 
+                                 selectedLineManager;
+                  if (selected) {
+                    return selected.email || `User ${selected.id}`;
+                  }
+                  return `Manager ID: ${value}`;
+                }}
                 onOpen={() => {
+                  // Don't clear query immediately - let existing selected manager stay visible
+                  if (!selectedLineManager && formData.report_to_id) {
+                    // Find the selected manager in current options and preserve it
+                    const currentSelected = lmOptions.find(opt => opt.id?.toString() === formData.report_to_id?.toString());
+                    if (currentSelected) {
+                      setSelectedLineManager(currentSelected);
+                    }
+                  }
+                }}
+                onClose={() => {
+                  // Reset query when closing dropdown
                   setLmQuery('');
                 }}
-                onChange={e => handleChange('report_to_id', e.target.value)}
+                onChange={e => {
+                  const selectedId = e.target.value;
+                  handleChange('report_to_id', selectedId);
+                  // Update selectedLineManager when a selection is made
+                  if (selectedId) {
+                    const selected = lmOptions.find(opt => opt.id?.toString() === selectedId?.toString());
+                    if (selected) {
+                      setSelectedLineManager(selected);
+                    }
+                  } else {
+                    setSelectedLineManager(null);
+                  }
+                }}
                 MenuProps={{
                   PaperProps: {
                     id: lmMenuId,
