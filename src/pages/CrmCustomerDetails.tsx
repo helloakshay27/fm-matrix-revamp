@@ -303,7 +303,7 @@ export const CrmCustomerDetails = () => {
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Organization Code</label>
                             <span className="text-sm">:</span>
-                            <span className="text-sm text-gray-900">{customer?.organization_code}</span>
+                            <span className="text-sm text-gray-900">{customer?.company_code}</span>
                         </div>
                         <div className="flex items-center gap-4">
                             <label className="w-32 text-sm font-medium text-gray-700">Customer Code</label>

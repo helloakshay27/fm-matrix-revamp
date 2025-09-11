@@ -63,7 +63,7 @@ export const ExternalUserDetail = () => {
     switch (status.toLowerCase()) {
       case 'approved': return <Badge className="bg-green-500 text-white hover:bg-green-600">Approved</Badge>;
       case 'pending': return <Badge className="bg-yellow-500 text-white hover:bg-yellow-600">Pending</Badge>;
-      case 'rejected': return <Badge className="bg-red-500 text-white hover:bg-red-600">Rejected</Badge>;
+      case 'rejected': return <Badge className="bg-red-500 text-white hover:bg-red-600">Deactivated</Badge>;
       default: return <Badge className="bg-gray-500 text-white hover:bg-gray-600">{status}</Badge>;
     }
   };
@@ -86,7 +86,7 @@ export const ExternalUserDetail = () => {
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const data = resp.data?.user || resp.data; // support either shape
         setUser(data);
-      } catch (e:any) {
+      } catch (e: any) {
         console.error('Fetch external user detail error', e);
         setError('Failed to load user');
       } finally { setLoading(false); }
@@ -95,15 +95,15 @@ export const ExternalUserDetail = () => {
   }, [userId]);
 
   if (loading) return (
-    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2"/>Back</Button><div className="text-center py-8 text-gray-500">Loading user...</div></div>
+    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">Loading user...</div></div>
   );
   if (error || !user) return (
-    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2"/>Back</Button><div className="text-center py-8 text-gray-500">{error || 'User not found'}</div></div>
+    <div className="p-6"><Button variant="ghost" onClick={() => navigate('/maintenance/m-safe/external')}><ArrowLeft className="h-4 w-4 mr-2" />Back</Button><div className="text-center py-8 text-gray-500">{error || 'User not found'}</div></div>
   );
 
   // Field derivations & fallbacks per spec
   const activeVal = user.lock_user_permission?.active;
-  const employeeId =  user.lock_user_permission?.employee_id;
+  const employeeId = user.lock_user_permission?.employee_id;
 
   return (
     <div className="flex justify-center w-full min-h-screen bg-[#F8F8F7]">

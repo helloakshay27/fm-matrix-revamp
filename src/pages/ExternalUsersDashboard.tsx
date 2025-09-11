@@ -251,6 +251,21 @@ export const ExternalUsersDashboard = () => {
     { key: 'line_manager_mobile', label: 'Line Manager Mobile', sortable: false, hideable: true },
   ];
 
+  // Helper: format any date string to DD/MM/YYYY
+  const formatDateDMY = (value?: string) => {
+    if (!value) return '-';
+    try {
+      const d = new Date(value);
+      if (isNaN(d.getTime())) return '-';
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${dd}/${mm}/${yyyy}`;
+    } catch {
+      return '-';
+    }
+  };
+
 
   const renderCell = (user: ExternalUser, columnKey: string): React.ReactNode => {
     switch (columnKey) {
@@ -281,9 +296,9 @@ export const ExternalUsersDashboard = () => {
         );
       }
       case 'birth_date':
-        return (user as any).birth_date || '-';
+  return formatDateDMY((user as any).birth_date);
       case 'joining_date':
-        return (user as any).lock_user_permission?.joining_date || (user as any).joining_date || '-';
+  return formatDateDMY((user as any).lock_user_permission?.joining_date || (user as any).joining_date);
       case 'status': {
         const statusVal = (user as any).lock_user_permission?.status || (user as any).status || (user as any).lock_user_permission_status;
         return statusVal ? getStatusBadge(statusVal) : '-';
