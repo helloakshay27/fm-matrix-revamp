@@ -33,11 +33,16 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
 } from "@mui/material";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { fetchWBS } from "@/store/slices/materialPRSlice";
 
 // Interfaces
 interface Company {
@@ -181,6 +186,9 @@ const serviceColumns: ColumnConfig[] = [
 
 export const ServicePRDetailsPage = () => {
   const dispatch = useAppDispatch();
+  const token = localStorage.getItem("token");
+  const baseUrl = localStorage.getItem("baseUrl");
+
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
@@ -196,10 +204,14 @@ export const ServicePRDetailsPage = () => {
   const [selectedAttachment, setSelectedAttachment] =
     useState<Attachment | null>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [showEditWbsModal, setShowEditWbsModal] = useState(false);
+  const [wbsCodes, setWbsCodes] = useState([]);
+  const [updatedWbsCodes, setUpdatedWbsCodes] = useState<{
+    [key: string]: string;
+  }>({});
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
-    showAddInvoice: false,
-    showAddDebitCredit: false,
+    editWbsCode: false,
   });
 
   // Fetch service PR data
@@ -224,9 +236,18 @@ export const ServicePRDetailsPage = () => {
         setServicePR(response.page || {});
         setButtonCondition({
           showSap: response.show_send_sap_yes,
-          showAddInvoice: response.show_add_invoice_ses,
-          showAddDebitCredit: response.can_add_debit_credit_note,
+          editWbsCode: response.can_edit_wbs_codes,
         });
+        // Initialize updatedWbsCodes with current WBS codes
+        const initialWbsCodes = response.page?.inventories?.reduce(
+          (acc: { [key: string]: string }, item: ServiceItem) => {
+            const key = item.id || item.sno.toString();
+            acc[key] = item.wbs_code || "";
+            return acc;
+          },
+          {}
+        );
+        setUpdatedWbsCodes(initialWbsCodes || {});
       } catch (error: any) {
         toast.error(error.message || "Failed to fetch service PR");
       } finally {
@@ -235,6 +256,65 @@ export const ServicePRDetailsPage = () => {
     };
     fetchData();
   }, [dispatch, id]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await dispatch(fetchWBS({ baseUrl, token })).unwrap();
+        setWbsCodes(response.wbs);
+      } catch (error) {
+        console.log(error);
+        toast.error(error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Handle WBS code change
+  const handleWbsCodeChange = useCallback(
+    (event, item: ServiceItem) => {
+      const newWbsCode = event.target.value as string;
+      const itemKey = (item.id || item.sno).toString();
+      setUpdatedWbsCodes((prev) => ({
+        ...prev,
+        [itemKey]: newWbsCode,
+      }));
+    },
+    []
+  );
+
+  // Handle update WBS codes to backend
+  const handleUpdateWbsCodes = useCallback(async () => {
+    const token = localStorage.getItem("token");
+    const baseUrl = localStorage.getItem("baseUrl");
+
+    if (!baseUrl || !token || !id) {
+      toast.error("Missing required configuration");
+      return;
+    }
+
+    try {
+      const updates = {
+        pms_po_inventory_updates: Object.entries(updatedWbsCodes).map(([itemKey, wbsCode]) => ({
+          id: itemKey,
+          wbs_code: wbsCode
+        }))
+      }
+
+      await axios.patch(
+        `https://${baseUrl}/pms/purchase_orders/bulk_update_wbs_codes.json`,
+        updates,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      toast.success("WBS Codes updated successfully");
+      setShowEditWbsModal(false);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update WBS Codes");
+    }
+  }, [id, updatedWbsCodes]);
 
   // Handle print
   const handlePrint = useCallback(async () => {
@@ -371,7 +451,9 @@ export const ServicePRDetailsPage = () => {
       boq_details: item.boq_details || "-",
       quantity: item.quantity || 0,
       uom: item.uom || "-",
-      expected_date: item.expected_date ? format(item.expected_date, "dd/MM/yyyy") : "-",
+      expected_date: item.expected_date
+        ? format(item.expected_date, "dd/MM/yyyy")
+        : "-",
       product_description: item.product_description || "-",
       rate: item.rate || 0,
       wbs_code: item.wbs_code || "-",
@@ -510,6 +592,14 @@ export const ServicePRDetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 btn-primary"
+              onClick={() => setShowEditWbsModal(true)}
+            >
+              Edit WBS Codes
+            </Button>
           </div>
         </div>
       </div>
@@ -570,8 +660,7 @@ export const ServicePRDetailsPage = () => {
         <Card className="shadow-sm border border-border">
           <CardHeader className="pb-4">
             <CardTitle className="text-lg font-medium text-center">
-              Service Purchase Request ({servicePR.work_order?.wo_status || "-"}
-              )
+              Service Purchase Request ({servicePR.work_order?.wo_status || "-"})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -978,6 +1067,57 @@ export const ServicePRDetailsPage = () => {
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
             >
               Reject
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={showEditWbsModal}
+          onClose={() => setShowEditWbsModal(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Edit WBS Codes</DialogTitle>
+          <DialogContent>
+            <div className="space-y-4 mt-4">
+              {servicePR.inventories?.map((item) => (
+                <FormControl fullWidth key={item.id || item.sno}>
+                  <InputLabel>
+                    WBS Code for {item.boq_details || `Item ${item.sno}`}
+                  </InputLabel>
+                  <Select
+                    value={updatedWbsCodes[(item.id || item.sno).toString()] || item.wbs_code}
+                    onChange={(e) => handleWbsCodeChange(e, item)}
+                    label={`WBS Code for ${item.boq_details || `Item ${item.sno}`}`}
+                  >
+                    <MenuItem value="">
+                      <em>Select WBS Code</em>
+                    </MenuItem>
+                    {wbsCodes.map((wbs: { wbs_code: string }) => (
+                      <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                        {wbs.wbs_code}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              ))}
+              {(!servicePR.inventories || servicePR.inventories.length === 0) && (
+                <p className="text-muted-foreground">No inventory items available</p>
+              )}
+            </div>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setShowEditWbsModal(false)}
+              variant="outline"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateWbsCodes}
+              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+            >
+              Update
             </Button>
           </DialogActions>
         </Dialog>
