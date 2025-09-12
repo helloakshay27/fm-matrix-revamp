@@ -86,8 +86,13 @@ const CheckHierarchy: React.FC = () => {
       const data = await resp.json();
       setTreeData(data as TreeNode);
       try {
-        const all = collectAllIds(data as TreeNode);
-        setExpandedNodes(new Set(all));
+        const node = data as TreeNode;
+        const rootId = node?.id;
+        const firstChildId = Array.isArray(node?.children) && node.children.length > 0 ? node.children[0].id : undefined;
+        const initial = new Set<number>();
+        if (typeof rootId === 'number') initial.add(rootId);
+        if (typeof firstChildId === 'number') initial.add(firstChildId);
+        setExpandedNodes(initial);
       } catch { /* noop */ }
       toast.success('Hierarchy fetched');
     } catch (e: any) {
@@ -266,8 +271,13 @@ const TreeNodeItem: React.FC<{ node: TreeNode; depth?: number; expanded: Set<num
       </div>
     );
   }, (prev, next) => {
+    // Re-render if node identity or depth changes
     if (prev.node !== next.node) return false;
     if (prev.depth !== next.depth) return false;
+    // Important: when the expanded Set reference changes (Expand/Collapse All),
+    // we must re-render to propagate the new expansion state to children.
+    if (prev.expanded !== next.expanded) return false;
+    // If only local open state is unchanged and the toggle handler is stable, skip.
     const prevOpen = prev.expanded.has(prev.node.id);
     const nextOpen = next.expanded.has(next.node.id);
     return prevOpen === nextOpen && prev.onToggle === next.onToggle;
