@@ -593,8 +593,8 @@ export const GatePassOutwardsAddPage = () => {
                   <tr key={row.id} className="bg-white border-b">
                     <td className="px-4 py-4">{index + 1}</td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Type</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Type <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Type"
                           notched
@@ -610,8 +610,8 @@ export const GatePassOutwardsAddPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Category</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
                           notched
@@ -628,8 +628,8 @@ export const GatePassOutwardsAddPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      <FormControl fullWidth variant="outlined" size="small" required>
-                        <InputLabel shrink>Item Name</InputLabel>
+                      <FormControl fullWidth variant="outlined" size="small" >
+                        <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Name"
                           notched
