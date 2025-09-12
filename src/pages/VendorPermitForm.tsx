@@ -83,8 +83,17 @@ export const VendorPermitForm = () => {
 
     useEffect(() => {
         const fetchPermitData = async () => {
+            const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            const url = `https://fm-uat-api.lockated.com/pms/permits/${id}/vendor_permit_fill_form.json`;
+
+            if (!baseUrl || !token) {
+                console.error('Missing baseUrl or token');
+                return;
+            }
+
+            // Ensure protocol is present
+            const baseUrlWithProtocol = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
+            const url = `${baseUrlWithProtocol}/pms/permits/${id}/vendor_permit_fill_form.json`;
             try {
                 const response = await fetch(url, {
                     headers: { Authorization: `Bearer ${token}` }
@@ -283,9 +292,11 @@ export const VendorPermitForm = () => {
         setLoading(true);
 
         try {
+            const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
-            if (!token) {
-                toast.error('Authentication token not found. Please login again.');
+
+            if (!baseUrl || !token) {
+                toast.error('Authentication token or base URL not found. Please login again.');
                 return;
             }
 
@@ -353,7 +364,10 @@ export const VendorPermitForm = () => {
                 }
             });
 
-            const url = `https://fm-uat-api.lockated.com/pms/permits/${id}/submit_form.json`;
+            // Ensure protocol is present
+            const baseUrlWithProtocol = /^https?:\/\//i.test(baseUrl) ? baseUrl : `https://${baseUrl}`;
+            const url = `${baseUrlWithProtocol}/pms/permits/${id}/submit_form.json`;
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
@@ -372,7 +386,7 @@ export const VendorPermitForm = () => {
             console.log('Form submitted successfully:', result);
 
             toast.success('permit form submitted successfully!');
-            // navigate(`/permits/${id}`);
+            navigate(`/safety/permit/details/${id}`);
         } catch (error) {
             console.error('Error submitting form:', error);
             toast.error(error instanceof Error ? error.message : 'Failed to submit permit form');
