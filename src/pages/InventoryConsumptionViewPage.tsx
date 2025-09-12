@@ -112,12 +112,27 @@ const InventoryConsumptionViewPage = () => {
       const token = localStorage.getItem('token');
       if (!baseUrl || !token) throw new Error('Missing baseUrl/token');
 
-      await axios.post(`https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`, payload, {
+      const resp = await axios.post(`https://${baseUrl}/pms/inventories/new_inventory_consumption_addition.json`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         }
       });
+
+      // Backend may return 200 with success:false and an errors field
+      if (resp?.data && resp.data.success === false) {
+        const rawErrors = resp.data.errors || resp.data.message;
+        let msg = '';
+        if (Array.isArray(rawErrors)) msg = rawErrors.join(', ');
+        else if (typeof rawErrors === 'object' && rawErrors !== null) {
+          // Flatten object values
+            msg = Object.values(rawErrors).flat().join(', ');
+        } else msg = rawErrors;
+        toast.error(msg || 'Submission failed');
+        // Keep modal open so user can adjust values
+        setIsSubmitting(false);
+        return;
+      }
 
       console.log('Refetching details with range:', { effectiveStart, effectiveEnd });
       await dispatch(

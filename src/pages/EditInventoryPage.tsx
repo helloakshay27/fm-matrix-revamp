@@ -66,11 +66,14 @@ export const EditInventoryPage = () => {
     cgstRate: '',
     igstRate: ''
   });
+  // Today (YYYY-MM-DD) used to restrict selecting past dates for expiry
+  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
   // Validation errors state for required fields
   const [errors, setErrors] = useState<{
     inventoryName?: string;
     inventoryCode?: string;
     minStockLevel?: string;
+  expiryDate?: string;
   }>({});
   // Inventory name suggestion state
   const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
@@ -359,6 +362,17 @@ export const EditInventoryPage = () => {
       nextVal = value.replace(/\D/g, '');
     }
 
+    if (field === 'expiryDate') {
+      // Disallow selecting a past date; set error if past
+      const val = value;
+      setFormData(prev => ({ ...prev, expiryDate: val }));
+      setErrors(prev => ({
+        ...prev,
+        expiryDate: val && val < todayISO ? 'Expiry Date cannot be in the past.' : ''
+      }));
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [field]: nextVal }));
 
     // Inline validate required fields
@@ -389,6 +403,7 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
+  if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -829,6 +844,9 @@ export const EditInventoryPage = () => {
                     type="date"
                     value={formData.expiryDate}
                     onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                    inputProps={{ min: todayISO }}
+                    error={Boolean(errors.expiryDate)}
+                    helperText={errors.expiryDate || ''}
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}

@@ -170,7 +170,7 @@ export const FillJSAForm = () => {
                 const data = await response.json();
                 console.log('JSA form submitted successfully:', data);
                 toast.success('JSA form submitted successfully!');
-                navigate('/safety/permit');
+                navigate(`/safety/permit/details/${id}`);
             } else {
                 const errorText = await response.text();
                 console.error('Failed to submit JSA form:', response.status, response.statusText, errorText);

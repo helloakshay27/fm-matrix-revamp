@@ -707,10 +707,7 @@ export const PODetailsPage = () => {
                   )}
                   {level.approved_by && level.approval_date && (
                     <div className="ms-2">
-                      {`${level.approved_by} (${format(
-                        new Date(level.approval_date),
-                        "dd-MM-yyyy"
-                      )})`}
+                      {`${level.approved_by} (${level.approval_date})`}
                     </div>
                   )}
                 </div>

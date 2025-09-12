@@ -21,6 +21,7 @@ export const GatePassInwardsDetailPage = () => {
   const [receivedDate, setReceivedDate] = useState('');
   const [remarks, setRemarks] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [receivedItems, setReceivedItems] = useState<number[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -75,6 +76,7 @@ export const GatePassInwardsDetailPage = () => {
       setReceivedDate('');
       setRemarks('');
       setAttachments([]);
+      setReceivedItems(prev => [...prev, selectedItemIndex]);
       // Optionally, refresh data here
     } catch (err) {
       // Handle error
@@ -116,17 +118,23 @@ export const GatePassInwardsDetailPage = () => {
   const passDate = selectedEntry.gate_pass_date ? new Date(selectedEntry.gate_pass_date).toLocaleString() : '--';
 
   // Prepare itemsData from gatePassData.gate_pass_materials
+  const attachmentLinks = (gatePassData.attachments || []).map((att: any) =>
+    att.document ? `<a href="${att.document}" target="_blank" rel="noopener noreferrer">📎</a>` : ''
+  ).filter(Boolean).join(', ');
   const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
     sNo: String(idx + 1).padStart(2, '0'),
     itemName: mat.material_type || '--',
-    itemCategory: mat.material_sub_type || '--',
+    itemCategory: mat.item_category || '--',
     itemNameDetail: mat.material || mat.other_material_name || '--',
-    unit: mat.uom || '--',
+    unit: mat.unit || '--',
     quantity: mat.gate_pass_qty ?? '--',
     description: mat.other_material_description || mat.remarks || '--',
-    attachment: mat.attachment ? '📎' : '',
+    attachment: attachmentLinks || '--',
     updates: 'Receive',
   }));
+
+  console.log(gatePassData.attachments.map);
+  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
@@ -186,7 +194,7 @@ export const GatePassInwardsDetailPage = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Employee/Visitor Name:
                     </label>
-                    <p className="text-sm text-gray-900">{personName}</p>
+                    <p className="text-sm text-gray-900">{selectedEntry?.contact_person || '--'}</p>
                   </div>
 
                   <div>
@@ -198,9 +206,9 @@ export const GatePassInwardsDetailPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Department:
+                      Site:
                     </label>
-                    <p className="text-sm text-gray-900">{selectedEntry.department || '--'}</p>
+                    <p className="text-sm text-gray-900">{selectedEntry.site?.name || '--'}</p>
                   </div>
 
                   <div>
@@ -219,17 +227,11 @@ export const GatePassInwardsDetailPage = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Mode Of Transport:
+                      Vehicle Number:
                     </label>
                     <p className="text-sm text-gray-900">{vehicleNo}</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Expected Date:
-                    </label>
-                    <p className="text-sm text-gray-900">{expectedReturnDate}</p>
-                  </div>
                 </div>
               </div>
             </div>
@@ -269,14 +271,20 @@ export const GatePassInwardsDetailPage = () => {
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.attachment}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">
+                          <span dangerouslySetInnerHTML={{ __html: item.attachment }} />
+                        </TableCell>
                         <TableCell className="px-4 py-3 text-sm">
-                          <button
-                            className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                            onClick={() => handleReceiveClick(index)}
-                          >
-                            {item.updates}
-                          </button>
+                          {receivedItems.includes(index) ? (
+                            <span className="text-green-600 font-medium">Received</span>
+                          ) : (
+                            <button
+                              className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
+                              onClick={() => handleReceiveClick(index)}
+                            >
+                              {item.updates}
+                            </button>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}

@@ -342,16 +342,16 @@ export const ticketManagementAPI = {
       console.log('✅ FM Users API Response:', {
         endpoint: ENDPOINTS.FM_USERS,
         responseData: response.data,
-        fmUsersArray: response.data.fm_users,
-        fmUsersLength: response.data.fm_users?.length || 0
+        usersArray: response.data.users,
+        usersLength: response.data.users?.length || 0
       });
       
-      const rawUsers = response.data.fm_users || [];
+      const rawUsers = response.data.users || [];
       
       // Map the raw user data to UserOption format
       const users: UserOption[] = rawUsers.map((user: any) => ({
         id: user.id,
-        name: `${user.firstname || ''} ${user.lastname || ''}`.trim() || user.email || `User ${user.id}`
+        name: user.full_name || user.email || `User ${user.id}`
       }));
       
       console.log('🔄 Mapped FM Users:', {
@@ -535,6 +535,40 @@ export const ticketManagementAPI = {
 
   async getSites(userId: string) {
     const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
+    return response.data;
+  },
+
+  async getEscalationUsers() {
+    const response = await apiClient.get(ENDPOINTS.ESCALATION_USERS);
+    return response.data;
+  },
+
+  async getBuildings() {
+    const response = await apiClient.get(ENDPOINTS.BUILDINGS);
+    return response.data;
+  },
+
+  async createSocietyGate(gateData: {
+    gate_name: string;
+    gate_device: string;
+    resource_id: number;
+    building_id: number;
+    user_id: number;
+    type: string;
+  }) {
+    const response = await apiClient.post(ENDPOINTS.SOCIETY_GATES, {
+      society_gate: gateData
+    });
+    return response.data;
+  },
+
+  async getSocietyGates(page: number = 1, perPage: number = 20) {
+    const queryParams = new URLSearchParams();
+    queryParams.append('page', page.toString());
+    queryParams.append('per_page', perPage.toString());
+    
+    const url = `${ENDPOINTS.SOCIETY_GATES}?${queryParams.toString()}`;
+    const response = await apiClient.get(url);
     return response.data;
   },
 
@@ -725,14 +759,10 @@ export const ticketManagementAPI = {
   },
 
   async getEngineers() {
-    const response = await apiClient.get('/pms/account_setups/fm_users.json');
+    const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
     return response.data;
   },
 
-  async getBuildings() {
-    const response = await apiClient.get('/buildings.json');
-    return response.data;
-  },
 
   async getAllowedSites(userId: string) {
     const response = await apiClient.get(`/pms/sites/allowed_sites.json?user_id=${userId}`);
@@ -1259,6 +1289,49 @@ export const ticketManagementAPI = {
       return response.data;
     } catch (error) {
       console.error('❌ Error creating visitor:', error);
+      throw error;
+    }
+  },
+
+  // Get society gate by ID
+  async getSocietyGateById(gateId: string) {
+    try {
+      const response = await apiClient.get(`${ENDPOINTS.SOCIETY_GATE_BY_ID}/${gateId}.json`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching society gate by ID:', error);
+      throw error;
+    }
+  },
+
+  // Update society gate by ID
+  async updateSocietyGate(gateId: string, gateData: {
+    gate_name: string;
+    gate_device: string;
+    resource_id: number;
+    building_id?: number;
+    user_id?: number;
+  }) {
+    try {
+      const payload = {
+        society_gate: gateData
+      };
+      
+      const response = await apiClient.put(`${ENDPOINTS.UPDATE_SOCIETY_GATE}/${gateId}.json`, payload);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating society gate:', error);
+      throw error;
+    }
+  },
+
+  // Get recent surveys
+  async getRecentSurveys() {
+    try {
+      const response = await apiClient.get(ENDPOINTS.RECENT_SURVEYS);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching recent surveys:', error);
       throw error;
     }
   },

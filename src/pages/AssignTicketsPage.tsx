@@ -52,14 +52,7 @@ interface ComplaintStatus {
 
 interface FMUser {
   id: number;
-  email: string;
-  firstname: string;
-  lastname: string;
-  login: string;
-  created_at: string;
-  updated_at: string;
-  spree_api_key: string;
-  deleted_at: string | null;
+  full_name: string;
 }
 
 const AssignTicketsPage: React.FC = () => {
@@ -107,8 +100,8 @@ const AssignTicketsPage: React.FC = () => {
     const fetchFMUsers = async () => {
       setLoadingUsers(true);
       try {
-        const response = await apiClient.get('/pms/account_setups/fm_users.json');
-        setFmUsers(response.data.fm_users || []);
+        const response = await apiClient.get('/pms/users/get_escalate_to_users.json');
+        setFmUsers(response.data.users || []);
       } catch (error) {
         console.error('Error fetching FM users:', error);
         toast({
@@ -474,7 +467,7 @@ const AssignTicketsPage: React.FC = () => {
                 <option value="" className="text-gray-500">Select engineer</option>
                 {fmUsers.map((user) => (
                   <option key={user.id} value={user.id} className="text-gray-900 py-2">
-                    {user.firstname} {user.lastname}
+                    {user.full_name}
                   </option>
                 ))}
               </select>

@@ -21,7 +21,6 @@ import {
   clearState 
 } from '@/store/slices/resolutionEscalationSlice';
 import { fetchHelpdeskCategories } from '@/store/slices/helpdeskCategoriesSlice';
-import { fetchFMUsers } from '@/store/slices/fmUserSlice';
 import { useToast } from '@/hooks/use-toast';
 import ReactSelect from 'react-select';
 import { ticketManagementAPI, UserAccountResponse } from '@/services/ticketManagementAPI';
@@ -120,9 +119,10 @@ export const ResolutionEscalationTab: React.FC = () => {
   } = useAppSelector((state) => state.resolutionEscalation);
   
   const { data: categories, loading: categoriesLoading } = useAppSelector((state) => state.helpdeskCategories);
-  const { data: fmUsers, loading: fmUsersLoading } = useAppSelector((state) => state.fmUsers);
 
   const [userAccount, setUserAccount] = useState<UserAccountResponse | null>(null);
+  const [escalationUsers, setEscalationUsers] = useState<{id: number; full_name: string}[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('');
   const [filteredRules, setFilteredRules] = useState(resolutionEscalations);
   const [editingRule, setEditingRule] = useState<any>(null);
@@ -205,12 +205,27 @@ export const ResolutionEscalationTab: React.FC = () => {
     }
   };
 
+  // Load escalation users
+  const loadEscalationUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const response = await ticketManagementAPI.getEscalationUsers();
+      setEscalationUsers(response.users || []);
+      console.log('Escalation users loaded:', response.users);
+    } catch (error) {
+      console.error('Error loading escalation users:', error);
+      toast({ title: 'Error', description: 'Failed to load escalation users', variant: 'destructive' });
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
   // Load initial data
   useEffect(() => {
     dispatch(fetchHelpdeskCategories());
-    dispatch(fetchFMUsers());
     dispatch(fetchResolutionEscalations());
     loadUserAccount();
+    loadEscalationUsers();
   }, [dispatch]);
 
   // Handle success/error states
@@ -498,7 +513,7 @@ export const ResolutionEscalationTab: React.FC = () => {
 
   // Options for react-select
   const categoryOptions = categories?.helpdesk_categories?.map(cat => ({ value: cat.id, label: cat.name })) || [];
-  const userOptions = fmUsers?.fm_users?.map(user => ({ value: user.id, label: `${user.firstname} ${user.lastname}` })) || [];
+  const userOptions = escalationUsers?.map(user => ({ value: user.id, label: user.full_name })) || [];
 
   const escalationLevels = ['e1', 'e2', 'e3', 'e4', 'e5'] as const;
   const priorities = ['p1', 'p2', 'p3', 'p4', 'p5'] as const;
@@ -571,7 +586,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                             setValue(`escalationLevels.${level}.users`, selectedUserIds, { shouldValidate: true });
                           }}
                           placeholder="Select up to 15 Options..."
-                          isLoading={fmUsersLoading}
+                          isLoading={loadingUsers}
                           className="min-w-[250px]"
                           styles={{
                             control: (base) => ({
@@ -761,8 +776,8 @@ export const ResolutionEscalationTab: React.FC = () => {
                               ? escalateToUsers.map((userId: string | number) => {
                                   // Convert to number for comparison, as API might return strings
                                   const userIdNum = typeof userId === 'string' ? parseInt(userId) : userId;
-                                  const user = fmUsers?.fm_users?.find(u => u.id === userIdNum);
-                                  return user ? `${user.firstname} ${user.lastname}` : `User ${userId}`;
+                                  const user = escalationUsers?.find(u => u.id === userIdNum);
+                                  return user ? user.full_name : `User ${userId}`;
                                 }).join(', ')
                               : '';
 
@@ -874,7 +889,7 @@ export const ResolutionEscalationTab: React.FC = () => {
                             setValue(`escalationLevels.${level}.users`, selected ? selected.map(s => s.value) : []);
                           }}
                           placeholder="Select up to 15 Options..."
-                          isLoading={fmUsersLoading}
+                          isLoading={loadingUsers}
                           className="min-w-[250px]"
                           styles={{
                             control: (base) => ({

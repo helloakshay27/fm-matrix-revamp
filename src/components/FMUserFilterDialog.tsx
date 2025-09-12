@@ -5,8 +5,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
-import Stack from '@mui/material/Stack';
-import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
@@ -72,7 +71,6 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                 const token = localStorage.getItem('token');
                 if (!baseUrl || !token) { setLoadingLists(false); return; }
                 const headers = { Authorization: `Bearer ${token}` };
-                // Using same fallback company ids as external dialog for now
                 const companyID = localStorage.getItem('selectedCompanyId');
                 const deptUrl = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyID}`;
                 const circleUrl = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyID}`;
@@ -86,7 +84,6 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                 ]);
                 setDepartments(deptResp.data?.departments || []);
                 setCircles(circleResp.data?.circles || []);
-                // Normalize clusters to ensure unique, defined ids and labels
                 const rawClusters = clusterResp.data?.clusters || [];
                 const normalizedClusters = (Array.isArray(rawClusters) ? rawClusters : []).map((c: any) => {
                     const id = c?.company_cluster_id ?? c?.id ?? c?.company_cluster?.id ?? c?.value ?? c?.key ?? '';
@@ -191,7 +188,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
     };
 
     return (
-        <Dialog open={isOpen} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
             <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700, fontSize: 20, borderBottom: '1px solid #eee', pb: 1.5 }}>
                 Filter
                 <IconButton onClick={onClose} size="small">
@@ -199,7 +196,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                 </IconButton>
             </DialogTitle>
             <DialogContent sx={{ pt: 3, pb: 2 }}>
-                <Stack spacing={3} sx={{ mt: 2 }}>
+                <Box sx={{ display: 'grid', gap: 2, mt: 1, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
                     <TextField label="First Name" variant="outlined" size="small" value={firstname} onChange={e => setFirstname(e.target.value)} fullWidth InputLabelProps={shrink(firstname)} />
                     <TextField label="Last Name" variant="outlined" size="small" value={lastname} onChange={e => setLastname(e.target.value)} fullWidth InputLabelProps={shrink(lastname)} />
                     <TextField label="Email" variant="outlined" size="small" value={email} onChange={e => setEmail(e.target.value)} fullWidth InputLabelProps={shrink(email)} />
@@ -301,9 +298,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                         placeholder="Type 4+ chars"
                         value={lmQuery}
                         onChange={(e) => setLmQuery(e.target.value)}
-                        InputProps={{
-                            endAdornment: lmLoading ? <CircularProgress color="inherit" size={16} /> : null,
-                        }}
+                        InputProps={{ endAdornment: lmLoading ? <CircularProgress color="inherit" size={16} /> : null }}
                     />
                     {lmOptions.length > 0 && (
                         <FormControl size="small" fullWidth>
@@ -330,7 +325,7 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
                             </Select>
                         </FormControl>
                     )}
-                </Stack>
+                </Box>
             </DialogContent>
             <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
                 <Button variant="outline" onClick={handleReset} className="border-gray-300 text-gray-700 hover:bg-gray-50">Reset</Button>
