@@ -285,6 +285,12 @@ export const PermitDetails = () => {
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Complete permit form states
+    const [completeModalOpen, setCompleteModalOpen] = useState(false);
+    const [completionComment, setCompletionComment] = useState("");
+    const [completeAttachments, setCompleteAttachments] = useState<File[]>([]);
+    const [isCompleting, setIsCompleting] = useState(false);
+
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
     const userId = searchParams.get('user_id');
@@ -579,6 +585,93 @@ export const PermitDetails = () => {
         } finally {
             setIsUploading(false);
         }
+    };
+
+    // Handle complete permit form submission
+    const handleCompletePermit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!id) {
+            toast.error('Permit ID is required for completion');
+            return;
+        }
+
+        if (!completionComment.trim()) {
+            toast.error('Please provide a completion comment');
+            return;
+        }
+
+        setIsCompleting(true);
+        try {
+            const baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+
+            if (!baseUrl || !token) {
+                throw new Error('Base URL or token not found');
+            }
+
+            // Ensure protocol is present
+            let fullBaseUrl = baseUrl;
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                fullBaseUrl = `https://${baseUrl}`;
+            }
+
+            // Create FormData for multipart/form-data
+            const formData = new FormData();
+            formData.append('pms_permit_closure[permit_id]', id);
+            formData.append('pms_permit_closure[completion_comment]', completionComment.trim());
+
+            // Add attachments if any
+            if (completeAttachments && completeAttachments.length > 0) {
+                completeAttachments.forEach((file, index) => {
+                    formData.append('attachments[]', file);
+                });
+            }
+
+            const response = await fetch(`${fullBaseUrl}/pms/permit_closures.json`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to complete permit: ${response.status} ${response.statusText}`);
+            }
+
+            toast.success('Permit completed successfully');
+            setCompleteModalOpen(false);
+            setCompletionComment("");
+            setCompleteAttachments([]);
+
+            // Refresh permit data to show updated information
+            if (id) {
+                try {
+                    await handleRefresh();
+                    console.log("Permit data refreshed successfully after completion");
+                } catch (refreshError) {
+                    console.error('Error refreshing permit data after completion:', refreshError);
+                }
+            }
+        } catch (error) {
+            console.error('Error completing permit:', error);
+            toast.error('Failed to complete permit. Please try again.');
+        } finally {
+            setIsCompleting(false);
+        }
+    };
+
+    // Handle file selection for complete permit attachments
+    const handleCompleteFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setCompleteAttachments(prev => [...prev, ...Array.from(e.target.files!)]);
+        }
+    };
+
+    // Handle removing a file from the complete attachments list
+    const handleRemoveCompleteFile = (index: number) => {
+        setCompleteAttachments(prev => prev.filter((_, i) => i !== index));
     };
 
     // Handle file selection for JSA uploads
@@ -943,7 +1036,7 @@ export const PermitDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => {/* Add complete functionality */ }}
+                            onClick={() => setCompleteModalOpen(true)}
                             className="bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
                         >
                             <CheckCircle className="w-4 h-4 mr-2" />
@@ -1907,6 +2000,110 @@ export const PermitDetails = () => {
                             {isUploading ? 'Uploading...' : 'Submit'}
                         </Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Complete Permit Modal */}
+            <Dialog open={completeModalOpen} onOpenChange={setCompleteModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex justify-between items-center">
+                            CLOSE PTW
+                            <button
+                                onClick={() => setCompleteModalOpen(false)}
+                                className="rounded-full p-1 hover:bg-gray-200"
+                            >
+                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                </svg>
+                            </button>
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleCompletePermit}>
+                        <div className="py-4">
+                            {/* Completion Comment Field */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">
+                                    Completion Comment<span className="text-red-500">*</span>
+                                </label>
+                                <Textarea
+                                    placeholder="Completion Comment"
+                                    value={completionComment}
+                                    onChange={(e) => setCompletionComment(e.target.value)}
+                                    className="min-h-[100px] resize-none"
+                                    required
+                                />
+                            </div>
+
+                            {/* Attachment Section */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">
+                                    Attachment
+                                </label>
+
+                                <div className="space-y-2 mb-4">
+                                    {completeAttachments.map((file, index) => (
+                                        <div key={index} className="flex items-center justify-between p-2 border rounded">
+                                            <span className="text-sm truncate">{file.name}</span>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                className="text-red-500 h-8 w-8 p-0"
+                                                onClick={() => handleRemoveCompleteFile(index)}
+                                            >
+                                                <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                                </svg>
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                                    >
+                                        <label className="cursor-pointer flex items-center">
+                                            <span className="text-orange-600">Choose files</span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                className="hidden"
+                                                onChange={handleCompleteFileChange}
+                                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+                                            />
+                                        </label>
+                                    </Button>
+                                    <div className="mt-1 text-xs text-gray-500">
+                                        {completeAttachments.length > 0
+                                            ? `${completeAttachments.length} file(s) selected`
+                                            : 'No file chosen'
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                onClick={() => setCompleteModalOpen(false)}
+                                variant="outline"
+                                className="mr-2"
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="bg-purple-600 hover:bg-purple-700"
+                                disabled={!completionComment.trim() || isCompleting}
+                            >
+                                {isCompleting ? 'Submitting...' : 'Submit'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
 
