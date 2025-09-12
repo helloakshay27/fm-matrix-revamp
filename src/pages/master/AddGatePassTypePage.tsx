@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { TextField, Autocomplete, TextFieldProps } from '@mui/material';
+import { TextField, Autocomplete, TextFieldProps, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { toast } from 'sonner';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 
@@ -42,9 +42,14 @@ const AddGatePassTypePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add Gate Pass Type</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-lg mx-auto">
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      <div className="w-full max-w-none space-y-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Gate Pass Types</h1>
+      <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+      <form onSubmit={handleSubmit(onSubmit)} >
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+
+        
         <Controller
           name="name"
           control={control}
@@ -79,25 +84,23 @@ const AddGatePassTypePage = () => {
           name="active"
           control={control}
           render={({ field }) => (
-            <Autocomplete
-              options={[
-                { label: 'Active', value: true },
-                { label: 'Inactive', value: false },
-              ]}
-              getOptionLabel={(option) => option.label}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-              onChange={(_, data) => field.onChange(data ? data.value : null)}
-              value={field.value ? { label: 'Active', value: true } : { label: 'Inactive', value: false }}
-              renderInput={(params: TextFieldProps) => (
-                <TextField
-                  {...params}
-                  label="Status"
-                  variant="outlined"
-                />
-              )}
-            />
+            <FormControl fullWidth variant="outlined">
+              <InputLabel shrink>Status <span style={{ color: 'red' }}>*</span></InputLabel>
+              <Select
+                label="Status"
+                notched
+                displayEmpty
+                value={field.value === true ? 'true' : field.value === false ? 'false' : ''}
+                onChange={e => field.onChange(e.target.value === 'true')}
+              >
+                <MenuItem value="">Select Status</MenuItem>
+                <MenuItem value="true">Active</MenuItem>
+                <MenuItem value="false">Inactive</MenuItem>
+              </Select>
+            </FormControl>
           )}
         />
+        </div>
         <div className="flex justify-center space-x-4 pt-4">
           <Button type="submit" className="w-32">
             Save
@@ -112,6 +115,8 @@ const AddGatePassTypePage = () => {
           </Button>
         </div>
       </form>
+      </div>
+      </div>
     </div>
   );
 };

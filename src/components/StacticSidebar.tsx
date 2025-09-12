@@ -259,11 +259,11 @@ const modulesByPackage = {
       icon: Package,
       href: '/master/inventory-type'
     },
-    {
-      name: 'Inventory Sub Type',
-      icon: PackagePlus,
-      href: '/master/inventory-sub-type'
-    },
+    // {
+    //   name: 'Inventory Sub Type',
+    //   icon: PackagePlus,
+    //   href: '/master/inventory-sub-type'
+    // },
 
   ],
   'Transitioning': [

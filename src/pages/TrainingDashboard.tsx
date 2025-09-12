@@ -7,14 +7,14 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { toast } from 'sonner';
 
 const columns = [
-  // { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
+  { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
   { key: 'user_name', label: 'User Name', sortable: true, defaultVisible: true },
   { key: 'email', label: 'Email ID', sortable: true, defaultVisible: true },
   { key: 'user_type', label: 'Type of User', sortable: true, defaultVisible: true },
-  { key: 'training_type', label: 'Training Type(Internal/External)', sortable: true, defaultVisible: true },
-  { key: 'training_name', label: 'Training Name', sortable: true, defaultVisible: true },
-  { key: 'training_date', label: 'Training Date', sortable: true, defaultVisible: true },
-  { key: 'attachment', label: 'Attachment', sortable: false, defaultVisible: true },
+  // { key: 'training_type', label: 'Training Type(Internal/External)', sortable: true, defaultVisible: true },
+  // { key: 'training_name', label: 'Training Name', sortable: true, defaultVisible: true },
+  // { key: 'training_date', label: 'Training Date', sortable: true, defaultVisible: true },
+  // { key: 'attachment', label: 'Attachment', sortable: false, defaultVisible: true },
 ];
 
 // API typess
@@ -227,7 +227,8 @@ const TrainingDashboard = () => {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => navigate(`/maintenance/training-list/${item.id}`, { state: { row: item } })}
+              title="View user trainings"
+              onClick={() => navigate(`/maintenance/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
             >
               <Eye className="h-4 w-4" />
             </Button>
