@@ -721,8 +721,18 @@ export const ScheduleListDashboard = () => {
         return;
       }
 
+      // Build query params from filters
+      const params = buildQueryParams();
+      params['page'] = tablePage.toString();
+      params['access_token'] = token;
+
+      // Convert params object to query string
+      const queryString = Object.entries(params)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+
       axios.get(
-        `${API_CONFIG.BASE_URL}/pms/custom_forms.json?page=${tablePage}&access_token=${token}`
+        `${API_CONFIG.BASE_URL}/pms/custom_forms.json?${queryString}`
       )
         .then(res => {
           if (!isMounted) return;
@@ -775,7 +785,7 @@ export const ScheduleListDashboard = () => {
           setTableLoading(false);
         });
       return () => { isMounted = false; };
-    }, [tablePage]);
+    }, [tablePage, filters]);
 
     // Add new state for global search
     const [globalSearchTerm, setGlobalSearchTerm] = useState('');
