@@ -199,7 +199,7 @@ export const TicketTagVendorPage = () => {
           <div>
             <FormControl fullWidth size="small">
               <InputLabel id="select-options-label">Select Vendors</InputLabel>
-              <Select<string[]>
+              <Select
                 labelId="select-options-label"
                 multiple
                 value={selectedOptions}
