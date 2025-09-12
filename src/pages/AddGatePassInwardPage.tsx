@@ -249,6 +249,34 @@ export const AddGatePassInwardPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
+
+    // Validate required fields
+    const missingFields: string[] = [];
+    if (!visitorDetails.contactPerson) missingFields.push('Visitor Name');
+    if (!visitorDetails.contactPersonNo || visitorDetails.contactPersonNo.length !== 10) missingFields.push('Mobile No.');
+    if (!selectedCompany) missingFields.push('Company');
+    if (!gatePassDetails.vendorId) missingFields.push('Vendor');
+    if (!visitorDetails.modeOfTransport) missingFields.push('Mode Of Transport');
+    if (!visitorDetails.reportingTime) missingFields.push('Reporting Time');
+    if (!selectedSite) missingFields.push('Site');
+    if (!gatePassDetails.buildingId) missingFields.push('Building');
+    if (!gatePassDetails.gateNumberId) missingFields.push('Gate Number');
+    if (!gatePassDetails.gatePassTypeId) missingFields.push('Gate Pass Type');
+    if (!gatePassDetails.gatePassDate) missingFields.push('Gate Pass Date');
+
+    // At least one item row with all required fields
+    const hasValidMaterial = materialRows.some(row => row.itemTypeId && row.itemCategoryId && row.itemNameId && row.quantity && row.unit);
+    if (!hasValidMaterial) missingFields.push('At least one valid Item Detail');
+
+    if (missingFields.length > 0) {
+      toast({
+        title: 'Please fill all required fields',
+        description: `Missing: ${missingFields.join(', ')}`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     const formData = new FormData();
 
