@@ -1,79 +1,77 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Users, ArrowRight, RefreshCw } from 'lucide-react';
+import { ticketManagementAPI } from '../services/ticketManagementAPI';
+import { toast } from 'sonner';
+
+interface SurveyResponse {
+    answer_id: number;
+    question_id: number;
+    question_name: string;
+    option_id: number;
+    option_name: string;
+    option_type: string;
+    created_at: string;
+    complaints: Array<{
+        complaint_id: number;
+        ticket_number: string;
+        heading: string;
+        assigned_to: number;
+        assignee: string;
+        created_at: string;
+    }>;
+}
+
+interface SurveyMapping {
+    id: number;
+    survey_id: number;
+    site_id: number;
+    building_id: number;
+    wing_id: number;
+    floor_id: number;
+    area_id: number;
+    room_id: number;
+    site_name: string;
+    building_name: string;
+    wing_name: string;
+    floor_name: string;
+    area_name: string;
+    room_name: string;
+    responded_questions_count: number;
+    responses: SurveyResponse[];
+}
 
 interface RecentSurvey {
-    id: number;
-    title: string;
-    type: 'feedback' | 'assessment' | 'review';
-    responses: number;
-    status: 'active' | 'expired' | 'pending';
-    createdAt: Date;
-    expiryDate?: Date;
+    survey_id: number;
+    survey_name: string;
+    survey_mappings: SurveyMapping[];
 }
 
 export const RecentSurveysSidebar: React.FC = () => {
+    const navigate = useNavigate();
     const [recentSurveys, setRecentSurveys] = useState<RecentSurvey[]>([]);
     const [isLoading, setIsLoading] = useState(false);
 
-    // Mock data - replace with actual API call
-    const mockSurveys: RecentSurvey[] = [
-        {
-            id: 1,
-            title: 'Customer Satisfaction Q4 2024',
-            type: 'feedback',
-            responses: 45,
-            status: 'active',
-            createdAt: new Date('2024-12-01'),
-            expiryDate: new Date('2024-12-31'),
-        },
-        {
-            id: 2,
-            title: 'Employee Performance Review',
-            type: 'assessment',
-            responses: 23,
-            status: 'active',
-            createdAt: new Date('2024-11-28'),
-            expiryDate: new Date('2024-12-15'),
-        },
-        {
-            id: 3,
-            title: 'Product Feedback Survey',
-            type: 'review',
-            responses: 67,
-            status: 'expired',
-            createdAt: new Date('2024-11-15'),
-            expiryDate: new Date('2024-11-30'),
-        },
-        {
-            id: 4,
-            title: 'Service Quality Assessment',
-            type: 'feedback',
-            responses: 12,
-            status: 'pending',
-            createdAt: new Date('2024-12-05'),
-            expiryDate: new Date('2024-12-20'),
-        },
-        {
-            id: 5,
-            title: 'Training Effectiveness Survey',
-            type: 'assessment',
-            responses: 38,
-            status: 'active',
-            createdAt: new Date('2024-11-20'),
-            expiryDate: new Date('2024-12-10'),
-        },
-    ];
 
     const fetchRecentSurveys = async () => {
         setIsLoading(true);
         try {
-            // Simulate API call delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            setRecentSurveys(mockSurveys);
+            console.log('Fetching recent surveys...');
+            const response = await ticketManagementAPI.getRecentSurveys();
+            console.log('Recent surveys response:', response);
+            
+            if (response && response.surveys && Array.isArray(response.surveys)) {
+                setRecentSurveys(response.surveys);
+            } else {
+                console.error('Invalid response format:', response);
+                setRecentSurveys([]);
+            }
         } catch (error) {
             console.error('Error fetching recent surveys:', error);
+            toast.error('Failed to load recent surveys. Please try again.');
+            setRecentSurveys([]);
         } finally {
             setIsLoading(false);
         }
@@ -83,33 +81,44 @@ export const RecentSurveysSidebar: React.FC = () => {
         fetchRecentSurveys();
     }, []);
 
-    const getStatusColor = (status: RecentSurvey['status']) => {
-        switch (status) {
-            case 'active':
-                return 'bg-green-100 text-green-700 border-green-200';
-            case 'expired':
-                return 'bg-red-100 text-red-700 border-red-200';
-            case 'pending':
-                return 'bg-orange-100 text-orange-700 border-orange-200';
-            default:
-                return 'bg-gray-100 text-gray-700 border-gray-200';
+    const getResponseCount = (survey: RecentSurvey) => {
+        if (!survey.survey_mappings || !Array.isArray(survey.survey_mappings)) {
+            return 0;
+        }
+        return survey.survey_mappings.reduce((total, mapping) => {
+            return total + (mapping.responded_questions_count || 0);
+        }, 0);
+    };
+
+    const getTotalMappings = (survey: RecentSurvey) => {
+        if (!survey.survey_mappings || !Array.isArray(survey.survey_mappings)) {
+            return 0;
+        }
+        return survey.survey_mappings.length;
+    };
+
+    const getStatusColor = (responseCount: number, totalMappings: number) => {
+        if (responseCount === 0) {
+            return 'bg-orange-100 text-orange-700 border-orange-200'; // No responses
+        } else if (responseCount < totalMappings) {
+            return 'bg-blue-100 text-blue-700 border-blue-200'; // Partial responses
+        } else {
+            return 'bg-green-100 text-green-700 border-green-200'; // All responded
         }
     };
 
-    const getTypeColor = (type: RecentSurvey['type']) => {
-        switch (type) {
-            case 'feedback':
-                return 'bg-blue-100 text-blue-700';
-            case 'assessment':
-                return 'bg-purple-100 text-purple-700';
-            case 'review':
-                return 'bg-yellow-100 text-yellow-700';
-            default:
-                return 'bg-gray-100 text-gray-700';
+    const getStatusText = (responseCount: number, totalMappings: number) => {
+        if (responseCount === 0) {
+            return 'No Responses';
+        } else if (responseCount < totalMappings) {
+            return 'In Progress';
+        } else {
+            return 'Completed';
         }
     };
 
-    const formatDate = (date: Date) => {
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
         const now = new Date();
         const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
         
@@ -119,17 +128,37 @@ export const RecentSurveysSidebar: React.FC = () => {
         return date.toLocaleDateString();
     };
 
-    const getDaysUntilExpiry = (expiryDate?: Date) => {
-        if (!expiryDate) return null;
-        const now = new Date();
-        const diffInDays = Math.ceil((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-        return diffInDays;
+    const getLastResponseDate = (survey: RecentSurvey) => {
+        if (!survey.survey_mappings || !Array.isArray(survey.survey_mappings)) {
+            return 'No responses yet';
+        }
+        
+        let latestDate = null;
+        
+        survey.survey_mappings.forEach(mapping => {
+            if (mapping.responses && Array.isArray(mapping.responses)) {
+                mapping.responses.forEach(response => {
+                    if (response.created_at) {
+                        const responseDate = new Date(response.created_at);
+                        if (!latestDate || responseDate > latestDate) {
+                            latestDate = responseDate;
+                        }
+                    }
+                });
+            }
+        });
+        
+        return latestDate ? latestDate.toLocaleDateString() : 'No responses yet';
+    };
+
+    const handleViewDetails = (surveyId: number) => {
+        navigate(`/maintenance/survey/response/details/${surveyId}`);
     };
 
     return (
         <div className="w-full bg-[#C4B89D]/25 border-l border-gray-200 p-4 h-full xl:max-h-[1208px] overflow-hidden flex flex-col overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Recent Surveys</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Recent Responses</h3>
                 <Button
                     variant="ghost"
                     size="sm"
@@ -144,25 +173,33 @@ export const RecentSurveysSidebar: React.FC = () => {
             {isLoading ? (
                 <div className="space-y-4">
                     {[...Array(3)].map((_, index) => (
-                        <div key={index} className="animate-pulse">
+                        <div key={index} className="animate-pulse bg-[#C4B89D]/20 rounded-lg p-4">
                             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/2 mb-2"></div>
                             <div className="h-3 bg-gray-200 rounded w-1/4"></div>
                         </div>
                     ))}
                 </div>
+            ) : recentSurveys.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                    <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm">No recent surveys found</p>
+                </div>
             ) : (
                 <div className="space-y-4">
                     {recentSurveys.map((survey) => {
-                        const daysUntilExpiry = getDaysUntilExpiry(survey.expiryDate);
+                        const responseCount = getResponseCount(survey);
+                        const totalMappings = getTotalMappings(survey);
+                        const latestResponseDate = getLastResponseDate(survey);
+                        
                         return (
                             <div
-                                key={survey.id}
+                                key={survey.survey_id}
                                 className="bg-[#C4B89D]/20 rounded-lg p-4 shadow-sm border border-[#C4B89D] border-opacity-60 hover:shadow-md transition-shadow cursor-pointer group"
                             >
                                 <div className="flex items-start justify-between mb-2">
                                     <h4 className="text-sm font-medium text-gray-900 line-clamp-2 group-hover:text-[#C72030] transition-colors">
-                                        {survey.title}
+                                        {survey.survey_name}
                                     </h4>
                                     <ArrowRight className="w-4 h-4 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-2" />
                                 </div>
@@ -170,49 +207,41 @@ export const RecentSurveysSidebar: React.FC = () => {
                                 <div className="flex flex-wrap gap-2 mb-3">
                                     <Badge 
                                         variant="outline" 
-                                        className={`text-xs ${getStatusColor(survey.status)}`}
+                                        className={`text-xs ${getStatusColor(responseCount, totalMappings)}`}
                                     >
-                                        {survey.status}
+                                        {getStatusText(responseCount, totalMappings)}
                                     </Badge>
                                     <Badge 
                                         variant="outline" 
-                                        className={`text-xs ${getTypeColor(survey.type)}`}
+                                        className="text-xs bg-purple-100 text-purple-700 border-purple-200"
                                     >
-                                        {survey.type}
+                                        Survey
                                     </Badge>
                                 </div>
 
                                 <div className="space-y-2 text-xs text-gray-500">
                                     <div className="flex items-center gap-1">
                                         <Users className="w-3 h-3" />
-                                        <span>{survey.responses} responses</span>
+                                        <span>{responseCount} responses from {totalMappings} locations</span>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <Clock className="w-3 h-3" />
-                                        <span>Created {formatDate(survey.createdAt)}</span>
-                                    </div>
-                                    {daysUntilExpiry !== null && (
+                                    {latestResponseDate && (
                                         <div className="flex items-center gap-1">
                                             <Clock className="w-3 h-3" />
-                                            <span>
-                                                {daysUntilExpiry > 0 
-                                                    ? `Expires in ${daysUntilExpiry} days`
-                                                    : daysUntilExpiry === 0 
-                                                    ? 'Expires today'
-                                                    : 'Expired'
-                                                }
-                                            </span>
+                                            <span>Last response {formatDate(latestResponseDate)}</span>
                                         </div>
                                     )}
+                                    <div className="text-xs text-gray-400">
+                                        Survey ID: {survey.survey_id}
+                                    </div>
                                 </div>
                                 <div className="mt-4 pt-3 border-t border-gray-200 border-opacity-60 flex justify-end">
-                            <button 
-                                className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
-                                onClick={() => {/* Handle view survey details */}}
-                            >
-                                View Details&gt;&gt;
-                            </button>
-                        </div>
+                                    <button 
+                                        className="text-blue-600 text-sm font-medium underline hover:text-blue-800" 
+                                        onClick={() => handleViewDetails(survey.survey_id)}
+                                    >
+                                        View Details&gt;&gt;
+                                    </button>
+                                </div>
                             </div>
                         );
                     })}

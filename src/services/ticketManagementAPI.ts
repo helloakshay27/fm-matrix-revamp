@@ -1324,4 +1324,15 @@ export const ticketManagementAPI = {
       throw error;
     }
   },
+
+  // Get recent surveys
+  async getRecentSurveys() {
+    try {
+      const response = await apiClient.get(ENDPOINTS.RECENT_SURVEYS);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching recent surveys:', error);
+      throw error;
+    }
+  },
 };

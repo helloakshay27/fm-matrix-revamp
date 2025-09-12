@@ -242,6 +242,8 @@ export const API_CONFIG = {
     // Society gate by ID endpoints
     SOCIETY_GATE_BY_ID: '/admin/society_gates', // Base path, will append /{id}.json
     UPDATE_SOCIETY_GATE: '/admin/society_gates', // Base path, will append /{id}.json
+    RECENT_SURVEYS: '/survey_mappings/response_list.json?&recent=true',
+
   },
 } as const
 

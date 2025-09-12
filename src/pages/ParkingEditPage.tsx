@@ -1,35 +1,58 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"; // Keeping shadcn/ui Select for now
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Bike, Car } from "lucide-react";
+import { ArrowLeft, Bike, Car, MapPin, User, FileText } from "lucide-react";
 import { toast } from 'sonner';
-import { fetchBuildings, fetchFloors, fetchParkingSlotsWithStatus, fetchEntities, fetchCustomerLeases, fetchParkingDetails, updateParkingBookings, Building, Floor, ParkingCategory, Entity, CustomerLease, ParkingDetailsResponse } from '@/services/parkingConfigurationsAPI';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material'; // Importing Material-UI components
+import {
+  fetchBuildings, fetchFloors, fetchParkingSlotsWithStatus, fetchEntities,
+  fetchCustomerLeases, fetchParkingDetails, updateParkingBookings,
+  Building, Floor, ParkingCategory, Entity, CustomerLease, ParkingDetailsResponse
+} from '@/services/parkingConfigurationsAPI';
+
+// Field styles for Material-UI components - re-using from AddTicketDashboard
+const fieldStyles = {
+  height: '45px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '45px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 export const ParkingEditPage = () => {
   const navigate = useNavigate();
   const { clientId } = useParams();
   const [building, setBuilding] = useState('');
   const [floor, setFloor] = useState('');
-  const [parkingSlot, setParkingSlot] = useState('');
+  const [parkingSlotType, setParkingSlotType] = useState(''); // Renamed to avoid confusion with actual slots
   const [clientName, setClientName] = useState('');
   const [leaser, setLeaser] = useState('');
 
-  // New state for selected parking slots
   const [selectedTwoWheelerSlots, setSelectedTwoWheelerSlots] = useState<string[]>([]);
   const [selectedFourWheelerSlots, setSelectedFourWheelerSlots] = useState<string[]>([]);
-  
-  // State to show parking slots section
+
   const [showParkingSlots, setShowParkingSlots] = useState(false);
 
-  // API data state
   const [parkingCategories, setParkingCategories] = useState<ParkingCategory[]>([]);
   const [loadingParkingSlots, setLoadingParkingSlots] = useState(false);
   const [loadingSubmit, setLoadingSubmit] = useState(false);
 
-  // Dynamic dropdown data
   const [buildings, setBuildings] = useState<Building[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [entities, setEntities] = useState<Entity[]>([]);
@@ -39,40 +62,33 @@ export const ParkingEditPage = () => {
   const [loadingEntities, setLoadingEntities] = useState(false);
   const [loadingLeases, setLoadingLeases] = useState(false);
 
-  // Dynamic client data based on current selection or API data
   const [clientDetails, setClientDetails] = useState<ParkingDetailsResponse | null>(null);
   const [loadingClientDetails, setLoadingClientDetails] = useState(false);
-  
+
+  // Memoized client data for info panel, if needed more dynamically
   const clientData = useMemo(() => ({
-    clientName: clientDetails?.entity.name || clientName || "Select Client", 
-    availableSlots: 0 // This will be calculated from API data
+    clientName: clientDetails?.entity?.name || clientName || "Select Client",
+    availableSlots: 0 // This would be calculated from parkingCategories
   }), [clientName, clientDetails]);
 
   // Fetch client details if clientId is provided (edit mode)
   useEffect(() => {
     const fetchClientDetailsData = async () => {
       if (!clientId) return;
-      
+
       setLoadingClientDetails(true);
       try {
         const clientDetailsData = await fetchParkingDetails(clientId);
         setClientDetails(clientDetailsData);
-        // Pre-populate client name if editing existing client
         setClientName(clientDetailsData.entity.name);
-        
-        // Also fetch and populate the leases for this client
+
         setLoadingLeases(true);
         try {
           const leasesData = await fetchCustomerLeases(clientDetailsData.entity.id);
           setCustomerLeases(leasesData);
-          
-          // Pre-select the lease if there's lease data in the parking details
+
           if (clientDetailsData.leases && clientDetailsData.leases.length > 0) {
-            // Assuming we want to select the first lease from the parking details
-            // or you could match by ID if you have the specific lease ID to select
             const firstLeaseId = clientDetailsData.leases[0].id;
-            
-            // Find matching lease in the customer leases and pre-select it
             const matchingLease = leasesData.find(lease => lease.id === firstLeaseId);
             if (matchingLease) {
               setLeaser(matchingLease.id.toString());
@@ -136,7 +152,7 @@ export const ParkingEditPage = () => {
     const fetchFloorsData = async () => {
       if (!building) {
         setFloors([]);
-        setFloor(''); // Reset floor when building changes
+        setFloor('');
         return;
       }
 
@@ -155,29 +171,22 @@ export const ParkingEditPage = () => {
     fetchFloorsData();
   }, [building]);
 
-  // Handle building change
   const handleBuildingChange = (value: string) => {
     setBuilding(value);
-    // Reset dependent dropdown
     setFloor('');
-    setParkingSlot('');
+    setParkingSlotType('');
   };
 
-  // Handle floor change
   const handleFloorChange = (value: string) => {
     setFloor(value);
-    // Reset dependent dropdown
-    setParkingSlot('');
+    setParkingSlotType('');
   };
 
-  // Handle client name change
   const handleClientNameChange = async (value: string) => {
     setClientName(value);
-    // Reset leaser when client changes
     setLeaser('');
     setCustomerLeases([]);
 
-    // Find the selected entity and fetch its leases
     const selectedEntity = entities.find(entity => entity.name === value);
     if (selectedEntity) {
       setLoadingLeases(true);
@@ -193,7 +202,6 @@ export const ParkingEditPage = () => {
     }
   };
 
-  // Get current client and lease data for info panel
   const getCurrentClientData = () => {
     const selectedEntity = entities.find(entity => entity.name === clientName);
     if (!selectedEntity) return null;
@@ -205,19 +213,17 @@ export const ParkingEditPage = () => {
     };
   };
 
-  // This is the handler for the "Load Parking Slots" button
   const handleLoadParkingSlots = async () => {
-    if (!building || !floor || !parkingSlot || !clientName || !leaser) {
-      toast.error('Please fill in all required fields');
+    if (!building || !floor || !parkingSlotType || !clientName || !leaser) {
+      toast.error('Please fill in all required fields to load parking slots');
       return;
     }
 
-    // Call the API to fetch parking slots
     setLoadingParkingSlots(true);
     try {
-      const response = await fetchParkingSlotsWithStatus(building, floor, parkingSlot);
+      const response = await fetchParkingSlotsWithStatus(building, floor, parkingSlotType);
       setParkingCategories(response.parking_categories);
-      setShowParkingSlots(true); // Show parking slots section on the page
+      setShowParkingSlots(true);
       toast.success('Parking slots loaded successfully');
     } catch (error) {
       console.error('Error fetching parking slots:', error);
@@ -227,22 +233,18 @@ export const ParkingEditPage = () => {
     }
   };
 
-  // This is the handler for the final "Submit Parking" button
   const handleSubmit = async () => {
-    // Validate that slots have been selected
     const totalSelectedSlots = selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length;
     if (totalSelectedSlots === 0) {
       toast.error('Please select parking slots first');
       return;
     }
 
-    // Validate that all required fields are filled
-    if (!building || !floor || !parkingSlot || !clientName || !leaser) {
-      toast.error('Please fill in all required fields');
+    if (!building || !floor || !parkingSlotType || !clientName || !leaser) {
+      toast.error('Please fill in all required fields before submitting');
       return;
     }
 
-    // Get the selected entity and lease information
     const selectedEntity = entities.find(entity => entity.name === clientName);
     if (!selectedEntity) {
       toast.error('Selected client entity not found');
@@ -255,19 +257,13 @@ export const ParkingEditPage = () => {
       return;
     }
 
-    // Combine all selected parking slots (both 2-wheeler and 4-wheeler)
     const selectedParkingSlots = [
       ...selectedTwoWheelerSlots.map(id => parseInt(id)),
       ...selectedFourWheelerSlots.map(id => parseInt(id))
     ];
 
-    console.log("Selected 2-wheeler slots:", selectedTwoWheelerSlots);
-    console.log("Selected 4-wheeler slots:", selectedFourWheelerSlots);
-    console.log("Combined selected slots:", selectedParkingSlots);
-
     setLoadingSubmit(true);
     try {
-      // Prepare data payload for API
       const apiPayload = {
         lease_id: selectedLease.id,
         building_id: parseInt(building),
@@ -276,17 +272,10 @@ export const ParkingEditPage = () => {
         selected_parking_slots: selectedParkingSlots
       };
 
-      console.log('API Payload:', apiPayload);
-      
-      // Call the update parking bookings API
       const response = await updateParkingBookings(apiPayload);
-      
-      console.log('API Response:', response);
-      
+
       if (response.status === 'success') {
         toast.success(response.message || 'Parking booking updated successfully');
-        
-        // Navigate back to parking details or main parking page
         if (clientId) {
           navigate(`/vas/parking/details/${clientId}`);
         } else {
@@ -307,7 +296,6 @@ export const ParkingEditPage = () => {
     navigate('/vas/parking');
   };
 
-  // Handle slot selection
   const handleSlotClick = (slotId: string, type: '2 Wheeler' | '4 Wheeler', currentStatus: string) => {
     if (currentStatus !== 'available') {
       toast.info('This slot is not available for selection.');
@@ -325,20 +313,19 @@ export const ParkingEditPage = () => {
     }
   };
 
-
   return (
-    <div className="p-6 space-y-6 min-h-screen bg-gray-50">
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center mb-6">
-        <Button 
+      <div className="mb-8 flex items-center">
+        <Button
           onClick={handleBack}
-          variant="ghost" 
+          variant="ghost"
           className="mr-4 p-2 hover:bg-[#C72030]/10"
         >
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-[#C72030]">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {clientId ? 'Edit Parking Details' : 'Create Parking Booking'}
           </h1>
           {loadingClientDetails && (
@@ -347,132 +334,178 @@ export const ParkingEditPage = () => {
         </div>
       </div>
 
-      {/* Main Content Card */}
-      <Card className="max-w-6xl mx-auto bg-white shadow-sm">
-        <CardContent className="p-8">
-          <div className="space-y-8">
-            {/* Form Header */}
-            <div className="border-b border-gray-200 pb-4">
-              <h2 className="text-xl font-semibold text-gray-900">
-                {clientId ? `Edit Parking for: ${clientData.clientName}` : 'Create New Parking Booking'}
-              </h2>
-            </div>
-
-            {/* First Row - Location Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-              <div>
-                <Label htmlFor="building" className="text-sm font-medium text-gray-900">
-                  Building
-                </Label>
-                <Select value={building} onValueChange={handleBuildingChange} disabled={loadingBuildings}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={loadingBuildings ? "Loading buildings..." : "Select Building"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {buildings.map((buildingItem) => (
-                      <SelectItem key={buildingItem.id} value={buildingItem.id.toString()}>
-                        {buildingItem.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="floor" className="text-sm font-medium text-gray-900">
-                  Floor
-                </Label>
-                <Select value={floor} onValueChange={handleFloorChange} disabled={loadingFloors || !building}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={
-                      loadingFloors ? "Loading floors..." : 
-                      !building ? "Select building first" : 
-                      "Select Floor"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {floors.map((floorItem) => (
-                      <SelectItem key={floorItem.id} value={floorItem.id.toString()}>
-                        {floorItem.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="parkingSlot" className="text-sm font-medium text-gray-900">
-                  Parking Slot
-                </Label>
-                <Select value={parkingSlot} onValueChange={setParkingSlot}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Select Parking Slot" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">EV</SelectItem>
-                    <SelectItem value="2">Visitor</SelectItem>
-                    <SelectItem value="3">All</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex justify-start">
-                <Button 
-                  onClick={handleLoadParkingSlots}
-                  disabled={loadingParkingSlots}
-                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 disabled:opacity-50"
-                >
-                  {loadingParkingSlots ? 'Loading...' : 'Load Parking Slots'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Second Row - Client Information */}
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
+        {/* Section 1: Location Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <MapPin size={16} color="#C72030" />
+              </span>
+              Location Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div>
-                <Label htmlFor="clientName" className="text-sm font-medium text-gray-900">
-                  Client Name<span className="text-red-500">*</span>
-                </Label>
-                <Select value={clientName} onValueChange={handleClientNameChange} disabled={loadingEntities}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={
-                      loadingEntities ? "Loading clients..." : 
-                      "Select Client Name"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {entities.map((entity) => (
-                      <SelectItem key={entity.id} value={entity.name}>
-                        {entity.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Building</InputLabel>
+                <MuiSelect
+                  value={building}
+                  onChange={(e) => handleBuildingChange(e.target.value)}
+                  label="Building"
+                  notched
+                  displayEmpty
+                  disabled={loadingBuildings}
+                >
+                  <MenuItem value="">
+                    {loadingBuildings ? "Loading buildings..." : "Select Building"}
+                  </MenuItem>
+                  {buildings.map((buildingItem) => (
+                    <MenuItem key={buildingItem.id} value={buildingItem.id.toString()}>
+                      {buildingItem.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
 
-              <div>
-                <Label htmlFor="leaser" className="text-sm font-medium text-gray-900">
-                  Leases<span className="text-red-500">*</span>
-                </Label>
-                <Select value={leaser} onValueChange={setLeaser} disabled={!clientName || loadingLeases}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={
-                      loadingLeases ? "Loading leases..." :
-                      !clientName ? "Select client first" : 
-                      "Select Customer Lease"
-                    } />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customerLeases.map((lease) => (
-                      <SelectItem key={lease.id} value={lease.id.toString()}>
-                        Lease {lease.id} ({lease.lease_start_date} to {lease.lease_end_date})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-3 text-sm bg-gray-50 p-4 rounded-lg">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Floor</InputLabel>
+                <MuiSelect
+                  value={floor}
+                  onChange={(e) => handleFloorChange(e.target.value)}
+                  label="Floor"
+                  notched
+                  displayEmpty
+                  disabled={loadingFloors || !building}
+                >
+                  <MenuItem value="">
+                    {loadingFloors ? "Loading floors..." :
+                      !building ? "Select building first" :
+                        "Select Floor"}
+                  </MenuItem>
+                  {floors.map((floorItem) => (
+                    <MenuItem key={floorItem.id} value={floorItem.id.toString()}>
+                      {floorItem.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Parking Slot Type</InputLabel>
+                <MuiSelect
+                  value={parkingSlotType}
+                  onChange={(e) => setParkingSlotType(e.target.value)}
+                  label="Parking Slot Type"
+                  notched
+                  displayEmpty
+                >
+                  <MenuItem value="">Select Parking Slot Type</MenuItem>
+                  <MenuItem value="1">EV</MenuItem>
+                  <MenuItem value="2">Visitor</MenuItem>
+                  <MenuItem value="3">All</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+            <div className="flex justify-end pt-4">
+              <Button
+                type="button"
+                onClick={handleLoadParkingSlots}
+                disabled={loadingParkingSlots || !building || !floor || !parkingSlotType}
+                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2 disabled:opacity-50"
+              >
+                {loadingParkingSlots ? 'Loading Slots...' : 'Load Parking Slots'}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Client & Lease Details */}
+        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="px-6 py-3 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900 flex items-center">
+              <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                <User size={16} color="#C72030" />
+              </span>
+              Client & Lease Details
+            </h2>
+          </div>
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Client Name</InputLabel>
+                <MuiSelect
+                  value={clientName}
+                  onChange={(e) => handleClientNameChange(e.target.value)}
+                  label="Client Name"
+                  notched
+                  displayEmpty
+                  disabled={loadingEntities}
+                >
+                  <MenuItem value="">
+                    {loadingEntities ? "Loading clients..." : "Select Client Name"}
+                  </MenuItem>
+                  {entities.map((entity) => (
+                    <MenuItem key={entity.id} value={entity.name}>
+                      {entity.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+                required
+                sx={{ '& .MuiInputBase-root': fieldStyles }}
+              >
+                <InputLabel shrink>Lease</InputLabel>
+                <MuiSelect
+                  value={leaser}
+                  onChange={(e) => setLeaser(e.target.value)}
+                  label="Lease"
+                  notched
+                  displayEmpty
+                  disabled={!clientName || loadingLeases}
+                >
+                  <MenuItem value="">
+                    {loadingLeases ? "Loading leases..." :
+                      !clientName ? "Select client first" :
+                        "Select Customer Lease"}
+                  </MenuItem>
+                  {customerLeases.map((lease) => (
+                    <MenuItem key={lease.id} value={lease.id.toString()}>
+                      Lease {lease.id} ({lease.lease_start_date} to {lease.lease_end_date})
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+
+            {/* Lease Info Summary */}
+            <div className="space-y-3 text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
+              <h3 className="font-semibold text-gray-800">Lease Overview:</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
                 <div className="flex justify-between">
                   <span className="font-medium text-gray-700">Free Parking:</span>
                   <span className="text-gray-600">
@@ -501,127 +534,142 @@ export const ParkingEditPage = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
 
-            {/* Parking Slots Selection Section - Display inline instead of modal */}
-            {showParkingSlots && parkingCategories.length > 0 && (
-              <div className="border-t border-gray-200 pt-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Select Parking Slots</h3>
-                
-                {/* Render parking categories from API */}
-                {parkingCategories.map((category, categoryIndex) => (
-                  <div key={categoryIndex} className="bg-gray-50 p-4 rounded-lg shadow-sm mb-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-semibold text-lg text-gray-800">
-                        Floor: {category.floor_name}, Type: {category.parking_category}, Allotted: {category.booked_slots}, Vacant: {category.vacant_slots}, Reserved: {category.reserved_slots}
-                      </h4>
-                      <span className="text-sm font-medium text-gray-600">
-                        Available Slots: {category.vacant_slots}
+        {/* Section 3: Parking Slot Selection */}
+        {showParkingSlots && parkingCategories.length > 0 && (
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="px-6 py-3 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                <span className="w-8 h-8 text-white rounded-full flex items-center justify-center mr-3" style={{ backgroundColor: '#E5E0D3' }}>
+                  <Car size={16} color="#C72030" />
+                </span>
+                Select Parking Slots
+              </h2>
+            </div>
+            <div className="p-6 space-y-6">
+              {parkingCategories.map((category, categoryIndex) => (
+                <div key={categoryIndex} className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+                  <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
+                    <h4 className="font-semibold text-lg text-gray-800">
+                      {category.parking_category} Slots
+                      <span className="text-sm font-normal text-gray-600 ml-2">
+                        (Floor: {category.floor_name})
                       </span>
-                    </div>
-                    <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-3">
-                      {category.parking_slots.map(slot => {
-                        const slotId = slot.id.toString();
-                        const isSelected = category.parking_category === '2 Wheeler' 
-                          ? selectedTwoWheelerSlots.includes(slotId)
-                          : selectedFourWheelerSlots.includes(slotId);
-                        const isAvailable = slot.status === 'available';
-                        const isBooked = slot.status === 'booked';
-                        const entityColor = slot.booking_details?.entity_color;
-                        
-                        let slotClass = "flex flex-col items-center justify-center p-2 rounded-md border cursor-pointer transition-colors";
-                        const slotStyle: React.CSSProperties = {};
-                        
-                        if (isBooked && entityColor) {
-                          // Use entity color for booked slots
-                          slotClass += " text-white border-opacity-80 cursor-not-allowed";
-                          slotStyle.backgroundColor = entityColor;
-                          slotStyle.borderColor = entityColor;
-                        } else if (!isAvailable) {
-                          // Fallback red color for unavailable slots without entity color
-                          slotClass += " bg-red-600 text-white border-red-600 cursor-not-allowed";
-                        } else if (isSelected) {
-                          slotClass += " bg-green-500 text-white border-green-500";
-                        } else {
-                          slotClass += " bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
-                        }
-                        
-                        return (
-                          <div 
-                            key={slot.id} 
-                            className={slotClass}
-                            style={slotStyle}
-                            onClick={() => handleSlotClick(slotId, category.parking_category as '2 Wheeler' | '4 Wheeler', slot.status)}
-                            title={isBooked && slot.booking_details ? 
-                              `Booked by: ${slot.booking_details.entity_name}` : 
-                              slot.reserved ? 'Reserved slot' : 
-                              slot.stacked ? 'Stacked parking' : 
-                              'Available slot'
-                            }
-                          >
-                            {category.parking_category === '2 Wheeler' ? (
-                              <Bike className="w-8 h-8 mb-1" />
-                            ) : (
-                              <Car className="w-8 h-8 mb-1" />
-                            )}
-                            <span className="text-xs font-medium">{slot.name}</span>
-                            {slot.stacked && (
-                              <span className="text-xs opacity-75">Stacked</span>
-                            )}
-                            {slot.reserved && (
-                              <span className="text-xs opacity-75">Reserved</span>
-                            )}
-                            {isBooked && slot.booking_details && (
-                              <span className="text-xs opacity-90 text-center leading-tight">
-                                {slot.booking_details.entity_name}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })}
+                    </h4>
+                    <div className="flex gap-4 text-sm font-medium text-gray-700">
+                      <span>Booked: <span className="text-gray-800">{category.booked_slots}</span></span>
+                      <span>Vacant: <span className="text-green-600">{category.vacant_slots}</span></span>
+                      <span>Reserved: <span className="text-orange-600">{category.reserved_slots}</span></span>
                     </div>
                   </div>
-                ))}
-                
-                {/* Selected slots summary */}
-                {(selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                    <h5 className="font-medium text-blue-900 mb-2">
-                      Selected Slots Summary: {selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length} total
-                    </h5>
-                    <div className="flex gap-4 text-sm text-blue-800">
-                      {selectedTwoWheelerSlots.length > 0 && (
-                        <span>Two Wheeler: {selectedTwoWheelerSlots.length}</span>
-                      )}
-                      {selectedFourWheelerSlots.length > 0 && (
-                        <span>Four Wheeler: {selectedFourWheelerSlots.length}</span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+                  <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-10 lg:grid-cols-12 gap-3">
+                    {category.parking_slots.map(slot => {
+                      const slotId = slot.id.toString();
+                      const isTwoWheeler = category.parking_category === '2 Wheeler';
+                      const isSelected = isTwoWheeler
+                        ? selectedTwoWheelerSlots.includes(slotId)
+                        : selectedFourWheelerSlots.includes(slotId);
+                      const isAvailable = slot.status === 'available';
+                      const isBooked = slot.status === 'booked';
+                      const entityColor = slot.booking_details?.entity_color;
 
-            {/* Bottom Action Buttons */}
-            <div className="flex justify-center gap-4 pt-6">
-              <Button 
-                onClick={handleBack}
-                variant="outline"
-                className="px-8 py-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </Button>
-              {/* This button will trigger the final submission */}
-              <Button 
-                onClick={handleSubmit} 
-                disabled={loadingSubmit}
-                className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-12 py-3"
-              >
-                {loadingSubmit ? 'Submitting...' : 'Submit Parking'}
-              </Button>
+                      let slotClass = "flex flex-col items-center justify-center p-2 rounded-md border cursor-pointer transition-colors text-center";
+                      const slotStyle: React.CSSProperties = { minHeight: '80px' }; // Ensure consistent height
+
+                      if (isBooked && entityColor) {
+                        slotClass += " text-white border-opacity-80 cursor-not-allowed";
+                        slotStyle.backgroundColor = entityColor;
+                        slotStyle.borderColor = entityColor;
+                      } else if (isBooked) {
+                        slotClass += " bg-red-600 text-white border-red-600 cursor-not-allowed";
+                      } else if (slot.reserved) {
+                        slotClass += " bg-orange-300 text-orange-900 border-orange-400 cursor-not-allowed";
+                      } else if (!isAvailable) {
+                        slotClass += " bg-gray-400 text-white border-gray-400 cursor-not-allowed";
+                      } else if (isSelected) {
+                        slotClass += " bg-green-500 text-white border-green-500";
+                      } else {
+                        slotClass += " bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200";
+                      }
+
+                      return (
+                        <div
+                          key={slot.id}
+                          className={slotClass}
+                          style={slotStyle}
+                          onClick={() => handleSlotClick(slotId, category.parking_category as '2 Wheeler' | '4 Wheeler', slot.status)}
+                          title={isBooked && slot.booking_details ?
+                            `Booked by: ${slot.booking_details.entity_name}` :
+                            slot.reserved ? 'Reserved slot' :
+                              slot.stacked ? 'Stacked parking' :
+                                'Available slot'
+                          }
+                        >
+                          {isTwoWheeler ? (
+                            <Bike className="w-6 h-6 mb-1" />
+                          ) : (
+                            <Car className="w-6 h-6 mb-1" />
+                          )}
+                          <span className="text-xs font-medium truncate w-full">{slot.name}</span>
+                          {slot.stacked && (
+                            <span className="text-xs opacity-75">Stacked</span>
+                          )}
+                          {slot.reserved && (
+                            <span className="text-xs opacity-75">Reserved</span>
+                          )}
+                          {isBooked && slot.booking_details && (
+                            <span className="text-xs opacity-90 leading-tight block w-full">
+                              {slot.booking_details.entity_name}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+
+              {/* Selected slots summary */}
+              {(selectedTwoWheelerSlots.length > 0 || selectedFourWheelerSlots.length > 0) && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200 text-blue-900">
+                  <h5 className="font-medium mb-2">
+                    Selected Slots: {selectedTwoWheelerSlots.length + selectedFourWheelerSlots.length} total
+                  </h5>
+                  <div className="flex gap-4 text-sm">
+                    {selectedTwoWheelerSlots.length > 0 && (
+                      <span>Two Wheeler: <span className="font-semibold">{selectedTwoWheelerSlots.length}</span></span>
+                    )}
+                    {selectedFourWheelerSlots.length > 0 && (
+                      <span>Four Wheeler: <span className="font-semibold">{selectedFourWheelerSlots.length}</span></span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 justify-center pt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleBack}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            disabled={loadingSubmit || (!showParkingSlots && (!building || !floor || !parkingSlotType || !clientName || !leaser))} // Disable if not ready to load or no slots shown
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-12 py-3"
+          >
+            {loadingSubmit ? 'Submitting...' : 'Submit Parking'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };

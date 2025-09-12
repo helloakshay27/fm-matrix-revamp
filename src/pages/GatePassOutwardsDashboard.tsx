@@ -74,7 +74,7 @@ export const GatePassOutwardsDashboard = () => {
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
     // { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
-    { key: 'returnableNonReturnable', label: 'Returnable/Non Returnable', sortable: true, hideable: true, draggable: true },
+    { key: 'returnableNonReturnable', label: 'Returnable', sortable: true, hideable: true, draggable: true },
     // { key: 'expectedReturnDate', label: 'Expected Return Date', sortable: true, hideable: true, draggable: true },
     { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
     { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },

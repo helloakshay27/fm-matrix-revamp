@@ -6,6 +6,7 @@ import {
   Monitor,
   AlertTriangle,
   Trash2,
+  IndianRupee,
 } from "lucide-react";
 
 interface AssetStatsProps {
@@ -32,8 +33,9 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
     },
     {
       label: "Total Value",
-      value: stats.total_value,
-      icon: <DollarSign className="w-6 h-6 text-[#C72030]" />,
+      value: typeof stats.total_value === 'number' ? stats.total_value.toLocaleString('en-IN') : stats.total_value,
+      // icon: <DollarSign className="w-6 h-6 text-[#C72030]" />,
+      icon: <IndianRupee className="w-6 h-6 text-[#C72030]" />,
       filterType: "value",
     },
     {
@@ -79,9 +81,8 @@ export const AssetStats: React.FC<AssetStatsProps> = ({ stats, onCardClick }) =>
       {statData.map((item, i) => (
         <div
           key={i}
-          className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${
-            onCardClick && item.filterType !== "value" ? "cursor-pointer hover:shadow-lg transition-shadow" : ""
-          }`}
+          className={`bg-[#F6F4EE] p-6 rounded-lg shadow-[0px_1px_8px_rgba(45,45,45,0.05)] flex items-center gap-4 ${onCardClick && item.filterType !== "value" ? "cursor-pointer hover:shadow-lg transition-shadow" : ""
+            }`}
           onClick={() => {
             if (onCardClick && item.filterType !== "value") {
               onCardClick(item.filterType);

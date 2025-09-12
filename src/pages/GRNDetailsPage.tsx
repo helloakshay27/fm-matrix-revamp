@@ -25,6 +25,10 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField,
 } from "@mui/material";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -111,111 +115,10 @@ const debitNoteColumns: ColumnConfig[] = [
   { key: "amount", label: "Amount", sortable: true, draggable: true },
   { key: "description", label: "Description", sortable: true, draggable: true },
   { key: "approved", label: "Approved", sortable: true, draggable: true },
-  { key: "approved_on", label: "Approved On", sortable: true, draggable: true },
+  { key: "approved_at", label: "Approved On", sortable: true, draggable: true },
   { key: "approved_by", label: "Approved By", sortable: true, draggable: true },
-  { key: "created_on", label: "Created On", sortable: true, draggable: true },
+  { key: "created_at", label: "Created On", sortable: true, draggable: true },
   { key: "created_by", label: "Created By", sortable: true, draggable: true },
-  {
-    key: "attachment",
-    label: "Attachment",
-    sortable: false,
-    draggable: true,
-  },
-];
-
-const paymentDetailsColumns: ColumnConfig[] = [
-  { key: "action", label: "Action", sortable: true, draggable: true },
-  { key: "amount", label: "Amount", sortable: true, draggable: true },
-  {
-    key: "payment_mode",
-    label: "Payment Mode",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "transaction_number",
-    label: "Transaction Number",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "status", label: "Status", sortable: true, draggable: true },
-  {
-    key: "payment_date",
-    label: "Payment Date",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "note", label: "Note", sortable: true, draggable: true },
-  {
-    key: "date_of_entry",
-    label: "Date of Entry",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "actions", label: "Actions", sortable: false, draggable: true },
-];
-
-const retentionPaymentColumns: ColumnConfig[] = [
-  { key: "action", label: "Action", sortable: true, draggable: true },
-  { key: "amount", label: "Amount", sortable: true, draggable: true },
-  {
-    key: "payment_mode",
-    label: "Payment Mode",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "transaction_number",
-    label: "Transaction Number",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "status", label: "Status", sortable: true, draggable: true },
-  {
-    key: "payment_date",
-    label: "Payment Date",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "note", label: "Note", sortable: true, draggable: true },
-  {
-    key: "date_of_entry",
-    label: "Date of Entry",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "actions", label: "Actions", sortable: false, draggable: true },
-];
-
-const qcPaymentColumns: ColumnConfig[] = [
-  { key: "amount", label: "Amount", sortable: true, draggable: true },
-  {
-    key: "payment_mode",
-    label: "Payment Mode",
-    sortable: true,
-    draggable: true,
-  },
-  {
-    key: "transaction_number",
-    label: "Transaction Number",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "status", label: "Status", sortable: true, draggable: true },
-  {
-    key: "payment_date",
-    label: "Payment Date",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "note", label: "Note", sortable: true, draggable: true },
-  {
-    key: "date_of_entry",
-    label: "Date of Entry",
-    sortable: true,
-    draggable: true,
-  },
-  { key: "actions", label: "Actions", sortable: false, draggable: true },
 ];
 
 export const GRNDetailsPage = () => {
@@ -234,26 +137,33 @@ export const GRNDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [openDebitModal, setOpenDebitModal] = useState(false);
   const [grnDetails, setGrnDetails] = useState<any>({});
   const [rejectComment, setRejectComment] = useState("");
   const [openRejectDialog, setOpenRejectDialog] = useState(false);
   const [sendToSap, setSendToSap] = useState(false);
   const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [debitForm, setDebitForm] = useState({
+    type: "",
+    amount: "",
+    description: "",
+  });
+
+  const fetchData = async () => {
+    try {
+      const response = await dispatch(
+        fetchSingleGRN({ baseUrl, token, id: Number(id) })
+      ).unwrap();
+      setGrnDetails(response.grn || {});
+      setSendToSap(response.show_send_sap_yes);
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await dispatch(
-          fetchSingleGRN({ baseUrl, token, id: Number(id) })
-        ).unwrap();
-        setGrnDetails(response.grn || {});
-        setSendToSap(response.show_send_sap_yes);
-      } catch (error) {
-        console.log(error);
-        toast.error(error);
-      }
-    };
     if (id) fetchData();
   }, [dispatch, baseUrl, token, id]);
 
@@ -361,6 +271,60 @@ export const GRNDetailsPage = () => {
     setRejectComment("");
   };
 
+  const handleOpenDebitModal = () => {
+    setOpenDebitModal(true);
+  };
+
+  const handleCloseDebitModal = () => {
+    setOpenDebitModal(false);
+  };
+
+  const handleDebitChange = (e) => {
+    const { name, value } = e.target;
+    setDebitForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmitDebit = async () => {
+    try {
+      const payload = {
+        debit_note: {
+          amount: debitForm.amount,
+          note: debitForm.description,
+          note_type: debitForm.type,
+          resource_id: Number(id),
+          resource_type: "Pms::Grn",
+        },
+      };
+
+      await axios.post(`https://${baseUrl}/debit_notes.json`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchData();
+      setDebitForm({
+        type: "",
+        amount: "",
+        description: "",
+      });
+      toast.success("Debit note created successfully");
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    } finally {
+      handleCloseDebitModal();
+    }
+  };
+
+  const renderDebitNoteCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "approved":
+        return item[columnKey] ? "Yes" : "No";
+      default:
+        return item[columnKey] || "-";
+    }
+  }
+
   // Transform grn_inventories to include S.No.
   const itemsData =
     grnDetails.grn_inventories?.map((item: any, index: number) => ({
@@ -433,6 +397,18 @@ export const GRNDetailsPage = () => {
                 Send to SAP
               </Button>
             )}
+            {
+              grnDetails.all_level_approved && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                  onClick={handleOpenDebitModal}
+                >
+                  Debit Note
+                </Button>
+              )
+            }
             <Button
               size="sm"
               variant="outline"
@@ -736,7 +712,11 @@ export const GRNDetailsPage = () => {
                             className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                             title="View"
                             onClick={() => {
-                              setSelectedAttachment(attachment);
+                              setSelectedAttachment({
+                                id: attachment.id,
+                                url: attachment.document_url,
+                                document_name: attachment.filename,
+                              });
                               setIsPreviewModalOpen(true);
                             }}
                             type="button"
@@ -748,7 +728,11 @@ export const GRNDetailsPage = () => {
                             alt={attachment.filename}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
-                              setSelectedAttachment(attachment);
+                              setSelectedAttachment({
+                                id: attachment.id,
+                                url: attachment.document_url,
+                                document_name: attachment.filename,
+                              });
                               setIsPreviewModalOpen(true);
                             }}
                           />
@@ -779,7 +763,11 @@ export const GRNDetailsPage = () => {
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                           onClick={() => {
-                            setSelectedAttachment(attachment);
+                            setSelectedAttachment({
+                              id: attachment.id,
+                              url: attachment.document_url,
+                              document_name: attachment.filename,
+                            });
                             setIsPreviewModalOpen(true);
                           }}
                         >
@@ -812,124 +800,7 @@ export const GRNDetailsPage = () => {
           hideColumnsButton={true}
           hideTableExport={true}
           hideTableSearch={true}
-          renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
-          }}
-          leftActions={
-            <>
-              <Button
-                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-                className="hover:bg-[#F2EEE9]/90"
-              >
-                Retention Payment
-              </Button>
-            </>
-          }
-        />
-      </div>
-
-      {/* Payment Details Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Payment Details
-        </h2>
-        <EnhancedTable
-          data={grnDetails.payment_details || []}
-          columns={paymentDetailsColumns}
-          storageKey="grn-payment-details-table"
-          emptyMessage="No payment details available"
-          pagination={true}
-          pageSize={10}
-          hideColumnsButton={true}
-          hideTableExport={true}
-          hideTableSearch={true}
-          renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
-          }}
-          leftActions={
-            <>
-              <Button
-                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-                className="hover:bg-[#F2EEE9]/90"
-              >
-                Retention Payment
-              </Button>
-            </>
-          }
-        />
-      </div>
-
-      {/* Retention Payment Details Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Retention Payment Details
-        </h2>
-        <EnhancedTable
-          data={grnDetails.retention_payment_details || []}
-          columns={retentionPaymentColumns}
-          storageKey="grn-retention-payment-table"
-          emptyMessage="No retention payment details available"
-          pagination={true}
-          pageSize={10}
-          hideColumnsButton={true}
-          hideTableExport={true}
-          hideTableSearch={true}
-          renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
-          }}
-          leftActions={
-            <>
-              <Button
-                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-                className="hover:bg-[#F2EEE9]/90"
-              >
-                Retention Payment
-              </Button>
-            </>
-          }
-        />
-      </div>
-
-      {/* QC Payment Details Card */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          QC Payment Details
-        </h2>
-        <EnhancedTable
-          data={grnDetails.qc_payment_details || []}
-          columns={qcPaymentColumns}
-          storageKey="grn-qc-payment-table"
-          emptyMessage="No QC payment details available"
-          pagination={true}
-          pageSize={10}
-          hideColumnsButton={true}
-          hideTableExport={true}
-          hideTableSearch={true}
-          renderCell={(item: any, columnKey: string) => {
-            switch (columnKey) {
-              default:
-                return item[columnKey];
-            }
-          }}
-          leftActions={
-            <>
-              <Button
-                style={{ backgroundColor: "#F2EEE9", color: "#BF213E" }}
-                className="hover:bg-[#F2EEE9]/90"
-              >
-                Retention Payment
-              </Button>
-            </>
-          }
+          renderCell={renderDebitNoteCell}
         />
       </div>
 
@@ -980,6 +851,88 @@ export const GRNDetailsPage = () => {
             className="bg-[#C72030] text-white hover:bg-[#a61b27]"
           >
             Reject
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openDebitModal}
+        onClose={handleCloseDebitModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Debit/Credit Notes</DialogTitle>
+        <DialogContent>
+          <FormControl
+            fullWidth
+            variant="outlined"
+            sx={{
+              mt: 1,
+            }}
+          >
+            <InputLabel shrink>Select Type</InputLabel>
+            <Select
+              label="Select Type"
+              value={debitForm.type}
+              onChange={handleDebitChange}
+              displayEmpty
+              name="type"
+              sx={{
+                height: {
+                  xs: 28,
+                  sm: 36,
+                  md: 45,
+                },
+                "& .MuiInputBase-input, & .MuiSelect-select": {
+                  padding: {
+                    xs: "8px",
+                    sm: "10px",
+                    md: "12px",
+                  },
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>Select Type</em>
+              </MenuItem>
+              <MenuItem value="Debit">Debit</MenuItem>
+            </Select>
+          </FormControl>
+          <TextField
+            margin="dense"
+            name="amount"
+            label="Amount"
+            type="number"
+            fullWidth
+            value={debitForm.amount}
+            onChange={handleDebitChange}
+          />
+          <TextField
+            margin="dense"
+            name="description"
+            label="Description"
+            type="text"
+            fullWidth
+            value={debitForm.description}
+            onChange={handleDebitChange}
+            multiline
+            rows={2}
+            sx={{
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDebitModal}>Close</Button>
+          <Button
+            onClick={handleSubmitDebit}
+            style={{ backgroundColor: "#6B46C1", color: "white" }}
+          >
+            Submit
           </Button>
         </DialogActions>
       </Dialog>

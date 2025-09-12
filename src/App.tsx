@@ -711,6 +711,7 @@ import CRMWalletList from "./pages/CRMWalletList";
 import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
 import CRMWalletDetails from "./pages/CRMWalletDetails";
 import EditCRMWalletPointExpiry from "./pages/EditCRMWalletPointExpiry";
+import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 
 const queryClient = new QueryClient();
 
@@ -2183,6 +2184,10 @@ function App() {
                     <Route
                       path="/maintenance/msafe-detail-report"
                       element={<MsafeDetailReportDownload />}
+                    />
+                    <Route
+                      path="/maintenance/employee-deletion-history"
+                      element={<EmployeeDeletionHistory />}
                     />
                     <Route
                       path="/maintenance/check-hierarchy-levels"
