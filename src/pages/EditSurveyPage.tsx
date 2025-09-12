@@ -163,8 +163,8 @@ export const EditSurveyPage = () => {
     setLoadingFmUsers(true);
     try {
       const response = await ticketManagementAPI.getEngineers();
-      setFmUsers(response.fm_users || []);
-      console.log("FM users loaded:", response.fm_users);
+      setFmUsers(response.users || response.fm_users || []);
+      console.log("FM users loaded:", response.users || response.fm_users);
     } catch (error) {
       console.error("Error loading FM users:", error);
     } finally {
@@ -598,12 +598,20 @@ export const EditSurveyPage = () => {
                   id="title"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  required
+                  InputLabelProps={{ 
+                    shrink: true,
+                    sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                  }}
                   sx={fieldStyles}
                 />
               </div>
 
               <div className="space-y-2">
-                <FormControl fullWidth sx={fieldStyles}>
+                <FormControl fullWidth required sx={{ 
+                  ...fieldStyles,
+                  "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                }}>
                   <InputLabel id="check-type-label">
                     Select Check Type
                   </InputLabel>
@@ -686,9 +694,9 @@ export const EditSurveyPage = () => {
                         {fmUsers.map((user) => (
                           <MenuItem
                             key={user.id}
-                            value={`${user.firstname} ${user.lastname}`}
+                            value={user.full_name || `${user.firstname} ${user.lastname}`}
                           >
-                            {user.firstname} {user.lastname}
+                            {user.full_name || `${user.firstname} ${user.lastname}`}
                             {user.email && ` (${user.email})`}
                           </MenuItem>
                         ))}
