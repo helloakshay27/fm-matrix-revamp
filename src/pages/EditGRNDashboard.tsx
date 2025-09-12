@@ -514,6 +514,12 @@ export const EditGRNDashboard = () => {
         return;
       }
       if (
+        item.receivedQuantity > item.expectedQuantity
+      ) {
+        toast.error(`Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`);
+        return false;
+      }
+      if (
         !item.approvedQuantity ||
         isNaN(parseFloat(item.approvedQuantity)) ||
         parseFloat(item.approvedQuantity) < 0
