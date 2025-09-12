@@ -506,19 +506,6 @@ export const WODetailsPage = () => {
                 </Button>
               )
             }
-            {
-              buttonCondition.editWbsCode && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 btn-primary"
-                  data-bs-toggle="modal"
-                  data-bs-target="#wbsBulkModal"
-                >
-                  Edit WBS Codes
-                </Button>
-              )
-            }
             <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
               <Edit className="w-4 h-4 mr-1" />
               Edit
