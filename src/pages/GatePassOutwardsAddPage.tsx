@@ -238,36 +238,34 @@ export const GatePassOutwardsAddPage = () => {
     },
   };
 
+  // Field-level error state
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Toast-based required field validation
-    const missingFields: string[] = [];
-    if (!selectedSite) missingFields.push('Site');
-    if (!gatePassDetails.buildingId) missingFields.push('Building');
-    if (!visitorDetails.gateNoId) missingFields.push('Gate No.');
-    if (!gatePassDetails.gatePassTypeId) missingFields.push('Gate Pass Type');
-    if (!gatePassDetails.gatePassDate) missingFields.push('Gate Pass Date');
-    if (!visitorDetails.contactPerson) missingFields.push('Contact Person');
-    if (!visitorDetails.contactPersonNo || visitorDetails.contactPersonNo.length !== 10) missingFields.push('Contact No');
-    if (!visitorDetails.modeOfTransport) missingFields.push('Mode Of Transport');
-    if (!visitorDetails.reportingTime) missingFields.push('Reporting Time');
-    if (!selectedCompany) missingFields.push('Company Name');
-    if (!gatePassDetails.vendorId) missingFields.push('Vendor');
-    if (returnableStatus === 'returnable' && !visitorDetails.expectedReturnDate) missingFields.push('Expected Return Date');
+    // Field-level validation
+    const errors: { [key: string]: string } = {};
+    if (!selectedSite) errors.site = 'Site is required';
+    if (!gatePassDetails.buildingId) errors.buildingId = 'Building is required';
+    if (!visitorDetails.gateNoId) errors.gateNoId = 'Gate No. is required';
+    if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
+    if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
+    if (!visitorDetails.contactPerson) errors.contactPerson = 'Contact Person is required';
+    if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Contact No is required';
+    else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Contact No must be 10 digits';
+    if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
+    if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
+    if (!selectedCompany) errors.company = 'Company Name is required';
+    if (!gatePassDetails.vendorId) errors.vendorId = 'Vendor is required';
+    if (returnableStatus === 'returnable' && !visitorDetails.expectedReturnDate) errors.expectedReturnDate = 'Expected Return Date is required';
 
     // At least one item row with all required fields
     const hasValidMaterial = materialRows && materialRows.some(row => row.itemTypeId && row.itemCategoryId && row.itemNameId && row.unit);
-    if (!hasValidMaterial) missingFields.push('At least one valid Item Detail');
+    if (!hasValidMaterial) errors.material = 'At least one valid Item Detail is required';
 
-    if (missingFields.length > 0) {
-      toast({
-        title: 'Please fill all required fields',
-        description: `Missing: ${missingFields.join(', ')}`,
-        variant: 'destructive',
-      });
-      return;
-    }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
 
     const formData = new FormData();
 
@@ -398,7 +396,7 @@ export const GatePassOutwardsAddPage = () => {
       <form onSubmit={handleSubmit} className="space-y-6 border border-gray-200 rounded-lg p-10 bg-white">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Row 1 */}
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
             <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Site"
@@ -410,8 +408,9 @@ export const GatePassOutwardsAddPage = () => {
               <MenuItem value="">Select Site</MenuItem>
               {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
             </MuiSelect>
+            {fieldErrors.site && <Typography variant="caption" color="error">{fieldErrors.site}</Typography>}
           </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
             <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Building"
@@ -426,8 +425,9 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
               ))}
             </MuiSelect>
+            {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
           </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNoId}>
             <InputLabel shrink>Gate No. <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Gate No."
@@ -441,8 +441,9 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem key={option.id} value={option.id}>{option.gate_number || option.name}</MenuItem>
               ))}
             </MuiSelect>
+            {fieldErrors.gateNoId && <Typography variant="caption" color="error">{fieldErrors.gateNoId}</Typography>}
           </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gatePassTypeId}>
             <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Gate Pass Type"
@@ -456,8 +457,12 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
               ))}
             </MuiSelect>
+            {fieldErrors.gatePassTypeId && <Typography variant="caption" color="error">{fieldErrors.gatePassTypeId}</Typography>}
           </FormControl>
-          <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+            error={!!fieldErrors.gatePassDate}
+            helperText={fieldErrors.gatePassDate}
+          />
           
           {returnableStatus === 'returnable' && (
             <TextField
@@ -469,17 +474,25 @@ export const GatePassOutwardsAddPage = () => {
               onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
+              error={!!fieldErrors.expectedReturnDate}
+              helperText={fieldErrors.expectedReturnDate}
             />
           )}
           
           <TextField label={<span>Contact Person <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
             const value = e.target.value;
             if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
-          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+            error={!!fieldErrors.contactPerson}
+            helperText={fieldErrors.contactPerson}
+          />
           <TextField label={<span>Contact No <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) =>{
             const value = e.target.value;
             if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
-          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+            error={!!fieldErrors.contactPersonNo}
+            helperText={fieldErrors.contactPersonNo}
+          />
           <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
             const value = e.target.value;
             if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('driverName', value);
@@ -489,7 +502,7 @@ export const GatePassOutwardsAddPage = () => {
             if (/^\d{0,10}$/.test(value)) handleVisitorChange('driverContactNo', value);
           }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
 
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
             <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
               <MenuItem value="">Select Transport</MenuItem>
@@ -499,6 +512,7 @@ export const GatePassOutwardsAddPage = () => {
               <MenuItem value="walk">Walking</MenuItem>
               <MenuItem value="self">Self</MenuItem>
             </MuiSelect>
+            {fieldErrors.modeOfTransport && <Typography variant="caption" color="error">{fieldErrors.modeOfTransport}</Typography>}
           </FormControl>
           {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
             <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
@@ -512,8 +526,10 @@ export const GatePassOutwardsAddPage = () => {
             onChange={(e) => handleVisitorChange('reportingTime', e.target.value)}
             InputLabelProps={{ shrink: true }}
             InputProps={{ sx: fieldStyles }}
+            error={!!fieldErrors.reportingTime}
+            helperText={fieldErrors.reportingTime}
           />
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
             <InputLabel shrink>Company Name <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Company Name"
@@ -525,10 +541,11 @@ export const GatePassOutwardsAddPage = () => {
               <MenuItem value="">Select Company</MenuItem>
               {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
             </MuiSelect>
+            {fieldErrors.company && <Typography variant="caption" color="error">{fieldErrors.company}</Typography>}
           </FormControl>
 
           {/* Vendor Dropdown */}
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
             <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
             <MuiSelect
               label="Vendor"
@@ -542,6 +559,7 @@ export const GatePassOutwardsAddPage = () => {
                 <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
               ))}
             </MuiSelect>
+            {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
           </FormControl>
 
           {/* Quantity and Unit fields */}
@@ -621,7 +639,7 @@ export const GatePassOutwardsAddPage = () => {
                           disabled={!row.itemTypeId}
                         >
                           <MenuItem value="">Select Category</MenuItem>
-                          {(itemCategoryOptions[row.id] || []).map((option) => (
+                          {(itemCategoryOptions[row.id] || []).filter(option => option.id !== '').map((option) => (
                             <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
                           ))}
                         </MuiSelect>

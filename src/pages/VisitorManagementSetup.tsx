@@ -141,7 +141,7 @@ export const VisitorManagementSetup = () => {
     
     const updatedItem = visitorGateData.find(item => item.id === id);
     const newValue = updatedItem ? !updatedItem[field] : false;
-    toast.success(`${field === 'status' ? 'Status' : 'Active state'} updated to ${newValue ? 'enabled' : 'disabled'}`);
+    toast.success(`${field === 'status' ? 'Status' : 'Active state'} is ${newValue ? 'Active' : 'Deactive'}`);
   };
 
   const handleEdit = (id: number) => {
@@ -167,14 +167,14 @@ export const VisitorManagementSetup = () => {
   // Column definitions for visibility control
   const columns = [
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
-    { key: 'id', label: 'ID', visible: visibleColumns.id },
+    // { key: 'id', label: 'ID', visible: visibleColumns.id },
     { key: 'society', label: 'Society', visible: visibleColumns.society },
     { key: 'tower', label: 'Tower', visible: visibleColumns.tower },
     { key: 'gateName', label: 'Gate Name', visible: visibleColumns.gateName },
-    { key: 'gateDevice', label: 'Gate Device', visible: visibleColumns.gateDevice },
+    { key: 'gateDevice', label: 'Gate Device ID', visible: visibleColumns.gateDevice },
     { key: 'userName', label: 'User Name', visible: visibleColumns.userName },
     { key: 'status', label: 'Status', visible: visibleColumns.status },
-    { key: 'active', label: 'Active', visible: visibleColumns.active },
+    // { key: 'active', label: 'Active', visible: visibleColumns.active },
     { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
   ];
 
@@ -226,10 +226,10 @@ export const VisitorManagementSetup = () => {
               {visibleColumns.society && <TableHead className="min-w-[300px]">Society</TableHead>}
               {visibleColumns.tower && <TableHead className="w-32">Tower</TableHead>}
               {visibleColumns.gateName && <TableHead className="w-32">Gate Name</TableHead>}
-              {visibleColumns.gateDevice && <TableHead className="w-40">Gate Device</TableHead>}
+              {visibleColumns.gateDevice && <TableHead className="w-40">Gate Device ID</TableHead>}
               {visibleColumns.userName && <TableHead className="w-40">User Name</TableHead>}
               {visibleColumns.status && <TableHead className="w-24 text-center">Status</TableHead>}
-              {visibleColumns.active && <TableHead className="w-24 text-center">Active</TableHead>}
+              {/* {visibleColumns.active && <TableHead className="w-24 text-center">Active</TableHead>} */}
               {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>}
             </TableRow>
           </TableHeader>
@@ -284,7 +284,7 @@ export const VisitorManagementSetup = () => {
                       />
                     </TableCell>
                   )}
-                  {visibleColumns.active && (
+                  {/* {visibleColumns.active && (
                     <TableCell className="text-center">
                       <span className={`px-2 py-1 text-xs font-medium ${
                         item.active ? 'text-green-700' : 'text-gray-500'
@@ -292,7 +292,7 @@ export const VisitorManagementSetup = () => {
                         {item.active ? 'Yes' : 'No'}
                       </span>
                     </TableCell>
-                  )}
+                  )} */}
                   {visibleColumns.createdBy && <TableCell>{item.createdBy}</TableCell>}
                 </TableRow>
               ))
