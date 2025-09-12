@@ -543,13 +543,18 @@ export const PermitDetails = () => {
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
 
-
             if (!baseUrl || !token) {
                 throw new Error('Base URL or token not found');
             }
 
+            // Ensure protocol is present
+            let fullBaseUrl = baseUrl;
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                fullBaseUrl = `https://${baseUrl}`;
+            }
+
             // Construct the full URL using the base URL to avoid path concatenation issues
-            const url = `https://${baseUrl}/pms/permits/${id}.json`;
+            const url = `${fullBaseUrl}/pms/permits/${id}.json`;
             console.log('Uploading JSA to URL:', url);
 
             const response = await fetch(url, {
