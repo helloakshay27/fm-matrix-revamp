@@ -67,16 +67,11 @@ export const DynamicHeader = () => {
         }
       });
 
-      // Set the active module based on user's first accessible function
-      const activeModule = getActiveModuleForUser(userRole);
-      if (activeModule && userAccessibleModules.includes(activeModule)) {
-        setCurrentSection(activeModule);
-      } else if (userAccessibleModules.length > 0) {
-        // Fallback to first accessible module
-        setCurrentSection(userAccessibleModules[0]);
-      }
+      // NOTE: We don't set currentSection here anymore as it's handled automatically 
+      // by the LayoutProvider based on the current route. This ensures consistency
+      // between route-based navigation and header display.
     }
-  }, [userRole, setCurrentSection]);
+  }, [userRole]); // Removed setCurrentSection from dependencies
 
   // Don't render header if user has no function access or no accessible modules
   if (!shouldShowHeader || accessibleModules.length === 0) {
