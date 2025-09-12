@@ -4899,7 +4899,7 @@ export const AddSchedulePage = () => {
                                   />
 
                                   <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
-                                    <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
+                                    <InputLabel shrink>Type</InputLabel>
                                     <Select
                                       label="Type"
                                       notched
@@ -4993,7 +4993,7 @@ export const AddSchedulePage = () => {
                                   />
 
                                   <FormControl variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles, minWidth: 80 }} size="small">
-                                    <InputLabel shrink>Type <span style={{ color: 'red' }}>*</span></InputLabel>
+                                    <InputLabel shrink>Type</InputLabel>
                                     <Select
                                       label="Type"
                                       notched

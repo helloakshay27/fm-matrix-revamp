@@ -75,8 +75,13 @@ export const ScheduleListDashboard = () => {
     queryKey: ['custom-forms', filters],
     queryFn: async () => {
       try {
-        console.log('Fetching custom forms with params:', buildQueryParams());
-        const result = await fetchCustomForms(buildQueryParams());
+        const params = buildQueryParams();
+        // Add access_token from API_CONFIG.TOKEN
+        if (API_CONFIG.TOKEN) {
+          params['access_token'] = API_CONFIG.TOKEN;
+        }
+        console.log('Fetching custom forms with params:', params);
+        const result = await fetchCustomForms(params);
         console.log('API Response:', result);
         return result;
       } catch (error) {
