@@ -592,14 +592,18 @@ export const ServicePRDetailsPage = () => {
               <Rss className="w-4 h-4 mr-1" />
               Feeds
             </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 btn-primary"
-              onClick={() => setShowEditWbsModal(true)}
-            >
-              Edit WBS Codes
-            </Button>
+            {
+              buttonCondition.editWbsCode && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-gray-300 btn-primary"
+                  onClick={() => setShowEditWbsModal(true)}
+                >
+                  Edit WBS Codes
+                </Button>
+              )
+            }
           </div>
         </div>
       </div>
