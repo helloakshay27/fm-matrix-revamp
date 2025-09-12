@@ -111,7 +111,13 @@ const EmployeeDeletionHistory: React.FC = () => {
         try {
             const dt = new Date(iso);
             if (Number.isNaN(dt.getTime())) return '—';
-            return dt.toLocaleString();
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const d = pad(dt.getDate());
+            const m = pad(dt.getMonth() + 1);
+            const y = dt.getFullYear();
+            const hh = pad(dt.getHours());
+            const mm = pad(dt.getMinutes());
+            return `${d}/${m}/${y} ${hh}:${mm}`; // DD/MM/YYYY HH:mm (24-hour)
         } catch { return '—'; }
     };
 
@@ -235,7 +241,7 @@ const EmployeeDeletionHistory: React.FC = () => {
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
                 <DialogContent className="max-w-3xl" onMouseLeave={() => setDetailOpen(false)}>
                     <DialogHeader>
-                        <DialogTitle className='text-[#c72030]'>Employee Detail</DialogTitle>
+                        <DialogTitle className='text-[#c72030]'>Employee Details</DialogTitle>
                         <DialogDescription>Deletion log and profile information</DialogDescription>
                     </DialogHeader>
                     {selected && (

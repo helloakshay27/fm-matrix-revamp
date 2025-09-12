@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing } from 'lucide-react';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
@@ -30,7 +30,7 @@ const modulesByPackage = {
         //     ],
         // },
         { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+        { name: 'Employee Deletion History', icon: ChartColumnIncreasing , href: '/maintenance/employee-deletion-history' },
 
 
         { name: 'User Report', icon: Download, href: '/maintenance/msafe-report' },
