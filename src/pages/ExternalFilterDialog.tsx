@@ -5,13 +5,14 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
+import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 // Autocomplete removed in favor of Select-based controls
 import CircularProgress from '@mui/material/CircularProgress';
-import Stack from '@mui/material/Stack';
+// Stack removed in favor of CSS grid using Box
 import axios from 'axios';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -172,7 +173,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="xs" fullWidth>
+    <Dialog open={isOpen} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontWeight: 700, fontSize: 20, borderBottom: '1px solid #eee', pb: 1.5 }}>
         Filter
         <IconButton onClick={onClose} size="small">
@@ -180,7 +181,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
         </IconButton>
       </DialogTitle>
       <DialogContent sx={{ pt: 3, pb: 2 }}>
-        <Stack spacing={3} sx={{ mt: 2 }}>
+        <Box sx={{ display: 'grid', gap: 2, mt: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
           <TextField label="First Name" size="small" value={firstname} onChange={e => setFirstname(e.target.value)} fullWidth InputLabelProps={{ shrink: Boolean(firstname) || undefined }} />
           <TextField label="Last Name" size="small" value={lastname} onChange={e => setLastname(e.target.value)} fullWidth InputLabelProps={{ shrink: Boolean(lastname) || undefined }} />
           <TextField label="Email" size="small" value={email} onChange={e => setEmail(e.target.value)} fullWidth InputLabelProps={{ shrink: Boolean(email) || undefined }} />
@@ -273,7 +274,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
               </Select>
             </FormControl>
           )}
-        </Stack>
+        </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
         <Button variant="outline" onClick={handleReset} className="border-gray-300 text-gray-700 hover:bg-gray-50">Reset</Button>
