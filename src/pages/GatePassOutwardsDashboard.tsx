@@ -80,7 +80,7 @@ export const GatePassOutwardsDashboard = () => {
     { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },
     // { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
     { key: 'passNo', label: 'Pass No.', sortable: true, hideable: true, draggable: true },
-    { key: 'modeOfTransport', label: 'Mode of Transport', sortable: true, hideable: true, draggable: true },
+    { key: 'modeOfTransport', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
     // { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
     // { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
     { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
@@ -100,6 +100,7 @@ export const GatePassOutwardsDashboard = () => {
     lrNo: item.lr_no || '--',
     tripId: item.trip_id || '--',
     gateEntry: item.gate_number || '--',
+    returnableNonReturnable: item.returnable === true ? 'check' : 'cross',
     itemDetails: (item.gate_pass_materials || [])
       .map(m => `ID:${m.pms_inventory_id} Qty:${m.gate_pass_qty ?? '--'}`)
       .join(', ')
@@ -141,6 +142,13 @@ export const GatePassOutwardsDashboard = () => {
     lrNo: entry.lrNo,
     tripId: entry.tripId,
     gateEntry: entry.gateEntry,
+    returnableNonReturnable: entry.returnableNonReturnable === 'check' ? (
+      <span title="Returnable" style={{color: 'green', fontSize: '18px'}}>&#10003;</span>
+    ) : entry.returnableNonReturnable === 'cross' ? (
+      <span title="Non Returnable" style={{color: 'red', fontSize: '18px'}}>&#10007;</span>
+    ) : (
+      <span style={{color: '#888', fontSize: '18px'}}>-</span>
+    ),
     itemDetails: (
       <div className="max-w-xs">
         <div className="truncate" title={entry.itemDetails}>

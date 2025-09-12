@@ -1691,7 +1691,7 @@ export const FillForm = () => {
 
             if (response.ok) {
                 toast.success('Cold Work Permit form submitted successfully!');
-                navigate('/safety/permit');
+                navigate(`/safety/permit/details/${actualPermitId}`);
             } else {
                 const errorData = await response.json();
                 toast.error(`Failed to submit permit form: ${errorData.message || 'Unknown error'}`);

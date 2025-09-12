@@ -229,7 +229,7 @@ const Section = memo(({
             </div>
             <div className="w-2 h-2 bg-[#C72030] rounded-full"></div>
         </div>
-        {(activeSection === sectionKey || activeSection === "details") && (
+        {(activeSection === sectionKey || (activeSection === "details" && sectionKey !== "permit-extension")) && (
             <div className="p-6">
                 {children}
             </div>
@@ -532,9 +532,8 @@ export const PermitDetails = () => {
             });
             formData.append('pms_permit[id]', id || '');
             // Use API_CONFIG to ensure consistent URL construction
-            // This avoids path issues by using the full base URL
-            // const baseUrl = API_CONFIG.BASE_URL;
-            // const token = API_CONFIG.TOKEN;
+
+
             const baseUrl = localStorage.getItem('baseUrl');
             const token = localStorage.getItem('token');
 
@@ -858,7 +857,7 @@ export const PermitDetails = () => {
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => setActiveSection("permit-extension")}
+                            onClick={() => setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")}
                             className="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
                         >
                             <Clock className="w-4 h-4 mr-2" />

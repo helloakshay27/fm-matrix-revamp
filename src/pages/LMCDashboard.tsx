@@ -230,7 +230,12 @@ const LMCDashboard = () => {
                         const sectionCard = (title: string, bodyHtml: string, withDate = false) => `
                             <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
                                 <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
-                                    <div style='width:32px;height:32px;background:#C72030;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:600;'>${title.charAt(0)}</div>
+                                    <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
+                                        <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg' aria-hidden='true' focusable='false' style='display:block'>
+                                            <circle cx='16' cy='16' r='16' fill='#C72030' />
+                                            <text x='16' y='16' dy='.35em' fill='#ffffff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text>
+                                        </svg>
+                                    </div>
                                     <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${withDate ? title + ': ' + lmcDate : title}</h2>
                                 </div>
                                 <div style='padding:24px;'>${bodyHtml}</div>

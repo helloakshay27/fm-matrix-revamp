@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
-import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2 } from 'lucide-react';
+import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
@@ -153,6 +153,48 @@ export const SurveyMappingDashboard = () => {
 
   const handleAddMapping = () => {
     navigate('/maintenance/survey/mapping/add');
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await apiClient.get('/survey_mappings.xlsx', {
+        params: {
+          export: true
+        },
+        responseType: 'blob'
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Set filename with current date
+      const currentDate = new Date().toISOString().split('T')[0];
+      link.setAttribute('download', `survey-mappings-${currentDate}.xlsx`);
+      
+      // Append to html link element page
+      document.body.appendChild(link);
+      
+      // Start download
+      link.click();
+      
+      // Clean up and remove the link
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: "Survey mappings exported successfully",
+      });
+    } catch (error: any) {
+      console.error('Error exporting survey mappings:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export survey mappings",
+        variant: "destructive"
+      });
+    }
   };
 
   const columns = [
@@ -308,6 +350,7 @@ export const SurveyMappingDashboard = () => {
             renderCell={renderCell}
             storageKey="survey-mapping-table"
             enableExport={true}
+            handleExport={handleExport}
             exportFileName="survey-mapping-data"
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -323,6 +366,7 @@ export const SurveyMappingDashboard = () => {
                   <Plus className="w-4 h-4" />
                   Add Survey Mapping
                 </Button>
+            
               </div>
             }
           />

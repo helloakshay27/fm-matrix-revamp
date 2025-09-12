@@ -76,6 +76,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const [assetGroups, setAssetGroups] = useState<any[]>([]);
   const [assetSubGroups, setAssetSubGroups] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [dateError, setDateError] = useState<string>('');
 
   // Fetch initial data when component mounts
   useEffect(() => {
@@ -127,7 +128,60 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     'Preparedness'
   ];
 
+  // Date validation function
+  const validateDates = (fromDate: string, toDate: string): string => {
+    if (!fromDate && !toDate) {
+      return '';
+    }
+    
+    if (fromDate && !toDate) {
+      return 'Please select a "To Date"';
+    }
+    
+    if (!fromDate && toDate) {
+      return 'Please select a "From Date"';
+    }
+    
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      
+      if (from > to) {
+        return '"From Date" cannot be later than "To Date"';
+      }
+      
+      // Check if date range is too large (more than 1 year)
+      const oneYear = 365 * 24 * 60 * 60 * 1000; // milliseconds in a year
+      if (to.getTime() - from.getTime() > oneYear) {
+        return 'Date range cannot exceed 1 year';
+      }
+    }
+    
+    return '';
+  };
+
+  // Handle date changes with validation
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value);
+    const error = validateDates(value, dateTo);
+    setDateError(error);
+  };
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value);
+    const error = validateDates(dateFrom, value);
+    setDateError(error);
+  };
+
   const handleApply = async () => {
+    // Validate dates before applying
+    const dateValidationError = validateDates(dateFrom, dateTo);
+    if (dateValidationError) {
+      setDateError(dateValidationError);
+      toast.error(dateValidationError);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const filters: TaskFilters = {
@@ -167,6 +221,7 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     setAssetGroupId('');
     setAssetSubGroupId('');
     setSupplierId('');
+    setDateError(''); // Clear date error
     
     onApply({});
     onClose();
@@ -384,23 +439,32 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
                 label="From Date"
                 type="date"
                 value={dateFrom}
-                onChange={(e) => setDateFrom(e.target.value)}
+                onChange={(e) => handleDateFromChange(e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                error={!!dateError && dateError.includes('From')}
+                helperText={dateError && dateError.includes('From') ? dateError : ''}
               />
               <TextField
                 label="To Date"
                 type="date"
                 value={dateTo}
-                onChange={(e) => setDateTo(e.target.value)}
+                onChange={(e) => handleDateToChange(e.target.value)}
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 InputProps={{ sx: fieldStyles }}
+                error={!!dateError && dateError.includes('To')}
+                helperText={dateError && dateError.includes('To') ? dateError : ''}
               />
             </div>
+            {dateError && !dateError.includes('From') && !dateError.includes('To') && (
+              <div className="mt-2 text-sm text-red-600">
+                {dateError}
+              </div>
+            )}
           </div>
 
           {/* Show All Tasks Toggle */}
