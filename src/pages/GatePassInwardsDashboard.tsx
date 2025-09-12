@@ -118,14 +118,7 @@ export const GatePassInwardsDashboard = () => {
         </div>
       </div>
     ),
-    id: (
-      <button
-        onClick={() => handleViewDetails(entry.id)}
-        className="text-[#C72030] hover:underline hover:text-[#C72030]/80 transition-colors font-medium"
-      >
-        {entry.id}
-      </button>
-    ),
+    id: entry.id,
     type: entry.type,
     category: entry.category,
     personName: entry.personName,

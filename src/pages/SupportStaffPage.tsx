@@ -61,6 +61,7 @@ export const SupportStaffPage = () => {
     sNo: true,
     actions: true,
     name: true,
+    icons: true,
     estimatedTime: true,
     createdOn: true,
     createdBy: true
@@ -82,26 +83,34 @@ export const SupportStaffPage = () => {
 
   // Field styles for Material-UI components
   const fieldStyles = {
+    height: '45px',
     backgroundColor: '#fff',
     borderRadius: '4px',
     '& .MuiOutlinedInput-root': {
+      height: '45px',
       '& fieldset': {
         borderColor: '#ddd',
       },
       '&:hover fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#999696ff',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#C72030',
       },
     },
     '& .MuiInputLabel-root': {
+      color: '#000000', // Keep label text black
       '&.Mui-focused': {
         color: '#C72030',
       },
+      '& .MuiInputLabel-asterisk': {
+        color: '#ff0000 !important', // Only asterisk red
+      },
+    },
+    '& .MuiFormLabel-asterisk': {
+      color: '#ff0000 !important', // Only asterisk red
     },
   };
-
   // Service type options
   const serviceTypeOptions = [
     'Delivery',
@@ -469,10 +478,42 @@ export const SupportStaffPage = () => {
     { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
     { key: 'name', label: 'Name', visible: visibleColumns.name },
+    { key: 'icons', label: 'Icons', visible: visibleColumns.icons },
     { key: 'estimatedTime', label: 'Estimated Time', visible: visibleColumns.estimatedTime },
     { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
     { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
   ];
+
+  // Helper function to format estimated time without trailing commas
+  const formatEstimatedTime = (estimatedTime: string): string => {
+    if (!estimatedTime || estimatedTime === '--') return '--';
+    
+    // Parse the estimated time string to extract components
+    const timeUnits: string[] = [];
+    
+    // Match patterns like "2 days", "3 hours", "30 minutes"
+    const matches = estimatedTime.match(/(\d+)\s*(days?|hours?|hrs?|minutes?|mins?)/gi);
+    
+    if (matches) {
+      matches.forEach(match => {
+        const value = parseInt(match.match(/\d+/)?.[0] || '0');
+        const unit = match.match(/(days?|hours?|hrs?|minutes?|mins?)/i)?.[0].toLowerCase();
+        
+        if (value > 0) {
+          if (unit?.includes('day')) {
+            timeUnits.push(`${value} ${value === 1 ? 'day' : 'days'}`);
+          } else if (unit?.includes('hour') || unit?.includes('hr')) {
+            timeUnits.push(`${value} ${value === 1 ? 'hour' : 'hours'}`);
+          } else if (unit?.includes('minute') || unit?.includes('min')) {
+            timeUnits.push(`${value} ${value === 1 ? 'minute' : 'minutes'}`);
+          }
+        }
+      });
+    }
+    
+    // Join with commas and proper spacing, no trailing comma
+    return timeUnits.length > 0 ? timeUnits.join(', ') : estimatedTime;
+  };
 
   return (
     <>
@@ -521,7 +562,8 @@ export const SupportStaffPage = () => {
             <TableRow className="bg-[#f6f4ee]">
               {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
               {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
-              {visibleColumns.name && <TableHead className="w-40">Name</TableHead>}
+              {visibleColumns.name && <TableHead className="w-40">Category name</TableHead>}
+              {visibleColumns.icons && <TableHead className="w-20">Icons</TableHead>}
               {visibleColumns.estimatedTime && <TableHead className="w-40">Estimated time</TableHead>}
               {visibleColumns.createdOn && <TableHead className="w-48">Created On</TableHead>}
               {/* {visibleColumns.createdBy && <TableHead className="w-40">Created By</TableHead>} */}
@@ -569,9 +611,29 @@ export const SupportStaffPage = () => {
                       {staff.name}
                     </TableCell>
                   )}
+                  {visibleColumns.icons && (
+                    <TableCell className="text-center">
+                      {staff.icon_image_url ? (
+                        <img 
+                          src={staff.icon_image_url}
+                          alt={staff.name}
+                          className="w-8 h-8 object-contain mx-auto"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                            const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
+                            if (nextElement) {
+                              nextElement.style.display = 'block';
+                            }
+                          }}
+                        />
+                      ) : (
+                        <span className="text-gray-400 text-xs">No Icon</span>
+                      )}
+                    </TableCell>
+                  )}
                   {visibleColumns.estimatedTime && (
                     <TableCell className="text-gray-500">
-                      {staff.estimated_time || '--'}
+                      {formatEstimatedTime(staff.estimated_time)}
                     </TableCell>
                   )}
                   {visibleColumns.createdOn && <TableCell>{staff.created_on}</TableCell>}
@@ -648,7 +710,7 @@ export const SupportStaffPage = () => {
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader className="flex flex-row items-center justify-between">
-            <DialogTitle className="text-lg font-semibold">Create</DialogTitle>
+            <DialogTitle className="text-lg font-semibold">Create Support Staff Category</DialogTitle>
             <Button
               variant="ghost"
               size="icon"
@@ -663,25 +725,28 @@ export const SupportStaffPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
               {/* Category Name Input */}
               <TextField
-                label="Category Name"
+                label="Category Name" 
                 placeholder="Enter Category Name"
                 value={formData.categoryName}
                 onChange={(e) => setFormData({...formData, categoryName: e.target.value})}
                 fullWidth
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                required
+                // slotProps={{
+                //   inputLabel: {
+                //     shrink: true,
+                //   },
+                // }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx = {fieldStyles}
               />
               </div>
 
               {/* Days Input */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>Estimated Time <span className='text-red-500'>*</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <TextField
                 label="Days"
                 placeholder="0"
@@ -741,9 +806,11 @@ export const SupportStaffPage = () => {
                 }}
               />
             </div>
+            </div>  
 
             {/* Icon Selection Grid */}
-            <div className="space-y-3">
+            <div className="mt-2">Select icon <span className='text-red-500'>*</span>
+            <div className="space-y-3 mt-4"> 
               {/* <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Select Icon {iconsData.length > 0 && `(${iconsData.length} available)`}
@@ -821,9 +888,17 @@ export const SupportStaffPage = () => {
                 </div>
               )}
             </div>
+            </div>
 
             {/* Submit Button */}
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleModalClose}
+                className="px-6"
+              >
+                Cancel
+              </Button>
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -861,19 +936,22 @@ export const SupportStaffPage = () => {
                 onChange={(e) => setEditFormData({...editFormData, categoryName: e.target.value})}
                 fullWidth
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                required
+                // slotProps={{
+                //   inputLabel: {
+                //     shrink: true,
+                //   },
+                // }}
+                // InputProps={{
+                //   sx: fieldStyles,
+                // }}
+                sx={fieldStyles}
               />
             </div>
 
             {/* Days Input */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>Estimated Time <span className='text-red-500'>*</span>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <TextField
                 label="Days"
                 placeholder="0"
@@ -933,9 +1011,11 @@ export const SupportStaffPage = () => {
                 }}
               />
             </div>
+            </div>
 
             {/* Icon Selection Grid */}
-            <div className="space-y-3">
+             <div className="mt-2">Select icon <span className='text-red-500'>*</span>
+            <div className="space-y-3 mt-4">
               {/* <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Select Icon {iconsData.length > 0 && `(${iconsData.length} available)`}
@@ -1012,6 +1092,7 @@ export const SupportStaffPage = () => {
                   ))}
                 </div>
               )}
+            </div>
             </div>
 
             {/* Submit Button */}
