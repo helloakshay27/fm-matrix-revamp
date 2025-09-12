@@ -334,9 +334,9 @@ export const AddGatePassInwardPage = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <TextField label={<span>Visitor Name <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Name" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
-              const value = e.target.value;
-              if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
-            }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} inputProps={{ maxLength: 50, pattern: '[a-zA-Z\s]*' }} />
+    const value = e.target.value;
+    if (/^[a-zA-Z ]*$/.test(value)) handleVisitorChange('contactPerson', value);
+  }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} inputProps={{ maxLength: 50, pattern: '^[a-zA-Z ]+$' }} />
             <TextField label={<span>Mobile No. <span style={{ color: 'red' }}>*</span></span>} placeholder="+91" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => {
               const value = e.target.value;
               if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
