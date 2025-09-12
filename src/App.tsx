@@ -712,6 +712,8 @@ import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
 import CRMWalletDetails from "./pages/CRMWalletDetails";
 import EditCRMWalletPointExpiry from "./pages/EditCRMWalletPointExpiry";
 import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
+import AddAddressMaster from "./pages/master/AddAddressMaster";
+import EditAddressMaster from "./pages/master/EditAddressMaster";
 
 const queryClient = new QueryClient();
 
@@ -1126,6 +1128,14 @@ function App() {
                     <Route
                       path="/master/address"
                       element={<AddressMasterPage />}
+                    />
+                    <Route
+                      path="/master/address/add"
+                      element={<AddAddressMaster />}
+                    />
+                    <Route
+                      path="/master/address/edit/:id"
+                      element={<EditAddressMaster />}
                     />
                     <Route
                       path="/master/unit-default"
