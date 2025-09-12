@@ -136,7 +136,21 @@ export const ColumnVisibilityDropdown: React.FC<LegacyColumnVisibilityProps> = (
   };
 
   const handleResetToDefaults = () => {
-    if (onColumnChange) {
+    if (onColumnToggle && columns) {
+      // Reset each column to visible state using onColumnToggle
+      columns.forEach(col => {
+        if (!columnVisibility[col.key]) {
+          onColumnToggle(col.key, true);
+        }
+      });
+    } else if (onColumnToggle) {
+      // If we have onColumnToggle but no columns array, reset all keys in columnVisibility
+      Object.keys(columnVisibility).forEach(key => {
+        if (!columnVisibility[key]) {
+          onColumnToggle(key, true);
+        }
+      });
+    } else if (onColumnChange) {
       const defaultVisibility = Object.keys(columnVisibility).reduce(
         (acc, key) => ({ ...acc, [key]: true }), 
         {}

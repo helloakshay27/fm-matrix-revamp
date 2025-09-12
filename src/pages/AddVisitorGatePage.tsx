@@ -22,16 +22,23 @@ export const AddVisitorGatePage = () => {
         borderColor: '#ddd',
       },
       '&:hover fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#999696ff',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#C72030',
       },
     },
     '& .MuiInputLabel-root': {
+      color: '#000000', // Keep label text black
       '&.Mui-focused': {
         color: '#C72030',
       },
+      '& .MuiInputLabel-asterisk': {
+        color: '#ff0000 !important', // Only asterisk red
+      },
+    },
+    '& .MuiFormLabel-asterisk': {
+      color: '#ff0000 !important', // Only asterisk red
     },
   };
   
@@ -153,10 +160,30 @@ export const AddVisitorGatePage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check for required fields with specific toast messages
+    if (!formData.site) {
+      toast.error('Please select a site');
+      return;
+    }
     
-    // Validate form
-    if (!formData.site || !formData.user || !formData.tower || !formData.gateName || !formData.gateDevice) {
-      toast.error('Please fill in all fields');
+    if (!formData.user) {
+      toast.error('Please select a user');
+      return;
+    }
+    
+    if (!formData.tower) {
+      toast.error('Please select a tower');
+      return;
+    }
+    
+    if (!formData.gateName.trim()) {
+      toast.error('Please enter gate name');
+      return;
+    }
+    
+    if (!formData.gateDevice.trim()) {
+      toast.error('Please enter gate device ID');
       return;
     }
 
@@ -188,6 +215,9 @@ export const AddVisitorGatePage = () => {
         gateDevice: ''
       });
       
+      // Navigate to visitor management setup page
+      navigate('/security/visitor-management/setup');
+      
     } catch (error) {
       console.error('Error creating visitor gate:', error);
       toast.error('Failed to add visitor gate. Please try again.');
@@ -217,17 +247,17 @@ export const AddVisitorGatePage = () => {
               <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm font-bold mr-3">
                 1
               </div>
-              <h2 className="text-lg font-semibold text-gray-900">GATE CONFIGURATION</h2>
+              <h2 className="text-lg font-semibold text-gray-900">TAB CONFIGURATION</h2>
             </div>
             <div className="p-6 space-y-6 bg-gray-50">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  required
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                 
+                  sx={fieldStyles}
                 >
-                  <InputLabel shrink>Site</InputLabel>
+                  <InputLabel shrink required>Site</InputLabel>
                   <MuiSelect
                     value={formData.site}
                     onChange={(e) => handleInputChange('site', e.target.value)}
@@ -250,10 +280,10 @@ export const AddVisitorGatePage = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  required
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                  
+                 sx={fieldStyles}
                 >
-                  <InputLabel shrink>User</InputLabel>
+                  <InputLabel shrink required>User</InputLabel>
                   <MuiSelect
                     value={formData.user}
                     onChange={(e) => handleInputChange('user', e.target.value)}
@@ -276,10 +306,10 @@ export const AddVisitorGatePage = () => {
                 <FormControl
                   fullWidth
                   variant="outlined"
-                  required
-                  sx={{ '& .MuiInputBase-root': fieldStyles }}
+                
+                   sx={fieldStyles}
                 >
-                  <InputLabel shrink>Tower</InputLabel>
+                  <InputLabel shrink required>Tower</InputLabel>
                   <MuiSelect
                     value={formData.tower}
                     onChange={(e) => handleInputChange('tower', e.target.value)}
@@ -308,33 +338,21 @@ export const AddVisitorGatePage = () => {
                   onChange={(e) => handleInputChange('gateName', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  required
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
+                 
+                  InputLabelProps={{ shrink: true, required: true }}
+                  sx={fieldStyles}
                 />
 
                 <TextField
-                  label="Gate Device"
-                  placeholder="Enter gate device"
+                  label="Gate Device ID"
+                  placeholder="Enter gate device ID"
                   value={formData.gateDevice}
                   onChange={(e) => handleInputChange('gateDevice', e.target.value)}
                   fullWidth
                   variant="outlined"
-                  required
-                  slotProps={{
-                    inputLabel: {
-                      shrink: true,
-                    },
-                  }}
-                  InputProps={{
-                    sx: fieldStyles,
-                  }}
+                
+                  InputLabelProps={{ shrink: true, required: true }}
+                  sx={fieldStyles}
                 />
               </div>
             </div>

@@ -45,6 +45,8 @@ export interface SupportStaffCategoryResponse {
     mm: number;
   };
   icon: string | null;
+  icon_id?: number;
+  icon_image_url?: string;
 }
 
 export interface SupportStaffCategoriesGetResponse {
@@ -59,6 +61,7 @@ export interface SupportStaffCategory {
   created_by: string;
   active: boolean;
   icon_id?: number; // Add icon_id to track the associated icon
+  icon_image_url?: string; // Add icon_image_url for displaying icons
 }
 
 // Single support staff category response interface (for GET by ID)
@@ -276,7 +279,9 @@ export const fetchSupportStaffCategories = async (): Promise<SupportStaffCategor
       hour12: true
     }),
     created_by: 'Admin', // This should come from API if available in future
-    active: item.active === 1
+    active: item.active === 1,
+    icon_id: item.icon_id,
+    icon_image_url: item.icon_image_url
   }));
 
   console.log('Support staff categories fetched successfully:', transformedData);
