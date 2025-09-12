@@ -73,6 +73,7 @@ import {
   DoorOpen,
   PackagePlus,
   Ticket,
+  Trash,
 } from "lucide-react";
 
 const navigationStructure = {
@@ -657,6 +658,8 @@ const modulesByPackage = {
         },
       ],
     },
+            { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+
     {
       name: "Msafe Report",
       icon: Download,

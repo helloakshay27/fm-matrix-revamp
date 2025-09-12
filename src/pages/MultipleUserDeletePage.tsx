@@ -228,7 +228,7 @@ export const MultipleUserDeletePage = () => {
             const tokenHeader = getAuthHeader();
             const isEmail = raw.includes('@');
             const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-            const paramKey = isEmail ? 'email' : 'mobile_number';
+            const paramKey = 'email'; // API expects 'email' for both email and mobile inputs
             const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=external`;
             const resp = await fetch(url, {
                 headers: {
@@ -275,9 +275,24 @@ export const MultipleUserDeletePage = () => {
 
     const handleTreeDelete = async () => {
         const raw = (treeIdentifier || '').trim();
-        if (!raw || !isValidEmail(raw)) {
-            toast.error('Enter a valid email to delete with reportees');
+        if (!raw) {
+            toast.error('Enter a valid email or mobile number');
             return;
+        }
+        let emailToDelete = '';
+        if (raw.includes('@')) {
+            if (!isValidEmail(raw)) {
+                toast.error('Enter a valid email or mobile number');
+                return;
+            }
+            emailToDelete = raw.toLowerCase();
+        } else {
+            const rootEmail = (treeData as any)?.email || '';
+            if (!rootEmail || !isValidEmail(rootEmail)) {
+                toast.error('Email not found for this user. Please fetch by email or ensure hierarchy contains an email.');
+                return;
+            }
+            emailToDelete = rootEmail.toLowerCase();
         }
         try {
             setTreeDeleteLoading(true);
@@ -288,7 +303,7 @@ export const MultipleUserDeletePage = () => {
                     'Content-Type': 'application/json',
                     'Authorization': getAuthHeader(),
                 },
-                body: JSON.stringify({ email: raw.toLowerCase() }),
+                body: JSON.stringify({ email: emailToDelete }),
             });
             if (!resp.ok) {
                 let message = 'Failed to delete hierarchy';
@@ -816,7 +831,7 @@ export const MultipleUserDeletePage = () => {
                                         >
                                             {treeLoading ? 'Fetching...' : 'Submit'}
                                         </Button>
-                                        {treeIdentifier.trim().includes('@') && treeData && !isTreeEmpty(treeData) && (
+                                        {treeData && !isTreeEmpty(treeData) &&  (
                                             <Button
                                                 onClick={() => setShowDeleteChoice(true)}
                                                 disabled={treeDeleteLoading}
