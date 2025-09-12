@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
-import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree } from 'lucide-react';
+import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing } from 'lucide-react';
 
 // VI-only modules mirroring Sidebar/OmanSidebar design
 const modulesByPackage = {
@@ -30,9 +30,12 @@ const modulesByPackage = {
         //     ],
         // },
         { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
+        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+
+
         { name: 'User Report', icon: Download, href: '/maintenance/msafe-report' },
         { name: 'Msafe Detail Report', icon: Download, href: '/maintenance/msafe-detail-report' },
-        { name: 'Msafe Dashboard Report', icon: Download, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
+        { name: 'Msafe Dashboard Report', icon: ChartColumnIncreasing, href: 'https://reports.lockated.com/vi-msafe/?token=10b1d3d490656b1e6fdb7932f1a8c125171245bcd90c177d' },
 
     ],
 }

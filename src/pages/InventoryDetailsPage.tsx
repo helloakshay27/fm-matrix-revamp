@@ -525,6 +525,17 @@ export const InventoryDetailsPage = () => {
                     <span className="text-gray-600 w-24">Expiry Date</span>
                     <span>: {formatDateOnly(inventoryData?.expiry_date)}</span>
                   </div>
+                  <div className="flex text-sm items-center">
+                    <span className="text-gray-600 w-24">Expired</span>
+                    <span className="flex items-center gap-2">
+                      :
+                      {((inventoryData as any)?.expired === true || String((inventoryData as any)?.expired).toLowerCase() === 'true') ? (
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-[#C72030]/10 text-[#C72030]">Expired</span>
+                      ) : (
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-green-100 text-green-700">Valid</span>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>

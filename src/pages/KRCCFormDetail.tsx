@@ -92,6 +92,7 @@ interface ICategoriesResponse {
   underground?: ICategoryUnderground;
   bicycle?: ICategoryBicycle;
   mhe?: ICategoryMHE;
+  none_of_the_above?: boolean;
 }
 
 interface IApiResponse {
@@ -195,6 +196,7 @@ type CategoriesMutable = {
   underground?: ICategoryUnderground;
   bicycle?: ICategoryBicycle;
   mhe?: ICategoryMHE;
+  none_of_the_above?: boolean;
 };
 
 const ensureAttachmentBucket = (obj: ICategoryCommonAttachments, key: string) => {
@@ -214,7 +216,8 @@ const mergeKrccAttachmentsIntoCategories = (
     height: categories?.height ? { ...categories.height, attachments: { ...(categories.height.attachments || {}) } } : undefined,
     underground: categories?.underground ? { ...categories.underground, attachments: { ...(categories.underground.attachments || {}) } } : undefined,
     bicycle: categories?.bicycle ? { ...categories.bicycle } : undefined,
-    mhe: categories?.mhe ? { ...categories.mhe } : undefined,
+  mhe: categories?.mhe ? { ...categories.mhe } : undefined,
+  none_of_the_above: categories?.none_of_the_above,
   };
 
   const pushTo = (cat: keyof CategoriesMutable, key: string, att: IAttachmentItem) => {
@@ -333,6 +336,7 @@ export const KRCCFormDetail: React.FC = () => {
   const underground = mergedCategories?.underground;
   const bicycle = mergedCategories?.bicycle;
   const mhe = mergedCategories?.mhe;
+  const noneOfTheAbove = mergedCategories?.none_of_the_above;
 
   const exportToExcel = useCallback(() => {
     if (!data) return;
@@ -576,6 +580,19 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="Cut resistant hand gloves available" value={mhe.hand_gloves} />
               <KeyValue label="Reflective jacket available" value={mhe.reflective_jacket} />
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* None of the Above */}
+      {noneOfTheAbove && (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
+            <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
+            <h2 className="text-lg font-semibold">None of the Above</h2>
+          </div>
+          <div className="p-6 pt-2">
+            <p className="text-sm text-gray-700">User selected "None of the above"; no category-specific details provided.</p>
           </div>
         </div>
       )}

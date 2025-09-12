@@ -18,7 +18,8 @@ import {
   UserRoundPen, DoorOpen,
   Ticket, PackagePlus,
   FolderTree,
-  Wallet
+  Wallet,
+  Trash
 } from 'lucide-react';
 
 const navigationStructure = {
@@ -385,6 +386,7 @@ const modulesByPackage = {
       ]
     },
     { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
+        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
 
     {
       name: 'Msafe Report',

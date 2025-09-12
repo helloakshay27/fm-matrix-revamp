@@ -1274,7 +1274,7 @@ export const EditServicePRPage = () => {
             className="bg-red-600 hover:bg-red-700 text-white px-8"
             disabled={submitting}
           >
-            Save Work Order
+            Save Service PR
           </Button>
           <Button variant="outline" onClick={() => navigate(-1)} className="px-8">
             Cancel

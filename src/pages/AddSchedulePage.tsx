@@ -2269,9 +2269,9 @@ export const AddSchedulePage = () => {
       errors['planDurationValue'] = 'Plan Duration value is required when duration type is selected';
     }
 
-    if (!formData.emailTriggerRule) {
-      errors['emailTriggerRule'] = 'Email Trigger Rule is required';
-    }
+    // if (!formData.emailTriggerRule) {
+    //   errors['emailTriggerRule'] = 'Email Trigger Rule is required';
+    // }
 
     // if (!formData.scanType) {
     //   errors['scanType'] = 'Scan Type is required';
@@ -2282,16 +2282,16 @@ export const AddSchedulePage = () => {
     }
 
     // Submission time validation
-    if (!formData.submissionTime) {
-      errors['submissionTime'] = 'Submission Time type is required';
-    }
-    if (formData.submissionTime && !formData.submissionTimeValue) {
-      errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
-    }
+    // if (!formData.submissionTime) {
+    //   errors['submissionTime'] = 'Submission Time type is required';
+    // }
+    // if (formData.submissionTime && !formData.submissionTimeValue) {
+    //   errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
+    // }
 
-    if (!formData.supervisors) {
-      errors['supervisors'] = 'Supervisors selection is required';
-    }
+    // if (!formData.supervisors) {
+    //   errors['supervisors'] = 'Supervisors selection is required';
+    // }
 
     if (!formData.lockOverdueTask) {
       errors['lockOverdueTask'] = 'Lock Overdue Task selection is required';
@@ -3831,7 +3831,7 @@ export const AddSchedulePage = () => {
 
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supplier <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Supplier </InputLabel>
                   <Select
                     label="Supplier"
                     notched
