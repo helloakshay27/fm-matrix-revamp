@@ -712,7 +712,11 @@ export const GRNDetailsPage = () => {
                             className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
                             title="View"
                             onClick={() => {
-                              setSelectedAttachment(attachment);
+                              setSelectedAttachment({
+                                id: attachment.id,
+                                url: attachment.document_url,
+                                document_name: attachment.filename,
+                              });
                               setIsPreviewModalOpen(true);
                             }}
                             type="button"
@@ -724,7 +728,11 @@ export const GRNDetailsPage = () => {
                             alt={attachment.filename}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
-                              setSelectedAttachment(attachment);
+                              setSelectedAttachment({
+                                id: attachment.id,
+                                url: attachment.document_url,
+                                document_name: attachment.filename,
+                              });
                               setIsPreviewModalOpen(true);
                             }}
                           />
@@ -755,7 +763,11 @@ export const GRNDetailsPage = () => {
                           variant="ghost"
                           className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
                           onClick={() => {
-                            setSelectedAttachment(attachment);
+                            setSelectedAttachment({
+                              id: attachment.id,
+                              url: attachment.document_url,
+                              document_name: attachment.filename,
+                            });
                             setIsPreviewModalOpen(true);
                           }}
                         >
