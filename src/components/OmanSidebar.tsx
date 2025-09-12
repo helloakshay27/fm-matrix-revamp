@@ -714,33 +714,6 @@ export const OmanSidebar = () => {
     navigate(href);
   };
 
-  React.useEffect(() => {
-    const path = location.pathname;
-    if (path.startsWith("/utility")) {
-      setCurrentSection("Utility");
-    } else if (path.startsWith("/transitioning")) {
-      setCurrentSection("Transitioning");
-    } else if (path.startsWith("/security")) {
-      setCurrentSection("Security");
-    } else if (path.startsWith("/vas")) {
-      setCurrentSection("Value Added Services");
-    } else if (path.startsWith("/finance")) {
-      setCurrentSection("Finance");
-    } else if (path.startsWith("/maintenance")) {
-      setCurrentSection("Maintenance");
-    } else if (path.startsWith("/safety")) {
-      setCurrentSection("Safety");
-    } else if (path.startsWith("/crm")) {
-      setCurrentSection("CRM");
-    } else if (path.startsWith("/market-place")) {
-      setCurrentSection("Market Place");
-    } else if (path.startsWith("/master")) {
-      setCurrentSection("Master");
-    } else if (path.startsWith("/settings")) {
-      setCurrentSection("Settings");
-    }
-  }, [location.pathname, setCurrentSection]);
-
   const currentModules = modulesByPackage[currentSection] || [];
 
   const isActiveRoute = (href: string) => {

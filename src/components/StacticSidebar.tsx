@@ -386,7 +386,7 @@ const modulesByPackage = {
       ]
     },
     { name: 'Check Hierarchy Levels', icon: FolderTree, href: '/maintenance/check-hierarchy-levels' },
-        { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
+    { name: 'Employee Deletion History', icon: Trash, href: '/maintenance/employee-deletion-history' },
 
     {
       name: 'Msafe Report',
@@ -415,7 +415,7 @@ const modulesByPackage = {
       subItems: [
         { name: 'Permit ', href: '/safety/permit', color: 'text-[#1a1a1a]' },
         { name: 'Pending Approvals', href: '/safety/permit/pending-approvals', color: 'text-[#1a1a1a]' },
-        { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
+        // { name: 'Permit Checklist', href: '/safety/permit/checklist', color: 'text-[#1a1a1a]' }
 
       ]
     },
@@ -491,7 +491,7 @@ const modulesByPackage = {
     { name: 'Water', icon: Droplets, href: '/utility/water' },
     { name: 'STP', icon: Database, href: '/utility/stp' },
     { name: 'Daily Readings', icon: ClipboardList, href: '/utility/daily-readings' },
-    // { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
+    { name: 'Utility Request', icon: FileText, href: '/utility/utility-request' },
     // { name: 'Utility Consumption', icon: BarChart3, href: '/utility/utility-consumption' },
     { name: 'EV Consumption', icon: Car, href: '/utility/ev-consumption' },
     { name: 'Solar Generator', icon: Sun, href: '/utility/solar-generator' }
