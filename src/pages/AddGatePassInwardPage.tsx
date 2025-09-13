@@ -271,6 +271,17 @@ export const AddGatePassInwardPage = () => {
     if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
     if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
 
+    // Validate all item details
+    const incompleteItem = materialRows.some(row => !row.itemTypeId || !row.itemCategoryId || !row.itemNameId);
+    if (incompleteItem) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill all item details.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -372,33 +383,7 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.contactPersonNo}
               helperText={fieldErrors.contactPersonNo}
             />
-            <TextField
-              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
-              value={selectedCompany ? selectedCompany.name : ''}
-              fullWidth
-              variant="outlined"
-              disabled
-              InputLabelProps={{ shrink: true }}
-              sx={{ '& .MuiInputBase-root': fieldStyles }}
-              error={!!fieldErrors.company}
-              helperText={fieldErrors.company}
-            />
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {vendors.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+            
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
               <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
@@ -456,6 +441,33 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
+            </FormControl>
+            <TextField
+              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
+              value={selectedCompany ? selectedCompany.name : ''}
+              fullWidth
+              variant="outlined"
+              disabled
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+              error={!!fieldErrors.company}
+              helperText={fieldErrors.company}
+            />
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {vendors.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNumberId}>
               <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>

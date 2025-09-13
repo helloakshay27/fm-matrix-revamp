@@ -258,7 +258,6 @@ export const GatePassInwardsDetailPage = () => {
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Updates</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -273,18 +272,6 @@ export const GatePassInwardsDetailPage = () => {
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">
                           <span dangerouslySetInnerHTML={{ __html: item.attachment }} />
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-sm">
-                          {receivedItems.includes(index) ? (
-                            <span className="text-green-600 font-medium">Received</span>
-                          ) : (
-                            <button
-                              className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                              onClick={() => handleReceiveClick(index)}
-                            >
-                              {item.updates}
-                            </button>
-                          )}
                         </TableCell>
                       </TableRow>
                     ))}

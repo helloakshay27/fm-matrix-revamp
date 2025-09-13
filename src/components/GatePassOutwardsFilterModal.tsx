@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { X } from 'lucide-react';
+import { API_CONFIG } from '@/config/apiConfig';
+import { FormControl, InputLabel, Select as MuiSelect, TextField } from '@mui/material';
 
 interface GatePassOutwardsFilterModalProps {
   isOpen: boolean;
@@ -14,6 +16,19 @@ interface GatePassOutwardsFilterModalProps {
 
 export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilters }: GatePassOutwardsFilterModalProps) => {
   const [searchByNameOrId, setSearchByNameOrId] = useState('');
+  const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
+      headers: {
+        'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then(res => res.json())
+      .then(data => setVendors(data || []))
+      .catch(() => setVendors([]));
+  }, []);
 
   const handleChange = (field: string, value: string) => {
     setFilters({ ...filters, [field]: value });
@@ -35,7 +50,49 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
       expectedReturnDate: '',
     });
     setSearchByNameOrId('');
+    setVendors([]); // This will clear the dropdown selection
     console.log('Filters reset');
+  };
+
+  const fieldStyles = {
+    width: '100%',
+    '& .MuiOutlinedInput-root': {
+      height: { xs: '36px', md: '45px' },
+      borderRadius: '8px',
+      backgroundColor: '#FFFFFF',
+      '& fieldset': {
+        borderColor: '#E0E0E0',
+      },
+      '&:hover fieldset': {
+        borderColor: '#1A1A1A',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+        borderWidth: 2,
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: '#666666',
+      fontSize: '14px',
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+      '&.MuiInputLabel-shrink': {
+        transform: 'translate(14px, -9px) scale(0.75)',
+        backgroundColor: '#FFFFFF',
+        padding: '0 4px',
+      },
+    },
+    '& .MuiOutlinedInput-input, & .MuiSelect-select': {
+      color: '#1A1A1A',
+      fontSize: '14px',
+      padding: { xs: '8px 14px', md: '12px 14px' },
+      height: 'auto',
+      '&::placeholder': {
+        color: '#999999',
+        opacity: 1,
+      },
+    },
   };
 
   return (
@@ -57,80 +114,65 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
         <div className="">
           {/* Gate Number Input */}
           <div className="mb-4">
-            <Label htmlFor="gateNumber" className="text-sm font-medium">
-              Gate Number
-            </Label>
-            <Input
-              id="gateNumber"
-              placeholder="Enter gate number"
+            <TextField
+              label="Gate Number"
+              placeholder="Enter Gate Number"
               value={filters.gateNumber}
-              onChange={e => handleChange('gateNumber', e.target.value)}
-              className="border-gray-300 rounded-none"
+                onChange={e => handleChange('gateNumber', e.target.value)}
+                variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
             />
           </div>
           {/* Created By */}
           <div className="mb-4">
-            <Label htmlFor="createdBy" className="text-sm font-medium">
-              Created By (Full Name)
-            </Label>
-            <Input
-              id="createdBy"
-              placeholder="Enter full name"
+            <TextField
+              label="Created By"
+              placeholder="Enter Created Person"
               value={filters.createdBy}
-              onChange={e => handleChange('createdBy', e.target.value)}
-              className="border-gray-300 rounded-none"
+                onChange={e => handleChange('createdBy', e.target.value)}
+                variant="outlined"
+              InputLabelProps={{
+                shrink: true,
+              }}
+              sx={fieldStyles}
             />
           </div>
-          {/* Material Name */}
+          {/* Supplier Name (Vendor Dropdown) */}
           <div className="mb-4">
-            <Label htmlFor="materialName" className="text-sm font-medium">
-              Material Name
-            </Label>
-            <Input
-              id="materialName"
-              placeholder="Enter material name"
-              value={filters.materialName}
-              onChange={e => handleChange('materialName', e.target.value)}
-              className="border-gray-300 rounded-none"
-            />
-          </div>
-          {/* Supplier Name */}
-          <div className="mb-4">
-            <Label htmlFor="supplierName" className="text-sm font-medium">
-              Supplier Name
-            </Label>
-            <Input
-              id="supplierName"
-              placeholder="Enter supplier name"
-              value={filters.supplierName}
-              onChange={e => handleChange('supplierName', e.target.value)}
-              className="border-gray-300 rounded-none"
-            />
-          </div>
-          {/* Material Type */}
-          <div className="mb-4">
-            <Label htmlFor="materialType" className="text-sm font-medium">
-              Material Type
-            </Label>
-            <Input
-              id="materialType"
-              placeholder="Enter material type"
-              value={filters.materialType}
-              onChange={e => handleChange('materialType', e.target.value)}
-              className="border-gray-300 rounded-none"
-            />
+            <FormControl variant="outlined" sx={fieldStyles}>
+              <InputLabel id="supplierName-label" shrink>Vendor</InputLabel>
+              <MuiSelect
+                native
+                labelId="supplierName-label"
+                label="Vendor"
+                displayEmpty
+                value={filters.supplierName}
+                onChange={e => handleChange('supplierName', e.target.value)}
+              >
+                <option value="">Select vendor</option>
+                {vendors.map(vendor => (
+                  <option key={vendor.id} value={vendor.name}>{vendor.name}</option>
+                ))}
+              </MuiSelect>
+            </FormControl>
           </div>
           {/* Expected Return Date */}
           <div className="mb-4">
-            <Label htmlFor="expectedReturnDate" className="text-sm font-medium">
-              Expected Return Date
-            </Label>
-            <Input
-              id="expectedReturnDate"
+            <TextField
+              label="Expected Return Date"
               type="date"
               value={filters.expectedReturnDate}
               onChange={e => handleChange('expectedReturnDate', e.target.value)}
-              className="border-gray-300 rounded-none"
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              sx={fieldStyles}
+              inputProps={{
+                min: '',
+                max: '',
+              }}
             />
           </div>
           {/* Action Buttons */}
