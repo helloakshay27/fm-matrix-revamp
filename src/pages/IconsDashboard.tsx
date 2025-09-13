@@ -50,21 +50,35 @@ interface IconItem {
 }
 
 // Field styles for Material-UI components
-const fieldStyles = {
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: '#ddd',
+ const fieldStyles = {
+    height: '45px',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '45px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#999696ff',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    '& .MuiInputLabel-root': {
+      color: '#000000', // Keep label text black
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
+      '& .MuiInputLabel-asterisk': {
+        color: '#ff0000 !important', // Only asterisk red
+      },
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
+    '& .MuiFormLabel-asterisk': {
+      color: '#ff0000 !important', // Only asterisk red
     },
-  },
-};
+  };
 
 export const IconsDashboard = () => {
   const navigate = useNavigate();
@@ -115,23 +129,32 @@ export const IconsDashboard = () => {
 
   // Field styles for Material-UI components
   const fieldStyles = {
+    height: '45px',
     backgroundColor: '#fff',
     borderRadius: '4px',
     '& .MuiOutlinedInput-root': {
+      height: '45px',
       '& fieldset': {
         borderColor: '#ddd',
       },
       '&:hover fieldset': {
-        borderColor: '#C72030',
+        borderColor: '#999696ff',
       },
       '&.Mui-focused fieldset': {
         borderColor: '#C72030',
       },
     },
     '& .MuiInputLabel-root': {
+      color: '#000000', // Keep label text black
       '&.Mui-focused': {
         color: '#C72030',
       },
+      '& .MuiInputLabel-asterisk': {
+        color: '#ff0000 !important', // Only asterisk red
+      },
+    },
+    '& .MuiFormLabel-asterisk': {
+      color: '#ff0000 !important', // Only asterisk red
     },
   };
 
@@ -177,8 +200,15 @@ export const IconsDashboard = () => {
       const apiData: ApiIconResponse[] = await response.json();
       console.log('API Response:', apiData);
 
-      // Transform API data to UI format
-      const transformedIcons: IconItem[] = apiData.map((apiIcon, index) => ({
+      // Sort API data by creation date in descending order (latest first)
+      const sortedApiData = apiData.sort((a, b) => {
+        const dateA = new Date(a.image_updated_at).getTime();
+        const dateB = new Date(b.image_updated_at).getTime();
+        return dateB - dateA; // Descending order (latest first)
+      });
+
+      // Transform sorted API data to UI format
+      const transformedIcons: IconItem[] = sortedApiData.map((apiIcon, index) => ({
         id: apiIcon.id.toString(),
         sNo: index + 1,
         name: apiIcon.image_file_name.replace(/\.[^/.]+$/, ""), // Remove file extension for display
@@ -194,7 +224,7 @@ export const IconsDashboard = () => {
         contentType: apiIcon.image_content_type
       }));
       
-      console.log('Transformed data:', transformedIcons);
+      console.log('Transformed data (sorted by latest first):', transformedIcons);
       setIconsData(transformedIcons);
       setFilteredIcons(transformedIcons);
     } catch (error) {
@@ -370,6 +400,8 @@ export const IconsDashboard = () => {
       });
       
       handleCloseAddModal();
+      // Reset pagination to first page to show the newly added icon
+      setCurrentPage(1);
       // Reload the data
       await loadIcons();
     } catch (error) {
@@ -509,6 +541,8 @@ export const IconsDashboard = () => {
       });
       
       handleCloseAddModal();
+      // Reset pagination to first page to show the updated icon
+      setCurrentPage(1);
       // Reload the data
       await loadIcons();
     } catch (error) {
@@ -598,14 +632,14 @@ export const IconsDashboard = () => {
     { key: 'sNo', label: 'S.No.', visible: visibleColumns.sNo },
     { key: 'actions', label: 'Actions', visible: visibleColumns.actions },
     { key: 'icon', label: 'Icon', visible: visibleColumns.icon },
-    { key: 'name', label: 'Image Name', visible: visibleColumns.name },
+    // { key: 'name', label: 'Image Name', visible: visibleColumns.name },
     { key: 'iconType', label: 'Icon Type', visible: visibleColumns.iconType },
-    { key: 'description', label: 'Description', visible: visibleColumns.description },
-    { key: 'category', label: 'Category', visible: visibleColumns.category },
+    // { key: 'description', label: 'Description', visible: visibleColumns.description },
+    // { key: 'category', label: 'Category', visible: visibleColumns.category },
     { key: 'status', label: 'Status', visible: visibleColumns.status },
-    { key: 'fileSize', label: 'File Size', visible: visibleColumns.fileSize },
-    { key: 'contentType', label: 'Content Type', visible: visibleColumns.contentType },
-    { key: 'usageCount', label: 'Usage Count', visible: visibleColumns.usageCount },
+    // { key: 'fileSize', label: 'File Size', visible: visibleColumns.fileSize },
+    // { key: 'contentType', label: 'Content Type', visible: visibleColumns.contentType },
+    // { key: 'usageCount', label: 'Usage Count', visible: visibleColumns.usageCount },
     { key: 'createdOn', label: 'Created On', visible: visibleColumns.createdOn },
     { key: 'createdBy', label: 'Created By', visible: visibleColumns.createdBy }
   ];
@@ -650,7 +684,7 @@ export const IconsDashboard = () => {
               {visibleColumns.sNo && <TableHead className="w-20">S.No.</TableHead>}
               {visibleColumns.actions && <TableHead className="w-20">Actions</TableHead>}
               {visibleColumns.icon && <TableHead className="w-20">Icon</TableHead>}
-              {visibleColumns.name && <TableHead className="w-40">Image Name</TableHead>}
+              {/* {visibleColumns.name && <TableHead className="w-40">Image Name</TableHead>} */}
               {visibleColumns.iconType && <TableHead className="w-40">Icon Type</TableHead>}
               {visibleColumns.description && <TableHead className="w-60">Description</TableHead>}
               {/* {visibleColumns.category && <TableHead className="w-32">Category</TableHead>} */}
@@ -720,16 +754,14 @@ export const IconsDashboard = () => {
                       </div>
                     </TableCell>
                   )}
-                  {visibleColumns.name && (
+                  {/* {visibleColumns.name && (
                     <TableCell className="font-medium">
                       {icon.name}
                     </TableCell>
-                  )}
+                  )} */}
                   {visibleColumns.iconType && (
-                    <TableCell className="font-medium">
-                      <span className="px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                    <TableCell className="font-medium">                    
                         {icon.iconType}
-                      </span>
                     </TableCell>
                   )}
                   {visibleColumns.description && (
@@ -868,14 +900,10 @@ export const IconsDashboard = () => {
                 onChange={(e) => setFormData({...formData, iconType: e.target.value})}
                 fullWidth
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+                required
+                 InputLabelProps={{ shrink: true, required: true }}
+                sx={fieldStyles}
+                
               />
 
               {/* Active/Inactive Checkbox */}
@@ -899,7 +927,7 @@ export const IconsDashboard = () => {
             {/* File Upload Section */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">
-                Icon File *
+                Icon File <span className="text-red-500">*</span>
               </label>
               
               {/* New File Preview */}
@@ -943,7 +971,14 @@ export const IconsDashboard = () => {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end">
+            <div className="flex justify-center gap-3">
+              <Button 
+                variant="outline"
+                onClick={handleCloseAddModal}
+                className="px-6"
+              >
+                Cancel
+              </Button>
               <Button 
                 onClick={handleSubmit}
                 disabled={isSubmitting}
@@ -981,14 +1016,9 @@ export const IconsDashboard = () => {
                 onChange={(e) => setEditFormData({...editFormData, iconType: e.target.value})}
                 fullWidth
                 variant="outlined"
-                slotProps={{
-                  inputLabel: {
-                    shrink: true,
-                  },
-                }}
-                InputProps={{
-                  sx: fieldStyles,
-                }}
+               required
+                 InputLabelProps={{ shrink: true, required: true }}
+                sx={fieldStyles}
               />
 
               {/* Active/Inactive Checkbox */}
@@ -1012,7 +1042,7 @@ export const IconsDashboard = () => {
             {/* Current Icon Preview and File Upload Section */}
             <div className="space-y-3">
               <label className="block text-sm font-medium text-gray-700">
-                Icon File (Optional)
+                Icon File <span className='text-red-500'>*</span>
               </label>
               
               {/* Current Icon Preview */}

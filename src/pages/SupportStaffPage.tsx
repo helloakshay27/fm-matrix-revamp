@@ -872,7 +872,7 @@ export const SupportStaffPage = () => {
                         <img 
                           src={iconItem.image_url}
                           alt={iconItem.icon_type}
-                          className="w-10 h-10 object-contain"
+                          className="w-15 h-10 object-contain"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                             const nextElement = e.currentTarget.nextElementSibling as HTMLElement;
@@ -883,6 +883,10 @@ export const SupportStaffPage = () => {
                         />
                       ) : null}
                       <div className="text-xs text-gray-400 hidden">No Image</div>
+                      {/* Icon Type Name */}
+                      <div className="text-xs text-center text-gray-600 font-medium">
+                        {iconItem.icon_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1088,6 +1092,10 @@ export const SupportStaffPage = () => {
                         />
                       ) : null}
                       <div className="text-xs text-gray-400 hidden">No Image</div>
+                      {/* Icon Type Name */}
+                      <div className="text-xs text-center text-gray-600 font-medium">
+                        {iconItem.icon_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </div>
                     </div>
                   ))}
                 </div>
