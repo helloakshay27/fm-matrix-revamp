@@ -10,6 +10,7 @@ import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
+import { toast } from "sonner";
 
 interface AttachmentFile {
   id: string;
@@ -38,7 +39,6 @@ interface MaterialRow {
 
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -257,44 +257,79 @@ export const AddGatePassInwardPage = () => {
     if (isSubmitting) return;
 
     // Field-level validation
-    const errors: { [key: string]: string } = {};
-    if (!visitorDetails.contactPerson) errors.contactPerson = 'Visitor Name is required';
-    if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Mobile No. is required';
-    else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Mobile No. must be 10 digits';
-    if (!selectedCompany) errors.company = 'Company is required';
-    if (!gatePassDetails.vendorId) errors.vendorId = 'Supplier is required';
-    if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
-    if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
-    if (!selectedSite) errors.site = 'Site is required';
-    if (!gatePassDetails.buildingId) errors.buildingId = 'Building is required';
-    if (!gatePassDetails.gateNumberId) errors.gateNumberId = 'Gate Number is required';
-    if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
-    if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
-
-    // Validate all item details and show toast for each missing field
-    let itemError = false;
-    materialRows.forEach((row, idx) => {
-      if (!row.itemTypeId) {
-        toast({ title: 'Validation Error', description: `Item Type is required for row ${idx + 1}.`, variant: 'destructive' });
-        itemError = true;
-      } else if (!row.itemCategoryId) {
-        toast({ title: 'Validation Error', description: `Item Category is required for row ${idx + 1}.`, variant: 'destructive' });
-        itemError = true;
-      } else if (!row.itemNameId) {
-        toast({ title: 'Validation Error', description: `Item Name is required for row ${idx + 1}.`, variant: 'destructive' });
-        itemError = true;
-      }
-    });
-    if (itemError) return;
-
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) {
-      // Show toast for each error
-      Object.values(errors).forEach(msg => {
-        toast({ title: 'Validation Error', description: msg, variant: 'destructive' });
-      });
+    if (!visitorDetails.contactPerson) {
+      toast.error("Visitor Name is required");
       return;
     }
+    if (!visitorDetails.contactPersonNo) {
+      toast.error("Mobile No. is required");
+      return;
+    }
+    if (visitorDetails.contactPersonNo.length !== 10) {
+      toast.error("Mobile No. must be 10 digits");
+      return;
+    }
+
+    if (!visitorDetails.modeOfTransport) {
+      toast.error("Mode Of Transport is required");
+      return;
+    }
+    if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
+      toast.error("Vehicle No. is required");
+      return;
+    }
+    if (!visitorDetails.reportingTime) {
+      toast.error("Reporting Time is required");
+      return;
+    }
+    if (!selectedSite) {
+      toast.error("Site is required");
+      return;
+    }
+    if (!gatePassDetails.buildingId) {
+      toast.error("Building is required");
+      return;
+    }
+    if (!selectedCompany) {
+      toast.error("Company is required");
+      return;
+    }
+    if (!gatePassDetails.vendorId) {
+      toast.error("Vendor is required");
+      return;
+    }
+    if (!gatePassDetails.gateNumberId) {
+      toast.error("Gate Number is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassTypeId) {
+      toast.error("Gate Pass Type is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassDate) {
+      toast.error("Gate Pass Date is required");
+      return;
+    }
+
+    // Validate all item details and show toast for each missing field
+    for (let idx = 0; idx < materialRows.length; idx++) {
+      const row = materialRows[idx];
+      if (!row.itemTypeId) {
+        toast.error(`Item Type is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemCategoryId) {
+        toast.error(`Item Category is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemNameId) {
+        toast.error(`Item Name is required for row ${idx + 1}`);
+        return;
+      }
+    }
+
+    // setFieldErrors(errors); // Removed because 'errors' is not defined
+    // The following block is also removed since 'errors' is not used elsewhere
 
     setIsSubmitting(true);
     const formData = new FormData();
@@ -394,7 +429,7 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.contactPersonNo}
               helperText={fieldErrors.contactPersonNo}
             />
-            
+
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
               <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
