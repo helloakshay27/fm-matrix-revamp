@@ -1,11 +1,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
-import { Eye, Users, UserCheck, ClipboardList, Building2 } from 'lucide-react';
+import { Eye, Users, UserCheck, ClipboardList, Building2, Download } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const SMTDashboard = () => {
   // simple debounce hook (local)
@@ -36,6 +38,7 @@ const SMTDashboard = () => {
   const [paginationData, setPaginationData] = useState<PaginationData>({ current_page: 1, total_count: 0, total_pages: 1 });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
   const cardData = useMemo(() => {
     const uniqueCircles = new Set(serverData.map((d) => d.circle_name || '-')).size;
     const peopleInteracted = serverData.reduce((acc, r) => acc + (r.people_interacted_with?.filter((n) => (n || '').toString().trim().length > 0).length || 0), 0);
@@ -141,7 +144,21 @@ const SMTDashboard = () => {
               className="h-8 w-8 p-0"
               onClick={() => navigate(`/maintenance/m-safe/smt/${item.id}`, { state: { row: item } })}
             >
-              <Eye className="h-4 w-4" onClick={() => navigate(`/maintenance/m-safe/smt/${item.id}`, { state: { row: item } })} />
+              <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 disabled:opacity-50"
+              title={generatingId === item.id ? 'Generating PDF...' : 'Download PDF'}
+              disabled={generatingId === item.id}
+              onClick={() => downloadPdf(item)}
+            >
+              {generatingId === item.id ? (
+                <span className="animate-pulse text-xs">...</span>
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
             </Button>
           </div>
         );
@@ -149,6 +166,278 @@ const SMTDashboard = () => {
         return formatDate(item.smt_done_date);
       default:
         return item[columnKey] || '';
+    }
+  };
+
+  // Generate PDF for a specific SMT entry mirroring SMTDetailPage UI
+  const downloadPdf = async (row: any) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      setError('Missing base URL or token');
+      toast.error('Missing base URL or token');
+      return;
+    }
+    setGeneratingId(row.id);
+    try {
+      // Fetch full detail
+      const url = `https://${baseUrl}/smts/${row.id}.json`;
+      const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
+      const payload = resp.data || {};
+      const detail: any = Array.isArray(payload?.data) ? payload.data[0] : payload?.data || payload || {};
+
+      // Helpers copied from detail page behavior
+      const parsePeople = (val: any): string[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map((p) => (p || '').toString().trim()).filter((p) => p.length > 0);
+        if (typeof val === 'string') {
+          const s = val.trim();
+          if (s.startsWith('[') && s.endsWith(']')) {
+            try { const parsed = JSON.parse(s); if (Array.isArray(parsed)) return parsed.map((p: any) => (p || '').toString().trim()).filter((p: string) => p.length > 0); } catch {}
+          }
+          return s.split(/[;\n,]/g).map((x) => x.trim()).filter((x) => x.length > 0);
+        }
+        return [];
+      };
+      const formDetails = (detail?.form_details || {}) as Record<string, any>;
+      const yn = (v: any) => String(v ?? '').toLowerCase() === 'yes' || v === true || v === 'true';
+      const topics = {
+        road_safety: yn(formDetails['road_safety']),
+        electrical_safety: yn(formDetails['electrical_safety']),
+        work_height_safety: yn(formDetails['work_height'] || formDetails['work_height_safety']),
+        ofc: yn(formDetails['ofc']),
+        health_wellbeing: yn(formDetails['health_well'] || formDetails['health_wellbeing']),
+        tool_box_talk: yn(formDetails['tool_box'] || formDetails['tool_box_talk']),
+        thank_you_card: yn(formDetails['thank_you_card']),
+      };
+      const peopleList = parsePeople(detail?.people_interacted_with);
+      const thankYouCardUrl = (detail?.card_attachments || []).map((a: any) => a?.url).filter(Boolean)[0] || '';
+      const otherImages: string[] = (detail?.other_attachments || []).map((a: any) => a?.url).filter(Boolean);
+
+      const formatDateStr = (val?: string | null) => {
+        if (!val) return '—';
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return '—';
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
+  // Offscreen containers for snapshot (split to force page break)
+  const containerMain = document.createElement('div');
+  containerMain.style.padding = '20px';
+  containerMain.style.fontFamily = 'Arial, sans-serif';
+  containerMain.style.width = '1000px';
+  containerMain.style.background = '#f3f4f6';
+  containerMain.style.position = 'absolute';
+  containerMain.style.left = '-10000px';
+
+  const containerTail = document.createElement('div');
+  containerTail.style.padding = '20px';
+  containerTail.style.fontFamily = 'Arial, sans-serif';
+  containerTail.style.width = '1000px';
+  containerTail.style.background = '#f3f4f6';
+  containerTail.style.position = 'absolute';
+  containerTail.style.left = '-10000px';
+
+      const sectionCard = (title: string, bodyHtml: string) => `
+        <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
+          <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
+            <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
+              <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg' aria-hidden='true' focusable='false' style='display:block'>
+                <circle cx='16' cy='16' r='16' fill='#C72030' />
+                <text x='16' y='16' dy='.35em' fill='#ffffff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text>
+              </svg>
+            </div>
+            <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${title}</h2>
+          </div>
+          <div style='padding:24px;'>${bodyHtml}</div>
+        </div>`;
+
+      const labelVal = (label: string, value: string) => `
+        <div style='display:flex;flex-direction:column;gap:4px;'>
+          <span style='color:#6b7280;font-size:12px;'>${label}</span>
+          <span style='color:#111;font-size:13px;font-weight:600;'>${value || '—'}</span>
+        </div>`;
+
+      const grid2 = (items: string[]) => `
+        <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 48px;'>${items.join('')}</div>`;
+
+      const smtDetailsHtml = grid2([
+        labelVal('Name', detail?.smt_user?.name || '—'),
+        labelVal('Email Id', detail?.smt_user?.email || '—'),
+        labelVal('Function', detail?.smt_user?.department || '—'),
+        labelVal('Circle', detail?.circle_name || '—'),
+        labelVal('Zone/Work Location', detail?.work_location || '—'),
+      ]);
+
+      const facilityHtml = grid2([
+        labelVal('Type of Facility', detail?.facility_name || detail?.other_facility_name || '—'),
+        labelVal('Area of Visit', detail?.area_of_visit || '—'),
+      ]);
+
+      const dateHtml = `<div style='font-weight:600;'>${formatDateStr(detail?.smt_done_date || detail?.created_at)}</div>`;
+
+      const peopleHtml = peopleList.length
+        ? `<ol style='margin:8px 0 0 16px;'>${peopleList.map((p) => `<li style='margin-bottom:6px;font-size:13px;'>${p}</li>`).join('')}</ol>`
+        : `<span style='color:#9ca3af;font-size:13px;'>N/A</span>`;
+
+      const topicsHtml = `
+        <ul style='margin:0;padding-left:16px;'>
+          <li>Road Safety: ${topics.road_safety ? 'Yes' : 'No'}</li>
+          <li>Electrical Safety: ${topics.electrical_safety ? 'Yes' : 'No'}</li>
+          <li>Work/Height Safety: ${topics.work_height_safety ? 'Yes' : 'No'}</li>
+          <li>OFC: ${topics.ofc ? 'Yes' : 'No'}</li>
+          <li>Health and wellbeing initiatives by in: ${topics.health_wellbeing ? 'Yes' : 'No'}</li>
+          <li>Tool Box Talk: ${topics.tool_box_talk ? 'Yes' : 'No'}</li>
+          <li>Thank you card given: ${topics.thank_you_card ? 'Yes' : 'No'}</li>
+        </ul>`;
+
+      const attachmentsHtml = `
+        <div style='display:flex;flex-direction:column;gap:8px;'>
+          <div>
+            <div style='font-weight:600;margin-bottom:4px;'>Attach Card Image</div>
+            ${thankYouCardUrl ? `<div style='font-size:12px;word-break:break-all;color:#1f2937;'>${thankYouCardUrl}</div>` : `<span style='color:#9ca3af;font-size:13px;'>No file</span>`}
+          </div>
+          <div>
+            <div style='font-weight:600;margin-bottom:4px;'>Attach Other Images</div>
+            ${otherImages.length ? otherImages.map((u) => `<div style='font-size:12px;word-break:break-all;color:#1f2937;'>${u}</div>`).join('') : `<span style='color:#9ca3af;font-size:13px;'>No images</span>`}
+          </div>
+        </div>`;
+
+      // Key Observations
+      const keyObsHtml = `
+        <div style='font-size:13px;color:#111;'>${(detail?.key_observations && String(detail.key_observations)) || '<span style="color:#9ca3af;">N/A</span>'}</div>`;
+
+      // Person Responsible for Location
+      const responsibleHtml = `
+        <div style='font-size:13px;color:#111;'>${(detail?.responsible_person?.name && String(detail.responsible_person.name)) || '<span style="color:#9ca3af;">N/A</span>'}</div>`;
+
+      // Build HTML parts
+      containerMain.innerHTML = `
+        ${sectionCard('SMT DETAILS', smtDetailsHtml)}
+        ${sectionCard('TYPE OF FACILITY & AREA OF VISIT', facilityHtml)}
+        ${sectionCard('SMT DATE', dateHtml)}
+        ${sectionCard('PEOPLE INTERACTED WITH', peopleHtml)}
+        ${sectionCard('TOPICS DISCUSSED', topicsHtml)}
+        ${sectionCard('ATTACHMENTS', attachmentsHtml)}
+      `;
+
+      containerTail.innerHTML = `
+        ${sectionCard('KEY OBSERVATIONS/EXPERIENCE WITH TALKING TO PEOPLE', keyObsHtml)}
+        ${sectionCard('PERSON RESPONSIBLE FOR LOCATION', responsibleHtml)}
+        <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+      `;
+
+      // Append both containers for rendering
+      document.body.appendChild(containerMain);
+      document.body.appendChild(containerTail);
+
+      // Render canvases
+      const canvasMain = await html2canvas(containerMain, { scale: 2 });
+      const canvasTail = await html2canvas(containerTail, { scale: 2 });
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const marginX = 20;
+      const marginY = 20;
+      const usableWidth = pageWidth - marginX * 2;
+  const ratioMain = usableWidth / canvasMain.width;
+  const fullHeightPtMain = canvasMain.height * ratioMain;
+
+      const saveWithFallback = (pdfInst: any, filename: string) => {
+        try { pdfInst.save(filename); }
+        catch {
+          try {
+            const blob = pdfInst.output('blob');
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = filename; document.body.appendChild(a); a.click();
+            setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
+          } catch {}
+        }
+      };
+
+      // Render main part (can be multipage)
+      let pagesRendered = 0;
+      if (fullHeightPtMain <= pageHeight - marginY * 2) {
+        const imgDataMain = canvasMain.toDataURL('image/png');
+        pdf.addImage(imgDataMain, 'PNG', marginX, marginY, usableWidth, fullHeightPtMain, undefined, 'FAST');
+        pagesRendered++;
+      } else {
+        const pageUsableHeightPt = pageHeight - marginY * 2;
+        const sliceHeightPx = Math.floor(pageUsableHeightPt / ratioMain);
+        let renderedPx = 0;
+        let pageIndex = 0;
+        while (renderedPx < canvasMain.height) {
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvasMain.width;
+          sliceCanvas.height = Math.min(sliceHeightPx, canvasMain.height - renderedPx);
+          const ctx = sliceCanvas.getContext('2d');
+          ctx?.drawImage(canvasMain, 0, renderedPx, canvasMain.width, sliceCanvas.height, 0, 0, canvasMain.width, sliceCanvas.height);
+          const sliceData = sliceCanvas.toDataURL('image/png');
+          if (pageIndex > 0) pdf.addPage();
+          const sliceHeightPt = sliceCanvas.height * ratioMain;
+          pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+          renderedPx += sliceCanvas.height;
+          pageIndex++;
+          pagesRendered++;
+        }
+      }
+
+      // Determine if an extra blank page was left after rendering main
+      const getCurrentPageNumber = () => {
+        const infoGetter = (pdf as any)?.internal?.getCurrentPageInfo;
+        try {
+          if (typeof infoGetter === 'function') {
+            return infoGetter.call((pdf as any)).pageNumber as number;
+          }
+        } catch {}
+        return pdf.getNumberOfPages();
+      };
+      const currentPageAfterMain = getCurrentPageNumber();
+      const hasBlankSpacerPage = currentPageAfterMain > pagesRendered;
+
+      // Render tail part (can be multipage)
+      const ratioTail = usableWidth / canvasTail.width;
+      const fullHeightPtTail = canvasTail.height * ratioTail;
+      if (fullHeightPtTail <= pageHeight - marginY * 2) {
+        // Start tail on a new page unless a blank spacer page already exists
+        if (!hasBlankSpacerPage) pdf.addPage();
+        const imgDataTail = canvasTail.toDataURL('image/png');
+        pdf.addImage(imgDataTail, 'PNG', marginX, marginY, usableWidth, fullHeightPtTail, undefined, 'FAST');
+      } else {
+        const pageUsableHeightPt = pageHeight - marginY * 2;
+        const sliceHeightPx = Math.floor(pageUsableHeightPt / ratioTail);
+        let renderedPx = 0;
+        let pageIndex = 0;
+        // First tail slice starts on the next page, unless we already have a blank one
+        if (!hasBlankSpacerPage) pdf.addPage();
+        while (renderedPx < canvasTail.height) {
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvasTail.width;
+          sliceCanvas.height = Math.min(sliceHeightPx, canvasTail.height - renderedPx);
+          const ctx = sliceCanvas.getContext('2d');
+          ctx?.drawImage(canvasTail, 0, renderedPx, canvasTail.width, sliceCanvas.height, 0, 0, canvasTail.width, sliceCanvas.height);
+          const sliceData = sliceCanvas.toDataURL('image/png');
+          if (pageIndex > 0) pdf.addPage();
+          const sliceHeightPt = sliceCanvas.height * ratioTail;
+          pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+          renderedPx += sliceCanvas.height;
+          pageIndex++;
+        }
+      }
+
+      saveWithFallback(pdf, `smt_${row.id}.pdf`);
+      document.body.removeChild(containerMain);
+      document.body.removeChild(containerTail);
+    } catch (e: any) {
+      console.error('[SMT][PDF] Generation error', e);
+      setError(e?.message || 'Failed to generate PDF');
+      toast.error('Failed to generate PDF');
+    } finally {
+      setGeneratingId(null);
     }
   };
 
