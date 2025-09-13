@@ -5,16 +5,18 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { Eye } from 'lucide-react';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext } from '@/components/ui/pagination';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const columns = [
-  // { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
+  { key: 'actions', label: 'Action', sortable: false, defaultVisible: true },
   { key: 'user_name', label: 'User Name', sortable: true, defaultVisible: true },
   { key: 'email', label: 'Email ID', sortable: true, defaultVisible: true },
   { key: 'user_type', label: 'Type of User', sortable: true, defaultVisible: true },
-  { key: 'training_type', label: 'Training Type(Internal/External)', sortable: true, defaultVisible: true },
-  { key: 'training_name', label: 'Training Name', sortable: true, defaultVisible: true },
-  { key: 'training_date', label: 'Training Date', sortable: true, defaultVisible: true },
-  { key: 'attachment', label: 'Attachment', sortable: false, defaultVisible: true },
+  // { key: 'training_type', label: 'Training Type(Internal/External)', sortable: true, defaultVisible: true },
+  // { key: 'training_name', label: 'Training Name', sortable: true, defaultVisible: true },
+  // { key: 'training_date', label: 'Training Date', sortable: true, defaultVisible: true },
+  // { key: 'attachment', label: 'Attachment', sortable: false, defaultVisible: true },
 ];
 
 // API typess
@@ -96,6 +98,7 @@ const TrainingDashboard = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewAttachmentId, setPreviewAttachmentId] = useState<number | null>(null);
   const [downloadingAttachment, setDownloadingAttachment] = useState(false);
+  const [generatingId, setGeneratingId] = useState<number | null>(null);
   // Filter dialog state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filterEmail, setFilterEmail] = useState('');
@@ -227,9 +230,24 @@ const TrainingDashboard = () => {
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
-              onClick={() => navigate(`/maintenance/training-list/${item.id}`, { state: { row: item } })}
+              title="View user trainings"
+              onClick={() => navigate(`/maintenance/m-safe/training-list/training-user-details/${item.id}`, { state: { row: item } })}
             >
               <Eye className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 w-8 p-0 disabled:opacity-50"
+              title={generatingId === item.id ? 'Generating PDF...' : 'Download PDF'}
+              disabled={generatingId === item.id}
+              onClick={() => downloadPdf(item)}
+            >
+              {generatingId === item.id ? (
+                <span className="animate-pulse text-xs">...</span>
+              ) : (
+                <Download className="h-4 w-4" />
+              )}
             </Button>
           </div>
         );
@@ -283,6 +301,302 @@ const TrainingDashboard = () => {
       }
       default:
         return item[columnKey] || '';
+    }
+  };
+
+  // Download PDF for a user's trainings mirroring TrainingUserDetailPage
+  const downloadPdf = async (row: TrainingRow) => {
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) {
+      setError('Missing base URL or token');
+      toast.error('Missing base URL or token');
+      return;
+    }
+    setGeneratingId(row.id);
+    try {
+      // Fetch same data as TrainingUserDetailPage
+      const url = `https://${baseUrl}/trainings/${row.id}/user_trainings.json`;
+      const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json: { data?: any[] } = await res.json();
+  let records: any[] = json.data || [];
+  let primary = records[0] || {};
+
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const formatDateTime = (iso?: string | null) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        if (isNaN(d.getTime())) return '—';
+        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      };
+      const statusLabel = (status?: string | null) => {
+        const s = (status || '').trim().toLowerCase();
+        if (!s) return 'Not Yet';
+        if (s === 'completed') return 'Pass';
+        if (s === 'pending') return 'Fail';
+        return 'Not Yet';
+      };
+
+      // Helpers for attachments/images
+      const isImage = (url?: string, doctype?: string | null) => {
+        const u = url || '';
+        const dt = (doctype || '').toLowerCase();
+        return /(jpg|jpeg|png|webp|gif|svg)$/i.test(u) || dt.startsWith('image/');
+      };
+      const extToMime = (url?: string | null) => {
+        const u = (url || '').toLowerCase();
+        if (u.endsWith('.png')) return 'image/png';
+        if (u.endsWith('.jpg') || u.endsWith('.jpeg')) return 'image/jpeg';
+        if (u.endsWith('.webp')) return 'image/webp';
+        if (u.endsWith('.gif')) return 'image/gif';
+        if (u.endsWith('.svg')) return 'image/svg+xml';
+        return 'image/jpeg';
+      };
+      const fixDataUrlMime = (dataUrl: string, fallbackUrl?: string | null) => {
+        if (!dataUrl.startsWith('data:image')) {
+          const mime = extToMime(fallbackUrl);
+          // Replace leading mime if it's application/octet-stream or empty
+          return dataUrl.replace(/^data:[^;]+/, `data:${mime}`);
+        }
+        return dataUrl;
+      };
+      const toDataUrl = async (url: string): Promise<string> => {
+        try {
+          const resp = await fetch(url, { mode: 'cors', credentials: 'omit' });
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          const p: Promise<string> = new Promise((resolve, reject) => {
+            reader.onload = () => {
+              const raw = String(reader.result || url);
+              resolve(fixDataUrlMime(raw, url));
+            };
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(blob);
+          return await p;
+        } catch {
+          return url; // fallback
+        }
+      };
+      const toDataUrlViaApi = async (attId?: number | null, fallbackUrl?: string | null): Promise<string> => {
+        if (!attId) return fallbackUrl || '';
+        try {
+          const apiUrl = `https://${baseUrl}/attachfiles/${attId}?show_file=true`;
+          const resp = await fetch(apiUrl, { headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error('attach fetch failed');
+          const blob = await resp.blob();
+          const reader = new FileReader();
+          const p: Promise<string> = new Promise((resolve, reject) => {
+            reader.onload = () => {
+              const raw = String(reader.result || fallbackUrl || '');
+              resolve(fixDataUrlMime(raw, fallbackUrl));
+            };
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(blob);
+          return await p;
+        } catch {
+          // fallback to unauthenticated fetch or original url
+          return fallbackUrl ? await toDataUrl(fallbackUrl) : '';
+        }
+      };
+      const enrichAttachments = async (recs: any[]) => {
+        return Promise.all(
+          recs.map(async (rec) => {
+            const atts = Array.isArray(rec?.training_attachments) ? rec.training_attachments : [];
+            const enhanced = await Promise.all(
+              atts.map(async (a: any) => ({
+                ...a,
+                dataUrl: isImage(a?.url, a?.doctype) ? await toDataUrlViaApi(a?.id, a?.url) : undefined,
+              }))
+            );
+            return { ...rec, __enhanced_attachments: enhanced };
+          })
+        );
+      };
+
+      // Preload images to avoid CORS issues and keep quality
+      records = await enrichAttachments(records);
+      primary = records[0] || {};
+
+      // Build offscreen DOM mirroring sections
+      const container = document.createElement('div');
+      container.style.padding = '24px';
+      container.style.fontFamily = 'Arial, sans-serif';
+      container.style.width = '1000px';
+      container.style.background = '#f3f4f6';
+      container.style.position = 'absolute';
+      container.style.left = '-10000px';
+
+      const section = (title: string, bodyHtml: string) => `
+        <div style='background:#fff;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:24px;'>
+          <div style='display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f6f4ee;'>
+            <div style='width:32px;height:32px;flex:0 0 auto;display:inline-block;'>
+              <svg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'><circle cx='16' cy='16' r='16' fill='#C72030' /><text x='16' y='16' dy='.35em' fill='#fff' font-family='Arial, sans-serif' font-size='16' font-weight='700' text-anchor='middle'>${title.charAt(0).toUpperCase()}</text></svg>
+            </div>
+            <h2 style='margin:0;font-size:16px;font-weight:700;color:#111;'>${title}</h2>
+          </div>
+          <div style='padding:24px;'>${bodyHtml}</div>
+        </div>`;
+
+      const label = (l: string, v: string) => `
+        <div style='display:flex;flex-direction:column;gap:4px;'>
+          <span style='color:#6b7280;font-size:12px;'>${l}</span>
+          <span style='color:#111;font-size:13px;font-weight:600;'>${v || '—'}</span>
+        </div>`;
+      const grid3 = (items: string[]) => `
+        <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>${items.join('')}</div>`;
+
+  // Personal Details (from primary)
+      const createdBy = (primary?.created_by || {}) as any;
+      const personalHtml = grid3([
+        label('Name', createdBy?.name || '—'),
+        label('Email Id', createdBy?.email || '—'),
+        label('Mobile Number', createdBy?.mobile || '—'),
+        label('User Type', createdBy?.employee_type || '—'),
+        label('Status', statusLabel(primary?.status)),
+        label('Training Date', formatDateTime(primary?.training_date)),
+      ]);
+
+      const recordCard = (rec: any, index: number) => {
+        const top = `
+          <div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>
+            <div style='font-weight:700;color:#111;font-size:14px;'>Training Details ${records.length > 1 ? `(${index + 1})` : ''}</div>
+            <div style='font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb;'>${statusLabel(rec?.status)}</div>
+          </div>`;
+        const body = `
+          <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>
+            ${label('Training Name', rec?.training_subject_name || '—')}
+            ${label('Training Type', rec?.training_type || '—')}
+            ${label('Training Date', formatDateTime(rec?.training_date))}
+            ${label('Resource', `${rec?.resource_type || '—'} ${rec?.resource_id ? `#${rec.resource_id}` : ''}`)}
+            ${label('Created On', formatDateTime(rec?.created_at))}
+            ${label('Updated On', formatDateTime(rec?.updated_at))}
+          </div>`;
+  // Attachments: render images as smaller thumbnails (2-column grid) for compact PDFs
+        const atts = Array.isArray(rec?.__enhanced_attachments) ? rec.__enhanced_attachments : (Array.isArray(rec?.training_attachments) ? rec.training_attachments : []);
+        const attList = atts.length
+          ? atts
+              .map((a: any) =>
+                isImage(a?.url, a?.doctype)
+      ? `<div style='width:100%;margin:0;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;background:#fff;page-break-inside:avoid;'>
+           <img src='${a?.dataUrl || a?.url || ''}' crossOrigin='anonymous' style='width:100%;height:auto;max-height:240px;object-fit:contain;display:block;background:#fff'/>
+                     </div>`
+                  : `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`
+              )
+              .join('')
+          : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
+        const attachments = `
+          <div style='margin-top:12px;'>
+            <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
+      <div style='display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;'>${attList}</div>
+          </div>`;
+        return section('TRAINING DETAILS', top + body + attachments);
+      };
+
+      container.innerHTML = `
+        ${section('PERSONAL DETAILS', personalHtml)}
+        ${records.map((r, i) => recordCard(r, i)).join('')}
+        <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+      `;
+
+      document.body.appendChild(container);
+
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await html2canvas(container, { scale: 3, useCORS: true, allowTaint: false });
+      } catch (e) {
+        console.warn('[Training][PDF] html2canvas failed with images, falling back to URLs only', e);
+        // Fallback: rebuild container replacing images with URLs to avoid CORS-taint
+        const rebuildWithUrlOnly = () => {
+          const recsHtml = records
+            .map((rec: any, i: number) => {
+              const top = `
+                <div style='display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;'>
+                  <div style='font-weight:700;color:#111;font-size:14px;'>Training Details ${records.length > 1 ? `(${i + 1})` : ''}</div>
+                  <div style='font-size:11px;font-weight:700;padding:4px 8px;border-radius:6px;background:#f3f4f6;border:1px solid #e5e7eb;'>${statusLabel(rec?.status)}</div>
+                </div>`;
+              const body = `
+                <div style='display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 32px;'>
+                  ${label('Training Name', rec?.training_subject_name || '—')}
+                  ${label('Training Type', rec?.training_type || '—')}
+                  ${label('Training Date', formatDateTime(rec?.training_date))}
+                  ${label('Resource', `${rec?.resource_type || '—'} ${rec?.resource_id ? `#${rec.resource_id}` : ''}`)}
+                  ${label('Created On', formatDateTime(rec?.created_at))}
+                  ${label('Updated On', formatDateTime(rec?.updated_at))}
+                </div>`;
+              const atts = Array.isArray(rec?.training_attachments) ? rec.training_attachments : [];
+              const list = atts.length
+                ? atts.map((a: any) => `<div style='font-size:12px;color:#1f2937;word-break:break-all;'>• ${a?.url || ''}</div>`).join('')
+                : `<span style='color:#9ca3af;font-size:13px;'>No attachments</span>`;
+              const attachments = `
+                <div style='margin-top:12px;'>
+                  <div style='font-weight:600;margin-bottom:4px;'>Attachments</div>
+                  ${list}
+                </div>`;
+              return section('TRAINING DETAILS', top + body + attachments);
+            })
+            .join('');
+
+          container.innerHTML = `
+            ${section('PERSONAL DETAILS', personalHtml)}
+            ${recsHtml}
+            <div style='text-align:right;font-size:10px;color:#666;margin-top:8px;'>Generated: ${new Date().toLocaleString()}</div>
+          `;
+        };
+        rebuildWithUrlOnly();
+        canvas = await html2canvas(container, { scale: 2 });
+      }
+      const pdf = new jsPDF('p', 'pt', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const marginX = 20;
+      const marginY = 20;
+      const usableWidth = pageWidth - marginX * 2;
+      const ratio = usableWidth / canvas.width;
+      const fullHeightPt = canvas.height * ratio;
+
+      if (fullHeightPt <= pageHeight - marginY * 2) {
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', marginX, marginY, usableWidth, fullHeightPt, undefined, 'FAST');
+      } else {
+        const pageUsableHeightPt = pageHeight - marginY * 2;
+        const sliceHeightPx = Math.floor(pageUsableHeightPt / ratio);
+        let renderedPx = 0;
+        let pageIndex = 0;
+        while (renderedPx < canvas.height) {
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = Math.min(sliceHeightPx, canvas.height - renderedPx);
+          const ctx = sliceCanvas.getContext('2d');
+          ctx?.drawImage(canvas, 0, renderedPx, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+          const sliceData = sliceCanvas.toDataURL('image/png');
+          if (pageIndex > 0) pdf.addPage();
+          const sliceHeightPt = sliceCanvas.height * ratio;
+          pdf.addImage(sliceData, 'PNG', marginX, marginY, usableWidth, sliceHeightPt, undefined, 'FAST');
+          renderedPx += sliceCanvas.height;
+          pageIndex++;
+        }
+      }
+
+      try { pdf.save(`training_${row.id}.pdf`); }
+      catch {
+        try {
+          const blob = pdf.output('blob');
+          const urlObj = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = urlObj; a.download = `training_${row.id}.pdf`; document.body.appendChild(a); a.click();
+          setTimeout(() => { URL.revokeObjectURL(urlObj); document.body.removeChild(a); }, 1500);
+        } catch {}
+      }
+
+      document.body.removeChild(container);
+    } catch (e: any) {
+      console.error('[Training][PDF] Generation error', e);
+      setError(e?.message || 'Failed to generate PDF');
+      toast.error('Failed to generate PDF');
+    } finally {
+      setGeneratingId(null);
     }
   };
 

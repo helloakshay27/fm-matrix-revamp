@@ -411,7 +411,7 @@ export const GRNSRNDashboard = () => {
         searchTerm={searchQuery}
         onSearchChange={setSearchQuery}
         searchPlaceholder="Search..."
-        enableExport={true}
+        hideTableExport={true}
         exportFileName="grn_srn_export"
         enableSearch={true}
         leftActions={leftActions}

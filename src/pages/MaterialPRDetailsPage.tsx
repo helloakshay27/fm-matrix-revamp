@@ -136,12 +136,12 @@ interface TableRow {
 const columns: ColumnConfig[] = [
   { key: "srNo", label: "SR No.", sortable: true, defaultVisible: true },
   { key: "item", label: "Item", sortable: true, defaultVisible: true },
-  {
-    key: "availability",
-    label: "Availability",
-    sortable: true,
-    defaultVisible: true,
-  },
+  // {
+  //   key: "availability",
+  //   label: "Availability",
+  //   sortable: true,
+  //   defaultVisible: true,
+  // },
   {
     key: "sacHsnCode",
     label: "SAC/HSN Code",
