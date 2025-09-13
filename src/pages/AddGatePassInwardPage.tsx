@@ -632,9 +632,7 @@ export const AddGatePassInwardPage = () => {
                         </MuiSelect>
                       </FormControl>
                     </td>
-                    <td className="px-4 py-2 pt-4">
-                      
-                      
+                    <td className="px-4 py-2 pt-4">                      
                       <TextField
                         variant="outlined"
                         size="small"
