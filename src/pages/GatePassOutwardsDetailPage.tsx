@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload, FileText, QrCode, Box, User, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { API_CONFIG } from '@/config/apiConfig';
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
@@ -22,6 +23,8 @@ export const GatePassOutwardsDetailPage = () => {
   const [remarks, setRemarks] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [receivedItems, setReceivedItems] = useState<number[]>([]);
+  const [isAttachmentModalOpen, setIsAttachmentModalOpen] = useState(false);
+  const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -132,6 +135,8 @@ export const GatePassOutwardsDetailPage = () => {
     att.document ? `<a href="${att.document}" target="_blank" rel="noopener noreferrer">📎</a>` : ''
   ).filter(Boolean).join(', ');
   
+
+  console.log('Attachment Links:', gatePassData.attachments )
   // Prepare itemsData from gatePassData.gate_pass_materials
   const itemsData = (gatePassData.gate_pass_materials || []).map((mat: any, idx: number) => ({
     sNo: String(idx + 1).padStart(2, '0'),
@@ -205,7 +210,7 @@ export const GatePassOutwardsDetailPage = () => {
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
-                        <span className="text-sm text-gray-900">{mobileNo}</span>
+                        <span class-Name="text-sm text-gray-900">{mobileNo}</span>
                     </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Site:</span>
@@ -297,19 +302,35 @@ export const GatePassOutwardsDetailPage = () => {
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">
-{gatePassData.attachments && gatePassData.attachments.length > 0 ? (
-                            gatePassData.attachments.map((att: any, idx: number) => (
+                          {/* Attachment column */}
+                          {gatePassData.attachments && gatePassData.attachments.length > 0 ? (
+                            gatePassData.attachments.map((att: any, idx: number) =>
                               att.document ? (
                                 <span key={idx} className="inline-flex items-center gap-2 mr-2">
-                                  <a href={att.document} download title="Download">
-                                    <Download className="w-4 h-4 text-green-600 hover:text-green-800 inline-block" />
-                                  </a>
+                                  <button
+                                    title="View/Download"
+                                    onClick={() => {
+                                      setSelectedAttachment({
+                                        id: att.id, // <-- ensure id is present for AttachmentPreviewModal
+                                        url: att.document,
+                                        document_name: att.document_name || att.document?.split('/').pop() || `Document_${idx + 1}`,
+                                        document_file_name: att.document_file_name,
+                                        doctype: att.doctype,
+                                      });
+                                      setIsAttachmentModalOpen(true);
+                                    }}
+                                    className="p-0 bg-transparent border-none hover:underline text-green-600 hover:text-green-800"
+                                    style={{ cursor: 'pointer' }}
+                                  >
+                                    <Download className="w-4 h-4 inline-block" />
+                                  </button>
                                 </span>
                               ) : null
-                            ))
+                            )
                           ) : (
                             '--'
-                          )}                        </TableCell>
+                          )}
+                        </TableCell>
                         <TableCell className="px-4 py-3 text-sm">
                           {receivedItems.includes(index) ? (
                             <span className="text-green-600 font-medium">Received</span>
@@ -446,5 +467,13 @@ export const GatePassOutwardsDetailPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Attachment Preview Modal */}
+      <AttachmentPreviewModal
+        isModalOpen={isAttachmentModalOpen}
+        setIsModalOpen={setIsAttachmentModalOpen}
+        selectedDoc={selectedAttachment}
+        setSelectedDoc={setSelectedAttachment}
+      />
     </div>;
 };

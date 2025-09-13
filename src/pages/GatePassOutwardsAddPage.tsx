@@ -728,8 +728,12 @@ export const GatePassOutwardsAddPage = () => {
                         type="number"
                         value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0, step: 'any' }}
-                      // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
+                        inputProps={{
+                          // Remove max validation to avoid browser tooltip
+                          min: 0,
+                          step: 'any'
+                        }}
+                        // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
                     <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.unit} onChange={(e) => {

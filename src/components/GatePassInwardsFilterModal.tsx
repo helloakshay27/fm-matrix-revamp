@@ -13,7 +13,7 @@ interface GatePassInwardsFilterModalProps {
 
 export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilters }: GatePassInwardsFilterModalProps) => {
   // Provide default filters if undefined
-  const safeFilters = filters || {
+  const defaultFilters = {
     gateNumber: '',
     createdBy: '',
     materialName: '',
@@ -21,8 +21,17 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
     materialType: '',
     expectedReturnDate: '',
   };
+  const safeFilters = filters || defaultFilters;
 
   const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
+  // Local state for modal filter changes
+  const [localFilters, setLocalFilters] = useState(safeFilters);
+
+  // Sync localFilters with filters when modal opens
+  React.useEffect(() => {
+    if (isOpen) setLocalFilters(safeFilters);
+    // eslint-disable-next-line
+  }, [isOpen]);
 
   React.useEffect(() => {
     fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
@@ -36,23 +45,21 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
       .catch(() => setVendors([]));
   }, []);
 
+  // Update localFilters only
   const handleChange = (field: string, value: string) => {
-    setFilters({ ...safeFilters, [field]: value });
+    setLocalFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  // Apply localFilters to parent state
   const handleApply = () => {
+    setFilters(localFilters);
     onClose();
   };
 
+  // Reset localFilters to default and update parent filters
   const handleReset = () => {
-    setFilters({
-      gateNumber: '',
-      createdBy: '',
-      materialName: '',
-      supplierName: '',
-      materialType: '',
-      expectedReturnDate: '',
-    });
+    setLocalFilters(defaultFilters);
+    setFilters(defaultFilters); // <-- update parent filters so table resets
   };
 
   const fieldStyles = {
@@ -108,7 +115,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             <TextField
               label="Gate Number"
               placeholder="Enter Gate Number"
-              value={safeFilters.gateNumber}
+              value={localFilters.gateNumber}
               onChange={e => handleChange('gateNumber', e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -120,7 +127,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             <TextField
               label="Created By"
               placeholder="Enter Created By"
-              value={safeFilters.createdBy}
+              value={localFilters.createdBy}
               onChange={e => handleChange('createdBy', e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
@@ -136,7 +143,7 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
                 labelId="supplierName-label"
                 label="Vendor"
                 displayEmpty
-                value={safeFilters.supplierName}
+                value={localFilters.supplierName}
                 onChange={e => handleChange('supplierName', e.target.value)}
               >
                 <option value="">Select vendor</option>
@@ -147,18 +154,18 @@ export const GatePassInwardsFilterModal = ({ isOpen, onClose, filters, setFilter
             </FormControl>
           </div>
           {/* Expected Return Date */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <TextField
               label="Expected Return Date"
               type="date"
-              value={safeFilters.expectedReturnDate}
+              value={localFilters.expectedReturnDate}
               onChange={e => handleChange('expectedReturnDate', e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               sx={fieldStyles}
               inputProps={{ min: '', max: '' }}
             />
-          </div>
+          </div> */}
           {/* Action Buttons */}
           <div className="flex justify-end gap-3 pt-4">
             <Button
