@@ -272,14 +272,27 @@ export const getAuthHeader = (): string => {
   return `Bearer ${token}`;
 }
 
+// Helper to get role name header
+export const getRoleNameHeader = (): string | null => {
+  return localStorage.getItem('user_role_name');
+}
+
 // Helper to create authenticated fetch options
 export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: string | FormData | null): RequestInit => {
+  const headers: Record<string, string> = {
+    'Authorization': getAuthHeader(),
+    'Content-Type': 'application/json',
+  };
+
+  // Add role name header if available
+  const roleName = getRoleNameHeader();
+  if (roleName) {
+    headers['X-User-Role'] = roleName;
+  }
+
   const options: RequestInit = {
     method,
-    headers: {
-      'Authorization': getAuthHeader(),
-      'Content-Type': 'application/json',
-    },
+    headers,
   };
 
   if (body && method !== 'GET') {

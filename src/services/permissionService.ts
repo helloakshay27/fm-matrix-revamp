@@ -56,6 +56,13 @@ export const permissionService = {
       const response = await apiClient.get<UserRoleResponse>('/pms/users/get_user_role.json');
       
       if (response.data.success) {
+        // Store display name and role name in local storage
+        if (response.data.display_name) {
+          localStorage.setItem('user_display_name', response.data.display_name);
+        }
+        if (response.data.role_name) {
+          localStorage.setItem('user_role_name', response.data.role_name);
+        }
         return response.data;
       } else {
         console.error('Failed to fetch user role');
@@ -65,6 +72,42 @@ export const permissionService = {
       console.error('Error fetching user role:', error);
       return null;
     }
+  },
+
+  /**
+   * Get the stored display name from local storage
+   */
+  getDisplayName(): string | null {
+    return localStorage.getItem('user_display_name');
+  },
+
+  /**
+   * Get the stored role name from local storage
+   */
+  getRoleName(): string | null {
+    return localStorage.getItem('user_role_name');
+  },
+
+  /**
+   * Clear the stored display name from local storage
+   */
+  clearDisplayName(): void {
+    localStorage.removeItem('user_display_name');
+  },
+
+  /**
+   * Clear the stored role name from local storage
+   */
+  clearRoleName(): void {
+    localStorage.removeItem('user_role_name');
+  },
+
+  /**
+   * Clear all stored user data from local storage
+   */
+  clearUserData(): void {
+    localStorage.removeItem('user_display_name');
+    localStorage.removeItem('user_role_name');
   },
 
   /**
@@ -388,5 +431,23 @@ export const permissionService = {
     return possibleModules.some(moduleName => 
       this.isModuleEnabled(userRole, moduleName)
     );
-  }
+  },
+
+  /**
+   * Set role name in local storage and headers
+   * This is useful for manual role name setting
+   */
+  setRoleName(roleName: string): void {
+    localStorage.setItem('user_role_name', roleName);
+  },
+
+  /**
+   * Get user role information including role name for headers
+   */
+  getUserRoleInfo(): { displayName: string | null; roleName: string | null } {
+    return {
+      displayName: this.getDisplayName(),
+      roleName: this.getRoleName()
+    };
+  },
 };
