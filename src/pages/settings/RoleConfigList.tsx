@@ -36,20 +36,7 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true
   },
-  {
-    key: 'description',
-    label: 'Description',
-    sortable: true,
-    hideable: true,
-    draggable: true
-  },
-  {
-    key: 'permissions',
-    label: 'Permissions',
-    sortable: false,
-    hideable: true,
-    draggable: true
-  },
+
   {
     key: 'createdOn',
     label: 'Created On',
@@ -64,63 +51,11 @@ const columns: ColumnConfig[] = [
     hideable: true,
     draggable: true
   },
-  {
-    key: 'active',
-    label: 'Status',
-    sortable: true,
-    hideable: true,
-    draggable: true
-  }
+ 
 ];
 
 // Mock data for role configuration management
-const mockRoleConfigData: RoleConfigItem[] = [
-  {
-    id: 1,
-    roleName: 'Super Admin',
-    description: 'Full system access and administration rights',
-    permissions: ['CREATE', 'READ', 'UPDATE', 'DELETE', 'MANAGE_USERS'],
-    createdOn: '15/08/2024',
-    createdBy: 'System Admin',
-    active: true
-  },
-  {
-    id: 2,
-    roleName: 'Facility Manager',
-    description: 'Manage facility operations and maintenance',
-    permissions: ['READ', 'UPDATE', 'MANAGE_TICKETS', 'MANAGE_ASSETS'],
-    createdOn: '12/08/2024',
-    createdBy: 'Robert Day2',
-    active: true
-  },
-  {
-    id: 3,
-    roleName: 'Maintenance Staff',
-    description: 'Handle maintenance tasks and updates',
-    permissions: ['READ', 'UPDATE', 'MANAGE_TASKS'],
-    createdOn: '10/08/2024',
-    createdBy: 'Robert Day2',
-    active: true
-  },
-  {
-    id: 4,
-    roleName: 'Security Officer',
-    description: 'Monitor security and access control',
-    permissions: ['READ', 'MANAGE_VISITORS', 'MANAGE_SECURITY'],
-    createdOn: '08/08/2024',
-    createdBy: 'Robert Day2',
-    active: false
-  },
-  {
-    id: 5,
-    roleName: 'Accountant',
-    description: 'Handle financial operations and approvals',
-    permissions: ['READ', 'MANAGE_FINANCE', 'APPROVE_INVOICES'],
-    createdOn: '05/08/2024',
-    createdBy: 'Finance Head',
-    active: true
-  }
-];
+
 
 // Transform API data to frontend format
 const transformRoleConfigData = (apiData: ApiRoleConfigItem[]): RoleConfigItem[] => {
@@ -340,7 +275,7 @@ export const RoleConfigList = () => {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-wide uppercase">Role Configuration</h1>
-            <p className="text-gray-600">Manage role permissions and configurations</p>
+            <p className="text-gray-600">Manage role permissions and configurationsaa</p>
           </div>
         </div>
       </header>

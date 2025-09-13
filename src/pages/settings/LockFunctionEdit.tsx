@@ -6,13 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from 'sonner';
 import { lockFunctionService, LockFunction, UpdateLockFunctionPayload } from '@/services/lockFunctionService';
+import { moduleService, LockModule } from '@/services/moduleService';
 
 export const LockFunctionEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [lockFunction, setLockFunction] = useState<LockFunction | null>(null);
+  const [modules, setModules] = useState<LockModule[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -24,41 +27,60 @@ export const LockFunctionEdit = () => {
     phase_id: '',
     module_id: '',
     parent_function: '',
-    url: ''
   });
 
   useEffect(() => {
-    const fetchLockFunction = async () => {
+    const fetchData = async () => {
       if (!id) return;
       
       setLoading(true);
       try {
-        const data = await lockFunctionService.fetchLockFunction(parseInt(id));
-        setLockFunction(data);
+        // Fetch both lock function and modules
+        const [lockFunctionData, modulesData] = await Promise.all([
+          lockFunctionService.fetchLockFunction(parseInt(id)),
+          moduleService.fetchModules()
+        ]);
+        
+        setLockFunction(lockFunctionData);
+        setModules(modulesData);
         setFormData({
-          name: data.name || '',
-          action_name: data.action_name || '',
-          active: Boolean(data.active),
-          lock_controller_id: data.lock_controller_id?.toString() || '',
-          phase_id: data.phase_id?.toString() || '',
-          module_id: data.module_id?.toString() || '',
-          parent_function: data.parent_function || '',
-          url: data.url || ''
+          name: lockFunctionData.name || '',
+          action_name: lockFunctionData.action_name || '',
+          active: Boolean(lockFunctionData.active),
+          lock_controller_id: lockFunctionData.lock_controller_id?.toString() || '',
+          phase_id: lockFunctionData.phase_id?.toString() || '',
+          module_id: lockFunctionData.module_id?.toString() || '',
+          parent_function: lockFunctionData.parent_function || '',
         });
       } catch (error: any) {
-        console.error('Error fetching lock function:', error);
-        toast.error(`Failed to load lock function: ${error.message}`);
+        console.error('Error fetching data:', error);
+        toast.error(`Failed to load data: ${error.message}`);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLockFunction();
+    fetchData();
   }, [id]);
 
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      toast.error('Function name is required');
+      return false;
+    }
+    if (!formData.action_name.trim()) {
+      toast.error('Action name is required');
+      return false;
+    }
+    if (!formData.module_id) {
+      toast.error('Module selection is required');
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async () => {
-    if (!lockFunction || !formData.name.trim()) {
-      toast.error('Please fill in all required fields');
+    if (!lockFunction || !validateForm()) {
       return;
     }
 
@@ -71,7 +93,7 @@ export const LockFunctionEdit = () => {
           active: formData.active,
           lock_controller_id: formData.lock_controller_id ? parseInt(formData.lock_controller_id) : undefined,
           phase_id: formData.phase_id ? parseInt(formData.phase_id) : undefined,
-          module_id: parseInt(formData.module_id) || 0,
+          module_id: parseInt(formData.module_id),
           parent_function: formData.parent_function.trim() || undefined,
         }
       };
@@ -174,85 +196,36 @@ export const LockFunctionEdit = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="action_name">Action Name</Label>
+              <Label htmlFor="action_name">Action Name *</Label>
               <Input
                 id="action_name"
                 value={formData.action_name}
                 onChange={(e) => handleChange('action_name', e.target.value)}
-                placeholder="Enter action name"
+                placeholder="Enter action name (e.g., unlock, pms_notices)"
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="parent_function">Parent Function</Label>
-              <Input
-                id="parent_function"
-                value={formData.parent_function}
-                onChange={(e) => handleChange('parent_function', e.target.value)}
-                placeholder="Enter parent function"
-              />
+              <Label htmlFor="module_id">Module *</Label>
+              <Select value={formData.module_id} onValueChange={(value) => handleChange('module_id', value)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select module" />
+                </SelectTrigger>
+                <SelectContent>
+                  {modules.map((module) => (
+                    <SelectItem key={module.id} value={module.id?.toString() || ''}>
+                      {module.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => handleChange('active', checked)}
-              />
-              <Label htmlFor="active">Active</Label>
-            </div>
+            
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>System Configuration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="lock_controller_id">Lock Controller ID</Label>
-              <Input
-                id="lock_controller_id"
-                type="number"
-                value={formData.lock_controller_id}
-                onChange={(e) => handleChange('lock_controller_id', e.target.value)}
-                placeholder="Enter lock controller ID"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="phase_id">Phase ID</Label>
-              <Input
-                id="phase_id"
-                type="number"
-                value={formData.phase_id}
-                onChange={(e) => handleChange('phase_id', e.target.value)}
-                placeholder="Enter phase ID"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="module_id">Module ID</Label>
-              <Input
-                id="module_id"
-                type="number"
-                value={formData.module_id}
-                onChange={(e) => handleChange('module_id', e.target.value)}
-                placeholder="Enter module ID"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="url">URL</Label>
-              <Input
-                id="url"
-                value={formData.url}
-                onChange={(e) => handleChange('url', e.target.value)}
-                placeholder="Enter URL"
-              />
-            </div>
-          </CardContent>
-        </Card>
+       
       </div>
     </div>
   );

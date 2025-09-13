@@ -56,6 +56,7 @@ export const API_CONFIG = {
     SUB_FUNCTION_DETAILS: '/lock_sub_functions', // Base path, will append /:id.json
     // Module, Function, Sub-Function CRUD endpoints
     MODULES: '/lock_modules.json',
+    MODULE_DETAILS: '/lock_modules', // Base path, will append /:id.json
     CREATE_MODULE: '/lock_modules.json',
     UPDATE_MODULE: '/lock_modules', // Base path, will append /:id.json
     DELETE_MODULE: '/lock_modules', // Base path, will append /:id.json
