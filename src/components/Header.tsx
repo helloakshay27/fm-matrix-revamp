@@ -33,6 +33,7 @@ import {
   clearSites,
 } from "@/store/slices/siteSlice";
 import { getUser, clearAuth } from "@/utils/auth";
+import { permissionService } from "@/services/permissionService";
 import { is } from "date-fns/locale";
 
 export interface Company {
@@ -47,6 +48,8 @@ export interface Site {
 
 export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
+  const [userRoleName, setUserRoleName] = useState<string | null>(null);
   const dispatch = useDispatch<AppDispatch>();
 
   const currentPath = window.location.pathname;
@@ -105,11 +108,23 @@ export const Header = () => {
     "53815",
   ];
 
+  // Load user display name and role name from localStorage
+  useEffect(() => {
+    const loadUserInfo = () => {
+      const displayName = permissionService.getDisplayName();
+      const roleName = permissionService.getRoleName();
+      setUserDisplayName(displayName);
+      setUserRoleName(roleName);
+    };
+
+    loadUserInfo();
+  }, []);
+
   useEffect(() => {
     if (selectedCompany) {
       // setCompany(selectedCompany.name)
       localStorage.setItem("selectedCompany", selectedCompany.name);
-      localStorage.setItem("selectedCompanyId", selectedCompany.id);
+      localStorage.setItem("selectedCompanyId", selectedCompany.id.toString());
     }
   }, [selectedCompany]);
 
@@ -348,7 +363,7 @@ export const Header = () => {
               </div>
               <div className="hidden md:block">
                 <span className="text-sm font-medium text-[#1a1a1a]">
-                  {user.firstname}
+                  { user.firstname}
                 </span>
                 <ChevronDown className="w-3 h-3 text-[#1a1a1a] inline-block ml-1" />
               </div>
@@ -356,24 +371,23 @@ export const Header = () => {
             <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
               <div className="px-2 py-2 mb-2 border-b border-gray-100">
                 <p className="font-medium text-sm">
-                  {user.firstname} {user.lastname}
+                  { `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-1">
                   <Mail className="w-3 h-3 mr-1" />
                   <span>{user.email}</span>
                 </div>
                 <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  {user?.lock_role?.name || "No Role"}{" "}
+                  {userRoleName || user?.lock_role?.name || "No Role"}{" "}
                 </div>
               </div>
-              <DropdownMenuItem className="flex items-center gap-2">
-                {/* <Settings className="w-4 h-4" />
-                <span>Profile Settings</span> */}
-              </DropdownMenuItem>
+           
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
                   clearAuth();
+                  // Clear stored user data from permissionService
+                  permissionService.clearUserData();
                   window.location.reload();
 
                   navigate("/login");
