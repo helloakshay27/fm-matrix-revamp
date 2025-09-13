@@ -251,35 +251,37 @@ const CRMWalletPointExpiry = () => {
                 )
             }
 
-            <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
-                <CardHeader
-                    className="bg-[#F6F4EE]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
-                        <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
-                            L
-                        </span>
-                        LOGS
-                    </CardTitle>
-                </CardHeader>
-                <CardContent
-                    className="px-[50px] py-[25px] bg-[#F6F7F7]"
-                    style={{ border: "1px solid #D9D9D9" }}
-                >
-                    <div className="">
-                        <div className="relative">
-                            {/* Background gradient */}
-                            <div className="absolute inset-0 bg-gradient-glow opacity-30" />
+            {!addAllowed &&
+                <Card className="mb-6" style={{ border: "1px solid #D9D9D9" }}>
+                    <CardHeader
+                        className="bg-[#F6F4EE]"
+                        style={{ border: "1px solid #D9D9D9" }}
+                    >
+                        <CardTitle className="flex items-center gap-4 text-[20px] fw-semibold text-[#000]">
+                            <span className="w-[40px] h-[40px] bg-[#E5E0D3] text-[#000] rounded-full flex items-center justify-center text-md font-bold">
+                                L
+                            </span>
+                            LOGS
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent
+                        className="px-[50px] py-[25px] bg-[#F6F7F7]"
+                        style={{ border: "1px solid #D9D9D9" }}
+                    >
+                        <div className="">
+                            <div className="relative">
+                                {/* Background gradient */}
+                                <div className="absolute inset-0 bg-gradient-glow opacity-30" />
 
-                            {/* Content */}
-                            <div className="relative z-10">
-                                <LogsTimeline logs={logs} title="Activity Logs" />
+                                {/* Content */}
+                                <div className="relative z-10">
+                                    <LogsTimeline logs={logs} title="Activity Logs" />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            }
 
             <RuleAlert
                 open={showRuleCreateAlert}
