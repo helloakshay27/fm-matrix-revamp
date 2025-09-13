@@ -219,6 +219,14 @@ export const GatePassInwardsDetailPage = () => {
                     <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
                   </div>
                   <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Gate Pass Date:</span>
+                    <span className="text-sm text-gray-900">{selectedEntry.gate_pass_date ? new Date(selectedEntry.gate_pass_date).toLocaleDateString() : '--'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Reporting Time:</span>
+                    <span className="text-sm text-gray-900">{selectedEntry.due_at ? new Date(selectedEntry.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Vendor:</span>
                     <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
                   </div>
@@ -226,10 +234,15 @@ export const GatePassInwardsDetailPage = () => {
                     <span className="text-sm font-medium text-gray-700">Date/Time:</span>
                     <span className="text-sm text-gray-900">{passDate}</span>
                   </div>
+                  <div className='flex justify-between items-center'>
+                    <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
+                    <span className={`text-sm text-gray-900`} style={{textTransform: 'capitalize'}}>{gatePassData.mode_of_transport || '--'}</span>
+                  </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium text-gray-700">Vehicle Number:</span>
                     <span className="text-sm text-gray-900">{vehicleNo}</span>
                   </div>
+                  
                 </div>
               </div>
             </div>

@@ -182,15 +182,11 @@ export const GatePassOutwardsAddPage = () => {
 
       setMaterialRows(updatedRows);
     } else if (field === 'quantity') {
-      const currentRow = newRows.find(row => row.id === id);
-      if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
-        toast({
-          title: "Validation Error",
-          description: `Quantity cannot be greater than ${currentRow.maxQuantity}.`,
-          variant: "destructive"
-        });
-        return;
-      }
+      // const currentRow = newRows.find(row => row.id === id);
+      // if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
+      //   toast.error(`Quantity cannot be greater than ${currentRow.maxQuantity}.`);
+      //   return;
+      // }
       setMaterialRows(newRows);
     } else {
       setMaterialRows(newRows);
@@ -286,7 +282,9 @@ export const GatePassOutwardsAddPage = () => {
           toast.error("Vendor is required");
           return;
         }
-        if (!gatePassDetails.gateNumberId) {
+        console.log("Gate Pass Details:", gatePassDetails);
+
+        if (!visitorDetails.gateNoId) {
           toast.error("Gate Number is required");
           return;
         }
@@ -329,6 +327,7 @@ export const GatePassOutwardsAddPage = () => {
     formData.append('gate_pass[site_id]', selectedSite?.id?.toString() ?? '');
     formData.append('gate_pass[company_id]', selectedCompany?.id?.toString() ?? '');
     formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo ? visitorDetails.vehicleNo : '');
+    if (visitorDetails.modeOfTransport) formData.append('gate_pass[mode_of_transport]', visitorDetails.modeOfTransport);
     formData.append('gate_pass[due_at]', visitorDetails.reportingTime ? visitorDetails.reportingTime : '');
     formData.append('gate_pass[remarks]', gatePassDetails.remarks ? gatePassDetails.remarks : '');
     formData.append('gate_pass[building_id]', gatePassDetails.buildingId?.toString() ?? '');
@@ -375,18 +374,11 @@ export const GatePassOutwardsAddPage = () => {
 
       await gatePassInwardService.createGatePassInward(formData);
 
-      toast({
-        title: "Success",
-        description: "Gate pass outward entry created successfully!"
-      });
+      toast.success("Gate pass outward entry created successfully!");
       navigate('/security/gate-pass/outwards');
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create entry. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to create entry. Please try again.");
     }
   };
   useEffect(() => {
@@ -734,9 +726,9 @@ export const GatePassOutwardsAddPage = () => {
                         variant="outlined"
                         size="small"
                         type="number"
-                        value={row.maxQuantity !== null ? row.maxQuantity : ''}
+                        value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0 }}
+                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0, step: 'any' }}
                       // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>

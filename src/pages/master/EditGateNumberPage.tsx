@@ -103,7 +103,7 @@ const EditGateNumberPage = () => {
         company_id: companyId,
         pms_site_id: siteId,
         project_id: null, // will be set after projects are loaded
-        active: initialData.active === 1 || initialData.active === true,
+        // active: initialData.active === 1 || initialData.active === true,
       });
       // Fetch projects for the site and set project after loaded
       if (siteId) {
@@ -150,7 +150,7 @@ const EditGateNumberPage = () => {
       const payload = {
         gate_number: {
           ...data,
-          active: data.active ? 1 : 0,
+          // active: data.active ? 1 : 0,
           building_id: data.project_id,
         },
       };
@@ -257,7 +257,7 @@ const EditGateNumberPage = () => {
             )}
           />
           {/* Status Dropdown */}
-          <Controller
+          {/* <Controller
             name="active"
             control={control}
             render={({ field }) => (
@@ -278,7 +278,7 @@ const EditGateNumberPage = () => {
                 </FormControl>
               </Box>
             )}
-          />
+          /> */}
         </div>
         <div className="flex justify-center space-x-4 pt-4">
           <Button type="submit" className="w-32">Save</Button>
