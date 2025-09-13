@@ -215,10 +215,10 @@ export const GatePassOutwardsDetailPage = () => {
                         <span className="text-sm font-medium text-gray-700">Company Name:</span>
                         <span className="text-sm text-gray-900">{companyName}</span>
                     </div>
-                    {/* <div>
-                      <span className="text-sm font-medium text-gray-700">Expected Return Date:</span>
-                      <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
-                    </div> */}
+                                        <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Vendor:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
+                    </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Gate Number:</span>
                         <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
@@ -232,13 +232,17 @@ export const GatePassOutwardsDetailPage = () => {
                         <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Vendor:</span>
-                        <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
+                        <span className="text-sm font-medium text-gray-700">Gate Pass Date:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.gate_pass_date ? new Date(gatePassData.gate_pass_date).toLocaleDateString() : '--'}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Date/Time:</span>
-                        <span className="text-sm text-gray-900">{passDate}</span>
+                        <span className="text-sm font-medium text-gray-700">Reporting Time:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.due_at ? new Date(gatePassData.due_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}</span>
                     </div>
+                    <div className='flex justify-between items-center'>
+                    <span className="text-sm font-medium text-gray-700">Mode Of Transport:</span>
+                    <span className={`text-sm text-gray-900`} style={{textTransform: 'capitalize'}}>{gatePassData.mode_of_transport || '--'}</span>
+                  </div>
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Vehicle Number:</span>
                         <span className="text-sm text-gray-900">{vehicleNo}</span>

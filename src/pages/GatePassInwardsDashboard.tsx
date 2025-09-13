@@ -7,6 +7,15 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG } from '@/config/apiConfig';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import {
+  Pagination,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationContent,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
@@ -25,6 +34,10 @@ export const GatePassInwardsDashboard = () => {
     materialType: '',
     expectedReturnDate: '',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
   // Helper to build query params from filters
   const buildQueryParams = () => {
@@ -39,9 +52,10 @@ export const GatePassInwardsDashboard = () => {
     return params;
   };
 
-  // Fetch data with filters
+  // Fetch data with filters and pagination
   useEffect(() => {
     const params = buildQueryParams();
+    params['page'] = currentPage.toString();
     const queryString = Object.entries(params)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join('&');
@@ -55,10 +69,12 @@ export const GatePassInwardsDashboard = () => {
       .then(res => res.json())
       .then(data => {
         setInwardData(data.gate_passes || []);
+        setTotalPages(data.pagination?.total_pages || 1);
+        setTotalCount(data.pagination?.total_count || (data.gate_passes?.length || 0));
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [filters]);
+  }, [filters, currentPage]);
 
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
@@ -69,7 +85,7 @@ export const GatePassInwardsDashboard = () => {
     { key: 'personName', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'passNo', label: 'Gate Pass No.', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'modeOfTransport', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'gateEntry', label: 'Gate Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'visitorContact', label: 'Visitor Contact', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'numberOfMaterials', label: 'No. of Materials', sortable: true, hideable: true, draggable: true, defaultVisible: true },
@@ -186,6 +202,52 @@ export const GatePassInwardsDashboard = () => {
           exportFileName="inward-gate-pass-entries"
           leftActions={renderActionButton()}
         />
+      )}
+      {/* Pagination UI */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({totalCount} total entries)
+          </div>
+        </div>
       )}
       <GatePassInwardsFilterModal 
         isOpen={isFilterModalOpen}

@@ -9,7 +9,7 @@ import { gatePassTypeService } from '@/services/gatePassTypeService';
 interface GatePassTypeFormValues {
   name: string;
   value: string;
-  active: boolean;
+  // active: boolean;
 }
 
 const EditGatePassTypePage = () => {
@@ -31,7 +31,7 @@ const EditGatePassTypePage = () => {
         reset({
           name: data.name || '',
           value: data.value || '',
-          active: data.active === true,
+          // active: data.active === true,
         });
       });
     }
@@ -89,7 +89,7 @@ const EditGatePassTypePage = () => {
             />
           )}
         />
-        <Controller
+        {/* <Controller
           name="active"
           control={control}
           render={({ field }) => (
@@ -110,7 +110,7 @@ const EditGatePassTypePage = () => {
               </FormControl>
             </Box>
           )}
-        />
+        /> */}
         </div>
         <div className="flex justify-center space-x-4 pt-4">
           <Button type="submit" className="w-32">

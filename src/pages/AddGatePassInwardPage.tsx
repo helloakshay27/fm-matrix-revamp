@@ -190,15 +190,11 @@ export const AddGatePassInwardPage = () => {
       } : row);
       setMaterialRows(updatedRows);
     } else if (field === 'quantity') {
-      const currentRow = newRows.find(row => row.id === id);
-      if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
-        toast({
-          title: "Validation Error",
-          description: `Quantity cannot be greater than ${currentRow.maxQuantity}.`,
-          variant: "destructive"
-        });
-        return;
-      }
+      // const currentRow = newRows.find(row => row.id === id);
+      // if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
+      //   toast.error(`Quantity cannot be greater than ${currentRow.maxQuantity}.`);
+      //   return;
+      // }
       setMaterialRows(newRows);
     } else {
       setMaterialRows(newRows);
@@ -328,9 +324,6 @@ export const AddGatePassInwardPage = () => {
       }
     }
 
-    // setFieldErrors(errors); // Removed because 'errors' is not defined
-    // The following block is also removed since 'errors' is not used elsewhere
-
     setIsSubmitting(true);
     const formData = new FormData();
 
@@ -343,6 +336,7 @@ export const AddGatePassInwardPage = () => {
     if (selectedSite?.id) formData.append('gate_pass[site_id]', selectedSite.id.toString());
     if (selectedCompany?.id) formData.append('gate_pass[company_id]', selectedCompany.id.toString());
     if (visitorDetails.vehicleNo) formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo);
+    if (visitorDetails.modeOfTransport) formData.append('gate_pass[mode_of_transport]', visitorDetails.modeOfTransport);
     if (gatePassDetails.remarks) formData.append('gate_pass[remarks]', gatePassDetails.remarks);
     if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
     if (gatePassDetails.gateNumberId) formData.append('gate_pass[gate_number_id]', gatePassDetails.gateNumberId.toString());
@@ -376,18 +370,11 @@ export const AddGatePassInwardPage = () => {
 
     try {
       await gatePassInwardService.createGatePassInward(formData);
-      toast({
-        title: "Success",
-        description: "Gate pass inward entry created successfully!"
-      });
+      toast.success("Gate pass inward entry created successfully!");
       navigate('/security/gate-pass/inwards');
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create entry. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to create entry. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -646,14 +633,14 @@ export const AddGatePassInwardPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4">
+                      
+                      
                       <TextField
                         variant="outlined"
                         size="small"
                         type="number"
-                        value={row.maxQuantity !== null ? row.maxQuantity : ''}
+                        value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0 }}
-                      // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
                     <td className="px-4 py-2 pt-4">

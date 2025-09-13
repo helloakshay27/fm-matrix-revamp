@@ -29,7 +29,8 @@ export const inventoryTypeService = {
       });
       if (!response.ok) throw new Error('Failed to fetch inventory type details');
       const data = await response.json();
-      return data.pms_inventory_type;
+      
+      return data;
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching inventory type details.');
       throw error;
