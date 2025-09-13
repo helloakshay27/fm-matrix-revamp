@@ -170,7 +170,7 @@ export const GatePassInwardsDetailPage = () => {
           </TabsList>
 
           {/* Profile */}
-          <TabsContent value="profile" className="p-4 sm:p-6">
+          <TabsContent value="profile" className="p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="bg-white rounded-lg border">
               <div className="flex p-4 items-center bg-[#F6F4EE]">
                 <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
@@ -190,68 +190,46 @@ export const GatePassInwardsDetailPage = () => {
 
                 {/* Details */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Employee/Visitor Name:
-                    </label>
-                    <p className="text-sm text-gray-900">{selectedEntry?.contact_person || '--'}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Employee/Visitor Name:</span>
+                    <span className="text-sm text-gray-900">{selectedEntry?.contact_person || '--'}</span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Visitor Mobile No.:
-                    </label>
-                    <p className="text-sm text-gray-900">{selectedEntry.contact_person_no || '--'}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Visitor Mobile No.:</span>
+                    <span className="text-sm text-gray-900">{selectedEntry.contact_person_no || '--'}</span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Site:
-                    </label>
-                    <p className="text-sm text-gray-900">{selectedEntry.site?.name || '--'}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Site:</span>
+                    <span className="text-sm text-gray-900">{selectedEntry.site?.name || '--'}</span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Name:
-                    </label>
-                    <p className="text-sm text-gray-900">{companyName}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Company Name:</span>
+                    <span className="text-sm text-gray-900">{companyName}</span>
                   </div>
-                  <div>
-                      <span className="text-sm font-medium text-gray-700">Expected Return Date:</span>
-                      <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Gate Number:</span>
-                        <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Gate Pass Type:</span>
-                        <span className="text-sm text-gray-900">{gatePassData.gate_pass_type_name || '--'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Gate Pass No:</span>
-                        <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Vendor:</span>
-                        <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
-                    </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Date/Time:
-                    </label>
-                    <p className="text-sm text-gray-900">{passDate}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Gate Number:</span>
+                    <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Vehicle Number:
-                    </label>
-                    <p className="text-sm text-gray-900">{vehicleNo}</p>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Gate Pass Type:</span>
+                    <span className="text-sm text-gray-900">{gatePassData.gate_pass_type_name || '--'}</span>
                   </div>
-
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Gate Pass No:</span>
+                    <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Vendor:</span>
+                    <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Date/Time:</span>
+                    <span className="text-sm text-gray-900">{passDate}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-gray-700">Vehicle Number:</span>
+                    <span className="text-sm text-gray-900">{vehicleNo}</span>
+                  </div>
                 </div>
               </div>
             </div>
