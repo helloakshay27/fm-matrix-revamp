@@ -262,7 +262,7 @@ export const AddGatePassInwardPage = () => {
     if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Mobile No. is required';
     else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Mobile No. must be 10 digits';
     if (!selectedCompany) errors.company = 'Company is required';
-    if (!gatePassDetails.vendorId) errors.vendorId = 'Vendor is required';
+    if (!gatePassDetails.vendorId) errors.vendorId = 'Supplier is required';
     if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
     if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
     if (!selectedSite) errors.site = 'Site is required';
@@ -271,19 +271,30 @@ export const AddGatePassInwardPage = () => {
     if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
     if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
 
-    // Validate all item details
-    const incompleteItem = materialRows.some(row => !row.itemTypeId || !row.itemCategoryId || !row.itemNameId);
-    if (incompleteItem) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill all item details.",
-        variant: "destructive"
+    // Validate all item details and show toast for each missing field
+    let itemError = false;
+    materialRows.forEach((row, idx) => {
+      if (!row.itemTypeId) {
+        toast({ title: 'Validation Error', description: `Item Type is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      } else if (!row.itemCategoryId) {
+        toast({ title: 'Validation Error', description: `Item Category is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      } else if (!row.itemNameId) {
+        toast({ title: 'Validation Error', description: `Item Name is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      }
+    });
+    if (itemError) return;
+
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      // Show toast for each error
+      Object.values(errors).forEach(msg => {
+        toast({ title: 'Validation Error', description: msg, variant: 'destructive' });
       });
       return;
     }
-
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
 
     setIsSubmitting(true);
     const formData = new FormData();
