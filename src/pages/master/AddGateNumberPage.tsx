@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { TextField, Autocomplete, TextFieldProps } from '@mui/material';
+import { TextField, Autocomplete, TextFieldProps, FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 import { toast } from 'sonner';
 import { gateNumberService } from '@/services/gateNumberService';
+import { SectionCard } from '@/components/survey/SectionCard';
 
 interface GateNumberFormValues {
   gate_number: string;
@@ -17,6 +18,12 @@ interface GateNumberFormValues {
 interface DropdownOption {
   id: number;
   name: string;
+}
+
+export interface SectionCardProps {
+  style?: React.CSSProperties;
+  children?: React.ReactNode;
+  // other props if any
 }
 
 const AddGateNumberPage = () => {
@@ -93,97 +100,105 @@ const AddGateNumberPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add Gate Number</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Controller
-              name="company_id"
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  options={companies}
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, value) => value ? option.id === value.id : false}
-                  onChange={(_, data) => field.onChange(data ? data.id : null)}
-                  value={companies.find((c) => c.id === field.value) || null}
-                  renderInput={(params: TextFieldProps) => (
-                    <TextField
-                      {...params}
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      <div className="w-full max-w-none space-y-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">ADD GATE NUMBER</h1>
+
+        <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Controller
+                name="company_id"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Company <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
                       label="Select Company"
-                      variant="outlined"
-                    />
-                  )}
-                />
-              )}
-            />
-            <Controller
-              name="pms_site_id"
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  options={sites}
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, value) => value ? option.id === value.id : false}
-                  onChange={(_, data) => field.onChange(data ? data.id : null)}
-                  value={sites.find((s) => s.id === field.value) || null}
-                  renderInput={(params: TextFieldProps) => (
-                    <TextField
-                      {...params}
+                      notched
+                      displayEmpty
+                      value={field.value || ''}
+                      onChange={e => field.onChange(e.target.value || null)}
+                    >
+                      <MenuItem value="">Select Company</MenuItem>
+                      {companies.map(option => (
+                        <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              />
+              <Controller
+                name="pms_site_id"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Site <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
                       label="Select Site"
-                      variant="outlined"
-                    />
-                  )}
-                />
-              )}
-            />
-            <Controller
-              name="building_id"
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  options={projects}
-                  getOptionLabel={(option) => option.name}
-                  isOptionEqualToValue={(option, value) => value ? option.id === value.id : false}
-                  onChange={(_, data) => field.onChange(data ? data.id : null)}
-                  value={projects.find((p) => p.id === field.value) || null}
-                  renderInput={(params: TextFieldProps) => (
-                    <TextField
-                      {...params}
+                      notched
+                      displayEmpty
+                      value={field.value || ''}
+                      onChange={e => field.onChange(e.target.value || null)}
+                    >
+                      <MenuItem value="">Select Site</MenuItem>
+                      {sites.map(option => (
+                        <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              />
+              <Controller
+                name="building_id"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Select Building <span style={{ color: 'red' }}>*</span></InputLabel>
+                    <Select
                       label="Select Building"
-                      variant="outlined"
-                    />
-                  )}
-                />
-              )}
-            />
-            <Controller
-              name="gate_number"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Gate Number"
-                  variant="outlined"
-                  fullWidth
-                />
-              )}
-            />
+                      notched
+                      displayEmpty
+                      value={field.value || ''}
+                      onChange={e => field.onChange(e.target.value || null)}
+                    >
+                      <MenuItem value="">Select Building</MenuItem>
+                      {projects.map(option => (
+                        <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+              />
+              <Controller
+                name="gate_number"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Gate Number"
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
+              />
+            </div>
+            <div className="flex justify-center space-x-4 pt-4">
+              <Button type="submit" className="w-32">
+                Save
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-32"
+                onClick={() => navigate(-1)}
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
         </div>
-        <div className="flex justify-center space-x-4 pt-4">
-          <Button type="submit" className="w-32">
-            Save
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-32"
-            onClick={() => navigate(-1)}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };

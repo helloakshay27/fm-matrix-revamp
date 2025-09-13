@@ -29,7 +29,7 @@ export const gatePassTypeService = {
       });
       if (!response.ok) throw new Error('Failed to fetch gate pass type details');
       const data = await response.json();
-      return data.gate_pass_type;
+      return data;
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching gate pass type details.');
       throw error;

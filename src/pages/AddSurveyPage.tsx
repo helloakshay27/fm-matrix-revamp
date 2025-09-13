@@ -107,7 +107,9 @@ export const AddSurveyPage = () => {
     []
   );
   const [fmUsers, setFmUsers] = useState<
-    { id: number; firstname: string; lastname: string; email?: string }[]
+    {
+      full_name: string; id: number; firstname: string; lastname: string; email?: string 
+}[]
   >([]);
   const [loadingTicketCategories, setLoadingTicketCategories] = useState(false);
   const [loadingFmUsers, setLoadingFmUsers] = useState(false);
@@ -168,8 +170,8 @@ export const AddSurveyPage = () => {
     setLoadingFmUsers(true);
     try {
       const response = await ticketManagementAPI.getEngineers();
-      setFmUsers(response.fm_users || []);
-      console.log("FM users loaded:", response.fm_users);
+      setFmUsers(response.users || response.fm_users || []);
+      console.log("FM users loaded:", response.users || response.fm_users);
     } catch (error) {
       console.error("Error loading FM users:", error);
     } finally {
@@ -849,7 +851,7 @@ export const AddSurveyPage = () => {
                     </MenuItem>
                     {fmUsers.map((user) => (
                       <MenuItem key={user.id} value={user.id.toString()}>
-                        {`${user.firstname} ${user.lastname}`.trim()}
+                        {user.full_name || `${user.firstname} ${user.lastname}`}
                       </MenuItem>
                     ))}
                   </MuiSelect>

@@ -79,11 +79,11 @@ export const SurveyListDashboard = () => {
           url += `&q[name_cont]=${encodeURIComponent(filters.surveyName)}`;
         }
         if (filters.categoryId && filters.categoryId !== 'all') {
-          url += `&q[snag_audit_category_id_eq]=${filters.categoryId}`;
+          url += `&q[generic_tag_category_name_eq]=${filters.categoryId}`;
         }
       } else {
         // Default params when no filters
-        url += `&q[name_cont]=&q[snag_audit_sub_category_id_eq]=&q[snag_audit_category_id_eq]=`;
+        url += `&q[name_cont]=&q[snag_audit_sub_category_id_eq]=&q[generic_tag_category_name_eq]=`;
       }
       
       const response = await apiClient.get(url);

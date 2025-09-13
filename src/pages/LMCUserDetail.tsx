@@ -254,7 +254,7 @@ const LMCUserDetail = () => {
                         </div>
                         <div>
                             <span className="text-gray-500 text-sm">Unique Number</span>
-                            <p className="text-gray-900 font-medium">{detail?.id || '—'}</p>
+                            <p className="text-gray-900 font-medium">{lmcUser?.id || '—'}</p>
                         </div>
                     </div>
                 </div>

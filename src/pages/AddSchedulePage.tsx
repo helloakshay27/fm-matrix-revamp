@@ -2269,9 +2269,9 @@ export const AddSchedulePage = () => {
       errors['planDurationValue'] = 'Plan Duration value is required when duration type is selected';
     }
 
-    if (!formData.emailTriggerRule) {
-      errors['emailTriggerRule'] = 'Email Trigger Rule is required';
-    }
+    // if (!formData.emailTriggerRule) {
+    //   errors['emailTriggerRule'] = 'Email Trigger Rule is required';
+    // }
 
     // if (!formData.scanType) {
     //   errors['scanType'] = 'Scan Type is required';
@@ -2282,16 +2282,16 @@ export const AddSchedulePage = () => {
     }
 
     // Submission time validation
-    if (!formData.submissionTime) {
-      errors['submissionTime'] = 'Submission Time type is required';
-    }
-    if (formData.submissionTime && !formData.submissionTimeValue) {
-      errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
-    }
+    // if (!formData.submissionTime) {
+    //   errors['submissionTime'] = 'Submission Time type is required';
+    // }
+    // if (formData.submissionTime && !formData.submissionTimeValue) {
+    //   errors['submissionTimeValue'] = 'Submission Time value is required when time type is selected';
+    // }
 
-    if (!formData.supervisors) {
-      errors['supervisors'] = 'Supervisors selection is required';
-    }
+    // if (!formData.supervisors) {
+    //   errors['supervisors'] = 'Supervisors selection is required';
+    // }
 
     if (!formData.lockOverdueTask) {
       errors['lockOverdueTask'] = 'Lock Overdue Task selection is required';
@@ -3339,14 +3339,16 @@ export const AddSchedulePage = () => {
                       value={formData.service}
                       onChange={e => handleAutocompleteChange('service', services.filter(service => e.target.value.includes(service.id.toString())))}
                       renderValue={(selected) =>
-                        services
-                          .filter(service => selected.includes(service.id.toString()))
-                          .map(service => service.service_name)
-                          .join(', ')
+                        !selected || selected.length === 0
+                          ? <span style={{ color: '#aaa' }}>Select Services</span>
+                          : services
+                              .filter(service => selected.includes(service.id.toString()))
+                              .map(service => service.service_name)
+                              .join(', ')
                       }
                       disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
                     >
-                      <MenuItem value="">Select Services</MenuItem>
+                      <MenuItem value="" disabled>Select Services</MenuItem>
                       {services && services.map((option) => (
                         <MenuItem key={option.id} value={option.id.toString()}>{option.service_name}</MenuItem>
                       ))}
@@ -3584,7 +3586,7 @@ export const AddSchedulePage = () => {
 
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Email Trigger Rule <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Email Trigger Rule</InputLabel>
                   <Select
                     label="Email Trigger Rule"
                     notched
@@ -3658,7 +3660,7 @@ export const AddSchedulePage = () => {
               {/* Submission Time with conditional input */}
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Submission Time <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Submission Time</InputLabel>
                   <Select
                     label="Submission Time"
                     notched
@@ -3700,7 +3702,7 @@ export const AddSchedulePage = () => {
 
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supervisors <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Supervisors </InputLabel>
                   <Select
                     label="Supervisors"
                     notched
@@ -3831,7 +3833,7 @@ export const AddSchedulePage = () => {
 
               <Box>
                 <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                  <InputLabel shrink>Supplier <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Supplier </InputLabel>
                   <Select
                     label="Supplier"
                     notched

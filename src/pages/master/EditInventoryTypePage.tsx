@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { TextField, Autocomplete, TextFieldProps } from '@mui/material';
+import { TextField, Box, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
 import { toast } from 'sonner';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
 import { gateNumberService } from '@/services/gateNumberService'; // Reusing for company fetch
@@ -36,7 +36,14 @@ const EditInventoryTypePage = () => {
     gateNumberService.getCompanies().then(setCompanies).catch(() => toast.error("Failed to load companies."));
     if (inventoryTypeId) {
       inventoryTypeService.getInventoryTypeById(inventoryTypeId).then(data => {
-        reset(data);
+        // Map API response to form fields
+        reset({
+          name: data.name || '',
+          company_id: data.company_id || null,
+          material_type_code: data.material_type_code || '',
+          material_type_description: data.material_type_description || '',
+          category: data.category || '',
+        });
       });
     }
   }, [inventoryTypeId, reset]);
@@ -55,9 +62,11 @@ const EditInventoryTypePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Edit Inventory Type</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      <div className="w-full max-w-none space-y-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Edit Inventory Type</h1>
+      <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+        <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Controller
             name="name"
@@ -80,16 +89,23 @@ const EditInventoryTypePage = () => {
             control={control}
             rules={{ required: 'Company is required' }}
             render={({ field }) => (
-              <Autocomplete
-                options={companies}
-                getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, data) => field.onChange(data ? data.id : null)}
-                value={companies.find((c) => c.id === field.value) || null}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField {...params} label="Select Company" variant="outlined" error={!!errors.company_id} helperText={errors.company_id?.message} />
-                )}
-              />
+              <Box>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Select Company <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <Select
+                    label="Select Company"
+                    notched
+                    displayEmpty
+                    value={field.value || ''}
+                    onChange={e => field.onChange(e.target.value || null)}
+                  >
+                    <MenuItem value="">Select Company</MenuItem>
+                    {companies.map(option => (
+                      <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Box>
             )}
           />
           <Controller
@@ -115,6 +131,8 @@ const EditInventoryTypePage = () => {
           <Button type="button" variant="outline" className="w-32" onClick={() => navigate(-1)}>Cancel</Button>
         </div>
       </form>
+      </div>
+      </div>
     </div>
   );
 };

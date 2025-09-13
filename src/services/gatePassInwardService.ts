@@ -2,30 +2,31 @@ import { API_CONFIG, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
 const fetchAndFormat = async (url: string, key: string) => {
-    const response = await fetch(url, {
-        headers: {
-            'Authorization': getAuthHeader(),
-            'Content-Type': 'application/json',
-        },
-    });
-    if (!response.ok) throw new Error(`Failed to fetch data from ${url}`);
-    const data = await response.json();
-    const items = data[key] || data || [];
-    if (!Array.isArray(items)) {
-        console.error("Expected an array but got:", items);
-        return [];
-    }
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': getAuthHeader(),
+      'Content-Type': 'application/json',
+    },
+  });
+  if (!response.ok) throw new Error(`Failed to fetch data from ${url}`);
+  const data = await response.json();
+  const items = data[key] || data || [];
+  if (!Array.isArray(items)) {
+    console.error("Expected an array but got:", items);
+    return [];
+  }
 
-    // Special handling for item_categories with only 'category' property
-    if (key === 'item_categories' && items.length > 0 && items[0].category && !items[0].id && !items[0].name) {
-        return items.map((item: any, idx: number) => ({
-            id: item.category, // use category string as id
-            name: item.category,
-            quantity: undefined
-        }));
-    }
+  // Special handling for item_categories with only 'category' property (even if null or empty string)
+  if (key === 'item_categories' && items.length > 0 && Object.keys(items[0]).length === 1 && 'category' in items[0]) {
+    return items.map((item: any) => ({
+      id: item.category ?? '',
+      name: item.category ?? '',
+      quantity: undefined,
+      unit: undefined
+    }));
+  }
 
-    return items.map((item: any) => ({ id: item.id, name: item.name, quantity: item.quantity, unit: item.unit }) ); ;
+  return items.map((item: any) => ({ id: item.id, name: item.name, quantity: item.quantity, unit: item.unit }) );
 };
 
 export const gatePassInwardService = {
@@ -39,12 +40,9 @@ export const gatePassInwardService = {
     }
   },
 
-  async getInventorySubTypes(inventoryTypeId?: number) {
+  async getInventorySubTypes() {
     try {
       let url = `${API_CONFIG.BASE_URL}/pms/inventory_types/get_subtype.json`;
-      if (inventoryTypeId) {
-        url += `?inventory_type_id=${inventoryTypeId}`;
-      }
       return await fetchAndFormat(url, 'item_categories');
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching inventory sub-types.');

@@ -4,10 +4,8 @@ import { useLayout } from '../contexts/LayoutContext';
 export const ViDynamicHeader: React.FC = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
 
-  // Force Maintenance as the only and default section
-  useEffect(() => {
-    setCurrentSection('Maintenance');
-  }, [setCurrentSection]);
+  // Note: Section is now automatically detected by LayoutProvider based on route
+  // No need to manually set it here
 
   return (
     <div

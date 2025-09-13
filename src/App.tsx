@@ -653,6 +653,7 @@ import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
 import LMCDashboard from "./pages/LMCDashboard";
 import LMCUserDetail from "./pages/LMCUserDetail";
 import TrainingDashboard from "./pages/TrainingDashboard";
+import TrainingUserDetailPage from "./pages/TrainingUserDetailPage";
 import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
@@ -712,6 +713,8 @@ import CRMWalletPointExpiry from "./pages/CRMWalletPointExpiry";
 import CRMWalletDetails from "./pages/CRMWalletDetails";
 import EditCRMWalletPointExpiry from "./pages/EditCRMWalletPointExpiry";
 import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
+import AddAddressMaster from "./pages/master/AddAddressMaster";
+import EditAddressMaster from "./pages/master/EditAddressMaster";
 
 const queryClient = new QueryClient();
 
@@ -1128,6 +1131,14 @@ function App() {
                       element={<AddressMasterPage />}
                     />
                     <Route
+                      path="/master/address/add"
+                      element={<AddAddressMaster />}
+                    />
+                    <Route
+                      path="/master/address/edit/:id"
+                      element={<EditAddressMaster />}
+                    />
+                    <Route
                       path="/master/unit-default"
                       element={<UnitMasterByDefaultPage />}
                     />
@@ -1434,6 +1445,12 @@ function App() {
                     <Route
                       path="/safety/training-list/edit/:id"
                       element={<AddTrainingRecordDashboard />}
+                    />
+
+                    {/* New Training User Detail route (distinct from existing training detail) */}
+                    <Route
+                      path="/maintenance/m-safe/training-list/training-user-details/:id"
+                      element={<TrainingUserDetailPage />}
                     />
 
                     <Route
