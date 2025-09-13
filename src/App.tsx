@@ -653,6 +653,7 @@ import { WorkOrderAddPage } from "./pages/WorkOrderAddPage";
 import LMCDashboard from "./pages/LMCDashboard";
 import LMCUserDetail from "./pages/LMCUserDetail";
 import TrainingDashboard from "./pages/TrainingDashboard";
+import TrainingUserDetailPage from "./pages/TrainingUserDetailPage";
 import TrainingDetailPage from "./pages/TrainingDetailPage";
 import SMTDashboard from "./pages/SMTDashboard";
 import SMTDetailPage from "./pages/SMTDetailPage";
@@ -1444,6 +1445,12 @@ function App() {
                     <Route
                       path="/safety/training-list/edit/:id"
                       element={<AddTrainingRecordDashboard />}
+                    />
+
+                    {/* New Training User Detail route (distinct from existing training detail) */}
+                    <Route
+                      path="/maintenance/m-safe/training-list/training-user-details/:id"
+                      element={<TrainingUserDetailPage />}
                     />
 
                     <Route

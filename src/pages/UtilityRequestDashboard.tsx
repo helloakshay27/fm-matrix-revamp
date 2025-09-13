@@ -1,196 +1,44 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Search, Plus, Edit, Eye, Filter, Download, Upload } from 'lucide-react';
+import { Plus, Edit, Eye } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-// Mock data for customer consumption
-const customerConsumptionData = [
-  {
-    id: '1',
-    entity: 'SIFY TECHNOLOGIES LTD',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '35.93',
-    rate: '28.78',
-    amount: '1033.95',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '2',
-    entity: 'Tata Starbucks Private Limited',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '321.27',
-    rate: '28.78',
-    amount: '9246.21',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '3',
-    entity: 'Storybook Ventures',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '155.23',
-    rate: '28.78',
-    amount: '4467.63',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '4',
-    entity: 'CREST DIGITAL PRIVATE LIMITED (Space Tele)',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '786.67',
-    rate: '28.78',
-    amount: '22640.5',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '5',
-    entity: 'Reliance Jio Infocomm Limited',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '97.85',
-    rate: '28.78',
-    amount: '2816.01',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '6',
-    entity: 'Synechron Technologies Pvt. Ltd.-SE',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '3525.64',
-    rate: '28.78',
-    amount: '101468.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '7',
-    entity: 'Northern Operating Solutions Pvt. L',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '7258.89',
-    rate: '28.78',
-    amount: '208911.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '8',
-    entity: 'ALTERA DIGITAL HEALTH (INDIA) LLP',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '1671.24',
-    rate: '28.78',
-    amount: '48098.2',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '9',
-    entity: 'CompuCom CSI Systems India Pvt. Ltd',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '3094.7',
-    rate: '28.78',
-    amount: '89065.6',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '10',
-    entity: 'Allianz Services Private Limited',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '2949.43',
-    rate: '28.78',
-    amount: '84884.5',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '11',
-    entity: 'XPO India Shared Services LLP',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '2098.84',
-    rate: '28.78',
-    amount: '60404.6',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '12',
-    entity: 'Cybage Software Pvt. Ltd.',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '4411.59',
-    rate: '28.78',
-    amount: '126966.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '13',
-    entity: 'Citco Group Services (India) LLP',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '8275.9',
-    rate: '28.78',
-    amount: '238180.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '14',
-    entity: 'NORTHERN OPERATING SERVICES PRIVATE',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '35607.8',
-    rate: '28.78',
-    amount: '1024790.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  },
-  {
-    id: '15',
-    entity: 'Isobar Commerce India Pvt Ltd',
-    fromDate: '2024-05-01',
-    toDate: '2024-05-31',
-    totalConsumption: '1457.26',
-    rate: '28.78',
-    amount: '41940.0',
-    plantDetail: '',
-    status: 'pending',
-    readingType: 'DGKVAH'
-  }
-];
+// Define type for consumption data
+interface ConsumptionData {
+  id: string;
+  entity: string;
+  fromDate: string;
+  toDate: string;
+  totalConsumption: string;
+  rate: string;
+  amount: string;
+  plantDetail: string;
+  status: string;
+  readingType: string;
+  url?: string;
+}
+
+// Interface for the API response
+interface ApiConsumptionData {
+  id: number;
+  entity_id: number;
+  from_date: string;
+  to_date: string;
+  total_consumption: number;
+  rate: number;
+  amount: number;
+  plant_detail_id: number | null;
+  status: string;
+  reading_type: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+}
 
 // Column configuration for enhanced table
 const columns: ColumnConfig[] = [
@@ -211,8 +59,181 @@ export const UtilityRequestDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [consumptionData, setConsumptionData] = useState<ConsumptionData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filteredData = customerConsumptionData.filter(item =>
+  // Fetch entities to map entity IDs to names
+  const fetchEntities = async (baseUrl: string, token: string) => {
+    try {
+      // Always use API_BASE_URL for consistency
+      console.log('Fetching entities from:', `${API_BASE_URL}/entities.json`);
+      const response = await axios.get(`${API_BASE_URL}/entities.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      console.log('Entities API response:', response.data);
+
+      // Create a map of entity IDs to entity names
+      const entityMap = new Map();
+      const entities = response.data.entities || response.data;
+
+      if (Array.isArray(entities)) {
+        console.log(`Mapping ${entities.length} entities`);
+        entities.forEach((entity: any) => {
+          entityMap.set(entity.id.toString(), entity.name);
+        });
+      } else {
+        console.warn('Entities response is not an array:', entities);
+      }
+
+      console.log('Entity map size:', entityMap.size);
+      return entityMap;
+    } catch (err: any) {
+      console.error('Error fetching entities:', err);
+      console.error('Error details:', err.response?.data || err.message);
+      return new Map();
+    }
+  };
+
+  // Properly format the base URL to ensure it doesn't include localhost
+  const formatBaseUrl = (url: string): string => {
+    console.log('Original URL:', url);
+
+    // Direct check for the problematic URL pattern
+    if (url === 'http://localhost:5174/utility/fm-uat-api.lockated.com/compile_utilizations.json' ||
+      url.startsWith('http://localhost:') && url.includes('fm-uat-api.lockated.com')) {
+      url = 'https://fm-uat-api.lockated.com';
+      console.log('Detected specific problematic URL pattern, fixed to:', url);
+      return url;
+    }
+
+    // If URL doesn't have a protocol, add https://
+    if (!url.match(/^https?:\/\//)) {
+      url = 'https://' + url;
+      console.log('Added protocol:', url);
+    }
+
+    // Remove trailing slashes
+    url = url.replace(/\/+$/, '');
+    console.log('Removed trailing slashes:', url);
+
+    // Check if URL contains localhost and correct the URL structure
+    if (url.includes('localhost')) {
+      console.log('URL contains localhost, attempting to fix');
+
+      // Various patterns that might occur
+      let match;
+
+      // Pattern: http://localhost:PORT/actual-domain.com/path
+      match = url.match(/https?:\/\/localhost:[0-9]+\/([^\/]+\.[^\/]+)(\/.*)?/);
+      if (match) {
+        const domain = match[1];
+        const path = match[2] || '';
+        url = `https://${domain}${path}`;
+        console.log('Fixed localhost URL with domain pattern:', url);
+      }
+      // If the above didn't match but URL still contains fm-uat-api.lockated.com somewhere
+      else if (url.includes('fm-uat-api.lockated.com')) {
+        url = 'https://fm-uat-api.lockated.com';
+        console.log('Fixed to default API URL:', url);
+      }
+    }
+
+    console.log('Final formatted URL:', url);
+    return url;
+  };
+
+  // Hard-coded API URL to ensure we're always using the correct one
+  const API_BASE_URL = 'https://fm-uat-api.lockated.com';
+
+  // Set up proper base URL at component mount if needed
+  useEffect(() => {
+    const currentBaseUrl = localStorage.getItem('baseUrl');
+
+    if (currentBaseUrl &&
+      (currentBaseUrl.includes('localhost') ||
+        !currentBaseUrl.startsWith('http'))) {
+
+      console.log('Found problematic baseUrl in localStorage:', currentBaseUrl);
+      console.log('Setting fixed API URL in localStorage:', API_BASE_URL);
+      localStorage.setItem('baseUrl', API_BASE_URL);
+    }
+  }, []);
+
+  // Fetch data from API
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Always use our API base URL for this component
+        const baseUrl = API_BASE_URL;
+        const token = localStorage.getItem('token');
+
+        console.log('Using baseUrl:', baseUrl);
+
+        if (!token) {
+          setError('Authentication token not found');
+          setLoading(false);
+          return;
+        }
+
+        // First fetch entities to get their names
+        const entityMap = await fetchEntities(baseUrl, token);
+
+        // Then fetch utilization data
+        console.log('Fetching utilization data from:', `${baseUrl}/compile_utilizations.json`);
+        const response = await axios.get(`${baseUrl}/compile_utilizations.json`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        console.log('Utilization data API response:', response.data);
+
+        if (!Array.isArray(response.data)) {
+          console.warn('Utilization data is not an array:', response.data);
+          setError('Invalid response format from API');
+          setLoading(false);
+          return;
+        }
+
+        // Map API response to our component data structure
+        const mappedData: ConsumptionData[] = response.data.map((item: ApiConsumptionData) => {
+          const entityName = entityMap.get(item.entity_id.toString());
+          console.log(`Mapping entity ID ${item.entity_id} to name: ${entityName || 'not found'}`);
+
+          return {
+            id: item.id.toString(),
+            entity: entityName || `Entity ID: ${item.entity_id}`,
+            fromDate: item.from_date,
+            toDate: item.to_date,
+            totalConsumption: item.total_consumption.toString(),
+            rate: item.rate.toString(),
+            amount: item.amount.toString(),
+            plantDetail: item.plant_detail_id?.toString() || '',
+            status: item.status,
+            readingType: item.reading_type,
+            url: item.url
+          };
+        });
+
+        console.log('Mapped data:', mappedData);
+        setConsumptionData(mappedData);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Error fetching consumption data:', err);
+        console.error('Error details:', err.response?.data || err.message);
+        setError(`Failed to fetch consumption data: ${err.response?.data?.message || err.message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const filteredData = consumptionData.filter(item =>
     item.entity.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.status.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.id.includes(searchTerm)
@@ -236,6 +257,8 @@ export const UtilityRequestDashboard = () => {
 
   const handleEdit = (item: any) => {
     console.log('Edit item:', item);
+    // You can use item.url for the API endpoint to edit this specific consumption record
+    navigate(`/utility/utility-request/edit/${item.id}`);
   };
 
   const handleView = (item: any) => {
@@ -244,6 +267,59 @@ export const UtilityRequestDashboard = () => {
 
   const handleAdd = () => {
     navigate('/utility/utility-request/add');
+  };
+
+  const handleRefresh = () => {
+    setLoading(true);
+    setError(null);
+    // Re-fetch the data
+    const fetchData = async () => {
+      try {
+        // Use the hardcoded API URL for consistency
+        const baseUrl = API_BASE_URL;
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          setError('Authentication token not found');
+          setLoading(false);
+          return;
+        }
+
+        // First fetch entities to get their names
+        const entityMap = await fetchEntities(baseUrl, token);
+
+        // Then fetch utilization data
+        const response = await axios.get(`${baseUrl}/compile_utilizations.json`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        // Map API response to our component data structure
+        const mappedData: ConsumptionData[] = response.data.map((item: ApiConsumptionData) => ({
+          id: item.id.toString(),
+          entity: entityMap.get(item.entity_id.toString()) || `Entity ID: ${item.entity_id}`,
+          fromDate: item.from_date,
+          toDate: item.to_date,
+          totalConsumption: item.total_consumption.toString(),
+          rate: item.rate.toString(),
+          amount: item.amount.toString(),
+          plantDetail: item.plant_detail_id?.toString() || '',
+          status: item.status,
+          readingType: item.reading_type,
+          url: item.url
+        }));
+
+        setConsumptionData(mappedData);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching consumption data:', err);
+        setError('Failed to fetch consumption data');
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   };
 
   const getStatusColor = (status: string) => {
@@ -321,7 +397,7 @@ export const UtilityRequestDashboard = () => {
       <h1 className="font-work-sans font-semibold text-base sm:text-2xl lg:text-[26px] leading-auto tracking-normal text-gray-900">Customer Consumption</h1>
 
       {/* Action Buttons */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 justify-between">
         <Button
           onClick={handleAdd}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
@@ -329,50 +405,55 @@ export const UtilityRequestDashboard = () => {
           <Plus className="w-4 h-4" />
           Add
         </Button>
-      </div>
-
-      {/* Search */}
-      {/* <div className="flex justify-between items-center">
-        <div></div>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              placeholder="Search consumption data..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64 h-10 bg-white border border-gray-300 rounded-none focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030] text-sm"
-            />
-          </div>
-          <Button 
-            className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-6 py-2 h-10 text-sm font-medium border-0"
+        {/* <Button
+            onClick={handleRefresh}
+            className="bg-gray-100 text-gray-800 hover:bg-gray-200 transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border border-gray-300"
+            disabled={loading}
           >
-            Go!
-          </Button>
-        </div>
-      </div> */}
-
-      {/* Enhanced Data Table */}
-      <div>
-        <EnhancedTable
-          data={filteredData}
-          columns={columns}
-          renderCell={renderCell}
-          onSelectAll={handleSelectAll}
-          onSelectItem={handleSelectItem}
-          selectedItems={selectedItems}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          enableSearch={false}
-          enableExport={false}
-          hideColumnsButton={false}
-          pagination={true}
-          pageSize={15}
-          emptyMessage="No customer consumption data found"
-          selectable={true}
-          storageKey="utility-request-table"
-        />
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`${loading ? 'animate-spin' : ''}`}>
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.7 2.84" />
+              <path d="M12 3v9l4-4" />
+            </svg>
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </Button> */}
       </div>
+
+      {/* Display error message if any */}
+      {error && (
+        <div className="p-4 bg-red-100 text-red-800 rounded">
+          {error}
+        </div>
+      )}
+
+      {/* Loading state */}
+      {loading ? (
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#C72030]"></div>
+          <span className="ml-2">Loading...</span>
+        </div>
+      ) : (
+        /* Enhanced Data Table */
+        <div>
+          <EnhancedTable
+            data={filteredData}
+            columns={columns}
+            renderCell={renderCell}
+            onSelectAll={handleSelectAll}
+            onSelectItem={handleSelectItem}
+            selectedItems={selectedItems}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            enableSearch={false}
+            enableExport={false}
+            hideColumnsButton={false}
+            pagination={true}
+            pageSize={15}
+            emptyMessage="No customer consumption data found"
+            selectable={true}
+            storageKey="utility-request-table"
+          />
+        </div>
+      )}
     </div>
   );
 };

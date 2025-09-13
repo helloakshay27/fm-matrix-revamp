@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
-import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from '@mui/material';
+import { TextField, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent, CircularProgress } from '@mui/material';
 
 interface UtilizationFormData {
   entity: string;
@@ -13,6 +13,43 @@ interface UtilizationFormData {
   totalConsumption: string;
   rate: string;
   readingType: string;
+}
+
+interface Entity {
+  id: number;
+  name: string;
+  mobile: string;
+  email: string;
+  ext_project_code: string | null;
+  company_code: string | null;
+  ext_customer_code: string | null;
+  color_code: string | null;
+  customer_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  customer_leases: CustomerLease[];
+}
+
+interface PlantDetail {
+  id: number;
+  plant_name: string;
+  site_name: string;
+  valuation_area: string;
+  plant_category: string;
+  company_name: string;
+  pms_site_id: number;
+  created_at: string;
+  updated_at: string;
+  company_code: string;
+  sale_org_code: string;
+}
+
+interface CustomerLease {
+  id: number;
+  lease_start_date: string;
+  lease_end_date: string;
+  free_parking: number;
+  paid_parking: number;
 }
 
 export const AddUtilityRequestPage = () => {
@@ -27,29 +64,111 @@ export const AddUtilityRequestPage = () => {
     readingType: ''
   });
 
-  const entities = [
-    'SIFY TECHNOLOGIES LTD',
-    'Tata Starbucks Private Limited',
-    'Storybook Ventures',
-    'CREST DIGITAL PRIVATE LIMITED',
-    'Reliance Jio Infocomm Limited',
-    'Synechron Technologies Pvt. Ltd.-SE',
-    'Northern Operating Solutions Pvt. L',
-    'ALTERA DIGITAL HEALTH (INDIA) LLP'
-  ];
+  const [entities, setEntities] = useState<Entity[]>([]);
+  const [plantDetailsList, setPlantDetailsList] = useState<PlantDetail[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [loadingPlants, setLoadingPlants] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [plantError, setPlantError] = useState<string | null>(null);
 
-  const plantDetails = [
-    'Plant A - Main Building',
-    'Plant B - Secondary',
-    'Plant C - Backup',
-    'Plant D - Emergency'
-  ];
+  // Fetch entities from API on component mount
+  // Fetch entities from API on component mount
+  useEffect(() => {
+    const fetchEntities = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        if (!baseUrl || !token) {
+          throw new Error('Base URL or token not found in localStorage');
+        }
+
+        // Construct the full URL
+        let url = baseUrl;
+        if (!/^https?:\/\//i.test(url)) {
+          url = `https://${url}`;
+        }
+
+        const response = await fetch(`${url}/entities.json`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch entities: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setEntities(data.entities || []);
+      } catch (err) {
+        console.error('Error fetching entities:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch entities');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEntities();
+  }, []);
+
+  // Fetch plant details from API on component mount
+  useEffect(() => {
+    const fetchPlantDetails = async () => {
+      setLoadingPlants(true);
+      setPlantError(null);
+
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        if (!baseUrl || !token) {
+          throw new Error('Base URL or token not found in localStorage');
+        }
+
+        // Construct the full URL
+        let url = baseUrl;
+        if (!/^https?:\/\//i.test(url)) {
+          url = `https://${url}`;
+        }
+
+        const response = await fetch(`${url}/pms/purchase_orders/get_plant_detail.json`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch plant details: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setPlantDetailsList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching plant details:', err);
+        setPlantError(err instanceof Error ? err.message : 'Failed to fetch plant details');
+      } finally {
+        setLoadingPlants(false);
+      }
+    };
+
+    fetchPlantDetails();
+  }, []);
+
+  // Plant details will be fetched from API
 
   const readingTypes = [
-    'DGKVAH',
-    'KWH',
-    'KVAR',
-    'KVA'
+    { value: '', label: 'Select Reading Type' },
+    { value: 'EBKVh', label: 'EBKVh' },
+    { value: 'DGKVH', label: 'DGKVH' }
   ];
 
   const handleInputChange = (field: keyof UtilizationFormData, value: string) => {
@@ -64,16 +183,176 @@ export const AddUtilityRequestPage = () => {
     handleInputChange(name as keyof UtilizationFormData, value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // Here you would typically send the data to your API
-    // For now, we'll just navigate back
-    navigate('/utility/utility-request');
+
+    // Form validation
+    if (!formData.entity || !formData.plantDetail || !formData.fromDate ||
+      !formData.toDate || !formData.totalConsumption || !formData.rate || !formData.readingType) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Get the baseUrl and token from localStorage
+      const baseUrl = localStorage.getItem('baseUrl');
+      const token = localStorage.getItem('token');
+
+      if (!baseUrl || !token) {
+        throw new Error('Base URL or token not found in localStorage');
+      }
+
+      // Construct the full URL
+      let url = baseUrl;
+      if (!/^https?:\/\//i.test(url)) {
+        url = `https://${url}`;
+      }
+
+      // Calculate amount based on total consumption and rate
+      const totalConsumption = parseFloat(formData.totalConsumption);
+      const rate = parseFloat(formData.rate);
+      const amount = totalConsumption * rate;
+
+      // Prepare the request payload
+      const requestPayload = {
+        compile_utilization: {
+          entity_id: parseInt(formData.entity),
+          from_date: formData.fromDate,
+          to_date: formData.toDate,
+          total_consumption: totalConsumption,
+          rate: rate,
+          amount: parseFloat(amount.toFixed(2)), // Round to 2 decimal places
+          plant_detail_id: parseInt(formData.plantDetail),
+          status: "pending",
+          reading_type: formData.readingType
+        }
+      };
+
+      // Make the API call
+      const response = await fetch(`${url}/compile_utilizations.json`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestPayload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Failed to submit utilization: ${response.status} ${response.statusText}${errorData.error ? ': ' + errorData.error : ''}`);
+      }
+
+      const responseData = await response.json();
+      console.log('Utilization submitted successfully:', responseData);
+
+      // Show success message
+      alert('Utilization compiled successfully!');
+
+      // Navigate back to the utility requests page
+      navigate('/utility/utility-request');
+    } catch (error) {
+      console.error('Error submitting utilization:', error);
+      alert(`Failed to submit utilization: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     navigate('/utility/utility-request');
+  };
+
+  // Retry fetching entities if initial load failed
+  const handleRetryFetch = async () => {
+    const fetchEntities = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        if (!baseUrl || !token) {
+          throw new Error('Base URL or token not found in localStorage');
+        }
+
+        // Construct the full URL
+        let url = baseUrl;
+        if (!/^https?:\/\//i.test(url)) {
+          url = `https://${url}`;
+        }
+
+        const response = await fetch(`${url}/entities.json`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch entities: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setEntities(data.entities || []);
+      } catch (err) {
+        console.error('Error fetching entities:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch entities');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEntities();
+  };
+
+  // Retry fetching plant details if initial load failed
+  const handleRetryPlantFetch = async () => {
+    const fetchPlantDetails = async () => {
+      setLoadingPlants(true);
+      setPlantError(null);
+
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+
+        if (!baseUrl || !token) {
+          throw new Error('Base URL or token not found in localStorage');
+        }
+
+        // Construct the full URL
+        let url = baseUrl;
+        if (!/^https?:\/\//i.test(url)) {
+          url = `https://${url}`;
+        }
+
+        const response = await fetch(`${url}/pms/purchase_orders/get_plant_detail.json`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch plant details: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setPlantDetailsList(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Error fetching plant details:', err);
+        setPlantError(err instanceof Error ? err.message : 'Failed to fetch plant details');
+      } finally {
+        setLoadingPlants(false);
+      }
+    };
+
+    fetchPlantDetails();
   };
 
   return (
@@ -126,14 +405,38 @@ export const AddUtilityRequestPage = () => {
                         backgroundColor: '#f6f4ee',
                       }
                     }}
+                    disabled={loading}
+                    startAdornment={loading ?
+                      <CircularProgress color="inherit" size={20} /> : null
+                    }
                   >
-                    {entities.map((entity) => (
-                      <MenuItem key={entity} value={entity}>
-                        {entity}
+                    {entities.length > 0 ? (
+                      entities.map((entity) => (
+                        <MenuItem key={entity.id} value={entity.id.toString()}>
+                          {entity.name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled value="">
+                        {error ? "Error loading entities" : "No entities found"}
                       </MenuItem>
-                    ))}
+                    )}
                   </Select>
                 </FormControl>
+                {error && (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-red-500 text-xs">{error}</p>
+                    <Button
+                      onClick={handleRetryFetch}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs py-1 h-auto"
+                      disabled={loading}
+                    >
+                      {loading ? 'Retrying...' : 'Retry'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Plant Detail */}
@@ -156,14 +459,38 @@ export const AddUtilityRequestPage = () => {
                         backgroundColor: '#f6f4ee',
                       }
                     }}
+                    disabled={loadingPlants}
+                    startAdornment={loadingPlants ?
+                      <CircularProgress color="inherit" size={20} /> : null
+                    }
                   >
-                    {plantDetails.map((plant) => (
-                      <MenuItem key={plant} value={plant}>
-                        {plant}
+                    {plantDetailsList.length > 0 ? (
+                      plantDetailsList.map((plant) => (
+                        <MenuItem key={plant.id} value={plant.id.toString()}>
+                          {plant.plant_name}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled value="">
+                        {plantError ? "Error loading plant details" : "No plant details found"}
                       </MenuItem>
-                    ))}
+                    )}
                   </Select>
                 </FormControl>
+                {plantError && (
+                  <div className="flex flex-col gap-1">
+                    <p className="text-red-500 text-xs">{plantError}</p>
+                    <Button
+                      onClick={handleRetryPlantFetch}
+                      size="sm"
+                      variant="outline"
+                      className="text-xs py-1 h-auto"
+                      disabled={loadingPlants}
+                    >
+                      {loadingPlants ? 'Retrying...' : 'Retry'}
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* From Date */}
@@ -264,6 +591,7 @@ export const AddUtilityRequestPage = () => {
                     value={formData.readingType}
                     onChange={handleSelectChange}
                     label="Reading Type*"
+                    displayEmpty
                     sx={{
                       height: '45px',
                       backgroundColor: '#f6f4ee',
@@ -274,8 +602,8 @@ export const AddUtilityRequestPage = () => {
                     }}
                   >
                     {readingTypes.map((type) => (
-                      <MenuItem key={type} value={type}>
-                        {type}
+                      <MenuItem key={type.value} value={type.value} disabled={type.value === ''}>
+                        {type.label}
                       </MenuItem>
                     ))}
                   </Select>
@@ -288,8 +616,14 @@ export const AddUtilityRequestPage = () => {
               <Button
                 type="submit"
                 className="bg-[#C72030] hover:bg-[#A01B29] text-white px-8 py-3 rounded-none font-medium transition-colors duration-200"
+                disabled={isSubmitting}
               >
-                Submit
+                {isSubmitting ? (
+                  <>
+                    <CircularProgress size={16} color="inherit" className="mr-2" />
+                    Submitting...
+                  </>
+                ) : 'Submit'}
               </Button>
             </div>
           </form>

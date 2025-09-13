@@ -19,10 +19,8 @@ const packages = [
 export const StaticDynamicHeader = () => {
   const { currentSection, setCurrentSection, isSidebarCollapsed } = useLayout();
 
-  // Set "Maintenance" as the default section when the component mounts
-  useEffect(() => {
-    setCurrentSection('Maintenance');
-  }, [setCurrentSection]);
+  // Note: Section is now automatically detected by LayoutProvider based on route
+  // No need to manually set it here
 
   return (
     <div

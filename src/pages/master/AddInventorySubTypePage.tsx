@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
-import { TextField, Autocomplete, TextFieldProps } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
 import { toast } from 'sonner';
 import { inventorySubTypeService } from '@/services/inventorySubTypeService';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
@@ -53,65 +53,138 @@ const AddInventorySubTypePage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Add Inventory Sub-Type</h1>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 max-w-2xl mx-auto">
+    <div className="p-4 sm:p-6 max-w-full sm:max-w-7xl mx-auto min-h-screen bg-gray-50" style={{ fontFamily: 'Work Sans, sans-serif' }}>
+      <div className="w-full max-w-none space-y-6">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Add</h1>
+
+        {/* Basic Configuration Section - Match AddGateNumberPage styling */}
+        <div style={{ padding: '24px', margin: 0, borderRadius: '3px', background: '#fff' }}>
+      <form onSubmit={handleSubmit(onSubmit)} >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Name Field */}
           <Controller
             name="name"
             control={control}
             rules={{ required: 'Name is required' }}
             render={({ field }) => (
-              <TextField {...field} label="Sub-Type Name" variant="outlined" fullWidth error={!!errors.name} helperText={errors.name?.message} />
+              <Box>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Sub-Type Name <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <TextField
+                    {...field}
+                    label="Sub-Type Name"
+                    variant="outlined"
+                    fullWidth
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                  />
+                </FormControl>
+              </Box>
             )}
           />
+          {/* Sub-Type Code Field */}
           <Controller
             name="material_sub_type_code"
             control={control}
             rules={{ required: 'Code is required' }}
             render={({ field }) => (
-              <TextField {...field} label="Sub-Type Code" variant="outlined" fullWidth error={!!errors.material_sub_type_code} helperText={errors.material_sub_type_code?.message} />
+              <Box>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Sub-Type Code <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <TextField
+                    {...field}
+                    label="Sub-Type Code"
+                    variant="outlined"
+                    fullWidth
+                    error={!!errors.material_sub_type_code}
+                    helperText={errors.material_sub_type_code?.message}
+                  />
+                </FormControl>
+              </Box>
             )}
           />
+          {/* Inventory Type Dropdown */}
           <Controller
             name="pms_inventory_type_id"
             control={control}
             rules={{ required: 'Inventory Type is required' }}
             render={({ field }) => (
-              <Autocomplete
-                options={inventoryTypes}
-                getOptionLabel={(option) => option.name}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                onChange={(_, data) => field.onChange(data ? data.id : null)}
-                value={inventoryTypes.find((c) => c.id === field.value) || null}
-                renderInput={(params: TextFieldProps) => (
-                  <TextField {...params} label="Select Inventory Type" variant="outlined" error={!!errors.pms_inventory_type_id} helperText={errors.pms_inventory_type_id?.message} />
+              <Box>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Inventory Type <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <Select
+                    label="Inventory Type"
+                    notched
+                    displayEmpty
+                    value={field.value || ''}
+                    onChange={e => field.onChange(e.target.value || null)}
+                  >
+                    <MenuItem value="">Select Inventory Type</MenuItem>
+                    {inventoryTypes.map(option => (
+                      <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {errors.pms_inventory_type_id && (
+                  <Typography variant="caption" color="error">{errors.pms_inventory_type_id.message}</Typography>
                 )}
-              />
+              </Box>
             )}
           />
-           <Controller
-              name="active"
-              control={control}
-              render={({ field }) => (
-                <Autocomplete
-                  options={[{ label: 'Active', value: true }, { label: 'Inactive', value: false }]}
-                  getOptionLabel={(option) => option.label}
-                  isOptionEqualToValue={(option, value) => option.value === value.value}
-                  onChange={(_, data) => field.onChange(data ? data.value : false)}
-                  value={field.value ? { label: 'Active', value: true } : { label: 'Inactive', value: false }}
-                  renderInput={(params: TextFieldProps) => (
-                    <TextField {...params} label="Status" variant="outlined" />
-                  )}
-                />
-              )}
-            />
+          {/* Status Dropdown */}
+          <Controller
+            name="active"
+            control={control}
+            render={({ field }) => (
+              <Box>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel shrink>Status <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <Select
+                    label="Status"
+                    notched
+                    displayEmpty
+                    value={field.value === true ? 'true' : field.value === false ? 'false' : ''}
+                    onChange={e => field.onChange(e.target.value === 'true')}
+                  >
+                    <MenuItem value="">Select Status</MenuItem>
+                    <MenuItem value="true">Active</MenuItem>
+                    <MenuItem value="false">Inactive</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            )}
+          />
+          {/* Description Textarea */}
           <div className="md:col-span-2">
             <Controller
               name="description"
               control={control}
               render={({ field }) => (
-                <TextField {...field} label="Description" variant="outlined" fullWidth multiline rows={3} />
+                <TextField
+                  {...field}
+                  label={
+                    <span style={{ fontSize: '16px' }}>
+                      Description <span style={{ color: "red" }}>*</span>
+                    </span>
+                  }
+                  placeholder="Enter Description/SOP"
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  sx={{
+                    mb: 3,
+                    "& textarea": {
+                      width: "100% !important",
+                      resize: "both",
+                      overflow: "auto",
+                      boxSizing: "border-box",
+                      display: "block",
+                    },
+                    "& textarea[aria-hidden='true']": {
+                      display: "none !important",
+                    },
+                  }}
+                />
               )}
             />
           </div>
@@ -121,6 +194,8 @@ const AddInventorySubTypePage = () => {
           <Button type="button" variant="outline" className="w-32" onClick={() => navigate(-1)}>Cancel</Button>
         </div>
       </form>
+      </div>
+    </div>
     </div>
   );
 };

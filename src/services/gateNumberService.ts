@@ -60,7 +60,7 @@ export const gateNumberService = {
 
   async getGateNumbers(buildingId: number) {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${buildingId}`, {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json`, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
@@ -85,7 +85,7 @@ export const gateNumberService = {
       });
       if (!response.ok) throw new Error('Failed to fetch gate number details');
       const data = await response.json();
-      return data.gate_number;
+      return data;
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching gate number details.');
       throw error;
