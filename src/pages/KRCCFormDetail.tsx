@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2 } from 'lucide-react';
+import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -122,6 +122,75 @@ const KeyValue: React.FC<{ label: string; value?: string | number | null; colSpa
   );
 };
 
+// Shared label helpers for checklist fields
+const FIELD_LABELS: Record<string, string> = {
+  // common 2w/4w
+  dl_number: 'Driving License Number',
+  dl_date: 'DL Date',
+  reg_number: 'Registration Number',
+  vehicle_type: 'Vehicle Type',
+  valid_insurence: 'Valid Insurance',
+  valid_insurence_date: 'Valid Insurance Till',
+  valid_puc: 'Valid PUC',
+  valid_puc_date: 'Valid PUC Till',
+  medical_certificate_valid_date: 'Medical Certificate Valid Till',
+  // 2w extras
+  full_face_helmet: 'Full Face Helmet',
+  reflective_jacket: 'Reflective Jacket',
+  // underground
+  yoe: 'Experience (Years)',
+  role: 'Role',
+  fit_to_work: 'Fit to Work',
+};
+
+const toTitle = (s: string) => s.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+const isYes = (v: any) => String(v).toLowerCase() === 'yes' || v === true || String(v).toLowerCase() === 'true' || v === 1;
+const isNo = (v: any) => String(v).toLowerCase() === 'no' || String(v).toLowerCase() === 'false' || v === 0;
+
+const SectionChecklist: React.FC<{ title: string; prefix: string; formDetails?: Record<string, any> }>
+  = ({ title, prefix, formDetails }) => {
+    const entries = Object.entries(formDetails || {})
+      .filter(([k]) => k.startsWith(prefix))
+      .filter(([k]) => !k.startsWith('rule')) // defensive; our keys include prefix already
+      .map(([k, v]) => {
+        const base = k.slice(prefix.length).replace(/^_/, '');
+        const label = FIELD_LABELS[base] || toTitle(base);
+        // Checked when explicit Yes/true, or when a non-empty non-No value exists (like numbers/dates)
+        const checked = isYes(v) || (!isNo(v) && typeof v === 'string' && v.trim() !== '') || (typeof v === 'number' && !isNaN(v));
+        const showValue = typeof v === 'string' && !['yes', 'no', 'true', 'false'].includes(v.toLowerCase()) && v.trim() !== '';
+        return { label, checked, valueText: showValue ? v : undefined };
+      })
+      .filter(item => !!item.label);
+
+    if (!entries.length) return null;
+
+    return (
+      <div className="mt-2 mb-6">
+        <div className="flex items-center gap-2 mb-3">
+          <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
+          <h3 className="text-base font-medium text-gray-900">{title}</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          {entries.map((it, idx) => (
+            <div key={idx} className="flex items-start gap-2 text-sm text-gray-900">
+              {it.checked ? (
+                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5" />
+              ) : (
+                <XCircle className="h-4 w-4 text-red-500 mt-0.5" />
+              )}
+              <span>
+                {it.label}
+                {it.valueText ? (
+                  <span className="ml-1 text-gray-600">({it.valueText})</span>
+                ) : null}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
 const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined }> = ({ title, items }) => {
   if (!items || items.length === 0) return null;
 
@@ -136,7 +205,7 @@ const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | und
   if (imageItems.length === 0) return null;
 
   return (
-    <div className="mb-6">
+    <div className="mt-4 mb-6">
       <div className="flex items-center gap-2 mb-3">
         <FileText className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
         <label className="block text-sm font-medium text-gray-700">{title}</label>
@@ -422,6 +491,7 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="Valid Till" value={bike.dl_valid_till} />
               <KeyValue label="2 Wheeler Reg. Number" value={bike.reg_number} />
             </div>
+            <SectionChecklist title="2 Wheeler Checklist" prefix="2w_" formDetails={data.form_details} />
             <AttachmentGroup title="M-Parivahan Attachments" items={bike.attachments?.mparivahan as IAttachmentItem[]} />
             <AttachmentGroup title="Vehicle Attachments" items={bike.attachments?.vehicle as IAttachmentItem[]} />
             <AttachmentGroup title="Insurance Attachments" items={bike.attachments?.insurance as IAttachmentItem[]} />
@@ -460,6 +530,7 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="Valid PUC" value={car.valid_puc} />
               <KeyValue label="Valid Till (If Applicable)" value={car.medical_certificate_valid_till} />
             </div>
+            <SectionChecklist title="4 Wheeler Checklist" prefix="4w_" formDetails={data.form_details} />
             <AttachmentGroup title="M-Parivahan Attachments" items={car.attachments?.mparivahan as IAttachmentItem[]} />
             <AttachmentGroup title="Insurance Attachments" items={car.attachments?.insurance as IAttachmentItem[]} />
             <AttachmentGroup title="PUC Attachments" items={car.attachments?.puc as IAttachmentItem[]} />
@@ -546,6 +617,7 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue label="Valid Till (If Applicable)" value={underground.medical_certificate_valid_till} />
               </div>
             </div>
+            <SectionChecklist title="Work Underground Checklist" prefix="work_under_ground_" formDetails={data.form_details} />
             <AttachmentGroup title="Medical Certificate Attachments" items={underground.attachments?.medical_certificate as IAttachmentItem[]} />
           </div>
         </div>
