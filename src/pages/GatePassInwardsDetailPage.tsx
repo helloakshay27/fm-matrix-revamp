@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Upload, FileText, QrCode, Box, User } from 'lucide-react';
+import { ArrowLeft, Upload, FileText, QrCode, Box, User, Download, Eye } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { API_CONFIG } from '@/config/apiConfig';
 
@@ -217,6 +217,26 @@ export const GatePassInwardsDetailPage = () => {
                     </label>
                     <p className="text-sm text-gray-900">{companyName}</p>
                   </div>
+                  <div>
+                      <span className="text-sm font-medium text-gray-700">Expected Return Date:</span>
+                      <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Gate Number:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Gate Pass Type:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.gate_pass_type_name || '--'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Gate Pass No:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.gate_pass_no || '--'}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium text-gray-700">Vendor:</span>
+                        <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
+                    </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -244,7 +264,7 @@ export const GatePassInwardsDetailPage = () => {
                     <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                         <Box className="w-4 h-4" />
                     </div>
-                    <h2 className="text-lg font-[700]">DETAILS</h2>
+                    <h2 className="text-lg font-[700]">ITEM DETAILS</h2>
                 </div>
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                 <Table>
@@ -258,7 +278,6 @@ export const GatePassInwardsDetailPage = () => {
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
                       <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
-                      <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Updates</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -272,18 +291,18 @@ export const GatePassInwardsDetailPage = () => {
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">
-                          <span dangerouslySetInnerHTML={{ __html: item.attachment }} />
-                        </TableCell>
-                        <TableCell className="px-4 py-3 text-sm">
-                          {receivedItems.includes(index) ? (
-                            <span className="text-green-600 font-medium">Received</span>
+                          {gatePassData.attachments && gatePassData.attachments.length > 0 ? (
+                            gatePassData.attachments.map((att: any, idx: number) => (
+                              att.document ? (
+                                <span key={idx} className="inline-flex items-center gap-2 mr-2">
+                                  <a href={att.document} download title="Download">
+                                    <Download className="w-4 h-4 text-green-600 hover:text-green-800 inline-block" />
+                                  </a>
+                                </span>
+                              ) : null
+                            ))
                           ) : (
-                            <button
-                              className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                              onClick={() => handleReceiveClick(index)}
-                            >
-                              {item.updates}
-                            </button>
+                            '--'
                           )}
                         </TableCell>
                       </TableRow>

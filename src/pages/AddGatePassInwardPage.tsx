@@ -262,7 +262,7 @@ export const AddGatePassInwardPage = () => {
     if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Mobile No. is required';
     else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Mobile No. must be 10 digits';
     if (!selectedCompany) errors.company = 'Company is required';
-    if (!gatePassDetails.vendorId) errors.vendorId = 'Vendor is required';
+    if (!gatePassDetails.vendorId) errors.vendorId = 'Supplier is required';
     if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
     if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
     if (!selectedSite) errors.site = 'Site is required';
@@ -271,8 +271,30 @@ export const AddGatePassInwardPage = () => {
     if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
     if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
 
+    // Validate all item details and show toast for each missing field
+    let itemError = false;
+    materialRows.forEach((row, idx) => {
+      if (!row.itemTypeId) {
+        toast({ title: 'Validation Error', description: `Item Type is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      } else if (!row.itemCategoryId) {
+        toast({ title: 'Validation Error', description: `Item Category is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      } else if (!row.itemNameId) {
+        toast({ title: 'Validation Error', description: `Item Name is required for row ${idx + 1}.`, variant: 'destructive' });
+        itemError = true;
+      }
+    });
+    if (itemError) return;
+
     setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (Object.keys(errors).length > 0) {
+      // Show toast for each error
+      Object.values(errors).forEach(msg => {
+        toast({ title: 'Validation Error', description: msg, variant: 'destructive' });
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     const formData = new FormData();
@@ -372,33 +394,7 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.contactPersonNo}
               helperText={fieldErrors.contactPersonNo}
             />
-            <TextField
-              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
-              value={selectedCompany ? selectedCompany.name : ''}
-              fullWidth
-              variant="outlined"
-              disabled
-              InputLabelProps={{ shrink: true }}
-              sx={{ '& .MuiInputBase-root': fieldStyles }}
-              error={!!fieldErrors.company}
-              helperText={fieldErrors.company}
-            />
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {vendors.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+            
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
               <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
@@ -456,6 +452,33 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
+            </FormControl>
+            <TextField
+              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
+              value={selectedCompany ? selectedCompany.name : ''}
+              fullWidth
+              variant="outlined"
+              disabled
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+              error={!!fieldErrors.company}
+              helperText={fieldErrors.company}
+            />
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {vendors.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNumberId}>
               <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>

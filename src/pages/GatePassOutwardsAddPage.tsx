@@ -262,7 +262,14 @@ export const GatePassOutwardsAddPage = () => {
 
     // At least one item row with all required fields
     const hasValidMaterial = materialRows && materialRows.some(row => row.itemTypeId && row.itemCategoryId && row.itemNameId && row.unit);
-    if (!hasValidMaterial) errors.material = 'At least one valid Item Detail is required';
+    if (!hasValidMaterial) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill all item details.",
+        variant: "destructive"
+      });
+      return;
+    }
 
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
@@ -346,7 +353,7 @@ export const GatePassOutwardsAddPage = () => {
         },
       })
         .then(res => res.json())
-  .then(data => setGateNumbers(data.gate_numbers || data))
+        .then(data => setGateNumbers(data.gate_numbers || data))
         .catch(() => setGateNumbers([]));
     } else {
       setGateNumbers([]);
@@ -394,176 +401,84 @@ export const GatePassOutwardsAddPage = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 border border-gray-200 rounded-lg p-10 bg-white">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Row 1 */}
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
-            <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Site"
-              notched
-              displayEmpty
-              value={selectedSite ? selectedSite.id : ''}
-              disabled
-            >
-              <MenuItem value="">Select Site</MenuItem>
-              {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
-            </MuiSelect>
-            {fieldErrors.site && <Typography variant="caption" color="error">{fieldErrors.site}</Typography>}
-          </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
-            <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Building"
-              notched
-              displayEmpty
-              value={gatePassDetails.buildingId || ''}
-              onChange={e => handleGatePassChange('buildingId', e.target.value)}
-              disabled={!selectedSite}
-            >
-              <MenuItem value="">Select Building</MenuItem>
-              {buildings.map((option) => (
-                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-              ))}
-            </MuiSelect>
-            {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
-          </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNoId}>
-            <InputLabel shrink>Gate No. <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Gate No."
-              notched
-              displayEmpty
-              value={visitorDetails.gateNoId || ''}
-              onChange={e => handleVisitorChange('gateNoId', e.target.value)}
-            >
-              <MenuItem value="">Select Gate No</MenuItem>
-              {gateNumbers.map((option) => (
-                <MenuItem key={option.id} value={option.id}>{option.gate_number || option.name}</MenuItem>
-              ))}
-            </MuiSelect>
-            {fieldErrors.gateNoId && <Typography variant="caption" color="error">{fieldErrors.gateNoId}</Typography>}
-          </FormControl>
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gatePassTypeId}>
-            <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Gate Pass Type"
-              notched
-              displayEmpty
-              value={gatePassDetails.gatePassTypeId || ''}
-              onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
-            >
-              <MenuItem value="">Select Type</MenuItem>
-              {gatePassTypes.map((option) => (
-                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-              ))}
-            </MuiSelect>
-            {fieldErrors.gatePassTypeId && <Typography variant="caption" color="error">{fieldErrors.gatePassTypeId}</Typography>}
-          </FormControl>
-          <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
-            error={!!fieldErrors.gatePassDate}
-            helperText={fieldErrors.gatePassDate}
-          />
-          
-          {returnableStatus === 'returnable' && (
+
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Visitor Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Row 1 */}
+            <TextField label={<span>Contact Person <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
+              const value = e.target.value;
+              if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
+            }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+              error={!!fieldErrors.contactPerson}
+              helperText={fieldErrors.contactPerson}
+            />
+            <TextField label={<span>Contact No <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => {
+              const value = e.target.value;
+              if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
+            }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+              error={!!fieldErrors.contactPersonNo}
+              helperText={fieldErrors.contactPersonNo}
+            />
+            
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
+              <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
+                <MenuItem value="">Select Transport</MenuItem>
+                <MenuItem value="car">Car</MenuItem>
+                <MenuItem value="bike">Bike</MenuItem>
+                <MenuItem value="truck">Truck</MenuItem>
+                <MenuItem value="walk">Walking</MenuItem>
+                <MenuItem value="self">Self</MenuItem>
+              </MuiSelect>
+              {fieldErrors.modeOfTransport && <Typography variant="caption" color="error">{fieldErrors.modeOfTransport}</Typography>}
+            </FormControl>
+            {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
+              <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+            )}
             <TextField
-              label={<span>Expected Return Date <span style={{ color: 'red' }}>*</span></span>}
-              type="date"
+              label={<span>Reporting Time <span style={{ color: 'red' }}>*</span></span>}
+              type="time"
               fullWidth
               variant="outlined"
-              value={visitorDetails.expectedReturnDate}
-              onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
+              value={visitorDetails.reportingTime}
+              onChange={(e) => handleVisitorChange('reportingTime', e.target.value)}
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
-              error={!!fieldErrors.expectedReturnDate}
-              helperText={fieldErrors.expectedReturnDate}
+              error={!!fieldErrors.reportingTime}
+              helperText={fieldErrors.reportingTime}
             />
-          )}
-          
-          <TextField label={<span>Contact Person <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => {
-            const value = e.target.value;
-            if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('contactPerson', value);
-          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
-            error={!!fieldErrors.contactPerson}
-            helperText={fieldErrors.contactPerson}
-          />
-          <TextField label={<span>Contact No <span style={{ color: 'red' }}>*</span></span>} placeholder="Enter Contact No" fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) =>{
-            const value = e.target.value;
-            if (/^\d{0,10}$/.test(value)) handleVisitorChange('contactPersonNo', value);
-          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
-            error={!!fieldErrors.contactPersonNo}
-            helperText={fieldErrors.contactPersonNo}
-          />
-          <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
+
+            {returnableStatus === 'returnable' && (
+              <TextField
+                label={<span>Expected Return Date <span style={{ color: 'red' }}>*</span></span>}
+                type="date"
+                fullWidth
+                variant="outlined"
+                value={visitorDetails.expectedReturnDate}
+                onChange={e => handleVisitorChange('expectedReturnDate', e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                error={!!fieldErrors.expectedReturnDate}
+                helperText={fieldErrors.expectedReturnDate}
+              />
+            )}
+
+            
+            {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
             const value = e.target.value;
             if (/^[a-zA-Z\s]*$/.test(value)) handleVisitorChange('driverName', value);
           }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
           <TextField label="Driver Contact No" placeholder="Enter Driver Contact No" fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => {
             const value = e.target.value;
             if (/^\d{0,10}$/.test(value)) handleVisitorChange('driverContactNo', value);
-          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+          }} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} /> */}
 
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
-            <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
-              <MenuItem value="">Select Transport</MenuItem>
-              <MenuItem value="car">Car</MenuItem>
-              <MenuItem value="bike">Bike</MenuItem>
-              <MenuItem value="truck">Truck</MenuItem>
-              <MenuItem value="walk">Walking</MenuItem>
-              <MenuItem value="self">Self</MenuItem>
-            </MuiSelect>
-            {fieldErrors.modeOfTransport && <Typography variant="caption" color="error">{fieldErrors.modeOfTransport}</Typography>}
-          </FormControl>
-          {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
-            <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
-          )}
-          <TextField
-            label={<span>Reporting Time <span style={{ color: 'red' }}>*</span></span>}
-            type="time"
-            fullWidth
-            variant="outlined"
-            value={visitorDetails.reportingTime}
-            onChange={(e) => handleVisitorChange('reportingTime', e.target.value)}
-            InputLabelProps={{ shrink: true }}
-            InputProps={{ sx: fieldStyles }}
-            error={!!fieldErrors.reportingTime}
-            helperText={fieldErrors.reportingTime}
-          />
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
-            <InputLabel shrink>Company Name <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Company Name"
-              notched
-              displayEmpty
-              value={selectedCompany ? selectedCompany.id : ''}
-              disabled
-            >
-              <MenuItem value="">Select Company</MenuItem>
-              {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
-            </MuiSelect>
-            {fieldErrors.company && <Typography variant="caption" color="error">{fieldErrors.company}</Typography>}
-          </FormControl>
+            
+            
 
-          {/* Vendor Dropdown */}
-          <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-            <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-            <MuiSelect
-              label="Vendor"
-              notched
-              displayEmpty
-              value={gatePassDetails.vendorId || ''}
-              onChange={e => handleGatePassChange('vendorId', e.target.value)}
-            >
-              <MenuItem value="">Select Vendor</MenuItem>
-              {companies.map((option) => (
-                <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-              ))}
-            </MuiSelect>
-            {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-          </FormControl>
-
-          {/* Quantity and Unit fields */}
-          {/* <TextField
+            {/* Quantity and Unit fields */}
+            {/* <TextField
             label="Quantity"
             placeholder="Enter Quantity"
             fullWidth
@@ -583,6 +498,112 @@ export const GatePassOutwardsAddPage = () => {
             InputLabelProps={{ shrink: true }}
             InputProps={{ sx: fieldStyles }}
           /> */}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
+              <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Site"
+                notched
+                displayEmpty
+                value={selectedSite ? selectedSite.id : ''}
+                disabled
+              >
+                <MenuItem value="">Select Site</MenuItem>
+                {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
+              </MuiSelect>
+              {fieldErrors.site && <Typography variant="caption" color="error">{fieldErrors.site}</Typography>}
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
+              <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Building"
+                notched
+                displayEmpty
+                value={gatePassDetails.buildingId || ''}
+                onChange={e => handleGatePassChange('buildingId', e.target.value)}
+                disabled={!selectedSite}
+              >
+                <MenuItem value="">Select Building</MenuItem>
+                {buildings.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
+              <InputLabel shrink>Company Name <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Company Name"
+                notched
+                displayEmpty
+                value={selectedCompany ? selectedCompany.id : ''}
+                disabled
+              >
+                <MenuItem value="">Select Company</MenuItem>
+                {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
+              </MuiSelect>
+              {fieldErrors.company && <Typography variant="caption" color="error">{fieldErrors.company}</Typography>}
+            </FormControl>
+
+            {/* Vendor Dropdown */}
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {companies.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNoId}>
+              <InputLabel shrink>Gate No. <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Gate No."
+                notched
+                displayEmpty
+                value={visitorDetails.gateNoId || ''}
+                onChange={e => handleVisitorChange('gateNoId', e.target.value)}
+              >
+                <MenuItem value="">Select Gate No</MenuItem>
+                {gateNumbers.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.gate_number || option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.gateNoId && <Typography variant="caption" color="error">{fieldErrors.gateNoId}</Typography>}
+            </FormControl>
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gatePassTypeId}>
+              <InputLabel shrink>Gate Pass Type <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Gate Pass Type"
+                notched
+                displayEmpty
+                value={gatePassDetails.gatePassTypeId || ''}
+                onChange={e => handleGatePassChange('gatePassTypeId', e.target.value)}
+              >
+                <MenuItem value="">Select Type</MenuItem>
+                {gatePassTypes.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.gatePassTypeId && <Typography variant="caption" color="error">{fieldErrors.gatePassTypeId}</Typography>}
+            </FormControl>
+            <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
+              error={!!fieldErrors.gatePassDate}
+              helperText={fieldErrors.gatePassDate}
+            />
+          </div>
         </div>
 
 
@@ -678,7 +699,7 @@ export const GatePassOutwardsAddPage = () => {
                       const value = e.target.value;
                       if (/^[a-zA-Z\s]*$/.test(value)) handleRowChange(row.id, 'unit', value);
                     }}
-                    inputProps={{ pattern: "[a-zA-Z\s]*" }}
+                      inputProps={{ pattern: "[a-zA-Z\s]*" }}
                     /></td>
                     <td className="px-4 py-4"><TextField variant="outlined" size="small" value={row.description} onChange={(e) => handleRowChange(row.id, 'description', e.target.value)} /></td>
                     <td className="px-4 py-4">
@@ -701,78 +722,78 @@ export const GatePassOutwardsAddPage = () => {
             )}
             <div className="flex gap-4" >
 
-            {attachments.map((attachment) => {
-              const isImage = attachment.file.type.startsWith('image/');
-              return (
-                <Box
-                  key={attachment.id}
-                  sx={{
-                    width: '120px',
-                    height: '120px',
-                    border: '2px dashed #ccc',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    backgroundColor: '#fafafa',
-                    '&:hover': {
-                      borderColor: '#999'
-                    }
-                  }}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={() => handleRemoveAttachment(attachment.id)}
+              {attachments.map((attachment) => {
+                const isImage = attachment.file.type.startsWith('image/');
+                return (
+                  <Box
+                    key={attachment.id}
                     sx={{
-                      position: 'absolute',
-                      top: 4,
-                      right: 4,
-                      backgroundColor: 'white',
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                      width: 20,
-                      height: 20,
+                      width: '120px',
+                      height: '120px',
+                      border: '2px dashed #ccc',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative',
+                      backgroundColor: '#fafafa',
                       '&:hover': {
-                        backgroundColor: '#f5f5f5'
+                        borderColor: '#999'
                       }
                     }}
                   >
-                    <Close sx={{ fontSize: 12 }} />
-                  </IconButton>
-
-                  {isImage ? (
-                    <img
-                      src={attachment.url}
-                      alt={attachment.name}
-                      style={{
-                        maxWidth: '100px',
-                        maxHeight: '100px',
-                        objectFit: 'contain',
-                        marginBottom: 8,
-                        borderRadius: 4,
-                      }}
-                    />
-                  ) : (
-                    <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
-                  )}
-                  {!isImage && (
-                    <Typography
-                      variant="caption"
+                    <IconButton
+                      size="small"
+                      onClick={() => handleRemoveAttachment(attachment.id)}
                       sx={{
-                        textAlign: 'center',
-                        px: 1,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        width: '100%',
+                        position: 'absolute',
+                        top: 4,
+                        right: 4,
+                        backgroundColor: 'white',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                        width: 20,
+                        height: 20,
+                        '&:hover': {
+                          backgroundColor: '#f5f5f5'
+                        }
                       }}
                     >
-                      {attachment.name}
-                    </Typography>
-                  )}
-                </Box>
-              );
-            })}
+                      <Close sx={{ fontSize: 12 }} />
+                    </IconButton>
+
+                    {isImage ? (
+                      <img
+                        src={attachment.url}
+                        alt={attachment.name}
+                        style={{
+                          maxWidth: '100px',
+                          maxHeight: '100px',
+                          objectFit: 'contain',
+                          marginBottom: 8,
+                          borderRadius: 4,
+                        }}
+                      />
+                    ) : (
+                      <AttachFile sx={{ fontSize: 24, color: '#666', mb: 1 }} />
+                    )}
+                    {!isImage && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          textAlign: 'center',
+                          px: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          width: '100%',
+                        }}
+                      >
+                        {attachment.name}
+                      </Typography>
+                    )}
+                  </Box>
+                );
+              })}
             </div>
           </Box>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
