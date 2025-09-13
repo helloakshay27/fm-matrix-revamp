@@ -215,10 +215,10 @@ export const GatePassOutwardsDetailPage = () => {
                         <span className="text-sm font-medium text-gray-700">Company Name:</span>
                         <span className="text-sm text-gray-900">{companyName}</span>
                     </div>
-                    <div>
+                    {/* <div>
                       <span className="text-sm font-medium text-gray-700">Expected Return Date:</span>
                       <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
-                    </div>
+                    </div> */}
                     <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Gate Number:</span>
                         <span className="text-sm text-gray-900">{gatePassData.gate_number || '--'}</span>
@@ -250,7 +250,7 @@ export const GatePassOutwardsDetailPage = () => {
                     </div>
                     {gatePassData.returnable == true && (
                         <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium text-gray-700">Expected Date:</span>
+                            <span className="text-sm font-medium text-gray-700">Expected Return Date:</span>
                             <span className="text-sm text-gray-900">{expectedReturnDate || "-"}</span>
                         </div>
                     )}

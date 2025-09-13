@@ -10,6 +10,7 @@ import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { useToast } from '@/hooks/use-toast';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
+import { toast } from "sonner";
 
 // Define DropdownOption type
 interface DropdownOption {
@@ -40,7 +41,6 @@ interface MaterialRow {
 
 export const GatePassOutwardsAddPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -154,7 +154,7 @@ export const GatePassOutwardsAddPage = () => {
       setItemNameOptions(prev => ({ ...prev, [id]: [] }));
 
       if (value) {
-        const subTypes = await gatePassInwardService.getInventorySubTypes(value);
+        const subTypes = await gatePassInwardService.getInventorySubTypes();
         setItemCategoryOptions(prev => ({ ...prev, [id]: subTypes }));
       } else {
         setItemCategoryOptions(prev => ({ ...prev, [id]: [] }));
@@ -245,34 +245,79 @@ export const GatePassOutwardsAddPage = () => {
     e.preventDefault();
 
     // Field-level validation
-    const errors: { [key: string]: string } = {};
-    if (!selectedSite) errors.site = 'Site is required';
-    if (!gatePassDetails.buildingId) errors.buildingId = 'Building is required';
-    if (!visitorDetails.gateNoId) errors.gateNoId = 'Gate No. is required';
-    if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
-    if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
-    if (!visitorDetails.contactPerson) errors.contactPerson = 'Contact Person is required';
-    if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Contact No is required';
-    else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Contact No must be 10 digits';
-    if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
-    if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
-    if (!selectedCompany) errors.company = 'Company Name is required';
-    if (!gatePassDetails.vendorId) errors.vendorId = 'Vendor is required';
-    if (returnableStatus === 'returnable' && !visitorDetails.expectedReturnDate) errors.expectedReturnDate = 'Expected Return Date is required';
+    if (!visitorDetails.contactPerson) {
+          toast.error("Visitor Name is required");
+          return;
+        }
+        if (!visitorDetails.contactPersonNo) {
+          toast.error("Mobile No. is required");
+          return;
+        }
+        if (visitorDetails.contactPersonNo.length !== 10) {
+          toast.error("Mobile No. must be 10 digits");
+          return;
+        }
+        
+        if (!visitorDetails.modeOfTransport) {
+          toast.error("Mode Of Transport is required");
+          return;
+        }
+        if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
+          toast.error("Vehicle No. is required");
+          return;
+        }
+        if (!visitorDetails.reportingTime) {
+          toast.error("Reporting Time is required");
+          return;
+        }
+        if (!selectedSite) {
+          toast.error("Site is required");
+          return;
+        }
+        if (!gatePassDetails.buildingId) {
+          toast.error("Building is required");
+          return;
+        }
+        if (!selectedCompany) {
+          toast.error("Company is required");
+          return;
+        }
+        if (!gatePassDetails.vendorId) {
+          toast.error("Vendor is required");
+          return;
+        }
+        if (!gatePassDetails.gateNumberId) {
+          toast.error("Gate Number is required");
+          return;
+        }
+        if (!gatePassDetails.gatePassTypeId) {
+          toast.error("Gate Pass Type is required");
+          return;
+        }
+        if (!gatePassDetails.gatePassDate) {
+          toast.error("Gate Pass Date is required");
+          return;
+        }
+    
+        // Validate all item details and show toast for each missing field
+        for (let idx = 0; idx < materialRows.length; idx++) {
+          const row = materialRows[idx];
+          if (!row.itemTypeId) {
+            toast.error(`Item Type is required for row ${idx + 1}`);
+            return;
+          }
+          if (!row.itemCategoryId) {
+            toast.error(`Item Category is required for row ${idx + 1}`);
+            return;
+          }
+          if (!row.itemNameId) {
+            toast.error(`Item Name is required for row ${idx + 1}`);
+            return;
+          }
+        }
 
-    // At least one item row with all required fields
-    const hasValidMaterial = materialRows && materialRows.some(row => row.itemTypeId && row.itemCategoryId && row.itemNameId && row.unit);
-    if (!hasValidMaterial) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill all item details.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    // setFieldErrors(errors);
+    // if (Object.keys(errors).length > 0) return;
 
     const formData = new FormData();
 
@@ -434,7 +479,7 @@ export const GatePassOutwardsAddPage = () => {
               {fieldErrors.modeOfTransport && <Typography variant="caption" color="error">{fieldErrors.modeOfTransport}</Typography>}
             </FormControl>
             {(visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck") && (
-              <TextField label="Vehicle No." placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
+              <TextField label={<span>Vehicle No. <span style={{ color: 'red' }}>*</span></span>} placeholder="MH04BA-1009" fullWidth variant="outlined" value={visitorDetails.vehicleNo} onChange={(e) => handleVisitorChange('vehicleNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             )}
             <TextField
               label={<span>Reporting Time <span style={{ color: 'red' }}>*</span></span>}

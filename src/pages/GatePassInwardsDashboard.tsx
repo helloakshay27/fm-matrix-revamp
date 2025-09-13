@@ -73,7 +73,7 @@ export const GatePassInwardsDashboard = () => {
     { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'visitorContact', label: 'Visitor Contact', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'numberOfMaterials', label: 'No. of Materials', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'supplierName', label: 'Supplier Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'supplierName', label: 'Vendor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
   ];
 
   const handleViewDetails = (id: string) => {
