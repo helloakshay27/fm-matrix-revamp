@@ -1,4 +1,237 @@
-@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:wght@100;200;300;400;500;600&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --red: #c72030;
+}
+
+* {
+  font-family: "Poppins", sans-serif;
+}
+
+.bg-red {
+  background-color: var(--red);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+#addTask::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+#addTask::-webkit-scrollbar-track {
+  background: #f5c6b5;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+#addTask::-webkit-scrollbar-thumb {
+  background: #c72030;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.tag {
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="65" height="15" viewBox="0 0 65 15" fill="none"><path d="M3.1474 1H56.7164C57.2555 1.00005 57.7732 1.20387 58.1591 1.568L63.688 6.784C63.7868 6.87716 63.8652 6.98851 63.9188 7.11148C63.9724 7.23445 64 7.36655 64 7.5C64 7.63345 63.9724 7.76555 63.9188 7.88852C63.8652 8.01149 63.7868 8.12284 63.688 8.216L58.1591 13.432C57.7732 13.7961 57.2555 13.9999 56.7164 14H2.55556C1.57379 14 1 12.584 1 11.5V3.709C1 2.625 2.16667 1 3.1474 1Z" stroke="%23E95420" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+  color: #383838;
+  font-size: 9px;
+
+  align-items: center;
+  padding: 5px 4px 4px 0px;
+  margin-right: 4px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: left center;
+}
+
+.tag span {
+  margin: 1.5rem 0.5rem !important;
+}
+
+.dropdown-menu {
+  min-width: 180px;
+  z-index: 1000;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdown-item:hover {
+  background-color: #f3f4f6;
+}
+
+.dropdown-item.selected {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+.gantt_tree_icon {
+  cursor: pointer;
+}
+/* Brown/tan fill */
+.gantt_task_content {
+  background-color: #bc977c !important; /* Adjust hex as needed */
+}
+
+/* Make Gantt task link lines reddish-brown */
+.gantt_line_wrapper div {
+  background-color: #C72030 !important; /* Reddish-brown color from the image */
+}
+
+/* Corners */
+.gantt_task_link .gantt_link_corner {
+  border-color: #C72030 !important; /* Match corner color to line */
+  
+}
+
+.gantt_task_link div.gantt_link_arrow{
+   color: #C72030 !important; /* Reddish-brown color from the image */
+
+}
+
+/* Optional: Arrow color */
+.gantt_task_link .gantt_link_arrow {
+}
+
+gantt_task_link div.gantt_link_arrow:before {
+
+   color: #C72030 !important; /* Reddish-brown color from the image */
+
+   
+
+}
+
+.gantt_cal_ltitle{
+  border-bottom: 1px solid #c72030 !important;
+}
+
+.gantt_save_btn_set {
+  background-color: #c72030 !important;
+  color: white !important;
+  border: none !important;
+}
+
+.gantt_cancel_btn_set{
+
+    border: 1px solid #c72030 !important;
+    color: #c72030 !important;
+
+}
+.gantt_duration .gantt_duration_dec, .gantt_duration .gantt_duration_inc {
+    color: #c72030 !important;
+}
+.gantt_link_arrow {
+    --dhx-gantt-base-colors-icons:#C72030 !important;
+}
+
+/* Optional: border styling for better visibility */
+
+
+.gantt_task_row.gantt_selected {
+  background-color: #f5f5f5;
+}
+
+.gantt_task_link .gantt_line_wrapper {
+  z-index: 1;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  /* color: #000; */
+  border-bottom: 1.5px solid #d5dbdb;
+  font-size: 14px;
+  font-weight: 400px;
+}
+
+.sidebar-link:hover {
+  background-color: var(--red);
+  color: #fff;
+  cursor: pointer;
+  border-bottom: 1.5px solid #fff;
+}
+
+.sidebar ul a.active .sidebar-link {
+  background-color: var(--red);
+  color: #fff;
+  border-bottom: 1.5px solid #fff;
+}
+
+.selected {
+  border-bottom: 2px solid red;
+}
+
+.custom-task {
+  background-color: #d9534f !important;
+  border: 1px solid #b52b27;
+  color: white;
+}
+
+.milestone-task {
+  background-color: #d9534f !important;
+  border: 1px solid #900;
+  color: white;
+  border-radius: 50%;
+}
+
+.custom-switch {
+  width: 65px;
+  height: 24px;
+}
+
+.custom-switch:checked {
+  background-color: var(--red);
+  border-color: var(--red);
+}
+
+.form-switch .form-check-input {
+  width: 3em !important;
+}
+
+svg {
+  z-index: 1;
+}
+
+/* In your CSS file (e.g., global.css or App.css) */
+
+/* Target the success icon specifically */
+.react-hot-toast-success-icon path {
+  stroke: red !important; /* Change to your desired color, e.g., #FF0000 */
+}
+
+/* Optional: To change the checkmark inside the circle */
+.react-hot-toast-success-icon polyline {
+  stroke: red !important; /* Or whatever color you want for the checkmark itself */
+}
+
+/* Alternatively, if you want to apply this globally to all success toasts */
+.Toastify__toast--success .Toastify__toast-icon svg path {
+  stroke: red !important;
+}
+.Toastify__toast--success .Toastify__toast-icon svg polyline {
+  stroke: red !important;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}@import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 @import './styles/enhanced-select.css';
 @tailwind base;

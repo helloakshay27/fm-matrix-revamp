@@ -1,22 +1,107 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, RotateCcw } from 'lucide-react';
 import { SurveyResponseTable } from '../components/SurveyResponseTable';
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MaterialDatePicker } from "@/components/ui/material-date-picker";
 import { useToast } from "@/hooks/use-toast";
+import { apiClient } from '@/utils/apiClient';
+
+interface Survey {
+  id: number;
+  name: string;
+  active: number;
+}
+
+interface Site {
+  id: number;
+  name: string;
+}
+
+interface Building {
+  id: number;
+  name: string;
+}
 
 export const SurveyResponseDashboard = () => {
   const { toast } = useToast();
   const [selectedSurvey, setSelectedSurvey] = useState('');
-  const [dateRange, setDateRange] = useState('01/05/2025 - 21/06/2025');
+  const [dateRange, setDateRange] = useState('');
   const [selectedSite, setSelectedSite] = useState('');
   const [selectedBuilding, setSelectedBuilding] = useState('');
   const [selectedWing, setSelectedWing] = useState('');
   const [selectedArea, setSelectedArea] = useState('');
   const [selectedFloor, setSelectedFloor] = useState('');
   const [selectedRoom, setSelectedRoom] = useState('');
+
+  // Data states
+  const [surveys, setSurveys] = useState<Survey[]>([]);
+  const [sites, setSites] = useState<Site[]>([]);
+  const [buildings, setBuildings] = useState<Building[]>([]);
+  const [loadingSurveys, setLoadingSurveys] = useState(false);
+  const [loadingSites, setLoadingSites] = useState(false);
+  const [loadingBuildings, setLoadingBuildings] = useState(false);
+
+  // Initialize date range to today's date range (example: last 30 days)
+  useEffect(() => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const formatDate = (date: Date) => {
+      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    };
+    setDateRange(`${formatDate(thirtyDaysAgo)} - ${formatDate(today)}`);
+  }, []);
+
+  // Fetch surveys
+  useEffect(() => {
+    fetchSurveys();
+    fetchSites();
+  }, []);
+
+  const fetchSurveys = async () => {
+    try {
+      setLoadingSurveys(true);
+      const siteId = localStorage.getItem('site_id') || '2189';
+      const response = await apiClient.get(`/pms/admin/snag_checklists.json?site_id=${siteId}`);
+      setSurveys(response.data || []);
+    } catch (error) {
+      console.error('Error fetching surveys:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch surveys",
+        variant: "destructive"
+      });
+    } finally {
+      setLoadingSurveys(false);
+    }
+  };
+
+  const fetchSites = async () => {
+    try {
+      setLoadingSites(true);
+      const response = await apiClient.get('/sites.json');
+      setSites(response.data || []);
+    } catch (error) {
+      console.error('Error fetching sites:', error);
+    } finally {
+      setLoadingSites(false);
+    }
+  };
+
+  const fetchBuildings = async (siteId: string) => {
+    if (!siteId) return;
+    
+    try {
+      setLoadingBuildings(true);
+      const response = await apiClient.get('/buildings.json');
+      setBuildings(response.data || []);
+    } catch (error) {
+      console.error('Error fetching buildings:', error);
+    } finally {
+      setLoadingBuildings(false);
+    }
+  };
 
   const handleSearch = () => {
     const filters = {
@@ -40,7 +125,6 @@ export const SurveyResponseDashboard = () => {
 
   const handleReset = () => {
     setSelectedSurvey('');
-    setDateRange('01/05/2025 - 21/06/2025');
     setSelectedSite('');
     setSelectedBuilding('');
     setSelectedWing('');
@@ -48,10 +132,34 @@ export const SurveyResponseDashboard = () => {
     setSelectedFloor('');
     setSelectedRoom('');
     
+    // Reset date range to last 30 days
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today.getTime() - (30 * 24 * 60 * 60 * 1000));
+    const formatDate = (date: Date) => {
+      return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    };
+    setDateRange(`${formatDate(thirtyDaysAgo)} - ${formatDate(today)}`);
+    
     toast({
       title: "Filters Reset",
       description: "All filters have been reset to default values",
     });
+  };
+
+  // Handle site change to fetch buildings
+  const handleSiteChange = (siteId: string) => {
+    setSelectedSite(siteId);
+    setSelectedBuilding(''); // Reset building when site changes
+    setSelectedWing('');
+    setSelectedArea('');
+    setSelectedFloor('');
+    setSelectedRoom('');
+    
+    if (siteId) {
+      fetchBuildings(siteId);
+    } else {
+      setBuildings([]);
+    }
   };
 
   return (
@@ -73,12 +181,14 @@ export const SurveyResponseDashboard = () => {
             <label className="text-sm font-medium text-gray-700">Select Survey</label>
             <Select value={selectedSurvey} onValueChange={setSelectedSurvey}>
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
-                <SelectValue placeholder="Select Survey" />
+                <SelectValue placeholder={loadingSurveys ? "Loading surveys..." : "Select Survey"} />
               </SelectTrigger>
               <SelectContent className="bg-white border border-[#D5DbDB] z-50">
-                <SelectItem value="customer-satisfaction">Customer Satisfaction Survey</SelectItem>
-                <SelectItem value="facility-maintenance">Facility Maintenance Survey</SelectItem>
-                <SelectItem value="employee-feedback">Employee Feedback Survey</SelectItem>
+                {surveys.map((survey) => (
+                  <SelectItem key={survey.id} value={survey.id.toString()}>
+                    {survey.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -98,28 +208,32 @@ export const SurveyResponseDashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Select Site</label>
-            <Select value={selectedSite} onValueChange={setSelectedSite}>
+            <Select value={selectedSite} onValueChange={handleSiteChange}>
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
-                <SelectValue placeholder="Select Site" />
+                <SelectValue placeholder={loadingSites ? "Loading sites..." : "Select Site"} />
               </SelectTrigger>
               <SelectContent className="bg-white border border-[#D5DbDB] z-50">
-                <SelectItem value="site-1">Lockastead Site 1</SelectItem>
-                <SelectItem value="site-2">Lockastead Site 2</SelectItem>
-                <SelectItem value="downtown">Downtown Office</SelectItem>
+                {sites.map((site) => (
+                  <SelectItem key={site.id} value={site.id.toString()}>
+                    {site.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700">Select Building</label>
-            <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+            <Select value={selectedBuilding} onValueChange={setSelectedBuilding} disabled={!selectedSite}>
               <SelectTrigger className="border-[#D5DbDB] focus:ring-[#C72030] focus:border-[#C72030]">
-                <SelectValue placeholder="Select Building" />
+                <SelectValue placeholder={loadingBuildings ? "Loading buildings..." : "Select Building"} />
               </SelectTrigger>
               <SelectContent className="bg-white border border-[#D5DbDB] z-50">
-                <SelectItem value="building-a">Building A</SelectItem>
-                <SelectItem value="building-b">Building B</SelectItem>
-                <SelectItem value="main-tower">Main Tower</SelectItem>
+                {buildings.map((building) => (
+                  <SelectItem key={building.id} value={building.id.toString()}>
+                    {building.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
