@@ -50,20 +50,33 @@ const MsafeDetailReportDownload: React.FC = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (response.data.status === 'completed') {
-        const downloadUrl = response.data.download_url;
+      const { status, message, download_url: downloadUrl } = response?.data || {};
+
+      // Prefer showing backend-provided message when present
+      if (message) {
+        if (status === 'completed') toast.success(message);
+        else if (status === 'failed' || status === 'error') toast.error(message);
+        else toast.info(message);
+      }
+
+      if (status === 'completed') {
         if (downloadUrl) {
           window.open(downloadUrl, '_blank');
-          toast.success('Report download started successfully.');
+          if (!message) toast.success('Report download started successfully.');
         } else {
           toast.error('Download URL not found in the response.');
         }
-      } else {
+      } else if (!message) {
+        // Fallback generic note only if backend didn't provide a message
         toast.info('Report generation is not yet complete. Please try again later.');
       }
     } catch (error) {
       console.error('Error fetching report status:', error);
-      toast.error('Failed to fetch report status. Please try again.');
+      // If server returned a message, show it; otherwise show generic error
+      const anyErr = error as any;
+      const serverMsg = anyErr?.response?.data?.message || anyErr?.message;
+      if (serverMsg) toast.error(serverMsg);
+      else toast.error('Failed to fetch report status. Please try again.');
     } finally {
       setLoading(false);
     }
