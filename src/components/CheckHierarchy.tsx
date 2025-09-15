@@ -91,10 +91,9 @@ const CheckHierarchy: React.FC = () => {
       setTreeLoading(true);
       setTreeData(null);
   const tokenHeader = getAuthHeader();
-  const isEmail = identifierType === 'email';
       const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-      const paramKey = isEmail ? 'email' : 'mobile_number';
-      const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=${employeeType}`;
+      // As requested: always pass the identifier using the 'email' param (for both email and mobile inputs)
+      const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?email=${encodeURIComponent(raw)}&employee_type=${employeeType}`;
       const resp = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +117,8 @@ const CheckHierarchy: React.FC = () => {
           }
           message = message.toString().replace(/^{"[a-zA-Z_]+":\s*"(.+)"}$/,'$1').trim();
         }
-        throw new Error(message);
+        // Throw a structured error so we can tailor the user-facing toast message
+        throw { status: resp.status, message } as { status?: number; message?: string };
       }
       const data = await resp.json();
       setTreeData(data as TreeNode);
@@ -134,7 +134,32 @@ const CheckHierarchy: React.FC = () => {
     toast.success('Hierarchy fetched');
     } catch (e: any) {
       console.error('Hierarchy fetch error', e);
-      toast.error(e.message || 'Failed to fetch hierarchy');
+      // Build a clean, user-friendly message based on the identifier type
+      const serverMsg = (e && (e.message || e.msg)) ? String(e.message || e.msg) : (typeof e === 'string' ? e : '');
+      const status = e && typeof e.status === 'number' ? e.status : undefined;
+      const idType = identifierType; // capture current type
+      const digits = raw.replace(/\D/g, '');
+
+      let uiMessage = '';
+      const looksNotFound = /not\s*(present|found)/i.test(serverMsg || '') || status === 404;
+      const isAuthError = status === 401 || status === 403;
+
+      if (isAuthError) {
+        uiMessage = 'You are not authorized to view this hierarchy.';
+      } else if (idType === 'mobile') {
+        // Never show a message that labels the number as an email
+        uiMessage = looksNotFound
+          ? (digits ? `User not present with mobile number ${digits}` : 'No user found for the provided mobile number.')
+          : ((serverMsg || '').replace(/email/gi, 'mobile number') || 'Failed to fetch hierarchy');
+      } else if (idType === 'email') {
+        uiMessage = looksNotFound
+          ? (raw ? `User not present with email ${raw}` : 'No user found for the provided email.')
+          : (serverMsg || 'Failed to fetch hierarchy');
+      } else {
+        uiMessage = serverMsg || 'Failed to fetch hierarchy';
+      }
+
+      toast.error(uiMessage);
     } finally {
       setTreeLoading(false);
     }
