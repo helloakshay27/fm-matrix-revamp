@@ -11,6 +11,7 @@ import { getPurchaseOrders } from "@/store/slices/purchaseOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -71,13 +72,6 @@ const columns: ColumnConfig[] = [
     defaultVisible: true,
   },
   {
-    key: "activeInactive",
-    label: "Active/Inactive",
-    sortable: false,
-    draggable: true,
-    defaultVisible: true,
-  },
-  {
     key: "lastApprovedBy",
     label: "Last Approved By",
     sortable: true,
@@ -88,6 +82,13 @@ const columns: ColumnConfig[] = [
     key: "approvalStatus",
     label: "Approval status",
     sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "activeInactive",
+    label: "Active/Inactive",
+    sortable: false,
     draggable: true,
     defaultVisible: true,
   },
@@ -364,11 +365,12 @@ export const PODashboard = () => {
         );
       case "activeInactive":
         return (
-          <input
-            type="checkbox"
+          <Switch
             checked={item.activeInactive}
-            onChange={() => handleCheckboxChange(item)}
-            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            onCheckedChange={() =>
+              handleCheckboxChange(item)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
         );

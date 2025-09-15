@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchWorkOrders } from "@/store/slices/workOrderSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { updateServiceActiveStaus } from "@/store/slices/servicePRSlice";
+import { Switch } from "@/components/ui/switch";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -352,11 +353,12 @@ export const WODashboard = () => {
         );
       case "active":
         return (
-          <input
-            type="checkbox"
+          <Switch
             checked={item.active}
-            onChange={() => handleCheckboxChange(item)}
-            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            onCheckedChange={() =>
+              handleCheckboxChange(item)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
         );
