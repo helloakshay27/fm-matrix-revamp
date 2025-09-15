@@ -828,7 +828,7 @@ export const AddPODashboard = () => {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                       <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                         <InputLabel shrink>Item Details</InputLabel>
                         <MuiSelect
@@ -865,14 +865,14 @@ export const AddPODashboard = () => {
                       />
 
                       <TextField
-                        label="Quantity"
-                        value={item.quantity}
+                        label="Expected Date"
+                        type="date"
+                        value={item.expectedDate}
                         onChange={(e) =>
-                          updateItem(item.id, "quantity", e.target.value)
+                          updateItem(item.id, "expectedDate", e.target.value)
                         }
                         fullWidth
                         variant="outlined"
-                        type="number"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
@@ -901,14 +901,14 @@ export const AddPODashboard = () => {
                       </FormControl>
 
                       <TextField
-                        label="Expected Date"
-                        type="date"
-                        value={item.expectedDate}
+                        label="Quantity"
+                        value={item.quantity}
                         onChange={(e) =>
-                          updateItem(item.id, "expectedDate", e.target.value)
+                          updateItem(item.id, "quantity", e.target.value)
                         }
                         fullWidth
                         variant="outlined"
+                        type="number"
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}
                         sx={{ mt: 1 }}
