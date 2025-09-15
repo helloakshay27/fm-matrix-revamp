@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management';
   endpoint: string;
   title: string;
 }
@@ -185,7 +185,17 @@ const analyticsOptions = {
     ]
   },
 
-};
+  checklist_management: {
+    icon: CheckSquare,
+    label: 'Checklist Management',
+    color: '#C4B89D',
+    options: [
+      { id: 'cm_progress_quarterly', endpoint: 'cm_progress_quarterly', label: 'Checklist Progress Status – Center-Wise Quarterly Comparison' },
+      { id: 'cm_overdue_centerwise', endpoint: 'cm_overdue_centerwise', label: 'Top 10 Overdue Checklists – Center-wise Contribution Comparison' },
+    ]
+  },
+
+} as const;
 
 export const UnifiedAnalyticsSelector: React.FC<UnifiedAnalyticsSelectorProps> = ({
   selectedAnalytics,
