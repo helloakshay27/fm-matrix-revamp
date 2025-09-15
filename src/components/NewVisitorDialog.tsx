@@ -10,6 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface NewVisitorDialogProps {
   isOpen: boolean;
@@ -25,6 +26,24 @@ export const NewVisitorDialog: React.FC<NewVisitorDialogProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate mobile number
+    if (!mobileNumber.trim()) {
+      toast.error('Please enter a mobile number');
+      return;
+    }
+    
+    if (mobileNumber.length !== 10) {
+      toast.error('Please enter a valid mobile number');
+      return;
+    }
+    
+    // Check if mobile number contains only digits
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      toast.error('Please enter a valid mobile number');
+      return;
+    }
+    
     console.log('Submitting visitor with mobile number:', mobileNumber);
     onClose();
     // Pass the mobile number as state to the visitor form page
@@ -62,13 +81,11 @@ export const NewVisitorDialog: React.FC<NewVisitorDialogProps> = ({
   value={mobileNumber}
   onChange={(e) => {
     const value = e.target.value.replace(/\D/g, ""); // remove non-numeric chars
-    setMobileNumber(value);
+    if (value.length <= 10) {
+      setMobileNumber(value);
+    }
   }}
-  pattern="[0-9]{10}"
-  maxLength={10}
-  minLength={10}
   className="w-full"
-  required
 />
           </div>
 
