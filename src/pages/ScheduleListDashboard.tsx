@@ -1040,7 +1040,8 @@ export const ScheduleListDashboard = () => {
   // Custom export handler for schedules
   const handleScheduleExport = async () => {
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/checklist.xlsx`;
+      // const url = `https://fm-uat-api.lockated.com/pms/custom_forms/export_checklist.xlsx?access_token=ojrsRqfNo0GLUT2roCu7O8z9eRt2OdyVrsF0AtsECGg`;
+      const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/export_checklist.xlsx`;
       const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,

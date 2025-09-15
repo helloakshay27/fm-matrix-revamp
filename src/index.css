@@ -33,7 +33,7 @@
 [class*="MuiFormControl"] [class*="MuiSelect-select"]:not(textarea),
 [class*="MuiFormControl"] [class*="MuiInputBase-input"]:not(textarea):not(.MuiInputBase-inputMultiline) {
   padding: 8px 12px !important;
-  display: flex !important;
+  display: block !important;
   align-items: center !important;
 }
 

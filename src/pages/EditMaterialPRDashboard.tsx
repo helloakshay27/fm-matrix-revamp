@@ -562,6 +562,19 @@ export const EditMaterialPRDashboard = () => {
               </FormControl>
 
               <TextField
+                label="Related To*"
+                name="relatedTo"
+                value={supplierDetails.relatedTo}
+                onChange={handleSupplierChange}
+                placeholder="Related To"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+
+              <TextField
                 label="Transportation"
                 name="transportation"
                 value={supplierDetails.transportation}
@@ -638,19 +651,6 @@ export const EditMaterialPRDashboard = () => {
                 value={supplierDetails.advanceAmount}
                 onChange={handleSupplierChange}
                 placeholder="Enter Number"
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Related To*"
-                name="relatedTo"
-                value={supplierDetails.relatedTo}
-                onChange={handleSupplierChange}
-                placeholder="Related To"
                 fullWidth
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
@@ -823,6 +823,20 @@ export const EditMaterialPRDashboard = () => {
                   />
 
                   <TextField
+                    label="Expected Date*"
+                    type="date"
+                    value={item.expectedDate}
+                    onChange={(e) =>
+                      handleItemChange(item.id, "expectedDate", e.target.value)
+                    }
+                    fullWidth
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{ sx: fieldStyles }}
+                    sx={{ mt: 1 }}
+                  />
+
+                  <TextField
                     label="Rate"
                     value={item.each}
                     onChange={(e) =>
@@ -847,20 +861,6 @@ export const EditMaterialPRDashboard = () => {
                     fullWidth
                     variant="outlined"
                     type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Expected Date*"
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "expectedDate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
                     InputLabelProps={{ shrink: true }}
                     InputProps={{ sx: fieldStyles }}
                     sx={{ mt: 1 }}
