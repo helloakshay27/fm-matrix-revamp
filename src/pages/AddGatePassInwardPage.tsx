@@ -35,6 +35,7 @@ interface MaterialRow {
   unit: string;
   description: string;
   maxQuantity: number | null;
+  otherMaterialName?: string; // For "Other"
 }
 
 export const AddGatePassInwardPage = () => {
@@ -43,7 +44,7 @@ export const AddGatePassInwardPage = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [materialRows, setMaterialRows] = useState<MaterialRow[]>([
-    { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }
+    { id: 1, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }
   ]);
 
   const [visitorDetails, setVisitorDetails] = useState({
@@ -81,6 +82,7 @@ export const AddGatePassInwardPage = () => {
   const [itemNameOptions, setItemNameOptions] = useState<{ [key: number]: DropdownOption[] }>({});
   const [gateNumbers, setGateNumbers] = useState<DropdownOption[]>([]);
   const [vendors, setVendors] = useState<DropdownOption[]>([]);
+  const [vendorCompanyName, setVendorCompanyName] = useState<string>('');
 
   // Get selected company and site from Redux (Header)
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
@@ -144,35 +146,42 @@ export const AddGatePassInwardPage = () => {
 
   const handleAddRow = () => {
     const newId = materialRows.length > 0 ? Math.max(...materialRows.map(r => r.id)) + 1 : 1;
-    setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null }]);
+    setMaterialRows([...materialRows, { id: newId, itemTypeId: null, itemCategoryId: null, itemNameId: null, quantity: '', unit: '', description: '', maxQuantity: null, otherMaterialName: '' }]);
   };
 
   const handleDeleteRow = (id: number) => {
     setMaterialRows(materialRows.filter(row => row.id !== id));
   };
 
+  // Always add "Other" to itemCategoryOptions
+  const getItemCategoryOptionsWithOther = (rowId: number) => {
+    const options = itemCategoryOptions[rowId] || [];
+    const hasOther = options.some(opt => opt.id === -1);
+    return hasOther
+      ? options
+      : [...options, { id: -1, name: 'Other' }];
+  };
+
   const handleRowChange = async (id: number, field: keyof Omit<MaterialRow, 'id'>, value: any) => {
-    const newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
+    let newRows = materialRows.map(row => row.id === id ? { ...row, [field]: value } : row);
 
     if (field === 'itemTypeId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemCategoryId: null, itemNameId: null, maxQuantity: null, quantity: '', unit: '', otherMaterialName: '' } : row);
       setMaterialRows(updatedRows);
       setItemNameOptions(prev => ({ ...prev, [id]: [] }));
 
       if (value) {
         const subTypes = await gatePassInwardService.getInventorySubTypes();
-        console.log("Fetched subTypes:", subTypes);
-
         setItemCategoryOptions(prev => ({ ...prev, [id]: subTypes }));
       } else {
         setItemCategoryOptions(prev => ({ ...prev, [id]: [] }));
       }
     } else if (field === 'itemCategoryId') {
-      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '', unit: '' } : row);
+      const updatedRows = newRows.map(row => row.id === id ? { ...row, itemNameId: null, maxQuantity: null, quantity: '', unit: '', otherMaterialName: '' } : row);
       setMaterialRows(updatedRows);
 
       const currentItemTypeId = newRows.find(row => row.id === id)?.itemTypeId;
-      if (value && currentItemTypeId) {
+      if (value && currentItemTypeId && value !== -1) {
         const inventories = await gatePassInwardService.getInventories(currentItemTypeId, value);
         setItemNameOptions(prev => ({ ...prev, [id]: inventories }));
       } else {
@@ -180,26 +189,20 @@ export const AddGatePassInwardPage = () => {
       }
     } else if (field === 'itemNameId') {
       const selectedItem = (itemNameOptions[id] || []).find(item => item.id === value);
-      console.log("selected", selectedItem);
-
       const updatedRows = newRows.map(row => row.id === id ? {
         ...row,
         maxQuantity: selectedItem?.quantity ?? null,
         quantity: '',
-        unit: selectedItem?.unit ?? '' // Set unit from selected item
+        unit: selectedItem?.unit ?? ''
       } : row);
       setMaterialRows(updatedRows);
-    } else if (field === 'quantity') {
-      // const currentRow = newRows.find(row => row.id === id);
-      // if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
-      //   toast.error(`Quantity cannot be greater than ${currentRow.maxQuantity}.`);
-      //   return;
-      // }
+    } else if (field === 'otherMaterialName') {
       setMaterialRows(newRows);
     } else {
       setMaterialRows(newRows);
     }
   };
+  console.log("itemCategoryOptions:----", itemCategoryOptions);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -290,10 +293,6 @@ export const AddGatePassInwardPage = () => {
       toast.error("Company is required");
       return;
     }
-    if (!gatePassDetails.vendorId) {
-      toast.error("Vendor is required");
-      return;
-    }
     if (!gatePassDetails.gateNumberId) {
       toast.error("Gate Number is required");
       return;
@@ -318,7 +317,11 @@ export const AddGatePassInwardPage = () => {
         toast.error(`Item Category is required for row ${idx + 1}`);
         return;
       }
-      if (!row.itemNameId) {
+      // Require either itemNameId or otherMaterialName (for "Other")
+      if (
+        (row.itemCategoryId === -1 && !row.otherMaterialName) ||
+        (row.itemCategoryId !== -1 && !row.itemNameId)
+      ) {
         toast.error(`Item Name is required for row ${idx + 1}`);
         return;
       }
@@ -348,17 +351,28 @@ export const AddGatePassInwardPage = () => {
     if (visitorDetails.contactPerson) formData.append('gate_pass[contact_person]', visitorDetails.contactPerson);
     if (visitorDetails.contactPersonNo) formData.append('gate_pass[contact_person_no]', visitorDetails.contactPersonNo);
 
+    // Vendor Company Name
+    if (vendorCompanyName) formData.append('gate_pass[vendor_company_name]', vendorCompanyName);
+
     // Append material details
     materialRows.forEach((row, index) => {
-      console.log("row", row);
-
-      if (row.itemNameId) {
+      if (row.itemCategoryId === -1) {
+        if (row.otherMaterialName)
+          formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_name]`, row.otherMaterialName);
+        if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
+        if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString() || 'Other');
+        if (row.quantity || row.maxQuantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, String(Number(row.quantity || row.maxQuantity)));
+        if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description ?? '');
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][remarks]`, gatePassDetails.remarks ?? '');
+      } else {
         formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_id]`, row.itemNameId.toString());
         if (row.itemTypeId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][pms_inventory_type_id]`, row.itemTypeId.toString());
         if (row.itemCategoryId) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][item_category]`, row.itemCategoryId.toString());
         if (row.quantity || row.maxQuantity) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][gate_pass_qty]`, String(Number(row.quantity || row.maxQuantity)));
         if (row.unit) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][unit]`, row.unit);
-        if (row.description) formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description);
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][other_material_description]`, row.description ?? '');
+        formData.append(`gate_pass[gate_pass_materials_attributes][${index}][remarks]`, gatePassDetails.remarks ?? '');
       }
     });
 
@@ -436,10 +450,37 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.reportingTime}
               helperText={fieldErrors.reportingTime}
             />
+            {/* NEW: Vendor Company Name field, placed next to Reporting Time */}
+            <TextField
+              label="Company Name"
+              placeholder="Enter Company Name"
+              fullWidth
+              variant="outlined"
+              value={vendorCompanyName}
+              onChange={e => setVendorCompanyName(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+            />
             {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) => handleVisitorChange('driverName', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Driver Contact No." placeholder="Enter Driver Contact No." fullWidth variant="outlined" value={visitorDetails.driverContactNo} onChange={(e) => handleVisitorChange('driverContactNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Contact Person" placeholder="Enter Contact Person" fullWidth variant="outlined" value={visitorDetails.contactPerson} onChange={(e) => handleVisitorChange('contactPerson', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} />
             <TextField label="Contact Person No." placeholder="Enter Contact Person No." fullWidth variant="outlined" value={visitorDetails.contactPersonNo} onChange={(e) => handleVisitorChange('contactPersonNo', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }} /> */}
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor</InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {vendors.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
+            </FormControl>
           </div>
         </div>
 
@@ -486,22 +527,7 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.company}
               helperText={fieldErrors.company}
             /> */}
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {vendors.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNumberId}>
               <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
@@ -538,6 +564,9 @@ export const AddGatePassInwardPage = () => {
             <TextField label={<span>Gate Pass Date <span style={{ color: 'red' }}>*</span></span>} type="date" fullWidth variant="outlined" value={gatePassDetails.gatePassDate} onChange={(e) => handleGatePassChange('gatePassDate', e.target.value)} InputLabelProps={{ shrink: true }} InputProps={{ sx: fieldStyles }}
               error={!!fieldErrors.gatePassDate}
               helperText={fieldErrors.gatePassDate}
+              inputProps={{
+                min: new Date().toISOString().split('T')[0]
+              }}
             />
             <div className="lg:col-span-3">
               <TextField
@@ -569,9 +598,10 @@ export const AddGatePassInwardPage = () => {
                   <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Type</th>
                   <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Category</th>
                   <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Item Name</th>
-                  <th scope="col" className="px-4 py-3" /* Quantity: balance width */>Quantity</th>
+                  <th scope="col" className="px-4 py-3">Quantity</th>
                   <th scope="col" className="px-4 py-3" style={{ minWidth: '80px' }}>Unit</th>
                   <th scope="col" className="px-4 py-3" style={{ minWidth: '180px' }}>Description</th>
+                  {/* <th scope="col" className="px-4 py-3 sticky right-0 bg-white z-10" style={{ width: '120px' }}>Attachments</th> */}
                   <th scope="col" className="px-4 py-3" style={{ width: '80px' }}>Action</th>
                 </tr>
               </thead>
@@ -603,36 +633,53 @@ export const AddGatePassInwardPage = () => {
                           label="Item Category"
                           notched
                           displayEmpty
-                          value={row.itemCategoryId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemCategoryId', e.target.value)}
+                          value={row.itemCategoryId ?? ''}
+                          onChange={e => handleRowChange(row.id, 'itemCategoryId', Number(e.target.value))}
                           disabled={!row.itemTypeId}
                         >
                           <MenuItem value="">Select Category</MenuItem>
-                          {(itemCategoryOptions[row.id] || []).filter(option => option.id !== '').map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
+                          {/* Filter out empty string id/name options and -1 (handled below) */}
+                          {(itemCategoryOptions[row.id] || [])
+                            .filter(option => option.id !== -1 && option.id !== "" && option.name !== "")
+                            .map((option) => (
+                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                            ))}
+                          {/* Always add static "Other" option */}
+                          <MenuItem key={-1} value={-1}>Other</MenuItem>
                         </MuiSelect>
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
-                        <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
-                        <MuiSelect
-                          label="Item Name"
-                          notched
-                          displayEmpty
-                          value={row.itemNameId || ''}
-                          onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
-                          disabled={!row.itemCategoryId}
-                        >
-                          <MenuItem value="">Select Item</MenuItem>
-                          {(itemNameOptions[row.id] || []).map((option) => (
-                            <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                          ))}
-                        </MuiSelect>
-                      </FormControl>
+                      {/* If "Other" is selected, show input, else dropdown */}
+                      {row.itemCategoryId === -1 ? (
+                        <TextField
+                          variant="outlined"
+                          size="small"
+                          placeholder="Enter Item Name"
+                          value={row.otherMaterialName || ''}
+                          onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
+                          required
+                        />
+                      ) : (
+                        <FormControl fullWidth variant="outlined" size="small" >
+                          <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
+                          <MuiSelect
+                            label="Item Name"
+                            notched
+                            displayEmpty
+                            value={row.itemNameId || ''}
+                            onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+                            disabled={!row.itemCategoryId}
+                          >
+                            <MenuItem value="">Select Item</MenuItem>
+                            {(itemNameOptions[row.id] || []).map((option) => (
+                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                            ))}
+                          </MuiSelect>
+                        </FormControl>
+                      )}
                     </td>
-                    <td className="px-4 py-2 pt-4">                      
+                    <td className="px-4 py-2 pt-4">
                       <TextField
                         variant="outlined"
                         size="small"
