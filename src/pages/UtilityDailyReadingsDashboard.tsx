@@ -5,7 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Search, Download, Upload, Filter, Edit, RefreshCw } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Download, Upload, Filter, Edit, RefreshCw, X } from 'lucide-react';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { toast } from '@/hooks/use-toast';
@@ -16,6 +18,11 @@ import { BulkUploadDialog } from '@/components/BulkUploadDialog';
 interface CustomerName {
   name: string | null;
   id: number | null;
+}
+
+interface Customer {
+  id: number;
+  name: string;
 }
 
 interface Measurement {
@@ -39,6 +46,14 @@ interface DailyReadingItem {
   totalConsumption: string;
   customerName: string;
   date: string;
+}
+
+// Filter interface
+interface FilterData {
+  asset: string;
+  dateRange: string; // Changed back to string for q[date_range] parameter
+  customerName: string;
+  parameterName: string;
 }
 
 // Transform API response to match the table structure
@@ -80,8 +95,29 @@ export default function UtilityDailyReadingsDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Customer data state
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+
   // Bulk upload state
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
+
+  // Filter modal state
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [activeFilters, setActiveFilters] = useState<FilterData>({
+    asset: '',
+    dateRange: '',
+    customerName: '',
+    parameterName: ''
+  });
+
+  // Filter form state
+  const [filterFormData, setFilterFormData] = useState<FilterData>({
+    asset: '',
+    dateRange: '',
+    customerName: '',
+    parameterName: ''
+  });
 
   // API fetch function
   const fetchMeasurements = useCallback(async () => {
@@ -127,16 +163,81 @@ export default function UtilityDailyReadingsDashboard() {
     }
   }, []);
 
+  // Fetch customers function
+  const fetchCustomers = useCallback(async () => {
+    try {
+      setCustomersLoading(true);
+
+      // Build URL with the parameter q[pms_asset_entity_id_in][]
+      // Using placeholder endpoint - replace with actual customer endpoint
+      const url = new URL(`${API_CONFIG.BASE_URL}/customers`);
+      // Add the parameter - you can modify this based on actual API endpoint
+      // url.searchParams.append('q[pms_asset_entity_id_in][]', 'value');
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Fetched customers data:', data);
+
+      // Support both array and object API responses
+      const customersArray = Array.isArray(data)
+        ? data
+        : Array.isArray(data.customers)
+          ? data.customers
+          : [];
+
+      setCustomers(customersArray);
+    } catch (err) {
+      console.error('Failed to fetch customers:', err);
+      // Don't show error toast for customers as it's not critical
+    } finally {
+      setCustomersLoading(false);
+    }
+  }, []);
+
   // Fetch data on component mount
   useEffect(() => {
     fetchMeasurements();
+    // Temporarily disabled until actual API endpoints are provided
+    // fetchCustomers();
+    // fetchParameters();
   }, [fetchMeasurements]);
 
-  const filteredData = dailyReadingsData.filter(item =>
-    item.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.parameterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.id.includes(searchTerm)
-  );
+  const filteredData = dailyReadingsData.filter(item => {
+    // Text search filter
+    const matchesSearch = item.assetName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.parameterName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.id.includes(searchTerm);
+
+    // Apply active filters
+    const matchesAsset = !activeFilters.asset || item.assetName.toLowerCase().includes(activeFilters.asset.toLowerCase());
+
+    // Filter by customer ID instead of name
+    const matchesCustomer = !activeFilters.customerName ||
+      item.customerName.toLowerCase().includes(activeFilters.customerName.toLowerCase()) ||
+      // Also check if the customer ID matches (if we have the customer data)
+      customers.some(customer =>
+        customer.id.toString() === activeFilters.customerName &&
+        customer.name.toLowerCase().includes(item.customerName.toLowerCase())
+      );
+
+    const matchesParameter = !activeFilters.parameterName || item.parameterName.toLowerCase().includes(activeFilters.parameterName.toLowerCase());
+
+    // Date range filter - for now just check if dateRange is set
+    const matchesDateRange = !activeFilters.dateRange; // Implement actual date range logic when you have the date range picker
+
+    return matchesSearch && matchesAsset && matchesCustomer && matchesParameter && matchesDateRange;
+  });
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -232,6 +333,37 @@ export default function UtilityDailyReadingsDashboard() {
     });
   };
 
+  const handleFilterApply = (filters: FilterData) => {
+    setActiveFilters(filters);
+    setShowFilterModal(false);
+    toast({
+      title: "Filters Applied",
+      description: "Data filtered successfully",
+    });
+  };
+
+  const handleFilterOpen = () => {
+    setFilterFormData(activeFilters);
+    setShowFilterModal(true);
+  };
+
+  const handleFilterReset = () => {
+    const resetFilters = {
+      asset: '',
+      dateRange: '',
+      customerName: '',
+      parameterName: ''
+    };
+    setFilterFormData(resetFilters);
+  };
+
+  const handleFilterChange = (key: keyof FilterData, value: string | Date | undefined) => {
+    setFilterFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
   const renderCell = (item: any, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
@@ -305,6 +437,7 @@ export default function UtilityDailyReadingsDashboard() {
           Export
         </Button>
         <Button
+          onClick={handleFilterOpen}
           className="bg-[#C72030] text-white hover:bg-[#A01B29] transition-colors duration-200 rounded-none px-4 py-2 h-9 text-sm font-medium flex items-center gap-2 border-0"
         >
           <Filter className="w-4 h-4" />
@@ -368,6 +501,130 @@ export default function UtilityDailyReadingsDashboard() {
           />
         )}
       </div>
+
+      {/* Filter Modal */}
+      <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+        <DialogContent className="max-w-2xl bg-white [&>button]:hidden">
+          <DialogHeader className="flex flex-row items-center justify-between border-b pb-4">
+            <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowFilterModal(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogHeader>
+          <DialogDescription className="sr-only">
+            Filter the daily readings data by asset, date range, customer name, and parameter name.
+          </DialogDescription>
+
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Asset */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Asset
+                </label>
+                <Select
+                  value={filterFormData.asset}
+                  onValueChange={(value) => handleFilterChange('asset', value)}
+                >
+                  <SelectTrigger className="border-gray-300">
+                    <SelectValue placeholder="Select Asset" className="text-gray-400" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="asset1">Asset 1</SelectItem>
+                    <SelectItem value="asset2">Asset 2</SelectItem>
+                    <SelectItem value="asset3">Asset 3</SelectItem>
+                    <SelectItem value="asset4">Asset 4</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Date Range */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Date Range <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  type="text"
+                  name="q[date_range]"
+                  value={filterFormData.dateRange}
+                  onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+                  placeholder="Select Date Range"
+                  className="border-gray-300"
+                />
+              </div>
+
+              {/* Customer Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Customer Name
+                </label>
+                <Select
+                  value={filterFormData.customerName}
+                  onValueChange={(value) => handleFilterChange('customerName', value)}
+                  disabled={customersLoading}
+                >
+                  <SelectTrigger className="border-gray-300">
+                    <SelectValue
+                      placeholder={customersLoading ? "Loading customers..." : "Select Customer Name"}
+                      className="text-gray-400"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer.id} value={customer.id.toString()}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                    {customers.length === 0 && !customersLoading && (
+                      <SelectItem value="api-pending" disabled>
+                        API will provide customer data
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Parameter Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Parameter Name
+                </label>
+                <Input
+                  type="text"
+                  name="q[pms_asset_measure_name_cont]"
+                  value={filterFormData.parameterName}
+                  onChange={(e) => handleFilterChange('parameterName', e.target.value)}
+                  placeholder="Enter Parameter Name"
+                  className="border-gray-300"
+                />
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex justify-end gap-3 pt-4">
+              <Button
+                onClick={handleFilterReset}
+                variant="outline"
+                className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-2"
+              >
+                Reset
+              </Button>
+              <Button
+                onClick={() => handleFilterApply(filterFormData)}
+                style={{ backgroundColor: '#C72030' }}
+                className="hover:bg-[#C72030]/90 text-white px-8 py-2"
+              >
+                Submit
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Upload Dialog */}
       <BulkUploadDialog

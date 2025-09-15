@@ -1,44 +1,196 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import axios from 'axios';
 
-// Mock detailed data - in real app this would come from API
-const getDetailedData = (id: string) => ({
-  id,
-  customer: 'SIFY TECHNOLOGIES LTD',
-  totalConsumption: '35.93',
-  rate: '28.78',
-  readingType: 'DGKVAH',
-  toDate: '2024-05-31',
-  status: 'pending',
-  amount: '1033.95',
-  plantDetail: '',
-  fromDate: '2024-05-01',
-  consumptionDetails: [
-    {
-      clientName: 'SIFY TECHNOLOGIES LTD',
-      meterNo: 'ENERGY METER 80',
-      readingType: 'DGKVAH',
-      adjustmentFactor: '1.10286',
-      consumption: '35.9258',
-      amount: '1033.95',
-      meterLocation: 'Site - EON Kharadi - II / Building - COMMON / Wing - COMMON / Floor - BASEMENT 2 / Area - NA / Room - NA'
-    }
-  ]
-});
+// Interface for the API response
+interface ApiUtilizationData {
+  id: number;
+  entity_id: number;
+  from_date: string;
+  to_date: string;
+  total_consumption: number;
+  rate: number;
+  amount: number;
+  plant_detail_id: number | null;
+  status: string;
+  reading_type: string;
+  created_at: string;
+  updated_at: string;
+  url: string;
+}
+
+// Interface for detailed data
+interface DetailedData {
+  id: string;
+  customer: string;
+  totalConsumption: string;
+  rate: string;
+  readingType: string;
+  toDate: string;
+  status: string;
+  amount: string;
+  plantDetail: string;
+  fromDate: string;
+  consumptionDetails: {
+    clientName: string;
+    meterNo: string;
+    readingType: string;
+    adjustmentFactor: string;
+    consumption: string;
+    amount: string;
+    meterLocation: string;
+  }[];
+}
 
 export const UtilityRequestDetailsPage = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
+  const [data, setData] = useState<DetailedData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch entities to map entity IDs to names
+  const fetchEntities = async (baseUrl: string, token: string) => {
+    try {
+      console.log('Fetching entities from:', `${baseUrl}/entities.json`);
+      const response = await axios.get(`${baseUrl}/entities.json`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      console.log('Entities API response:', response.data);
+
+      // Create a map of entity IDs to entity names
+      const entityMap = new Map();
+      const entities = response.data.entities || response.data;
+
+      if (Array.isArray(entities)) {
+        console.log(`Mapping ${entities.length} entities`);
+        entities.forEach((entity: any) => {
+          entityMap.set(entity.id.toString(), entity.name);
+        });
+      } else {
+        console.warn('Entities response is not an array:', entities);
+      }
+
+      console.log('Entity map size:', entityMap.size);
+      return entityMap;
+    } catch (err: any) {
+      console.error('Error fetching entities:', err);
+      console.error('Error details:', err.response?.data || err.message);
+      return new Map();
+    }
+  };
+
+  // Fetch detailed data from API
+  useEffect(() => {
+    const fetchDetailedData = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const baseUrl = localStorage.getItem('baseUrl') || 'https://fm-uat-api.lockated.com';
+        const token = localStorage.getItem('token');
+
+        if (!token) {
+          setError('Authentication token not found');
+          setLoading(false);
+          return;
+        }
+
+        // First fetch entities to get their names
+        const entityMap = await fetchEntities(baseUrl, token);
+
+        // Fetch specific utilization data by ID
+        console.log('Fetching utilization details from:', `${baseUrl}/compile_utilizations/${id}.json`);
+        const response = await axios.get(`${baseUrl}/compile_utilizations/${id}.json`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        console.log('Utilization details API response:', response.data);
+
+        const apiData: ApiUtilizationData = response.data;
+        const entityName = entityMap.get(apiData.entity_id.toString());
+
+        // Map API response to component data structure
+        const mappedData: DetailedData = {
+          id: apiData.id.toString(),
+          customer: entityName || `Entity ID: ${apiData.entity_id}`,
+          totalConsumption: apiData.total_consumption.toString(),
+          rate: apiData.rate.toString(),
+          readingType: apiData.reading_type,
+          toDate: apiData.to_date,
+          status: apiData.status,
+          amount: apiData.amount.toString(),
+          plantDetail: apiData.plant_detail_id?.toString() || '',
+          fromDate: apiData.from_date,
+          consumptionDetails: [
+            {
+              clientName: entityName || `Entity ID: ${apiData.entity_id}`,
+              meterNo: 'ENERGY METER 80', // This might need to come from another API or be configurable
+              readingType: apiData.reading_type,
+              adjustmentFactor: '1.10286', // This might need to come from another API or be configurable
+              consumption: apiData.total_consumption.toString(),
+              amount: apiData.amount.toString(),
+              meterLocation: 'Site - EON Kharadi - II / Building - COMMON / Wing - COMMON / Floor - BASEMENT 2 / Area - NA / Room - NA' // This might need to come from another API
+            }
+          ]
+        };
+
+        console.log('Mapped detailed data:', mappedData);
+        setData(mappedData);
+        setLoading(false);
+      } catch (err: any) {
+        console.error('Error fetching utilization details:', err);
+        console.error('Error details:', err.response?.data || err.message);
+        setError(`Failed to fetch utilization details: ${err.response?.data?.message || err.message}`);
+        setLoading(false);
+      }
+    };
+
+    fetchDetailedData();
+  }, [id]);
+
   if (!id) {
     return <div>Invalid ID</div>;
   }
 
-  const data = getDetailedData(id);
+  if (loading) {
+    return (
+      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="flex justify-center items-center p-12">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#C72030]"></div>
+          <span className="ml-2">Loading utilization details...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+        <div className="p-4 bg-red-100 text-red-800 rounded">
+          {error}
+        </div>
+        <Button onClick={() => navigate('/utility/utility-request')} className="bg-[#C72030] text-white">
+          Back to Utility Request
+        </Button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return <div>No data found</div>;
+  }
 
   const handleBack = () => {
     navigate('/utility/utility-request');
@@ -46,7 +198,7 @@ export const UtilityRequestDetailsPage = () => {
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'pending': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'approved': return 'bg-green-100 text-green-800';
       case 'rejected': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
