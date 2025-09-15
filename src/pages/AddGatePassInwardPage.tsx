@@ -448,7 +448,7 @@ export const AddGatePassInwardPage = () => {
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Move Site and Building fields to the top */}
-            <TextField
+            {/* <TextField
               label={<span>Site <span style={{ color: 'red' }}>*</span></span>}
               value={selectedSite ? selectedSite.name : ''}
               fullWidth
@@ -458,7 +458,7 @@ export const AddGatePassInwardPage = () => {
               sx={{ '& .MuiInputBase-root': fieldStyles }}
               error={!!fieldErrors.site}
               helperText={fieldErrors.site}
-            />
+            /> */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
               <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
@@ -475,7 +475,7 @@ export const AddGatePassInwardPage = () => {
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
             </FormControl>
-            <TextField
+            {/* <TextField
               label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
               value={selectedCompany ? selectedCompany.name : ''}
               fullWidth
@@ -485,7 +485,7 @@ export const AddGatePassInwardPage = () => {
               sx={{ '& .MuiInputBase-root': fieldStyles }}
               error={!!fieldErrors.company}
               helperText={fieldErrors.company}
-            />
+            /> */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
               <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect

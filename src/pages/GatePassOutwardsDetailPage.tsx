@@ -116,7 +116,7 @@ export const GatePassOutwardsDetailPage = () => {
   
 
   // Defensive fallback for missing fields
-  const personName = gatePassData.created_by_name || gatePassData.contact_person || '--';
+  const personName = gatePassData.contact_person || '--';
   const returnableNonReturnable = gatePassData.returnable ? 'Returnable' : 'Non Returnable';
   const expectedReturnDate = gatePassData.expected_return_date || '-';
   const category = gatePassData.gate_pass_type_name || gatePassData.gate_pass_category || '--';

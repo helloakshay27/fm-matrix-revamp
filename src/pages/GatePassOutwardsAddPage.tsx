@@ -541,7 +541,7 @@ export const GatePassOutwardsAddPage = () => {
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-4">Gate Pass Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
+              {/* <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.site}>
               <InputLabel shrink>Site <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Site"
@@ -554,7 +554,7 @@ export const GatePassOutwardsAddPage = () => {
                 {selectedSite && <MenuItem value={selectedSite.id}>{selectedSite.name}</MenuItem>}
               </MuiSelect>
               {fieldErrors.site && <Typography variant="caption" color="error">{fieldErrors.site}</Typography>}
-            </FormControl>
+            </FormControl> */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.buildingId}>
               <InputLabel shrink>Building <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
@@ -572,7 +572,7 @@ export const GatePassOutwardsAddPage = () => {
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
             </FormControl>
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
+            {/* <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.company}>
               <InputLabel shrink>Company Name <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect
                 label="Company Name"
@@ -585,7 +585,7 @@ export const GatePassOutwardsAddPage = () => {
                 {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
               </MuiSelect>
               {fieldErrors.company && <Typography variant="caption" color="error">{fieldErrors.company}</Typography>}
-            </FormControl>
+            </FormControl> */}
 
             {/* Vendor Dropdown */}
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
