@@ -130,30 +130,30 @@ const RedIcon = styled(Settings)(({ theme }) => ({
   fontSize: '32px',
 }));
 
-const fieldStyles = {
-  height: '40px',
-  backgroundColor: '#fff',
-  borderRadius: '4px',
-  '& .MuiOutlinedInput-root': {
+ const fieldStyles = {
     height: '40px',
-    fontSize: '14px',
-    '& fieldset': {
-      borderColor: '#ddd',
+    backgroundColor: '#fff',
+    borderRadius: '4px',
+    '& .MuiOutlinedInput-root': {
+      height: '40px',
+      fontSize: '14px',
+      '& fieldset': {
+        borderColor: '#ddd',
+      },
+      '&:hover fieldset': {
+        borderColor: '#C72030',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#C72030',
+      },
     },
-    '&:hover fieldset': {
-      borderColor: '#C72030',
+    '& .MuiInputLabel-root': {
+      fontSize: '14px',
+      '&.Mui-focused': {
+        color: '#C72030',
+      },
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#C72030',
-    },
-  },
-  '& .MuiInputLabel-root': {
-    fontSize: '14px',
-    '&.Mui-focused': {
-      color: '#C72030',
-    },
-  },
-};
+  };
 
 interface AttachmentFile {
   id: string;
@@ -3855,18 +3855,19 @@ export const AddSchedulePage = () => {
                 )}
               </Box>
 
-              {/* Start Date */}
-<div>
-  <label htmlFor="startFrom" className="text-sm font-medium" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-    Start Date<span className="text-red-500">*</span>
-  </label>
+<Box>
   <TextField
+    label={
+      <span>
+        Start Date <span style={{ color: 'red' }}>*</span>
+      </span>
+    }
     id="startFrom"
     type="date"
-    value={formData.startFrom}
-    onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
     fullWidth
     variant="outlined"
+    value={formData.startFrom}
+    onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
     InputLabelProps={{ shrink: true }}
     InputProps={{ sx: fieldStyles }}
     sx={{ mt: 1 }}
@@ -3878,20 +3879,21 @@ export const AddSchedulePage = () => {
     error={Boolean(fieldErrors.startFrom)}
     helperText={fieldErrors.startFrom}
   />
-</div>
+</Box>
 
-{/* End Date */}
-<div>
-  <label htmlFor="endAt" className="text-sm font-medium" style={{ fontFamily: 'Work Sans, sans-serif' }}>
-    End Date<span className="text-red-500">*</span>
-  </label>
+<Box>
   <TextField
+    label={
+      <span>
+        End Date <span style={{ color: 'red' }}>*</span>
+      </span>
+    }
     id="endAt"
     type="date"
-    value={formData.endAt}
-    onChange={e => setFormData({ ...formData, endAt: e.target.value })}
     fullWidth
     variant="outlined"
+    value={formData.endAt}
+    onChange={e => setFormData({ ...formData, endAt: e.target.value })}
     InputLabelProps={{ shrink: true }}
     InputProps={{ sx: fieldStyles }}
     sx={{ mt: 1 }}
@@ -3908,7 +3910,7 @@ export const AddSchedulePage = () => {
         : "")
     }
   />
-</div>
+</Box>
             </Box>
           </SectionCard>
         );
