@@ -1913,7 +1913,6 @@ export const AddSchedulePage = () => {
       );
 
       if (hasReadingTasks) {
-        // Fetch checklist mappings when moving to mapping step
         if (result?.custom_form_code) {
           const mappingsData = await (async () => {
             try {
@@ -1945,27 +1944,37 @@ export const AddSchedulePage = () => {
             }
           })();
 
-          // If mappingsData exists and all assets' measures arrays are empty, skip mapping
+          // If assets is empty and any task has reading true, go to schedule list
           if (
             mappingsData &&
             Array.isArray(mappingsData.assets) &&
-            mappingsData.assets.length > 0 &&
-            mappingsData.assets.every((asset: any) => Array.isArray(asset.measures) && asset.measures.length === 0)
+            mappingsData.assets.length === 0 &&
+            questionSections.some(section => section.tasks.some((task: TaskQuestion) => task.reading === true))
           ) {
             clearAllFromLocalStorage();
             navigate('/maintenance/schedule');
             return;
           }
-        }
 
-        // Move to next step (Mapping) after successful submission
-        if (activeStep < steps.length - 1) {
-          setActiveStep(activeStep + 1);
-          setCompletedSteps([...completedSteps, activeStep]);
+          // If assets is not empty, go to mapping section
+          if (
+            mappingsData &&
+            Array.isArray(mappingsData.assets) &&
+            mappingsData.assets.length > 0
+          ) {
+            if (activeStep < steps.length - 1) {
+              setActiveStep(activeStep + 1);
+              setCompletedSteps([...completedSteps, activeStep]);
+            }
+            return;
+          }
         }
+        // fallback: if no mappingsData, just go to schedule list
+        clearAllFromLocalStorage();
+        navigate('/maintenance/schedule');
       } else {
         // No reading tasks found, skip mapping and navigate directly to schedule list
-        clearAllFromLocalStorage(); // Clear all saved data on successful completion
+        clearAllFromLocalStorage();
         navigate('/maintenance/schedule');
       }
 
@@ -2496,17 +2505,45 @@ export const AddSchedulePage = () => {
   };
 
   const handleNext = () => {
-    if (!validateCurrentStep()) {
-      toast.error("Please fill all required fields before proceeding.", {
-        position: 'top-right',
-        duration: 4000,
-        style: {
-          background: '#ef4444',
-          color: 'white',
-          border: 'none',
-        },
-      });
-      return;
+    // For Question Setup step, show all field errors in toast
+    if (activeStep === 2) {
+      const errors = validateQuestionSetup();
+      if (errors.length > 0) {
+        toast.error(
+          <div style={{ textAlign: 'left' }}>
+            <b>Validation Errors:</b>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {errors.map((err, idx) => (
+                <li key={idx} style={{ fontSize: 13 }}>{err}</li>
+              ))}
+            </ul>
+          </div>,
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#ef4444',
+              color: 'white',
+              border: 'none',
+              minWidth: 320
+            },
+          }
+        );
+        return;
+      }
+    } else {
+      if (!validateCurrentStep()) {
+        toast.error("Please fill all required fields before proceeding.", {
+          position: 'top-right',
+          duration: 4000,
+          style: {
+            background: '#ef4444',
+            color: 'white',
+            border: 'none',
+          },
+        });
+        return;
+      }
     }
 
     // Mark current step as completed
