@@ -9,7 +9,7 @@ import { gatePassTypeService } from '@/services/gatePassTypeService';
 interface GatePassTypeFormValues {
   name: string;
   value: string;
-  active: boolean;
+  // active: boolean;
 }
 
 const AddGatePassTypePage = () => {
@@ -22,7 +22,7 @@ const AddGatePassTypePage = () => {
     defaultValues: {
       name: '',
       value: '',
-      active: true,
+      // active: true,
     },
   });
 
@@ -80,7 +80,7 @@ const AddGatePassTypePage = () => {
             />
           )}
         />
-        <Controller
+        {/* <Controller
           name="active"
           control={control}
           render={({ field }) => (
@@ -99,7 +99,7 @@ const AddGatePassTypePage = () => {
               </Select>
             </FormControl>
           )}
-        />
+        /> */}
         </div>
         <div className="flex justify-center space-x-4 pt-4">
           <Button type="submit" className="w-32">

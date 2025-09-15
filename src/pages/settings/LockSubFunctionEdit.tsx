@@ -202,33 +202,11 @@ export const LockSubFunctionEdit = () => {
               </Select>
             </div>
             
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => handleChange('active', checked)}
-              />
-              <Label htmlFor="active">Active</Label>
-            </div>
+  
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Configuration</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="url">URL</Label>
-              <Input
-                id="url"
-                value={formData.url}
-                onChange={(e) => handleChange('url', e.target.value)}
-                placeholder="Enter URL"
-              />
-            </div>
-          </CardContent>
-        </Card>
+   
       </div>
     </div>
   );

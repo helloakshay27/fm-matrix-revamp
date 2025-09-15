@@ -62,6 +62,7 @@ interface Supplier {
   pan_number?: string;
   mobile1?: string;
   company_name?: string;
+  gstin_number?: string;
 }
 
 interface ApprovalLevel {
@@ -922,7 +923,7 @@ export const PODetailsPage = () => {
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-44">GST</span>
-                  <span className="font-medium">: {poDetails.gst ?? "-"}</span>
+                  <span className="font-medium">: {poDetails.supplier.gstin_number ?? "-"}</span>
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-44">

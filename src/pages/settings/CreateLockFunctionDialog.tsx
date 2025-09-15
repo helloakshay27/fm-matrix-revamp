@@ -178,7 +178,7 @@ export const CreateLockFunctionDialog = ({ open, onOpenChange, onLockFunctionCre
               <SelectContent>
                 {modules.map((module) => (
                   <SelectItem key={module.id} value={module.id?.toString() || ''}>
-                    {module.show_name} ({module.abbreviation})
+                    {module.name} 
                   </SelectItem>
                 ))}
               </SelectContent>

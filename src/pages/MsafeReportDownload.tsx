@@ -201,10 +201,10 @@ const MsafeReportDownload = () => {
     <div className="relative p-6 sm:p-8">
       <div className="max-w-4xl">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">
-         User Report Download
+         Msafe User Report Download
         </h1>
         <p className="text-gray-600 mb-6">
-          Generate and download the latest User report for your records.
+          Generate and download the latest Msafe User report for your records.
         </p>
 
         {/* Current status from export_status API */}

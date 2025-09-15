@@ -47,17 +47,53 @@ const CheckHierarchy: React.FC = () => {
 
   const descCount = useMemo(() => countDescendants(treeData), [treeData]);
 
+  // Validation helpers
+  const isValidEmail = useCallback((val: string) => {
+    const email = val.trim();
+    // Basic email regex: something@something.tld
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }, []);
+
+  const isValidMobile = useCallback((val: string) => {
+    // Allow spaces/dashes/+ in input, but validate digits count
+    const digits = (val || '').replace(/\D/g, '');
+    return digits.length === 10; // expecting 10-digit mobile number
+  }, []);
+
+  const identifierType: 'email' | 'mobile' | 'empty' = useMemo(() => {
+    const raw = (treeIdentifier || '').trim();
+    if (!raw) return 'empty';
+    if (raw.includes('@')) return 'email';
+    // Consider as mobile only when input consists of digits and common separators, and has at least 1 digit
+    const mobileLike = /^[\d\s()+-]+$/.test(raw) && /\d/.test(raw);
+    return mobileLike ? 'mobile' : 'email';
+  }, [treeIdentifier]);
+
+  const identifierError = useMemo(() => {
+    const raw = (treeIdentifier || '').trim();
+    if (!raw) return '';
+    if (identifierType === 'email') {
+      return isValidEmail(raw) ? '' : 'Please enter a valid email address.';
+    }
+    // mobile
+    return isValidMobile(raw) ? '' : 'Please enter a valid 10-digit mobile number.';
+  }, [treeIdentifier, identifierType, isValidEmail, isValidMobile]);
+
   const fetchHierarchy = useCallback(async () => {
   const raw = (treeIdentifier || '').trim();
   if (!raw || !employeeType) return;
+    // Block submit if identifier is invalid
+    if (identifierError) {
+      toast.error(identifierError);
+      return;
+    }
     try {
       setTreeLoading(true);
       setTreeData(null);
-      const tokenHeader = getAuthHeader();
-      const isEmail = raw.includes('@');
+  const tokenHeader = getAuthHeader();
       const baseUrl = localStorage.getItem('baseUrl') || 'fm-uat-api.lockated.com';
-      const paramKey = isEmail ? 'email' : 'mobile_number';
-      const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?${paramKey}=${encodeURIComponent(raw)}&employee_type=${employeeType}`;
+      // As requested: always pass the identifier using the 'email' param (for both email and mobile inputs)
+      const url = `https://${baseUrl}/pms/users/vi_user_hierarchy.json?email=${encodeURIComponent(raw)}&employee_type=${employeeType}`;
       const resp = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -81,7 +117,8 @@ const CheckHierarchy: React.FC = () => {
           }
           message = message.toString().replace(/^{"[a-zA-Z_]+":\s*"(.+)"}$/,'$1').trim();
         }
-        throw new Error(message);
+        // Throw a structured error so we can tailor the user-facing toast message
+        throw { status: resp.status, message } as { status?: number; message?: string };
       }
       const data = await resp.json();
       setTreeData(data as TreeNode);
@@ -94,14 +131,39 @@ const CheckHierarchy: React.FC = () => {
         if (typeof firstChildId === 'number') initial.add(firstChildId);
         setExpandedNodes(initial);
       } catch { /* noop */ }
-      toast.success('Hierarchy fetched');
+    toast.success('Hierarchy fetched');
     } catch (e: any) {
       console.error('Hierarchy fetch error', e);
-      toast.error(e.message || 'Failed to fetch hierarchy');
+      // Build a clean, user-friendly message based on the identifier type
+      const serverMsg = (e && (e.message || e.msg)) ? String(e.message || e.msg) : (typeof e === 'string' ? e : '');
+      const status = e && typeof e.status === 'number' ? e.status : undefined;
+      const idType = identifierType; // capture current type
+      const digits = raw.replace(/\D/g, '');
+
+      let uiMessage = '';
+      const looksNotFound = /not\s*(present|found)/i.test(serverMsg || '') || status === 404;
+      const isAuthError = status === 401 || status === 403;
+
+      if (isAuthError) {
+        uiMessage = 'You are not authorized to view this hierarchy.';
+      } else if (idType === 'mobile') {
+        // Never show a message that labels the number as an email
+        uiMessage = looksNotFound
+          ? (digits ? `User not present with mobile number ${digits}` : 'No user found for the provided mobile number.')
+          : ((serverMsg || '').replace(/email/gi, 'mobile number') || 'Failed to fetch hierarchy');
+      } else if (idType === 'email') {
+        uiMessage = looksNotFound
+          ? (raw ? `User not present with email ${raw}` : 'No user found for the provided email.')
+          : (serverMsg || 'Failed to fetch hierarchy');
+      } else {
+        uiMessage = serverMsg || 'Failed to fetch hierarchy';
+      }
+
+      toast.error(uiMessage);
     } finally {
       setTreeLoading(false);
     }
-  }, [treeIdentifier, employeeType]);
+  }, [treeIdentifier, employeeType, identifierError, identifierType]);
 
   const onToggleNode = useCallback((id: number) => {
     setExpandedNodes((prev) => {
@@ -134,7 +196,7 @@ const CheckHierarchy: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
             <TextField
               select
               label="Employee Type"
@@ -172,6 +234,8 @@ const CheckHierarchy: React.FC = () => {
               autoComplete="off"
               slotProps={{ inputLabel: { shrink: true } as any }}
               InputProps={{ sx: fieldStyles }}
+              error={Boolean(treeIdentifier.trim() && identifierError)}
+              helperText={treeIdentifier.trim() ? (identifierError || ' ') : ' '}
               inputProps={{
                 autoComplete: 'off',
                 name: 'tree-identifier',
@@ -183,7 +247,7 @@ const CheckHierarchy: React.FC = () => {
             <div className="flex gap-3 items-center">
               <Button
                 onClick={fetchHierarchy}
-                disabled={!treeIdentifier.trim() || !employeeType || treeLoading}
+                disabled={!treeIdentifier.trim() || !employeeType || treeLoading || Boolean(identifierError)}
                 className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
               >
                 {treeLoading ? 'Fetching...' : 'Submit'}

@@ -48,14 +48,14 @@ export const CreateRoleConfigDialog = ({ open, onOpenChange, onRoleConfigCreated
       return false;
     }
 
-    if (permissions.length === 0) {
-      toast({
-        title: "Validation Error",
-        description: "Please select at least one permission",
-        variant: "destructive",
-      });
-      return false;
-    }
+    // if (permissions.length === 0) {
+    //   toast({
+    //     title: "Validation Error",
+    //     description: "Please select at least one permission",
+    //     variant: "destructive",
+    //   });
+    //   return false;
+    // }
 
     return true;
   };
@@ -81,11 +81,9 @@ export const CreateRoleConfigDialog = ({ open, onOpenChange, onRoleConfigCreated
     setIsSubmitting(true);
 
     const payload: CreateRoleConfigPayload = {
-      role_config: {
+      lock_module: {
         name: roleName,
-        description: description,
-        permissions: permissions,
-        active: active
+      
       }
     };
 
@@ -129,7 +127,7 @@ export const CreateRoleConfigDialog = ({ open, onOpenChange, onRoleConfigCreated
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4 border-b">
-          <DialogTitle className="text-xl font-semibold">Create Role Configuration</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">Create Module Configuration</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
@@ -157,62 +155,12 @@ export const CreateRoleConfigDialog = ({ open, onOpenChange, onRoleConfigCreated
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Enter a brief description of the role"
-              className="w-full min-h-[100px]"
-            />
-          </div>
+         
 
           {/* Permissions */}
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Permissions * 
-              <span className="text-xs text-gray-500 font-normal ml-2">
-                Select all applicable permissions
-              </span>
-            </Label>
-            <div className="grid grid-cols-2 gap-3 p-4 border rounded-lg bg-gray-50">
-              {availablePermissions.map((permission) => (
-                <div key={permission.id} className="flex items-center space-x-2">
-                  <Checkbox 
-                    id={permission.id}
-                    checked={permissions.includes(permission.id)}
-                    onCheckedChange={(checked) => handlePermissionChange(permission.id, checked as boolean)}
-                  />
-                  <Label 
-                    htmlFor={permission.id} 
-                    className="text-sm font-medium cursor-pointer"
-                  >
-                    {permission.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-            {permissions.length > 0 && (
-              <div className="text-xs text-gray-600">
-                Selected: {permissions.map(id => availablePermissions.find(p => p.id === id)?.label).join(', ')}
-              </div>
-            )}
-          </div>
-
+      
           {/* Active Status */}
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="active" 
-              checked={active}
-              onCheckedChange={(checked) => setActive(checked as boolean)}
-            />
-            <Label htmlFor="active" className="text-sm font-medium cursor-pointer">
-              Active
-            </Label>
-          </div>
+     
         </div>
 
         <div className="flex justify-end space-x-3 pt-4 border-t">

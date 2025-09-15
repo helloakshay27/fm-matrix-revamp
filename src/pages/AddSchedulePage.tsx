@@ -4327,7 +4327,7 @@ export const AddSchedulePage = () => {
                     disabled={(stepIndex < activeStep && editingStep !== stepIndex) || loading.templates}
                   >
                     <MenuItem value="">None</MenuItem>
-                    {Array.isDefined(templates) && templates.map(template => (
+                    {Array.isArray(templates) && templates.map(template => (
                       <MenuItem key={template.id} value={String(template.id)}>{template.form_name}</MenuItem>
                     ))}
                   </Select>

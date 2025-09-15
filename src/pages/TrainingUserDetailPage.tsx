@@ -124,7 +124,7 @@ const TrainingUserDetailPage: React.FC = () => {
                 <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                   <span className="text-white font-bold text-lg">T</span>
                 </div>
-                <h2 className="text-lg font-bold text-gray-900">Training Details {records.length > 1 ? `#${idx + 1}` : ''}</h2>
+                <h2 className="text-lg font-bold text-gray-900">Training Details {records.length > 1 ? `(${idx + 1})` : ''}</h2>
               </div>
               {(() => {
                 const meta = getStatusMeta(rec.status);

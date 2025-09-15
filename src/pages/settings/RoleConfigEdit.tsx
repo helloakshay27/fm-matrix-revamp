@@ -70,11 +70,9 @@ export const RoleConfigEdit = () => {
     setSaving(true);
     try {
       const payload: UpdateRoleConfigPayload = {
-        role_config: {
+        lock_module: {
           name: formData.roleName.trim(),
-          description: formData.description.trim(),
-          permissions: formData.permissions,
-          active: formData.active,
+   
         }
       };
 
@@ -158,8 +156,8 @@ export const RoleConfigEdit = () => {
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-wide uppercase">Edit Role Configuration</h1>
-              <p className="text-gray-600">Update role configuration information</p>
+              <h1 className="text-xl font-bold tracking-wide uppercase">Edit Module Configuration</h1>
+              <p className="text-gray-600">Update Module configuration information</p>
             </div>
           </div>
         </div>
@@ -184,9 +182,7 @@ export const RoleConfigEdit = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Basic Information</CardTitle>
-          </CardHeader>
+        
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="roleName">Role Name *</Label>
@@ -198,108 +194,14 @@ export const RoleConfigEdit = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleChange('description', e.target.value)}
-                placeholder="Enter role description"
-                rows={3}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={(checked) => handleChange('active', checked)}
-              />
-              <Label htmlFor="active">Active</Label>
-            </div>
+     
+         
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Add Permissions</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Common Permissions</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {commonPermissions.map(permission => (
-                  <Button
-                    key={permission}
-                    variant="outline"
-                    size="sm"
-                    onClick={() => addPermission(permission)}
-                    disabled={formData.permissions.includes(permission)}
-                    className="justify-start text-xs"
-                  >
-                    {permission}
-                  </Button>
-                ))}
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <Label>Custom Permission</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={newPermission}
-                  onChange={(e) => setNewPermission(e.target.value)}
-                  placeholder="Enter custom permission"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addCustomPermission();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={addCustomPermission}
-                  disabled={!newPermission.trim()}
-                >
-                  Add
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Current Permissions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {formData.permissions.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {formData.permissions.map((permission, index) => (
-                  <Badge 
-                    key={index}
-                    variant="outline"
-                    className="bg-blue-50 text-blue-700 border-blue-200 pr-1"
-                  >
-                    {permission}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-4 w-4 p-0 ml-1 hover:bg-red-100"
-                      onClick={() => removePermission(permission)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No permissions assigned. Add permissions using the form above.</p>
-            )}
-          </CardContent>
-        </Card>
+     
       </div>
     </div>
   );
