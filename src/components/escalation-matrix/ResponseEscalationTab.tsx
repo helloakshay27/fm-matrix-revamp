@@ -132,11 +132,8 @@ export const ResponseEscalationTab: React.FC = () => {
       dispatch(fetchResponseEscalations())
       dispatch(clearState())
     }
-    if (error) {
-      toast.error(error)
-      dispatch(clearState())
-    }
-  }, [success, error, form, dispatch])
+    // Note: Error handling is done in the form submission to provide more specific feedback
+  }, [success, form, dispatch])
 
   // Helper functions
   const getCategoryName = (id: number) => {
@@ -314,37 +311,130 @@ export const ResponseEscalationTab: React.FC = () => {
   }
 
   // Form submission
-  const onSubmit = (data: ResponseEscalationFormData) => {
-    // Ensure user account is loaded to get site_id
-    if (!userAccount?.site_id) {
-      toast.error('Unable to determine site ID from user account. Please refresh and try again.')
-      return
+  const onSubmit = async (data: ResponseEscalationFormData) => {
+    try {
+      // Ensure user account is loaded to get site_id
+      if (!userAccount?.site_id) {
+        toast.error('Unable to determine site ID from user account. Please refresh and try again.')
+        return
+      }
+
+      // Get site_id from user account API response
+      const siteId = userAccount.site_id
+
+      // Transform form data to API payload
+      const payload: EscalationMatrixPayload = {
+        complaint_worker: {
+          society_id: siteId,
+          esc_type: 'response',
+          of_phase: 'pms',
+          of_atype: 'Pms::Site',
+        },
+        category_ids: data.categoryIds,
+        escalation_matrix: {
+          e1: { name: 'E1', escalate_to_users: data.escalationLevels.e1 },
+          e2: { name: 'E2', escalate_to_users: data.escalationLevels.e2 },
+          e3: { name: 'E3', escalate_to_users: data.escalationLevels.e3 },
+          e4: { name: 'E4', escalate_to_users: data.escalationLevels.e4 },
+          e5: { name: 'E5', escalate_to_users: data.escalationLevels.e5 },
+        },
+      }
+
+      console.log('Response escalation payload:', JSON.stringify(payload, null, 2));
+      console.log('Using site ID from user account:', siteId);
+      
+      await dispatch(createResponseEscalation(payload)).unwrap()
+    } catch (error: unknown) {
+      // Handle 422 error specifically for category already taken
+      console.log('Full error object:', error);
+      console.log('Error type:', typeof error);
+      console.log('Error stringified:', JSON.stringify(error, null, 2));
+      
+      let errorMessage = 'Failed to create response escalation rule';
+      let shouldShowCategoryTakenMessage = false;
+      
+      // Try to extract error information from different possible structures
+      if (typeof error === 'string') {
+        errorMessage = error;
+        // Check if string contains 422 or conflict indicators
+        shouldShowCategoryTakenMessage = error.includes('422') || 
+                                       error.toLowerCase().includes('already') ||
+                                       error.toLowerCase().includes('exists') ||
+                                       error.toLowerCase().includes('taken') ||
+                                       error.toLowerCase().includes('conflict');
+      } else if (error && typeof error === 'object') {
+        const errorObj = error as {
+          status?: number;
+          code?: number;
+          message?: string;
+          error?: string;
+          category_id?: string[];
+          response?: {
+            status?: number;
+            data?: {
+              message?: string;
+              category_id?: string[];
+            };
+          };
+          data?: {
+            message?: string;
+            category_id?: string[];
+          };
+        };
+        
+        // Check for 422 status first
+        const statusIs422 = errorObj.status === 422 || 
+                           errorObj?.response?.status === 422 ||
+                           errorObj?.code === 422;
+        
+        // Check for specific category_id error format: {category_id: ["has already been taken"]}
+        const hasCategoryIdError = errorObj?.category_id || 
+                                  errorObj?.response?.data?.category_id || 
+                                  errorObj?.data?.category_id;
+        
+        if (hasCategoryIdError && Array.isArray(hasCategoryIdError) && hasCategoryIdError.length > 0) {
+          // Extract the actual error message from category_id array
+          const categoryError = hasCategoryIdError[0];
+          if (typeof categoryError === 'string' && categoryError.toLowerCase().includes('already been taken')) {
+            shouldShowCategoryTakenMessage = true;
+          }
+        }
+        
+        // Fallback checks for other error message formats
+        const messageContains422 = errorObj?.message?.includes('422') ||
+                                  errorObj?.response?.data?.message?.includes('422') ||
+                                  errorObj?.data?.message?.includes('422');
+                                  
+        const hasConflictMessage = errorObj?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.message?.toLowerCase().includes('conflict') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('conflict') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('conflict');
+        
+        // Set flag if any condition matches
+        shouldShowCategoryTakenMessage = shouldShowCategoryTakenMessage || statusIs422 || messageContains422 || hasConflictMessage;
+        
+        // Extract error message from various possible locations
+        errorMessage = errorObj?.message || 
+                      errorObj?.response?.data?.message || 
+                      errorObj?.data?.message || 
+                      errorObj?.error || 
+                      'Failed to create response escalation rule';
+      }
+      
+      if (shouldShowCategoryTakenMessage) {
+        toast.error('Category already been taken');
+      } else {
+        toast.error(errorMessage);
+      }
     }
-
-    // Get site_id from user account API response
-    const siteId = userAccount.site_id
-
-    // Transform form data to API payload
-    const payload: EscalationMatrixPayload = {
-      complaint_worker: {
-        society_id: siteId,
-        esc_type: 'response',
-        of_phase: 'pms',
-        of_atype: 'Pms::Site',
-      },
-      category_ids: data.categoryIds,
-      escalation_matrix: {
-        e1: { name: 'E1', escalate_to_users: data.escalationLevels.e1 },
-        e2: { name: 'E2', escalate_to_users: data.escalationLevels.e2 },
-        e3: { name: 'E3', escalate_to_users: data.escalationLevels.e3 },
-        e4: { name: 'E4', escalate_to_users: data.escalationLevels.e4 },
-        e5: { name: 'E5', escalate_to_users: data.escalationLevels.e5 },
-      },
-    }
-
-    console.log('Response escalation payload:', JSON.stringify(payload, null, 2));
-    console.log('Using site ID from user account:', siteId);
-    dispatch(createResponseEscalation(payload))
   }
 
   return (

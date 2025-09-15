@@ -9,7 +9,7 @@ import { gatePassTypeService } from '@/services/gatePassTypeService';
 interface GatePassTypeFormValues {
   name: string;
   value: string;
-  // active: boolean;
+  active: boolean;
 }
 
 const AddGatePassTypePage = () => {
@@ -22,7 +22,7 @@ const AddGatePassTypePage = () => {
     defaultValues: {
       name: '',
       value: '',
-      // active: true,
+      active: true,
     },
   });
 

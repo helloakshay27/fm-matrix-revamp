@@ -15,8 +15,25 @@ interface GatePassOutwardsFilterModalProps {
 }
 
 export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilters }: GatePassOutwardsFilterModalProps) => {
+  const defaultFilters = {
+    gateNumber: '',
+    createdBy: '',
+    materialName: '',
+    supplierName: '',
+    materialType: '',
+    expectedReturnDate: '',
+  };
+  const safeFilters = filters || defaultFilters;
+
   const [searchByNameOrId, setSearchByNameOrId] = useState('');
   const [vendors, setVendors] = useState<{ id: number; name: string }[]>([]);
+  const [localFilters, setLocalFilters] = useState(safeFilters);
+
+  // Sync localFilters with filters when modal opens
+  useEffect(() => {
+    if (isOpen) setLocalFilters(safeFilters);
+    // eslint-disable-next-line
+  }, [isOpen]);
 
   useEffect(() => {
     fetch(`${API_CONFIG.BASE_URL}/pms/suppliers/get_suppliers.json`, {
@@ -30,28 +47,22 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
       .catch(() => setVendors([]));
   }, []);
 
+  // Update localFilters only
   const handleChange = (field: string, value: string) => {
-    setFilters({ ...filters, [field]: value });
+    setLocalFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  // Apply localFilters to parent state
   const handleApply = () => {
-    console.log('Filter applied:', filters);
-    // Here you would implement the actual filter logic
+    setFilters(localFilters);
     onClose();
   };
 
+  // Reset localFilters to default and update parent filters
   const handleReset = () => {
-    setFilters({
-      gateNumber: '',
-      createdBy: '',
-      materialName: '',
-      supplierName: '',
-      materialType: '',
-      expectedReturnDate: '',
-    });
+    setLocalFilters(defaultFilters);
+    setFilters(defaultFilters);
     setSearchByNameOrId('');
-    setVendors([]); // This will clear the dropdown selection
-    console.log('Filters reset');
   };
 
   const fieldStyles = {
@@ -117,9 +128,9 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
             <TextField
               label="Gate Number"
               placeholder="Enter Gate Number"
-              value={filters.gateNumber}
-                onChange={e => handleChange('gateNumber', e.target.value)}
-                variant="outlined"
+              value={localFilters.gateNumber}
+              onChange={e => handleChange('gateNumber', e.target.value)}
+              variant="outlined"
               InputLabelProps={{
                 shrink: true,
               }}
@@ -131,9 +142,9 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
             <TextField
               label="Created By"
               placeholder="Enter Created Person"
-              value={filters.createdBy}
-                onChange={e => handleChange('createdBy', e.target.value)}
-                variant="outlined"
+              value={localFilters.createdBy}
+              onChange={e => handleChange('createdBy', e.target.value)}
+              variant="outlined"
               InputLabelProps={{
                 shrink: true,
               }}
@@ -149,7 +160,7 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
                 labelId="supplierName-label"
                 label="Vendor"
                 displayEmpty
-                value={filters.supplierName}
+                value={localFilters.supplierName}
                 onChange={e => handleChange('supplierName', e.target.value)}
               >
                 <option value="">Select vendor</option>
@@ -164,7 +175,7 @@ export const GatePassOutwardsFilterModal = ({ isOpen, onClose, filters, setFilte
             <TextField
               label="Expected Return Date"
               type="date"
-              value={filters.expectedReturnDate}
+              value={localFilters.expectedReturnDate}
               onChange={e => handleChange('expectedReturnDate', e.target.value)}
               variant="outlined"
               InputLabelProps={{ shrink: true }}

@@ -116,7 +116,7 @@ export const AddGatePassInwardPage = () => {
 
   useEffect(() => {
     if (gatePassDetails.buildingId) {
-      fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${gatePassDetails.buildingId}`, {
+      fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[active_eq]=true&q[building_id_eq]=${gatePassDetails.buildingId}`, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
           'Content-Type': 'application/json',
@@ -632,9 +632,7 @@ export const AddGatePassInwardPage = () => {
                         </MuiSelect>
                       </FormControl>
                     </td>
-                    <td className="px-4 py-2 pt-4">
-                      
-                      
+                    <td className="px-4 py-2 pt-4">                      
                       <TextField
                         variant="outlined"
                         size="small"

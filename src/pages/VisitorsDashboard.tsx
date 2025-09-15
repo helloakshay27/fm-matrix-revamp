@@ -5,13 +5,24 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { VisitorSelectionPanel } from '@/components/VisitorSelectionPanel';
+import { ActionSelectionPanel } from '@/components/ActionSelectionPanel';
+import {
+  Pagination,
+  PaginationEllipsis,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
@@ -157,6 +168,7 @@ export const VisitorsDashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
   const navigate = useNavigate();
 
   // API State
@@ -789,14 +801,29 @@ export const VisitorsDashboard = () => {
         );
       case 'action':
         return (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleVisitorDetails(visitor.id)}
-            className="h-8 w-8 p-0"
-          >
-            <Eye className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center justify-center gap-2">
+            <div title="View visitor details" className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <Eye 
+                className="w-4 h-4 cursor-pointer text-gray-600 hover:text-[#C72030] hover:scale-110 transition-all duration-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleVisitorDetails(visitor.id);
+                }}
+              />
+            </div>
+            <div title={`${visitor.is_flagged ? 'Unflag' : 'Flag'} visitor`} className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <Flag
+                className={`w-4 h-4 cursor-pointer transition-all duration-200 hover:text-[#C72030] hover:scale-110 ${visitor.is_flagged
+                  ? 'text-red-500 fill-red-500'
+                  : 'text-gray-600'
+                  }`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSingleVisitorFlag(visitor.id, visitor.is_flagged);
+                }}
+              />
+            </div>
+          </div>
         );
       default: {
         const value = visitor[columnKey as keyof typeof visitor];
@@ -902,6 +929,42 @@ export const VisitorsDashboard = () => {
       setSelectAll(false);
     }
   };
+
+  // Bulk operation handlers for VisitorSelectionPanel
+  const handleBulkCheckOut = async () => {
+    console.log('Bulk checking out visitors:', selectedVisitors);
+    // Implement bulk checkout logic here
+    for (const visitorId of selectedVisitors) {
+      await handleCheckOut(visitorId);
+    }
+    // Clear selection after successful operation
+    setSelectedVisitors([]);
+  };
+
+  const handleBulkApprove = async () => {
+    console.log('Bulk approving visitors:', selectedVisitors);
+    // Implement bulk approve logic here
+    for (const visitorId of selectedVisitors) {
+      await handleSkipApproval(visitorId);
+    }
+    // Clear selection after successful operation
+    setSelectedVisitors([]);
+  };
+
+  const handleBulkExport = async () => {
+    console.log('Bulk exporting visitors:', selectedVisitors);
+    // This will be handled by the VisitorSelectionPanel component
+  };
+
+  const handleClearSelection = () => {
+    setSelectedVisitors([]);
+    setSelectAll(false);
+  };
+
+  // Get selected visitor objects for the selection panel
+  const selectedVisitorObjects = visitorHistoryData.filter(visitor => 
+    selectedVisitors.includes(visitor.id)
+  );
 
   const handleCheckOut = async (visitorId: number) => {
     try {
@@ -1099,6 +1162,216 @@ export const VisitorsDashboard = () => {
   const handleCheckIn = (visitorId: number) => {
     console.log('Checking in visitor:', visitorId);
     // Handle check in logic here
+  };
+
+  const handleSingleVisitorFlag = async (visitorId: number, currentFlagStatus: boolean) => {
+    console.log('VisitorsDashboard - Single flag action for visitor:', visitorId);
+    try {
+      // TODO: Replace with actual API endpoint when available
+      // For now, we'll simulate the flag toggle
+      console.log(`${currentFlagStatus ? 'Unflagging' : 'Flagging'} visitor ${visitorId}`);
+
+      // Update the visitor locally
+      setVisitorHistoryData(prevVisitors => {
+        const updatedVisitors = prevVisitors.map(visitor =>
+          visitor.id === visitorId
+            ? { ...visitor, is_flagged: !currentFlagStatus }
+            : visitor
+        );
+
+        // If flagging a visitor, move it to the top
+        if (!currentFlagStatus) {
+          const newlyFlaggedVisitor = updatedVisitors.find(visitor => visitor.id === visitorId);
+          const otherVisitors = updatedVisitors.filter(visitor => visitor.id !== visitorId);
+          return [newlyFlaggedVisitor, ...otherVisitors];
+        }
+
+        return updatedVisitors;
+      });
+
+      toast.success(`Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
+
+      // TODO: Add actual API call here
+      /*
+      const response = await visitorManagementAPI.markAsFlagged([visitorId]);
+      toast.success(response.message || `Visitor ${!currentFlagStatus ? 'flagged' : 'unflagged'} successfully`);
+      */
+
+    } catch (error) {
+      console.error('Single flag action failed:', error);
+      toast.error("Failed to flag visitor");
+    }
+  };
+
+  const handleBulkFlag = async () => {
+    console.log('VisitorsDashboard - Bulk flag action for visitors:', selectedVisitors);
+    if (selectedVisitors.length === 0) {
+      toast.error("Please select visitors to flag");
+      return;
+    }
+
+    try {
+      // TODO: Replace with actual API endpoint when available
+      // For now, we'll simulate the bulk flag toggle
+      console.log(`Bulk flagging ${selectedVisitors.length} visitors`);
+
+      // Update selected visitors locally
+      setVisitorHistoryData(prevVisitors => {
+        return prevVisitors.map(visitor =>
+          selectedVisitors.includes(visitor.id)
+            ? { ...visitor, is_flagged: true }
+            : visitor
+        );
+      });
+
+      toast.success(`${selectedVisitors.length} visitor(s) flagged successfully`);
+      setSelectedVisitors([]);
+
+      // TODO: Add actual API call here
+      /*
+      await visitorManagementAPI.markAsFlagged(selectedVisitors);
+      await fetchVisitorHistory(historyPagination.currentPage);
+      */
+
+    } catch (error) {
+      console.error('Bulk flag action failed:', error);
+      toast.error("Failed to flag visitors");
+    }
+  };
+
+  const handleImportVisitors = () => {
+    console.log('Import visitors functionality');
+    toast.info('Import visitors feature coming soon!');
+    // TODO: Implement import functionality
+    // This could open a file dialog, navigate to import page, etc.
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const totalPages = historyPagination.totalPages;
+    const currentPage = historyPagination.currentPage;
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            className='cursor-pointer'
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show pages 2, 3, 4 if currentPage is 1, 2, or 3
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink
+                  className='cursor-pointer'
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      } else {
+        // Show ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page if more than 1 page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              className='cursor-pointer'
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              className='cursor-pointer'
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
+  const handlePageChange = (page: number) => {
+    fetchVisitorHistory(page);
   };
 
   return (
@@ -1306,32 +1579,59 @@ export const VisitorsDashboard = () => {
             <EnhancedTable
               data={visitorHistoryData}
               columns={visitorHistoryColumns}
+              selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
-              enableSelection={false}
-              // enableExport={true}
-              enablePagination={true}
-              pagination={historyPagination}
-              onPageChange={fetchVisitorHistory}
-              loading={historyLoading}
+              enableSelection={true}
+              selectedItems={selectedVisitors.map(id => id.toString())}
+              onSelectItem={(visitorIdString: string, checked: boolean) => 
+                handleSelectVisitor(parseInt(visitorIdString), checked)
+              }
+              onSelectAll={handleSelectAll}
+              getItemId={visitor => visitor.id.toString()}
+              enableExport={true}
+              exportFileName="visitor-history"
+              pagination={false}
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
-              exportFileName="visitor-history"
               searchPlaceholder="Search..."
-              hideTableExport={false}
-              hideColumnsButton={false}
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
                   <Button
-                    onClick={() => setIsNewVisitorDialogOpen(true)}
+                    onClick={() => setIsActionPanelOpen(true)}
                     className="bg-[#C72030] text-white hover:bg-[#C72030]/90 h-9 px-4 text-sm font-medium"
                   >
-                    <Plus className="w-4 h-4 mr-2" /> Add
+                    <Plus className="w-4 h-4 mr-2" />
+                    Action
+
                   </Button>
                 </div>
               }
             />
+
+            {/* Pagination */}
+            {historyPagination.totalPages > 1 && (
+              <div className="flex justify-center mt-6">
+                <Pagination>
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(Math.max(1, historyPagination.currentPage - 1))}
+                        className={historyPagination.currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                    {renderPaginationItems()}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => handlePageChange(Math.min(historyPagination.totalPages, historyPagination.currentPage + 1))}
+                        className={historyPagination.currentPage === historyPagination.totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="analytics" className="mt-4">
@@ -1358,6 +1658,31 @@ export const VisitorsDashboard = () => {
         onApplyFilters={handleFilterApply}
         onResetFilters={handleFilterReset}
         currentFilters={activeVisitorType === 'unexpected' ? unexpectedFilters : expectedFilters}
+      />
+
+      {/* Visitor Selection Panel */}
+      <VisitorSelectionPanel
+        selectedVisitors={selectedVisitors}
+        selectedVisitorObjects={selectedVisitorObjects}
+        onCheckOut={handleBulkCheckOut}
+        onApprove={handleBulkApprove}
+        onFlag={handleBulkFlag}
+        onExport={handleBulkExport}
+        onClearSelection={handleClearSelection}
+      />
+
+      {/* Action Selection Panel */}
+      <ActionSelectionPanel
+        isOpen={isActionPanelOpen}
+        onClose={() => setIsActionPanelOpen(false)}
+        onAddVisitor={() => {
+          setIsNewVisitorDialogOpen(true);
+          setIsActionPanelOpen(false);
+        }}
+        onImportVisitors={() => {
+          handleImportVisitors();
+          setIsActionPanelOpen(false);
+        }}
       />
     </div>
   );

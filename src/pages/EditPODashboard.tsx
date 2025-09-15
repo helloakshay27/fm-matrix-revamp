@@ -735,7 +735,7 @@ export const EditPODashboard = () => {
                                 />
                             </div>
 
-                            <div className="mt-6">
+                            <div className="mt-2">
                                 <TextField
                                     label="Terms & Conditions"
                                     value={formData.termsConditions}
@@ -756,6 +756,18 @@ export const EditPODashboard = () => {
                                         "& .MuiOutlinedInput-root": {
                                             height: "auto !important",
                                             padding: "2px !important",
+                                            display: "flex",
+                                        },
+                                        "& .MuiInputBase-input[aria-hidden='true']": {
+                                            flex: 0,
+                                            width: 0,
+                                            height: 0,
+                                            padding: "0 !important",
+                                            margin: 0,
+                                            display: "none",
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            resize: "none !important",
                                         },
                                     }}
                                 />
@@ -799,7 +811,7 @@ export const EditPODashboard = () => {
                                             )}
                                         </div>
 
-                                        <div className="grid grid-cols-3 gap-4">
+                                        <div className="grid grid-cols-4 gap-4">
                                             <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                                                 <InputLabel shrink>Item Details</InputLabel>
                                                 <MuiSelect
@@ -836,13 +848,13 @@ export const EditPODashboard = () => {
                                             />
 
                                             <TextField
-                                                label="Quantity"
-                                                value={item.quantity}
+                                                label="Expected Date"
+                                                type="date"
+                                                value={item.expectedDate}
                                                 onChange={(e) =>
-                                                    updateItem(item.id, "quantity", e.target.value)
+                                                    updateItem(item.id, "expectedDate", e.target.value)
                                                 }
                                                 fullWidth
-                                                type="number"
                                                 variant="outlined"
                                                 InputLabelProps={{ shrink: true }}
                                                 InputProps={{ sx: fieldStyles }}
@@ -872,13 +884,13 @@ export const EditPODashboard = () => {
                                             </FormControl>
 
                                             <TextField
-                                                label="Expected Date"
-                                                type="date"
-                                                value={item.expectedDate}
+                                                label="Quantity"
+                                                value={item.quantity}
                                                 onChange={(e) =>
-                                                    updateItem(item.id, "expectedDate", e.target.value)
+                                                    updateItem(item.id, "quantity", e.target.value)
                                                 }
                                                 fullWidth
+                                                type="number"
                                                 variant="outlined"
                                                 InputLabelProps={{ shrink: true }}
                                                 InputProps={{ sx: fieldStyles }}

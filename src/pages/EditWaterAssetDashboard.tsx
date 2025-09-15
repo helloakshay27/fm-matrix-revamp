@@ -39,7 +39,7 @@ function EditWaterAssetDashboard() {
 
     // Get type from URL search params
     const searchParams = new URLSearchParams(location.search);
-    const assetType = searchParams.get("type") || "WaterAsset";
+    const assetType = searchParams.get("type") || "Water";
 
     // Asset Meter Type ID mapping based on database values (copied from AddAssetPage)
     const getAssetMeterTypeId = (meterCategory, subCategory = null, tertiaryCategory = null) => {
@@ -315,39 +315,40 @@ function EditWaterAssetDashboard() {
             const data = await response.json();
             const asset = data.asset || data;
 
+            // Map API response to form data
             setFormData({
-                site: asset.pms_site_id ?? '',
-                building: asset.pms_building_id ?? '',
-                wing: asset.pms_wing_id ?? '',
-                area: asset.pms_area_id ?? '',
-                floor: asset.pms_floor_id ?? '',
-                room: asset.pms_room_id ?? '',
-                assetName: asset.name ?? '',
-                assetNo: asset.asset_number ?? '',
-                equipmentId: asset.equipment_id ?? '',
-                modelNo: asset.model_number ?? '',
-                serialNo: asset.serial_number ?? '',
-                consumerNo: asset.consumer_number ?? '',
-                purchaseCost: asset.purchase_cost !== undefined && asset.purchase_cost !== null ? asset.purchase_cost.toString() : '',
-                capacity: asset.capacity ?? '',
-                unit: asset.capacity_unit ?? '',
-                group: asset.pms_asset_group_id ?? '',
-                subgroup: asset.pms_asset_sub_group_id ?? '',
-                purchasedOnDate: asset.purchased_on ?? '',
-                expiryDate: asset.expiry_date ?? '',
-                manufacturer: asset.manufacturer ?? '',
-                locationType: asset.location_type ?? 'common',
-                assetType: typeof asset.asset_type === 'string' ? asset.asset_type : (asset.asset_type === true ? 'parent' : 'child'),
-                status: asset.status === 'in_use' ? 'inUse' : asset.status ?? 'inUse',
+                site: asset.pms_site_id || '',
+                building: asset.pms_building_id || '',
+                wing: asset.pms_wing_id || '',
+                area: asset.pms_area_id || '',
+                floor: asset.pms_floor_id || '',
+                room: asset.pms_room_id || '',
+                assetName: asset.name || '',
+                assetNo: asset.asset_number || '',
+                equipmentId: asset.equipment_id || '',
+                modelNo: asset.model_number || '',
+                serialNo: asset.serial_number || '',
+                consumerNo: asset.consumer_number || '',
+                purchaseCost: asset.purchase_cost ? asset.purchase_cost.toString() : '',
+                capacity: asset.capacity || '',
+                unit: asset.capacity_unit || '',
+                group: asset.pms_asset_group_id || '',
+                subgroup: asset.pms_asset_sub_group_id || '',
+                purchasedOnDate: asset.purchased_on || '',
+                expiryDate: asset.expiry_date || '',
+                manufacturer: asset.manufacturer || '',
+                locationType: asset.location_type || 'common',
+                assetType: asset.asset_type || 'parent',
+                status: asset.status === 'in_use' ? 'inUse' : asset.status || 'inUse',
                 critical: asset.critical ? 'yes' : 'no',
-                meterApplicable: asset.is_meter ?? false,
+                meterApplicable: asset.is_meter || false,
                 underWarranty: asset.warranty ? 'yes' : 'no',
-                warrantyStartDate: asset.warranty_start ?? '',
-                warrantyExpiresOn: asset.warranty_expiry ?? '',
+                warrantyStartDate: asset.warranty_start || '',
+                warrantyExpiresOn: asset.warranty_expiry || '',
                 warrantyStatus: asset.warranty ? 'active' : 'na',
-                commissioningDate: asset.commisioning_date ?? '',
+                commissioningDate: asset.commisioning_date || '',
                 selectedMeterCategories: [],
-                selectedMeterCategory: asset.meter_tag_type ?? '',
+                selectedMeterCategory: asset.meter_tag_type || '',
                 boardSubCategory: '',
                 renewableSubCategory: '',
                 freshWaterSubCategory: '',
@@ -714,10 +715,16 @@ function EditWaterAssetDashboard() {
                     'Content-Type': 'application/json',
                 },
             });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             const data = await response.json();
             setMeterUnitTypes(data.meter_unit_types || []);
         } catch (error) {
             console.error('Error fetching unit types:', error);
+            // Set empty array on error to prevent issues
             setMeterUnitTypes([]);
         } finally {
             setLoadingUnitTypes(false);
@@ -936,7 +943,7 @@ function EditWaterAssetDashboard() {
                 is_meter: formData.meterApplicable,
                 meter_applicable: formData.meterApplicable,
                 location_type: formData.locationType,
-                asset_type: formData.assetType === 'parent' ? true : false,
+                asset_type: formData.assetType,
                 pms_site_id: formData.site,
                 pms_building_id: formData.building,
                 pms_wing_id: formData.wing,
@@ -949,12 +956,12 @@ function EditWaterAssetDashboard() {
                 purchased_on: formData.purchasedOnDate,
                 expiry_date: formData.expiryDate,
                 warranty_expiry: formData.warrantyExpiresOn,
-                warranty_start: formData.warrantyStartDate,
+                warranty_start_date: formData.warrantyStartDate,
                 warranty_status: formData.warrantyStatus,
                 under_warranty: formData.warrantyStatus === 'active',
                 purchase_cost: formData.purchaseCost,
                 capacity: formData.capacity,
-                capacity_unit: formData.unit,
+                unit: formData.unit,
                 type: assetType,
                 meter_tag_type: meterCategoryType,
                 sub_category_type: subCategoryType,
@@ -1002,11 +1009,19 @@ function EditWaterAssetDashboard() {
 
         try {
             let response;
-            // ...existing PUT logic...
+
+            // Check if file uploads exist for multipart form
             if (hasFiles()) {
                 const formDataObj = new FormData();
+
+                // Add all form data fields
                 Object.entries(payload.pms_asset).forEach(([key, value]) => {
-                    if (!["consumption_pms_asset_measures_attributes", "non_consumption_pms_asset_measures_attributes"].includes(key)) {
+                    if (
+                        ![
+                            "consumption_pms_asset_measures_attributes",
+                            "non_consumption_pms_asset_measures_attributes",
+                        ].includes(key)
+                    ) {
                         if (typeof value === "object" && value !== null && !(value instanceof File)) {
                             formDataObj.append(`pms_asset[${key}]`, JSON.stringify(value));
                         } else if (value !== undefined && value !== null) {
@@ -1014,26 +1029,38 @@ function EditWaterAssetDashboard() {
                         }
                     }
                 });
+
+                // Add measure fields
                 payload.pms_asset.consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
                     Object.entries(measure).forEach(([k, v]) => {
-                        formDataObj.append(`pms_asset[consumption_pms_asset_measures_attributes][${idx}][${k}]`, String(v));
+                        formDataObj.append(
+                            `pms_asset[consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+                            String(v)
+                        );
                     });
                 });
                 payload.pms_asset.non_consumption_pms_asset_measures_attributes?.forEach((measure, idx) => {
                     Object.entries(measure).forEach(([k, v]) => {
-                        formDataObj.append(`pms_asset[non_consumption_pms_asset_measures_attributes][${idx}][${k}]`, String(v));
+                        formDataObj.append(
+                            `pms_asset[non_consumption_pms_asset_measures_attributes][${idx}][${k}]`,
+                            String(v)
+                        );
                     });
                 });
+
+                // Handle attachments - only add new files (File objects)
                 Object.entries(attachments).forEach(([category, fileList]) => {
                     if (Array.isArray(fileList)) {
                         fileList.forEach((file: any) => {
                             if (file instanceof File) {
+                                // Map categories to API expected names
                                 let apiCategory = '';
                                 if (category === 'meterAssetImage') apiCategory = 'asset_image';
                                 else if (category === 'meterManualsUpload') apiCategory = 'asset_manuals';
                                 else if (category === 'meterInsuranceDetails') apiCategory = 'asset_insurances';
                                 else if (category === 'meterPurchaseInvoice') apiCategory = 'asset_purchases';
                                 else if (category === 'meterOtherDocuments') apiCategory = 'asset_other_uploads';
+
                                 if (apiCategory) {
                                     formDataObj.append(`pms_asset[${apiCategory}][]`, file);
                                 }
@@ -1041,6 +1068,7 @@ function EditWaterAssetDashboard() {
                         });
                     }
                 });
+
                 response = await apiClient.put(`pms/assets/${id}.json`, formDataObj, {
                     headers: { "Content-Type": "multipart/form-data" },
                     timeout: 300000,
@@ -1057,15 +1085,12 @@ function EditWaterAssetDashboard() {
                 duration: 3000,
             });
 
-            // Refetch asset data to update form and meter dropdowns
-            await fetchAssetData();
-
-            // Optionally, navigate away (remove if you want to stay on edit page)
-            // if (assetType === 'Energy') {
-            //     navigate('/utility/energy');
-            // } else {
-            //     navigate('/utility/water');
-            // }
+            // Navigate back to appropriate dashboard based on asset type
+            if (assetType === 'Energy') {
+                navigate('/utility/energy');
+            } else {
+                navigate('/utility/water');
+            }
 
         } catch (err: any) {
             toast({
@@ -1239,9 +1264,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={loadingStates.sites}>
                                             <InputLabel>Site*</InputLabel>
                                             <MuiSelect
-                                                value={formData.site}
+                                                value={sites.some(site => site.id === formData.site) ? formData.site : ''}
                                                 label="Site*"
-                                                onChange={(e) => setFormData({ ...formData, site: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, site: e.target.value, building: '', wing: '', area: '', floor: '', room: '' });
+                                                    if (e.target.value) fetchBuildings(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {sites.map((site) => (
@@ -1256,9 +1284,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={loadingStates.buildings || !formData.site}>
                                             <InputLabel>Building</InputLabel>
                                             <MuiSelect
-                                                value={formData.building}
+                                                value={buildings.some(building => building.id === formData.building) ? formData.building : ''}
                                                 label="Building"
-                                                onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, building: e.target.value, wing: '', area: '', floor: '', room: '' });
+                                                    if (e.target.value) fetchWings(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {buildings.map((building) => (
@@ -1273,9 +1304,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={loadingStates.wings || !formData.building}>
                                             <InputLabel>Wing</InputLabel>
                                             <MuiSelect
-                                                value={formData.wing || ''}
+                                                value={wings.some(wing => wing.id === formData.wing) ? formData.wing || '' : ''}
                                                 label="Wing"
-                                                onChange={(e) => setFormData({ ...formData, wing: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, wing: e.target.value, area: '', floor: '', room: '' });
+                                                    if (e.target.value) fetchAreas(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {wings.map((wing, idx) => (
@@ -1290,9 +1324,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={loadingStates.areas || !formData.wing}>
                                             <InputLabel>Area</InputLabel>
                                             <MuiSelect
-                                                value={formData.area || ''}
+                                                value={areas.some(area => area.id === formData.area) ? formData.area || '' : ''}
                                                 label="Area"
-                                                onChange={(e) => setFormData({ ...formData, area: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, area: e.target.value, floor: '', room: '' });
+                                                    if (e.target.value) fetchFloors(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {areas.map((area) => (
@@ -1307,9 +1344,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={loadingStates.floors || !formData.area}>
                                             <InputLabel>Floor</InputLabel>
                                             <MuiSelect
-                                                value={formData.floor || ''}
+                                                value={floors.some(floor => floor.id === formData.floor) ? formData.floor || '' : ''}
                                                 label="Floor"
-                                                onChange={(e) => setFormData({ ...formData, floor: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, floor: e.target.value, room: '' });
+                                                    if (e.target.value) fetchRooms(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {floors.map((floor) => (
@@ -1325,7 +1365,7 @@ function EditWaterAssetDashboard() {
                                     <FormControl size="small" sx={{ width: { xs: '100%', md: '20%' } }} disabled={loadingStates.rooms || !formData.floor}>
                                         <InputLabel>Room</InputLabel>
                                         <MuiSelect
-                                            value={formData.room || ''}
+                                            value={rooms.some(room => room.id === formData.room) ? formData.room || '' : ''}
                                             label="Room"
                                             onChange={(e) => setFormData({ ...formData, room: e.target.value })}
                                             sx={{ height: '45px' }}
@@ -1466,9 +1506,12 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={groupsLoading}>
                                             <InputLabel>Group</InputLabel>
                                             <MuiSelect
-                                                value={formData.group}
+                                                value={groups.some(group => group.id === formData.group) ? formData.group : ''}
                                                 label="Group"
-                                                onChange={(e) => setFormData({ ...formData, group: e.target.value })}
+                                                onChange={(e) => {
+                                                    setFormData({ ...formData, group: e.target.value, subgroup: '' });
+                                                    if (e.target.value) fetchSubgroups(e.target.value);
+                                                }}
                                                 sx={{ height: '45px' }}
                                             >
                                                 {groups.map((group) => (
@@ -1483,7 +1526,7 @@ function EditWaterAssetDashboard() {
                                         <FormControl fullWidth size="small" disabled={subgroupsLoading}>
                                             <InputLabel>Sub Group</InputLabel>
                                             <MuiSelect
-                                                value={formData.subgroup}
+                                                value={subgroups.some(subgroup => subgroup.id === formData.subgroup) ? formData.subgroup : ''}
                                                 label="Sub Group"
                                                 onChange={(e) => setFormData({ ...formData, subgroup: e.target.value })}
                                                 sx={{ height: '45px' }}

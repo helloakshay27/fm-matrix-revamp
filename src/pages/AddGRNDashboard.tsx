@@ -694,7 +694,7 @@ export const AddGRNDashboard = () => {
             />
           </div>
 
-          <div className="mt-6">
+          <div className="mt-4">
             <TextField
               label="Notes"
               value={grnDetails.notes}
@@ -712,6 +712,18 @@ export const AddGRNDashboard = () => {
                 "& .MuiOutlinedInput-root": {
                   height: "auto !important",
                   padding: "2px !important",
+                  display: "flex",
+                },
+                "& .MuiInputBase-input[aria-hidden='true']": {
+                  flex: 0,
+                  width: 0,
+                  height: 0,
+                  padding: "0 !important",
+                  margin: 0,
+                  display: "none",
+                },
+                "& .MuiInputBase-input": {
+                  resize: "none !important",
                 },
               }}
             />

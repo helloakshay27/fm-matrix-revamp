@@ -77,7 +77,7 @@ export const WaterAssetDetailsPage = () => {
   };
 
   const handleEditDetails = () => {
-    navigate(`/utility/water/edit/${asset.id}`);
+    navigate(`/utility/water/edit/${asset.id}?type=Water`);
   };
 
   const handleCreateChecklist = () => {
@@ -96,12 +96,12 @@ export const WaterAssetDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Assets List
         </button>
-        
+
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
             {asset.name.toUpperCase()} (#{asset.id})
           </h1>
-          
+
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Breakdown</span>
@@ -112,16 +112,16 @@ export const WaterAssetDetailsPage = () => {
               />
               <span className="text-sm text-gray-600">In Use</span>
             </div>
-            
-            <Button 
+
+            <Button
               onClick={handleEditClick}
               variant="outline"
               className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
             >
               <Edit className="w-4 h-4 mr-2" />
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={handleEditDetails}
               variant="outline"
               className="border-gray-300 text-gray-700 bg-white hover:bg-gray-50"
@@ -129,8 +129,8 @@ export const WaterAssetDetailsPage = () => {
               <Edit className="w-4 h-4 mr-2" />
               Edit Details
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={handleCreateChecklist}
               className="bg-[#C72030] hover:bg-[#A61B2A] text-white"
             >
@@ -152,11 +152,10 @@ export const WaterAssetDetailsPage = () => {
             </div>
             <div>
               <span className="text-gray-600">Status:</span>
-              <span className={`ml-2 px-2 py-1 rounded text-xs ${
-                asset.status === 'In Use' ? 'bg-green-500 text-white' : 
-                asset.status === 'Breakdown' ? 'bg-red-500 text-white' : 
-                'bg-gray-500 text-white'
-              }`}>
+              <span className={`ml-2 px-2 py-1 rounded text-xs ${asset.status === 'In Use' ? 'bg-green-500 text-white' :
+                  asset.status === 'Breakdown' ? 'bg-red-500 text-white' :
+                    'bg-gray-500 text-white'
+                }`}>
                 {asset.status}
               </span>
             </div>
@@ -222,7 +221,7 @@ export const WaterAssetDetailsPage = () => {
       </div>
 
       {/* Edit Status Modal */}
-      <EditStatusModal 
+      <EditStatusModal
         isOpen={isEditStatusOpen}
         onClose={() => setIsEditStatusOpen(false)}
       />
