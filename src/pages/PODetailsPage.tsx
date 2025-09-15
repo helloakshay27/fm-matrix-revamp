@@ -1256,18 +1256,18 @@ export const PODetailsPage = () => {
 
         {shouldShowButtons && (
           <div className="flex items-center justify-center gap-4 my-6">
-            <Button
+            <button
               className="bg-green-600 text-white hover:bg-green-700"
               onClick={handleApprove}
             >
               Approve
-            </Button>
-            <Button
+            </button>
+            <button
               className="bg-[#C72030] text-white hover:bg-[#a61b27]"
               onClick={() => setOpenRejectDialog(true)}
             >
               Reject
-            </Button>
+            </button>
           </div>
         )}
 
