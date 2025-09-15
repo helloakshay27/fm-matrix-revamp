@@ -53,7 +53,7 @@ const EditInventoryTypePage = () => {
   const onSubmit = async (data: InventoryTypeFormValues) => {
     try {
       const payload = {
-        pms_inventory_type: { ...data, deleted: false },
+        pms_inventory_type: { ...data, deleted: false, active: true },
       };
       await inventoryTypeService.updateInventoryType(inventoryTypeId, payload);
       toast.success("Inventory type updated successfully");
@@ -98,6 +98,7 @@ const EditInventoryTypePage = () => {
                         label="Select Company"
                         notched
                         displayEmpty
+                        disabled={true}
                         value={field.value || ''}
                         onChange={e => field.onChange(e.target.value || null)}
                       >
