@@ -756,6 +756,18 @@ export const EditWODashboard: React.FC = () => {
                                         "& .MuiOutlinedInput-root": {
                                             height: "auto !important",
                                             padding: "2px !important",
+                                            display: "flex",
+                                        },
+                                        "& .MuiInputBase-input[aria-hidden='true']": {
+                                            flex: 0,
+                                            width: 0,
+                                            height: 0,
+                                            padding: "0 !important",
+                                            margin: 0,
+                                            display: "none",
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            resize: "none !important",
                                         },
                                     }}
                                 />
@@ -796,7 +808,7 @@ export const EditWODashboard: React.FC = () => {
                                         </Button>
                                     )}
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                     {/* First Row */}
                                     <FormControl
                                         fullWidth
@@ -876,18 +888,18 @@ export const EditWODashboard: React.FC = () => {
                                     />
 
                                     <TextField
-                                        label="Quantity/Area*"
-                                        value={detailsData.quantityArea}
+                                        label="Expected Date*"
+                                        value={detailsData.expectedDate}
                                         onChange={(e) =>
                                             handleDetailsChange(
                                                 detailsData.id,
-                                                "quantityArea",
-                                                e.target.value
+                                                "expectedDate",
+                                                new Date(e.target.value)
                                             )
                                         }
                                         fullWidth
                                         variant="outlined"
-                                        type="number"
+                                        type="date"
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
@@ -908,7 +920,6 @@ export const EditWODashboard: React.FC = () => {
                                         }}
                                     />
 
-                                    {/* Second Row */}
                                     <TextField
                                         label="UOM"
                                         value={detailsData.uom}
@@ -937,19 +948,20 @@ export const EditWODashboard: React.FC = () => {
                                         }}
                                     />
 
+
                                     <TextField
-                                        label="Expected Date*"
-                                        value={detailsData.expectedDate}
+                                        label="Quantity/Area*"
+                                        value={detailsData.quantityArea}
                                         onChange={(e) =>
                                             handleDetailsChange(
                                                 detailsData.id,
-                                                "expectedDate",
-                                                new Date(e.target.value)
+                                                "quantityArea",
+                                                e.target.value
                                             )
                                         }
                                         fullWidth
                                         variant="outlined"
-                                        type="date"
+                                        type="number"
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
@@ -1056,7 +1068,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1119,7 +1130,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1181,7 +1191,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1244,7 +1253,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1273,7 +1281,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1303,7 +1310,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,
@@ -1332,7 +1338,6 @@ export const EditWODashboard: React.FC = () => {
                                                     sm: "10px",
                                                     md: "12px",
                                                 },
-                                                backgroundColor: "#f5f5f5",
                                             },
                                             height: {
                                                 xs: 28,

@@ -324,14 +324,98 @@ export const ResolutionEscalationTab: React.FC = () => {
 
       console.log('Resolution escalation payload:', JSON.stringify(payload, null, 2));
       console.log('Using site ID from user account:', siteId);
-      await dispatch(createResolutionEscalation(payload));
-    } catch (err) {
-      console.error('Error creating resolution escalation:', err);
-      toast({ 
-        title: 'Error', 
-        description: 'Failed to create resolution escalation. Please try again.', 
-        variant: 'destructive' 
-      });
+      
+      await dispatch(createResolutionEscalation(payload)).unwrap();
+    } catch (error: unknown) {
+      // Handle 422 error specifically for category already taken
+      console.log('Full error object:', error);
+      console.log('Error type:', typeof error);
+      console.log('Error stringified:', JSON.stringify(error, null, 2));
+      
+      let errorMessage = 'Failed to create resolution escalation. Please try again.';
+      let shouldShowCategoryTakenMessage = false;
+      
+      // Try to extract error information from different possible structures
+      if (typeof error === 'string') {
+        errorMessage = error;
+        // Check if string contains 422 or conflict indicators
+        shouldShowCategoryTakenMessage = error.includes('422') || 
+                                       error.toLowerCase().includes('already') ||
+                                       error.toLowerCase().includes('exists') ||
+                                       error.toLowerCase().includes('taken') ||
+                                       error.toLowerCase().includes('conflict');
+      } else if (error && typeof error === 'object') {
+        const errorObj = error as {
+          status?: number;
+          code?: number;
+          message?: string;
+          error?: string;
+          category_id?: string[];
+          response?: {
+            status?: number;
+            data?: {
+              message?: string;
+              category_id?: string[];
+            };
+          };
+          data?: {
+            message?: string;
+            category_id?: string[];
+          };
+        };
+        
+        // Check for 422 status first
+        const statusIs422 = errorObj.status === 422 || 
+                           errorObj?.response?.status === 422 ||
+                           errorObj?.code === 422;
+        
+        // Check for specific category_id error format: {category_id: ["has already been taken"]}
+        const hasCategoryIdError = errorObj?.category_id || 
+                                  errorObj?.response?.data?.category_id || 
+                                  errorObj?.data?.category_id;
+        
+        if (hasCategoryIdError && Array.isArray(hasCategoryIdError) && hasCategoryIdError.length > 0) {
+          // Extract the actual error message from category_id array
+          const categoryError = hasCategoryIdError[0];
+          if (typeof categoryError === 'string' && categoryError.toLowerCase().includes('already been taken')) {
+            shouldShowCategoryTakenMessage = true;
+          }
+        }
+        
+        // Fallback checks for other error message formats
+        const messageContains422 = errorObj?.message?.includes('422') ||
+                                  errorObj?.response?.data?.message?.includes('422') ||
+                                  errorObj?.data?.message?.includes('422');
+                                  
+        const hasConflictMessage = errorObj?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.message?.toLowerCase().includes('conflict') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.response?.data?.message?.toLowerCase().includes('conflict') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('already') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('exists') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('taken') ||
+                                 errorObj?.data?.message?.toLowerCase().includes('conflict');
+        
+        // Set flag if any condition matches
+        shouldShowCategoryTakenMessage = shouldShowCategoryTakenMessage || statusIs422 || messageContains422 || hasConflictMessage;
+        
+        // Extract error message from various possible locations
+        errorMessage = errorObj?.message || 
+                      errorObj?.response?.data?.message || 
+                      errorObj?.data?.message || 
+                      errorObj?.error || 
+                      'Failed to create resolution escalation. Please try again.';
+      }
+      
+      if (shouldShowCategoryTakenMessage) {
+        toast({ title: 'Error', description: 'Category already been taken', variant: 'destructive' });
+      } else {
+        toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+      }
     }
   };
 
@@ -523,7 +607,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Select Categories</CardTitle>
+          <CardTitle>on submit if for the api it will get the 422 error please give toast as Category alredy been taken.</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

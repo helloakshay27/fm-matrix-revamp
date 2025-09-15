@@ -31,7 +31,7 @@ const EditGatePassTypePage = () => {
         reset({
           name: data.name || '',
           value: data.value || '',
-          // active: data.active === true,
+          active: data.active === true,
         });
       });
     }

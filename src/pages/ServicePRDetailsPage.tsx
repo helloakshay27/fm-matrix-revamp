@@ -1023,18 +1023,18 @@ export const ServicePRDetailsPage = () => {
 
         {shouldShowButtons && (
           <div className="flex items-center justify-center gap-4 my-6">
-            <Button
-              className="bg-green-600 text-white hover:bg-green-700"
+            <button
+              className="bg-green-600 text-white py-2 px-4 rounded-md"
               onClick={handleApprove}
             >
               Approve
-            </Button>
-            <Button
-              className="bg-[#C72030] text-white hover:bg-[#a61b27]"
+            </button>
+            <button
+              className="bg-[#C72030] text-white py-2 px-4 rounded-md"
               onClick={() => setOpenRejectDialog(true)}
             >
               Reject
-            </Button>
+            </button>
           </div>
         )}
 

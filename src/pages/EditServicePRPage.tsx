@@ -671,6 +671,18 @@ export const EditServicePRPage = () => {
                   "& .MuiOutlinedInput-root": {
                     height: "auto !important",
                     padding: "2px !important",
+                    display: "flex",
+                  },
+                  "& .MuiInputBase-input[aria-hidden='true']": {
+                    flex: 0,
+                    width: 0,
+                    height: 0,
+                    padding: "0 !important",
+                    margin: 0,
+                    display: "none",
+                  },
+                  "& .MuiInputBase-input": {
+                    resize: "none !important",
                   },
                 }}
               />
@@ -765,7 +777,7 @@ export const EditServicePRPage = () => {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Select Service*</InputLabel>
                     <MuiSelect
@@ -805,18 +817,18 @@ export const EditServicePRPage = () => {
                   />
 
                   <TextField
-                    label="Quantity/Area*"
-                    value={detailsData.quantityArea}
+                    label="Expected Date*"
+                    value={detailsData.expectedDate}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
-                        "quantityArea",
-                        e.target.value
+                        "expectedDate",
+                        new Date(e.target.value)
                       )
                     }
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="date"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -834,18 +846,18 @@ export const EditServicePRPage = () => {
                   />
 
                   <TextField
-                    label="Expected Date*"
-                    value={detailsData.expectedDate}
+                    label="Quantity/Area*"
+                    value={detailsData.quantityArea}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
-                        "expectedDate",
-                        new Date(e.target.value)
+                        "quantityArea",
+                        e.target.value
                       )
                     }
                     fullWidth
                     variant="outlined"
-                    type="date"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -887,7 +899,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -917,7 +928,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -947,7 +957,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -977,7 +986,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -994,7 +1002,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 }
                     }}
@@ -1011,7 +1018,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1028,7 +1034,6 @@ export const EditServicePRPage = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}

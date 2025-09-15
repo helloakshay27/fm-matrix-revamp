@@ -102,6 +102,7 @@ import UtilitySolarGeneratorDashboard from "./pages/UtilitySolarGeneratorDashboa
 import { UtilityRequestDashboard } from "./pages/UtilityRequestDashboard";
 import { UtilityRequestDetailsPage } from "./pages/UtilityRequestDetailsPage";
 import { AddUtilityRequestPage } from "./pages/AddUtilityRequestPage";
+import { EditUtilityRequestPage } from "./pages/EditUtilityRequestPage";
 import UtilityConsumptionDashboard from "./pages/UtilityConsumptionDashboard";
 import { GenerateUtilityBillPage } from "./pages/GenerateUtilityBillPage";
 
@@ -2054,6 +2055,10 @@ function App() {
                     <Route
                       path="/utility/utility-request/add"
                       element={<AddUtilityRequestPage />}
+                    />
+                    <Route
+                      path="/utility/utility-request/edit/:id"
+                      element={<EditUtilityRequestPage />}
                     />
                     <Route
                       path="/utility/utility-consumption"

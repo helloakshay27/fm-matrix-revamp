@@ -32,7 +32,7 @@ const fetchAndFormat = async (url: string, key: string) => {
 export const gatePassInwardService = {
   async getInventoryTypes() {
     try {
-      const url = `${API_CONFIG.BASE_URL}/pms/inventory_types/autocomplete.json`;
+      const url = `${API_CONFIG.BASE_URL}/pms/inventory_types/autocomplete.json?q[active_eq]=true`;
       return await fetchAndFormat(url, 'item_types');
     } catch (error: any) {
       toast.error(error.message || 'An error occurred while fetching inventory types.');
