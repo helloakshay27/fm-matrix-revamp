@@ -2158,8 +2158,8 @@ export const AddSchedulePage = () => {
           position: 'top-right',
           duration: 4000,
           style: {
-            background: '#fff4444',
             background: '#fff',
+            color:'black'
             border: 'none',
           },
         });
