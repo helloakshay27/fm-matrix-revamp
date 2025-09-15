@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Box as BoxIcon, RefreshCcw, Eye } from 'lucide-react';
+import { Box as BoxIcon, RefreshCcw, Eye, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -240,6 +240,16 @@ const EmployeeDeletionHistory: React.FC = () => {
             {/* Detail Dialog */}
             <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
                 <DialogContent className="max-w-3xl" onMouseLeave={() => setDetailOpen(false)}>
+                    {/* Close (X) button */}
+                    <button
+                        type="button"
+                        aria-label="Close"
+                        title="Close"
+                        onClick={() => setDetailOpen(false)}
+                        className="absolute top-3 right-3 inline-flex items-center justify-center rounded-md p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-300"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
                     <DialogHeader>
                         <DialogTitle className='text-[#c72030]'>Employee Details</DialogTitle>
                         <DialogDescription>Deletion log and profile information</DialogDescription>
