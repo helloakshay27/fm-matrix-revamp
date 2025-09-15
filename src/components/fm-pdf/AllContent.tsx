@@ -1725,7 +1725,7 @@ const AllContent = () => {
                     {/* Overlay Text */}
                     <div className="absolute bottom-6 right-10 text-white text-sm leading-relaxed print:text-white print:bottom-4 print:right-8">
                         <p>
-                            <span className="font-semibold">Company</span>: UrbanWrk
+                            <span className="font-semibold">Company</span>: {localStorage.getItem('selectedCompany') || 'URBZ NWRK'}
                         </p>
                         <p>
                             <span className="font-semibold">Industry</span>: Coworking Space
@@ -1738,7 +1738,7 @@ const AllContent = () => {
                     {/* Red Rectangle */}
                     <div className="absolute left-[200px] top-[-100px] w-[450px] print:h-[750px] h-[600px] bg-[#bf0c0c] z-10 flex flex-col items-end justify-center space-y-6 text-white 
                     print:left-[50px] print:top-[-300px] print:w-[50%] print:text-right  print:items-end print:justify-center print:space-y-1">
-                        <div className="text-5xl print:ml-10 font-bold print:text-6xl">QUART</div>
+                        <div className="text-5xl print:ml-10 font-bold print:text-6xl">GOPHYGITAL</div>
                         <div className="text-6xl font-extrabold print:text-7xl">REP</div>
                     </div>
 
@@ -1749,7 +1749,7 @@ const AllContent = () => {
                         {/* Overlaid Report Letters */}
                         <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
-                            <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">ERLY</div>
+                            <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">WORK</div>
                             <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
                         </div>
 
@@ -1776,7 +1776,7 @@ const AllContent = () => {
 
 
             {/* Disclaimer Page */}
-            <div className="flex flex-col min-h-screen font-sans bg-white px-6 py-10 relative">
+            {/* <div className="flex flex-col min-h-screen font-sans bg-white px-6 py-10 relative">
                 <div className="flex justify-center w-full">
                     <img
                         src={logo} // change this path as per your folder structure
@@ -1811,19 +1811,19 @@ const AllContent = () => {
                 </div>
                 <div className="absolute bottom-0 left-0 w-full h-4 bg-red-700 print-footer-bar"></div>
                 <div className="absolute bottom-6 right-0 w-30 h-3 bg-red-700 print-footer-small"></div>
-            </div>
+            </div> */}
 
             {/* Table of Contents Page */}
             <div className="min-h-screen flex flex-col justify-between font-sans text-black bg-white px-10 py-2 relative">
                 {/* Header */}
                 <div>
-                    <div className="flex justify-center w-full mt-0">
+                    {/* <div className="flex justify-center w-full mt-0">
                         <img
                             src={logo} // change this path as per your folder structure
                             alt="URBZ NWRK Logo"
                             className="h-12 md:h-16" // adjust height as needed
                         />
-                    </div>
+                    </div> */}
 
 
                     {/* Table of Content Title */}
@@ -1944,7 +1944,7 @@ const AllContent = () => {
                             </p>
                             <div className="flex justify-between items-center print:flex print:justify-between">
                                 <p className="text-2xl font-bold print:text-1xl print:font-bold">
-                                    UrbanWrk
+                                    {localStorage.getItem('selectedCompany')}
                                 </p>
                                 <p className="text-3xl font-bold text-red-600 print:text-red-600 print:text-2xl">
                                     {meetingRoomData?.data?.revenue_generation_overview?.total_revenue ?? '-'}
