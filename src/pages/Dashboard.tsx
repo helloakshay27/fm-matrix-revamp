@@ -1375,8 +1375,15 @@ export const Dashboard = () => {
         {/* Filter Controls Section */}
         <div className="bg-white ">
           <div className="px-6 py-4">
-            <div className="flex items-center justify-end">
-
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={() => navigate('/dashboard/configuration')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Configure Dashboard
+              </Button>
 
               <div className="flex items-center gap-4">
                 <UnifiedDateRangeFilter

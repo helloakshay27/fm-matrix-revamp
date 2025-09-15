@@ -18,6 +18,7 @@ import "./styles/enhanced-select.css"; // Global enhanced select styles
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
+import DashboardConfiguration from "./pages/DashboardConfiguration";
 
 // Import existing pages
 import Index from "./pages/Index";
@@ -929,6 +930,10 @@ function App() {
                     }
                   >
                     <Route index element={<Index />} />
+
+                    {/* Dashboard Routes */}
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dashboard/configuration" element={<DashboardConfiguration />} />
 
                     {/* Holiday Calendar Route */}
                     <Route
