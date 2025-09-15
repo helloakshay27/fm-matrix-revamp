@@ -258,40 +258,120 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
 };
 
 // Send forgot password OTP
-export const sendForgotPasswordOTP = async (emailOrPhone: string): Promise<OTPResponse> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
+export const sendForgotPasswordOTP = async (emailOrMobile: string): Promise<OTPResponse> => {
+  const baseUrl = getBaseUrl();
   
-  // Store temp email/phone for password reset
-  if (emailOrPhone.includes('@')) {
-    localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrPhone);
+  if (!baseUrl) {
+    throw new Error('Base URL not configured');
+  }
+
+  // Determine if input is email or mobile
+  const isEmail = emailOrMobile.includes('@');
+  const requestBody: any = {
+    request_otp: 1
+  };
+
+  if (isEmail) {
+    requestBody.email = emailOrMobile;
+    // Store temp email for password reset
+    localStorage.setItem(AUTH_KEYS.TEMP_EMAIL, emailOrMobile);
   } else {
-    localStorage.setItem(AUTH_KEYS.TEMP_PHONE, emailOrPhone);
+    requestBody.mobile = emailOrMobile;
+    // Store temp mobile for password reset
+    localStorage.setItem(AUTH_KEYS.TEMP_PHONE, emailOrMobile);
+  }
+
+  const response = await fetch(`${baseUrl}/api/users/forgot_password_otp.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send OTP');
+  }
+
+  const data = await response.json();
+  
+  return {
+    success: true,
+    message: data.message || 'OTP sent successfully'
+  };
+};
+
+// Verify forgot password OTP and reset password
+export const verifyForgotPasswordOTPAndResetPassword = async (
+  emailOrMobile: string, 
+  otp: string, 
+  newPassword: string, 
+  confirmPassword: string
+): Promise<{ success: boolean; message: string }> => {
+  const baseUrl = getBaseUrl();
+  
+  if (!baseUrl) {
+    throw new Error('Base URL not configured');
+  }
+
+  if (newPassword !== confirmPassword) {
+    throw new Error('Passwords do not match');
+  }
+
+  // Determine if input is email or mobile
+  const isEmail = emailOrMobile.includes('@');
+  const requestBody: any = {
+    verify_otp: 1,
+    otp: otp,
+    newpassword: newPassword,
+    newpassword_confirm: confirmPassword
+  };
+
+  if (isEmail) {
+    requestBody.email = emailOrMobile;
+  } else {
+    requestBody.mobile = emailOrMobile;
+  }
+
+  const response = await fetch(`${baseUrl}/api/users/forgot_password_otp.json`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.message || 'Failed to reset password');
+  }
+
+  const data = await response.json();
+  
+  // Clear temp data
+  localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
+  localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
+  
+  return {
+    success: true,
+    message: data.message || 'Password reset successfully'
+  };
+};
+
+// Verify forgot password OTP (kept for backward compatibility)
+export const verifyForgotPasswordOTP = async (otp: string): Promise<{ success: boolean; message: string }> => {
+  // This function is now mainly for validation, actual reset happens in the combined function above
+  if (!otp) {
+    throw new Error('OTP is required');
   }
   
   return {
     success: true,
-    message: 'OTP sent successfully',
-    otp: '123456' // For development
+    message: 'OTP verified successfully'
   };
 };
 
-// Verify forgot password OTP
-export const verifyForgotPasswordOTP = async (otp: string): Promise<{ success: boolean; message: string }> => {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  if (otp === '123456') {
-    return {
-      success: true,
-      message: 'OTP verified successfully'
-    };
-  } else {
-    throw new Error('Invalid OTP');
-  }
-};
-
-// Reset password
+// Reset password (kept for backward compatibility)
 export const resetPassword = async (newPassword: string, confirmPassword: string): Promise<{ success: boolean; message: string }> => {
   if (newPassword !== confirmPassword) {
     throw new Error('Passwords do not match');
@@ -301,15 +381,8 @@ export const resetPassword = async (newPassword: string, confirmPassword: string
     throw new Error('Password must be at least 6 characters long');
   }
   
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // Clear temp data
-  localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
-  localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
-  
   return {
     success: true,
-    message: 'Password reset successfully'
+    message: 'Password validation successful'
   };
 };
