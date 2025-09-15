@@ -10,6 +10,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getMaterialPR, updateActiveStaus } from "@/store/slices/materialPRSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { format } from "date-fns";
+import { Switch } from "@/components/ui/switch";
 
 const debounce = (func: (...args: any[]) => void, wait: number) => {
   let timeout: NodeJS.Timeout;
@@ -256,11 +257,12 @@ export const MaterialPRDashboard = () => {
         );
       case "activeInactive":
         return (
-          <input
-            type="checkbox"
+          <Switch
             checked={item.activeInactive}
-            onChange={() => handleCheckboxChange(item)}
-            className={`w-4 h-4 ${updatingStatus[item.id] ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+            onCheckedChange={() =>
+              handleCheckboxChange(item)
+            }
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
             disabled={updatingStatus[item.id]}
           />
         );
