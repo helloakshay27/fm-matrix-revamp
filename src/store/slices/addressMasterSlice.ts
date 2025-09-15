@@ -36,6 +36,23 @@ export const createAddress = createAsyncThunk(
     }
 )
 
+export const updateAddress = createAsyncThunk(
+    "updateAddress",
+    async ({ data, baseUrl, token, id }: { data: any, baseUrl: string, token: string, id: number }, { rejectWithValue }) => {
+        try {
+            const response = await axios.put(`https://${baseUrl}/pms/billing_addresses/${id}.json`, data, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.error || error.error || 'Failed to create address'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 export const getAddressById = createAsyncThunk(
     "getAddressById",
     async ({ id, baseUrl, token }: { id: string, baseUrl: string, token: string }, { rejectWithValue }) => {
@@ -55,6 +72,10 @@ export const getAddressById = createAsyncThunk(
 
 const fetchAddressesSlice = createApiSlice("fetchAddresses", fetchAddresses);
 const createAddressSlice = createApiSlice("createAddress", createAddress);
+const updateAddressSlice = createApiSlice('updateAddress', updateAddress);
+const getAddressByIdSlice = createApiSlice('getAddressById', getAddressById);
 
 export const fetchAddressesReducer = fetchAddressesSlice.reducer
 export const createAddressReducer = createAddressSlice.reducer
+export const updateAddressReducer = updateAddressSlice.reducer
+export const getAddressByIdReducer = getAddressByIdSlice.reducer
