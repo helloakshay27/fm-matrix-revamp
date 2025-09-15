@@ -40,6 +40,7 @@ import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import { format } from "date-fns";
+import DebitCreditModal from "@/components/DebitCreditModal";
 
 // Interfaces
 interface BillingAddress {
@@ -647,11 +648,11 @@ export const PODetailsPage = () => {
       description: item.note || "-",
       approved: item.approved,
       approved_on: item.approved_at
-        ? format(new Date(item.approved_at), "dd-MM-yyyy")
+        ? item.approved_at
         : "-",
       approved_by: item.approved_by || "-",
       created_on: item.created_at
-        ? format(new Date(item.created_at), "dd-MM-yyyy")
+        ? item.created_at
         : "-",
       created_by: item.creator_name || "-",
     })) || [];
@@ -1314,100 +1315,14 @@ export const PODetailsPage = () => {
           </DialogActions>
         </Dialog>
 
-        <Dialog
-          open={openDebitCreditModal}
-          onClose={handleCloseDebitCreditModal}
-          maxWidth="sm"
-          fullWidth
-        >
-          <DialogTitle>Debit/Credit Notes</DialogTitle>
-          <DialogContent>
-            <FormControl
-              fullWidth
-              variant="outlined"
-              sx={{
-                mt: 1,
-              }}
-            >
-              <InputLabel shrink>Select Type</InputLabel>
-              <Select
-                label="Select Type"
-                value={debitCreditForm.type}
-                onChange={handleDebitCreditChange}
-                displayEmpty
-                name="type"
-                sx={{
-                  height: {
-                    xs: 28,
-                    sm: 36,
-                    md: 45,
-                  },
-                  "& .MuiInputBase-input, & .MuiSelect-select": {
-                    padding: {
-                      xs: "8px",
-                      sm: "10px",
-                      md: "12px",
-                    },
-                  },
-                }}
-              >
-                <MenuItem value="">
-                  <em>Select Type</em>
-                </MenuItem>
-                <MenuItem value="Debit">Debit</MenuItem>
-                <MenuItem value="Credit">Credit</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              margin="dense"
-              name="amount"
-              label="Amount"
-              type="number"
-              fullWidth
-              value={debitCreditForm.amount}
-              onChange={handleDebitCreditChange}
-            />
-            <TextField
-              margin="dense"
-              name="description"
-              label="Description"
-              type="text"
-              fullWidth
-              value={debitCreditForm.description}
-              onChange={handleDebitCreditChange}
-              multiline
-              rows={2}
-              sx={{
-                mt: 1,
-                "& .MuiOutlinedInput-root": {
-                  height: "auto !important",
-                  padding: "2px !important",
-                  display: "flex",
-                },
-                "& .MuiInputBase-input[aria-hidden='true']": {
-                  flex: 0,
-                  width: 0,
-                  height: 0,
-                  padding: "0 !important",
-                  margin: 0,
-                  display: "none",
-                },
-                "& .MuiInputBase-input": {
-                  resize: "none !important",
-                },
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDebitCreditModal}>Close</Button>
-            <Button
-              onClick={handleSubmitDebitCredit}
-              style={{ backgroundColor: "#6B46C1", color: "white" }}
-            >
-              Submit
-            </Button>
-          </DialogActions>
-        </Dialog>
+        <DebitCreditModal
+          options={["Debit", "Credit"]}
+          openDebitCreditModal={openDebitCreditModal}
+          handleCloseDebitCreditModal={handleCloseDebitCreditModal}
+          debitCreditForm={debitCreditForm}
+          handleDebitCreditChange={handleDebitCreditChange}
+          handleSubmitDebitCredit={handleSubmitDebitCredit}
+        />
 
         <AttachmentPreviewModal
           isModalOpen={isPreviewModalOpen}
