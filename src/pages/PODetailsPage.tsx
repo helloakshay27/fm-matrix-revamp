@@ -923,7 +923,7 @@ export const PODetailsPage = () => {
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-44">GST</span>
-                  <span className="font-medium">: {poDetails.supplier.gstin_number ?? "-"}</span>
+                  <span className="font-medium">: {poDetails.supplier?.gstin_number ?? "-"}</span>
                 </div>
                 <div className="flex">
                   <span className="text-muted-foreground w-44">
