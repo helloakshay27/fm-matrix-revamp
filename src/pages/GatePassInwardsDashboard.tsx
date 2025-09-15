@@ -7,6 +7,15 @@ import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 import { API_CONFIG } from '@/config/apiConfig';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
+import {
+  Pagination,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationContent,
+  PaginationEllipsis,
+} from '@/components/ui/pagination';
 
 // Define your API base URL here or import it from your config/environment
 const API_BASE_URL = API_CONFIG.BASE_URL;
@@ -25,6 +34,10 @@ export const GatePassInwardsDashboard = () => {
     materialType: '',
     expectedReturnDate: '',
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
   // Helper to build query params from filters
   const buildQueryParams = () => {
@@ -39,9 +52,10 @@ export const GatePassInwardsDashboard = () => {
     return params;
   };
 
-  // Fetch data with filters
+  // Fetch data with filters and pagination
   useEffect(() => {
     const params = buildQueryParams();
+    params['page'] = currentPage.toString();
     const queryString = Object.entries(params)
       .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
       .join('&');
@@ -55,26 +69,27 @@ export const GatePassInwardsDashboard = () => {
       .then(res => res.json())
       .then(data => {
         setInwardData(data.gate_passes || []);
+        setTotalPages(data.pagination?.total_pages || 1);
+        setTotalCount(data.pagination?.total_count || (data.gate_passes?.length || 0));
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [filters]);
+  }, [filters, currentPage]);
 
   // Column configuration for the enhanced table
   const columns: ColumnConfig[] = [
-    { key: 'sNo', label: 'Sr No.', sortable: false, hideable: false, draggable: false },
-    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false },
-    { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true },
-    // { key: 'type', label: 'Type', sortable: true, hideable: true, draggable: true },
-    { key: 'category', label: 'Category', sortable: true, hideable: true, draggable: true },
-    { key: 'personName', label: 'Person Name', sortable: true, hideable: true, draggable: true },
-    // { key: 'profileImage', label: 'Profile Image', sortable: false, hideable: true, draggable: true },
-    { key: 'passNo', label: 'Pass No.', sortable: true, hideable: true, draggable: true },
-    { key: 'modeOfTransport', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true },
-    // { key: 'lrNo', label: 'LR No.', sortable: true, hideable: true, draggable: true },
-    // { key: 'tripId', label: 'Trip ID', sortable: true, hideable: true, draggable: true },
-    { key: 'gateEntry', label: 'Gate Entry', sortable: true, hideable: true, draggable: true },
-  // { key: 'itemDetails', label: 'Item Details', sortable: false, hideable: true, draggable: true }
+    { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false, defaultVisible: true },
+    { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'returnableNonReturnable', label: 'Goods Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'category', label: 'Gate Pass Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'personName', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'passNo', label: 'Gate Pass No.', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'modeOfTransport', label: 'Vehicle Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'gateEntry', label: 'Gate Number', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'visitorName', label: 'Visitor Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'visitorContact', label: 'Visitor Contact', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'numberOfMaterials', label: 'No. of Materials', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'supplierName', label: 'Vendor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
   ];
 
   const handleViewDetails = (id: string) => {
@@ -86,30 +101,36 @@ export const GatePassInwardsDashboard = () => {
   };
 
   // Prepare data with index for the enhanced table
-  const dataWithIndex = inwardData.map((item, index) => ({
-    sNo: index + 1,
-    id: item.id,
-    type: item.gate_pass_category || '--',
-    category: item.gate_pass_type_name || '--',
-    personName: item.created_by_name || '--',
-    profileImage: '/placeholder.svg', // or use a real field if available
-    passNo: item.gate_pass_no || '--',
-    modeOfTransport: item.vehicle_no || '--',
-    lrNo: item.lr_no || '--',
-    tripId: item.trip_id || '--',
-    gateEntry: item.gate_number || '--',
-    itemDetails: (item.gate_pass_materials || [])
-      .map(m => `ID:${m.pms_inventory_id} Qty:${m.gate_pass_qty ?? '--'}`)
-      .join(', ')
-  }));
+  const dataWithIndex = inwardData.map((item, index) => {
+    const materials = Array.isArray(item.gate_pass_materials) ? item.gate_pass_materials : [];
+    const getJoined = (key: keyof typeof materials[0]) =>
+      materials.length ? materials.map(m => m?.[key] ?? '--').join(', ') : '--';
+    return {
+      actions: '', // Placeholder, will be filled by renderRow
+      id: item.id,
+      returnableNonReturnable: item.returnable === true ? 'check' : 'cross',
+      category: item.gate_pass_type_name || '--',
+      personName: item.created_by_name || '--',
+      passNo: item.gate_pass_no || '--',
+      modeOfTransport: item.vehicle_no || '--',
+      gateEntry: item.gate_number || '--',
+      visitorName: item.contact_person || '--',
+      visitorContact: item.contact_person_no || '--',
+      // materialName: getJoined('material'),
+      // materialCategory: getJoined('item_category'),
+      // materialQuantity: getJoined('gate_pass_qty'),
+      // unit: getJoined('unit'),
+      numberOfMaterials: materials.length,
+      supplierName: item.supplier_name || '--',
+    };
+  });
 
   console.log("Data with index:", dataWithIndex);
 
   // Render row function for enhanced table
   const renderRow = (entry: any) => ({
-    sNo: entry.sNo,
     actions: (
-      <div className="flex gap-2 justify-center">
+      <div className="flex gap-2 justify-center" style={{ maxWidth: '60px' }}>
         <div title="View details">
           <Eye 
             className="w-4 h-4 text-gray-600 cursor-pointer hover:text-[#C72030]" 
@@ -118,29 +139,25 @@ export const GatePassInwardsDashboard = () => {
         </div>
       </div>
     ),
-    id: entry.id,
-    type: entry.type,
+    id: <span style={{maxWidth:'60px'}}>{entry.id}</span>,
+    returnableNonReturnable: entry.returnableNonReturnable === 'check'
+      ? 'Returnable'
+      : entry.returnableNonReturnable === 'cross'
+        ? 'Non Returnable'
+        : '-',
     category: entry.category,
     personName: entry.personName,
-    profileImage: (
-      <img 
-        src={entry.profileImage} 
-        alt={`${entry.personName} profile`}
-        className="w-8 h-8 rounded-full object-cover border border-gray-200 mx-auto"
-      />
-    ),
     passNo: entry.passNo,
     modeOfTransport: entry.modeOfTransport,
-    lrNo: entry.lrNo,
-    tripId: entry.tripId,
     gateEntry: entry.gateEntry,
-    itemDetails: (
-      <div className="max-w-xs">
-        <div className="truncate" title={entry.itemDetails}>
-          {entry.itemDetails}
-        </div>
-      </div>
-    )
+    visitorName: entry.visitorName,
+    visitorContact: entry.visitorContact,
+    // materialName: entry.materialName,
+    // materialCategory: entry.materialCategory,
+    // materialQuantity: entry.materialQuantity,
+    // unit: entry.unit,
+    numberOfMaterials: entry.numberOfMaterials,
+    supplierName: entry.supplierName,
   });
 
   // SelectionPanel actions (customize as needed)
@@ -185,6 +202,52 @@ export const GatePassInwardsDashboard = () => {
           exportFileName="inward-gate-pass-entries"
           leftActions={renderActionButton()}
         />
+      )}
+      {/* Pagination UI */}
+      {totalPages > 1 && (
+        <div className="mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => {
+                    if (currentPage > 1) setCurrentPage(currentPage - 1);
+                  }}
+                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+              {Array.from(
+                { length: Math.min(totalPages, 10) },
+                (_, i) => i + 1
+              ).map((page) => (
+                <PaginationItem key={page}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(page)}
+                    isActive={currentPage === page}
+                  >
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              {totalPages > 10 && (
+                <PaginationItem>
+                  <PaginationEllipsis />
+                </PaginationItem>
+              )}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => {
+                    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+                  }}
+                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+          <div className="text-center mt-2 text-sm text-gray-600">
+            Showing page {currentPage} of {totalPages} ({totalCount} total entries)
+          </div>
+        </div>
       )}
       <GatePassInwardsFilterModal 
         isOpen={isFilterModalOpen}

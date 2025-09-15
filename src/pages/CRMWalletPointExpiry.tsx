@@ -10,20 +10,6 @@ import { Pen } from 'lucide-react';
 import RuleAlert from '@/components/RuleAlert';
 import { useNavigate } from 'react-router-dom';
 import { LogEntry, LogsTimeline } from '@/components/LogTimeline';
-import { id } from 'date-fns/locale';
-
-const sampleLogs: LogEntry[] = [
-    {
-        id: "1",
-        description: "Complimentary condition updated to 'Weekly' by Ankit Gupta",
-        timestamp: "5 June 2025  2:09PM"
-    },
-    {
-        id: "2",
-        description: "Complimentary condition created with 'Monthly', Purchase condition created with 'Monthly' by Ankit Gupta",
-        timestamp: "5 June 2025  2:08PM"
-    }
-];
 
 const formattedLogs = (logs) => {
     return logs.map((log, index) => {

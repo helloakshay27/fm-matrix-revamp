@@ -32,6 +32,7 @@ import {
 
 // --- Interface Definitions ---
 interface AnswerOption {
+  id?: number;
   text: string;
   type: "P" | "N";
 }
@@ -225,7 +226,7 @@ export const EditSurveyPage = () => {
       if (hasTicketConfig && surveyData.snag_questions?.[0]?.ticket_configs) {
         const ticketConfig = surveyData.snag_questions[0].ticket_configs;
         setTicketCategory(ticketConfig.category || "");
-        setAssignTo(ticketConfig.assigned_to || "");
+        setAssignTo(ticketConfig.assigned_to_id ? ticketConfig.assigned_to_id.toString() : "");
       }
 
       // Map snag_questions to component questions format
@@ -250,12 +251,15 @@ export const EditSurveyPage = () => {
           mandatory: q.quest_mandatory,
           answerOptions:
             q.snag_quest_options?.map((option: any) => ({
+              id: option.id,
               text: option.qname,
               type: option.option_type === "p" ? "P" : "N",
             })) || [],
           rating: q.qtype === "rating" ? q.rating || 5 : undefined,
           selectedEmoji:
             q.qtype === "emoji" ? q.selected_emoji || "😊" : undefined,
+          additionalFieldOnNegative: q.additional_field_on_negative || false,
+          additionalFields: q.additional_fields || [],
         })) || [];
 
       setQuestions(
@@ -294,7 +298,7 @@ export const EditSurveyPage = () => {
   const handleQuestionChange = (
     id: string,
     field: keyof Question,
-    value: string | boolean | number | AnswerOption[]
+    value: string | boolean | number | AnswerOption[] | Array<{title: string; files: File[]}>
   ) => {
     setQuestions(
       questions.map((q) => {
@@ -446,13 +450,20 @@ export const EditSurveyPage = () => {
       if (createTicket) {
         formData.append("create_ticket", "true");
         formData.append("category_name", ticketCategory);
-        formData.append("category_type", assignTo);
+        formData.append("category_type", assignTo); // This should be the user ID
+        formData.append("tag_type", "Ticket Setup");
       }
 
-      // Process questions with proper FormData structure
-      let fileCounter = 0;
-
+      // Process questions with proper FormData structure matching server expectations
       questions.forEach((question, questionIndex) => {
+        // Add question ID only for existing questions (not new ones)
+        // New questions have IDs that start with a timestamp
+        const isNewQuestion = question.id && question.id.length > 10 && /^\d+$/.test(question.id) && Date.now().toString().startsWith(question.id.slice(0, 10));
+        
+        if (question.id && question.id !== "1" && !isNewQuestion) {
+          formData.append(`question[][id]`, question.id);
+        }
+
         // Add question basic fields
         formData.append(`question[][descr]`, question.text);
 
@@ -460,7 +471,7 @@ export const EditSurveyPage = () => {
           question.answerType === "multiple-choice"
             ? "multiple"
             : question.answerType === "input-box"
-            ? "input"
+            ? "text"
             : question.answerType === "rating"
             ? "rating"
             : question.answerType === "emojis"
@@ -474,31 +485,66 @@ export const EditSurveyPage = () => {
         );
         formData.append(`question[][image_mandatory]`, "false");
 
-        // Add multiple choice options
+        // Add rating
+        if (question.answerType === "rating" && question.rating) {
+          formData.append(`question[][rating]`, question.rating.toString());
+        }
+
+        // Add selected emoji
+        if (question.answerType === "emojis" && question.selectedEmoji) {
+          formData.append(`question[][selected_emoji]`, question.selectedEmoji);
+        }
+
+        // Add additional field on negative selection
+        if (question.additionalFieldOnNegative) {
+          formData.append(`question[][additional_field_on_negative]`, "true");
+          
+          // Add additional fields if they exist
+          if (question.additionalFields) {
+            question.additionalFields.forEach((field, fieldIndex) => {
+              formData.append(`question[][additional_fields][][title]`, field.title);
+              
+              // Add uploaded files for this field
+              field.files.forEach((file, fileIdx) => {
+                formData.append(`question[][additional_fields][][files][]`, file);
+              });
+            });
+          }
+        }
+
+        // Add multiple choice options with proper structure
         if (
           question.answerType === "multiple-choice" &&
           question.answerOptions
         ) {
           question.answerOptions.forEach((option, optionIndex) => {
+            // Check if this is an existing option (would have an ID from server)
+            if (option.id) {
+              formData.append(`question[][snag_quest_options][][id]`, option.id.toString());
+            }
             formData.append(
-              `question[][quest_options][][option_name]`,
+              `question[][snag_quest_options][][option_name]`,
               option.text
             );
             formData.append(
-              `question[][quest_options][][option_type]`,
+              `question[][snag_quest_options][][option_type]`,
               option.type.toLowerCase()
             );
           });
         }
 
-        // Add rating
-        if (question.answerType === "rating" && question.rating) {
-          formData.append(`question[][rating]`, question.rating.toString());
+        // Add generic tags if they exist (for ticket configuration)
+        if (createTicket && questionIndex === 0) {
+          // Add generic tags for the first question when ticket creation is enabled
+          formData.append(`question[][generic_tags][][category_name]`, ticketCategory);
+          formData.append(`question[][generic_tags][][category_type]`, "questions");
+          formData.append(`question[][generic_tags][][tag_type]`, "not generic");
+          formData.append(`question[][generic_tags][][active]`, "true");
         }
       });
 
       console.log(
-        "Question updated with FormData:",
+        "Survey updated with FormData:",
         Array.from(formData.entries())
       );
 
@@ -511,11 +557,11 @@ export const EditSurveyPage = () => {
           },
         }
       );
-      console.log("Question updated successfully:", response.data);
+      console.log("Survey updated successfully:", response.data);
 
       // Show success toast
-      toast.success("Question Updated Successfully!", {
-        description: "Your Question has been updated.",
+      toast.success("Survey Updated Successfully!", {
+        description: "Your Survey has been updated.",
         icon: <CheckCircle className="w-4 h-4" />,
         duration: 4000,
       });
@@ -579,7 +625,7 @@ export const EditSurveyPage = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <h1 className="text-3xl font-bold tracking-tight">Edit Question</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Edit Survey</h1>
         </div>
       </div>
 
@@ -593,7 +639,7 @@ export const EditSurveyPage = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <TextField
-                  label="Title/Question Name"
+                  label="Survey Title/Name"
                   fullWidth
                   id="title"
                   value={title}
@@ -694,10 +740,9 @@ export const EditSurveyPage = () => {
                         {fmUsers.map((user) => (
                           <MenuItem
                             key={user.id}
-                            value={user.full_name || `${user.firstname} ${user.lastname}`}
+                            value={user.id.toString()}
                           >
-                            {user.full_name || `${user.firstname} ${user.lastname}`}
-                            {user.email && ` (${user.email})`}
+                            {`${user.full_name}`}
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -955,6 +1000,143 @@ export const EditSurveyPage = () => {
                           Mandatory
                         </Label>
                       </div>
+
+                      {/* Additional Field on Negative Selection */}
+                      {question.answerType === "multiple-choice" && (
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`additional-${question.id}`}
+                            checked={question.additionalFieldOnNegative || false}
+                            onCheckedChange={(checked) =>
+                              handleQuestionChange(
+                                question.id!,
+                                "additionalFieldOnNegative",
+                                checked
+                              )
+                            }
+                          />
+                          <Label
+                            htmlFor={`additional-${question.id}`}
+                            className="text-sm text-black"
+                          >
+                            Do you want to open additional field on negative selection
+                          </Label>
+                        </div>
+                      )}
+
+                      {/* Additional Fields */}
+                      {question.additionalFieldOnNegative && question.additionalFields && (
+                        <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
+                          <Label className="font-medium">Additional Fields</Label>
+                          {question.additionalFields.map((field, fieldIndex) => (
+                            <div key={fieldIndex} className="space-y-2">
+                              <div className="flex gap-2">
+                                <Input
+                                  value={field.title}
+                                  onChange={(e) => {
+                                    const updatedFields = [...(question.additionalFields || [])];
+                                    updatedFields[fieldIndex] = { ...field, title: e.target.value };
+                                    handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                                  }}
+                                  placeholder="Field Title"
+                                  className="flex-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    const updatedFields = question.additionalFields?.filter((_, idx) => idx !== fieldIndex) || [];
+                                    handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                                  }}
+                                  className="p-2"
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                              
+                              {/* Image Upload */}
+                              <div className="space-y-2">
+                                <Label className="text-sm">Upload Images</Label>
+                                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                  <input
+                                    type="file"
+                                    id={`file-${question.id}-${fieldIndex}`}
+                                    multiple
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const files = Array.from(e.target.files || []);
+                                      const updatedFields = [...(question.additionalFields || [])];
+                                      updatedFields[fieldIndex] = { 
+                                        ...field, 
+                                        files: [...field.files, ...files] 
+                                      };
+                                      handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                                    }}
+                                    className="hidden"
+                                  />
+                                  <label
+                                    htmlFor={`file-${question.id}-${fieldIndex}`}
+                                    className="flex flex-col items-center justify-center cursor-pointer"
+                                  >
+                                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                                    <span className="text-sm text-gray-600">
+                                      Click to upload images or drag and drop
+                                    </span>
+                                    <span className="text-xs text-gray-400">
+                                      PNG, JPG, GIF up to 10MB
+                                    </span>
+                                  </label>
+                                </div>
+                                
+                                {/* Display uploaded files */}
+                                {field.files.length > 0 && (
+                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                    {field.files.map((file, fileIndex) => (
+                                      <div key={fileIndex} className="relative">
+                                        <img
+                                          src={URL.createObjectURL(file)}
+                                          alt={file.name}
+                                          className="w-full h-20 object-cover rounded border"
+                                        />
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => {
+                                            const updatedFields = [...(question.additionalFields || [])];
+                                            const updatedFiles = field.files.filter((_, idx) => idx !== fileIndex);
+                                            updatedFields[fieldIndex] = { ...field, files: updatedFiles };
+                                            handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                                          }}
+                                          className="absolute top-0 right-0 p-1 h-6 w-6 bg-red-500 text-white hover:bg-red-600"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </Button>
+                                        <span className="text-xs text-gray-600 block mt-1 truncate">
+                                          {file.name}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                          
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              const updatedFields = [...(question.additionalFields || []), { title: "", files: [] }];
+                              handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                            }}
+                            className="p-0 h-auto font-medium"
+                            style={{ color: "#C72030" }}
+                          >
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add Additional Field
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
@@ -977,7 +1159,7 @@ export const EditSurveyPage = () => {
                   disabled={loading || isSubmitting}
                   className="bg-red-600 hover:bg-red-700 text-white px-8"
                 >
-                  {loading || isSubmitting ? "Updating..." : "Update Question"}
+                  {loading || isSubmitting ? "Updating..." : "Update Survey"}
                 </Button>
                 <Button
                   onClick={() => navigate("/master/survey/list")}

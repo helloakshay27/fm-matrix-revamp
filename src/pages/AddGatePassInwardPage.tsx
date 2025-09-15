@@ -10,6 +10,7 @@ import { gatePassInwardService } from '@/services/gatePassInwardService';
 import { gatePassTypeService } from '@/services/gatePassTypeService';
 import { API_CONFIG } from '@/config/apiConfig';
 import { useSelector } from 'react-redux';
+import { toast } from "sonner";
 
 interface AttachmentFile {
   id: string;
@@ -38,7 +39,6 @@ interface MaterialRow {
 
 export const AddGatePassInwardPage = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [attachments, setAttachments] = useState<AttachmentFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -190,15 +190,11 @@ export const AddGatePassInwardPage = () => {
       } : row);
       setMaterialRows(updatedRows);
     } else if (field === 'quantity') {
-      const currentRow = newRows.find(row => row.id === id);
-      if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
-        toast({
-          title: "Validation Error",
-          description: `Quantity cannot be greater than ${currentRow.maxQuantity}.`,
-          variant: "destructive"
-        });
-        return;
-      }
+      // const currentRow = newRows.find(row => row.id === id);
+      // if (currentRow && currentRow.maxQuantity !== null && Number(value) > currentRow.maxQuantity) {
+      //   toast.error(`Quantity cannot be greater than ${currentRow.maxQuantity}.`);
+      //   return;
+      // }
       setMaterialRows(newRows);
     } else {
       setMaterialRows(newRows);
@@ -257,22 +253,76 @@ export const AddGatePassInwardPage = () => {
     if (isSubmitting) return;
 
     // Field-level validation
-    const errors: { [key: string]: string } = {};
-    if (!visitorDetails.contactPerson) errors.contactPerson = 'Visitor Name is required';
-    if (!visitorDetails.contactPersonNo) errors.contactPersonNo = 'Mobile No. is required';
-    else if (visitorDetails.contactPersonNo.length !== 10) errors.contactPersonNo = 'Mobile No. must be 10 digits';
-    if (!selectedCompany) errors.company = 'Company is required';
-    if (!gatePassDetails.vendorId) errors.vendorId = 'Vendor is required';
-    if (!visitorDetails.modeOfTransport) errors.modeOfTransport = 'Mode Of Transport is required';
-    if (!visitorDetails.reportingTime) errors.reportingTime = 'Reporting Time is required';
-    if (!selectedSite) errors.site = 'Site is required';
-    if (!gatePassDetails.buildingId) errors.buildingId = 'Building is required';
-    if (!gatePassDetails.gateNumberId) errors.gateNumberId = 'Gate Number is required';
-    if (!gatePassDetails.gatePassTypeId) errors.gatePassTypeId = 'Gate Pass Type is required';
-    if (!gatePassDetails.gatePassDate) errors.gatePassDate = 'Gate Pass Date is required';
+    if (!visitorDetails.contactPerson) {
+      toast.error("Visitor Name is required");
+      return;
+    }
+    if (!visitorDetails.contactPersonNo) {
+      toast.error("Mobile No. is required");
+      return;
+    }
+    if (visitorDetails.contactPersonNo.length !== 10) {
+      toast.error("Mobile No. must be 10 digits");
+      return;
+    }
 
-    setFieldErrors(errors);
-    if (Object.keys(errors).length > 0) return;
+    if (!visitorDetails.modeOfTransport) {
+      toast.error("Mode Of Transport is required");
+      return;
+    }
+    if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
+      toast.error("Vehicle No. is required");
+      return;
+    }
+    if (!visitorDetails.reportingTime) {
+      toast.error("Reporting Time is required");
+      return;
+    }
+    if (!selectedSite) {
+      toast.error("Site is required");
+      return;
+    }
+    if (!gatePassDetails.buildingId) {
+      toast.error("Building is required");
+      return;
+    }
+    if (!selectedCompany) {
+      toast.error("Company is required");
+      return;
+    }
+    if (!gatePassDetails.vendorId) {
+      toast.error("Vendor is required");
+      return;
+    }
+    if (!gatePassDetails.gateNumberId) {
+      toast.error("Gate Number is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassTypeId) {
+      toast.error("Gate Pass Type is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassDate) {
+      toast.error("Gate Pass Date is required");
+      return;
+    }
+
+    // Validate all item details and show toast for each missing field
+    for (let idx = 0; idx < materialRows.length; idx++) {
+      const row = materialRows[idx];
+      if (!row.itemTypeId) {
+        toast.error(`Item Type is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemCategoryId) {
+        toast.error(`Item Category is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemNameId) {
+        toast.error(`Item Name is required for row ${idx + 1}`);
+        return;
+      }
+    }
 
     setIsSubmitting(true);
     const formData = new FormData();
@@ -286,6 +336,7 @@ export const AddGatePassInwardPage = () => {
     if (selectedSite?.id) formData.append('gate_pass[site_id]', selectedSite.id.toString());
     if (selectedCompany?.id) formData.append('gate_pass[company_id]', selectedCompany.id.toString());
     if (visitorDetails.vehicleNo) formData.append('gate_pass[vehicle_no]', visitorDetails.vehicleNo);
+    if (visitorDetails.modeOfTransport) formData.append('gate_pass[mode_of_transport]', visitorDetails.modeOfTransport);
     if (gatePassDetails.remarks) formData.append('gate_pass[remarks]', gatePassDetails.remarks);
     if (visitorDetails.gateNoId) formData.append('gate_pass[gate_number_id]', visitorDetails.gateNoId.toString());
     if (gatePassDetails.gateNumberId) formData.append('gate_pass[gate_number_id]', gatePassDetails.gateNumberId.toString());
@@ -319,18 +370,11 @@ export const AddGatePassInwardPage = () => {
 
     try {
       await gatePassInwardService.createGatePassInward(formData);
-      toast({
-        title: "Success",
-        description: "Gate pass inward entry created successfully!"
-      });
+      toast.success("Gate pass inward entry created successfully!");
       navigate('/security/gate-pass/inwards');
     } catch (error) {
       console.error('Error submitting form:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create entry. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Failed to create entry. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -372,33 +416,7 @@ export const AddGatePassInwardPage = () => {
               error={!!fieldErrors.contactPersonNo}
               helperText={fieldErrors.contactPersonNo}
             />
-            <TextField
-              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
-              value={selectedCompany ? selectedCompany.name : ''}
-              fullWidth
-              variant="outlined"
-              disabled
-              InputLabelProps={{ shrink: true }}
-              sx={{ '& .MuiInputBase-root': fieldStyles }}
-              error={!!fieldErrors.company}
-              helperText={fieldErrors.company}
-            />
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {vendors.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.modeOfTransport}>
               <InputLabel shrink>Mode Of Transport <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect label="Mode Of Transport" notched displayEmpty value={visitorDetails.modeOfTransport} onChange={(e) => handleVisitorChange('modeOfTransport', e.target.value)}>
@@ -456,6 +474,33 @@ export const AddGatePassInwardPage = () => {
                 ))}
               </MuiSelect>
               {fieldErrors.buildingId && <Typography variant="caption" color="error">{fieldErrors.buildingId}</Typography>}
+            </FormControl>
+            <TextField
+              label={<span>Company <span style={{ color: 'red' }}>*</span></span>}
+              value={selectedCompany ? selectedCompany.name : ''}
+              fullWidth
+              variant="outlined"
+              disabled
+              InputLabelProps={{ shrink: true }}
+              sx={{ '& .MuiInputBase-root': fieldStyles }}
+              error={!!fieldErrors.company}
+              helperText={fieldErrors.company}
+            />
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {vendors.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
             </FormControl>
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNumberId}>
               <InputLabel shrink>Gate Number <span style={{ color: 'red' }}>*</span></InputLabel>
@@ -587,15 +632,13 @@ export const AddGatePassInwardPage = () => {
                         </MuiSelect>
                       </FormControl>
                     </td>
-                    <td className="px-4 py-2 pt-4">
+                    <td className="px-4 py-2 pt-4">                      
                       <TextField
                         variant="outlined"
                         size="small"
                         type="number"
-                        value={row.maxQuantity !== null ? row.maxQuantity : ''}
+                        value={row.quantity}
                         onChange={(e) => handleRowChange(row.id, 'quantity', e.target.value)}
-                        inputProps={{ max: row.maxQuantity ?? undefined, min: 0 }}
-                      // helperText={row.maxQuantity !== null ? `Max: ${row.maxQuantity}` : ''}
                       />
                     </td>
                     <td className="px-4 py-2 pt-4">

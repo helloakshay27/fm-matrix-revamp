@@ -57,7 +57,7 @@ export const roleConfigService = {
   async fetchRoleConfigs(): Promise<RoleConfigItem[]> {
     try {
       const response = await fetch(
-        getFullUrl(API_CONFIG.ENDPOINTS.ROLE_CONFIGS),
+        getFullUrl(API_CONFIG.ENDPOINTS.MODULES),
         {
           method: 'GET',
           headers: {
@@ -84,7 +84,7 @@ export const roleConfigService = {
   async fetchRoleConfig(id: number): Promise<RoleConfigItem> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.ROLE_CONFIG_DETAILS}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.MODULE_DETAILS}/${id}.json`),
         {
           method: 'GET',
           headers: {
@@ -111,7 +111,7 @@ export const roleConfigService = {
   async createRoleConfig(payload: CreateRoleConfigPayload): Promise<RoleConfigItem> {
     try {
       const response = await fetch(
-        getFullUrl(API_CONFIG.ENDPOINTS.CREATE_ROLE_CONFIG),
+        getFullUrl(API_CONFIG.ENDPOINTS.MODULES),
         {
           method: 'POST',
           headers: {
@@ -140,7 +140,7 @@ export const roleConfigService = {
   async updateRoleConfig(id: number, payload: UpdateRoleConfigPayload): Promise<RoleConfigItem> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.UPDATE_ROLE_CONFIG}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.MODULE_DETAILS}/${id}.json`),
         {
           method: 'PATCH',
           headers: {
@@ -169,7 +169,7 @@ export const roleConfigService = {
   async deleteRoleConfig(id: number): Promise<void> {
     try {
       const response = await fetch(
-        getFullUrl(`${API_CONFIG.ENDPOINTS.DELETE_ROLE_CONFIG}/${id}.json`),
+        getFullUrl(`${API_CONFIG.ENDPOINTS.MODULE_DETAILS}/${id}.json`),
         {
           method: 'DELETE',
           headers: {

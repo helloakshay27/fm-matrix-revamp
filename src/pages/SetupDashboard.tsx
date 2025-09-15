@@ -4,11 +4,11 @@ import { SetupLayout } from '../components/SetupLayout';
 import { useLayout } from '../contexts/LayoutContext';
 
 export const SetupDashboard = () => {
-  const { setCurrentSection } = useLayout();
 
-  useEffect(() => {
-    setCurrentSection('Settings');
-  }, [setCurrentSection]);
+  // Note: Section is now automatically set by LayoutProvider based on route
+  // useEffect(() => {
+  //   setCurrentSection('Settings');
+  // }, [setCurrentSection]);
 
   return (
     <SetupLayout>

@@ -102,7 +102,6 @@ const navigationStructure = {
           },
           { name: "Shift", href: "/settings/account/shift" },
           { name: "Roster", href: "/settings/account/roster" },
-          { name: "Role Config", href: "/settings/account/role-config" },
           { name: "Lock Module", href: "/settings/account/lock-module" },
           { name: "Lock Function", href: "/settings/account/lock-function" },
           {
@@ -1086,7 +1085,6 @@ const modulesByPackage = {
         },
         { name: "Shift", href: "/settings/account/shift" },
         { name: "Roster", href: "/settings/account/roster" },
-        { name: "Role Config", href: "/settings/account/role-config" },
         { name: "Lock Module", href: "/settings/account/lock-module" },
         { name: "Lock Function", href: "/settings/account/lock-function" },
         {

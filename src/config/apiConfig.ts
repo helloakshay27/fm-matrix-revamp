@@ -56,6 +56,7 @@ export const API_CONFIG = {
     SUB_FUNCTION_DETAILS: '/lock_sub_functions', // Base path, will append /:id.json
     // Module, Function, Sub-Function CRUD endpoints
     MODULES: '/lock_modules.json',
+    MODULE_DETAILS: '/lock_modules', // Base path, will append /:id.json
     CREATE_MODULE: '/lock_modules.json',
     UPDATE_MODULE: '/lock_modules', // Base path, will append /:id.json
     DELETE_MODULE: '/lock_modules', // Base path, will append /:id.json
@@ -271,14 +272,27 @@ export const getAuthHeader = (): string => {
   return `Bearer ${token}`;
 }
 
+// Helper to get role name header
+export const getRoleNameHeader = (): string | null => {
+  return localStorage.getItem('user_role_name');
+}
+
 // Helper to create authenticated fetch options
 export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: string | FormData | null): RequestInit => {
+  const headers: Record<string, string> = {
+    'Authorization': getAuthHeader(),
+    'Content-Type': 'application/json',
+  };
+
+  // Add role name header if available
+  const roleName = getRoleNameHeader();
+  if (roleName) {
+    headers['X-User-Role'] = roleName;
+  }
+
   const options: RequestInit = {
     method,
-    headers: {
-      'Authorization': getAuthHeader(),
-      'Content-Type': 'application/json',
-    },
+    headers,
   };
 
   if (body && method !== 'GET') {
