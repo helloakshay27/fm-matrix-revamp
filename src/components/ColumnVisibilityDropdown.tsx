@@ -41,53 +41,55 @@ export const ColumnVisibilityMenu: React.FC<ColumnVisibilityMenuProps> = ({
           
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel className="flex items-center justify-between">
+      <DropdownMenuContent align="end" className="w-48 max-h-80 overflow-y-auto">
+        <DropdownMenuLabel className="flex items-center justify-between sticky top-0 bg-white z-10">
           <span>Show Columns</span>
           <span className="text-xs text-gray-500">
             {visibleCount} of {columns.length}
           </span>
         </DropdownMenuLabel>
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="sticky top-8 bg-white z-10" />
         
-        {hideableColumns.map((column) => {
-          const isVisible = columnVisibility[column.key];
-          const isLastVisible = visibleCount === 1 && isVisible;
-          
-          return (
-            <DropdownMenuItem
-              key={column.key}
-              className="flex items-center gap-2 cursor-pointer"
-              onSelect={(e) => {
-                e.preventDefault();
-                if (!isLastVisible) {
-                  onToggleVisibility(column.key);
-                }
-              }}
-            >
-              <Checkbox
-                checked={isVisible}
-                disabled={isLastVisible}
-                className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-              />
-              <div className="flex items-center gap-2 flex-1">
-                {/* {isVisible ? (
-                  <Eye className="w-4 h-4 text-green-600" />
-                ) : (
-                  <EyeOff className="w-4 h-4 text-gray-400" />
-                )} */}
-                <span className={isLastVisible ? "text-gray-400" : ""}>
-                  {column.label}
-                </span>
-              </div>
-            </DropdownMenuItem>
-          );
-        })}
+        <div className="max-h-48 overflow-y-auto">
+          {hideableColumns.map((column) => {
+            const isVisible = columnVisibility[column.key];
+            const isLastVisible = visibleCount === 1 && isVisible;
+            
+            return (
+              <DropdownMenuItem
+                key={column.key}
+                className="flex items-center gap-2 cursor-pointer"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  if (!isLastVisible) {
+                    onToggleVisibility(column.key);
+                  }
+                }}
+              >
+                <Checkbox
+                  checked={isVisible}
+                  disabled={isLastVisible}
+                  className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                />
+                <div className="flex items-center gap-2 flex-1">
+                  {/* {isVisible ? (
+                    <Eye className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-gray-400" />
+                  )} */}
+                  <span className={isLastVisible ? "text-gray-400" : ""}>
+                    {column.label}
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            );
+          })}
+        </div>
         
-        <DropdownMenuSeparator />
+        <DropdownMenuSeparator className="sticky bottom-8 bg-white z-10" />
         <DropdownMenuItem 
           onClick={onResetToDefaults}
-          className="flex items-center gap-2 cursor-pointer text-gray-600"
+          className="flex items-center gap-2 cursor-pointer text-gray-600 sticky bottom-0 bg-white z-10"
         >
           <RotateCcw className="w-4 h-4" />
           Reset to Default

@@ -53,11 +53,11 @@ export const VisitorFormPage = () => {
     "& .MuiOutlinedInput-root": {
       height: "45px",
       "& fieldset": { borderColor: "#ddd" },
-      "&:hover fieldset": { borderColor: "#C72030" },
+      "&:hover fieldset": { borderColor: "#4d494aff" },
       "&.Mui-focused fieldset": { borderColor: "#C72030" },
     },
     "& .MuiInputLabel-root": {
-      "&.Mui-focused": { color: "#C72030" },
+      "&.Mui-focused": { color: "#201f20ff" },
       "& .MuiInputLabel-asterisk": {
         color: "#C72030 !important",
       },
@@ -342,6 +342,21 @@ export const VisitorFormPage = () => {
 
     if (formData.mobileNumber.length !== 10) {
       toast.error('Mobile number must be 10 digits');
+      return;
+    }
+
+     if (!formData.passNumber.trim()) {
+      toast.error('Please enter Pass number');
+      return;
+    }
+
+    // if (formData.passNumber.trim().length !== 10) {
+    //   toast.error('Pass number must be 10 digits');
+    //   return;
+    // }
+
+     if (!formData.vehicleNumber.trim()) {
+      toast.error('Please enter Vehicle number');
       return;
     }
 
@@ -921,6 +936,7 @@ export const VisitorFormPage = () => {
                   handleInputChange("passNumber", e.target.value)
                 }
                 fullWidth
+                required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
@@ -943,6 +959,7 @@ export const VisitorFormPage = () => {
                   handleInputChange("vehicleNumber", e.target.value)
                 }
                 fullWidth
+                required
                 variant="outlined"
                 InputLabelProps={{ shrink: true }}
                 sx={fieldStyles}
@@ -1294,10 +1311,10 @@ export const VisitorFormPage = () => {
                       )
                     }
                     fullWidth
-                    required
+                    // required
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
+                    // sx={fieldStyles}
                   />
                   <div className="flex items-center space-x-2 md:col-span-2">
                     <TextField
@@ -1310,10 +1327,10 @@ export const VisitorFormPage = () => {
                         }
                       }}
                       fullWidth
-                      required
+                      // required
                       variant="outlined"
                       InputLabelProps={{ shrink: true }}
-                      sx={fieldStyles}
+                      // sx={fieldStyles}
                       inputProps={{
                         inputMode: "numeric", // shows numeric keyboard on mobile
                         pattern: "[0-9]{10}", // regex for 10 digits

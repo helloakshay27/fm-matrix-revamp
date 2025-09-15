@@ -92,7 +92,6 @@ export const VisitorFilterDialog: React.FC<VisitorFilterDialogProps> = ({
     const handleReset = () => {
         setFilters({});
         onResetFilters();
-        onClose();
     };
 
     const handleClear = () => {

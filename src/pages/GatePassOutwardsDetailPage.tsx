@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Upload, FileText, QrCode, Box, User, Download } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { API_CONFIG } from '@/config/apiConfig';
-import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { AttachmentGoodsPreviewModal } from '@/components/AttachmentGoodsPreviewModal';
 
 export const GatePassOutwardsDetailPage = () => {
   const { id } = useParams();
@@ -116,7 +116,7 @@ export const GatePassOutwardsDetailPage = () => {
   
 
   // Defensive fallback for missing fields
-  const personName = gatePassData.created_by_name || gatePassData.contact_person || '--';
+  const personName = gatePassData.contact_person || '--';
   const returnableNonReturnable = gatePassData.returnable ? 'Returnable' : 'Non Returnable';
   const expectedReturnDate = gatePassData.expected_return_date || '-';
   const category = gatePassData.gate_pass_type_name || gatePassData.gate_pass_category || '--';
@@ -162,7 +162,7 @@ export const GatePassOutwardsDetailPage = () => {
         <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
           <span>Goods Outwards</span>
           <span>&gt;</span>
-          <span className="text-[#C72030] font-medium">Returnable</span>
+          <span className="text-[#C72030] font-medium">Details</span>
         </div>
       </div>
 
@@ -213,13 +213,9 @@ export const GatePassOutwardsDetailPage = () => {
                         <span class-Name="text-sm text-gray-900">{mobileNo}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Site:</span>
-                        <span className="text-sm text-gray-900">{siteName}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium text-gray-700">Company Name:</span>
-                        <span className="text-sm text-gray-900">{companyName}</span>
-                    </div>
+                    <span className="text-sm font-medium text-gray-700">Company Name:</span>
+                    <span className="text-sm text-gray-900">{gatePassData?.vendor_company_name || '--'}</span>
+                  </div>
                                         <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-gray-700">Vendor:</span>
                         <span className="text-sm text-gray-900">{gatePassData.supplier_name || '--'}</span>
@@ -279,71 +275,51 @@ export const GatePassOutwardsDetailPage = () => {
                 </div>
                 <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
                 <Table>
-                <TableHeader>
-                    <TableRow className="bg-gray-50">
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sr No.</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Attachment</TableHead>
-                    <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Updates</TableHead>
-                    </TableRow>
-                </TableHeader>
+        <TableHeader>
+          <TableRow className="bg-gray-50">
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Sr No.</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item category</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Item name detail</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Unit</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Quantity</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700">Description</TableHead>
+          <TableHead className="px-4 py-3 text-left text-sm font-medium text-gray-700 sticky right-0 bg-white z-10">Attachments</TableHead>
+          </TableRow>
+        </TableHeader>
                 <TableBody>
-                    {itemsData.map((item, index) => <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
+                    {itemsData.map((item, index) => (
+                      <TableRow key={item.sNo} className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition-colors`}>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.sNo}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemName}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory}</TableCell>
+                        <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemCategory == '-1' ? 'Other' : item.itemCategory}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.itemNameDetail}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.unit}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.quantity}</TableCell>
                         <TableCell className="px-4 py-3 text-sm text-gray-900">{item.description}</TableCell>
-                        <TableCell className="px-4 py-3 text-sm text-gray-900">
-                          {/* Attachment column */}
-                          {gatePassData.attachments && gatePassData.attachments.length > 0 ? (
-                            gatePassData.attachments.map((att: any, idx: number) =>
-                              att.document ? (
-                                <span key={idx} className="inline-flex items-center gap-2 mr-2">
-                                  <button
-                                    title="View/Download"
-                                    onClick={() => {
-                                      setSelectedAttachment({
-                                        id: att.id, // <-- ensure id is present for AttachmentPreviewModal
-                                        url: att.document,
-                                        document_name: att.document_name || att.document?.split('/').pop() || `Document_${idx + 1}`,
-                                        document_file_name: att.document_file_name,
-                                        doctype: att.doctype,
-                                      });
-                                      setIsAttachmentModalOpen(true);
-                                    }}
-                                    className="p-0 bg-transparent border-none hover:underline text-green-600 hover:text-green-800"
-                                    style={{ cursor: 'pointer' }}
-                                  >
-                                    <Download className="w-4 h-4 inline-block" />
-                                  </button>
-                                </span>
-                              ) : null
-                            )
-                          ) : (
-                            '--'
-                          )}
+                        <TableCell className="px-4 py-3 text-sm text-gray-900 sticky right-0 bg-white z-10">
+                          {/* Per-item attachments modal button, now also handles receive */}
+                          <button
+                            className="text-blue-600 underline hover:text-blue-800 font-medium"
+                            style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                            onClick={() => {
+                              const attachmentsToShow = (gatePassData.gate_pass_materials && gatePassData.gate_pass_materials[index]?.attachments?.length > 0)
+                                ? gatePassData.gate_pass_materials[index].attachments
+                                : gatePassData.attachments;
+                              setSelectedAttachment({
+                                attachments: attachmentsToShow || [],
+                                itemIndex: index,
+                                itemName: item.itemNameDetail,
+                                received: receivedItems.includes(index),
+                              });
+                              setIsAttachmentModalOpen(true);
+                            }}
+                          >
+                            View Attachments
+                          </button>
                         </TableCell>
-                        <TableCell className="px-4 py-3 text-sm">
-                          {receivedItems.includes(index) ? (
-                            <span className="text-green-600 font-medium">Received</span>
-                          ) : (
-                            <button
-                              className="text-[#C72030] underline hover:text-[#C72030]/80 transition-colors font-medium"
-                              onClick={() => handleReceiveClick(index)}
-                            >
-                              {item.updates}
-                            </button>
-                          )}
-                        </TableCell>
-                    </TableRow>)}
+                      </TableRow>
+                    ))}
                 </TableBody>
                 </Table>
             </div>
@@ -397,83 +373,129 @@ export const GatePassOutwardsDetailPage = () => {
         </Tabs>
       </div>
 
-      {/* Receive Modal */}
-      <Dialog open={isReceiveModalOpen} onOpenChange={setIsReceiveModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold text-gray-900">Return Process</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
-                Handover To
-              </Label>
-              <Input
-                id="handover"
-                placeholder="Enter handover details"
-                className="w-full"
-                value={handoverTo}
-                onChange={e => setHandoverTo(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
-                Received Date
-              </Label>
-              <Input
-                type="date"
-                id="received-date"
-                placeholder="Enter received date"
-                className="w-full"
-                value={receivedDate}
-                onChange={e => setReceivedDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
-                Remarks
-              </Label>
-              <Textarea
-                id="remarks"
-                placeholder="Enter remarks"
-                className="w-full min-h-[80px]"
-                value={remarks}
-                onChange={e => setRemarks(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
-                Attachment
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  id="attachment"
-                  type="file"
-                  className="w-full"
-                  multiple
-                  ref={fileInputRef}
-                  onChange={handleAttachmentChange}
-                />
-                <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                  <Upload className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </div>
-          <div className="flex justify-center pt-4">
-            <Button onClick={handleSubmitReceive} className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8">
-              Submit
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Receive functionality is now inside the AttachmentPreviewModal for each item */}
 
       {/* Attachment Preview Modal */}
-      <AttachmentPreviewModal
+      <AttachmentGoodsPreviewModal
         isModalOpen={isAttachmentModalOpen}
         setIsModalOpen={setIsAttachmentModalOpen}
         selectedDoc={selectedAttachment}
         setSelectedDoc={setSelectedAttachment}
+        toReceive={(() => {
+          if (!selectedAttachment || selectedAttachment.itemIndex === undefined) return false;
+          const mat = gatePassData?.gate_pass_materials?.[selectedAttachment.itemIndex];
+          return mat && (!mat.recieved_date || mat.recieved_date === '' || mat.recieved_date === null);
+        })()}
+        onReceive={(
+          itemIndex: number,
+          received: boolean,
+          setReceiveModalOpen: (open: boolean) => void,
+          receiveState: {
+            handoverTo: string,
+            setHandoverTo: (v: string) => void,
+            receivedDate: string,
+            setReceivedDate: (v: string) => void,
+            remarks: string,
+            setRemarks: (v: string) => void,
+            attachments: File[],
+            setAttachments: (v: File[]) => void,
+            fileInputRef: React.RefObject<HTMLInputElement>,
+          },
+        ) => {
+          // Only show receive UI if not already received
+          if (received) return null;
+          return (
+            <div className="mt-6 border-t pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="handover" className="text-sm font-medium text-gray-700">
+                  Handover To
+                </Label>
+                <Input
+                  id="handover"
+                  placeholder="Enter handover details"
+                  className="w-full"
+                  value={receiveState.handoverTo}
+                  onChange={e => receiveState.setHandoverTo(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="received-date" className="text-sm font-medium text-gray-700">
+                  Received Date
+                </Label>
+                <Input
+                  type="date"
+                  id="received-date"
+                  placeholder="Enter received date"
+                  className="w-full"
+                  value={receiveState.receivedDate}
+                  onChange={e => receiveState.setReceivedDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="remarks" className="text-sm font-medium text-gray-700">
+                  Remarks
+                </Label>
+                <Textarea
+                  id="remarks"
+                  placeholder="Enter remarks"
+                  className="w-full min-h-[80px]"
+                  value={receiveState.remarks}
+                  onChange={e => receiveState.setRemarks(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="attachment" className="text-sm font-medium text-gray-700">
+                  Attachment
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="attachment"
+                    type="file"
+                    className="w-full"
+                    multiple
+                    ref={receiveState.fileInputRef}
+                    onChange={e => receiveState.setAttachments(Array.from(e.target.files || []))}
+                  />
+                  <Button size="sm" variant="outline" onClick={() => receiveState.fileInputRef.current?.click()}>
+                    <Upload className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="flex justify-center pt-4">
+                <Button
+                  onClick={async () => {
+                    // Submit receive for this item
+                    const material = gatePassData.gate_pass_materials[itemIndex];
+                    if (!material) return;
+                    const formData = new FormData();
+                    formData.append('gate_pass_material[remarks]', receiveState.remarks);
+                    formData.append('gate_pass_material[handover_to]', receiveState.handoverTo);
+                    formData.append('gate_pass_material[recieved_date]', receiveState.receivedDate);
+                    receiveState.attachments.forEach(file => {
+                      formData.append('gate_pass_material[attachments][]', file);
+                    });
+                    try {
+                      const res = await fetch(`${API_CONFIG.BASE_URL}/gate_passes/${gatePassData.id}/gate_pass_materials/${material.id}/update_material`, {
+                        method: 'PUT',
+                        headers: {
+                          'Authorization': `Bearer ${API_CONFIG.TOKEN}`
+                        },
+                        body: formData
+                      });
+                      if (res.ok) {
+                        setReceiveModalOpen(false);
+                        setReceivedItems(prev => [...prev, itemIndex]);
+                      }
+                    } catch (err) {}
+                  }}
+                  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8"
+                >
+                  Submit
+                </Button>
+              </div>
+            </div>
+          );
+        }}
       />
     </div>;
 };

@@ -103,7 +103,7 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
             {selectedDoc?.document_name || selectedDoc?.document_file_name || 'Document'}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center justify-center gap-4 py-4">
+  <div className="flex flex-col items-center justify-center gap-4 py-4 max-h-[70vh] overflow-y-auto">
           {selectedDoc?.url ? (
             <img
               src={selectedDoc.url}
