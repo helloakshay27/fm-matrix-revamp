@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { X } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface UpdateIncidentModalProps {
   isOpen: boolean;
@@ -90,15 +91,15 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
 
     if (isClosedStatus) {
       if (!updateData.rca.trim()) {
-        alert('RCA is required when closing an incident');
+        toast.error('RCA is required when closing an incident');
         return;
       }
       if (!updateData.correctiveAction.trim()) {
-        alert('Corrective action is required when closing an incident');
+        toast.error('Corrective action is required when closing an incident');
         return;
       }
       if (!updateData.preventiveAction.trim()) {
-        alert('Preventive action is required when closing an incident');
+        toast.error('Preventive action is required when closing an incident');
         return;
       }
     }
@@ -138,15 +139,15 @@ export const UpdateIncidentModal: React.FC<UpdateIncidentModalProps> = ({
       if (response.ok) {
         const result = await response.json();
         console.log('Incident updated successfully:', result);
-        alert(`Incident ${isClosedStatus ? 'closed' : 'updated'} successfully`);
+        toast.success(`Incident ${isClosedStatus ? 'closed' : 'updated'} successfully`);
         onClose();
       } else {
         console.error('Failed to update incident');
-        alert('Failed to update incident. Please try again.');
+        toast.error('Failed to update incident. Please try again.');
       }
     } catch (error) {
       console.error('Error updating incident:', error);
-      alert('Error occurred while updating incident. Please try again.');
+      toast.error('Error occurred while updating incident. Please try again.');
     } finally {
       setLoading(false);
     }

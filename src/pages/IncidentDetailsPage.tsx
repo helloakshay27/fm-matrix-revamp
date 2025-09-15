@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,28 @@ import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
 import { AddInjuryModal } from '@/components/AddInjuryModal';
 import { incidentService, type Incident } from '@/services/incidentService';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { toast } from 'sonner';
+
+// Field component for consistent styling - defined outside main component to prevent re-renders
+const Field = memo(({
+  label,
+  value,
+  fullWidth = false
+}: {
+  label: string;
+  value: React.ReactNode;
+  fullWidth?: boolean;
+}) => (
+  <div className={`flex ${fullWidth ? 'flex-col' : 'items-center'} gap-4 ${fullWidth ? 'mb-4' : ''}`}>
+    <label className={`${fullWidth ? 'text-sm' : 'w-32 text-sm'} font-medium text-gray-700`}>
+      {label}
+    </label>
+    {!fullWidth && <span className="text-sm">:</span>}
+    <span className={`text-sm text-gray-900 ${fullWidth ? 'mt-1' : 'flex-1'}`}>
+      {value || '-'}
+    </span>
+  </div>
+));
 
 export const IncidentDetailsPage = () => {
   const { id } = useParams();
@@ -109,8 +131,11 @@ export const IncidentDetailsPage = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
+      toast.success('Incident report downloaded successfully');
+
     } catch (error) {
       console.error('Error downloading report:', error);
+      toast.error('Failed to download incident report');
       setError('Failed to download incident report');
     } finally {
       setDownloadLoading(false);
@@ -205,7 +230,7 @@ export const IncidentDetailsPage = () => {
         </nav>
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#1a1a1a]">Detail (#{incident.id})</h1>
+            <h1 className="text-2xl font-bold text-[#1a1a1a]">Details ({incident.id})</h1>
           </div>
           <div className="flex flex-wrap gap-3">
             <Button
@@ -257,52 +282,52 @@ export const IncidentDetailsPage = () => {
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div>
-              <span className="text-sm text-gray-600">Status</span>
-              <p className="font-medium">: {incident.current_status}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Incident Date and Time</span>
-              <p className="font-medium">: {incident.inc_time ? new Date(incident.inc_time).toLocaleString() : '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Reporting Date and Time</span>
-              <p className="font-medium">: {incident.created_at ? new Date(incident.created_at).toLocaleString() : '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Level</span>
-              <p className="font-medium">: {incident.inc_level_name || '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Support Required</span>
-              <p className="font-medium">: {incident.support_required ? 'Yes' : 'No'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Sent for Medical Treatment</span>
-              <p className="font-medium">: {incident.sent_for_medical_treatment}</p>
-            </div>
+            <Field
+              label="Status"
+              value={incident.current_status}
+            />
+            <Field
+              label="Incident Date and Time"
+              value={incident.inc_time ? new Date(incident.inc_time).toLocaleString() : '-'}
+            />
+            <Field
+              label="Reporting Date and Time"
+              value={incident.created_at ? new Date(incident.created_at).toLocaleString() : '-'}
+            />
+            <Field
+              label="Level"
+              value={incident.inc_level_name || '-'}
+            />
+            <Field
+              label="Support Required"
+              value={incident.support_required ? 'Yes' : 'No'}
+            />
+            <Field
+              label="Sent for Medical Treatment"
+              value={incident.sent_for_medical_treatment}
+            />
           </div>
           <div className="space-y-4">
-            <div>
-              <span className="text-sm text-gray-600">Tower</span>
-              <p className="font-medium">: {incident.tower_name || '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Building</span>
-              <p className="font-medium">: {incident.building_name || '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Reported By</span>
-              <p className="font-medium">: {incident.created_by}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Primary Category</span>
-              <p className="font-medium">: {incident.category_name || '-'}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">First Aid provided by Employees?</span>
-              <p className="font-medium">: {incident.first_aid_provided}</p>
-            </div>
+            <Field
+              label="Tower"
+              value={incident.tower_name || '-'}
+            />
+            <Field
+              label="Building"
+              value={incident.building_name || '-'}
+            />
+            <Field
+              label="Reported By"
+              value={incident.created_by}
+            />
+            <Field
+              label="Primary Category"
+              value={incident.category_name || '-'}
+            />
+            <Field
+              label="First Aid provided by Employees?"
+              value={incident.first_aid_provided}
+            />
           </div>
         </div>
       </CollapsibleSection>
@@ -315,27 +340,28 @@ export const IncidentDetailsPage = () => {
         onToggle={() => setDescriptionExpanded(!descriptionExpanded)}
       >
         <div className="space-y-4">
-          <div>
-            <span className="text-sm text-gray-600">Description</span>
-            <p className="font-medium">: {incident.description}</p>
-          </div>
+          <Field
+            label="Description"
+            value={incident.description}
+            fullWidth={true}
+          />
           {incident.sub_category_name && (
-            <div>
-              <span className="text-sm text-gray-600">Sub Category</span>
-              <p className="font-medium">: {incident.sub_category_name}</p>
-            </div>
+            <Field
+              label="Sub Category"
+              value={incident.sub_category_name}
+            />
           )}
           {incident.sub_sub_category_name && (
-            <div>
-              <span className="text-sm text-gray-600">Sub Sub Category</span>
-              <p className="font-medium">: {incident.sub_sub_category_name}</p>
-            </div>
+            <Field
+              label="Sub Sub Category"
+              value={incident.sub_sub_category_name}
+            />
           )}
           {incident.assigned_to_user_name && (
-            <div>
-              <span className="text-sm text-gray-600">Assigned To</span>
-              <p className="font-medium">: {incident.assigned_to_user_name}</p>
-            </div>
+            <Field
+              label="Assigned To"
+              value={incident.assigned_to_user_name}
+            />
           )}
         </div>
       </CollapsibleSection>
