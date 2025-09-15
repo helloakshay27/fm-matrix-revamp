@@ -935,7 +935,7 @@ export const AddServicePRDashboard = () => {
                     </Button>
                   )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
                     <InputLabel shrink>Select Service*</InputLabel>
                     <MuiSelect
@@ -975,18 +975,18 @@ export const AddServicePRDashboard = () => {
                   />
 
                   <TextField
-                    label="Quantity/Area*"
-                    value={detailsData.quantityArea}
+                    label="Expected Date*"
+                    value={detailsData.expectedDate}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
-                        "quantityArea",
+                        "expectedDate",
                         e.target.value
                       )
                     }
                     fullWidth
                     variant="outlined"
-                    type="number"
+                    type="date"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1004,18 +1004,18 @@ export const AddServicePRDashboard = () => {
                   />
 
                   <TextField
-                    label="Expected Date*"
-                    value={detailsData.expectedDate}
+                    label="Quantity/Area*"
+                    value={detailsData.quantityArea}
                     onChange={(e) =>
                       handleDetailsChange(
                         detailsData.id,
-                        "expectedDate",
+                        "quantityArea",
                         e.target.value
                       )
                     }
                     fullWidth
                     variant="outlined"
-                    type="date"
+                    type="number"
                     InputLabelProps={{ shrink: true }}
                     sx={fieldStyles}
                   />
@@ -1057,7 +1057,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1087,7 +1086,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1117,7 +1115,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1147,7 +1144,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1164,7 +1160,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1181,7 +1176,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}
@@ -1198,7 +1192,6 @@ export const AddServicePRDashboard = () => {
                       mt: 1,
                       "& .MuiInputBase-input": {
                         padding: { xs: "8px", sm: "10px", md: "12px" },
-                        backgroundColor: "#f5f5f5",
                       },
                       height: { xs: 28, sm: 36, md: 45 },
                     }}

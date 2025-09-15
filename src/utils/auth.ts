@@ -12,6 +12,7 @@ export interface User {
   country_code?: string;
   spree_api_key?: string;
   access_token?: string;
+  number_verified?: number;
   lock_role?: {
     id: number;
     name: string;
@@ -41,6 +42,7 @@ export interface LoginResponse {
   longitude?: number;
   country_code?: string;
   spree_api_key?: string;
+  number_verified?: number;
   lock_role?: {
     id: number;
     name: string;
@@ -213,32 +215,46 @@ export const loginWithPhone = async (phone: string, password: string): Promise<{
 
 // Verify OTP after phone login
 export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
-  const phone = localStorage.getItem(AUTH_KEYS.TEMP_PHONE);
+  const email = localStorage.getItem('temp_email');
+  const baseUrl = getBaseUrl();
+  const token = getToken();
   
-  if (!phone) {
-    throw new Error('Phone number not found');
+  if (!email) {
+    throw new Error('Email not found. Please login again.');
   }
 
-  // Simulate API call for OTP verification
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // For development, accept "123456" as valid OTP
-  if (otp === '123456') {
-    // Clear temp phone
-    localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
-    
-    // Return mock user data
-    return {
-      id: 1,
-      email: 'user@example.com',
-      firstname: 'John',
-      lastname: 'Doe',
-      phone: phone,
-      access_token: 'mock-jwt-token'
-    };
-  } else {
-    throw new Error('Invalid OTP');
+  if (!baseUrl) {
+    throw new Error('Base URL not found. Please login again.');
   }
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // Add Bearer token if available
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`https://live-api.gophygital.work/verify_code.json`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      email: email,
+      otp: otp
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('OTP verification failed');
+  }
+
+  const data = await response.json();
+  
+  // Clear temp email after successful verification
+  localStorage.removeItem('temp_email');
+  
+  return data;
 };
 
 // Send forgot password OTP

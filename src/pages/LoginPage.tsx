@@ -181,14 +181,30 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
-      toast.success("Login Successful", {
-        description: `Welcome back, ${response.firstname}!`
-      });
+      
+      // Check if number is verified
+      if (response.number_verified === 0 && isViSite ) {
+        // Store email temporarily for OTP verification
+        localStorage.setItem("temp_email", email);
+        
+        toast.success("Login Successful", {
+          description: "Please verify your phone number to continue."
+        });
+        
+        // Redirect to OTP verification page
+        setTimeout(() => {
+          navigate('/otp-verification');
+        }, 500);
+      } else {
+        toast.success("Login Successful", {
+          description: `Welcome back, ${response.firstname}!`
+        });
 
-      // Add a slight delay for better UX, then redirect to dashboard
-      setTimeout(() => {
-        navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
-      }, 500);
+        // Add a slight delay for better UX, then redirect to dashboard
+        setTimeout(() => {
+          navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
+        }, 500);
+      }
     } catch (error) {
       console.error("Login error:", error);
       toast.error("Login Failed", {
