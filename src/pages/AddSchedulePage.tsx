@@ -2159,7 +2159,7 @@ export const AddSchedulePage = () => {
           duration: 4000,
           style: {
             background: '#fff',
-            color:'black'
+            color:'black',
             border: 'none',
           },
         });
