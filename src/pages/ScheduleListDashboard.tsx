@@ -1024,16 +1024,41 @@ export const ScheduleListDashboard = () => {
   );
 
   // Handle filters
+
   function handleApplyFilters(filters: { activityName: string; type: string; category: string; }): void {
     setFilters(filters);
     setShowFilterDialog(false);
+    // Show toast with filter status
+    const activeFilters = Object.entries(filters).filter(([_, v]) => v && v.trim() !== '');
+    if (activeFilters.length > 0) {
+      const filterMsg = activeFilters.map(([k, v]) => `${k.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}: ${v}`).join(', ');
+      toast.success(`Filters applied: ${filterMsg}`, {
+        position: 'top-right',
+        duration: 3500,
+        style: {
+          background: '#fff',
+          color: 'black',
+          border: 'none',
+        },
+      });
+    } else {
+      toast.info('All filters cleared. Showing all schedules.', {
+        position: 'top-right',
+        duration: 3000,
+      });
+    }
   }
+
 
   function handleResetFilters(): void {
     setFilters({
       activityName: '',
       type: '',
       category: ''
+    });
+    toast.info('All filters reset. Showing all schedules.', {
+      position: 'top-right',
+      duration: 3000,
     });
   }
 
