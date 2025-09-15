@@ -116,7 +116,7 @@ export const AddGatePassInwardPage = () => {
 
   useEffect(() => {
     if (gatePassDetails.buildingId) {
-      fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[building_id_eq]=${gatePassDetails.buildingId}`, {
+      fetch(`${API_CONFIG.BASE_URL}/gate_numbers.json?q[active_eq]=true&q[building_id_eq]=${gatePassDetails.buildingId}`, {
         headers: {
           'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
           'Content-Type': 'application/json',

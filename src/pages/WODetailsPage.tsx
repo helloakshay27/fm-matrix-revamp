@@ -28,6 +28,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import DebitCreditModal from "@/components/DebitCreditModal";
 
 // Define the interface for Approval
 interface Approval {
@@ -1031,89 +1032,6 @@ export const WODetailsPage = () => {
       )}
 
       <Dialog
-        open={openDebitCreditModal}
-        onClose={handleCloseDebitCreditModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Debit/Credit Notes</DialogTitle>
-        <DialogContent>
-          <FormControl
-            fullWidth
-            variant="outlined"
-            sx={{
-              mt: 1,
-            }}
-          >
-            <InputLabel shrink>Select Type</InputLabel>
-            <Select
-              label="Select Type"
-              value={debitCreditForm.type}
-              onChange={handleDebitCreditChange}
-              displayEmpty
-              name="type"
-              sx={{
-                height: {
-                  xs: 28,
-                  sm: 36,
-                  md: 45,
-                },
-                "& .MuiInputBase-input, & .MuiSelect-select": {
-                  padding: {
-                    xs: "8px",
-                    sm: "10px",
-                    md: "12px",
-                  },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Type</em>
-              </MenuItem>
-              <MenuItem value="Debit">Debit</MenuItem>
-              <MenuItem value="Credit">Credit</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            margin="dense"
-            name="amount"
-            label="Amount"
-            type="number"
-            fullWidth
-            value={debitCreditForm.amount}
-            onChange={handleDebitCreditChange}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Description"
-            type="text"
-            fullWidth
-            value={debitCreditForm.description}
-            onChange={handleDebitCreditChange}
-            multiline
-            rows={2}
-            sx={{
-              mt: 1,
-              "& .MuiOutlinedInput-root": {
-                height: "auto !important",
-                padding: "2px !important",
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDebitCreditModal}>Close</Button>
-          <Button
-            onClick={handleSubmitDebitCredit}
-            style={{ backgroundColor: "#6B46C1", color: "white" }}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
         open={openRejectDialog}
         onClose={handleRejectCancel}
         maxWidth="sm"
@@ -1153,6 +1071,15 @@ export const WODetailsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DebitCreditModal
+        options={["Debit", "Credit"]}
+        openDebitCreditModal={openDebitCreditModal}
+        handleCloseDebitCreditModal={handleCloseDebitCreditModal}
+        debitCreditForm={debitCreditForm}
+        handleDebitCreditChange={handleDebitCreditChange}
+        handleSubmitDebitCredit={handleSubmitDebitCredit}
+      />
 
       <InvoiceModal
         openInvoiceModal={openInvoiceModal}

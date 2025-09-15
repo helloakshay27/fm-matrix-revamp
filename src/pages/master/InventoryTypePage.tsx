@@ -31,7 +31,7 @@ const InventoryTypePage = () => {
     const newActive = !(optimisticActive[id] !== undefined ? optimisticActive[id] : isActiveValue(item.active));
     setOptimisticActive(prev => ({ ...prev, [id]: newActive }));
     try {
-      await inventoryTypeService.updateInventoryType(id, { inventory_type: { active: newActive } });
+      await inventoryTypeService.updateInventoryType(id, { pms_inventory_type: { active: newActive } });
       setInventoryTypes(inventoryTypes => inventoryTypes.map(it => it.id === id ? { ...it, active: newActive } : it));
       toast.success(`Inventory type ${newActive ? 'activated' : 'deactivated'} successfully.`);
     } catch (error) {
@@ -149,15 +149,6 @@ const InventoryTypePage = () => {
                   title="Edit"
                 >
                   <Pencil className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-red-600 hover:bg-red-50"
-                  onClick={() => handleDelete(row.id)}
-                  title="Delete"
-                >
-                  <Trash2 className="h-4 w-4" />
                 </Button>
               </div>
             );

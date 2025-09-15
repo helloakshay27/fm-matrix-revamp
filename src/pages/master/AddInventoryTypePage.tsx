@@ -6,6 +6,7 @@ import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography }
 import { toast } from 'sonner';
 import { inventoryTypeService } from '@/services/inventoryTypeService';
 import { gateNumberService } from '@/services/gateNumberService'; // Reusing for company fetch
+import { useSelector } from 'react-redux';
 
 interface InventoryTypeFormValues {
   name: string;
@@ -13,6 +14,7 @@ interface InventoryTypeFormValues {
   material_type_code: string;
   material_type_description: string;
   category: string;
+  active: boolean;
 }
 
 interface DropdownOption {
@@ -23,6 +25,7 @@ interface DropdownOption {
 const AddInventoryTypePage = () => {
   const navigate = useNavigate();
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
+  const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
   const {
     control,
     handleSubmit,
@@ -36,7 +39,7 @@ const AddInventoryTypePage = () => {
   const onSubmit = async (data: InventoryTypeFormValues) => {
     try {
       const payload = {
-        pms_inventory_type: { ...data, deleted: false },
+        pms_inventory_type: { ...data, deleted: false, active: true },
       };
       await inventoryTypeService.createInventoryType(payload);
       toast.success("Inventory type created successfully");
@@ -108,20 +111,13 @@ const AddInventoryTypePage = () => {
                     label="Company"
                     notched
                     displayEmpty
-                    value={field.value || ''}
-                    onChange={e => field.onChange(e.target.value || null)}
+                    value={selectedCompany ? selectedCompany.id : ''}
+                    disabled
                   >
                     <MenuItem value="">Select Company</MenuItem>
-                    {companies.map(option => (
-                      <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                    ))}
+                    {selectedCompany && <MenuItem value={selectedCompany.id}>{selectedCompany.name}</MenuItem>}
                   </Select>
                 </FormControl>
-                {false && (
-                  <Typography variant="caption" color="textSecondary" sx={{ mt: 0.5 }}>
-                    Loading companies...
-                  </Typography>
-                )}
                 {errors.company_id && (
                   <Typography variant="caption" color="error">{errors.company_id.message}</Typography>
                 )}

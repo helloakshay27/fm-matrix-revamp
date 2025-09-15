@@ -36,6 +36,7 @@ import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
+import DebitCreditModal from "@/components/DebitCreditModal";
 
 // Define the interface for Approval
 interface Approval {
@@ -855,87 +856,14 @@ export const GRNDetailsPage = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog
-        open={openDebitModal}
-        onClose={handleCloseDebitModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Debit/Credit Notes</DialogTitle>
-        <DialogContent>
-          <FormControl
-            fullWidth
-            variant="outlined"
-            sx={{
-              mt: 1,
-            }}
-          >
-            <InputLabel shrink>Select Type</InputLabel>
-            <Select
-              label="Select Type"
-              value={debitForm.type}
-              onChange={handleDebitChange}
-              displayEmpty
-              name="type"
-              sx={{
-                height: {
-                  xs: 28,
-                  sm: 36,
-                  md: 45,
-                },
-                "& .MuiInputBase-input, & .MuiSelect-select": {
-                  padding: {
-                    xs: "8px",
-                    sm: "10px",
-                    md: "12px",
-                  },
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>Select Type</em>
-              </MenuItem>
-              <MenuItem value="Debit">Debit</MenuItem>
-            </Select>
-          </FormControl>
-          <TextField
-            margin="dense"
-            name="amount"
-            label="Amount"
-            type="number"
-            fullWidth
-            value={debitForm.amount}
-            onChange={handleDebitChange}
-          />
-          <TextField
-            margin="dense"
-            name="description"
-            label="Description"
-            type="text"
-            fullWidth
-            value={debitForm.description}
-            onChange={handleDebitChange}
-            multiline
-            rows={2}
-            sx={{
-              mt: 1,
-              "& .MuiOutlinedInput-root": {
-                height: "auto !important",
-                padding: "2px !important",
-              },
-            }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDebitModal}>Close</Button>
-          <Button
-            onClick={handleSubmitDebit}
-            style={{ backgroundColor: "#6B46C1", color: "white" }}
-          >
-            Submit
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <DebitCreditModal
+        options={["Debit"]}
+        openDebitCreditModal={openDebitModal}
+        handleCloseDebitCreditModal={handleCloseDebitModal}
+        debitCreditForm={debitForm}
+        handleDebitCreditChange={handleDebitChange}
+        handleSubmitDebitCredit={handleSubmitDebit}
+      />
 
       <AttachmentPreviewModal
         isModalOpen={isPreviewModalOpen}

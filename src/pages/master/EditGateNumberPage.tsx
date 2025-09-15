@@ -103,7 +103,7 @@ const EditGateNumberPage = () => {
         company_id: companyId,
         pms_site_id: siteId,
         project_id: null, // will be set after projects are loaded
-        // active: initialData.active === 1 || initialData.active === true,
+        active: initialData.active === 1 || initialData.active === true,
       });
       // Fetch projects for the site and set project after loaded
       if (siteId) {
