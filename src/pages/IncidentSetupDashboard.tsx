@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
-import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel, Chip, OutlinedInput, Box } from '@mui/material';
 
 export const IncidentSetupDashboard = () => {
   // Get baseUrl and token from localStorage, ensure baseUrl starts with https://
@@ -109,7 +109,7 @@ export const IncidentSetupDashboard = () => {
   };
   const [selectedEscalationLevel, setSelectedEscalationLevel] = useState('');
   const [escalateInDays, setEscalateInDays] = useState('');
-  const [escalateToUsers, setEscalateToUsers] = useState('');
+  const [escalateToUsers, setEscalateToUsers] = useState([]);
   const [approvalSetups, setApprovalSetups] = useState([{
     id: 1,
     users: 'Mahendra Lungare, Vinayak Mane'
@@ -729,11 +729,9 @@ export const IncidentSetupDashboard = () => {
         alert('An error occurred while adding the incidence level.');
       }
     } else if (selectedCategory === 'Escalations') {
-      if (selectedEscalationLevel && escalateInDays && escalateToUsers) {
+      if (selectedEscalationLevel && escalateInDays && escalateToUsers.length > 0) {
         try {
-          const usersArray = Array.isArray(escalateToUsers)
-            ? escalateToUsers
-            : escalateToUsers.split(',').map(u => u.trim()).filter(Boolean);
+          const usersArray = Array.isArray(escalateToUsers) ? escalateToUsers : [];
           const payload = {
             escalation_matrix: {
               name: selectedEscalationLevel,
@@ -753,7 +751,7 @@ export const IncidentSetupDashboard = () => {
             await fetchEscalations();
             setSelectedEscalationLevel('');
             setEscalateInDays('');
-            setEscalateToUsers('');
+            setEscalateToUsers([]);
           } else {
             const errorText = await response.text();
             // Enhanced error logging for debugging
@@ -1112,6 +1110,16 @@ export const IncidentSetupDashboard = () => {
         escalateInDays: '',
         users: ''
       });
+    } else if (type === 'Sub Sub Sub Category') {
+      setEditFormData({
+        category: item.category || '',
+        subCategory: item.subCategory || '',
+        subSubCategory: item.subSubCategory || '',
+        name: item.subSubSubCategory || '',
+        level: '',
+        escalateInDays: '',
+        users: ''
+      });
     } else {
       setEditFormData({
         category: item.category || item.secondaryCategory || item.name || '',
@@ -1265,6 +1273,13 @@ export const IncidentSetupDashboard = () => {
         return;
       }
     } else if (editingItem?.type === 'Sub Category') {
+      // Find the selected category object to get its id for parent_id
+      const parentCategoryObj = categories.find(cat => cat.name === editFormData.category);
+      if (!parentCategoryObj) {
+        alert('Please select a valid Category');
+        return;
+      }
+
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1274,7 +1289,8 @@ export const IncidentSetupDashboard = () => {
           },
           body: JSON.stringify({
             incidence_tag: {
-              name: editFormData.name
+              name: editFormData.name,
+              parent_id: parentCategoryObj.id
             }
           })
         });
@@ -1292,6 +1308,16 @@ export const IncidentSetupDashboard = () => {
         return;
       }
     } else if (editingItem?.type === 'Sub Sub Category') {
+      // Find the selected sub category object to get its id for parent_id
+      const parentSubCategoryObj = subCategories.find(sub =>
+        sub.subCategory === editFormData.subCategory &&
+        sub.category === editFormData.category
+      );
+      if (!parentSubCategoryObj) {
+        alert('Please select a valid Sub Category');
+        return;
+      }
+
       try {
         const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
           method: 'PUT',
@@ -1301,7 +1327,8 @@ export const IncidentSetupDashboard = () => {
           },
           body: JSON.stringify({
             incidence_tag: {
-              name: editFormData.name
+              name: editFormData.name,
+              parent_id: parentSubCategoryObj.id
             }
           })
         });
@@ -1316,6 +1343,45 @@ export const IncidentSetupDashboard = () => {
       } catch (error) {
         console.error('Error updating sub sub category:', error);
         alert('An error occurred while updating the sub sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Sub Sub Sub Category') {
+      // Find the selected sub sub category object to get its id for parent_id
+      const parentSubSubCategoryObj = subSubCategories.find(subsub =>
+        subsub.subSubCategory === editFormData.subSubCategory &&
+        subsub.subCategory === editFormData.subCategory &&
+        subsub.category === editFormData.category
+      );
+      if (!parentSubSubCategoryObj) {
+        alert('Please select a valid Sub Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSubSubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSubSubSubCategories();
+        } else {
+          console.error('Failed to update sub sub sub category:', response.statusText);
+          alert('Failed to update sub sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating sub sub sub category:', error);
+        alert('An error occurred while updating the sub sub sub category.');
         return;
       }
     } else if (editingItem?.type === 'Incidence status') {
@@ -1451,6 +1517,118 @@ export const IncidentSetupDashboard = () => {
       } catch (error) {
         console.error('Error updating RCA category:', error);
         alert('An error occurred while updating the RCA category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Category') {
+      // Find the selected secondary category object to get its id for parent_id
+      const parentSecondaryCategoryObj = secondaryCategories.find(cat => cat.name === editFormData.category);
+      if (!parentSecondaryCategoryObj) {
+        alert('Please select a valid Secondary Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondaryCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubCategories();
+        } else {
+          console.error('Failed to update secondary sub category:', response.statusText);
+          alert('Failed to update secondary sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub category:', error);
+        alert('An error occurred while updating the secondary sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Sub Category') {
+      // Find the selected secondary sub category object to get its id for parent_id
+      const parentSecondarySubCategoryObj = secondarySubCategories.find(sub =>
+        sub.secondarySubCategory === editFormData.subCategory &&
+        sub.secondaryCategory === editFormData.category
+      );
+      if (!parentSecondarySubCategoryObj) {
+        alert('Please select a valid Secondary Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondarySubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubSubCategories();
+        } else {
+          console.error('Failed to update secondary sub sub category:', response.statusText);
+          alert('Failed to update secondary sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub sub category:', error);
+        alert('An error occurred while updating the secondary sub sub category.');
+        return;
+      }
+    } else if (editingItem?.type === 'Secondary Sub Sub Sub Category') {
+      // Find the selected secondary sub sub category object to get its id for parent_id
+      const parentSecondarySubSubCategoryObj = secondarySubSubCategories.find(subsub =>
+        subsub.secondarySubSubCategory === editFormData.subSubCategory &&
+        subsub.secondarySubCategory === editFormData.subCategory &&
+        subsub.secondaryCategory === editFormData.category
+      );
+      if (!parentSecondarySubSubCategoryObj) {
+        alert('Please select a valid Secondary Sub Sub Category');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${baseUrl}/pms/incidence_tags/${editingItem.id}.json`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            incidence_tag: {
+              name: editFormData.name,
+              parent_id: parentSecondarySubSubCategoryObj.id
+            }
+          })
+        });
+
+        if (response.ok) {
+          await fetchSecondarySubSubSubCategories();
+        } else {
+          console.error('Failed to update secondary sub sub sub category:', response.statusText);
+          alert('Failed to update secondary sub sub sub category. Please try again.');
+          return;
+        }
+      } catch (error) {
+        console.error('Error updating secondary sub sub sub category:', error);
+        alert('An error occurred while updating the secondary sub sub sub category.');
         return;
       }
     }
@@ -1792,7 +1970,7 @@ export const IncidentSetupDashboard = () => {
                         <InputLabel>Sub-Category</InputLabel>
                         <MuiSelect
                           value={editFormData.subCategory}
-                          onChange={(e) => { setSelectedSubCategory(e.target.value); setSelectedSubSubCategory(''); }}
+                          onChange={(e) => setEditFormData({ ...editFormData, subCategory: e.target.value, subSubCategory: '' })}
                           label="Sub-Category"
                         >
                           {subCategories
@@ -1914,31 +2092,26 @@ export const IncidentSetupDashboard = () => {
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                           Escalate To Users
                         </label>
-                        {/* <Select value={escalateToUsers} onValueChange={setEscalateToUsers}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select up to 15 Options..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
-                            <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                            <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                            <SelectItem value="Abdul A">Abdul A</SelectItem>
-                            <SelectItem value="John Doe">John Doe</SelectItem>
-                          </SelectContent>
-                        </Select> */}
                         <FormControl fullWidth className="mb-2">
                           <InputLabel>Escalate To Users</InputLabel>
                           <MuiSelect
-                            value=""
+                            multiple
+                            value={escalateToUsers}
                             onChange={(e) => {
-                              const value = e.target.value;
-                              // escalateToUsers is a comma-separated string of IDs
-                              const currentUserIds = escalateToUsers ? escalateToUsers.split(',').filter(u => u) : [];
-                              if (!currentUserIds.includes(value)) {
-                                const newUserIds = [...currentUserIds, value].filter(u => u);
-                                setEscalateToUsers(newUserIds.join(','));
-                              }
+                              const value = typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value;
+                              setEscalateToUsers(value);
                             }}
-                            label="Escalate To Users"
+                            input={<OutlinedInput label="Escalate To Users" />}
+                            renderValue={(selected) => {
+                              if (selected.length === 0) {
+                                return <span style={{ color: '#999' }}>Select users...</span>;
+                              }
+                              return (
+                                <span>
+                                  {selected.length} user{selected.length !== 1 ? 's' : ''} selected
+                                </span>
+                              );
+                            }}
                           >
                             {escalateToUsersList.map(user => (
                               <MenuItem key={user.id} value={String(user.id)}>
@@ -1947,25 +2120,46 @@ export const IncidentSetupDashboard = () => {
                             ))}
                           </MuiSelect>
                         </FormControl>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {escalateToUsers.split(',').filter(id => id.trim()).map((id, index) => {
-                            const user = escalateToUsersList.find(u => String(u.id) === id);
-                            return (
-                              <div key={index} className="bg-gray-200 px-3 py-1 rounded-md flex items-center gap-2">
-                                <span className="text-sm">{user ? user.full_name : id}</span>
-                                <button
-                                  onClick={() => {
-                                    const userList = escalateToUsers.split(',').filter(u => u !== id);
-                                    setEscalateToUsers(userList.join(','));
-                                  }}
-                                  className="text-gray-500 hover:text-gray-700"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
+
+                        {/* Selected Users Display Area - Horizontal Compact Layout */}
+                        {escalateToUsers.length > 0 && (
+                          <div className="mt-3">
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-xs font-medium text-gray-600">
+                                Selected ({escalateToUsers.length}):
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => setEscalateToUsers([])}
+                                className="text-xs text-red-600 hover:text-red-800 underline"
+                              >
+                                Clear All
+                              </button>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {escalateToUsers.map((userId) => {
+                                const user = escalateToUsersList.find(u => String(u.id) === String(userId));
+                                return (
+                                  <Chip
+                                    key={userId}
+                                    label={user ? user.full_name : userId}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                    onDelete={() => {
+                                      setEscalateToUsers(escalateToUsers.filter(id => id !== userId));
+                                    }}
+                                    style={{
+                                      fontSize: '11px',
+                                      height: '24px',
+                                      margin: '0'
+                                    }}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Category' ? (
@@ -2239,7 +2433,7 @@ export const IncidentSetupDashboard = () => {
                           <>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Level</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate In Days</TableHead>
-                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Users</TableHead>
+                            <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Escalate To Users</TableHead>
                             <TableHead className="px-4 py-3 text-left text-xs font-medium text-[#1a1a1a] uppercase tracking-wider">Action</TableHead>
                           </>
                         ) : selectedCategory === 'Sub Sub Sub Category' ? (
@@ -2400,7 +2594,17 @@ export const IncidentSetupDashboard = () => {
                         <TableRow key={escalation.id} className="hover:bg-gray-50 border-b border-[#D5DbDB]">
                           <TableCell className="px-4 py-3 text-sm font-medium text-gray-900">{escalation.level}</TableCell>
                           <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.escalateInDays}</TableCell>
-                          <TableCell className="px-4 py-3 text-sm text-gray-600">{escalation.users}</TableCell>
+                          <TableCell className="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                            <div className="flex flex-wrap gap-1">
+                              {escalation.users ? escalation.users.split(', ').map((user, index) => (
+                                <span key={index} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-md text-xs">
+                                  {user}
+                                </span>
+                              )) : (
+                                <span className="text-gray-400">No users assigned</span>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className="px-4 py-3">
                             <div className="flex gap-2">
                               <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800" onClick={() => handleEdit(escalation, 'Escalations')}>
