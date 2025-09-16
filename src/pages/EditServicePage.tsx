@@ -56,7 +56,6 @@ export const EditServicePage = () => {
   const [errors, setErrors] = useState({
     serviceName: false,
     executionType: false,
-    siteId: false,
     buildingId: false,
     wingId: false,
     areaId: false,
@@ -68,6 +67,14 @@ export const EditServicePage = () => {
       dispatch(fetchService(id));
       dispatch(fetchSites());
       dispatch(fetchGroups());
+      
+      // Auto-set site based on user's current site
+      const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
+      if (userSiteId && !formData.siteId) {
+        const siteId = Number(userSiteId);
+        setFormData(prev => ({ ...prev, siteId }));
+        dispatch(fetchBuildings(siteId));
+      }
     }
     return () => {
       dispatch(resetServiceState());
@@ -142,11 +149,6 @@ export const EditServicePage = () => {
     if (field === 'executionType' && value !== '') {
       setErrors(prev => ({ ...prev, executionType: false }));
     }
-    if (field === 'siteId' && value !== null) {
-      setErrors(prev => ({ ...prev, siteId: false }));
-      dispatch(fetchBuildings(Number(value)));
-      setFormData(prev => ({ ...prev, buildingId: null, wingId: null, areaId: null, floorId: null, roomId: null }));
-    }
     if (field === 'buildingId' && value !== null) {
       setErrors(prev => ({ ...prev, buildingId: false }));
       const selectedBuilding = buildings.find(b => b.id === value);
@@ -195,7 +197,6 @@ export const EditServicePage = () => {
 
     const hasServiceNameError = formData.serviceName.trim() === '';
     const hasExecutionTypeError = formData.executionType === '';
-    const hasSiteIdError = formData.siteId === null;
     const hasBuildingIdError = formData.buildingId === null;
     const hasWingIdError = formData.wingId === null;
     const hasAreaIdError = formData.areaId === null;
@@ -204,7 +205,6 @@ export const EditServicePage = () => {
     if (
       hasServiceNameError ||
       hasExecutionTypeError ||
-      hasSiteIdError ||
       hasBuildingIdError ||
       hasWingIdError ||
       hasAreaIdError ||
@@ -213,7 +213,6 @@ export const EditServicePage = () => {
       setErrors({
         serviceName: hasServiceNameError,
         executionType: hasExecutionTypeError,
-        siteId: hasSiteIdError,
         buildingId: hasBuildingIdError,
         wingId: hasWingIdError,
         areaId: hasAreaIdError,
@@ -223,7 +222,6 @@ export const EditServicePage = () => {
       const errorFields = [];
       if (hasServiceNameError) errorFields.push('Service Name');
       if (hasExecutionTypeError) errorFields.push('Execution Type');
-      if (hasSiteIdError) errorFields.push('Site');
       if (hasBuildingIdError) errorFields.push('Building');
       if (hasWingIdError) errorFields.push('Wing');
       if (hasAreaIdError) errorFields.push('Area');
@@ -238,7 +236,6 @@ export const EditServicePage = () => {
     setErrors({
       serviceName: false,
       executionType: false,
-      siteId: false,
       buildingId: false,
       wingId: false,
       areaId: false,
@@ -319,7 +316,7 @@ export const EditServicePage = () => {
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE - ID: {id}</h1>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">EDIT SERVICE</h1>
       </div>
 
       <Card className="mb-6">
@@ -379,35 +376,6 @@ export const EditServicePage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-            <FormControl fullWidth variant="outlined" error={errors.siteId}>
-              <InputLabel id="site-select-label" shrink>
-                Site<span style={{ color: '#C72030' }}>*</span>
-              </InputLabel>              <MuiSelect
-                labelId="site-select-label"
-                label="Site"
-                value={formData.siteId || ''}
-                onChange={(e) => handleInputChange('siteId', Number(e.target.value))}
-                sx={fieldStyles}
-                disabled={isSubmitting || locationLoading.sites}
-                displayEmpty
-              >
-                <MenuItem value="">
-                  <em>Select Site</em>
-                </MenuItem>
-                {Array.isArray(sites) && sites.map((site) => (
-                  <MenuItem key={site.id} value={site.id}>
-                    {site.name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-              {errors.siteId && <FormHelperText>Site is required</FormHelperText>}
-              {locationLoading.sites && (
-                <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-                  <CircularProgress size={16} />
-                </div>
-              )}
-            </FormControl>
-
             <FormControl fullWidth variant="outlined" error={errors.buildingId}>
               <InputLabel id="building-select-label" shrink>
                 Building<span style={{ color: '#C72030' }}>*</span>
@@ -494,9 +462,7 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined" error={errors.floorId}>
               <InputLabel id="floor-select-label" shrink>
                 Floor<span style={{ color: '#C72030' }}>*</span>
@@ -525,7 +491,9 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <FormControl fullWidth variant="outlined">
               <InputLabel id="room-select-label" shrink>Room</InputLabel>
               <MuiSelect
@@ -606,6 +574,9 @@ export const EditServicePage = () => {
                 </div>
               )}
             </FormControl>
+
+            {/* Empty slot for consistent grid layout */}
+            <div></div>
           </div>
         </CardContent>
       </Card>

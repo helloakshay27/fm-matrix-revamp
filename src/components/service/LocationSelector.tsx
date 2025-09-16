@@ -103,11 +103,19 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
 
   console.log(buildings)
 
-  // Load sites and groups on component mount
+  // Load sites and groups on component mount, and auto-select user's site
   useEffect(() => {
     dispatch(fetchSites());
     dispatch(fetchGroups());
-  }, [dispatch]);
+    
+    // Auto-set site based on user's current site
+    const userSiteId = localStorage.getItem('selectedSiteId') || localStorage.getItem('siteId');
+    if (userSiteId && !selectedSiteId) {
+      const siteId = Number(userSiteId);
+      dispatch(setSelectedSite(siteId));
+      dispatch(fetchBuildings(siteId));
+    }
+  }, [dispatch, selectedSiteId]);
 
   useEffect(() => {
     if (resetTrigger) {
@@ -199,40 +207,9 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
   const selectedBuilding = buildings.find(b => b.id === selectedBuildingId);
 
   return (
-    <>
-      {/* First Row: Site, Building, Wing, Area */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        {/* Site */}
-        <FormControl fullWidth variant="outlined" error={errors.siteId}>
-          <InputLabel id="site-select-label" shrink>
-            Site<span className="text-red-500" style={{ color: '#C72030' }}>*</span>
-          </InputLabel>
-          <MuiSelect
-            labelId="site-select-label"
-            label="Site"
-            value={selectedSiteId || ''}
-            onChange={(e) => handleSiteChange(Number(e.target.value))}
-            sx={fieldStyles}
-            disabled={loading.sites}
-            displayEmpty
-          >
-            <MenuItem value="">
-              <em>Select Site</em>
-            </MenuItem>
-            {Array.isArray(sites) && sites.map((site) => (
-              <MenuItem key={site.id} value={site.id}>
-                {site.name}
-              </MenuItem>
-            ))}
-          </MuiSelect>
-          {errors.siteId && <FormHelperText>{helperTexts.siteId}</FormHelperText>}
-          {loading.sites && (
-            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
-              <CircularProgress size={16} />
-            </div>
-          )}
-        </FormControl>
-
+    <div className="space-y-4">
+      {/* First Row: Building, Wing, Area, Floor */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Building */}
         <FormControl fullWidth variant="outlined" error={errors.buildingId}>
           <InputLabel id="building-select-label" shrink>
@@ -245,7 +222,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             value={selectedBuildingId || ''}
             onChange={(e) => handleBuildingChange(Number(e.target.value))}
             sx={fieldStyles}
-            disabled={!selectedSiteId || loading.buildings}
+            disabled={loading.buildings}
           >
             <MenuItem value="">
               <em>Select Building</em>
@@ -325,10 +302,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             </div>
           )}
         </FormControl>
-      </div>
 
-      {/* Second Row: Floor, Room */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Floor */}
         <FormControl fullWidth variant="outlined" error={errors.floorId}>
           <InputLabel id="floor-select-label" shrink>
@@ -359,7 +333,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             </div>
           )}
         </FormControl>
+      </div>
 
+      {/* Second Row: Room, Group, Sub-Group, (Empty slot) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Room */}
         <FormControl fullWidth variant="outlined">
           <InputLabel id="room-select-label" shrink>Room</InputLabel>
@@ -416,7 +393,7 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
           )}
         </FormControl>
 
-        {/* SubGroup */}
+        {/* Sub-Group */}
         <FormControl fullWidth variant="outlined">
           <InputLabel id="subgroup-select-label" shrink>Sub-Group</InputLabel>
           <MuiSelect
@@ -443,7 +420,10 @@ export const LocationSelector: React.FC<LocationSelectorProps> = ({
             </div>
           )}
         </FormControl>
+
+        {/* Empty slot for future expansion */}
+        <div></div>
       </div>
-    </>
+    </div>
   );
 };
