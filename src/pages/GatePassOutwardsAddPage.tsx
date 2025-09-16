@@ -756,54 +756,92 @@ export const GatePassOutwardsAddPage = () => {
                           label="Item Category"
                           notched
                           displayEmpty
-                          value={row.itemCategoryId ?? ''}
-                          onChange={e => handleRowChange(row.id, 'itemCategoryId', Number(e.target.value))}
-                          disabled={!row.itemTypeId}
-                        >
-                          <MenuItem value="">Select Category</MenuItem>
-                          {/* Render all dynamic options except -1 */}
-                          {(itemCategoryOptions[row.id] || [])
-                            .filter(option => option.id !== -1 && option.id !== "" && option.name !== "")
-                            .map((option) => (
-                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                            ))}
-                          {/* Always add static "Other" option */}
-                          <MenuItem key={-1} value={-1}>Other</MenuItem>
-                        </MuiSelect>
-                      </FormControl>
-                      
-                    </td>
-                    <td className="px-4 py-4" style={{ minWidth: 150 }}>
-                      {/* If "Other" is selected, show input, else dropdown */}
-                      {row.itemCategoryId === -1 ? (
-                        <TextField
-                          variant="outlined"
-                          size="small"
-                          placeholder="Enter Item Name"
-                          value={row.otherMaterialName || ''}
-                          onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
-                          required
-                        />
-                      ) : (
-                        <FormControl fullWidth variant="outlined" size="small" >
-                          <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
-                          <MuiSelect
-                            label="Item Name"
-                            notched
-                            displayEmpty
-                            value={row.itemNameId || ''}
-                            onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
-                            disabled={!row.itemCategoryId}
-                          >
-                            <MenuItem value="">Select Item</MenuItem>
-                            {(itemNameOptions[row.id] || []).map((option) => (
-                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                            ))}
-                          </MuiSelect>
-                        </FormControl>
-                      )}
-                    </td>
-                    <td className="px-4 py-4">
+                          value={
+        row.itemCategoryId !== null && row.itemCategoryId !== undefined
+          ? String(row.itemCategoryId)
+          : ''
+      }
+      onChange={e => {
+        const value = e.target.value;
+        if (value === String(-1)) {
+          handleRowChange(row.id, 'itemCategoryId', -1);
+        } else if (value === '') {
+          handleRowChange(row.id, 'itemCategoryId', null);
+        } else {
+          const numVal = Number(value);
+          handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
+        }
+      }}
+      disabled={!row.itemTypeId}
+    >
+      <MenuItem value="">Select Category</MenuItem>
+      {(itemCategoryOptions[row.id] || [])
+        .filter(option => option.id !== "" && option.name !== "")
+        .map((option) => (
+          <MenuItem key={option.id} value={String(option.id)}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
+    </MuiSelect>
+  </FormControl>
+</td>
+<td className="px-4 py-4" style={{ minWidth: 150 }}>
+  {/* If "Other" is selected, show input, else dropdown */}
+  {row.itemCategoryId === -1 ? (
+    <TextField
+      variant="outlined"
+      size="small"
+      placeholder="Enter Item Name"
+      value={row.otherMaterialName || ''}
+      onChange={e => handleRowChange(row.id, 'otherMaterialName', e.target.value)}
+      required
+    />
+  ) : (
+    <FormControl fullWidth variant="outlined" size="small" >
+      <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
+      <MuiSelect
+        label="Item Name"
+        notched
+        displayEmpty
+        value={row.itemNameId || ''}
+        onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
+        disabled={!row.itemCategoryId}
+        MenuProps={{
+          PaperProps: {
+            style: {
+              maxWidth: 200,
+            },
+          },
+        }}
+      >
+        <MenuItem value="">Select Item</MenuItem>
+        {(itemNameOptions[row.id] || []).map((option) => (
+          <MenuItem key={option.id} value={option.id}>
+            <span style={{
+              display: 'inline-block',
+              maxWidth: 180,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
+              {option.name}
+            </span>
+          </MenuItem>
+        ))}
+      </MuiSelect>
+    </FormControl>
+  )}
+</td>
+<td className="px-4 py-4">
                       <TextField
                         variant="outlined"
                         size="small"

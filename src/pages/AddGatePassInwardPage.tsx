@@ -627,25 +627,51 @@ export const AddGatePassInwardPage = () => {
                       </FormControl>
                     </td>
                     <td className="px-4 py-2 pt-4" style={{ minWidth: 180 }}>
-                      <FormControl fullWidth variant="outlined" size="small" >
+                      <FormControl fullWidth variant="outlined" size="small">
                         <InputLabel shrink>Item Category <span style={{ color: 'red' }}>*</span></InputLabel>
                         <MuiSelect
                           label="Item Category"
                           notched
                           displayEmpty
-                          value={row.itemCategoryId ?? ''}
-                          onChange={e => handleRowChange(row.id, 'itemCategoryId', Number(e.target.value))}
+                          value={
+                            row.itemCategoryId !== null && row.itemCategoryId !== undefined
+                              ? String(row.itemCategoryId)
+                              : ''
+                          }
+                          onChange={e => {
+                            const value = e.target.value;
+                            // If "Other" is selected, set itemCategoryId to -1 (number)
+                            // If a valid option is selected, set itemCategoryId to its id (string or number)
+                            // If empty, set to null
+                            if (value === String(-1)) {
+                              handleRowChange(row.id, 'itemCategoryId', -1);
+                            } else if (value === '') {
+                              handleRowChange(row.id, 'itemCategoryId', null);
+                            } else {
+                              // If not "Other", set to the id (convert to number if possible)
+                              const numVal = Number(value);
+                              handleRowChange(row.id, 'itemCategoryId', isNaN(numVal) ? value : numVal);
+                            }
+                          }}
                           disabled={!row.itemTypeId}
                         >
                           <MenuItem value="">Select Category</MenuItem>
-                          {/* Filter out empty string id/name options and -1 (handled below) */}
                           {(itemCategoryOptions[row.id] || [])
-                            .filter(option => option.id !== -1 && option.id !== "" && option.name !== "")
+                            .filter(option => option.id !== "" && option.name !== "")
                             .map((option) => (
-                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                              <MenuItem key={option.id} value={String(option.id)}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  maxWidth: 180,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {option.name}
+                                </span>
+                              </MenuItem>
                             ))}
-                          {/* Always add static "Other" option */}
-                          <MenuItem key={-1} value={-1}>Other</MenuItem>
+                          <MenuItem key={-1} value={String(-1)}>Other</MenuItem>
                         </MuiSelect>
                       </FormControl>
                     </td>
@@ -661,7 +687,7 @@ export const AddGatePassInwardPage = () => {
                           required
                         />
                       ) : (
-                        <FormControl fullWidth variant="outlined" size="small" >
+                        <FormControl fullWidth variant="outlined" size="small">
                           <InputLabel shrink>Item Name <span style={{ color: 'red' }}>*</span></InputLabel>
                           <MuiSelect
                             label="Item Name"
@@ -670,10 +696,27 @@ export const AddGatePassInwardPage = () => {
                             value={row.itemNameId || ''}
                             onChange={e => handleRowChange(row.id, 'itemNameId', e.target.value)}
                             disabled={!row.itemCategoryId}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  maxWidth: 200,
+                                },
+                              },
+                            }}
                           >
                             <MenuItem value="">Select Item</MenuItem>
                             {(itemNameOptions[row.id] || []).map((option) => (
-                              <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                              <MenuItem key={option.id} value={option.id}>
+                                <span style={{
+                                  display: 'inline-block',
+                                  maxWidth: 180,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {option.name}
+                                </span>
+                              </MenuItem>
                             ))}
                           </MuiSelect>
                         </FormControl>

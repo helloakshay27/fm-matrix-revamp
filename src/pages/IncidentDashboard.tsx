@@ -16,17 +16,10 @@ import {
   Search,
   Loader2,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { incidentService, type Incident } from "@/services/incidentService";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { ColumnConfig } from "@/hooks/useEnhancedTable";
 
 // Stats calculation
 const calculateStats = (incidents: any[]) => {
@@ -67,6 +60,101 @@ export const IncidentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Define columns for the EnhancedTable
+  const columns: ColumnConfig[] = [
+    {
+      key: "srNo",
+      label: "Sr. No.",
+      sortable: false,
+      defaultVisible: true,
+      draggable: false,
+    },
+    {
+      key: "id",
+      label: "ID",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "description",
+      label: "Description",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "building_name",
+      label: "Site",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "region",
+      label: "Region",
+      sortable: false,
+      defaultVisible: false,
+      draggable: true,
+    },
+    {
+      key: "tower_name",
+      label: "Tower",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "inc_time",
+      label: "Incident Time",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "inc_level_name",
+      label: "Level",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "category_name",
+      label: "Category",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "sub_category_name",
+      label: "Sub Category",
+      sortable: true,
+      defaultVisible: false,
+      draggable: true,
+    },
+    {
+      key: "support_required",
+      label: "Support Required",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "assigned_to_user_name",
+      label: "Assigned To",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+    {
+      key: "current_status",
+      label: "Current Status",
+      sortable: true,
+      defaultVisible: true,
+      draggable: true,
+    },
+  ];
+
   useEffect(() => {
     fetchIncidents();
   }, []);
@@ -85,11 +173,74 @@ export const IncidentDashboard = () => {
     }
   };
 
+  // Render cell function for custom formatting
+  const renderCell = (item: Incident, columnKey: string): React.ReactNode => {
+    const index = incidents.findIndex(incident => incident.id === item.id);
+
+    switch (columnKey) {
+      case "srNo":
+        return <span className="font-medium">{index + 1}</span>;
+      case "id":
+        return <span className="font-medium">{item.id}</span>;
+      case "description":
+        return <span>{item.description}</span>;
+      case "building_name":
+        return <span>{item.building_name || "-"}</span>;
+      case "region":
+        return <span>-</span>;
+      case "tower_name":
+        return <span>{item.tower_name || "-"}</span>;
+      case "inc_time":
+        return (
+          <span>
+            {item.inc_time ? new Date(item.inc_time).toLocaleString() : "-"}
+          </span>
+        );
+      case "inc_level_name":
+        return (
+          <Badge className={getLevelColor(item.inc_level_name)}>
+            {item.inc_level_name}
+          </Badge>
+        );
+      case "category_name":
+        return <span>{item.category_name || "-"}</span>;
+      case "sub_category_name":
+        return <span>{item.sub_category_name || "-"}</span>;
+      case "support_required":
+        return (
+          <Badge className={item.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
+            {item.support_required ? "Yes" : "No"}
+          </Badge>
+        );
+      case "assigned_to_user_name":
+        return <span>{item.assigned_to_user_name || "-"}</span>;
+      case "current_status":
+        return (
+          <Badge className={getStatusColor(item.current_status)}>
+            {item.current_status}
+          </Badge>
+        );
+      default:
+        const value = item[columnKey as keyof Incident];
+        return <span>{String(value) || "-"}</span>;
+    }
+  };
+
+  // Render actions function
+  const renderActions = (item: Incident): React.ReactNode => {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleViewIncident(item.id.toString())}
+        title="View Incident"
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+    );
+  };
+
   const stats = calculateStats(incidents);
-  const filteredIncidents = incidents.filter(incident =>
-    incident.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    incident.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleAddIncident = () => {
     navigate("/safety/incident/add");
@@ -97,6 +248,64 @@ export const IncidentDashboard = () => {
 
   const handleViewIncident = (incidentId: string) => {
     navigate(`/safety/incident/${incidentId}`);
+  };
+
+  // Handle export functionality
+  const handleExport = async () => {
+    try {
+      // Create CSV content
+      const headers = columns
+        .filter(col => col.defaultVisible !== false)
+        .map(col => col.label)
+        .join(',');
+
+      const csvContent = [
+        headers,
+        ...incidents.map(incident =>
+          columns
+            .filter(col => col.defaultVisible !== false)
+            .map(col => {
+              let value = '';
+              switch (col.key) {
+                case 'srNo':
+                  value = String(incidents.findIndex(inc => inc.id === incident.id) + 1);
+                  break;
+                case 'inc_time':
+                  value = incident.inc_time ? new Date(incident.inc_time).toLocaleString() : '-';
+                  break;
+                case 'support_required':
+                  value = incident.support_required ? 'Yes' : 'No';
+                  break;
+                default:
+                  const fieldValue = incident[col.key as keyof Incident];
+                  value = String(fieldValue || '-');
+              }
+
+              // Handle values that might contain commas or quotes
+              const stringValue = String(value).replace(/"/g, '""');
+              return stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')
+                ? `"${stringValue}"`
+                : stringValue;
+            })
+            .join(',')
+        )
+      ].join('\n');
+
+      // Create and trigger download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `incidents_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting incidents:', error);
+      alert('Failed to export incidents');
+    }
   };
 
   const StatCard = ({ icon, label, value, color }: any) => (
@@ -143,130 +352,43 @@ export const IncidentDashboard = () => {
             <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} />
           </div>
 
-          {/* Action Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 ">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={handleAddIncident}
-                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
-              >
-                <Plus className="w-4 h-4" />
-                Add Incident
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search incidents..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" size="icon">
-                <Filter className="w-4 h-4" />
-              </Button>
-              <Button variant="outline" size="icon" onClick={fetchIncidents} disabled={loading}>
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              </Button>
-              <Button variant="outline" size="icon">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Incidents Table */}
-          {loading ? (
-            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin mr-2" />
-              <span>Loading incidents...</span>
-            </div>
-          ) : error ? (
-            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
-              <div className="text-center">
-                <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={fetchIncidents} variant="outline">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Try Again
+          {/* Enhanced Table */}
+          <EnhancedTable
+            data={incidents}
+            columns={columns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            onRowClick={(item) => handleViewIncident(item.id.toString())}
+            loading={loading}
+            emptyMessage={error ? error : "No incidents found"}
+            enableSearch={true}
+            searchPlaceholder="Search incidents..."
+            enableExport={true}
+            onExport={handleExport}
+            exportFileName="incidents"
+            storageKey="incidents-table"
+            className="min-w-full"
+            pagination={true}
+            pageSize={10}
+            leftActions={
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={handleAddIncident}
+                  className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-4 py-2 rounded-md transition-colors duration-200 flex items-center gap-2"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Incident
                 </Button>
               </div>
-            </div>
-          ) : filteredIncidents.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-sm border p-8 flex items-center justify-center">
-              <div className="text-center">
-                <AlertTriangle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No incidents found</p>
+            }
+            rightActions={
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={fetchIncidents} disabled={loading} title="Refresh">
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                </Button>
               </div>
-            </div>
-          ) : (
-            <div className="bg-white rounded-lg shadow-sm border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[60px]">Sr. No.</TableHead>
-                    <TableHead className="w-[80px]">Action</TableHead>
-                    <TableHead className="w-[100px]">ID</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Site</TableHead>
-                    <TableHead>Region</TableHead>
-                    <TableHead>Tower</TableHead>
-                    <TableHead>Incident Time</TableHead>
-                    <TableHead>Level</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Sub Category</TableHead>
-                    <TableHead>Support Required</TableHead>
-                    <TableHead>Assigned To</TableHead>
-                    <TableHead>Current Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredIncidents.map((incident, index) => (
-                    <TableRow key={incident.id}>
-                      <TableCell className="font-medium text-center">{index + 1}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleViewIncident(incident.id.toString())}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                      <TableCell className="font-medium">{incident.id}</TableCell>
-                      <TableCell>{incident.description}</TableCell>
-                      <TableCell>{incident.building_name || "-"}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>{incident.tower_name || "-"}</TableCell>
-                      <TableCell>
-                        {incident.inc_time ? new Date(incident.inc_time).toLocaleString() : "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge className={getLevelColor(incident.inc_level_name)}>
-                          {incident.inc_level_name}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{incident.category_name || "-"}</TableCell>
-                      <TableCell>{incident.sub_category_name || "-"}</TableCell>
-                      <TableCell>
-                        <Badge className={incident.support_required ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                          {incident.support_required ? "Yes" : "No"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{incident.assigned_to_user_name || "-"}</TableCell>
-                      <TableCell>
-                        <Badge className={getStatusColor(incident.current_status)}>
-                          {incident.current_status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+            }
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
