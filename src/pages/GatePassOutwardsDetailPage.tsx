@@ -186,6 +186,7 @@ export const GatePassOutwardsDetailPage = () => {
       updates: idx, // Store index for updates column
     })) || [];
 
+  // Conditionally include 'updates' column only if returnable
   const columns = [
     { key: "itemType", label: "Item Type", sortable: false, defaultVisible: true },
     { key: "itemCategory", label: "Item Category", sortable: false, defaultVisible: true },
@@ -193,41 +194,43 @@ export const GatePassOutwardsDetailPage = () => {
     { key: "unit", label: "Unit", sortable: false, defaultVisible: true },
     { key: "quantity", label: "Quantity", sortable: false, defaultVisible: true },
     { key: "description", label: "Description", sortable: false, defaultVisible: true },
-    { key: "updates", label: "Updates", sortable: false, defaultVisible: true },
+    // Only show 'updates' column if returnable
+    ...(gatePassData.returnable === true
+      ? [{ key: "updates", label: "Updates", sortable: false, defaultVisible: true }]
+      : []),
   ];
 
-  // Render cell for EnhancedTable, especially for Updates column
-  const renderCell = (item: any, columnKey: string) => {
-    if (columnKey === "updates") {
-      const idx = item.updates;
-      // If already handed over, always show "View Handover" button
-      if (handoverView[idx]) {
+    // Render cell for EnhancedTable, especially for Updates column
+    const renderCell = (item: any, columnKey: string) => {
+      // Only show receive/handover buttons if returnable
+      if (columnKey === "updates" && gatePassData.returnable === true) {
+        const idx = item.updates;
+        if (handoverView[idx]) {
+          return (
+            <Button
+              size="sm"
+              className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
+              onClick={() => {
+                setSelectedItemIndex(idx);
+                setIsReceiveModalOpen(true);
+              }}
+            >
+              View Handover
+            </Button>
+          );
+        }
         return (
           <Button
             size="sm"
             className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-            onClick={() => {
-              setSelectedItemIndex(idx);
-              setIsReceiveModalOpen(true);
-            }}
+            onClick={() => handleReceiveClick(idx)}
           >
-            View Handover
+            Receive
           </Button>
         );
       }
-      // If not handed over, show "Receive" button
-      return (
-        <Button
-          size="sm"
-          className="bg-[#C72030] text-white hover:bg-[#C72030]/90"
-          onClick={() => handleReceiveClick(idx)}
-        >
-          Receive
-        </Button>
-      );
-    }
-    return item[columnKey] ?? "--";
-  };
+      return item[columnKey] ?? "--";
+    };
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
