@@ -19,6 +19,7 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
 import DashboardConfiguration from "./pages/DashboardConfiguration";
+import ParkingBookingListSiteWise from "./pages/ParkingBookingListSiteWise";
 
 // Import existing pages
 import Index from "./pages/Index";
@@ -880,15 +881,6 @@ function App() {
                     element={
                       <ProtectedRoute>
                         <VisitorsDashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/visitors/:id"
-                    element={
-                      <ProtectedRoute>
-                        <VisitorDetailsPage />
                       </ProtectedRoute>
                     }
                   />
@@ -2156,13 +2148,16 @@ function App() {
                       path="/security/visitor"
                       element={<VisitorsDashboard />}
                     />
-                    <Route path="/visitor-form" element={<VisitorFormPage />} />
+                    <Route 
+                      path="/security/visitor/add" 
+                      element={<VisitorFormPage />} 
+                    />
                     <Route
                       path="/security/visitor/history"
                       element={<VisitorsHistoryDashboard />}
                     />
                     <Route
-                      path="/visitor-details/:id"
+                      path="/security/visitor/details/:id"
                       element={<VisitorDetailsPage />}
                     />
                     <Route
@@ -2318,6 +2313,10 @@ function App() {
                     <Route
                       path="/vas/parking/bookings"
                       element={<ParkingBookingsDashboard />}
+                    />
+                    <Route
+                      path="/vas/parking/site-wise-bookings"
+                      element={<ParkingBookingListSiteWise />}
                     />
                     <Route
                       path="/vas/parking/create"

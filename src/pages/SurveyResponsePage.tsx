@@ -9,7 +9,6 @@ import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModa
 import { SurveyResponseAnalytics } from '@/components/SurveyResponseAnalytics';
 import { SurveyAnalyticsContent } from '@/components/SurveyAnalyticsContent';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
-import { apiClient } from '@/utils/apiClient';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
@@ -57,7 +56,7 @@ interface AnalyticsData {
   };
 }
 
-// New interfaces for the response list API
+// Updated interfaces for the response list API
 interface Complaint {
   complaint_id: number;
   ticket_number: string;
@@ -70,7 +69,9 @@ interface Complaint {
 interface Response {
   answer_id: number;
   question_id: number | null;
+  question_name: string | null;
   option_id: number | null;
+  option_name: string | null;
   option_type: string | null;
   created_at: string;
   complaints: Complaint[];
@@ -78,6 +79,7 @@ interface Response {
 
 interface SurveyMapping {
   id: number;
+  survey_id: number;
   site_id: number;
   building_id: number;
   wing_id: number | null;
@@ -90,6 +92,7 @@ interface SurveyMapping {
   floor_name: string | null;
   area_name: string | null;
   room_name: string | null;
+  responded_questions_count: number;
   responses: Response[];
 }
 
@@ -100,6 +103,12 @@ interface Survey {
 }
 
 interface SurveyResponseApiResponse {
+  summary?: {
+    total_surveys: number;
+    active_surveys: number;
+    inactive_surveys: number;
+    total_responses: number;
+  };
   surveys: Survey[];
   pagination: {
     current_page: number;
@@ -152,6 +161,7 @@ export const SurveyResponsePage = () => {
     total_active_surveys: 0,
     total_feedback_count: 0,
     total_survey_count: 0,
+    total_responses: 0,
   });
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyTitle: '',
@@ -171,29 +181,38 @@ export const SurveyResponsePage = () => {
         total_active_surveys: data.statistics?.active_surveys || data.status?.info?.total_active_surveys || prev.total_active_surveys,
         total_feedback_count: data.distributions?.info?.total_feedback_surveys || data.distributions?.info?.total_feedback_count || prev.total_feedback_count,
         total_survey_count: data.distributions?.info?.total_assessment_surveys || data.statistics?.total_surveys || data.distributions?.info?.total_survey_count || prev.total_survey_count,
+        total_responses: prev.total_responses,
       }));
     }
   };
 
   // New function to fetch survey response list from the API
-  const fetchSurveyResponseList = async (page: number = 1) => {
+  const fetchSurveyResponseList = async (page: number = 1, filters?: FilterState) => {
     try {
       const url = getFullUrl('/survey_mappings/response_list.json');
       const options = getAuthenticatedFetchOptions();
       
       const urlWithParams = new URL(url);
       
-      // Add access_token parameter
+      // Add page parameter
+      urlWithParams.searchParams.append('page', page.toString());
+      
+      // Add per_page parameter
+      urlWithParams.searchParams.append('per_page', '10');
+      
+      // Add access_token parameter if available
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
         console.log('🔑 Adding access_token to request');
       }
       
-      // Add page parameter
-      urlWithParams.searchParams.append('page', page.toString());
+      // Add survey title filter if provided
+      if (filters?.surveyTitle && filters.surveyTitle.trim()) {
+        urlWithParams.searchParams.append('q[name_cont]', filters.surveyTitle.trim());
+        console.log('🔍 Adding survey title filter:', filters.surveyTitle);
+      }
       
-      // Note: survey_id parameter removed as requested
-      console.log('🚀 Calling survey response list API (without survey_id filter):', urlWithParams.toString());
+      console.log('🚀 Calling survey response list API:', urlWithParams.toString());
       
       const response = await fetch(urlWithParams.toString(), options);
       
@@ -214,6 +233,7 @@ export const SurveyResponsePage = () => {
       
       const data: SurveyResponseApiResponse = await response.json();
       console.log('✅ Survey response list fetched successfully:', data);
+      console.log('📊 API Summary data:', data.summary);
       
       return data;
     } catch (error) {
@@ -283,57 +303,13 @@ export const SurveyResponsePage = () => {
     return transformedData;
   };
 
-  // Fetch summary statistics from API
-  const fetchSummaryStats = useCallback(async () => {
-    try {
-      // Fetch from the survey details API with analytics flag
-      const url = getFullUrl(API_CONFIG.ENDPOINTS.SURVEY_DETAILS);
-      const urlWithParams = new URL(url);
-      urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN || '');
-      urlWithParams.searchParams.append('analytics', 'true');
-      
-      const response = await fetch(urlWithParams.toString());
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Survey summary stats API response:', data);
-        
-        // Extract counts from the API response
-        const activeCount = data.survey_status?.active_survey || 
-                          data.analytics?.total_surveys || 
-                          responseData.length || 20;
-        
-        const feedbackCount = data.distributions?.info?.total_feedback_surveys ||
-                            data.analytics?.total_feedback_count ||
-                            data.survey_details?.surveys?.filter((s: { survey_type: string }) => s.survey_type === 'feedback')?.length ||
-                            10;
-                            
-        const surveyCount = data.distributions?.info?.total_assessment_surveys ||
-                          data.analytics?.total_survey_count ||
-                          data.survey_details?.surveys?.length ||
-                          10;
-        
-        setSummaryStats({
-          total_active_surveys: activeCount,
-          total_feedback_count: feedbackCount,
-          total_survey_count: surveyCount,
-        });
-      }
-    } catch (error) {
-      console.error('Error fetching summary stats:', error);
-      // Keep default values on error
-      setSummaryStats(prev => ({
-        ...prev,
-        total_active_surveys: responseData.length || 20
-      }));
-    }
-  }, [responseData.length]);
-
-  const fetchSurveyResponses = async (filters?: FilterState) => {
+  const fetchSurveyResponses = useCallback(async (filters?: FilterState) => {
     setIsLoading(true);
     try {
       console.log('📡 Fetching survey responses for page:', currentPage);
+      console.log('🔍 Applied filters:', filters);
       
-      const data = await fetchSurveyResponseList(currentPage);
+      const data = await fetchSurveyResponseList(currentPage, filters);
       const transformedData = transformSurveyData(data.surveys);
       
       console.log('Fetched and transformed survey responses:', transformedData);
@@ -347,16 +323,58 @@ export const SurveyResponsePage = () => {
         total_pages: data.pagination.total_pages
       });
       
-      // Update summary stats from the transformed data
-      const totalSurveys = data.surveys.length;
-      const totalResponses = transformedData.reduce((sum, item) => sum + item.total_responses, 0);
-      const totalComplaints = transformedData.reduce((sum, item) => sum + item.total_complaints, 0);
-      
-      setSummaryStats({
-        total_active_surveys: totalSurveys,
-        total_feedback_count: totalResponses,
-        total_survey_count: totalComplaints,
-      });
+      // Update summary stats from the API summary data
+      if (data.summary) {
+        console.log('📊 Using API summary data:', data.summary);
+        const newStats = {
+          total_active_surveys: data.summary.active_surveys,
+          total_feedback_count: data.summary.total_responses,
+          total_survey_count: data.summary.total_surveys,
+          total_responses: data.summary.total_responses,
+        };
+        console.log('🔄 Setting summary stats:', newStats);
+        setSummaryStats(newStats);
+      } else {
+        console.log('⚠️ No summary data in API response, calculating from survey data');
+        
+        // Calculate proper values from the raw survey data
+        const totalSurveys = data.surveys ? data.surveys.length : 0;
+        
+        // Count surveys that have active mappings
+        const activeSurveys = data.surveys ? data.surveys.filter(survey => 
+          survey.survey_mappings && survey.survey_mappings.length > 0
+        ).length : 0;
+        
+        // Calculate total responses by counting all responses across all mappings
+        let totalResponsesFromData = 0;
+        if (data.surveys) {
+          data.surveys.forEach(survey => {
+            if (survey.survey_mappings) {
+              survey.survey_mappings.forEach(mapping => {
+                if (mapping.responses) {
+                  totalResponsesFromData += mapping.responses.length;
+                }
+              });
+            }
+          });
+        }
+        
+        console.log('📊 Calculated values:', {
+          totalSurveys,
+          activeSurveys,
+          totalResponsesFromData,
+          surveysData: data.surveys
+        });
+        
+        const newStats = {
+          total_active_surveys: activeSurveys,
+          total_feedback_count: totalResponsesFromData,
+          total_survey_count: totalSurveys,
+          total_responses: totalResponsesFromData,
+        };
+        console.log('🔄 Setting calculated summary stats:', newStats);
+        setSummaryStats(newStats);
+      }
       
       console.log('✅ Pagination updated:', {
         current_page: data.pagination.current_page,
@@ -379,45 +397,49 @@ export const SurveyResponsePage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [currentPage]); // Depend on currentPage since it's used in the function
 
   const fetchFilteredSurveyResponses = async (filters: FilterState) => {
     try {
       // Build query parameters
-      let url = '/survey_mapping_responses/all_responses.json?';
-      const params = new URLSearchParams();
+      const url = getFullUrl('/survey_mapping_responses/all_responses.json');
+      const urlWithParams = new URL(url);
       
       // Add access_token parameter first
       if (API_CONFIG.TOKEN) {
-        params.append('access_token', API_CONFIG.TOKEN);
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
         console.log('🔑 Adding access_token to filtered request');
       }
       
-      // Note: survey_id parameter removed as requested
       console.log('🔍 Filtering responses without survey_id restriction');
       
       if (filters.surveyTitle) {
-        params.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
+        urlWithParams.searchParams.append('q[survey_mapping_survey_name_cont]', filters.surveyTitle);
       }
       
       if (filters.surveyType) {
-        params.append('q[survey_type_eq]', filters.surveyType);
+        urlWithParams.searchParams.append('q[survey_type_eq]', filters.surveyType);
       }
       
       if (filters.startDate) {
-        params.append('q[created_at_gteq]', filters.startDate.toISOString());
+        urlWithParams.searchParams.append('q[created_at_gteq]', filters.startDate.toISOString());
       }
       
       if (filters.endDate) {
-        params.append('q[created_at_lteq]', filters.endDate.toISOString());
+        urlWithParams.searchParams.append('q[created_at_lteq]', filters.endDate.toISOString());
       }
       
-      url += params.toString();
+      console.log('🚀 Calling filtered survey responses API:', urlWithParams.toString());
       
-      console.log('🚀 Calling filtered survey responses API:', url);
+      const options = getAuthenticatedFetchOptions();
+      const response = await fetch(urlWithParams.toString(), options);
       
-      const response = await apiClient.get(url);
-      return response.data || [];
+      if (!response.ok) {
+        throw new Error(`Failed to fetch filtered survey responses: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data || [];
     } catch (error) {
       console.error('Error fetching filtered survey responses:', error);
       throw error;
@@ -446,13 +468,14 @@ export const SurveyResponsePage = () => {
     setAppliedFilters(filters);
     // Reset to page 1 when filters are applied
     setCurrentPage(1);
-    // Data will be fetched automatically by useEffect when currentPage changes
+    // Fetch data with filters
+    fetchSurveyResponses(filters);
   };
 
   const handleResetFilters = () => {
     const resetFilters = {
       surveyTitle: '',
-      surveyMappingId: '', // Remove survey_id from reset filters
+      surveyMappingId: '', 
       surveyType: '',
       startDate: null,
       endDate: null
@@ -460,7 +483,8 @@ export const SurveyResponsePage = () => {
     setAppliedFilters(resetFilters);
     // Reset to page 1 when filters are reset
     setCurrentPage(1);
-    // Data will be fetched automatically by useEffect when currentPage changes
+    // Fetch data without filters
+    fetchSurveyResponses(resetFilters);
   };
 
   const columns = [
@@ -547,93 +571,40 @@ export const SurveyResponsePage = () => {
   const handlePageChange = (page: number) => {
     console.log('📄 Page changed to:', page);
     setCurrentPage(page);
-    // Data will be fetched automatically by useEffect when currentPage changes
+    // Fetch data with current filters when page changes
+    fetchSurveyResponses(appliedFilters);
   };
 
   // Get dynamic counts from summary stats
   const getTotalActiveCount = () => {
-    return summaryStats.total_active_surveys;
+    const count = summaryStats.total_active_surveys;
+    console.log('🎯 Active Surveys count from state:', count);
+    return count;
   };
 
   const getFeedbackCount = () => {
-    return summaryStats.total_feedback_count;
+    const count = summaryStats.total_feedback_count;
+    console.log('📝 Feedback count from state:', count);
+    return count;
   };
 
   const getSurveyCount = () => {
-    return summaryStats.total_survey_count;
+    const count = summaryStats.total_survey_count;
+    console.log('📊 Total Surveys count from state:', count);
+    return count;
   };
 
-  // Fetch survey responses when currentPage changes
-  useEffect(() => {
-    console.log('🔄 useEffect triggered for currentPage:', currentPage);
-    
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        console.log('📡 Fetching survey responses for page:', currentPage);
-        
-        const data = await fetchSurveyResponseList(currentPage);
-        const transformedData = transformSurveyData(data.surveys);
-        
-        console.log('Fetched and transformed survey responses:', transformedData);
-        console.log('Pagination data from API:', data.pagination);
-        
-        setResponseData(transformedData);
-        setPagination({
-          current_page: data.pagination.current_page,
-          per_page: data.pagination.per_page,
-          total_count: data.pagination.total_count,
-          total_pages: data.pagination.total_pages
-        });
-        
-        // Update summary stats from the transformed data
-        const totalSurveys = data.surveys.length;
-        const totalResponses = transformedData.reduce((sum, item) => sum + item.total_responses, 0);
-        const totalComplaints = transformedData.reduce((sum, item) => sum + item.total_complaints, 0);
-        
-        setSummaryStats({
-          total_active_surveys: totalSurveys,
-          total_feedback_count: totalResponses,
-          total_survey_count: totalComplaints,
-        });
-        
-        console.log('✅ Pagination updated:', {
-          current_page: data.pagination.current_page,
-          per_page: data.pagination.per_page,
-          total_count: data.pagination.total_count,
-          total_pages: data.pagination.total_pages
-        });
-        
-      } catch (error) {
-        console.error('Error fetching survey responses:', error);
-        toast.error('Failed to fetch survey responses');
-        setResponseData([]);
-        // Reset pagination on error
-        setPagination({
-          current_page: 1,
-          per_page: 10,
-          total_count: 0,
-          total_pages: 1
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [currentPage]); // Only depend on currentPage
-  
-  // Fetch summary stats separately
-  useEffect(() => {
-    fetchSummaryStats();
-  }, [fetchSummaryStats]);
+  const getTotalResponsesCount = () => {
+    const count = summaryStats.total_responses;
+    console.log('👍 Total Responses count from state:', count);
+    return count;
+  };
 
-  // Update summary stats when response data changes
+  // Fetch survey responses when component mounts (only once)
   useEffect(() => {
-    if (responseData.length > 0) {
-      fetchSummaryStats();
-    }
-  }, [responseData.length, fetchSummaryStats]);
+    console.log('🔄 Initial data fetch on component mount');
+    fetchSurveyResponses(); // Fetch without filters on initial load
+  }, [fetchSurveyResponses]); // Include fetchSurveyResponses dependency
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -731,8 +702,8 @@ export const SurveyResponsePage = () => {
         {/* Tab Content */}
         <TabsContent value="list" className="mt-0">
           {/* AMC List-Style Statistics Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
-            {/* Total Active */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-6">
+            {/* Active Surveys */}
             <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
               <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <Activity className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -742,25 +713,11 @@ export const SurveyResponsePage = () => {
                   {getTotalActiveCount()}
                   {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Active</span>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Active Surveys</span>
               </div>
             </div>
 
-            {/* Feedback */}
-            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
-              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
-                <ThumbsUp className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
-              </div>
-              <div className="flex flex-col min-w-0 justify-start">
-                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
-                  {getFeedbackCount()}
-                  {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
-                </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Feedback</span>
-              </div>
-            </div>
-
-            {/* Survey */}
+            {/* Total Surveys */}
             <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
               <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
                 <ClipboardList className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
@@ -770,13 +727,23 @@ export const SurveyResponsePage = () => {
                   {getSurveyCount()}
                   {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
                 </div>
-                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Survey</span>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Surveys</span>
               </div>
             </div>
 
-            {/* Placeholder for 2 more cards if needed */}
-            <div className="hidden sm:flex"></div>
-            <div className="hidden sm:flex"></div>
+            {/* Total Responses */}
+            <div className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 bg-[#f6f4ee] cursor-pointer hover:bg-[#edeae3]">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 flex items-center justify-center flex-shrink-0 bg-[#C4B89D54]">
+                <ThumbsUp className="w-4 h-4 sm:w-6 sm:h-6" style={{ color: '#C72030' }} />
+              </div>
+              <div className="flex flex-col min-w-0 justify-start">
+                <div className="text-lg sm:text-2xl font-bold leading-tight truncate">
+                  {getTotalResponsesCount()}
+                  {isLoading && <span className="ml-1 text-xs animate-pulse">...</span>}
+                </div>
+                <span className="text-xs sm:text-sm text-muted-foreground font-medium leading-tight">Total Responses</span>
+              </div>
+            </div>
           </div>
 
           {/* Enhanced Data Table */}
@@ -847,9 +814,9 @@ export const SurveyResponsePage = () => {
                         </PaginationItem>
                       </PaginationContent>
                     </Pagination>
-                    <div className="text-center mt-2 text-sm text-gray-600">
+                    {/* <div className="text-center mt-2 text-sm text-gray-600">
                       Showing page {pagination.current_page} of {pagination.total_pages} ({pagination.total_count} total records)
-                    </div>
+                    </div> */}
                   </div>
                 )}
               </>

@@ -12,6 +12,7 @@ import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
 import { VisitorFilterDialog, VisitorFilters } from '@/components/VisitorFilterDialog';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { ColumnVisibilityMenu } from '@/components/ColumnVisibilityDropdown';
 import { VisitorSelectionPanel } from '@/components/VisitorSelectionPanel';
 import { ActionSelectionPanel } from '@/components/ActionSelectionPanel';
 import {
@@ -207,6 +208,20 @@ export const VisitorsDashboard = () => {
     totalPages: 1,
     totalEntries: 0,
     perPage: 20
+  });
+
+  // Column visibility state for visitor history table
+  const [visitorHistoryColumnVisibility, setVisitorHistoryColumnVisibility] = useState<Record<string, boolean>>({
+    action: true,
+    visitor_image: true,
+    guest_name: true,
+    guest_number: true,
+    primary_host: true,
+    visit_purpose: true,
+    guest_from: true,
+    visitor_type: true,
+    status: true,
+    check_in_time: true,
   });
 
   // Mock visitor data for expected visitors
@@ -1032,14 +1047,7 @@ export const VisitorsDashboard = () => {
 
   const handleVisitorDetails = (visitorId: number) => {
     console.log('Navigating to visitor details:', visitorId);
-    const currentPath = window.location.pathname;
-
-    if (currentPath.includes("visitors")) {
-      navigate(`/visitors/${visitorId}`);
-    } else {
-      navigate(`/visitor-details/${visitorId}`);
-    }
-    // navigate(`/visitor-details/${visitorId}`);
+    navigate(`/security/visitor/details/${visitorId}`);
   };
 
   const handleEditVisitor = (visitorId: number) => {
@@ -1245,6 +1253,34 @@ export const VisitorsDashboard = () => {
     // TODO: Implement import functionality
     // This could open a file dialog, navigate to import page, etc.
   };
+
+  // Column visibility handlers for visitor history table
+  const handleVisitorHistoryColumnToggle = (columnKey: string) => {
+    setVisitorHistoryColumnVisibility(prev => ({
+      ...prev,
+      [columnKey]: !prev[columnKey]
+    }));
+  };
+
+  const handleVisitorHistoryColumnReset = () => {
+    setVisitorHistoryColumnVisibility({
+      action: true,
+      visitor_image: true,
+      guest_name: true,
+      guest_number: true,
+      primary_host: true,
+      visit_purpose: true,
+      guest_from: true,
+      visitor_type: true,
+      status: true,
+      check_in_time: true,
+    });
+  };
+
+  // Filter visible columns for visitor history
+  const visibleVisitorHistoryColumns = visitorHistoryColumns.filter(
+    column => visitorHistoryColumnVisibility[column.key] !== false
+  );
 
   const renderPaginationItems = () => {
     const items = [];
@@ -1578,7 +1614,7 @@ export const VisitorsDashboard = () => {
             {/* Visitor History Table - Direct display without sub-tabs */}
             <EnhancedTable
               data={visitorHistoryData}
-              columns={visitorHistoryColumns}
+              columns={visibleVisitorHistoryColumns}
               selectable={true}
               renderCell={renderVisitorHistoryCell}
               enableSearch={true}
@@ -1595,6 +1631,7 @@ export const VisitorsDashboard = () => {
               storageKey="visitor-history-table"
               emptyMessage="No visitor history available"
               searchPlaceholder="Search..."
+              hideColumnsButton={true}
               onFilterClick={handleFilterOpen}
               leftActions={
                 <div className="flex gap-3">
@@ -1604,8 +1641,17 @@ export const VisitorsDashboard = () => {
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Action
-
                   </Button>
+                </div>
+              }
+              rightActions={
+                <div className="flex gap-2">
+                  <ColumnVisibilityMenu
+                    columns={visitorHistoryColumns}
+                    columnVisibility={visitorHistoryColumnVisibility}
+                    onToggleVisibility={handleVisitorHistoryColumnToggle}
+                    onResetToDefaults={handleVisitorHistoryColumnReset}
+                  />
                 </div>
               }
             />

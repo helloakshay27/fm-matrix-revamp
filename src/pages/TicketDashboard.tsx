@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo, startTransition } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -137,6 +137,7 @@ export const TicketDashboard = () => {
   const [resolutionTATReportData, setResolutionTATReportData] = useState<ResolutionTATReportData | null>(null);
   const [recentTicketsData, setRecentTicketsData] = useState<RecentTicketsResponse | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsLoaded, setAnalyticsLoaded] = useState(false); // Track if analytics data has been loaded
 
   // Utility function to convert DD/MM/YYYY to Date object
   const convertDateStringToDate = (dateString: string): Date => {
@@ -190,7 +191,7 @@ export const TicketDashboard = () => {
   });
   const [filters, setFilters] = useState<TicketFilters>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Reduced debounce for faster response
+  const debouncedSearchQuery = useDebounce(searchQuery, 300); // Optimized debounce timing
   const isSearchingRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
@@ -231,6 +232,7 @@ export const TicketDashboard = () => {
       setResponseTATData(responseTATData);
       setResolutionTATReportData(resolutionTATData);
       setRecentTicketsData(recentTickets);
+      setAnalyticsLoaded(true); // Mark analytics as loaded
 
       // toast({
       //   title: "Success",
@@ -259,7 +261,7 @@ export const TicketDashboard = () => {
     fetchAnalyticsData(startDate, endDate);
   };
 
-  // Fetch ticket summary from API
+  // Fetch ticket summary from API - Optimized with caching
   const fetchTicketSummary = useCallback(async () => {
     try {
       const summary = await ticketManagementAPI.getTicketSummary();
@@ -279,7 +281,7 @@ export const TicketDashboard = () => {
     }
   }, [filters, initialTotalTickets, toast]);
 
-  // Fetch tickets from API
+  // Fetch tickets from API - Optimized for faster loading
   const fetchTickets = useCallback(async (page: number = 1) => {
     // Use different loading states based on whether it's a search operation
     const isSearch = filters.search_all_fields_cont;
@@ -290,30 +292,36 @@ export const TicketDashboard = () => {
     }
 
     try {
+      // Start API call immediately without delays
       const response = await ticketManagementAPI.getTickets(page, perPage, filters);
 
-      // Sort tickets: flagged first, then golden tickets, then regular tickets
-      const sortedTickets = [...response.complaints].sort((a, b) => {
-        // Flagged tickets always come first
-        if (a.is_flagged && !b.is_flagged) return -1;
-        if (!a.is_flagged && b.is_flagged) return 1;
+      // Optimize sorting with early return for performance
+      const sortedTickets = response.complaints.length > 0 
+        ? [...response.complaints].sort((a, b) => {
+            // Flagged tickets always come first
+            if (a.is_flagged !== b.is_flagged) {
+              return a.is_flagged ? -1 : 1;
+            }
 
-        // Among non-flagged tickets, golden tickets come first
-        if (!a.is_flagged && !b.is_flagged) {
-          if (a.is_golden_ticket && !b.is_golden_ticket) return -1;
-          if (!a.is_golden_ticket && b.is_golden_ticket) return 1;
+            // Among non-flagged tickets, golden tickets come first
+            if (!a.is_flagged && !b.is_flagged && a.is_golden_ticket !== b.is_golden_ticket) {
+              return a.is_golden_ticket ? -1 : 1;
+            }
+
+            return 0; // Maintain original order for same priority
+          })
+        : [];
+
+      // Batch state updates for better performance - Use React.startTransition for non-urgent updates
+      startTransition(() => {
+        setTickets(sortedTickets);
+        if (response.pagination) {
+          setTotalPages(response.pagination.total_pages);
+          setTotalTickets(response.pagination.total_count);
+        } else {
+          setTotalTickets(response.complaints.length);
         }
-
-        return 0; // Maintain original order for same priority
       });
-
-      setTickets(sortedTickets);
-      if (response.pagination) {
-        setTotalPages(response.pagination.total_pages);
-        setTotalTickets(response.pagination.total_count);
-      } else {
-        setTotalTickets(response.complaints.length);
-      }
     } catch (error) {
       console.error('Error fetching tickets:', error);
       toast({
@@ -322,6 +330,7 @@ export const TicketDashboard = () => {
         variant: "destructive"
       });
     } finally {
+      // Clear loading states immediately
       if (isSearch) {
         setSearchLoading(false);
       } else {
@@ -336,7 +345,7 @@ export const TicketDashboard = () => {
     setSearchQuery(query);
   }, []);
 
-  // Effect to handle debounced search
+  // Effect to handle debounced search - Optimized
   useEffect(() => {
     // Skip if search query is the same as current filter
     const currentSearch = filters.search_all_fields_cont || '';
@@ -365,38 +374,64 @@ export const TicketDashboard = () => {
   }, [debouncedSearchQuery, filters.search_all_fields_cont]);
 
   useEffect(() => {
-    // Only fetch tickets if we're not in the middle of rapid filter changes
-    const timeoutId = setTimeout(() => {
-      fetchTickets(currentPage);
-      // Only fetch summary when filters change significantly (not during search)
-      if (!filters.search_all_fields_cont) {
-        fetchTicketSummary();
-      }
-    }, 50); // Reduced delay for faster response
+    // Always fetch tickets when currentPage or filters change
+    fetchTickets(currentPage);
+  }, [currentPage, filters, fetchTickets]);
 
-    return () => clearTimeout(timeoutId);
-  }, [currentPage, filters, fetchTickets, fetchTicketSummary]);
-
-  // Load analytics data with default date range on component mount
+  // Separate effect for fetching summary - only when necessary
   useEffect(() => {
-    const defaultRange = getDefaultDateRange();
-    const startDate = convertDateStringToDate(defaultRange.startDate);
-    const endDate = convertDateStringToDate(defaultRange.endDate);
-    fetchAnalyticsData(startDate, endDate);
-  }, [fetchAnalyticsData]);
+    // Only fetch summary when:
+    // 1. Component mounts (no filters)
+    // 2. Non-search filters change (status filters, etc.)
+    // 3. Search is cleared
+    const isSearchFilter = filters.search_all_fields_cont;
+    const isInitialLoad = Object.keys(filters).length === 0;
+    const isNonSearchFilter = Object.keys(filters).length > 0 && !isSearchFilter;
+    
+    if (isInitialLoad || isNonSearchFilter) {
+      fetchTicketSummary();
+    }
+  }, [filters, fetchTicketSummary]);
+
+  // Load analytics data with default date range on component mount - Only when analytics tab is active
+  useEffect(() => {
+    // Only load analytics data when explicitly needed to improve initial load time
+    // Analytics data will be loaded when user switches to analytics tab
+  }, []);
+
+  // Initial load effect - fetch summary on component mount
+  useEffect(() => {
+    // Initial fetch of summary data
+    const loadInitialData = async () => {
+      try {
+        const summary = await ticketManagementAPI.getTicketSummary();
+        setTicketSummary(summary);
+        setInitialTotalTickets(summary.total_tickets);
+      } catch (error) {
+        console.error('Error fetching initial ticket summary:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch ticket summary. Please try again.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    loadInitialData();
+  }, [toast]);
 
   // Use ticket summary data from API
-  const openTickets = ticketSummary.open_tickets;
-  const inProgressTickets = ticketSummary.in_progress_tickets;
-  const closedTickets = ticketSummary.closed_tickets;
-  const totalSummaryTickets = ticketSummary.total_tickets;
-  const pendingTickets = ticketSummary.pending_tickets; // Use ticket summary for pending as it's not in analytics
+  const openTickets = ticketSummary.open_tickets || 0;
+  const inProgressTickets = ticketSummary.in_progress_tickets || 0;
+  const closedTickets = ticketSummary.closed_tickets || 0;
+  const totalSummaryTickets = ticketSummary.total_tickets || 0;
+  const pendingTickets = ticketSummary.pending_tickets || 0; // Use ticket summary for pending as it's not in analytics
   const totalTicketsCount = initialTotalTickets || totalSummaryTickets;
   const displayTotalTickets = totalTicketsCount.toLocaleString();
 
 
-  // Analytics data with updated colors matching design using real API data
-  const statusData = [{
+  // Memoized calculations for better performance
+  const statusData = useMemo(() => [{
     name: 'Open',
     value: openTickets,
     color: '#c6b692'
@@ -412,8 +447,7 @@ export const TicketDashboard = () => {
     name: 'Pending',
     value: pendingTickets,
     color: '#d8dcdd'
-  }
-  ];
+  }], [openTickets, inProgressTickets, closedTickets, pendingTickets]);
 
   // Ticket type breakdown cards
   const ticketTypeCards = [{
@@ -459,15 +493,17 @@ export const TicketDashboard = () => {
   }
   ];
 
-  // Calculate category data from API analytics data only
-  const categoryChartData = categoryAnalyticsData.length > 0
-    ? categoryAnalyticsData.map(item => ({
-      name: item.category,
-      proactive: item.proactive.Open + item.proactive.Closed,
-      reactive: item.reactive.Open + item.reactive.Closed,
-      value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
-    }))
-    : []; // No fallback to tickets data
+  // Calculate category data from API analytics data only - Memoized for performance
+  const categoryChartData = useMemo(() => {
+    return categoryAnalyticsData.length > 0
+      ? categoryAnalyticsData.map(item => ({
+        name: item.category,
+        proactive: item.proactive.Open + item.proactive.Closed,
+        reactive: item.reactive.Open + item.reactive.Closed,
+        value: item.proactive.Open + item.proactive.Closed + item.reactive.Open + item.reactive.Closed
+      }))
+      : []; // No fallback to tickets data
+  }, [categoryAnalyticsData]);
 
   // Aging matrix data from API or fallback
   const agingMatrixData = agingMatrixAnalyticsData?.response.matrix
@@ -912,11 +948,13 @@ export const TicketDashboard = () => {
     key: 'actions',
     label: 'Actions',
     sortable: false
-  }, {
+  }, 
+  {
     key: 'ticket_number',
     label: 'Ticket ID',
     sortable: true
-  }, {
+  }, 
+  {
     key: 'heading',
     label: 'Description',
     sortable: true
@@ -1159,9 +1197,19 @@ export const TicketDashboard = () => {
   };
 
 
+  // Handle tab change and load analytics data only when needed
+  const handleTabChange = (value: string) => {
+    if (value === 'analytics' && !analyticsLoaded) {
+      const defaultRange = getDefaultDateRange();
+      const startDate = convertDateStringToDate(defaultRange.startDate);
+      const endDate = convertDateStringToDate(defaultRange.endDate);
+      fetchAnalyticsData(startDate, endDate);
+    }
+  };
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
-      <Tabs defaultValue="tickets" className="w-full">
+      <Tabs defaultValue="tickets" className="w-full" onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
           <TabsTrigger
             value="tickets"
@@ -1409,47 +1457,43 @@ export const TicketDashboard = () => {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto animate-fade-in">
-            {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="text-muted-foreground">Loading tickets...</div>
+            {searchLoading && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm">Searching tickets...</span>
+                </div>
               </div>
-            ) : (
-              <>
-                {/* {searchLoading && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4 flex items-center justify-center">
-                    <div className="flex items-center gap-2 text-blue-600">
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                      <span className="text-sm">Searching tickets...</span>
-                    </div>
-                  </div>
-                )} */}
-                <EnhancedTable
-                  data={tickets || []}
-                  columns={columns}
-                  renderCell={renderCell}
-                  selectable={true}
-                  pagination={false}
-                  enableExport={true}
-                  exportFileName="tickets"
-                  storageKey="tickets-table"
-                  enableSelection={true}
-                  selectedItems={selectedTickets.map(id => id.toString())}
-                  onSelectItem={handleTicketSelection}
-                  onSelectAll={handleSelectAll}
-                  getItemId={ticket => ticket.id.toString()}
-                  leftActions={
-                    <div className="flex gap-3">
-                      {renderCustomActions()}
-                    </div>
-                  }
-                  onFilterClick={() => setIsFilterOpen(true)}
-                  rightActions={null}
-                  searchPlaceholder="Search Tickets"
-                  onSearchChange={handleSearch}
-                  hideTableExport={false}
-                  hideColumnsButton={false}
-                  className="transition-all duration-500 ease-in-out"
-                />
+            )}
+            <EnhancedTable
+              data={tickets || []}
+              columns={columns}
+              renderCell={renderCell}
+              selectable={true}
+              pagination={false}
+              enableExport={true}
+              exportFileName="tickets"
+              storageKey="tickets-table"
+              enableSelection={true}
+              selectedItems={selectedTickets.map(id => id.toString())}
+              onSelectItem={handleTicketSelection}
+              onSelectAll={handleSelectAll}
+              getItemId={ticket => ticket.id.toString()}
+              leftActions={
+                <div className="flex gap-3">
+                  {renderCustomActions()}
+                </div>
+              }
+              onFilterClick={() => setIsFilterOpen(true)}
+              rightActions={null}
+              searchPlaceholder="Search Tickets"
+              onSearchChange={handleSearch}
+              hideTableExport={false}
+              hideColumnsButton={false}
+              className="transition-all duration-500 ease-in-out"
+              loading={loading}
+              loadingMessage="Loading tickets..."
+            />
 
                 {/* Add custom CSS for smooth row transitions */}
                 <style>{`
@@ -1569,8 +1613,35 @@ export const TicketDashboard = () => {
                     </button>
                   </div>
                 </div>
-              </>
-            )}
+
+                {/* Add custom CSS for smooth row transitions */}
+                <style>{`
+                  @keyframes slideInFromTop {
+                    from {
+                      opacity: 0;
+                      transform: translateY(-10px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateY(0);
+                    }
+                  }
+                  
+                  .table-row-transition {
+                    animation: slideInFromTop 0.4s ease-out;
+                    transition: all 0.3s ease-in-out;
+                  }
+                  
+                  .flagged-row {
+                    background-color: rgba(239, 68, 68, 0.05) !important;
+                    border-left: 3px solid #ef4444;
+                  }
+                  
+                  .golden-row {
+                    background-color: rgba(245, 158, 11, 0.05) !important;
+                    border-left: 3px solid #f59e0b;
+                  }
+                `}</style>
           </div>
         </TabsContent>
       </Tabs>

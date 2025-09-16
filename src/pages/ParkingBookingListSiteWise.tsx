@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Plus, Download, Eye, Search, Grid3x3, X, Upload, MoreHorizontal, Car, Bike, MapPin, CheckCircle, AlertTriangle, ChevronLeft, ChevronRight, Filter } from "lucide-react";
 import {
   Pagination,
@@ -20,54 +21,71 @@ import { useLayout } from '@/contexts/LayoutContext';
 import { toast } from 'sonner';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 
-// Define the data structure based on the API response
-interface SocietyStaff {
+// Define the data structure based on the actual API response
+interface ParkingBookingUser {
   id: number;
-  first_name: string;
-  last_name: string;
-  mobile: string;
-  soc_staff_id: string;
-  vendor_name: string;
-  active: number;
-  staff_type: string | null;
+  full_name: string;
+  department_name: string;
+  designation: string;
+  email: string;
+}
+
+interface ParkingCategory {
+  id: number;
+  name: string;
+}
+
+interface ParkingConfiguration {
+  id: number;
+  building_name: string;
+  floor_name: string;
+  parking_category: ParkingCategory;
+}
+
+interface Attendance {
+  punched_in_at: string | null;
+  punched_out_at: string | null;
+  formatted_punched_in_at: string | null;
+  formatted_punched_out_at: string | null;
+}
+
+interface QRCode {
+  id: number;
+  document_url: string;
+}
+
+interface CanCancel {
+  allowed: boolean;
+  reason: string;
+}
+
+interface ParkingBooking {
+  id: number;
+  user_id: number;
+  booking_date: string;
   status: string;
-  resource_id: number;
-  resource_type: string;
-  department_id: number | null;
-  type_id: number;
-  pms_unit_id: number | null;
-  created_by: number | null;
-  expiry_type: string | null;
-  expiry_value: string | null;
-  number_verified: boolean;
-  otp: string | null;
-  notes: string | null;
-  valid_from: string;
-  expiry: string;
+  booking_schedule: string;
+  cancelled_at: string | null;
   created_at: string;
   updated_at: string;
-  full_name: string;
-  email: string;
-  user_id: number;
-  unit_name: string | null;
-  department_name: string | null;
-  work_type_name: string;
-  status_text: string;
-  staff_image_url: string;
-  qr_code_present: boolean;
-  qr_code_url: string;
-  helpdesk_operations: unknown[];
-  staff_workings: unknown[];
-  documents: unknown[];
+  user: ParkingBookingUser;
+  parking_configuration: ParkingConfiguration;
+  attendance: Attendance;
+  cancelled_by: string | null;
+  qr_code: QRCode;
+  can_cancel: CanCancel;
+  url: string;
+}
+
+interface PaginationInfo {
+  current_page: number;
+  total_pages: number;
+  total_count: number;
 }
 
 interface ParkingBookingApiResponse {
-  society_staffs: SocietyStaff[];
-  pagination: {
-    current_page: number;
-    total_count: number;
-    total_pages: number;
-  };
+  parking_bookings: ParkingBooking[];
+  pagination: PaginationInfo;
 }
 
 // Transform API data to match our UI structure
@@ -102,12 +120,13 @@ const ParkingBookingListSiteWise = () => {
   const [isBulkUploadOpen, setIsBulkUploadOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [showActionPanel, setShowActionPanel] = useState(false);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFiltersModal, setShowFiltersModal] = useState(false);
   const navigate = useNavigate();
   const { isSidebarCollapsed } = useLayout();
   const panelRef = useRef<HTMLDivElement>(null);
 
   // API state
+  const [bookings, setBookings] = useState<ParkingBooking[]>([]);
   const [bookingData, setBookingData] = useState<ParkingBookingSite[]>([]);
   const [summary, setSummary] = useState<ParkingBookingSiteSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,83 +141,50 @@ const ParkingBookingListSiteWise = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  // API function to fetch parking bookings
-  const fetchParkingBookings = async (page: number = 1) => {
-    try {
-      const url = getFullUrl('/pms/admin/parking_bookings.json');
-      const options = getAuthenticatedFetchOptions();
-      
-      const requestOptions = {
-        ...options,
-        method: 'GET',
-      };
-      
-      console.log('🚀 Calling parking bookings API:', url);
-      
-      const response = await fetch(`${url}?page=${page}`, requestOptions);
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Parking Bookings API Error Response:', errorText);
-        throw new Error(`Failed to fetch parking bookings: ${response.status} ${response.statusText}`);
-      }
-      
-      const data: ParkingBookingApiResponse = await response.json();
-      console.log('✅ Parking bookings fetched successfully:', data);
-      
-      return data;
-    } catch (error) {
-      console.error('❌ Error fetching parking bookings:', error);
-      throw error;
-    }
-  };
-
   // Transform API data to match UI structure
-  const transformApiDataToBookings = (societyStaffs: SocietyStaff[]): ParkingBookingSite[] => {
-    return societyStaffs.map(staff => ({
-      id: staff.id,
-      employee_name: staff.full_name,
-      schedule_date: new Date(staff.valid_from).toLocaleDateString('en-GB', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      }),
-      category: Math.random() > 0.5 ? 'Two Wheeler' : 'Car', // Random for now, replace with actual field
-      building: 'Building A', // Replace with actual field from API if available
-      floor: 'Ground Floor', // Replace with actual field from API if available
-      designation: staff.work_type_name || 'N/A',
-      department: staff.department_name || '',
-      slot_parking_no: `Slot-${staff.id}`, // Replace with actual parking slot info
-      status: staff.status_text,
-      checked_in_at: null, // Replace with actual check-in data if available
-      checked_out_at: null, // Replace with actual check-out data if available
-      created_on: new Date(staff.created_at).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      }),
-      cancel: staff.status === 'Approved'
+  const transformApiDataToBookings = (parkingBookings: ParkingBooking[]): ParkingBookingSite[] => {
+    return parkingBookings.map((booking, index) => ({
+      id: booking.id,
+      employee_name: booking.user.full_name,
+      schedule_date: booking.booking_date,
+      category: booking.parking_configuration.parking_category.name,
+      building: booking.parking_configuration.building_name,
+      floor: booking.parking_configuration.floor_name,
+      designation: booking.user.designation,
+      department: booking.user.department_name,
+      slot_parking_no: `Slot-${booking.id}`, // Using booking ID as slot number
+      status: booking.status,
+      checked_in_at: booking.attendance.formatted_punched_in_at,
+      checked_out_at: booking.attendance.formatted_punched_out_at,
+      created_on: booking.created_at,
+      cancel: booking.can_cancel.allowed
     }));
   };
 
-  // Generate summary from transformed data
-  const generateSummary = (bookings: ParkingBookingSite[]): ParkingBookingSiteSummary => {
-    const confirmed = bookings.filter(b => b.status === 'Approved').length;
-    const cancelled = bookings.filter(b => b.status === 'Cancelled').length;
-    const twoWheeler = bookings.filter(b => b.category === 'Two Wheeler').length;
-    const fourWheeler = bookings.filter(b => b.category === 'Car').length;
-    
+  // Generate summary from API data
+  const generateSummaryFromBookings = (parkingBookings: ParkingBooking[]): ParkingBookingSiteSummary => {
+    const total_bookings = parkingBookings.length;
+    const confirmed_bookings = parkingBookings.filter(b => b.status === 'confirmed').length;
+    const cancelled_bookings = parkingBookings.filter(b => b.status === 'cancelled').length;
+    const two_wheeler_bookings = parkingBookings.filter(b => 
+      b.parking_configuration.parking_category.name.toLowerCase().includes('two') ||
+      b.parking_configuration.parking_category.name.toLowerCase().includes('bike')
+    ).length;
+    const four_wheeler_bookings = parkingBookings.filter(b => 
+      b.parking_configuration.parking_category.name.toLowerCase().includes('four') ||
+      b.parking_configuration.parking_category.name.toLowerCase().includes('car')
+    ).length;
+    const checked_in_count = parkingBookings.filter(b => b.attendance.punched_in_at !== null).length;
+    const checked_out_count = parkingBookings.filter(b => b.attendance.punched_out_at !== null).length;
+
     return {
-      total_bookings: bookings.length,
-      confirmed_bookings: confirmed,
-      cancelled_bookings: cancelled,
-      two_wheeler_bookings: twoWheeler,
-      four_wheeler_bookings: fourWheeler,
-      checked_in_count: bookings.filter(b => b.checked_in_at).length,
-      checked_out_count: bookings.filter(b => b.checked_out_at).length
+      total_bookings,
+      confirmed_bookings,
+      cancelled_bookings,
+      two_wheeler_bookings,
+      four_wheeler_bookings,
+      checked_in_count,
+      checked_out_count
     };
   };
 
@@ -229,6 +215,31 @@ const ParkingBookingListSiteWise = () => {
     { key: 'cancel', label: 'Cancel', visible: true }
   ]);
 
+  // Fetch parking bookings from API
+  const fetchParkingBookings = async (page = 1) => {
+    try {
+      const url = getFullUrl('/pms/admin/parking_bookings.json');
+      const options = getAuthenticatedFetchOptions();
+      
+      console.log('🔍 API Debug Info:');
+      console.log('Base URL from config:', API_CONFIG.BASE_URL);
+      console.log('Full URL being called:', `${url}?page=${page}`);
+      console.log('Auth options:', options);
+      
+      const response = await fetch(`${url}?page=${page}`, options);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data: ParkingBookingApiResponse = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching parking bookings:', error);
+      throw error;
+    }
+  };
+
   // Load booking data from API
   useEffect(() => {
     const loadBookingData = async () => {
@@ -236,13 +247,30 @@ const ParkingBookingListSiteWise = () => {
         setLoading(true);
         setError(null);
         
-        const response = await fetchParkingBookings(currentPage);
-        const transformedBookings = transformApiDataToBookings(response.society_staffs);
-        const generatedSummary = generateSummary(transformedBookings);
+        // Additional debugging for URL construction
+        console.log('🔍 Detailed URL Debug:');
+        console.log('Raw Base URL from API_CONFIG:', API_CONFIG.BASE_URL);
+        console.log('Raw endpoint:', '/pms/admin/parking_bookings.json');
         
+        const response = await fetchParkingBookings();
+        
+        // Set raw API data
+        setBookings(response.parking_bookings);
+        
+        // Transform for UI
+        const transformedBookings = transformApiDataToBookings(response.parking_bookings);
         setBookingData(transformedBookings);
+        
+        // Generate summary
+        const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
         setSummary(generatedSummary);
-        setApiPagination(response.pagination);
+        
+        // Set pagination
+        setApiPagination({
+          current_page: response.pagination.current_page,
+          total_count: response.pagination.total_count,
+          total_pages: response.pagination.total_pages
+        });
         
       } catch (error) {
         console.error('Error loading booking data:', error);
@@ -254,28 +282,42 @@ const ParkingBookingListSiteWise = () => {
     };
 
     loadBookingData();
-  }, [currentPage]);
+  }, [currentPage, itemsPerPage]);
 
   // Generate parking stats from summary data
   const parkingStats = useMemo(() => {
     if (!summary) {
       return [
+        { title: "Total Slots", count: 0, icon: MapPin },
         { title: "Total Bookings", count: 0, icon: MapPin },
         { title: "Confirmed", count: 0, icon: CheckCircle },
         { title: "Cancelled", count: 0, icon: AlertTriangle },
-        { title: "Two Wheeler", count: 0, icon: Bike },
-        { title: "Four Wheeler", count: 0, icon: Car },
+        { title: "Two Wheeler Booked", count: 0, icon: Bike },
+        { title: "Two Wheeler Available", count: 0, icon: Bike },
+        { title: "Four Wheeler Booked", count: 0, icon: Car },
+        { title: "Four Wheeler Available", count: 0, icon: Car },
         { title: "Checked In", count: 0, icon: CheckCircle },
         { title: "Checked Out", count: 0, icon: AlertTriangle }
       ];
     }
 
+    // Calculate slot availability (assuming total slots based on booking data)
+    const totalSlots = 100; // This should come from API or configuration
+    const twoWheelerTotalSlots = 60; // This should come from API or configuration
+    const fourWheelerTotalSlots = 40; // This should come from API or configuration
+    
+    const twoWheelerAvailable = twoWheelerTotalSlots - summary.two_wheeler_bookings;
+    const fourWheelerAvailable = fourWheelerTotalSlots - summary.four_wheeler_bookings;
+
     return [
+      { title: "Total Slots", count: totalSlots, icon: MapPin },
       { title: "Total Bookings", count: summary.total_bookings, icon: MapPin },
       { title: "Confirmed", count: summary.confirmed_bookings, icon: CheckCircle },
       { title: "Cancelled", count: summary.cancelled_bookings, icon: AlertTriangle },
-      { title: "Two Wheeler", count: summary.two_wheeler_bookings, icon: Bike },
-      { title: "Four Wheeler", count: summary.four_wheeler_bookings, icon: Car },
+      { title: "Two Wheeler Booked", count: summary.two_wheeler_bookings, icon: Bike },
+      { title: "Two Wheeler Available", count: Math.max(0, twoWheelerAvailable), icon: Bike },
+      { title: "Four Wheeler Booked", count: summary.four_wheeler_bookings, icon: Car },
+      { title: "Four Wheeler Available", count: Math.max(0, fourWheelerAvailable), icon: Car },
       { title: "Checked In", count: summary.checked_in_count, icon: CheckCircle },
       { title: "Checked Out", count: summary.checked_out_count, icon: AlertTriangle }
     ];
@@ -293,36 +335,37 @@ const ParkingBookingListSiteWise = () => {
       const formData = new FormData();
       formData.append('file', file);
       
-      const url = getFullUrl('/pms/manage/parking_bookings/site_wise/import.json');
+      const url = getFullUrl('/pms/admin/parking_bookings/import');
       const options = getAuthenticatedFetchOptions();
       
-      const requestOptions = {
+      const response = await fetch(url, {
         ...options,
         method: 'POST',
         body: formData,
-        headers: {
-          ...options.headers,
-        }
-      };
-      
-      delete requestOptions.headers['Content-Type'];
-      
-      console.log('🚀 Calling site-wise parking bookings import API:', url);
-      
-      const response = await fetch(url, requestOptions);
+      });
       
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Import API Error Response:', errorText);
-        throw new Error(`Failed to import parking bookings: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('✅ Site-wise parking bookings imported successfully:', data);
+      const result = await response.json();
+      console.log('✅ Site-wise parking bookings imported successfully:', result);
       
       toast.success('Site-wise parking bookings imported successfully!');
       
-      // Refresh the data (would need actual API call here)
+      // Refresh the data
+      const refreshedData = await fetchParkingBookings();
+      
+      // Set raw API data
+      setBookings(refreshedData.parking_bookings);
+      
+      // Transform for UI
+      const transformedBookings = transformApiDataToBookings(refreshedData.parking_bookings);
+      setBookingData(transformedBookings);
+      
+      // Generate summary
+      const generatedSummary = generateSummaryFromBookings(refreshedData.parking_bookings);
+      setSummary(generatedSummary);
       
     } catch (error) {
       console.error('❌ Error importing site-wise parking bookings:', error);
@@ -340,7 +383,7 @@ const ParkingBookingListSiteWise = () => {
   };
 
   const handleToggleFilters = () => {
-    setShowFilters(!showFilters);
+    setShowFiltersModal(!showFiltersModal);
   };
 
   const handleFilterChange = (key: string, value: string) => {
@@ -372,40 +415,29 @@ const ParkingBookingListSiteWise = () => {
     try {
       toast.info(`Cancelling booking ${bookingId}...`);
       
-      const url = getFullUrl(`/pms/admin/parking_bookings/${bookingId}.json`);
+      const url = getFullUrl(`/pms/admin/parking_bookings/${bookingId}`);
       const options = getAuthenticatedFetchOptions();
       
-      const requestOptions = {
+      const response = await fetch(url, {
         ...options,
         method: 'PUT',
+        headers: {
+          ...options.headers,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           parking_booking: {
             status: "cancelled"
           }
-        }),
-        headers: {
-          ...options.headers,
-          'Content-Type': 'application/json',
-        }
-      };
-      
-      console.log('🚀 Calling cancel booking API:', url);
-      console.log('📤 Request body:', {
-        parking_booking: {
-          status: "cancelled"
-        }
+        })
       });
       
-      const response = await fetch(url, requestOptions);
-      
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Cancel Booking API Error Response:', errorText);
-        throw new Error(`Failed to cancel booking: ${response.status} ${response.statusText}`);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      const data = await response.json();
-      console.log('✅ Booking cancelled successfully:', data);
+      const result = await response.json();
+      console.log('✅ Booking cancelled successfully:', result);
       
       toast.success(`Booking ${bookingId} cancelled successfully!`);
       
@@ -413,7 +445,7 @@ const ParkingBookingListSiteWise = () => {
       setBookingData(prevData => 
         prevData.map(booking => 
           booking.id === bookingId 
-            ? { ...booking, status: 'Cancelled', cancel: false }
+            ? { ...booking, status: 'cancelled', cancel: false }
             : booking
         )
       );
@@ -488,10 +520,40 @@ const ParkingBookingListSiteWise = () => {
 
   // Use API pagination for total pages
   const totalPages = apiPagination.total_pages;
+  const currentApiPage = apiPagination.current_page;
 
   // Handle page change - this will trigger API call
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+  const handlePageChange = async (page: number) => {
+    try {
+      setCurrentPage(page);
+      setLoading(true);
+      
+      const response = await fetchParkingBookings(page);
+      
+      // Set raw API data
+      setBookings(response.parking_bookings);
+      
+      // Transform for UI
+      const transformedBookings = transformApiDataToBookings(response.parking_bookings);
+      setBookingData(transformedBookings);
+      
+      // Generate summary
+      const generatedSummary = generateSummaryFromBookings(response.parking_bookings);
+      setSummary(generatedSummary);
+      
+      // Set pagination
+      setApiPagination({
+        current_page: response.pagination.current_page,
+        total_count: response.pagination.total_count,
+        total_pages: response.pagination.total_pages
+      });
+      
+    } catch (error) {
+      console.error('Error changing page:', error);
+      toast.error('Failed to load page data');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Handle search
@@ -530,9 +592,9 @@ const ParkingBookingListSiteWise = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {loading ? (
-          Array.from({ length: 7 }).map((_, index) => (
+          Array.from({ length: 10 }).map((_, index) => (
             <div
               key={index}
               className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
@@ -575,22 +637,13 @@ const ParkingBookingListSiteWise = () => {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         {/* Left Side Controls */}
         <div className="flex gap-2">
-          <Button 
+          {/* <Button 
             className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-4 py-2 rounded-none border-none shadow-none" 
             onClick={handleActionClick}
           >
             <Plus className="w-4 h-4 mr-2" />
             Action
-          </Button>
-          
-          <Button 
-            variant="outline"
-            onClick={handleToggleFilters}
-            className="px-4 py-2"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filters
-          </Button>
+          </Button> */}
         </div>
 
         {/* Right Side Controls */}
@@ -606,6 +659,15 @@ const ParkingBookingListSiteWise = () => {
             />
           </div>
 
+          {/* Filter Button */}
+          <Button 
+            variant="outline"
+            onClick={handleToggleFilters}
+            className="border-[#C72030] text-[#C72030] hover:bg-[#C72030]/10"
+          >
+            <Filter className="w-4 h-4" />
+          </Button>
+
           {/* Column Visibility */}
           <ColumnVisibilityDropdown
             columns={columns}
@@ -615,86 +677,14 @@ const ParkingBookingListSiteWise = () => {
       </div>
 
       {/* Filters Section */}
-      {showFilters && (
-        <Card className="border border-gray-200">
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                <select
-                  value={filters.category}
-                  onChange={(e) => handleFilterChange('category', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Categories</option>
-                  {getUniqueValues('category').map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Building</label>
-                <select
-                  value={filters.building}
-                  onChange={(e) => handleFilterChange('building', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Buildings</option>
-                  {getUniqueValues('building').map(building => (
-                    <option key={building} value={building}>{building}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Floor</label>
-                <select
-                  value={filters.floor}
-                  onChange={(e) => handleFilterChange('floor', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Floors</option>
-                  {getUniqueValues('floor').map(floor => (
-                    <option key={floor} value={floor}>{floor}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                >
-                  <option value="">All Statuses</option>
-                  {getUniqueValues('status').map(status => (
-                    <option key={status} value={status}>{status}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={handleClearFilters}
-                  className="w-full"
-                >
-                  Clear Filters
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Filters are now in a modal - see below */}
 
       {/* Data Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50">
-              {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>}
+              {/* {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>} */}
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
               {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
@@ -727,7 +717,7 @@ const ParkingBookingListSiteWise = () => {
             ) : (
               paginatedData.map((row) => (
                 <TableRow key={row.id} className="hover:bg-gray-50">
-                  {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>}
+                  {/* {isColumnVisible('id') && <TableCell className="font-medium">{row.id}</TableCell>} */}
                   {isColumnVisible('employee_name') && <TableCell>{row.employee_name}</TableCell>}
                   {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
                   {isColumnVisible('category') && (
@@ -794,12 +784,12 @@ const ParkingBookingListSiteWise = () => {
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => {
-                    if (currentPage > 1) {
-                      handlePageChange(currentPage - 1);
+                    if (currentApiPage > 1) {
+                      handlePageChange(currentApiPage - 1);
                     }
                   }}
                   className={
-                    currentPage === 1
+                    currentApiPage === 1
                       ? "pointer-events-none opacity-50"
                       : ""
                   }
@@ -813,7 +803,7 @@ const ParkingBookingListSiteWise = () => {
                 <PaginationItem key={page}>
                   <PaginationLink
                     onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
+                    isActive={currentApiPage === page}
                   >
                     {page}
                   </PaginationLink>
@@ -829,12 +819,12 @@ const ParkingBookingListSiteWise = () => {
               <PaginationItem>
                 <PaginationNext
                   onClick={() => {
-                    if (currentPage < totalPages) {
-                      handlePageChange(currentPage + 1);
+                    if (currentApiPage < totalPages) {
+                      handlePageChange(currentApiPage + 1);
                     }
                   }}
                   className={
-                    currentPage === totalPages
+                    currentApiPage === totalPages
                       ? "pointer-events-none opacity-50"
                       : ""
                   }
@@ -888,6 +878,155 @@ const ParkingBookingListSiteWise = () => {
           </div>
         </div>
       )}
+
+      {/* Filters Modal */}
+      <Dialog open={showFiltersModal} onOpenChange={setShowFiltersModal}>
+        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Filter className="w-5 h-5" />
+              Filter Parking Bookings
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select
+                  value={filters.category}
+                  onChange={(e) => handleFilterChange('category', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                >
+                  <option value="">All Categories</option>
+                  {getUniqueValues('category').map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Building</label>
+                <select
+                  value={filters.building}
+                  onChange={(e) => handleFilterChange('building', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                >
+                  <option value="">All Buildings</option>
+                  {getUniqueValues('building').map(building => (
+                    <option key={building} value={building}>{building}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Floor</label>
+                <select
+                  value={filters.floor}
+                  onChange={(e) => handleFilterChange('floor', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                >
+                  <option value="">All Floors</option>
+                  {getUniqueValues('floor').map(floor => (
+                    <option key={floor} value={floor}>{floor}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                >
+                  <option value="">All Statuses</option>
+                  {getUniqueValues('status').map(status => (
+                    <option key={status} value={status}>{status}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                <select
+                  value={filters.department}
+                  onChange={(e) => handleFilterChange('department', e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]"
+                >
+                  <option value="">All Departments</option>
+                  {getUniqueValues('department').map(department => (
+                    <option key={department} value={department}>{department}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {/* Active Filters Display */}
+            {(filters.category || filters.building || filters.floor || filters.status || filters.department) && (
+              <div className="border-t pt-4">
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Active Filters:</h4>
+                <div className="flex flex-wrap gap-2">
+                  {filters.category && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Category: {filters.category}
+                      <button onClick={() => handleFilterChange('category', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.building && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Building: {filters.building}
+                      <button onClick={() => handleFilterChange('building', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.floor && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Floor: {filters.floor}
+                      <button onClick={() => handleFilterChange('floor', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.status && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Status: {filters.status}
+                      <button onClick={() => handleFilterChange('status', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {filters.department && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-[#C72030] text-white text-xs rounded-full">
+                      Department: {filters.department}
+                      <button onClick={() => handleFilterChange('department', '')}>
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              className="border-gray-300"
+            >
+              Clear All Filters
+            </Button>
+            <Button
+              onClick={() => setShowFiltersModal(false)}
+              className="bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+            >
+              Apply Filters
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -27,7 +27,6 @@ interface VisitorSelectionPanelProps {
   onCheckOut: () => Promise<void>;
   onApprove: () => Promise<void>;
   onVerifyOtp?: () => Promise<void>;
-  onResendOtp?: () => Promise<void>;
   onBlacklist?: () => Promise<void>;
   onFlag?: () => Promise<void>;
   onExport: () => void;
@@ -41,7 +40,6 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   onCheckOut,
   onApprove,
   onVerifyOtp,
-  onResendOtp,
   onBlacklist,
   onFlag,
   onExport,
@@ -146,11 +144,70 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
   const handleResendOtp = async () => {
     console.log('VisitorSelectionPanel - Resend OTP clicked for visitors:', selectedVisitors);
     setIsResendOtpLoading(true);
+    
     try {
-      if (onResendOtp) {
-        await onResendOtp();
-        toast.success(`Successfully resent OTP for ${selectedVisitors.length} visitor(s).`);
-        
+      // Show loading toast
+      toast.info(`Sending OTP to ${selectedVisitors.length} visitor(s)...`);
+      
+      // Process each visitor individually
+      let successCount = 0;
+      let errorCount = 0;
+      
+      for (const visitorId of selectedVisitors) {
+        try {
+          console.log('🚀 Sending OTP for visitor ID:', visitorId);
+          
+          // Construct the API URL using the PUT endpoint for resend OTP
+          const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+          
+          // Create request body for resend OTP - set otp_verified to "0" to trigger new OTP
+          const requestBody = {
+            gatekeeper: {
+              otp_verified: "0",
+              otp: "",
+              guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30",
+              entry_gate_id: ""
+            }
+          };
+          
+          console.log('🚀 Calling resend OTP API:', url);
+          console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
+          
+          const response = await fetch(url, {
+            method: 'PUT',
+            headers: {
+              'Authorization': getAuthHeader(),
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          });
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response for visitor', visitorId, ':', errorText);
+            throw new Error(`Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`);
+          }
+          
+          const data = await response.json();
+          console.log('✅ OTP sent successfully for visitor', visitorId, ':', data);
+          successCount++;
+          
+        } catch (visitorError) {
+          console.error('❌ Error sending OTP for visitor', visitorId, ':', visitorError);
+          errorCount++;
+        }
+      }
+      
+      // Show success/error summary
+      if (successCount > 0) {
+        toast.success(`Successfully sent OTP to ${successCount} visitor(s).`);
+      }
+      if (errorCount > 0) {
+        toast.error(`Failed to send OTP to ${errorCount} visitor(s).`);
+      }
+      
+      // Only disable button if at least one was successful
+      if (successCount > 0) {
         // Disable resend button for 1 minute
         setResendOtpDisabled(true);
         setResendCountdown(60);
@@ -166,8 +223,9 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           });
         }, 1000);
       }
+      
     } catch (error) {
-      console.error('Failed to resend OTP:', error);
+      console.error('❌ Failed to resend OTP:', error);
       toast.error("Failed to resend OTP. Please try again.");
     } finally {
       setIsResendOtpLoading(false);

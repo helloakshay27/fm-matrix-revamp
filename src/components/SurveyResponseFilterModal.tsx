@@ -6,7 +6,7 @@ import { DateField } from '@mui/x-date-pickers/DateField';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { X } from 'lucide-react';
-import { apiClient } from '@/utils/apiClient';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
 interface FilterModalProps {
@@ -57,7 +57,7 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
     onClose();
   };
 
-  const handleInputChange = (field: keyof FilterState, value: any) => {
+  const handleInputChange = (field: keyof FilterState, value: string | Date | null) => {
     setFilters(prev => ({
       ...prev,
       [field]: value
