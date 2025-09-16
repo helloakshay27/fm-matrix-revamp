@@ -511,7 +511,7 @@ export const ScheduledTaskDashboard = () => {
   }, [activeTab, calendarFilters]);
 
   const handleViewTask = (taskId: string) => {
-    navigate(`/task-details/${taskId}`);
+    navigate(`/maintenance/task-details/${taskId}`);
   };
 
   const handleAdvancedFilter = (filters: any) => {
