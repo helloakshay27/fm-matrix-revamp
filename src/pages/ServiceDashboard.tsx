@@ -480,7 +480,7 @@ export const ServiceDashboard = () => {
     { key: 'actions', label: 'Actions', sortable: false },
     { key: 'serviceName', label: 'Service Name', sortable: true },
     { key: 'id', label: 'ID', sortable: true },
-    { key: 'referenceNumber', label: 'Reference Number', sortable: true },
+    { key: 'serviceCode', label: 'Service Code', sortable: true },
     { key: 'executionType', label: 'Execution Type', sortable: true },
     { key: 'group', label: 'Group', sortable: true },
     { key: 'subGroup', label: 'Sub Group', sortable: true },
@@ -565,7 +565,7 @@ export const ServiceDashboard = () => {
         return <span>{item.service_name || '-'}</span>;
       case 'id':
         return <span className="font-medium">{item.id}</span>;
-      case 'referenceNumber':
+      case 'serviceCode':
         return item.service_code || '-';
       case 'executionType':
         if (!item.execution_type) return '-';
