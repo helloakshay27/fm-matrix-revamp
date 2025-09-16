@@ -639,7 +639,13 @@ const modulesByPackage = {
 
     // { name: 'SMT', icon: BarChart, href: '/maintenance/smt' },
 
-    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' }
+    // { name: 'Design Insight Setup', icon: Target, href: '/settings/design-insights/setup' },
+
+    {
+      name: 'Projects & Tasks',
+      icon: Briefcase,
+      href: "/maintenance/projects"
+    }
   ],
   Safety: [
     { name: "Incident", icon: AlertTriangle, href: "/safety/incident" },
@@ -1452,8 +1458,8 @@ export const StacticSidebar = () => {
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           title={module.name}
         >
@@ -1538,8 +1544,8 @@ export const StacticSidebar = () => {
                     module.href && handleNavigation(module.href, currentSection)
                   }
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-                      ? "bg-[#f0e8dc] shadow-inner"
-                      : "hover:bg-[#DBC2A9]"
+                    ? "bg-[#f0e8dc] shadow-inner"
+                    : "hover:bg-[#DBC2A9]"
                     }`}
                   title={module.name}
                 >
@@ -1548,8 +1554,8 @@ export const StacticSidebar = () => {
                   )}
                   <module.icon
                     className={`w-5 h-5 ${isActiveRoute(module.href)
-                        ? "text-[#C72030]"
-                        : "text-[#1a1a1a]"
+                      ? "text-[#C72030]"
+                      : "text-[#1a1a1a]"
                       }`}
                   />
                 </button>

@@ -716,6 +716,7 @@ import EditCRMWalletPointExpiry from "./pages/EditCRMWalletPointExpiry";
 import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
+import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 
 const queryClient = new QueryClient();
 
@@ -1997,6 +1998,10 @@ function App() {
                     <Route
                       path="/maintenance/vendor/view/:id"
                       element={<DetailsVendorPage />}
+                    />
+                    <Route
+                      path="/maintenance/projects"
+                      element={<ProjectsDashboard />}
                     />
 
                     {/* Utility Routes */}
