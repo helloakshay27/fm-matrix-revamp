@@ -144,7 +144,7 @@ export const IncidentDashboard = () => {
           </div>
 
           {/* Action Bar */}
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 ">
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleAddIncident}
@@ -206,6 +206,7 @@ export const IncidentDashboard = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[60px]">Sr. No.</TableHead>
                     <TableHead className="w-[80px]">Action</TableHead>
                     <TableHead className="w-[100px]">ID</TableHead>
                     <TableHead>Description</TableHead>
@@ -222,8 +223,9 @@ export const IncidentDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredIncidents.map((incident) => (
+                  {filteredIncidents.map((incident, index) => (
                     <TableRow key={incident.id}>
+                      <TableCell className="font-medium text-center">{index + 1}</TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
@@ -233,7 +235,7 @@ export const IncidentDashboard = () => {
                           <Eye className="w-4 h-4" />
                         </Button>
                       </TableCell>
-                      <TableCell className="font-medium">#{incident.id}</TableCell>
+                      <TableCell className="font-medium">{incident.id}</TableCell>
                       <TableCell>{incident.description}</TableCell>
                       <TableCell>{incident.building_name || "-"}</TableCell>
                       <TableCell>-</TableCell>

@@ -2,10 +2,10 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormControl, InputLabel, MenuItem, Select, TextField } from "@mui/material";
 import { ArrowLeft } from "lucide-react"
-import { useNavigate } from "react-router-dom"
-import { useState } from "react"
+import { useNavigate, useParams } from "react-router-dom"
+import { useEffect, useState } from "react"
 import { useAppDispatch } from "@/hooks/useAppDispatch";
-import { createAddress } from "@/store/slices/addressMasterSlice";
+import { createAddress, getAddressById, updateAddress } from "@/store/slices/addressMasterSlice";
 import { toast } from "sonner";
 
 const states = {
@@ -56,6 +56,7 @@ const fieldStyles = {
 };
 
 const EditAddressMaster = () => {
+    const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
     const token = localStorage.getItem("token");
@@ -74,6 +75,30 @@ const EditAddressMaster = () => {
         address: '',
         note: ''
     });
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const response = await dispatch(getAddressById({ baseUrl, token, id })).unwrap();
+                setFormData({
+                    addressTitle: response.title,
+                    buildingName: response.building_name,
+                    email: response.email,
+                    state: response.state_code,
+                    phoneNumber: response.phone,
+                    faxNumber: response.fax,
+                    panNumber: response.pan_number,
+                    gstNumber: response.gst_number,
+                    address: response.address,
+                    note: response.notes
+                })
+            } catch (error) {
+                console.log(error)
+            }
+        }
+
+        fetchData()
+    }, [])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -101,8 +126,8 @@ const EditAddressMaster = () => {
         }
         try {
             setIsSubmitting(true);
-            await dispatch(createAddress({ token, baseUrl, data: payload })).unwrap();
-            toast.success('Address created successfully');
+            await dispatch(updateAddress({ token, baseUrl, data: payload, id: Number(id) })).unwrap();
+            toast.success('Address updated successfully');
             navigate('/master/address');
         } catch (error) {
             console.log(error)
@@ -245,6 +270,18 @@ const EditAddressMaster = () => {
                                     "& .MuiOutlinedInput-root": {
                                         height: "auto !important",
                                         padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
                                     },
                                 }}
                             />
@@ -264,6 +301,18 @@ const EditAddressMaster = () => {
                                     "& .MuiOutlinedInput-root": {
                                         height: "auto !important",
                                         padding: "2px !important",
+                                        display: "flex",
+                                    },
+                                    "& .MuiInputBase-input[aria-hidden='true']": {
+                                        flex: 0,
+                                        width: 0,
+                                        height: 0,
+                                        padding: "0 !important",
+                                        margin: 0,
+                                        display: "none",
+                                    },
+                                    "& .MuiInputBase-input": {
+                                        resize: "none !important",
                                     },
                                 }}
                             />

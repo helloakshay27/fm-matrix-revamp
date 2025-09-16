@@ -131,9 +131,9 @@ export const UtilityWaterDashboard = () => {
 
   const isSearchMode = searchTerm.trim().length > 0;
 
-  // Pagination object
+  // Pagination object - using Redux state values that now come from API pagination response
   const pagination = {
-    currentPage,
+    currentPage: currentPage,
     totalPages: totalPages || 1,
     totalCount: totalCount || 0,
   };

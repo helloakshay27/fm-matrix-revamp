@@ -58,7 +58,7 @@ import { createCustomerReducer, editCustomerReducer, getCustomerByIdReducer, get
 import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, getInvoincesReducer } from './slices/invoicesSlice'
 import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
-import { createAddressReducer, fetchAddressesReducer } from './slices/addressMasterSlice'
+import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, updateAddressReducer } from './slices/addressMasterSlice'
 
 export const store = configureStore({
   reducer: {
@@ -262,6 +262,8 @@ export const store = configureStore({
     // Address Master
     fetchAddresses: fetchAddressesReducer,
     createAddress: createAddressReducer,
+    updateAddress: updateAddressReducer,
+    getAddressById: getAddressByIdReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

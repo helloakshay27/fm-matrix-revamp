@@ -86,10 +86,13 @@ import parkingManagementAnalyticsAPI from '@/services/parkingManagementAnalytics
 import ParkingAllocationOverviewCard from '@/components/parking/ParkingAllocationOverviewCard';
 import visitorManagementAnalyticsAPI from '@/services/visitorManagementAnalyticsAPI';
 import VisitorTrendAnalysisCard from '@/components/visitor/VisitorTrendAnalysisCard';
+import checklistManagementAnalyticsAPI from '@/services/checklistManagementAnalyticsAPI';
+import { ChecklistProgressQuarterlyCard } from '@/components/checklist-management/ChecklistProgressQuarterlyCard';
+import { TopOverdueChecklistsCenterwiseCard } from '@/components/checklist-management/TopOverdueChecklistsCenterwiseCard';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management';
   endpoint: string;
   title: string;
 }
@@ -109,6 +112,7 @@ interface DashboardData {
   consumables_overview?: any;
   parking_management?: any;
   visitor_management?: any;
+  checklist_management?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -299,8 +303,6 @@ export const Dashboard = () => {
                   break;
                 case 'expiry_analysis':
                   promises.push(amcAnalyticsAPI.getAMCExpiryAnalysis(dateRange.from, dateRange.to));
-                  break;
-                case 'service_tracking':
                   promises.push(amcAnalyticsAPI.getAMCServiceTracking(dateRange.from, dateRange.to));
                   break;
                 case 'coverage_by_location':
@@ -490,6 +492,24 @@ export const Dashboard = () => {
                 case 'visitor_trend_analysis':
                   promises.push(visitorManagementAnalyticsAPI.getVisitorTrendAnalysis(dateRange.from!, dateRange.to!));
                   break;
+              }
+            }
+            break;
+          case 'checklist_management':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'cm_progress_quarterly':
+                  promises.push(
+                    checklistManagementAnalyticsAPI.getChecklistProgressRows(dateRange.from!, dateRange.to!)
+                  );
+                  break;
+                case 'cm_overdue_centerwise':
+                  promises.push(
+                    checklistManagementAnalyticsAPI.getTopOverdueChecklistMatrix(dateRange.from!, dateRange.to!)
+                  );
+                  break;
+                default:
+                  promises.push(Promise.resolve(null));
               }
             }
             break;
@@ -755,7 +775,7 @@ export const Dashboard = () => {
                 T2: data.T2 || 0,
                 T3: data.T3 || 0,
                 T4: data.T4 || 0,
-                T5: data.T5 || 0
+                T5: data.T5 || 0,
               }))
               : [
                 {
@@ -1274,6 +1294,27 @@ export const Dashboard = () => {
           default:
             return null;
         }
+      case 'checklist_management':
+        switch (analytic.endpoint) {
+          case 'cm_progress_quarterly': {
+            const rows = Array.isArray(rawData) ? rawData : [];
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <ChecklistProgressQuarterlyCard title={analytic.title} rows={rows} />
+              </SortableChartItem>
+            );
+          }
+          case 'cm_overdue_centerwise': {
+            const matrix = rawData || { categories: [], siteRows: [] };
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <TopOverdueChecklistsCenterwiseCard title={analytic.title} matrix={matrix} />
+              </SortableChartItem>
+            );
+          }
+          default:
+            return null;
+        }
       case 'helpdesk':
         switch (analytic.endpoint) {
           case 'snapshot':
@@ -1334,8 +1375,15 @@ export const Dashboard = () => {
         {/* Filter Controls Section */}
         <div className="bg-white ">
           <div className="px-6 py-4">
-            <div className="flex items-center justify-end">
-
+            <div className="flex items-center justify-between">
+              <Button
+                onClick={() => navigate('/dashboard/configuration')}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Settings className="w-4 h-4" />
+                Configure Dashboard
+              </Button>
 
               <div className="flex items-center gap-4">
                 <UnifiedDateRangeFilter

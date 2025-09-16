@@ -275,7 +275,7 @@ export const OTPVerificationPage = () => {
             OTP Verification
           </h2>
           <p className="text-gray-600 leading-relaxed">
-            We've sent a 6-digit confirmation code to your email address
+            We've sent a 5-digit confirmation code to your email address
             {email && `: ${email}`}. Make sure you enter the correct code.
           </p>
         </div>
@@ -283,7 +283,7 @@ export const OTPVerificationPage = () => {
         {/* OTP Input */}
         <div className="mb-6">
           <InputOTP
-            maxLength={6}
+            maxLength={5}
             value={otp}
             onChange={setOtp}
             className="w-full"
@@ -309,10 +309,7 @@ export const OTPVerificationPage = () => {
                 index={4}
                 className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg"
               />
-              <InputOTPSlot
-                index={5}
-                className="w-12 h-14 text-lg border-2 border-gray-300 rounded-lg"
-              />
+             
             </InputOTPGroup>
           </InputOTP>
         </div>
@@ -320,7 +317,7 @@ export const OTPVerificationPage = () => {
         {/* Verify Button */}
         <Button
           onClick={handleVerifyOTP}
-          disabled={isLoading || otp.length !== 6}
+          disabled={isLoading || otp.length !== 5}
           className="w-full h-14 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium text-base mt-8"
         >
           {isLoading ? (

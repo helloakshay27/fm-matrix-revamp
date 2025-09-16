@@ -130,30 +130,30 @@ const RedIcon = styled(Settings)(({ theme }) => ({
   fontSize: '32px',
 }));
 
- const fieldStyles = {
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
     height: '40px',
-    backgroundColor: '#fff',
-    borderRadius: '4px',
-    '& .MuiOutlinedInput-root': {
-      height: '40px',
-      fontSize: '14px',
-      '& fieldset': {
-        borderColor: '#ddd',
-      },
-      '&:hover fieldset': {
-        borderColor: '#C72030',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: '#C72030',
-      },
+    fontSize: '14px',
+    '& fieldset': {
+      borderColor: '#ddd',
     },
-    '& .MuiInputLabel-root': {
-      fontSize: '14px',
-      '&.Mui-focused': {
-        color: '#C72030',
-      },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
     },
-  };
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
 
 interface AttachmentFile {
   id: string;
@@ -738,8 +738,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -761,8 +761,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -784,8 +784,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -807,8 +807,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -844,8 +844,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -874,8 +874,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -909,8 +909,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -953,8 +953,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -995,8 +995,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1044,8 +1044,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1092,8 +1092,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1145,8 +1145,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1286,8 +1286,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1386,8 +1386,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1846,8 +1846,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -1935,8 +1935,8 @@ export const AddSchedulePage = () => {
                 position: 'top-right',
                 duration: 4000,
                 style: {
-                  background: '#ef4444',
-                  color: 'white',
+                  background: '#fff',
+                  color: 'black',
                   border: 'none',
                 },
               });
@@ -1984,8 +1984,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -2158,8 +2158,8 @@ export const AddSchedulePage = () => {
           position: 'top-right',
           duration: 4000,
           style: {
-            background: '#ef4444',
-            color: 'white',
+            background: '#fff',
+            color:'black',
             border: 'none',
           },
         });
@@ -2170,8 +2170,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });
@@ -2522,8 +2522,8 @@ export const AddSchedulePage = () => {
             position: 'top-right',
             duration: 5000,
             style: {
-              background: '#ef4444',
-              color: 'white',
+              background: '#fff',
+              color: 'black',
               border: 'none',
               minWidth: 320
             },
@@ -2537,8 +2537,8 @@ export const AddSchedulePage = () => {
           position: 'top-right',
           duration: 4000,
           style: {
-            background: '#ef4444',
-            color: 'white',
+            background: '#fff',
+            color: 'black',
             border: 'none',
           },
         });
@@ -3379,9 +3379,9 @@ export const AddSchedulePage = () => {
                         !selected || selected.length === 0
                           ? <span style={{ color: '#aaa' }}>Select Services</span>
                           : services
-                              .filter(service => selected.includes(service.id.toString()))
-                              .map(service => service.service_name)
-                              .join(', ')
+                            .filter(service => selected.includes(service.id.toString()))
+                            .map(service => service.service_name)
+                            .join(', ')
                       }
                       disabled={stepIndex < activeStep && editingStep !== stepIndex || loading.services}
                     >
@@ -3892,62 +3892,62 @@ export const AddSchedulePage = () => {
                 )}
               </Box>
 
-<Box>
-  <TextField
-    label={
-      <span>
-        Start Date <span style={{ color: 'red' }}>*</span>
-      </span>
-    }
-    id="startFrom"
-    type="date"
-    fullWidth
-    variant="outlined"
-    value={formData.startFrom}
-    onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
-    InputLabelProps={{ shrink: true }}
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 1 }}
-    placeholder="Select Start Date"
-    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-    inputProps={{
-      max: formData.endAt || undefined,
-    }}
-    error={Boolean(fieldErrors.startFrom)}
-    helperText={fieldErrors.startFrom}
-  />
-</Box>
+              <Box>
+                <TextField
+                  label={
+                    <span>
+                      Start Date <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
+                  id="startFrom"
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.startFrom}
+                  onChange={e => setFormData({ ...formData, startFrom: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                  placeholder="Select Start Date"
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                  inputProps={{
+                    max: formData.endAt || undefined,
+                  }}
+                  error={Boolean(fieldErrors.startFrom)}
+                  helperText={fieldErrors.startFrom}
+                />
+              </Box>
 
-<Box>
-  <TextField
-    label={
-      <span>
-        End Date <span style={{ color: 'red' }}>*</span>
-      </span>
-    }
-    id="endAt"
-    type="date"
-    fullWidth
-    variant="outlined"
-    value={formData.endAt}
-    onChange={e => setFormData({ ...formData, endAt: e.target.value })}
-    InputLabelProps={{ shrink: true }}
-    InputProps={{ sx: fieldStyles }}
-    sx={{ mt: 1 }}
-    placeholder="Select End Date"
-    disabled={stepIndex < activeStep && editingStep !== stepIndex}
-    inputProps={{
-      min: formData.startFrom || undefined,
-    }}
-    error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
-    helperText={
-      fieldErrors.endAt ||
-      (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
-        ? "End date cannot be before start date"
-        : "")
-    }
-  />
-</Box>
+              <Box>
+                <TextField
+                  label={
+                    <span>
+                      End Date <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
+                  id="endAt"
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.endAt}
+                  onChange={e => setFormData({ ...formData, endAt: e.target.value })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                  placeholder="Select End Date"
+                  disabled={stepIndex < activeStep && editingStep !== stepIndex}
+                  inputProps={{
+                    min: formData.startFrom || undefined,
+                  }}
+                  error={Boolean(fieldErrors.endAt) || (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom)}
+                  helperText={
+                    fieldErrors.endAt ||
+                    (formData.startFrom && formData.endAt && formData.endAt < formData.startFrom
+                      ? "End date cannot be before start date"
+                      : "")
+                  }
+                />
+              </Box>
             </Box>
           </SectionCard>
         );
@@ -5479,8 +5479,8 @@ export const AddSchedulePage = () => {
         position: 'top-right',
         duration: 4000,
         style: {
-          background: '#ef4444',
-          color: 'white',
+          background: '#fff',
+          color: 'black',
           border: 'none',
         },
       });

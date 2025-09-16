@@ -16,7 +16,7 @@ export const AddServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
-    umo: '',
+    uom: '',
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -172,7 +172,7 @@ export const AddServicePage = () => {
       sendData.append('pms_service[active]', 'true');
       sendData.append('pms_service[description]', formData.serviceDescription || '');
       sendData.append('pms_service[execution_type]', formData.executionType || '');
-      sendData.append('pms_service[base_uom]', formData.umo || '');
+      sendData.append('pms_service[base_uom]', formData.uom || '');
       sendData.append('pms_service[service_category]', '');
       sendData.append('pms_service[service_group]', '');
       sendData.append('pms_service[service_code]', '');
@@ -207,7 +207,7 @@ export const AddServicePage = () => {
           setFormData({
             serviceName: '',
             executionType: '',
-            umo: '',
+            uom: '',
             serviceDescription: '',
             siteId: null,
             buildingId: null,
@@ -332,12 +332,12 @@ export const AddServicePage = () => {
               )}
             </FormControl>
 
-            {/* UMO Field (Not required, no red asterisk) */}
+            {/* UOM Field (Not required, no red asterisk) */}
             <TextField
-              label="UMO"
-              placeholder="Enter UMO"
-              value={formData.umo}
-              onChange={(e) => handleInputChange('umo', e.target.value)}
+              label="UOM"
+              placeholder="Enter UOM"
+              value={formData.uom}
+              onChange={(e) => handleInputChange('uom', e.target.value)}
               fullWidth
               variant="outlined"
               slotProps={{
