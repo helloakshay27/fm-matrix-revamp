@@ -234,11 +234,6 @@ const MobileLMCPage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent 
                   className="w-[var(--radix-select-trigger-width)]"
-                  onOpenAutoFocus={(e) => {
-                    // Prevent Radix from focusing the first item; focus our search input instead
-                    e.preventDefault();
-                    setTimeout(() => searchInputRef.current?.focus(), 0);
-                  }}
                 >
                   <div className="p-2 sticky top-0 bg-white border-b">
                     <input
