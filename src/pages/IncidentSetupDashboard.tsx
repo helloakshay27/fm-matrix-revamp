@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Edit, Trash2 } from 'lucide-react';
 import { TextField, Select as MuiSelect, MenuItem, FormControl, InputLabel } from '@mui/material';
@@ -86,7 +85,7 @@ export const IncidentSetupDashboard = () => {
   // Only use /pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix for escalations GET
   const fetchEscalations = async () => {
     try {
-      const response = await fetch(`${baseUrl}/pms/incidence_tags.json?q[tag_type_eq]=EscaltionMatrix`, {
+      const response = await fetch(`${baseUrl}/pms/incidence_tags.json`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -1495,6 +1494,9 @@ export const IncidentSetupDashboard = () => {
       else if (type === 'Incidence level') fetchFn = fetchIncidenceLevels;
       else if (type === 'Secondary Category') fetchFn = fetchSecondaryCategories;
       else if (type === 'Secondary Sub Category') fetchFn = fetchSecondarySubCategories;
+      else if (type === 'Secondary Sub Sub Category') fetchFn = fetchSecondarySubSubCategories;
+      else if (type === 'Secondary Sub Sub Sub Category') fetchFn = fetchSecondarySubSubSubCategories;
+      else if (type === 'Escalations') fetchFn = fetchEscalations;
       else if (type === 'Who got injured') fetchFn = fetchWhoGotInjured;
       else if (type === 'Property Damage Category') fetchFn = fetchPropertyDamageCategories;
       else if (type === 'RCA Category') fetchFn = fetchRCACategories;
@@ -1502,12 +1504,36 @@ export const IncidentSetupDashboard = () => {
       // Only use local state for types that are not stored in backend
       if (fetchFn) {
         try {
-          const response = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'Authorization': `Bearer ${token}`
+          let response;
+          // Special handling for escalations which might need a different delete endpoint
+          if (type === 'Escalations') {
+            // Try special escalation delete endpoint first
+            try {
+              response = await fetch(`${baseUrl}/pms/escalations/${item.id}.json`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
+            } catch (error) {
+              // If special endpoint fails, fall back to standard endpoint
+              response = await fetch(`${baseUrl}/pms/incidence_tags/${item.id}.json`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`
+                }
+              });
             }
-          });
+          } else {
+            // Standard delete for all other types
+            response = await fetch(url, {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            });
+          }
+
           if (response.ok) {
             await fetchFn();
           } else {
@@ -1517,12 +1543,8 @@ export const IncidentSetupDashboard = () => {
           alert('An error occurred while deleting.');
         }
       } else {
-        // For local-only types
-        if (type === 'Sub Sub Sub Category') setSubSubSubCategories(subSubSubCategories.filter(subsubsub => subsubsub.id !== item.id));
-        else if (type === 'Escalations') setEscalations(escalations.filter(escalation => escalation.id !== item.id));
-        else if (type === 'Approval Setup') setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
-        else if (type === 'Secondary Sub Sub Category') setSecondarySubSubCategories(secondarySubSubCategories.filter(secondarySubSub => secondarySubSub.id !== item.id));
-        else if (type === 'Secondary Sub Sub Sub Category') setSecondarySubSubSubCategories(secondarySubSubSubCategories.filter(secondarySubSubSub => secondarySubSubSub.id !== item.id));
+        // For local-only types that don't have backend API
+        if (type === 'Approval Setup') setApprovalSetups(approvalSetups.filter(approval => approval.id !== item.id));
       }
     }
   };
@@ -1615,25 +1637,26 @@ export const IncidentSetupDashboard = () => {
                           </div>
                         ))}
                       </div>
-                      <Select
-                        onValueChange={value => {
-                          const currentUsers = editFormData.users ? editFormData.users.split(',').map(u => u.trim()) : [];
-                          if (!currentUsers.includes(value)) {
-                            const newUsers = [...currentUsers, value].filter(u => u);
-                            setEditFormData({ ...editFormData, users: newUsers.join(', ') });
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select users to add..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
-                          <SelectItem value="Mahendra Lungare">Mahendra Lungare</SelectItem>
-                          <SelectItem value="Vinayak Mane">Vinayak Mane</SelectItem>
-                          <SelectItem value="Abdul A">Abdul A</SelectItem>
-                          <SelectItem value="John Doe">John Doe</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Select users to add</InputLabel>
+                        <MuiSelect
+                          value=""
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            const currentUsers = editFormData.users ? editFormData.users.split(',').map(u => u.trim()) : [];
+                            if (!currentUsers.includes(value)) {
+                              const newUsers = [...currentUsers, value].filter(u => u);
+                              setEditFormData({ ...editFormData, users: newUsers.join(', ') });
+                            }
+                          }}
+                          label="Select users to add"
+                        >
+                          <MenuItem value="Mahendra Lungare">Mahendra Lungare</MenuItem>
+                          <MenuItem value="Vinayak Mane">Vinayak Mane</MenuItem>
+                          <MenuItem value="Abdul A">Abdul A</MenuItem>
+                          <MenuItem value="John Doe">John Doe</MenuItem>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   </div>
 
@@ -1680,152 +1703,128 @@ export const IncidentSetupDashboard = () => {
                 <div className="space-y-6">
                   {(editingItem?.type === 'Secondary Sub Category' || editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Category
-                      </label>
-                      <Select
-                        value={editFormData.category}
-                        onValueChange={value => setEditFormData({ ...editFormData, category: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.category}
+                          onChange={e => setEditFormData({ ...editFormData, category: e.target.value })}
+                          label="Secondary Category"
+                        >
                           {secondaryCategories.map(category => (
-                            <SelectItem key={category.id} value={category.name}>
+                            <MenuItem key={category.id} value={category.name}>
                               {category.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Secondary Sub Sub Category' || editingItem?.type === 'Secondary Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subCategory: e.target.value })}
+                          label="Secondary Sub Category"
+                        >
                           {secondarySubCategories
                             .filter(sub => sub.secondaryCategory === editFormData.category)
                             .map(subCategory => (
-                              <SelectItem key={subCategory.id} value={subCategory.secondarySubCategory}>
+                              <MenuItem key={subCategory.id} value={subCategory.secondarySubCategory}>
                                 {subCategory.secondarySubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {editingItem?.type === 'Secondary Sub Sub Sub Category' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Secondary Sub Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subSubCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subSubCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Secondary Sub Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subSubCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
+                          label="Secondary Sub Sub Category"
+                        >
                           {secondarySubSubCategories
                             .filter(subsub => subsub.secondaryCategory === editFormData.category && subsub.secondarySubCategory === editFormData.subCategory)
-                            .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={subSubCategory.secondarySubSubCategory}>
-                                {subSubCategory.secondarySubSubCategory}
-                              </SelectItem>
+                            .map(subsubCategory => (
+                              <MenuItem key={subsubCategory.id} value={subsubCategory.secondarySubSubCategory}>
+                                {subsubCategory.secondarySubSubCategory}
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Sub Category' || editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Category
-                      </label>
-                      <Select
-                        value={editFormData.category}
-                        onValueChange={async value => {
-                          setEditFormData({ ...editFormData, category: value, subCategory: '', subSubCategory: '' });
-                          // Optionally, fetch subcategories for this category if not already loaded
-                          // If you want to always fetch, uncomment below:
-                          // await fetchSubCategories();
-                        }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.category}
+                          onChange={async (e) => {
+                            setEditFormData({ ...editFormData, category: e.target.value, subCategory: '', subSubCategory: '' });
+                            // Optionally, fetch subcategories for this category if not already loaded
+                            // If you want to always fetch, uncomment below:
+                            // await fetchSubCategories();
+                          }}
+                          label="Category"
+                        >
                           {categories.map(category => (
-                            <SelectItem key={category.id} value={category.name}>
+                            <MenuItem key={category.id} value={category.name}>
                               {category.name}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {(editingItem?.type === 'Sub Sub Category' || editingItem?.type === 'Sub Sub Sub Category') && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sub-Category
-                      </label>
-                      <Select
-                        value={editFormData.subCategory}
-                        onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Sub-Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subCategory}
+                          onChange={(e) => { setSelectedSubCategory(e.target.value); setSelectedSubSubCategory(''); }}
+                          label="Sub-Category"
+                        >
                           {subCategories
                             .filter(sub => sub.category === editFormData.category)
                             .map(subCategory => (
-                              <SelectItem key={subCategory.id} value={subCategory.subCategory}>
+                              <MenuItem key={subCategory.id} value={subCategory.subCategory}>
                                 {subCategory.subCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
                   {editingItem?.type === 'Sub Sub Sub Category' && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sub Sub Category
-                      </label>
-                      <Select
-                        value={editFormData.subSubCategory}
-                        onValueChange={value => setEditFormData({ ...editFormData, subSubCategory: value })}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth size="small">
+                        <InputLabel>Sub Sub Category</InputLabel>
+                        <MuiSelect
+                          value={editFormData.subSubCategory}
+                          onChange={e => setEditFormData({ ...editFormData, subSubCategory: e.target.value })}
+                          label="Sub Sub Category"
+                        >
                           {subSubCategories
                             .filter(subsub => subsub.category === editFormData.category && subsub.subCategory === editFormData.subCategory)
                             .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
+                              <MenuItem key={subSubCategory.id} value={subSubCategory.subSubCategory}>
                                 {subSubCategory.subSubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
 
@@ -1926,28 +1925,28 @@ export const IncidentSetupDashboard = () => {
                             <SelectItem value="John Doe">John Doe</SelectItem>
                           </SelectContent>
                         </Select> */}
-                        <Select
-                          value={escalateToUsers}
-                          onValueChange={value => {
-                            // escalateToUsers is a comma-separated string of IDs
-                            const currentUserIds = escalateToUsers ? escalateToUsers.split(',').filter(u => u) : [];
-                            if (!currentUserIds.includes(value)) {
-                              const newUserIds = [...currentUserIds, value].filter(u => u);
-                              setEscalateToUsers(newUserIds.join(','));
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select up to 15 Options..." />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Escalate To Users</InputLabel>
+                          <MuiSelect
+                            value=""
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              // escalateToUsers is a comma-separated string of IDs
+                              const currentUserIds = escalateToUsers ? escalateToUsers.split(',').filter(u => u) : [];
+                              if (!currentUserIds.includes(value)) {
+                                const newUserIds = [...currentUserIds, value].filter(u => u);
+                                setEscalateToUsers(newUserIds.join(','));
+                              }
+                            }}
+                            label="Escalate To Users"
+                          >
                             {escalateToUsersList.map(user => (
-                              <SelectItem key={user.id} value={String(user.id)}>
+                              <MenuItem key={user.id} value={String(user.id)}>
                                 {user.full_name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                         <div className="flex flex-wrap gap-2 mt-2">
                           {escalateToUsers.split(',').filter(id => id.trim()).map((id, index) => {
                             const user = escalateToUsersList.find(u => String(u.id) === id);
@@ -1972,118 +1971,112 @@ export const IncidentSetupDashboard = () => {
                   ) : selectedCategory === 'Secondary Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubCategory}
+                            onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
+                            label="Secondary Sub Category"
+                          >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
                               .map(sub => (
-                                <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                <MenuItem key={sub.id} value={sub.secondarySubCategory}>
                                   {sub.secondarySubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Secondary Sub Sub Sub Category' ? (
                     <>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Category
-                        </label>
-                        <Select value={selectedSecondaryCategory} onValueChange={setSelectedSecondaryCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondaryCategory}
+                            onChange={(e) => setSelectedSecondaryCategory(e.target.value)}
+                            label="Secondary Category"
+                          >
                             {secondaryCategories.map(category => (
-                              <SelectItem key={category.id} value={category.name}>
+                              <MenuItem key={category.id} value={category.name}>
                                 {category.name}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubCategory} onValueChange={setSelectedSecondarySubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubCategory}
+                            onChange={(e) => setSelectedSecondarySubCategory(e.target.value)}
+                            label="Secondary Sub Category"
+                          >
                             {secondarySubCategories
                               .filter(sub => sub.secondaryCategory === selectedSecondaryCategory)
                               .map(sub => (
-                                <SelectItem key={sub.id} value={sub.secondarySubCategory}>
+                                <MenuItem key={sub.id} value={sub.secondarySubCategory}>
                                   {sub.secondarySubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                       <div className="flex-1">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Secondary Sub Sub Category
-                        </label>
-                        <Select value={selectedSecondarySubSubCategory} onValueChange={setSelectedSecondarySubSubCategory}>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Secondary Sub Sub Category" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-white z-50">
+                        <FormControl fullWidth className="mb-2">
+                          <InputLabel>Secondary Sub Sub Category</InputLabel>
+                          <MuiSelect
+                            value={selectedSecondarySubSubCategory}
+                            onChange={(e) => setSelectedSecondarySubSubCategory(e.target.value)}
+                            label="Secondary Sub Sub Category"
+                          >
                             {secondarySubSubCategories
                               .filter(subsub => subsub.secondaryCategory === selectedSecondaryCategory && subsub.secondarySubCategory === selectedSecondarySubCategory)
                               .map(subsub => (
-                                <SelectItem key={subsub.id} value={subsub.secondarySubSubCategory}>
+                                <MenuItem key={subsub.id} value={subsub.secondarySubSubCategory}>
                                   {subsub.secondarySubSubCategory}
-                                </SelectItem>
+                                </MenuItem>
                               ))}
-                          </SelectContent>
-                        </Select>
+                          </MuiSelect>
+                        </FormControl>
                       </div>
                     </>
                   ) : selectedCategory === 'Incident Disclaimer' ? (
@@ -2130,45 +2123,43 @@ export const IncidentSetupDashboard = () => {
                   ) : null}
                   {(selectedCategory === 'Sub Sub Category' || selectedCategory === 'Sub Sub Sub Category') && (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sub Category
-                      </label>
-                      <Select value={selectedSubCategory} onValueChange={(value) => { setSelectedSubCategory(value); setSelectedSubSubCategory(''); }}>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Sub Category</InputLabel>
+                        <MuiSelect
+                          value={selectedSubCategory}
+                          onChange={(e) => {
+                            setSelectedSubCategory(e.target.value);
+                            setSelectedSubSubCategory('');
+                          }}
+                          label="Sub Category"
+                        >
                           {subCategories.filter(sub => String(sub.categoryId) === String(selectedParentCategory)).map(subCategory => (
-                            <SelectItem key={subCategory.id} value={subCategory.id}>
+                            <MenuItem key={subCategory.id} value={subCategory.id}>
                               {subCategory.subCategory}
-                            </SelectItem>
+                            </MenuItem>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
                   {selectedCategory === 'Sub Sub Sub Category' && (
                     <div className="flex-1">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Sub Sub Category
-                      </label>
-                      <Select
-                        value={selectedSubSubCategory}
-                        onValueChange={setSelectedSubSubCategory}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select Sub Sub Category" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-white z-50">
+                      <FormControl fullWidth className="mb-2">
+                        <InputLabel>Sub Sub Category</InputLabel>
+                        <MuiSelect
+                          value={selectedSubSubCategory}
+                          onChange={(e) => setSelectedSubSubCategory(e.target.value)}
+                          label="Sub Sub Category"
+                        >
                           {subSubCategories
                             .filter(subsub => String(subsub.categoryId) === String(selectedParentCategory) && String(subsub.subCategoryId) === String(selectedSubCategory))
                             .map(subSubCategory => (
-                              <SelectItem key={subSubCategory.id} value={String(subSubCategory.id)}>
+                              <MenuItem key={subSubCategory.id} value={String(subSubCategory.id)}>
                                 {subSubCategory.subSubCategory}
-                              </SelectItem>
+                              </MenuItem>
                             ))}
-                        </SelectContent>
-                      </Select>
+                        </MuiSelect>
+                      </FormControl>
                     </div>
                   )}
                   {selectedCategory !== 'Escalations' && (
