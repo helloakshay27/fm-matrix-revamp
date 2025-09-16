@@ -35,6 +35,15 @@ export const GatePassInwardsDashboard = () => {
     materialType: '',
     expectedReturnDate: '',
     flagged: undefined as boolean | undefined,
+    gatePassNo: '',
+    gatePassTypeId: '',
+    gatePassDate: '',
+    vehicleNo: '',
+    vendorCompany: '',
+    vendor: '',
+    visitorName: '',
+    visitorContact: '',
+    buildingId: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -46,16 +55,25 @@ export const GatePassInwardsDashboard = () => {
   // Helper to build query params from filters
   const buildQueryParams = () => {
     const params: Record<string, string> = {};
+    // Existing params
     if (filters.gateNumber) params['q[gate_number_gate_number_cont]'] = filters.gateNumber;
     if (filters.createdBy) params['q[created_by_full_name_cont]'] = filters.createdBy;
     if (filters.materialName) params['q[gate_pass_materials_pms_inventory_name_cont]'] = filters.materialName;
     if (filters.supplierName) params['q[pms_supplier_company_name_cont]'] = filters.supplierName;
     if (filters.materialType) params['q[gate_pass_materials_pms_inventory_type_name_cont]'] = filters.materialType;
-    if (filters.expectedReturnDate) params['q[expected_return_date_eq]'] = filters.expectedReturnDate;
-    params['q[gate_pass_category_eq]'] = 'inward';
-    // Add flagged filter if present
+    // New fields from filter modal
+    if (filters.gatePassNo) params['q[gate_pass_no_cont]'] = filters.gatePassNo;
+    if (filters.gatePassTypeId) params['q[gate_pass_type_id_eq]'] = filters.gatePassTypeId;
+    if (filters.gatePassDate) params['q[gate_pass_date_eq]'] = filters.gatePassDate;
+    if (filters.vehicleNo) params['q[vehicle_no_cont]'] = filters.vehicleNo;
+    if (filters.vendorCompany) params['q[vendor_company_name_or_pms_supplier_company_name_cont]'] = filters.vendorCompany;
+    if (filters.vendor) params['q[pms_supplier_company_name_cont]'] = filters.vendor;
+    if (filters.visitorName) params['q[contact_person_cont]'] = filters.visitorName;
+    if (filters.visitorContact) params['q[contact_person_no_cont]'] = filters.visitorContact;
     if (filters.flagged === true) params['q[is_flagged_eq]'] = 'true';
     if (filters.flagged === false) params['q[is_flagged_eq]'] = 'false';
+    if (filters.buildingId) params['q[building_id_eq]'] = filters.buildingId;
+    params['q[gate_pass_category_eq]'] = 'inward';
     return params;
   };
 
@@ -207,13 +225,12 @@ export const GatePassInwardsDashboard = () => {
       const queryString = Object.entries(params)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
         .join('&');
-      const url = `${baseUrl}/gate_passes.xlsx?q[gate_pass_category_eq]=inward`;
+      const url = `${baseUrl}/gate_passes.xlsx?${queryString}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
         },
-        // Add no-referrer policy to avoid strict-origin issues
         referrerPolicy: 'no-referrer',
         mode: 'cors',
       });

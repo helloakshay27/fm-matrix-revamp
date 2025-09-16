@@ -33,6 +33,15 @@ export const GatePassOutwardsDashboard = () => {
     supplierName: '',
     expectedReturnDate: '',
     flagged: undefined as boolean | undefined,
+    gatePassNo: '',
+    gatePassTypeId: '',
+    gatePassDate: '',
+    vehicleNo: '',
+    vendorCompany: '',
+    visitorName: '',
+    visitorContact: '',
+    buildingId: '',
+    goodsType: '',
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -45,14 +54,24 @@ export const GatePassOutwardsDashboard = () => {
   // Helper to build query params from filters
   const buildQueryParams = () => {
     const params: Record<string, string> = {};
+    // Existing params
     if (filters.gateNumber) params['q[gate_number_gate_number_cont]'] = filters.gateNumber;
     if (filters.createdBy) params['q[created_by_full_name_cont]'] = filters.createdBy;
     if (filters.supplierName) params['q[pms_supplier_company_name_cont]'] = filters.supplierName;
     if (filters.expectedReturnDate) params['q[expected_return_date_eq]'] = filters.expectedReturnDate;
-    params['q[gate_pass_category_eq]'] = 'outward';
-    // Add flagged filter if present
+    // New fields from filter modal
+    if (filters.gatePassNo) params['q[gate_pass_no_cont]'] = filters.gatePassNo;
+    if (filters.gatePassTypeId) params['q[gate_pass_type_id_eq]'] = filters.gatePassTypeId;
+    if (filters.gatePassDate) params['q[gate_pass_date_eq]'] = filters.gatePassDate;
+    if (filters.vehicleNo) params['q[vehicle_no_cont]'] = filters.vehicleNo;
+    if (filters.vendorCompany) params['q[vendor_company_name_or_pms_supplier_company_name_cont]'] = filters.vendorCompany;
+    if (filters.visitorName) params['q[contact_person_cont]'] = filters.visitorName;
+    if (filters.visitorContact) params['q[contact_person_no_cont]'] = filters.visitorContact;
     if (filters.flagged === true) params['q[is_flagged_eq]'] = 'true';
     if (filters.flagged === false) params['q[is_flagged_eq]'] = 'false';
+    if (filters.buildingId) params['q[building_id_eq]'] = filters.buildingId;
+    if (filters.goodsType) params['q[returnable_eq]'] = filters.goodsType;
+    params['q[gate_pass_category_eq]'] = 'outward';
     return params;
   };
 
@@ -98,8 +117,6 @@ export const GatePassOutwardsDashboard = () => {
   const columns: ColumnConfig[] = [
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false, defaultVisible: true },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'vendorCompanyName', label: 'Vendor Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'buildingName', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'returnableNonReturnable', label: 'Goods Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'category', label: 'Gate Pass Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'personName', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
@@ -110,19 +127,23 @@ export const GatePassOutwardsDashboard = () => {
     { key: 'visitorContact', label: 'Visitor Contact', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'numberOfMaterials', label: 'No. of Materials', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'supplierName', label: 'Vendor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'isFlagged', label: 'Flag', sortable: false, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'vendorCompanyName', label: 'Vendor Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    { key: 'buildingName', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    // { key: 'isFlagged', label: 'Flag', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+    // { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
   ];
 
   // Prepare data with index for the enhanced table
   const dataWithIndex = outwardData.map((item, index) => {
     const materials = Array.isArray(item.gate_pass_materials) ? item.gate_pass_materials : [];
+    console.log('Gate Pass Item:', item);
+    
     return {
       sNo: index + 1,
       actions: '', // Placeholder, will be filled by renderRow
       id: item.id,
       vendorCompanyName: item.vendor_company_name || '--',
-      buildingName: item.building_name || '--',
+      buildingName: item?.building_name || '--',
       returnableNonReturnable: item.returnable === true ? 'check' : item.returnable === false ? 'cross' : '-',
       category: item.gate_pass_type_name || '--',
       personName: item.created_by_name || '--',
@@ -238,6 +259,8 @@ export const GatePassOutwardsDashboard = () => {
     unit: entry.unit,
     supplierName: entry.supplierName,
     numberOfMaterials: entry.numberOfMaterials,
+    vendorCompanyName: entry.vendorCompanyName,
+    buildingName: entry.buildingName,
     isFlagged: (
       <Flag
         className={`w-4 h-4 cursor-pointer ${entry.isFlagged ? 'text-red-500 fill-red-500' : 'text-gray-600'} ${togglingIds.has(entry.id) ? 'opacity-50 pointer-events-none' : ''}`}
@@ -277,12 +300,14 @@ export const GatePassOutwardsDashboard = () => {
       const queryString = Object.entries(params)
         .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
         .join('&');
-      const url = `${baseUrl}/gate_passes.xlsx?q[gate_pass_category_eq]=outward`;
+      const url = `${baseUrl}/gate_passes.xlsx?${queryString}`;
       const response = await fetch(url, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        referrerPolicy: 'no-referrer',
+        mode: 'cors',
       });
       if (!response.ok) {
         toast.error('Failed to export data');
