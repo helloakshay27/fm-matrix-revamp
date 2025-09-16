@@ -29,7 +29,7 @@ export const EditServicePage = () => {
   const [formData, setFormData] = useState({
     serviceName: '',
     executionType: '',
-    umo: '',
+    uom: '',
     serviceDescription: '',
     siteId: null as number | null,
     buildingId: null as number | null,
@@ -79,7 +79,7 @@ export const EditServicePage = () => {
       setFormData({
         serviceName: fetchedService.service_name || '',
         executionType: fetchedService.execution_type || '',
-        umo: fetchedService.base_uom || '',
+        uom: fetchedService.base_uom || '',
         serviceDescription: fetchedService.description || '',
         siteId: fetchedService.site_id || null,
         buildingId: fetchedService.building_id || null,
@@ -249,7 +249,7 @@ export const EditServicePage = () => {
     try {
       sendData.append('pms_service[service_name]', formData.serviceName);
       sendData.append('pms_service[execution_type]', formData.executionType);
-      sendData.append('pms_service[base_uom]', formData.umo || '');
+      sendData.append('pms_service[base_uom]', formData.uom || '');
       sendData.append('pms_service[site_id]', formData.siteId?.toString() || '');
       sendData.append('pms_service[building_id]', formData.buildingId?.toString() || '');
       sendData.append('pms_service[wing_id]', formData.wingId?.toString() || '');
@@ -366,10 +366,10 @@ export const EditServicePage = () => {
               )}
             </FormControl>
             <TextField
-              label="UMO"
-              placeholder="Enter UMO"
-              value={formData.umo}
-              onChange={(e) => handleInputChange('umo', e.target.value)}
+              label="UOM"
+              placeholder="Enter UOM"
+              value={formData.uom}
+              onChange={(e) => handleInputChange('uom', e.target.value)}
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
