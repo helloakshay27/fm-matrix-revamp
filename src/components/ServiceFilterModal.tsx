@@ -12,7 +12,13 @@ import {
   CircularProgress
 } from '@mui/material';
 import { toast } from 'sonner';
-import { fetchBuildings, fetchAreas, clearAreas } from '@/store/slices/serviceFilterSlice';
+import { fetchBuildings } from '@/store/slices/serviceFilterSlice';
+import {
+  fetchWings as fetchWingsLoc,
+  fetchAreas as fetchAreasLoc,
+  fetchFloors as fetchFloorsLoc,
+  fetchRooms as fetchRoomsLoc,
+} from '@/store/slices/locationSlice';
 import type { RootState, AppDispatch } from '@/store/store';
 
 interface ServiceFilterModalProps {
@@ -25,12 +31,24 @@ interface ServiceFilterModalProps {
 export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterModalProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const serviceFilterState = useSelector((state: RootState) => state.serviceFilter);
-  const { buildings = [], areas = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
+  const locationState = useSelector((state: RootState) => state.location);
+  const { buildings = [], loading = { buildings: false, areas: false }, error = { buildings: null, areas: null } } = serviceFilterState || {};
+  const wingsData = locationState?.wings?.data || [];
+  const wingsLoading = locationState?.wings?.loading || false;
+  const areasData = locationState?.areas?.data || [];
+  const areasLoading = locationState?.areas?.loading || false;
+  const floorsData = locationState?.floors?.data || [];
+  const floorsLoading = locationState?.floors?.loading || false;
+  const roomsData = locationState?.rooms?.data || [];
+  const roomsLoading = locationState?.rooms?.loading || false;
 
   const [filters, setFilters] = useState({
     serviceName: '',
     building: '',
-    area: ''
+    wing: '',
+    area: '',
+    floor: '',
+    room: ''
   });
 
   // All fields are optional; no validation errors tracked
@@ -46,14 +64,57 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
       const updated = { ...prev, [field]: value };
 
       if (field === 'building') {
+        // reset downstream
+        updated.wing = '';
         updated.area = '';
-        dispatch(clearAreas());
-
+        updated.floor = '';
+        updated.room = '';
         if (value) {
-          const wingId = parseInt(value);
-          if (!isNaN(wingId)) {
-            dispatch(fetchAreas(wingId));
+          const buildingId = parseInt(value);
+          if (!isNaN(buildingId)) {
+            dispatch(fetchWingsLoc(buildingId));
           }
+        }
+      }
+
+      if (field === 'wing') {
+        // reset below
+        updated.area = '';
+        updated.floor = '';
+        updated.room = '';
+        const buildingId = parseInt(prev.building);
+        const wingId = parseInt(value);
+        if (!isNaN(buildingId) && !isNaN(wingId)) {
+          dispatch(fetchAreasLoc({ buildingId, wingId }));
+        }
+      }
+
+      if (field === 'area') {
+        // reset below
+        updated.floor = '';
+        updated.room = '';
+        const buildingId = parseInt(prev.building);
+        const wingId = parseInt(prev.wing);
+        const areaId = parseInt(value);
+        if (!isNaN(buildingId) && !isNaN(areaId)) {
+          dispatch(fetchFloorsLoc({ buildingId, wingId: isNaN(wingId) ? 0 as unknown as number : wingId, areaId }));
+        }
+      }
+
+      if (field === 'floor') {
+        // reset below
+        updated.room = '';
+        const buildingId = parseInt(prev.building);
+        const wingId = parseInt(prev.wing);
+        const areaId = parseInt(prev.area);
+        const floorId = parseInt(value);
+        if (!isNaN(buildingId) && !isNaN(floorId)) {
+          dispatch(fetchRoomsLoc({
+            buildingId,
+            wingId: isNaN(wingId) ? 0 as unknown as number : wingId,
+            areaId: isNaN(areaId) ? 0 as unknown as number : areaId,
+            floorId,
+          }));
         }
       }
 
@@ -72,7 +133,10 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     setFilters({
       serviceName: '',
       building: '',
-      area: ''
+      wing: '',
+      area: '',
+      floor: '',
+      room: ''
     });
     onApply({});
   };
@@ -81,7 +145,10 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     setFilters({
       serviceName: '',
       building: '',
-      area: ''
+      wing: '',
+      area: '',
+      floor: '',
+      room: ''
     });
     onClose();
   };
@@ -115,11 +182,11 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
   // Helpers to safely render list options even if backend keys vary
   const unwrap = (obj: any): any => {
     if (!obj || typeof obj !== 'object') return obj;
-    // common wrappers from backend: { areas: {...} } or { buildings: {...} }
+    // Only treat as wrapper if the object has exactly one of the known wrapper keys
     const wrapperKeys = ['areas', 'area', 'buildings', 'building', 'wing', 'wings'];
-    for (const k of wrapperKeys) {
-      if (obj[k] && typeof obj[k] === 'object') return obj[k];
-    }
+    const keys = Object.keys(obj);
+    const soleWrapperKey = wrapperKeys.find((k) => k in obj && keys.length === 1);
+    if (soleWrapperKey && typeof obj[soleWrapperKey] === 'object') return obj[soleWrapperKey];
     return obj;
   };
 
@@ -210,9 +277,51 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                   ) : (
                     (Array.isArray(buildings) ? buildings : [])
                       .map((building) => {
-                        const idStr = getIdStr(building, ['id', 'building_id', 'wing_id', 'value']);
+                        const idStr = getIdStr(building, ['id', 'building_id', 'value']);
                         if (!idStr) return null;
-                        const label = getLabel(building, ['name', 'building_name', 'wing_name', 'label'], idStr);
+                        const label = getLabel(building, ['name', 'building_name', 'label'], idStr);
+                        return (
+                          <MenuItem key={idStr} value={idStr}>
+                            {label}
+                          </MenuItem>
+                        );
+                      })
+                      .filter(Boolean)
+                  )}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Wing */}
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="wing-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Wing</InputLabel>
+                <MuiSelect
+                  labelId="wing-select-label"
+                  label="Wing"
+                  displayEmpty
+                  value={filters.wing}
+                  onChange={(e) => {
+                    handleInputChange('wing', e.target.value as string);
+                  }}
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={!filters.building || wingsLoading}
+                >
+                  <MenuItem value=""><em>Wing</em></MenuItem>
+                  {wingsLoading ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : !filters.building ? (
+                    <MenuItem disabled>
+                      <em>Select a building first</em>
+                    </MenuItem>
+                  ) : (
+                    (Array.isArray(wingsData) ? wingsData : [])
+                      .map((wing) => {
+                        const idStr = getIdStr(wing, ['id', 'wing_id', 'value']);
+                        if (!idStr) return null;
+                        const label = getLabel(wing, ['name', 'wing_name', 'label'], idStr);
                         return (
                           <MenuItem key={idStr} value={idStr}>
                             {label}
@@ -236,10 +345,10 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                   }}
                   sx={fieldStyles}
                   MenuProps={menuProps}
-                  disabled={loading.areas || !filters.building}
+                  disabled={areasLoading || !filters.building || !filters.wing}
                 >
                   <MenuItem value=""><em>Area</em></MenuItem>
-                  {loading.areas ? (
+                  {areasLoading ? (
                     <MenuItem disabled>
                       <CircularProgress size={16} sx={{ mr: 1 }} />
                       Loading...
@@ -248,12 +357,100 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                     <MenuItem disabled>
                       <em>Select a building first</em>
                     </MenuItem>
+                  ) : !filters.wing ? (
+                    <MenuItem disabled>
+                      <em>Select a wing first</em>
+                    </MenuItem>
                   ) : (
-                    (Array.isArray(areas) ? areas : [])
+                    (Array.isArray(areasData) ? areasData : [])
                       .map((area) => {
                         const idStr = getIdStr(area, ['id', 'area_id', 'value']);
                         if (!idStr) return null;
                         const label = getLabel(area, ['name', 'area_name', 'label'], idStr);
+                        return (
+                          <MenuItem key={idStr} value={idStr}>
+                            {label}
+                          </MenuItem>
+                        );
+                      })
+                      .filter(Boolean)
+                  )}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Floor */}
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="floor-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Floor</InputLabel>
+                <MuiSelect
+                  labelId="floor-select-label"
+                  label="Floor"
+                  displayEmpty
+                  value={filters.floor}
+                  onChange={(e) => {
+                    handleInputChange('floor', e.target.value as string);
+                  }}
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={floorsLoading || !filters.area}
+                >
+                  <MenuItem value=""><em>Floor</em></MenuItem>
+                  {floorsLoading ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : !filters.area ? (
+                    <MenuItem disabled>
+                      <em>Select an area first</em>
+                    </MenuItem>
+                  ) : (
+                    (Array.isArray(floorsData) ? floorsData : [])
+                      .map((floor) => {
+                        const idStr = getIdStr(floor, ['id', 'floor_id', 'value']);
+                        if (!idStr) return null;
+                        const label = getLabel(floor, ['name', 'floor_name', 'label'], idStr);
+                        return (
+                          <MenuItem key={idStr} value={idStr}>
+                            {label}
+                          </MenuItem>
+                        );
+                      })
+                      .filter(Boolean)
+                  )}
+                </MuiSelect>
+              </FormControl>
+
+              {/* Room */}
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="room-select-label" shrink sx={{ backgroundColor: 'white', px: 1 }}>Room</InputLabel>
+                <MuiSelect
+                  labelId="room-select-label"
+                  label="Room"
+                  displayEmpty
+                  value={filters.room}
+                  onChange={(e) => {
+                    handleInputChange('room', e.target.value as string);
+                  }}
+                  sx={fieldStyles}
+                  MenuProps={menuProps}
+                  disabled={roomsLoading || !filters.floor}
+                >
+                  <MenuItem value=""><em>Room</em></MenuItem>
+                  {roomsLoading ? (
+                    <MenuItem disabled>
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                      Loading...
+                    </MenuItem>
+                  ) : !filters.floor ? (
+                    <MenuItem disabled>
+                      <em>Select a floor first</em>
+                    </MenuItem>
+                  ) : (
+                    (Array.isArray(roomsData) ? roomsData : [])
+                      .map((room) => {
+                        const idStr = getIdStr(room, ['id', 'room_id', 'value']);
+                        if (!idStr) return null;
+                        const label = getLabel(room, ['name', 'room_name', 'unit_name', 'label'], idStr);
                         return (
                           <MenuItem key={idStr} value={idStr}>
                             {label}
