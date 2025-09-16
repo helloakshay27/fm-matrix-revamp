@@ -948,7 +948,13 @@ export const OmanSidebar = () => {
           key={module.name}
           onClick={() => {
             if (hasSubItems) {
-              toggleExpanded(module.name);
+              // Navigate to first sub-item's href if it exists
+              const firstSubItem = module.subItems[0];
+              if (firstSubItem && firstSubItem.href) {
+                handleNavigation(firstSubItem.href, currentSection);
+              } else {
+                toggleExpanded(module.name);
+              }
             } else if (module.href) {
               handleNavigation(module.href, currentSection);
             }
@@ -1041,9 +1047,19 @@ export const OmanSidebar = () => {
               {currentModules.map((module) => (
                 <button
                   key={module.name}
-                  onClick={() =>
-                    module.href && handleNavigation(module.href, currentSection)
-                  }
+                  onClick={() => {
+                    if (module.subItems && module.subItems.length > 0) {
+                      // Navigate to first sub-item's href if it exists
+                      const firstSubItem = module.subItems[0];
+                      if (firstSubItem && firstSubItem.href) {
+                        handleNavigation(firstSubItem.href, currentSection);
+                      } else if (module.href) {
+                        handleNavigation(module.href, currentSection);
+                      }
+                    } else if (module.href) {
+                      handleNavigation(module.href, currentSection);
+                    }
+                  }}
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${
                     isActiveRoute(module.href)
                       ? "bg-[#f0e8dc] shadow-inner"
