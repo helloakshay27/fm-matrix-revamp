@@ -690,6 +690,20 @@ export const GatePassOutwardsAddPage = () => {
                 min: new Date().toISOString().split('T')[0]
               }}
             />
+             <div className="lg:col-span-3">
+                          <TextField
+                            label="Remarks"
+                            placeholder="Enter remarks"
+                            fullWidth
+                            variant="outlined"
+                            value={gatePassDetails.remarks}
+                            onChange={(e) => handleGatePassChange('remarks', e.target.value)}
+                            InputLabelProps={{ shrink: true }}
+                            // Removed multiline and rows for single-line input
+                            sx={{ '& .MuiInputBase-root': fieldStyles }}
+                          />
+                        </div>
+            
           </div>
         </div>
 
