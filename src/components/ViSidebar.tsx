@@ -46,6 +46,25 @@ const ViSidebar: React.FC = () => {
     const { currentSection, setCurrentSection, isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
+    // Helper function to find the deepest navigable sub-item
+    const findDeepestNavigableItem = (item: any): string | null => {
+        if (!item.subItems || item.subItems.length === 0) {
+            return item.href || null;
+        }
+
+        // Check if any sub-item has further sub-items
+        for (const subItem of item.subItems) {
+            if (subItem.subItems && subItem.subItems.length > 0) {
+                // Recursively find the deepest item
+                const deepest = findDeepestNavigableItem(subItem);
+                if (deepest) return deepest;
+            }
+        }
+
+        // If no deeper items, return the first sub-item's href
+        return item.subItems[0]?.href || null;
+    };
+
     useEffect(() => {
         // Ensure section shows Maintenance for VI routes
         if (location.pathname.startsWith('/maintenance')) {
@@ -175,7 +194,19 @@ const ViSidebar: React.FC = () => {
                             {currentModules.map((module) => (
                                 <button
                                     key={module.name}
-                                    onClick={() => module.href && handleNavigation(module.href)}
+                                    onClick={() => {
+                                        if (module.subItems && module.subItems.length > 0) {
+                                            // Navigate to the deepest navigable sub-item's href if it exists
+                                            const deepestHref = findDeepestNavigableItem(module);
+                                            if (deepestHref) {
+                                                handleNavigation(deepestHref);
+                                            } else if (module.href) {
+                                                handleNavigation(module.href);
+                                            }
+                                        } else if (module.href) {
+                                            handleNavigation(module.href);
+                                        }
+                                    }}
                                     className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
                                         ? 'bg-[#f0e8dc] shadow-inner'
                                         : 'hover:bg-[#DBC2A9]'

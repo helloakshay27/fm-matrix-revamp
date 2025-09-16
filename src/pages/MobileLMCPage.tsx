@@ -44,7 +44,8 @@ const MobileLMCPage: React.FC = () => {
     }
     try {
       setCirclesLoading(true);
-      const data = await authedGet(`https://${baseUrl.replace(/https?:\/\//,'')}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`);
+  const host = baseUrl ? baseUrl.replace(/^https?:\/\//,'') : 'live-api.gophygital.work';
+  const data = await authedGet(`https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`);
       let list: CircleOption[] = [];
       if (Array.isArray(data)) list = data.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
       else if (Array.isArray(data?.circles)) list = data.circles.map((c: any) => ({ id: String(c.id || c.circle_id || c.name), name: c.circle_name || c.name || c.circle || `Circle ${c.id}` }));
@@ -60,12 +61,24 @@ const MobileLMCPage: React.FC = () => {
   const loadUsers = async (circleId?: string) => {
     try {
       setUsersLoading(true);
-      const url = `https://${baseUrl.replace(/https?:\/\//,'')}/pms/users/get_escalate_to_users.json`;
+      const host = baseUrl ? baseUrl.replace(/^https?:\/\//,'') : 'live-api.gophygital.work';
+      const base = `https://${host}/pms/users/company_wise_users.json`;
+      const url = (restrictByCircle && circleId)
+        ? `${base}?q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(circleId)}`
+        : base;
       const data = await authedGet(url);
       const rawUsers = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
-      let mapped: UserOption[] = rawUsers.map((u: any) => ({ id: String(u.id), name: u.full_name || u.name || u.email || `User ${u.id}`, circle_id: u.circle_id || u.circle || u.circleId }));
+      let mapped: UserOption[] = rawUsers.map((u: any) => {
+        const first = u.first_name || u.firstname || u.firstName || '';
+        const last = u.last_name || u.lastname || u.lastName || '';
+        const fullFromParts = `${String(first).trim()} ${String(last).trim()}`.trim();
+        const fallbackFull = u.full_name || u.fullName || u.name || `User ${u.id}`;
+        const display = fullFromParts || fallbackFull;
+        return { id: String(u.id), name: String(display), circle_id: u.circle_id || u.circle || u.circleId };
+      });
+      // Fallback client-side filter if server didn’t apply
       if (restrictByCircle && circleId) {
-        mapped = mapped.filter(u => String(u.circle_id) === String(circleId));
+        mapped = mapped.filter(u => !u.circle_id || String(u.circle_id) === String(circleId));
       }
       setUsers(mapped);
     } catch (e: any) {

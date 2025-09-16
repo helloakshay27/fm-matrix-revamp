@@ -187,6 +187,11 @@ export interface CustomFormDetail {
   submission_time_value: number | null;
   rule_ids: string[];
   content: CustomFormContent[];
+  attachments?: Array<{
+    id: number;
+    file_name: string;
+    url: string;
+  }>;
 }
 
 export interface AssetTaskDetail {
@@ -204,11 +209,28 @@ export interface AssetTaskDetail {
   start_date: string;
   end_date: string;
   category: string;
-  assets: any[];
+  assigned_to?: Array<{
+    id: number;
+    name: string;
+    full_name: string;
+  }>;
+  backup_assigned?: {
+    id: number;
+    name: string;
+    full_name: string;
+  };
+  assets: Array<{
+    id: number;
+    name: string;
+    model_number?: string;
+    purchase_cost?: string;
+    created_at?: string;
+  }>;
   services: Array<{
     id: number;
     service_name: string;
     service_code: string;
+    created_at?: string;
   }>;
 }
 
@@ -249,13 +271,113 @@ export const transformChecklistData = (checklists: ChecklistMaster[]): Transform
 };
 
 export const fetchCustomFormDetails = async (formCode: string): Promise<CustomFormDetailsResponse> => {
-  const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${formCode}/custom_form_preview.json`;
-  
-  const response = await fetch(url, getAuthenticatedFetchOptions('GET'));
-  if (!response.ok) {
-    throw new Error('Failed to fetch custom form details');
+  if (!formCode) {
+    throw new Error('Form code is required');
   }
-  return response.json();
+  
+  // Use the same URL construction pattern as other working APIs
+  const baseUrl = getFullUrl(`/pms/custom_forms/${formCode}/custom_form_preview.json`);
+  
+  console.log('Fetching custom form details from:', baseUrl);
+  console.log('Using form code:', formCode);
+  
+  // Get auth options and log them for debugging
+  const fetchOptions = getAuthenticatedFetchOptions('GET');
+  console.log('Request headers:', fetchOptions.headers);
+  console.log('Request method:', fetchOptions.method);
+  
+  try {
+    const response = await fetch(baseUrl, fetchOptions);
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Error Response:', errorText);
+      
+      if (response.status === 404) {
+        throw new Error(`Schedule not found: Form code '${formCode}' does not exist`);
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      } else if (response.status === 403) {
+        throw new Error('Access denied. You do not have permission to view this schedule.');
+      } else {
+        throw new Error(`Failed to fetch schedule details: ${response.status} ${response.statusText}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log('Custom form details response:', data);
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in fetchCustomFormDetails:', error);
+    
+    // Log additional info for CORS debugging
+    if (error instanceof Error) {
+      console.error('Error name:', error.name);
+      console.error('Error message:', error.message);
+      console.error('Error stack:', error.stack);
+    }
+    
+    throw error;
+  }
+};
+
+// CORS-friendly alternative method that avoids preflight requests
+export const fetchCustomFormDetailsSimple = async (formCode: string): Promise<CustomFormDetailsResponse> => {
+  if (!formCode) {
+    throw new Error('Form code is required');
+  }
+  
+  // Use query parameter instead of headers to avoid CORS preflight
+  const url = `${API_CONFIG.BASE_URL}/pms/custom_forms/${formCode}/custom_form_preview.json?access_token=${API_CONFIG.TOKEN}`;
+  
+  console.log('Fetching custom form details (simple method) from:', url);
+  
+  try {
+    // Use simple GET request with no custom headers to avoid CORS preflight
+    const response = await fetch(url, {
+      method: 'GET'
+    });
+    
+    console.log('Simple method response status:', response.status);
+    console.log('Simple method response headers:', Object.fromEntries(response.headers.entries()));
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Simple method API Error Response:', errorText);
+      
+      if (response.status === 404) {
+        throw new Error(`Schedule not found: Form code '${formCode}' does not exist`);
+      } else if (response.status === 401) {
+        throw new Error('Authentication failed. Please log in again.');
+      } else if (response.status === 403) {
+        throw new Error('Access denied. You do not have permission to view this schedule.');
+      } else {
+        throw new Error(`Failed to fetch schedule details: ${response.status} ${response.statusText}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log('Simple method custom form details response:', data);
+    
+    // Validate response structure
+    if (!data || typeof data !== 'object') {
+      throw new Error('Invalid response format');
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error in fetchCustomFormDetailsSimple:', error);
+    throw error;
+  }
 };
 
 export const fetchCustomFormById = async (id: string): Promise<CustomForm> => {
@@ -294,7 +416,7 @@ export const transformCustomFormsData = (forms: CustomForm[]): TransformedSchedu
       validFrom: formatDate(form.start_date),
       validTill: formatDate(form.end_date),
       category: type === 'PPM' ? 'Technical' : 'Non Technical',
-      active: form.active === true || form.active === 1 || form.active === null,
+      active: form.active === 1 || form.active === null,
       createdOn: formatDate(form.created_at),
       custom_form_code: form.custom_form_code
     };
@@ -350,7 +472,15 @@ export interface ChecklistCreateResponse {
 export const createChecklistMaster = async (requestData: ChecklistCreateRequest): Promise<ChecklistCreateResponse> => {
   const url = `${API_CONFIG.BASE_URL}${ENDPOINTS.CREATE_CHECKLIST}`;
   
-  const response = await fetch(url, getAuthenticatedFetchOptions('POST', requestData));
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_CONFIG.TOKEN}`,
+      'Content-Type': 'application/json',
+      ...(localStorage.getItem('user_role_name') && { 'X-User-Role': localStorage.getItem('user_role_name')! })
+    },
+    body: JSON.stringify(requestData)
+  });
   if (!response.ok) {
     throw new Error('Failed to create checklist master');
   }
