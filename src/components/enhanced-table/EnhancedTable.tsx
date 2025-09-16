@@ -152,7 +152,7 @@ interface EnhancedTableProps<T> {
   leftActions?: React.ReactNode;
   rightActions?: React.ReactNode;
   onFilterClick?: () => void;
-  handleExport?: () => void;
+  handleExport?: (columnVisibility?: Record<string, boolean>) => void;
   enableGlobalSearch?: boolean; // Add this prop
   onGlobalSearch?: (searchTerm: string) => void; // Add this prop
 }
@@ -535,7 +535,13 @@ export function EnhancedTable<T extends Record<string, any>>({
             <Button
               variant="outline"
               size="sm"
-              onClick={handleExport || (() => exportTicketRecords())}
+              onClick={() => {
+                if (handleExport) {
+                  handleExport(columnVisibility);
+                } else {
+                  exportTicketRecords();
+                }
+              }}
               className="flex items-center gap-2"
               title='Export'
             >
