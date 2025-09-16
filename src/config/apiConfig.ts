@@ -284,11 +284,7 @@ export const getAuthenticatedFetchOptions = (method: string = 'GET', body?: stri
     'Content-Type': 'application/json',
   };
 
-  // Add role name header if available
-  const roleName = getRoleNameHeader();
-  if (roleName) {
-    headers['X-User-Role'] = roleName;
-  }
+
 
   const options: RequestInit = {
     method,
