@@ -461,7 +461,7 @@ const modulesByPackage = {
     { name: "Ticket", icon: FileText, href: "/maintenance/ticket" },
     { name: "Task", icon: CheckSquare, href: "/maintenance/task" },
     { name: "Schedule", icon: Calendar, href: "/maintenance/schedule" },
-    { name: "Services", icon: Wrench, href: "/maintenance/service" },
+    { name: "Soft Service", icon: Wrench, href: "/maintenance/service" },
     { name: "Assets", icon: Building, href: "/maintenance/asset" },
 
     {

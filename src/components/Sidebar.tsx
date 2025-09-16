@@ -474,7 +474,7 @@ const modulesByPackage = {
       href: "/maintenance/schedule",
     },
     {
-      name: "Services",
+      name: "Soft Services",
       icon: Wrench,
       href: "/maintenance/service",
     },

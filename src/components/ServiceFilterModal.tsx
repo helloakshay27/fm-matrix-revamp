@@ -112,6 +112,35 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
     disableEnforceFocus: true,
   };
 
+  // Helpers to safely render list options even if backend keys vary
+  const unwrap = (obj: any): any => {
+    if (!obj || typeof obj !== 'object') return obj;
+    // common wrappers from backend: { areas: {...} } or { buildings: {...} }
+    const wrapperKeys = ['areas', 'area', 'buildings', 'building', 'wing', 'wings'];
+    for (const k of wrapperKeys) {
+      if (obj[k] && typeof obj[k] === 'object') return obj[k];
+    }
+    return obj;
+  };
+
+  const getIdStr = (item: any, candidates: string[]): string | null => {
+    const src = unwrap(item);
+    for (const key of candidates) {
+      const v = src?.[key];
+      if (v !== undefined && v !== null && v !== '') return String(v);
+    }
+    return null;
+  };
+
+  const getLabel = (item: any, candidates: string[], fallback: string | null): string => {
+    const src = unwrap(item);
+    for (const key of candidates) {
+      const v = src?.[key];
+      if (typeof v === 'string' && v.trim()) return v;
+    }
+    return fallback ?? '';
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => { if (!open) handleClose(); }} modal={false}>
       <DialogContent className="max-w-2xl" aria-describedby="filter-dialog-description">
@@ -179,11 +208,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                       Loading...
                     </MenuItem>
                   ) : (
-                    buildings.map((building) => (
-                      <MenuItem key={building.id} value={building.id.toString()}>
-                        {building.name}
-                      </MenuItem>
-                    ))
+                    (Array.isArray(buildings) ? buildings : [])
+                      .map((building) => {
+                        const idStr = getIdStr(building, ['id', 'building_id', 'wing_id', 'value']);
+                        if (!idStr) return null;
+                        const label = getLabel(building, ['name', 'building_name', 'wing_name', 'label'], idStr);
+                        return (
+                          <MenuItem key={idStr} value={idStr}>
+                            {label}
+                          </MenuItem>
+                        );
+                      })
+                      .filter(Boolean)
                   )}
                 </MuiSelect>
               </FormControl>
@@ -213,11 +249,18 @@ export const ServiceFilterModal = ({ isOpen, onClose, onApply }: ServiceFilterMo
                       <em>Select a building first</em>
                     </MenuItem>
                   ) : (
-                    areas.map((area) => (
-                      <MenuItem key={area.id} value={area.id.toString()}>
-                        {area.name}
-                      </MenuItem>
-                    ))
+                    (Array.isArray(areas) ? areas : [])
+                      .map((area) => {
+                        const idStr = getIdStr(area, ['id', 'area_id', 'value']);
+                        if (!idStr) return null;
+                        const label = getLabel(area, ['name', 'area_name', 'label'], idStr);
+                        return (
+                          <MenuItem key={idStr} value={idStr}>
+                            {label}
+                          </MenuItem>
+                        );
+                      })
+                      .filter(Boolean)
                   )}
                 </MuiSelect>
               </FormControl>

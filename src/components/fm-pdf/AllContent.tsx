@@ -29,6 +29,7 @@ const AllContent = () => {
     const params = useMemo(() => new URLSearchParams(location.search), [location.search]);
     const startDate = params.get('start_date') || '2025-01-15';
     const endDate = params.get('end_date') || '2025-02-15';
+    const auto = params.get('auto') === '1';
 
     const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
     const dateRangeLabel = useMemo(() => {
@@ -1580,9 +1581,26 @@ const AllContent = () => {
         loadingHighestMaintenanceAssets
     );
 
+    // If auto flag is on and all data is ready, trigger print once.
+    useEffect(() => {
+        if (auto && !isGlobalLoading) {
+            const w = window;
+            try {
+                const handleAfter = () => {
+                    try { w.close(); } catch { }
+                    w.removeEventListener('afterprint', handleAfter as any);
+                };
+                w.addEventListener('afterprint', handleAfter as any);
+                setTimeout(() => {
+                    try { w.focus(); w.print(); } catch { }
+                }, 300);
+            } catch { }
+        }
+    }, [auto, isGlobalLoading]);
+
     if (isGlobalLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div data-loading="true" className="flex items-center justify-center min-h-screen">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-4 border-t-transparent border-red-600 mx-auto mb-3" />
                     <div className="text-gray-700">Loading report...</div>
@@ -1593,6 +1611,8 @@ const AllContent = () => {
 
     return (
         <>
+            {/* readiness marker for external polling */}
+            <div data-component="all-content" data-loading="false" style={{ display: 'none' }} />
 
             <style>{`@media print {
     @page {
