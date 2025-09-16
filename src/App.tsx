@@ -717,6 +717,7 @@ import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import { ProjectsDashboard } from "./pages/ProjectsDashboard";
+import ProjectDetailsPage from "./pages/ProjectDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -2002,6 +2003,10 @@ function App() {
                     <Route
                       path="/maintenance/projects"
                       element={<ProjectsDashboard />}
+                    />
+                    <Route
+                      path="/maintenance/projects/details/:id"
+                      element={<ProjectDetailsPage />}
                     />
 
                     {/* Utility Routes */}
