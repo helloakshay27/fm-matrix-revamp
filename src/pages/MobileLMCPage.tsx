@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -27,9 +27,14 @@ const MobileLMCPage: React.FC = () => {
   const [circlesLoading, setCirclesLoading] = useState(false);
   const [users, setUsers] = useState<UserOption[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [usersAppendLoading, setUsersAppendLoading] = useState(false);
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersTotalPages, setUsersTotalPages] = useState(1);
+  const [userSearch, setUserSearch] = useState('');
   const [selectedCircle, setSelectedCircle] = useState<string>('');
   const [selectedUser, setSelectedUser] = useState<string>('');
   const [refreshing, setRefreshing] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Derive baseUrl
   const rawBase = localStorage.getItem('baseUrl') || '';
@@ -58,14 +63,16 @@ const MobileLMCPage: React.FC = () => {
   };
 
   // Load users (optionally filtered by circle)
-  const loadUsers = async (circleId?: string) => {
+  const loadUsers = async (circleId?: string, page: number = 1, append: boolean = false) => {
     try {
-      setUsersLoading(true);
+      if (append) setUsersAppendLoading(true);
+      else setUsersLoading(true);
       const host = baseUrl ? baseUrl.replace(/^https?:\/\//,'') : 'live-api.gophygital.work';
       const base = `https://${host}/pms/users/company_wise_users.json`;
-      const url = (restrictByCircle && circleId)
-        ? `${base}?q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(circleId)}`
-        : base;
+      const params: string[] = [];
+      if (restrictByCircle && circleId) params.push(`q[lock_user_permissions_circle_id_eq]=${encodeURIComponent(circleId)}`);
+      if (page && page > 1) params.push(`page=${page}`);
+      const url = params.length ? `${base}?${params.join('&')}` : base;
       const data = await authedGet(url);
       const rawUsers = Array.isArray(data?.users) ? data.users : (Array.isArray(data) ? data : []);
       let mapped: UserOption[] = rawUsers.map((u: any) => {
@@ -80,12 +87,23 @@ const MobileLMCPage: React.FC = () => {
       if (restrictByCircle && circleId) {
         mapped = mapped.filter(u => !u.circle_id || String(u.circle_id) === String(circleId));
       }
-      setUsers(mapped);
+      setUsers(prev => {
+        if (!append) return mapped;
+        const existing = new Map(prev.map(u => [u.id, u] as const));
+        for (const u of mapped) existing.set(u.id, u);
+        return Array.from(existing.values());
+      });
+      const p = (data && data.pagination) ? data.pagination : undefined;
+      setUsersPage(p?.current_page || page || 1);
+      setUsersTotalPages(p?.total_pages || 1);
     } catch (e: any) {
       console.error('Failed to load users', e);
       toast.error(e.message || 'Failed to load users');
       setUsers([]);
-    } finally { setUsersLoading(false); }
+    } finally { 
+      if (append) setUsersAppendLoading(false);
+      else setUsersLoading(false);
+    }
   };
 
   // Initial loads
@@ -94,12 +112,15 @@ const MobileLMCPage: React.FC = () => {
     // When restriction toggles off, fetch all users ignoring circle.
     if (!restrictByCircle) {
       setSelectedCircle('');
-      loadUsers();
+      setUsers([]); setUsersPage(1); setUsersTotalPages(1);
+      loadUsers(undefined, 1, false);
     } else if (restrictByCircle && selectedCircle) {
-      loadUsers(selectedCircle);
+      setUsers([]); setUsersPage(1); setUsersTotalPages(1);
+      loadUsers(selectedCircle, 1, false);
     } else {
       // If restriction on but no circle chosen yet -> empty user list
       setUsers([]);
+      setUsersPage(1); setUsersTotalPages(1);
     }
   }, [restrictByCircle, selectedCircle]);
 
@@ -118,6 +139,22 @@ const MobileLMCPage: React.FC = () => {
   const userDisabled = restrictByCircle && !selectedCircle;
 
   const userPlaceholder = restrictByCircle ? (userDisabled ? 'Select circle first' : 'Select user') : 'Select user';
+  const filteredUsers = useMemo(() => {
+    const q = userSearch.trim().toLowerCase();
+    if (!q) return users;
+    return users.filter(u => u.name.toLowerCase().includes(q));
+  }, [userSearch, users]);
+
+  const handleUserScroll: React.UIEventHandler<HTMLDivElement> = (e) => {
+    const el = e.currentTarget;
+    if (usersLoading || usersAppendLoading) return;
+    const nearBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
+    if (nearBottom && usersPage < usersTotalPages) {
+      const nextPage = usersPage + 1;
+      const circleId = restrictByCircle ? selectedCircle || undefined : undefined;
+      loadUsers(circleId, nextPage, true);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-3 sm:p-6 flex items-center justify-center">
@@ -180,7 +217,7 @@ const MobileLMCPage: React.FC = () => {
               </Select>
             </div>
 
-            {/* User Dropdown */}
+            {/* User Dropdown with search + infinite scroll */}
             <div className="space-y-2">
               <Label className={`block text-sm sm:text-base font-medium text-center ${userDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
                 User
@@ -195,18 +232,52 @@ const MobileLMCPage: React.FC = () => {
                 }`}>
                   <SelectValue placeholder={usersLoading ? 'Loading users...' : userPlaceholder} />
                 </SelectTrigger>
-                <SelectContent className="max-h-60">
-                  {users.map(u => (
-                    <SelectItem key={u.id} value={u.id} className="text-base py-3">{u.name}</SelectItem>
-                  ))}
-                  {!usersLoading && users.length === 0 && (
-                    <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                      {restrictByCircle && !selectedCircle 
-                        ? 'Please select a circle first' 
-                        : 'No users available'
-                      }
-                    </div>
-                  )}
+                <SelectContent 
+                  className="w-[var(--radix-select-trigger-width)]"
+                  onOpenAutoFocus={(e) => {
+                    // Prevent Radix from focusing the first item; focus our search input instead
+                    e.preventDefault();
+                    setTimeout(() => searchInputRef.current?.focus(), 0);
+                  }}
+                >
+                  <div className="p-2 sticky top-0 bg-white border-b">
+                    <input
+                      ref={searchInputRef}
+                      value={userSearch}
+                      onChange={(e) => setUserSearch(e.target.value)}
+                      onKeyDown={(e) => {
+                        // Keep typing inside input; avoid Radix Select typeahead/selection
+                        e.stopPropagation();
+                        if (e.key === 'Enter') e.preventDefault();
+                      }}
+                      onKeyDownCapture={(e) => {
+                        // Extra guard so Select never sees these keys
+                        e.stopPropagation();
+                      }}
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={(e) => e.stopPropagation()}
+                      placeholder="Search user..."
+                      autoFocus
+                      className="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                    />
+                  </div>
+                  <div className="max-h-60 overflow-auto" onScroll={handleUserScroll}>
+                    {filteredUsers.map(u => (
+                      <SelectItem key={u.id} value={u.id} className="text-base py-3">{u.name}</SelectItem>
+                    ))}
+                    {(usersLoading || usersAppendLoading) && (
+                      <div className="px-4 py-3 text-center text-gray-500 text-sm">Loading...</div>
+                    )}
+                    {!usersLoading && filteredUsers.length === 0 && (
+                      <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                        {restrictByCircle && !selectedCircle 
+                          ? 'Please select a circle first' 
+                          : 'No users found'
+                        }
+                      </div>
+                    )}
+                  </div>
                 </SelectContent>
               </Select>
             </div>
