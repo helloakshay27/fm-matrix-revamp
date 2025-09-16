@@ -1313,6 +1313,25 @@ export const Sidebar = () => {
   const [selectedDepartment, setSelectedRole] = useState("");
   const [selectedRole, setSelectedDepartment] = useState("");
 
+  // Helper function to find the deepest navigable sub-item
+  const findDeepestNavigableItem = (item: any): string | null => {
+    if (!item.subItems || item.subItems.length === 0) {
+      return item.href || null;
+    }
+    
+    // Check if any sub-item has further sub-items
+    for (const subItem of item.subItems) {
+      if (subItem.subItems && subItem.subItems.length > 0) {
+        // Recursively find the deepest item
+        const deepest = findDeepestNavigableItem(subItem);
+        if (deepest) return deepest;
+      }
+    }
+    
+    // If no deeper items, return the first sub-item's href
+    return item.subItems[0]?.href || null;
+  };
+
   // Smart dynamic permission check using actual API response
   const checkPermission = React.useCallback((checkItem: any) => {
     // If no user role data, show all items
@@ -1846,10 +1865,10 @@ export const Sidebar = () => {
           key={module.name}
           onClick={() => {
             if (hasSubItems) {
-              // Navigate to first sub-item's href if it exists
-              const firstSubItem = module.subItems[0];
-              if (firstSubItem && firstSubItem.href) {
-                handleNavigation(firstSubItem.href, currentSection);
+              // Navigate to the deepest navigable sub-item's href if it exists
+              const deepestHref = findDeepestNavigableItem(module);
+              if (deepestHref) {
+                handleNavigation(deepestHref, currentSection);
               } else {
                 toggleExpanded(module.name);
               }
@@ -1953,10 +1972,10 @@ export const Sidebar = () => {
                   key={module.name}
                   onClick={() => {
                     if (module.subItems && module.subItems.length > 0) {
-                      // Navigate to first sub-item's href if it exists
-                      const firstSubItem = module.subItems[0];
-                      if (firstSubItem && firstSubItem.href) {
-                        handleNavigation(firstSubItem.href, currentSection);
+                      // Navigate to the deepest navigable sub-item's href if it exists
+                      const deepestHref = findDeepestNavigableItem(module);
+                      if (deepestHref) {
+                        handleNavigation(deepestHref, currentSection);
                       } else if (module.href) {
                         handleNavigation(module.href, currentSection);
                       }
