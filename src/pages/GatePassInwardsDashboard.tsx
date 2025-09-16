@@ -105,7 +105,7 @@ export const GatePassInwardsDashboard = () => {
   const columns = useMemo(() => [
     { key: 'actions', label: 'Actions', sortable: false, hideable: false, draggable: false, defaultVisible: true },
     { key: 'id', label: 'ID', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'returnableNonReturnable', label: 'Goods Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    // { key: 'returnableNonReturnable', label: 'Goods Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'category', label: 'Gate Pass Type', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'personName', label: 'Created By', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'passNo', label: 'Gate Pass No.', sortable: true, hideable: true, draggable: true, defaultVisible: true },
@@ -115,8 +115,8 @@ export const GatePassInwardsDashboard = () => {
     { key: 'visitorContact', label: 'Visitor Contact', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'numberOfMaterials', label: 'No. of Materials', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'supplierName', label: 'Vendor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'isFlagged', label: 'Flag', sortable: false, hideable: true, draggable: true, defaultVisible: true },
-    { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+    // { key: 'isFlagged', label: 'Flag', sortable: false, hideable: true, draggable: true, defaultVisible: true },
+    // { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
         { key: 'vendorCompanyName', label: 'Vendor Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'buildingName', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
   ], []);
