@@ -245,6 +245,11 @@ export const ServiceDetailsPage = () => {
 
   return (
     <div className="p-4 sm:p-6">
+      {/* Service Title */}
+      <div className="mb-3">
+        <h1 className="text-2xl font-bold text-[#1a1a1a] truncate">{details.service_name || 'Service Details'}</h1>
+      </div>
+
       {/* Top Buttons */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <Button
