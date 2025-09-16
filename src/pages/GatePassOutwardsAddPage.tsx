@@ -248,10 +248,12 @@ export const GatePassOutwardsAddPage = () => {
   // Field-level error state
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [vendorCompanyName, setVendorCompanyName] = useState<string>(''); // NEW: vendor company name field
+  const [isSubmitting, setIsSubmitting] = useState(false); // NEW: submission state
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    if (isSubmitting) return; // Prevent double submit
+    setIsSubmitting(true);
     // Field-level validation
     if (!visitorDetails.contactPerson) {
           toast.error("Visitor Name is required");
@@ -399,12 +401,13 @@ export const GatePassOutwardsAddPage = () => {
       // if (!response.ok) throw new Error('Failed to create entry');
 
       await gatePassInwardService.createGatePassInward(formData);
-
       toast.success("Gate pass outward entry created successfully!");
       navigate('/security/gate-pass/outwards');
     } catch (error) {
       console.error('Error submitting form:', error);
       toast.error("Failed to create entry. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
   useEffect(() => {
@@ -989,7 +992,13 @@ export const GatePassOutwardsAddPage = () => {
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-4 pt-4">
-          <Button type="submit" className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2">Submit</Button>
+          <Button
+  type="submit"
+  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+  disabled={isSubmitting}
+>
+  Submit
+</Button>
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/outwards')}>Cancel</Button>
         </div>
       </form>
