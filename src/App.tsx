@@ -2747,11 +2747,11 @@ function App() {
                       element={<AddWasteGenerationPage />}
                     />
                     <Route
-                      path="maintenance/task"
+                      path="/maintenance/task"
                       element={<ScheduledTaskDashboard />}
                     />
                     <Route
-                      path="task-details/:id"
+                      path="/maintenance/task-details/:id"
                       element={<TaskDetailsPage />}
                     />
                     <Route path="*" element={<NotFound />} />
