@@ -109,25 +109,7 @@ export const GatePassInwardsDetailPage = () => {
         >
           View Attachments
         </button>
-      ),
-      updates: (!mat.recieved_date || mat.recieved_date === '' || mat.recieved_date === null) ? (
-        <Button size="sm" variant="outline" onClick={() => {
-          const attachmentsToShow = (mat.attachments && mat.attachments.length > 0)
-            ? mat.attachments
-            : gatePassData.attachments;
-          setSelectedAttachment({
-            attachments: attachmentsToShow || [],
-            itemIndex: idx,
-            itemName: mat.material || mat.other_material_name || '--',
-            received: !!mat.recieved_date,
-          });
-          setIsAttachmentModalOpen(true);
-        }}>
-          Receive
-        </Button>
-      ) : (
-        <span className="text-green-600 text-xs">Received</span>
-      ),
+      )
     };
   });
 
@@ -154,7 +136,6 @@ export const GatePassInwardsDetailPage = () => {
     { key: "unit", label: "Unit", sortable: false, defaultVisible: true },
     { key: "quantity", label: "Quantity", sortable: false, defaultVisible: true },
     { key: "description", label: "Description", sortable: false, defaultVisible: true },
-    { key: "updates", label: "Updates", sortable: false, defaultVisible: true },
   ];
 
   const renderCell = (item: any, columnKey: string) => {

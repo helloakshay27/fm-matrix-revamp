@@ -44,6 +44,12 @@ export const AddServicePage = () => {
     floorId: false,
   });
 
+  // Upload constraints
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+  const ALLOWED_EXTS = new Set(['pdf','jpg','jpeg','xls','xlsx']);
+  const getExt = (name: string) => (name.split('.').pop() || '').toLowerCase();
+  const formatMB = (bytes: number) => `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+
   const handleInputChange = (field: string, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
@@ -88,12 +94,41 @@ export const AddServicePage = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      const newFiles = Array.from(files);
+      const incoming = Array.from(files);
+      const rejected: string[] = [];
+
       setSelectedFiles(prevFiles => {
         const existingNames = new Set(prevFiles.map(f => f.name));
-        const filteredNewFiles = newFiles.filter(f => !existingNames.has(f.name));
-        return [...prevFiles, ...filteredNewFiles];
+        const accepted: File[] = [];
+
+        for (const f of incoming) {
+          const ext = getExt(f.name);
+          if (!ALLOWED_EXTS.has(ext)) {
+            rejected.push(`${f.name}: unsupported format`);
+            continue;
+          }
+          if (f.size > MAX_FILE_SIZE) {
+            rejected.push(`${f.name}: too large (${formatMB(f.size)}). Max 10 MB`);
+            continue;
+          }
+          if (existingNames.has(f.name)) {
+            // silently skip duplicates by name
+            continue;
+          }
+          accepted.push(f);
+        }
+
+        if (rejected.length) {
+          toast.error(
+            `Some files were not added:\n` + rejected.slice(0, 5).join('\n') + (rejected.length > 5 ? `\n…and ${rejected.length - 5} more` : ''),
+            { duration: 5000 }
+          );
+        }
+
+        return [...prevFiles, ...accepted];
       });
+
+      // Reset input so same file can be reselected after modifying
       event.target.value = '';
     }
   };
@@ -420,7 +455,7 @@ export const AddServicePage = () => {
               className="hidden"
               id="file-upload"
               onChange={handleFileUpload}
-              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
+              accept=".pdf,.jpg,.jpeg,.xls,.xlsx"
               disabled={isSubmitting}
             />
             <div className="flex items-center justify-center gap-2 mb-4">
@@ -443,7 +478,17 @@ export const AddServicePage = () => {
             >
               <span className="text-lg mr-2">+</span> Upload Files
             </button>
-
+            <div className="mt-4 w-full max-w-[520px]">
+              <div className="text-[12px] text-gray-700 border border-gray-200 rounded-md bg-gray-50 px-3 py-2">
+                <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
+                  {/* <span className="font-medium text-gray-800">Upload guidelines:</span> */}
+                  <span className="text-gray-600 font-bold">Allowed formats:</span>
+                  <span className="text-gray-800">PDF, JPG, JPEG, XLS, XLSX</span>
+                  <span className="text-gray-600 font-bold">Max size per file:</span>
+                  <span className="text-gray-800">10 MB</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {selectedFiles.length > 0 && (
@@ -451,7 +496,7 @@ export const AddServicePage = () => {
               {selectedFiles.map((file, index) => {
                 const isImage = file.type.startsWith('image/');
                 const isPdf = file.type === 'application/pdf';
-                const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
                 const fileURL = URL.createObjectURL(file);
 
                 return (

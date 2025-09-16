@@ -297,7 +297,7 @@ export const ScheduleListDashboard = () => {
     sortable: true
   }, {
     key: 'scheduleType',
-    label: 'Schedule Type',
+    label: 'Schedule For',
     sortable: true
   }, {
     key: 'noOfAssociation',

@@ -17,9 +17,10 @@ import {
 import { toast } from "sonner";
 import { useAppDispatch } from "@/store/hooks";
 import { createServicePR, getServices } from "@/store/slices/servicePRSlice";
-import { getWorkOrderById } from "@/store/slices/workOrderSlice";
+import { fetchServicePR, getWorkOrderById } from "@/store/slices/workOrderSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import axios from "axios";
 
 interface Attachment {
   id: number;
@@ -48,13 +49,15 @@ export const WorkOrderAddPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [servicePR, setServicePR] = useState([])
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
+    servicePr: "",
     contractor: "",
     plantDetail: "",
-    woDate: new Date(),
+    woDate: "",
     billingAddress: "",
     retention: "",
     tds: "",
@@ -94,6 +97,15 @@ export const WorkOrderAddPage: React.FC = () => {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
 
   useEffect(() => {
+    const getServicePR = async () => {
+      try {
+        const response = await dispatch(fetchServicePR({ token, baseUrl })).unwrap();
+        setServicePR(response.service_prs)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
     const fetchSuppliers = async () => {
       try {
         const response = await dispatch(
@@ -146,6 +158,7 @@ export const WorkOrderAddPage: React.FC = () => {
       }
     };
 
+    getServicePR()
     fetchSuppliers();
     fetchPlantDetails();
     fetchAddresses();
@@ -163,6 +176,7 @@ export const WorkOrderAddPage: React.FC = () => {
           const data = response.page
 
           setFormData({
+            servicePr: "",
             contractor: data.pms_supplier_id,
             plantDetail: data.work_order?.plant_detail_id,
             woDate: data.work_order?.wo_date,
@@ -210,11 +224,75 @@ export const WorkOrderAddPage: React.FC = () => {
     }
   }, [shouldFetch]);
 
+  const fetchServicePRDetails = async (servicePrId) => {
+    try {
+      const response = await axios.get(`https://${baseUrl}/pms/work_orders/get_details.json?id=${servicePrId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = response.data.service_pr;
+      const inventory = response.data.pms_inventories
+
+      setFormData((prev) => ({
+        ...prev,
+        contractor: data.pms_supplier_id || prev.contractor,
+        plantDetail: data.plant_detail_id || prev.plantDetail,
+        woDate: data.wo_date.split("T")[0] || prev.woDate,
+        billingAddress: data.billing_address_id || prev.billingAddress,
+        retention: data.retention || prev.retention,
+        tds: data.tds || prev.tds,
+        qc: data.quality_holding || prev.qc,
+        paymentTenure: data.payment_tenure || prev.paymentTenure,
+        advanceAmount: data.advance_amount || prev.advanceAmount,
+        relatedTo: data.related_to || prev.relatedTo,
+        kindAttention: data.address_to || prev.kindAttention,
+        subject: data.subject || prev.subject,
+        description: data.description || prev.description,
+        termsConditions: data.term_condition || prev.termsConditions,
+      }));
+
+      if (inventory && inventory.length > 0) {
+        setDetailsForms(
+          inventory.map((item: any, index: number) => ({
+            id: index + 1,
+            service: item.pms_service_id || '',
+            productDescription: item.prod_desc || '',
+            quantityArea: item.quantity || '',
+            uom: item.unit || '',
+            expectedDate: item.expected_date ? new Date(item.expected_date) : new Date(),
+            rate: item.rate || '',
+            cgstRate: item.cgst_rate || '',
+            cgstAmt: item.cgst_amount || '',
+            sgstRate: item.sgst_rate || '',
+            sgstAmt: item.sgst_amount || '',
+            igstRate: item.igst_rate || '',
+            igstAmt: item.igst_amount || '',
+            tcsRate: item.tcs_rate || '',
+            tcsAmt: item.tcs_amount || '',
+            taxAmount: item.taxable_value,
+            amount: item.total_value || '',
+            totalAmount: Number(item.taxable_value) + Number(item.total_value) || '',
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Error fetching Service PR details:', error);
+      toast.error('Failed to fetch Service PR details');
+    }
+  };
+
   const handleInputChange = (field: string, value: string | Date) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    console.log(typeof value)
+    if (field === 'servicePr') {
+      fetchServicePRDetails(value);
+    }
   };
 
   const calculateItem = (item) => {
@@ -359,6 +437,7 @@ export const WorkOrderAddPage: React.FC = () => {
     }
     const payload = {
       pms_work_order: {
+        reference_id: formData.servicePr,
         letter_of_indent: false,
         pms_supplier_id: formData.contractor,
         plant_detail_id: formData.plantDetail,
@@ -445,6 +524,47 @@ export const WorkOrderAddPage: React.FC = () => {
                   mt: 1,
                 }}
               >
+                <InputLabel shrink>Select Service PR*</InputLabel>
+                <MuiSelect
+                  label="Select Service PR*"
+                  value={formData.servicePr}
+                  onChange={(e) =>
+                    handleInputChange("servicePr", e.target.value)
+                  }
+                  displayEmpty
+                  sx={{
+                    height: {
+                      xs: 28,
+                      sm: 36,
+                      md: 45,
+                    },
+                    "& .MuiInputBase-input, & .MuiSelect-select": {
+                      padding: {
+                        xs: "8px",
+                        sm: "10px",
+                        md: "12px",
+                      },
+                    },
+                  }}
+                >
+                  <MenuItem value="">
+                    <em>Select Service PR</em>
+                  </MenuItem>
+                  {servicePR.map((pr) => (
+                    <MenuItem key={pr.id} value={pr.id}>
+                      {pr.external_id} - {pr.reference_number}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+
+              <FormControl
+                fullWidth
+                variant="outlined"
+                sx={{
+                  mt: 1,
+                }}
+              >
                 <InputLabel shrink>Select Contractor*</InputLabel>
                 <MuiSelect
                   label="Select Contractor*"
@@ -522,13 +642,9 @@ export const WorkOrderAddPage: React.FC = () => {
 
               <TextField
                 label="Select WO Date*"
-                value={
-                  formData.woDate instanceof Date
-                    ? formData.woDate.toISOString().split("T")[0]
-                    : ""
-                }
+                value={formData.woDate}
                 onChange={(e) =>
-                  handleInputChange("woDate", new Date(e.target.value))
+                  handleInputChange("woDate", e.target.value)
                 }
                 fullWidth
                 variant="outlined"
@@ -594,6 +710,38 @@ export const WorkOrderAddPage: React.FC = () => {
                   ))}
                 </MuiSelect>
               </FormControl>
+
+              <TextField
+                label="Related To"
+                placeholder="Related To"
+                value={formData.relatedTo}
+                onChange={(e) =>
+                  handleInputChange("relatedTo", e.target.value)
+                }
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                inputProps={{
+                  min: 0,
+                }}
+                sx={{
+                  mt: 1,
+                  "& .MuiInputBase-input": {
+                    padding: {
+                      xs: "8px",
+                      sm: "10px",
+                      md: "12px",
+                    },
+                  },
+                  height: {
+                    xs: 28,
+                    sm: 36,
+                    md: 45,
+                  },
+                }}
+              />
 
               <TextField
                 label="Retention(%)"
@@ -757,44 +905,6 @@ export const WorkOrderAddPage: React.FC = () => {
                   },
                 }}
               />
-
-              {/* Full Width Field */}
-              <div className="md:col-span-3">
-                <TextField
-                  label="Related To*"
-                  placeholder="Related To"
-                  value={formData.relatedTo}
-                  onChange={(e) =>
-                    handleInputChange("relatedTo", e.target.value)
-                  }
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={2}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  sx={{
-                    mt: 1,
-                    "& .MuiOutlinedInput-root": {
-                      height: "auto !important",
-                      padding: "2px !important",
-                      display: "flex",
-                    },
-                    "& .MuiInputBase-input[aria-hidden='true']": {
-                      flex: 0,
-                      width: 0,
-                      height: 0,
-                      padding: "0 !important",
-                      margin: 0,
-                      display: "none",
-                    },
-                    "& .MuiInputBase-input": {
-                      resize: "none !important",
-                    },
-                  }}
-                />
-              </div>
             </div>
           </div>
         </div>
@@ -820,7 +930,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   <h3 className="text-md font-medium text-foreground">
                     Item {index + 1}
                   </h3>
-                  {detailsForms.length > 1 && (
+                  {/* {detailsForms.length > 1 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -829,7 +939,7 @@ export const WorkOrderAddPage: React.FC = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  )}
+                  )} */}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {/* First Row */}
@@ -1377,14 +1487,14 @@ export const WorkOrderAddPage: React.FC = () => {
             ))}
 
             {/* Add Items Button inside details card */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
+            {/* <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
                 onClick={addNewDetailsForm}
               >
                 Add Items
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
 
