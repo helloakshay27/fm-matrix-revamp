@@ -302,10 +302,6 @@ export const GatePassOutwardsDetailPage = () => {
               <div className="font-medium text-gray-900">{gatePassData.expected_return_date ? new Date(gatePassData.expected_return_date).toLocaleDateString() : '--'}</div>
             </div>
           }
-          <div>
-            <div className="text-gray-500 text-md">Reporting Time:</div>
-            <div className="font-medium text-gray-900">{reportingTime}</div>
-          </div>
           {remarks && <div>
             <div className="text-gray-500 text-md">Remarks:</div>
             <div className="font-medium text-gray-900">{remarks}</div>
