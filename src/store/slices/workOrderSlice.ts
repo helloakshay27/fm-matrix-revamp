@@ -118,14 +118,34 @@ export const addWOInvoice = createAsyncThunk(
     }
 )
 
+export const fetchServicePR = createAsyncThunk(
+    "fetchServicePR",
+    async ({ baseUrl, token }: { baseUrl: string, token: string }, { rejectWithValue }) => {
+        try {
+            const response = await axios.get(`https://${baseUrl}/pms/work_orders/get_service_prs.json`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "multipart/form-data"
+                }
+            })
+            return response.data
+        } catch (error) {
+            const message = error.response?.data?.message || error.message || 'Failed to add work order invoice'
+            return rejectWithValue(message)
+        }
+    }
+)
+
 const fetchWorkOrdersSlice = createApiSlice("fetchWorkOrders", fetchWorkOrders);
 const getWorkOrderByIdSlice = createApiSlice("getWorkOrderById", getWorkOrderById);
 const approveRejectWOSlice = createApiSlice("approveWO", approveRejectWO);
 const fetchBOQSlice = createApiSlice("fetchBOQ", fetchBOQ);
 const addWOInvoiceSlice = createApiSlice("addWOInvoice", addWOInvoice);
+const fetchServicePRSlice = createApiSlice("fetchServicePR", fetchServicePR);
 
 export const fetchWorkOrdersReducer = fetchWorkOrdersSlice.reducer
 export const getWorkOrderByIdReducer = getWorkOrderByIdSlice.reducer
 export const approveRejectWOReducer = approveRejectWOSlice.reducer
 export const fetchBOQReducer = fetchBOQSlice.reducer
 export const addWOInvoiceReducer = addWOInvoiceSlice.reducer
+export const fetchServicePRReducer = fetchServicePRSlice.reducer
