@@ -253,8 +253,8 @@ export const AddGatePassInwardPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
-
+    if (isSubmitting) return; // Prevent double submit
+    setIsSubmitting(true);
     // Field-level validation
     if (!visitorDetails.contactPerson) {
       toast.error("Visitor Name is required");
