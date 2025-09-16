@@ -1143,11 +1143,21 @@ const modulesByPackage = {
         },
       ],
     },
-    // {
-    //   name: 'Currency',
-    //   icon: Currency,
-    //   href: '/settings/currency',
-    // }
+    {
+      name: "Project & Tasks",
+      icon: Briefcase,
+      subItems: [
+        {
+          name: "Manage Users",
+          subItems: [
+            {
+              name: "Roles",
+              href: "/settings/manage-users/roles"
+            }
+          ],
+        },
+      ]
+    }
   ],
 };
 
