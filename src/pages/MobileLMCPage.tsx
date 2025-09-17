@@ -12,23 +12,21 @@ import { toast } from 'sonner';
 interface CircleOption { id: string; name: string; }
 interface UserOption { id: string; name: string; circle_id?: string | number | null; email?: string | null; }
 
-// Helper: fetch JSON with auth taken from localStorage
-async function authedGet(url: string, token?: string) {
-    const auth = token || localStorage.getItem('token');
-    if (!auth) throw new Error('Missing token');
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${auth}` } });
+// Helper: fetch JSON using ONLY the token from URL (no localStorage fallback)
+async function authedGet(url: string, token: string) {
+    if (!token) throw new Error('Missing token');
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error(`Request failed (${res.status})`);
     return res.json();
 }
 
-// Helper: POST JSON with auth
-async function authedPost(url: string, body: any, token?: string) {
-    const auth = token || localStorage.getItem('token');
-    if (!auth) throw new Error('Missing token');
+// Helper: POST JSON using ONLY the token from URL (no localStorage fallback)
+async function authedPost(url: string, body: any, token: string) {
+    if (!token) throw new Error('Missing token');
     const res = await fetch(url, {
         method: 'POST',
         headers: {
-            Authorization: `Bearer ${auth}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify(body),
@@ -62,9 +60,11 @@ const MobileLMCPage: React.FC = () => {
     const [resultModalOpen, setResultModalOpen] = useState(false);
     const [resultMessage, setResultMessage] = useState<string>('');
     const [resultAction, setResultAction] = useState<'Created' | 'Updated'>('Updated');
-    // Prefer token from URL; fallback to localStorage inside auth helpers
-    const urlToken = searchParams.get('token') || '';
-    const authToken = urlToken || undefined;
+    const [mappingLoading, setMappingLoading] = useState<boolean>(false);
+    const [resolvingUserLoading, setResolvingUserLoading] = useState<boolean>(false);
+    const [resolvingCircleLoading, setResolvingCircleLoading] = useState<boolean>(false);
+    // Token must come from URL only (e.g., ?token=...)
+    const authToken = searchParams.get('token') || '';
 
     // Derive baseUrl
     const rawBase = localStorage.getItem('baseUrl') || '';
@@ -95,6 +95,7 @@ const MobileLMCPage: React.FC = () => {
     // Load existing LMC manager mapping for the user from URL (if any)
     const loadExistingMapping = async (userId: string) => {
         try {
+            setMappingLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
             const url = `https://${host}/pms/users/get_lmc_manager.json?user_id=${encodeURIComponent(userId)}`;
             const resp = await authedGet(url, authToken);
@@ -118,11 +119,12 @@ const MobileLMCPage: React.FC = () => {
         } catch (e) {
             // If GET fails, treat as no existing mapping
             setHasExistingMapping(false);
-        }
+    } finally { setMappingLoading(false); }
     };
 
     // Resolve a user's display name by ID via company_wise_users, if available
     const resolveUserNameById = async (id: string) => {
+        setResolvingUserLoading(true);
         const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
         const base = `https://${host}/pms/users/company_wise_users.json`;
         const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
@@ -146,7 +148,7 @@ const MobileLMCPage: React.FC = () => {
                 // try next variant
             }
         }
-        if (!match) return;
+        if (!match) { setResolvingUserLoading(false); return; }
         const first = match.first_name || match.firstname || match.firstName || '';
         const last = match.last_name || match.lastname || match.lastName || '';
         const fullFromParts = `${String(first).trim()} ${String(last).trim()}`.trim();
@@ -168,11 +170,13 @@ const MobileLMCPage: React.FC = () => {
         if (circleId) {
             await resolveCircleNameById(String(circleId));
         }
+        setResolvingUserLoading(false);
     };
 
     // Resolve circle name by id via get_circles and select it in the dropdown
     const resolveCircleNameById = async (id: string) => {
         try {
+            setResolvingCircleLoading(true);
             mappedCircleIdRef.current = String(id);
             const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
@@ -191,7 +195,7 @@ const MobileLMCPage: React.FC = () => {
         } catch {
             setSelectedCircle(String(id));
             setCircles(prev => (prev.some(c => c.id === String(id)) ? prev : [{ id: String(id), name: `Circle ${id}` }, ...prev]));
-        }
+        } finally { setResolvingCircleLoading(false); }
     };
 
     // Load users (optionally filtered by circle)
@@ -305,6 +309,7 @@ const MobileLMCPage: React.FC = () => {
         } finally { setRefreshing(false); }
     };
 
+    const allLoading = circlesLoading || usersLoading || mappingLoading || resolvingUserLoading || resolvingCircleLoading;
     const circleDisabled = !restrictByCircle;
     const userDisabled = restrictByCircle && !selectedCircle;
 
@@ -418,7 +423,7 @@ const MobileLMCPage: React.FC = () => {
                             <Select
                                 value={selectedCircle}
                                 onValueChange={v => setSelectedCircle(v)}
-                                disabled={circleDisabled || circlesLoading}
+                                disabled={circleDisabled || circlesLoading || allLoading}
                             >
                                 <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${circleDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
                                     }`}>
@@ -445,7 +450,7 @@ const MobileLMCPage: React.FC = () => {
                             <Select
                                 value={selectedUser}
                                 onValueChange={v => setSelectedUser(v)}
-                                disabled={userDisabled || usersLoading}
+                                disabled={userDisabled || usersLoading || allLoading}
                             >
                                 <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${userDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
                                     }`}>
@@ -544,13 +549,27 @@ const MobileLMCPage: React.FC = () => {
                         {(circlesLoading || usersLoading) && (
                             <div className="flex items-center justify-center py-4">
                                 <Loader2 className="w-6 h-6 animate-spin text-[#C72030] mr-2" />
-                                <span className="text-sm text-gray-600">
+                                <span className="text-sm font-semibold text-[#C72030]">
                                     Loading {circlesLoading ? 'circles' : 'users'}...
                                 </span>
                             </div>
                         )}
                     </CardContent>
                 </Card>
+
+                {/* Global Loading Overlay */}
+                {allLoading && (
+                    <div className="fixed inset-0 z-50 bg-white/80 backdrop-blur-sm flex items-center justify-center">
+                        <div
+                            className="rounded-xl bg-white shadow-lg border border-[#C72030]/20 px-3 py-2 sm:px-4 sm:py-3 flex items-center gap-2 sm:gap-3"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin text-[#C72030]" />
+                            <span className="text-[#C72030] text-sm sm:text-base font-semibold">Loading...</span>
+                        </div>
+                    </div>
+                )}
 
                 {/* Result Modal */}
                 <Dialog open={resultModalOpen} onOpenChange={setResultModalOpen}>
