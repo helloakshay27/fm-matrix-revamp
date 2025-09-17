@@ -148,6 +148,19 @@ import { AddVisitorGatePage } from "./pages/AddVisitorGatePage";
 import { EditVisitorGatePage } from "./pages/EditVisitorGatePage";
 import { SupportStaffPage } from "./pages/SupportStaffPage";
 import { EditSupportStaffPage } from "./pages/EditSupportStaffPage";
+import { RolesPage } from "./pages/RolesPage";
+import { EscalationMatrixManagePage } from "./pages/EscalationMatrixPage";
+import { AddEscalationMatrixPage } from "./pages/AddEscalationMatrixPage";
+import { EditEscalationMatrixPage } from "./pages/EditEscalationMatrixPage";
+import { InternalUsersPage } from "./pages/InternalUsersPage";
+import { AddInternalUserPage } from "./pages/AddInternalUserPage";
+import { EditInternalUserPage } from "./pages/EditInternalUserPage";
+import { ExternalUsersPage } from "./pages/ExternalUsersPage";
+import { AddExternalUserPage } from "./pages/AddExternalUserPage";
+import { EditExternalUserPage } from "./pages/EditExternalUserPage";
+import { ProjectTeamsPage } from "./pages/ProjectTeamsPage";
+import { AddProjectTeamPage } from "./pages/AddProjectTeamPage";
+import { EditProjectTeamPage } from "./pages/EditProjectTeamPage";
 import { VisitingPurposePage } from "./pages/VisitingPurposePage";
 
 // Import Icons pages
@@ -464,7 +477,6 @@ import { EditAssetDetailsPage } from "./pages/EditAssetDetailsPage";
 import { MSafeDashboard } from "./pages/MSafeDashboard";
 import { MSafeUserDetail } from "./pages/MSafeUserDetail";
 import { ExternalUserDetail } from "./pages/ExternalUserDetail";
-import { EditExternalUserPage } from "./pages/EditExternalUserPage";
 import { NonFTEUsersDashboard } from "./pages/NonFTEUsersDashboard";
 import { ExternalUsersDashboard } from "./pages/ExternalUsersDashboard";
 import { KRCCFormListDashboard } from "./pages/KRCCFormListDashboard";
@@ -955,6 +967,58 @@ function App() {
                     <Route
                       path="/settings/users"
                       element={<FMUsersDashboard />}
+                    />
+                    <Route
+                      path="/settings/manage-users/roles"
+                      element={<RolesPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/escalation-matrix"
+                      element={<EscalationMatrixManagePage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/escalation-matrix/add"
+                      element={<AddEscalationMatrixPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/escalation-matrix/edit/:id"
+                      element={<EditEscalationMatrixPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/internal-users"
+                      element={<InternalUsersPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/internal-users/add"
+                      element={<AddInternalUserPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/internal-users/edit/:id"
+                      element={<EditInternalUserPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/external-users"
+                      element={<ExternalUsersPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/external-users/add"
+                      element={<AddExternalUserPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/external-users/edit/:id"
+                      element={<EditExternalUserPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/project-teams"
+                      element={<ProjectTeamsPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/project-teams/add"
+                      element={<AddProjectTeamPage />}
+                    />
+                    <Route
+                      path="/settings/manage-users/project-teams/edit/:id"
+                      element={<EditProjectTeamPage />}
                     />
                     <Route
                       path="/settings/users/edit-details/:id"
