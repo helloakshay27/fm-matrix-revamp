@@ -117,7 +117,7 @@ export const GatePassInwardsDashboard = () => {
     { key: 'supplierName', label: 'Vendor', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     // { key: 'isFlagged', label: 'Flag', sortable: false, hideable: true, draggable: true, defaultVisible: true },
     // { key: 'flaggedAt', label: 'Flagged At', sortable: true, hideable: true, draggable: true, defaultVisible: true },
-        { key: 'vendorCompanyName', label: 'Vendor Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
+        { key: 'vendorCompanyName', label: 'Company Name', sortable: true, hideable: true, draggable: true, defaultVisible: true },
     { key: 'buildingName', label: 'Building', sortable: true, hideable: true, draggable: true, defaultVisible: true },
   ], []);
 

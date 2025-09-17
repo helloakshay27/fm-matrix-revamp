@@ -328,7 +328,7 @@ export const GatePassOutwardsDetailPage = () => {
       {/* Details Table */}
       <div className="bg-white rounded-lg  px-4 pb-4 border border-gray-200 shadow-sm">
         <div className="flex items-center pt-4 pb-2">
-          <span className="font-semibold text-[#C72030] text-xl mr-4">Details</span>
+          <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable
