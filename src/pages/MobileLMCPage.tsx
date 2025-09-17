@@ -15,7 +15,7 @@ interface UserOption { id: string; name: string; circle_id?: string | number | n
 // Helper: fetch JSON using ONLY the token from URL (no localStorage fallback)
 async function authedGet(url: string, token: string) {
     if (!token) throw new Error('Missing token');
-    const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(url, { cache: 'no-store', headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) throw new Error(`Request failed (${res.status})`);
     return res.json();
 }
@@ -25,6 +25,7 @@ async function authedPost(url: string, body: any, token: string) {
     if (!token) throw new Error('Missing token');
     const res = await fetch(url, {
         method: 'POST',
+        cache: 'no-store',
         headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -263,6 +264,28 @@ const MobileLMCPage: React.FC = () => {
         if (opt) selectedUserOptionRef.current = opt;
     }, [selectedUser, users]);
 
+    // If the selected user's label is still a placeholder (e.g., "User #123"), try resolving it by ID
+    useEffect(() => {
+        if (!selectedUser) return;
+        const current = selectedUserOptionRef.current || users.find(u => u.id === selectedUser);
+        const name = current?.name || '';
+        const isPlaceholder = !name || /^user\s*#?\s*\d+$/i.test(name) || name === `User #${selectedUser}`;
+        if (isPlaceholder) {
+            resolveUserNameById(selectedUser).catch(() => { /* noop */ });
+        }
+    }, [selectedUser]);
+
+    // Derive the best label to show for the selected user (avoid showing raw ID placeholders on mobile)
+    const selectedUserBestLabel = useMemo(() => {
+        if (!selectedUser) return '';
+        const opt = selectedUserOptionRef.current || users.find(u => u.id === selectedUser);
+        if (!opt) return `User #${selectedUser}`;
+        const isPlaceholder = /^user\s*#?\s*\d+$/i.test(opt.name) || opt.name === `User #${selectedUser}`;
+        const primary = isPlaceholder ? (opt.email || `User #${selectedUser}`) : opt.name;
+        const suffix = opt.email && !isPlaceholder ? ` (${opt.email})` : (isPlaceholder && opt.email ? '' : '');
+        return `${primary}${suffix}`;
+    }, [selectedUser, users]);
+
     // Initial loads
     useEffect(() => { loadCircles(); }, []);
     // Read user_id from URL and load existing mapping once
@@ -480,7 +503,7 @@ const MobileLMCPage: React.FC = () => {
                             </Label>
                             {isMobile ? (
                                 <>
-                                    <Button
+                    <Button
                                         type="button"
                                         disabled={userDisabled || allLoading}
                                         onClick={() => setUserMobileDialogOpen(true)}
@@ -488,7 +511,7 @@ const MobileLMCPage: React.FC = () => {
                                         className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 ${userDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030]'} justify-between`}
                                     >
                                         <span className="truncate text-left">
-                                            {selectedUser ? `${(selectedUserOptionRef.current?.name || users.find(u => u.id === selectedUser)?.name || 'Selected user')}${(selectedUserOptionRef.current?.email || users.find(u => u.id === selectedUser)?.email) ? ` (${selectedUserOptionRef.current?.email || users.find(u => u.id === selectedUser)?.email})` : ''}` : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
+                        {selectedUser ? (selectedUserBestLabel || 'Selected user') : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
                                         </span>
                                         <span className="ml-2 text-gray-400">▼</span>
                                     </Button>
@@ -644,7 +667,12 @@ const MobileLMCPage: React.FC = () => {
                                         key={u.id}
                                         type="button"
                                         className="w-full text-left px-3 py-3 border-b last:border-b-0 hover:bg-gray-50"
-                                        onClick={() => { setSelectedUser(u.id); setUserMobileDialogOpen(false); }}
+                                        onClick={() => {
+                                            setSelectedUser(u.id);
+                                            // Cache immediately so the mobile label shows correctly even if the list gets reset
+                                            selectedUserOptionRef.current = u;
+                                            setUserMobileDialogOpen(false);
+                                        }}
                                     >
                                         <div className="text-sm font-medium">{u.name}</div>
                                         {u.email && <div className="text-xs text-gray-500">{u.email}</div>}
