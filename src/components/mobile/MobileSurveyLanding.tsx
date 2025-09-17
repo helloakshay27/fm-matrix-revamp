@@ -161,6 +161,17 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
+  // Check if survey has text-based questions (text, input, description)
+  const hasTextBasedQuestions = (): boolean => {
+    if (!surveyData) return false;
+    return surveyData.snag_checklist.snag_questions.some(
+      (question) => 
+        question.qtype === "text" || 
+        question.qtype === "input" || 
+        question.qtype === "description"
+    );
+  };
+
   // Handle option selection for multiple choice
   // Make multiple choice single-selectable (radio behavior)
   const handleOptionSelect = (option: SurveyOption) => {
@@ -957,6 +968,48 @@ export const MobileSurveyLanding: React.FC = () => {
                   </>
                 )}
 
+                {/* Text Question */}
+                {currentQuestion.qtype === "text" && (
+                  <>
+                    <div className="mt-14">
+                      <textarea
+                        value={currentQuestionValue}
+                        onChange={(e) =>
+                          setCurrentQuestionValue(e.target.value)
+                        }
+                        placeholder="Please enter your comments..."
+                        className="w-full h-24 sm:h-32 p-3 sm:p-4 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                      />
+                    </div>
+
+                    <button
+                      onClick={async () => {
+                        const isSingleQuestion =
+                          surveyData!.snag_checklist.questions_count === 1;
+
+                        // Save current answer first
+                        const answerData = saveCurrentAnswer();
+
+                        if (isSingleQuestion) {
+                          // Submit immediately with answer data
+                          handleSingleQuestionSubmit(answerData);
+                        } else {
+                          handleNextQuestion();
+                        }
+                      }}
+                      disabled={!isCurrentAnswerValid()}
+                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                    >
+                      {surveyData!.snag_checklist.questions_count === 1
+                        ? "Submit Survey"
+                        : currentQuestionIndex <
+                          surveyData.snag_checklist.questions_count - 1
+                        ? "Next Question"
+                        : "Continue"}
+                    </button>
+                  </>
+                )}
+
                 {/* Description Question */}
                 {currentQuestion.qtype === "description" && (
                   <>
@@ -1130,19 +1183,25 @@ export const MobileSurveyLanding: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Description Field */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Additional Comments (Optional)
-                      </label>
-                      <textarea
-                        value={finalDescription}
-                        onChange={(e) => setFinalDescription(e.target.value)}
-                        placeholder="Please describe any specific issues or suggestions..."
-                        className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+                    {/* Description Field - Only show for emoji, multiple, and rating question types AND if survey doesn't have text-based questions */}
+                    {(pendingNegativeType === "emoji" || 
+                      pendingNegativeType === "smiley" || 
+                      pendingNegativeType === "multiple" || 
+                      pendingNegativeType === "rating") && 
+                      !hasTextBasedQuestions() && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Additional Comments (Optional)
+                        </label>
+                        <textarea
+                          value={finalDescription}
+                          onChange={(e) => setFinalDescription(e.target.value)}
+                          placeholder="Please describe any specific issues or suggestions..."
+                          className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                          disabled={isSubmitting}
+                        />
+                      </div>
+                    )}
 
                     <button
                       onClick={async () => {
@@ -1204,7 +1263,13 @@ export const MobileSurveyLanding: React.FC = () => {
                         }
                       }}
                       disabled={
-                        selectedTags.length === 0 && !finalDescription.trim()
+                        selectedTags.length === 0 && 
+                        (pendingNegativeType === "emoji" || 
+                         pendingNegativeType === "smiley" || 
+                         pendingNegativeType === "multiple" || 
+                         pendingNegativeType === "rating") && 
+                        !hasTextBasedQuestions() &&
+                        !finalDescription.trim()
                       }
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
