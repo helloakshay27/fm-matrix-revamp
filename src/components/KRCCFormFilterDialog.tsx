@@ -223,14 +223,14 @@ export const KRCCFormFilterDialog = ({ isOpen, onClose, onApplyFilters }: KRCCFo
         >
           Submit
         </Button>
-        <Button 
+        {/* <Button 
           onClick={handleExport}
           className="flex-1 text-white cursor-pointer disabled:opacity-60"
           style={{ backgroundColor: '#C72030' }}
           disabled={exporting || !emailProvided}
         >
           {exporting ? 'Exporting...' : 'Export'}
-        </Button>
+        </Button> */}
         <Button 
           onClick={handleReset}
           variant="outline"
