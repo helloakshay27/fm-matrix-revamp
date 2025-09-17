@@ -291,10 +291,6 @@ export const GatePassOutwardsAddPage = () => {
       toast.error("Company is required");
       return;
     }
-    if (!gatePassDetails.vendorId) {
-      toast.error("Vendor is required");
-      return;
-    }
     if (!visitorDetails.gateNoId) {
       toast.error("Gate Number is required");
       return;
@@ -538,6 +534,23 @@ export const GatePassOutwardsAddPage = () => {
               />
             )}
 
+            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
+              <InputLabel shrink>Vendor</InputLabel>
+              <MuiSelect
+                label="Vendor"
+                notched
+                displayEmpty
+                value={gatePassDetails.vendorId || ''}
+                onChange={e => handleGatePassChange('vendorId', e.target.value)}
+              >
+                <MenuItem value="">Select Vendor</MenuItem>
+                {companies.map((option) => (
+                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
+                ))}
+              </MuiSelect>
+              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
+            </FormControl>
+
             
             {/* <TextField label="Driver Name" placeholder="Enter Driver Name" fullWidth variant="outlined" value={visitorDetails.driverName} onChange={(e) =>{
             const value = e.target.value;
@@ -625,22 +638,7 @@ export const GatePassOutwardsAddPage = () => {
             </FormControl> */}
 
             {/* Vendor Dropdown */}
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
-              <MuiSelect
-                label="Vendor"
-                notched
-                displayEmpty
-                value={gatePassDetails.vendorId || ''}
-                onChange={e => handleGatePassChange('vendorId', e.target.value)}
-              >
-                <MenuItem value="">Select Vendor</MenuItem>
-                {companies.map((option) => (
-                  <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
-                ))}
-              </MuiSelect>
-              {fieldErrors.vendorId && <Typography variant="caption" color="error">{fieldErrors.vendorId}</Typography>}
-            </FormControl>
+            
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.gateNoId}>
               <InputLabel shrink>Gate No. <span style={{ color: 'red' }}>*</span></InputLabel>
               <MuiSelect

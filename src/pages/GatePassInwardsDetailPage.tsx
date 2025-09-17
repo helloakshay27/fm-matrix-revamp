@@ -70,7 +70,7 @@ export const GatePassInwardsDetailPage = () => {
   // Defensive fallback for missing fields
   const personName = selectedEntry.contact_person || '--';
   const category = selectedEntry.gate_pass_type_name || selectedEntry.gate_pass_category || '--';
-  const companyName = (selectedEntry.company && selectedEntry.company.name) || '--';
+  const vendorCompanyName = gatePassData.vendor_company_name || '--';
   const siteName = (selectedEntry.site && selectedEntry.site.name) || '--';
   const buildingName = (selectedEntry.building && selectedEntry.building.name) || '--';
   const vehicleNo = selectedEntry.vehicle_no || '--';
@@ -167,7 +167,7 @@ export const GatePassInwardsDetailPage = () => {
           </div>
           <div>
             <div className="text-gray-500 text-md">Company:</div>
-            <div className="font-medium text-gray-900">{companyName}</div>
+            <div className="font-medium text-gray-900">{vendorCompanyName}</div>
           </div>
           <div>
             <div className="text-gray-500 text-md">Mobile No.:</div>
@@ -226,7 +226,7 @@ export const GatePassInwardsDetailPage = () => {
       {/* Details Table */}
       <div className="bg-white rounded-lg px-4 pb-4 border border-gray-200 shadow-sm">
         <div className="flex items-center pt-4 pb-2">
-          <span className="font-semibold text-[#C72030] text-xl mr-4">Details</span>
+          <span className="font-semibold text-[#C72030] text-xl mr-4">Item Details</span>
         </div>
         <div className="overflow-x-auto">
           <EnhancedTable

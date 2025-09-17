@@ -4,9 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from 'sonner';
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
-import { toast as sonnerToast } from 'sonner';
 
 interface CreateShiftDialogProps {
   open: boolean;
@@ -15,7 +14,6 @@ interface CreateShiftDialogProps {
 }
 
 export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: CreateShiftDialogProps) => {
-  const { toast } = useToast();
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
   const [fromAmPm, setFromAmPm] = useState<string>("");
@@ -43,11 +41,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
 
   const validateForm = () => {
     if (!fromHour || !fromMinute || !toHour || !toMinute) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all time fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill in all time fields");
       return false;
     }
 
@@ -57,11 +51,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
     const toTimeMinutes = parseInt(toTime24) * 60 + parseInt(toMinute);
 
     if (fromTimeMinutes >= toTimeMinutes) {
-      toast({
-        title: "Validation Error",
-        description: "End time must be after start time",
-        variant: "destructive",
-      });
+      toast.error("End time must be after start time");
       return false;
     }
 
@@ -109,7 +99,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
       const result = await response.json();
       console.log('Shift created successfully:', result);
 
-      sonnerToast.success('Shift created successfully!');
+      toast.success('Shift created successfully!');
       
       // Reset form
       resetForm();
@@ -124,7 +114,7 @@ export const CreateShiftDialog = ({ open, onOpenChange, onShiftCreated }: Create
 
     } catch (error: any) {
       console.error('Error creating shift:', error);
-      sonnerToast.error(`Failed to create shift: ${error.message}`);
+      toast.error(`Failed to create shift: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
