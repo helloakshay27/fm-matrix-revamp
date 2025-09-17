@@ -288,7 +288,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
           {/* Footer */}
           <div className="bg-gray-50 p-4 border-t text-right">
             <span className="text-lg font-semibold text-[#1A1A1A]">
-              Total Cost: OMR {totalCost.toLocaleString()}
+              Total Cost: INR {totalCost.toLocaleString()}
             </span>
           </div>
         </div>
@@ -313,7 +313,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Repaired / Replaced:</Label>
+              <Label className="text-sm font-medium">Repaired:</Label>
               <RadioGroup
                 value={formData.status}
                 onValueChange={handleStatusChange}
@@ -323,20 +323,16 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   <RadioGroupItem value="repaired" id="repaired" />
                   <Label htmlFor="repaired">Repaired</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="replaced" id="replaced" />
-                  <Label htmlFor="replaced">Replaced</Label>
-                </div>
               </RadioGroup>
             </div>
 
             <div>
               <Label htmlFor="cost" className="text-sm font-medium">
-                Cost (in OMR):
+                Cost (in INR):
               </Label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 ">
-                  OMR
+                  INR
                 </span>
                 <Input
                   id="cost"
@@ -443,7 +439,7 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
 
           <div className="space-y-4">
             <div>
-              <Label className="text-sm font-medium">Repaired / Replaced:</Label>
+              <Label className="text-sm font-medium">Repaired:</Label>
               <RadioGroup
                 value={assetStatusFormData.status}
                 onValueChange={handleAssetStatusChange}
@@ -453,20 +449,16 @@ export const OwnerCostTab: React.FC<OwnerCostTabProps> = ({ asset, refreshAssetD
                   <RadioGroupItem value="repaired" id="asset-repaired" />
                   <Label htmlFor="asset-repaired">Repaired</Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="replaced" id="asset-replaced" />
-                  <Label htmlFor="asset-replaced">Replaced</Label>
-                </div>
               </RadioGroup>
             </div>
 
             <div>
               <Label htmlFor="asset-cost" className="text-sm font-medium">
-                Cost (in OMR):
+                Cost (in INR):
               </Label>
               <div className="relative mt-1">
                 <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
-                  OMR
+                  INR
                 </span>
                 <Input
                   id="asset-cost"
