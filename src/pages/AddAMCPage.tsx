@@ -466,6 +466,7 @@ export const AddAMCPage = () => {
 
     const sendData = new FormData();
     // sendData.append('pms_asset_amc);
+    
     sendData.append('pms_asset_amc[supplier_id]', formData.supplier);
     sendData.append('pms_asset_amc[checklist_type]', formData.details);
     sendData.append('pms_asset_amc[amc_cost]', formData.cost);
@@ -491,7 +492,18 @@ export const AddAMCPage = () => {
           sendData.append('sub_group_id', formData.subgroup);
         }
       }
-    } else if (formData.details === 'Service') {
+    } 
+
+    // Include selected asset IDs for Individual Asset flow
+    if (formData.details === 'Asset' && formData.type === 'Individual' && Array.isArray(formData.asset_ids) && formData.asset_ids.length > 0) {
+      formData.asset_ids.forEach((id) => {
+        // Append as array param
+        sendData.append('pms_asset_amc[asset_id][]', String(id));
+      });
+    }
+
+    // Service (Individual) specific parameter
+    if (formData.details === 'Service') {
       if (formData.type === 'Individual' && formData.assetName) {
         sendData.append('pms_asset_amc[service_id]', formData.assetName);
       }

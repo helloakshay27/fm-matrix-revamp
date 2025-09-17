@@ -4,7 +4,18 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, User, BadgeCheck, Users, Hash, CalendarCheck2 } from 'lucide-react';
 import formSchema from './lmc_form.json';
 
-interface LMCUserRef { id: number; name: string; email: string; mobile?: string | null; employee_type?: string | null }
+interface LMCUserRef {
+    id: number;
+    name: string;
+    email: string;
+    mobile?: string | null;
+    employee_id?: string | number | null;
+    employee_type?: string | null;
+    circle_name?: string | null;
+    department_name?: string | null;
+    role_name?: string | null;
+    company_name?: string | null;
+}
 interface LMCDetailApiResponse {
     id: number;
     user_id: number;
@@ -211,16 +222,24 @@ const LMCUserDetail = () => {
                             <p className="text-gray-900 font-medium">{createdBy?.mobile || '—'}</p>
                         </div>
                         <div>
+                            <span className="text-gray-500 text-sm">Employee ID</span>
+                            <p className="text-gray-900 font-medium">{createdBy?.employee_id || '—'}</p>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 text-sm">Employee Type</span>
+                            <p className="text-gray-900 font-medium">{createdBy?.employee_type || '—'}</p>
+                        </div>
+                        <div>
                             <span className="text-gray-500 text-sm">Circle</span>
-                            <p className="text-gray-900 font-medium">—</p>
+                            <p className="text-gray-900 font-medium">{createdBy?.circle_name || '—'}</p>
                         </div>
                         <div>
                             <span className="text-gray-500 text-sm">Function</span>
-                            <p className="text-gray-900 font-medium">—</p>
+                            <p className="text-gray-900 font-medium">{createdBy?.department_name || '—'}</p>
                         </div>
                         <div>
                             <span className="text-gray-500 text-sm">Role</span>
-                            <p className="text-gray-900 font-medium">—</p>
+                            <p className="text-gray-900 font-medium">{createdBy?.role_name || '—'}</p>
                         </div>
                     </div>
                 </div>
@@ -242,7 +261,7 @@ const LMCUserDetail = () => {
                         </div>
                         <div>
                             <span className="text-gray-500 text-sm">Vendor Name</span>
-                            <p className="text-gray-900 font-medium">—</p>
+                            <p className="text-gray-900 font-medium">{lmcUser?.company_name || '—'}</p>
                         </div>
                         <div>
                             <span className="text-gray-500 text-sm">Email</span>
@@ -255,6 +274,14 @@ const LMCUserDetail = () => {
                         <div>
                             <span className="text-gray-500 text-sm">Unique Number</span>
                             <p className="text-gray-900 font-medium">{lmcUser?.id || '—'}</p>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 text-sm">Employee ID</span>
+                            <p className="text-gray-900 font-medium">{lmcUser?.employee_id || '—'}</p>
+                        </div>
+                        <div>
+                            <span className="text-gray-500 text-sm">Employee Type</span>
+                            <p className="text-gray-900 font-medium">{lmcUser?.employee_type || '—'}</p>
                         </div>
                     </div>
                 </div>
