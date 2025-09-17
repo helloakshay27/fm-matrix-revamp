@@ -206,8 +206,10 @@ const EmployeeDeletionHistory: React.FC = () => {
                                             <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
                                             <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
                                             <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
+                                                                                        <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+
                                             <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
-                                            <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
+
                                             <td className="p-4 align-middle">
                                                 <button
                                                     type="button"
