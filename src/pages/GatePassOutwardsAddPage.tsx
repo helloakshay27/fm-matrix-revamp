@@ -291,10 +291,6 @@ export const GatePassOutwardsAddPage = () => {
       toast.error("Company is required");
       return;
     }
-    if (!gatePassDetails.vendorId) {
-      toast.error("Vendor is required");
-      return;
-    }
     if (!visitorDetails.gateNoId) {
       toast.error("Gate Number is required");
       return;
@@ -539,7 +535,7 @@ export const GatePassOutwardsAddPage = () => {
             )}
 
             <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }} error={!!fieldErrors.vendorId}>
-              <InputLabel shrink>Vendor <span style={{ color: 'red' }}>*</span></InputLabel>
+              <InputLabel shrink>Vendor</InputLabel>
               <MuiSelect
                 label="Vendor"
                 notched
