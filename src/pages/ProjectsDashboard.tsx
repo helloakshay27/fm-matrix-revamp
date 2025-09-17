@@ -2,10 +2,25 @@ import AddProjectModal from "@/components/AddProjectModal";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import ProjectCreateModal from "@/components/ProjectCreateModal";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { fetchProjects } from "@/store/slices/projectManagementSlice";
-import { Eye, LogOut, Plus } from "lucide-react";
+import {
+  ChartNoAxesColumn,
+  ChevronDown,
+  Eye,
+  List,
+  LogOut,
+  MoreHorizontal,
+  Plus,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -98,6 +113,8 @@ export const ProjectsDashboard = () => {
   const [projects, setProjects] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [openFormDialog, setOpenFormDialog] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedView, setSelectedView] = useState("List");
   const [formData, setFormData] = useState({
     title: "",
     status: "",
@@ -111,7 +128,9 @@ export const ProjectsDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await dispatch(fetchProjects({ token, baseUrl })).unwrap();
+        const response = await dispatch(
+          fetchProjects({ token, baseUrl })
+        ).unwrap();
         setProjects(response);
       } catch (error) {
         console.log(error);
@@ -151,10 +170,20 @@ export const ProjectsDashboard = () => {
 
   const renderActions = (item: any) => (
     <div className="flex items-center justify-center gap-2">
-      <Button size="sm" variant="ghost" className="p-1" onClick={() => navigate(`/maintenance/projects/details/${item.id}`)}>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/maintenance/projects/details/${item.id}`)}
+      >
         <Eye className="w-4 h-4" />
       </Button>
-      <Button size="sm" variant="ghost" className="p-1">
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
+        onClick={() => navigate(`/maintenance/projects/${item.id}/milestones`)}
+      >
         <LogOut className="w-4 h-4" />
       </Button>
     </div>
@@ -213,6 +242,57 @@ export const ProjectsDashboard = () => {
     </>
   );
 
+  const rightActions = (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded"
+      >
+        <span className="text-red-600 font-medium flex items-center gap-2">
+          {selectedView === "Kanban" ? (
+            <ChartNoAxesColumn className="w-4 h-4 rotate-180 text-red-600" />
+          ) : (
+            <List className="w-4 h-4 text-red-600" />
+          )}
+          {selectedView}
+        </span>
+        <ChevronDown className="w-4 h-4 text-gray-600" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute top-full right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[180px]">
+          <div className="py-2">
+            <button
+              onClick={() => {
+                setSelectedView("Kanban");
+                setIsOpen(false);
+              }}
+              className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+            >
+              <div className="w-4 flex justify-center">
+                <ChartNoAxesColumn className="rotate-180 text-[#C72030]" />
+              </div>
+              <span className="text-gray-700">Kanban</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setSelectedView("List");
+                setIsOpen(false);
+              }}
+              className="flex items-center gap-3 w-full px-4 py-2 text-left hover:bg-gray-50"
+            >
+              <div className="w-4 flex justify-center">
+                <List className="w-4 h-4 text-red-600" />
+              </div>
+              <span className="text-gray-700">List</span>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="p-6">
       <EnhancedTable
@@ -237,7 +317,31 @@ export const ProjectsDashboard = () => {
         renderActions={renderActions}
         renderCell={renderCell}
         leftActions={leftActions}
+        rightActions={rightActions}
         storageKey="projects-table"
+        onFilterClick={() => { }}
+        canAddRow={true}
+        readonlyColumns={["id"]}
+        onAddRow={(newRowData) => {
+          console.log("New row data:", newRowData);
+        }}
+        renderEditableCell={(columnKey, value, onChange) => {
+          if (columnKey === "status") {
+            return (
+              <Select value={value} onValueChange={onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            );
+          }
+          return null;
+        }}
+        newRowPlaceholder="Click to add new project"
       />
 
       <AddProjectModal

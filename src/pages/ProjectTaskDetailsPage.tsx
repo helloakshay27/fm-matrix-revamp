@@ -114,7 +114,7 @@ const Attachments = ({ attachments }) => {
     );
 };
 
-const ProjectDetails = () => {
+const ProjectTaskDetailsPage = () => {
     const navigate = useNavigate();
     const [isSecondCollapsed, setIsSecondCollapsed] = useState(false);
     const [tab, setTab] = useState("Member");
@@ -371,4 +371,4 @@ const ProjectDetails = () => {
     );
 };
 
-export default ProjectDetails;
+export default ProjectTaskDetailsPage;

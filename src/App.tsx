@@ -718,6 +718,9 @@ import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import { ProjectsDashboard } from "./pages/ProjectsDashboard";
 import ProjectDetailsPage from "./pages/ProjectDetailsPage";
+import ProjectMilestones from "./pages/ProjectMilestones";
+import ProjectTasksPage from "./pages/ProjectTasksPage";
+import ProjectTaskDetailsPage from "./pages/ProjectTaskDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -2007,6 +2010,18 @@ function App() {
                     <Route
                       path="/maintenance/projects/details/:id"
                       element={<ProjectDetailsPage />}
+                    />
+                    <Route
+                      path="/maintenance/projects/:id/milestones"
+                      element={<ProjectMilestones />}
+                    />
+                    <Route
+                      path="/maintenance/projects/:id/milestones/:mid/tasks"
+                      element={<ProjectTasksPage />}
+                    />
+                    <Route
+                      path="/maintenance/projects/:id/milestones/:mid/tasks/:tid"
+                      element={<ProjectTaskDetailsPage />}
                     />
 
                     {/* Utility Routes */}
