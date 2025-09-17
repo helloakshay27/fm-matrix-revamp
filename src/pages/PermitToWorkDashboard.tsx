@@ -13,19 +13,11 @@ import {
   Download,
   RefreshCw,
   Settings,
-  Search,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { API_CONFIG } from "@/config/apiConfig";
+import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
+import { PermitFilterModal } from "@/components/PermitFilterModal";
 
 // Type definitions for permit data
 interface Permit {
@@ -45,7 +37,7 @@ interface Permit {
   jsa_data: any;
   permit_jsa_url: string;
   print_jsa: any;
-  vendor_name?: string;
+  vender_name?: string;
   expiry_date?: string;
 }
 
@@ -65,6 +57,87 @@ interface PermitCounts {
   extended: number;
   closed: number;
 }
+
+// Column configuration for EnhancedTable
+const permitColumns = [
+  {
+    key: 'id',
+    label: 'ID',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'reference_number',
+    label: 'Ref No.',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'permit_type',
+    label: 'Permit Type',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'permit_for',
+    label: 'Permit For',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'requested_by',
+    label: 'Created By',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'department_name',
+    label: 'Designation',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'status',
+    label: 'Status',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'location',
+    label: 'Location',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'vender_name',
+    label: 'Vendor Name',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'created_at',
+    label: 'Created On',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  },
+  {
+    key: 'expiry_date',
+    label: 'Permit Expiry/Extend Date',
+    sortable: true,
+    draggable: true,
+    defaultVisible: true
+  }
+];
 
 // API function to fetch permits
 const fetchPermits = async (): Promise<PermitsResponse> => {
@@ -134,6 +207,7 @@ export const PermitToWorkDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [permits, setPermits] = useState<Permit[]>([]);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [permitCounts, setPermitCounts] = useState<PermitCounts>({
     total: 0,
     draft: 0,
@@ -174,11 +248,6 @@ export const PermitToWorkDashboard = () => {
   }, []);
 
   const stats = calculateStats(permits);
-  const filteredPermits = permits.filter(permit =>
-    permit.permit_for.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    permit.id.toString().includes(searchTerm.toLowerCase()) ||
-    permit.reference_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const handleAddPermit = () => {
     navigate("/safety/permit/add");
@@ -218,6 +287,63 @@ export const PermitToWorkDashboard = () => {
       setLoading(false);
     }
   };
+
+  // Render cell content for EnhancedTable
+  const renderCell = (permit: Permit, columnKey: string) => {
+    switch (columnKey) {
+      case 'id':
+        return <span className="font-medium">{permit.id}</span>;
+      case 'reference_number':
+        return permit.reference_number;
+      case 'permit_type':
+        return permit.permit_type;
+      case 'permit_for':
+        return permit.permit_for;
+      case 'requested_by':
+        return permit.requested_by;
+      case 'department_name':
+        return permit.department_name;
+      case 'status':
+        return (
+          <Badge
+            className="text-white"
+            style={{ backgroundColor: permit.status_color_code }}
+          >
+            {permit.status}
+          </Badge>
+        );
+      case 'location':
+        return (
+          <span className="max-w-xs truncate block" title={permit.location}>
+            {permit.location}
+          </span>
+        );
+      case 'vendor_name':
+        return permit.vender_name || '-';
+      case 'created_at':
+        return formatDate(permit.created_at);
+      case 'expiry_date':
+        return permit.expiry_date ? formatDate(permit.expiry_date) : '-';
+      default:
+        return permit[columnKey as keyof Permit] || '-';
+    }
+  };
+
+  // Render actions for each row
+  const renderActions = (permit: Permit) => (
+    <div className="flex items-center gap-2">
+      <div title="View permit details">
+        <Eye
+          className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
+          onClick={(e) => {
+            e.stopPropagation();
+            console.log("Eye clicked for permit:", permit.id);
+            handleViewPermit(permit.id);
+          }}
+        />
+      </div>
+    </div>
+  );
 
   const StatCard = ({ icon, label, value }: any) => (
     <div className="bg-[#f6f4ee] p-6 rounded-lg shadow-[0px_2px_18px_rgba(45,45,45,0.1)] flex items-center gap-4">
@@ -263,7 +389,7 @@ export const PermitToWorkDashboard = () => {
             <StatCard icon={<AlertTriangle />} label="Extended" value={permitCounts.extended} />
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-6 ">
             <div className="flex items-center gap-2">
               <Button
                 onClick={handleAddPermit}
@@ -273,116 +399,37 @@ export const PermitToWorkDashboard = () => {
                 Create Permit
               </Button>
             </div>
-
-            <div className="flex items-center gap-2 flex-1 max-w-md">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search permits..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" size="icon">
-                <Filter className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleRefresh}
-                disabled={loading}
-              >
-                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="outline" size="icon">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
 
-          <div className="bg-white rounded-lg border">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-gray-50">
-                    <TableHead className="w-24">Actions</TableHead>
-                    <TableHead>ID</TableHead>
-                    <TableHead>Ref No.</TableHead>
-                    <TableHead>Permit Type</TableHead>
-                    <TableHead>Permit For</TableHead>
-                    <TableHead>Created By</TableHead>
-                    <TableHead>Designation</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Vendor Name</TableHead>
-                    <TableHead>Created On</TableHead>
-                    <TableHead>Permit Expiry/Extend Date</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                        Loading permits...
-                      </TableCell>
-                    </TableRow>
-                  ) : error ? (
-                    <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-red-500">
-                        {error}
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredPermits.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={12} className="text-center py-8 text-gray-500">
-                        No permits found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredPermits.map((permit) => (
-                      <TableRow key={permit.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Eye
-                              className="w-5 h-5 text-gray-600 cursor-pointer hover:text-[#C72030]"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                console.log("Eye clicked for permit:", permit.id);
-                                handleViewPermit(permit.id);
-                              }}
-                              title="View permit details"
-                            />
-                          </div>
-
-                        </TableCell>
-                        <TableCell className="font-medium">{permit.id}</TableCell>
-                        <TableCell>{permit.reference_number}</TableCell>
-                        <TableCell>{permit.permit_type}</TableCell>
-                        <TableCell>{permit.permit_for}</TableCell>
-                        <TableCell>{permit.requested_by}</TableCell>
-                        <TableCell>{permit.department_name}</TableCell>
-                        <TableCell>
-                          <Badge
-                            className="text-white"
-                            style={{ backgroundColor: permit.status_color_code }}
-                          >
-                            {permit.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs truncate" title={permit.location}>
-                          {permit.location}
-                        </TableCell>
-                        <TableCell>{permit.vendor_name || '-'}</TableCell>
-                        <TableCell>{formatDate(permit.created_at)}</TableCell>
-                        <TableCell>{permit.expiry_date ? formatDate(permit.expiry_date) : '-'}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <EnhancedTable
+            data={permits}
+            columns={permitColumns}
+            renderCell={renderCell}
+            renderActions={renderActions}
+            onRowClick={(permit) => handleViewPermit(permit.id)}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            searchPlaceholder="Search permits..."
+            enableExport={true}
+            exportFileName="permits-export"
+            pagination={true}
+            pageSize={20}
+            loading={loading}
+            onFilterClick={() => setIsFilterModalOpen(true)}
+            emptyMessage={error || "No permits found"}
+            storageKey="permit-dashboard-table"
+          // leftActions={
+          //   <Button
+          //     variant="outline"
+          //     size="icon"
+          //     onClick={handleRefresh}
+          //     disabled={loading}
+          //     title="Refresh"
+          //   >
+          //     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          //   </Button>
+          // }
+          />
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
@@ -447,6 +494,15 @@ export const PermitToWorkDashboard = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      <PermitFilterModal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        onApply={(filters) => {
+          console.log('Applied filters:', filters);
+          // Implement filter logic here
+        }}
+      />
     </div>
   );
 };

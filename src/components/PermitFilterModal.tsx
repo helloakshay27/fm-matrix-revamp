@@ -69,44 +69,42 @@ export const PermitFilterModal: React.FC<PermitFilterModalProps> = ({
             <X className="h-4 w-4" />
           </Button>
         </DialogHeader>
-        
+
         <div className="space-y-4 pt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <TextField
               label="Permit Id"
+              name="q[reference_number_eq]"
               value={filterData.permitId}
               onChange={(e) => handleInputChange('permitId', e.target.value)}
-              placeholder="Find By Permit Id"
+              placeholder="Search By Permit Id"
               fullWidth
               variant="outlined"
               InputLabelProps={{ shrink: true }}
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-            
-            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-              <InputLabel shrink>Permit Type</InputLabel>
-              <MuiSelect
-                label="Permit Type"
-                value={filterData.permitType}
-                onChange={(e) => handleInputChange('permitType', e.target.value)}
-                displayEmpty
-                sx={fieldStyles}
-              >
-                <MenuItem value=""><em>Search By Permit Type</em></MenuItem>
-                <MenuItem value="maintenance">Maintenance</MenuItem>
-                <MenuItem value="construction">Construction</MenuItem>
-                <MenuItem value="electrical">Electrical</MenuItem>
-                <MenuItem value="hot-work">Hot Work</MenuItem>
-              </MuiSelect>
-            </FormControl>
+
+            <TextField
+              label="Permit Type"
+              name="q[permit_type_name_cont]"
+              value={filterData.permitType}
+              onChange={(e) => handleInputChange('permitType', e.target.value)}
+              placeholder="Search By Permit Type"
+              fullWidth
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              InputProps={{ sx: fieldStyles }}
+              sx={{ mt: 1 }}
+            />
           </div>
 
           <TextField
             label="Vendor Name"
+            name="q[vender_company_name_cont]"
             value={filterData.vendorName}
             onChange={(e) => handleInputChange('vendorName', e.target.value)}
-            placeholder="Find By Vendor Name"
+            placeholder="Search By Vender Name"
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}

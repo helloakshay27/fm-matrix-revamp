@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextField } from '@mui/material';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Building2, Check } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { getOrganizationsByEmail, loginUser, saveUser, saveToken, saveBaseUrl, Organization } from '@/utils/auth';
 import { toast } from 'sonner';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -46,6 +46,7 @@ const muiFieldStyles = {
 
 export const LoginPage = ({ setBaseUrl, setToken }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -181,16 +182,19 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
-      
+
+      const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
+
+
       // Check if number is verified
-      if (response.number_verified === 0 && isViSite ) {
+      if (response.number_verified === 0 && isViSite) {
         // Store email temporarily for OTP verification
         localStorage.setItem("temp_email", email);
-        
+
         toast.success("Login Successful", {
           description: "Please verify your phone number to continue."
         });
-        
+
         // Redirect to OTP verification page
         setTimeout(() => {
           navigate('/otp-verification');
@@ -202,7 +206,8 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
 
         // Add a slight delay for better UX, then redirect to dashboard
         setTimeout(() => {
-          navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
+          isViSite ? navigate('/maintenance/m-safe/internal') : navigate(from, { replace: true });
+          // navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
         }, 500);
       }
     } catch (error) {
