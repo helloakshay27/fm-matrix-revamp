@@ -148,6 +148,7 @@ export const MobileSurveyLanding: React.FC = () => {
       case "multiple":
         return selectedOptions.length > 0;
       case "input":
+      case "text":
       case "description":
         return currentQuestionValue.trim() !== "";
       case "rating":
@@ -423,6 +424,7 @@ export const MobileSurveyLanding: React.FC = () => {
           break;
 
         case "input":
+        case "text":
         case "description":
           if (currentAnswer.value && currentAnswer.value.toString().trim()) {
             surveyResponse.response_text = currentAnswer.value
@@ -526,6 +528,7 @@ export const MobileSurveyLanding: React.FC = () => {
           break;
 
         case "input":
+        case "text":
         case "description":
           if (answerData.value && answerData.value.toString().trim()) {
             surveyResponse.response_text = answerData.value.toString().trim();
@@ -664,6 +667,7 @@ export const MobileSurveyLanding: React.FC = () => {
             break;
 
           case "input":
+          case "text":
           case "description":
             if (answer.value && answer.value.toString().trim()) {
               surveyResponse.response_text = answer.value.toString().trim();
