@@ -1563,7 +1563,7 @@ export const Sidebar = () => {
       'redemption marketplace': ['marketplace'],
       
       // Market Place
-      'all': ['marketplace'],
+      'marketplace_all': ['marketplace'],
       'installed': ['marketplace'],
       'updates': ['marketplace'],
       
