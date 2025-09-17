@@ -214,10 +214,10 @@ export const ShiftDashboard = () => {
       // Transform API data to match our interface
       const transformedData: ShiftItem[] = (data.user_shifts || []).map((item: any) => ({
         id: item.id,
-        timings: item.timings || 'Not specified', // Changed from 'timing' to 'timings'
+        timings: item.timings || 'Not specified',
         totalHours: item.total_hour || 0,
         checkInMargin: item.check_in_margin || '0h:0m',
-        createdOn: item.created_at ? new Date(item.created_at).toLocaleDateString('en-GB') : 'Not available',
+        createdOn: item.created_at || 'Not available', // Use the already formatted date string
         createdBy: item.created_by?.name || 'System',
         active: item.active !== undefined ? item.active : true
       }));
@@ -513,7 +513,6 @@ export const ShiftDashboard = () => {
           // Refresh the shifts data when a shift is updated
           fetchShiftData();
           setIsEditDialogOpen(false);
-          toast.success('Shift data refreshed');
         }}
       />
     </div>
