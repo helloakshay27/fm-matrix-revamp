@@ -87,6 +87,7 @@ export const EditServicePRPage = () => {
   const [detailsForms, setDetailsForms] = useState([
     {
       id: 1,
+      item_id: null,
       service: "",
       productDescription: "",
       quantityArea: "",
@@ -194,8 +195,9 @@ export const EditServicePRPage = () => {
         });
 
         setDetailsForms(
-          data.inventories.map((item) => ({
-            id: item.id,
+          data.inventories.map((item, index) => ({
+            id: index + 1,
+            item_id: item.id,
             service: item.pms_service_id,
             productDescription: item.product_description,
             quantityArea: item.quantity,
@@ -317,6 +319,7 @@ export const EditServicePRPage = () => {
     const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
     const newForm = {
       id: newId,
+      item_id: null,
       service: "",
       productDescription: "",
       quantityArea: "",
@@ -455,7 +458,7 @@ export const EditServicePRPage = () => {
         term_condition: formData.termsConditions,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_wo_inventories_attributes: detailsForms.map((item) => ({
-          id: item.id,
+          id: item.item_id,
           pms_service_id: item.service,
           prod_desc: item.productDescription,
           quantity: item.quantityArea,

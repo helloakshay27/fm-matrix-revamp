@@ -67,11 +67,12 @@ export const EditWODashboard: React.FC = () => {
     const [detailsForms, setDetailsForms] = useState([
         {
             id: 1,
+            item_id: null,
             service: "",
             productDescription: "",
             quantityArea: "",
             uom: "",
-            expectedDate: new Date(),
+            expectedDate: "",
             rate: "",
             cgstRate: "",
             cgstAmt: "",
@@ -174,13 +175,14 @@ export const EditWODashboard: React.FC = () => {
                 });
 
                 setDetailsForms(
-                    data.inventories.map((item) => ({
-                        id: item.id,
+                    data.inventories.map((item, index) => ({
+                        id: index + 1,
+                        item_id: item.id,
                         service: item.pms_service_id,
                         productDescription: item.product_description,
                         quantityArea: item.quantity,
                         uom: item.uom,
-                        expectedDate: item.expected_date,
+                        expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
                         rate: item.rate,
                         cgstRate: item.cgst_rate,
                         cgstAmt: item.cgst_amount,
@@ -283,11 +285,12 @@ export const EditWODashboard: React.FC = () => {
         const newId = Math.max(...detailsForms.map((form) => form.id)) + 1;
         const newForm = {
             id: newId,
+            item_id: null,
             service: "",
             productDescription: "",
             quantityArea: "",
             uom: "",
-            expectedDate: new Date(),
+            expectedDate: "",
             rate: "",
             cgstRate: "",
             cgstAmt: "",
@@ -355,7 +358,7 @@ export const EditWODashboard: React.FC = () => {
                 description: formData.description,
                 term_condition: formData.termsConditions,
                 pms_wo_inventories_attributes: detailsForms.map((item) => ({
-                    id: item.id,
+                    id: item.item_id,
                     pms_service_id: item.service,
                     prod_desc: item.productDescription,
                     quantity: item.quantityArea,
@@ -894,7 +897,7 @@ export const EditWODashboard: React.FC = () => {
                                             handleDetailsChange(
                                                 detailsData.id,
                                                 "expectedDate",
-                                                new Date(e.target.value)
+                                                e.target.value
                                             )
                                         }
                                         fullWidth

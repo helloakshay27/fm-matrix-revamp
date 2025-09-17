@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
@@ -67,6 +67,7 @@ export const EditMaterialPRDashboard = () => {
   const [items, setItems] = useState([
     {
       id: 1,
+      item_id: null,
       itemDetails: "",
       sacHsnCode: "",
       sacHsnCodeId: "",
@@ -146,8 +147,9 @@ export const EditMaterialPRDashboard = () => {
         });
 
         setItems(
-          response.pms_po_inventories.map((item) => ({
-            id: item.id,
+          response.pms_po_inventories.map((item, index) => ({
+            id: index + 1, // Unique local ID
+            item_id: item.id,
             itemDetails: item.inventory?.id,
             sacHsnCodeId: item.hsn_id,
             sacHsnCode: item.sac_hsn_code,
@@ -244,22 +246,55 @@ export const EditMaterialPRDashboard = () => {
     }
   }, [supplierDetails.plantDetail, dispatch, baseUrl, token]);
 
-  const handleItemChange = (id, field, value) => {
+  const handleItemChange = useCallback((id, field, value) => {
     setItems((prevItems) =>
       prevItems.map((item) => {
-        if (item.id === id) {
-          const updatedItem = { ...item, [field]: value };
-          if (field === "each" || field === "quantity") {
-            const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
-            const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
-            updatedItem.amount = (rate * quantity).toFixed(2);
-          }
-          return updatedItem;
+        if (item.id !== id) return item;
+
+        const updatedItem = { ...item, [field]: value };
+        if (field === "each" || field === "quantity") {
+          const rate = field === "each" ? parseFloat(value) || 0 : parseFloat(item.each) || 0;
+          const quantity = field === "quantity" ? parseFloat(value) || 0 : parseFloat(item.quantity) || 0;
+          updatedItem.amount = (rate * quantity).toFixed(2);
         }
-        return item;
+        return updatedItem;
       })
     );
-  };
+  }, []);
+
+  const onInventoryChange = useCallback(async (inventoryId, itemId) => {
+    try {
+      const response = await axios.get(
+        `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.id !== itemId) return item;
+
+          const newQuantity = parseFloat(item.quantity) || 0;
+          const newRate = parseFloat(response.data.rate) || 0;
+          const newAmount = (newRate * newQuantity).toFixed(2);
+
+          return {
+            ...item,
+            sacHsnCode: response.data.hsn?.code || "",
+            sacHsnCodeId: response.data.hsn?.id || "",
+            each: response.data.rate || "",
+            amount: newAmount,
+          };
+        })
+      );
+    } catch (error) {
+      console.log(error);
+      toast.error(error);
+    }
+  }, [baseUrl, token]);
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files);
@@ -280,10 +315,12 @@ export const EditMaterialPRDashboard = () => {
   };
 
   const addItem = () => {
+    const nextId = Math.max(...items.map(item => item.id || 0)) + 1;
     setItems([
       ...items,
       {
-        id: items.length + 1,
+        id: nextId,
+        item_id: null,
         itemDetails: "",
         sacHsnCode: "",
         sacHsnCodeId: "",
@@ -299,36 +336,6 @@ export const EditMaterialPRDashboard = () => {
 
   const removeItem = (id) => {
     setItems(items.filter((item) => item.id !== id));
-  };
-
-  const onInventoryChange = async (inventoryId, itemId) => {
-    try {
-      const response = await axios.get(
-        `https://${baseUrl}/pms/purchase_orders/${inventoryId}/hsn_code_categories.json`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setItems((prevItems) =>
-        prevItems.map((item) =>
-          item.id === itemId
-            ? {
-              ...item,
-              sacHsnCode: response.data.hsn?.code || "",
-              sacHsnCodeId: response.data.hsn?.id || "",
-              each: response.data.rate || "",
-              amount: ((parseFloat(response.data.rate) || 0) * (parseFloat(item.quantity) || 0)).toFixed(2),
-            }
-            : item
-        )
-      );
-    } catch (error) {
-      console.log(error);
-      toast.error(error);
-    }
   };
 
   const calculateTotalAmount = () => {
@@ -413,7 +420,7 @@ export const EditMaterialPRDashboard = () => {
         advance_amount: supplierDetails.advanceAmount,
         ...(wbsSelection === "overall" && { wbs_code: overallWbs }),
         pms_po_inventories_attributes: items.map((item) => ({
-          id: item.id,
+          id: item.item_id,
           pms_inventory_id: item.itemDetails,
           quantity: item.quantity,
           rate: item.each,

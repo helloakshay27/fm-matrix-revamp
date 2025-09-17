@@ -102,6 +102,7 @@ export const EditPODashboard = () => {
     const [items, setItems] = useState([
         {
             id: 1,
+            item_id: null,
             itemDetails: "",
             sacHsnCode: "",
             sacHsnCodeId: "",
@@ -214,8 +215,9 @@ export const EditPODashboard = () => {
                 });
 
                 setItems(
-                    response.pms_po_inventories?.map((item) => ({
-                        id: item.id,
+                    response.pms_po_inventories?.map((item, index) => ({
+                        id: index + 1,
+                        item_id: item.id,
                         itemDetails: item.inventory?.id || "",
                         sacHsnCode: item.sac_hsn_code || "",
                         sacHsnCodeId: item.hsn_id || "",
@@ -302,7 +304,7 @@ export const EditPODashboard = () => {
                 related_to: formData.relatedTo,
                 advance_amount: formData.advanceAmount,
                 pms_po_inventories_attributes: items.map((item) => ({
-                    id: item.id,
+                    id: item.item_id,
                     pms_inventory_id: item.itemDetails,
                     sac_hsn_code: item.sacHsnCodeId,
                     quantity: item.quantity,
@@ -363,6 +365,7 @@ export const EditPODashboard = () => {
     const addItem = () => {
         const newItem = {
             id: items.length + 1,
+            item_id: null,
             itemDetails: "",
             sacHsnCode: "",
             sacHsnCodeId: "",

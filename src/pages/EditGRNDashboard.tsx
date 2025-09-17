@@ -44,6 +44,7 @@ interface Batch {
 
 interface InventoryItem {
   id: string;
+  item_id: string;
   inventoryType: string;
   expectedQuantity: string;
   receivedQuantity: string;
@@ -113,6 +114,7 @@ export const EditGRNDashboard = () => {
   const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
     {
       id: "",
+      item_id: null,
       inventoryType: "",
       expectedQuantity: "",
       receivedQuantity: "",
@@ -201,7 +203,9 @@ export const EditGRNDashboard = () => {
         });
 
         setInventoryDetails(
-          grn.grn_inventories.map((item: any) => ({
+          grn.grn_inventories.map((item: any, index) => ({
+            id: index + 1,
+            item_id: item.id,
             inventoryType: item.inventory_id,
             expectedQuantity: item.expected_quantity,
             receivedQuantity: item.received_quantity,
@@ -550,7 +554,7 @@ export const EditGRNDashboard = () => {
         adj_amount: grnDetails.adjustmentAmount,
         notes: grnDetails.notes,
         pms_grn_inventories_attributes: inventoryDetails.map((item) => ({
-          id: item.id,
+          id: item.item_id,
           pms_inventory_id: item.inventoryType,
           quantity: item.expectedQuantity,
           unit: item.receivedQuantity,
