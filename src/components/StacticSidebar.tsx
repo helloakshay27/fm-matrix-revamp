@@ -1153,7 +1153,77 @@ const modulesByPackage = {
             {
               name: "Roles",
               href: "/settings/manage-users/roles"
+            },
+            {
+              name: "Escalation Matrix",
+              href: "/settings/manage-users/escalation-matrix"
+            },
+            {
+              name: "Internal Users",
+              href: "/settings/manage-users/internal-users"
+            },
+            { 
+              name: "External Users",
+              href: "/settings/manage-users/external-users"
+            },
+            {
+              name: "Project Teams",
+              href: "/settings/manage-users/project-teams"
             }
+          ],
+        },
+        {
+          name: "Project Master",
+          subItems: [
+            {
+              name: "Organizations",
+              href: "/settings/project-users/organizations"
+            },
+            {
+              name: "Company",
+              href: "/settings/project-users/company"
+            },
+            {
+              name: "Country",
+              href: "/settings/project-users/country"
+            },
+            { 
+              name: "Region",
+              href: "/settings/project-users/region"
+            },
+            {
+              name: "Zone",
+              href: "/settings/project-users/zone"
+            },
+            { 
+              name: "Types",
+              href: "/settings/project-users/types"
+            },
+            {
+              name: "Tags",
+              href: "/settings/project-users/tags"
+            },
+            { 
+              name: "Status",
+              href: "/settings/project-users/status"
+            },
+            { 
+              name: "Project Group",
+              href: "/settings/project-users/project-group"
+            },
+            { 
+              name: "Project Template",
+              href: "/settings/project-users/project-template"
+            }
+          ],
+        },
+        {
+          name: "Issue Master",
+          subItems: [
+            {
+              name: "Types",
+              href: "/settings/issue-master/types"
+            },
           ],
         },
       ]
