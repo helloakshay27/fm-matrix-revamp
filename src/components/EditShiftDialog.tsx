@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { X, Loader2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { API_CONFIG, getAuthHeader } from "@/config/apiConfig";
 
 interface ShiftData {
@@ -24,7 +24,6 @@ interface EditShiftDialogProps {
 }
 
 export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: EditShiftDialogProps) => {
-  const { toast } = useToast();
   const [fromHour, setFromHour] = useState<string>("");
   const [fromMinute, setFromMinute] = useState<string>("");
   const [fromAmPm, setFromAmPm] = useState<string>("AM");
@@ -129,11 +128,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
 
   const validateForm = () => {
     if (!fromHour || !fromMinute || !toHour || !toMinute) {
-      toast({
-        title: "Validation Error",
-        description: "Please fill in all time fields",
-        variant: "destructive",
-      });
+      toast.error("Please fill in all time fields");
       return false;
     }
 
@@ -143,11 +138,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
     const toTimeMinutes = parseInt(toTime24) * 60 + parseInt(toMinute);
 
     // if (fromTimeMinutes >= toTimeMinutes) {
-    //   toast({
-    //     title: "Validation Error",
-    //     description: "End time must be after start time",
-    //     variant: "destructive",
-    //   });
+    //   toast.error("End time must be after start time");
     //   return false;
     // }
 
@@ -197,10 +188,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
       const responseData = await response.json();
       console.log('API Response:', responseData);
 
-      toast({
-        title: "Success",
-        description: "Shift updated successfully",
-      });
+      toast.success("Shift updated successfully");
 
       // Call the callback to refresh the data
       if (onShiftUpdated) {
@@ -211,11 +199,7 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
 
     } catch (error) {
       console.error('Error updating shift:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update shift. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Failed to update shift. Please try again.");
     } finally {
       setIsLoading(false);
     }
