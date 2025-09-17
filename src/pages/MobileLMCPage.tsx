@@ -64,6 +64,9 @@ const MobileLMCPage: React.FC = () => {
     const [resolvingUserLoading, setResolvingUserLoading] = useState<boolean>(false);
     const [resolvingCircleLoading, setResolvingCircleLoading] = useState<boolean>(false);
     const [userSelectOpen, setUserSelectOpen] = useState<boolean>(false);
+    const [isMobile, setIsMobile] = useState<boolean>(false);
+    const [userMobileDialogOpen, setUserMobileDialogOpen] = useState<boolean>(false);
+    const mobileSearchInputRef = useRef<HTMLInputElement>(null);
     // Token must come from URL only (e.g., ?token=...)
     const authToken = searchParams.get('token') || '';
 
@@ -320,6 +323,23 @@ const MobileLMCPage: React.FC = () => {
         }
     }, [userSelectOpen]);
 
+    // Detect mobile viewport and focus input when mobile dialog opens
+    useEffect(() => {
+        const check = () => setIsMobile(window.matchMedia('(max-width: 640px)').matches);
+        check();
+        window.addEventListener('resize', check);
+        return () => window.removeEventListener('resize', check);
+    }, []);
+
+    useEffect(() => {
+        if (userMobileDialogOpen) {
+            const t = setTimeout(() => {
+                try { mobileSearchInputRef.current?.focus({ preventScroll: true } as any); } catch { /* noop */ }
+            }, 50);
+            return () => clearTimeout(t);
+        }
+    }, [userMobileDialogOpen]);
+
     const allLoading = circlesLoading || usersLoading || mappingLoading || resolvingUserLoading || resolvingCircleLoading;
     const circleDisabled = !restrictByCircle;
     const userDisabled = restrictByCircle && !selectedCircle;
@@ -458,75 +478,79 @@ const MobileLMCPage: React.FC = () => {
                             <Label className={`block text-sm sm:text-base font-medium text-center ${userDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
                                 LMC Manager User
                             </Label>
-                            <Select
-                                value={selectedUser}
-                                onValueChange={v => setSelectedUser(v)}
-                                disabled={userDisabled || usersLoading || allLoading}
-                                open={userSelectOpen}
-                                onOpenChange={setUserSelectOpen}
-                            >
-                                <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${userDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
-                                    }`}>
-                                    <SelectValue placeholder={usersLoading ? 'Loading LMC Manager users...' : userPlaceholder} />
-                                </SelectTrigger>
-                                <SelectContent
-                                    className="w-[var(--radix-select-trigger-width)]"
-                                    onOpenAutoFocus={(e: any) => { e.preventDefault(); /* we'll focus input manually */ }}
-                                    onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
-                                    onPointerDownOutside={(e: any) => {
-                                        // If tapping inside the input area, don't close
-                                        const target = e.target as HTMLElement | null;
-                                        if (target && target.closest('input')) {
-                                            e.preventDefault();
-                                        }
-                                    }}
+                            {isMobile ? (
+                                <>
+                                    <Button
+                                        type="button"
+                                        disabled={userDisabled || allLoading}
+                                        onClick={() => setUserMobileDialogOpen(true)}
+                                        variant="outline"
+                                        className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 ${userDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030]'} justify-between`}
+                                    >
+                                        <span className="truncate text-left">
+                                            {selectedUser ? `${(selectedUserOptionRef.current?.name || users.find(u => u.id === selectedUser)?.name || 'Selected user')}${(selectedUserOptionRef.current?.email || users.find(u => u.id === selectedUser)?.email) ? ` (${selectedUserOptionRef.current?.email || users.find(u => u.id === selectedUser)?.email})` : ''}` : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
+                                        </span>
+                                        <span className="ml-2 text-gray-400">▼</span>
+                                    </Button>
+                                </>
+                            ) : (
+                                <Select
+                                    value={selectedUser}
+                                    onValueChange={v => setSelectedUser(v)}
+                                    disabled={userDisabled || usersLoading || allLoading}
+                                    open={userSelectOpen}
+                                    onOpenChange={setUserSelectOpen}
                                 >
-                                    <div className="p-2 sticky top-0 bg-white border-b">
-                                        <input
-                                            ref={searchInputRef}
-                                            value={userSearch}
-                                            onChange={(e) => setUserSearch(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                // Keep typing inside input; avoid Radix Select typeahead/selection
-                                                e.stopPropagation();
-                                                if (e.key === 'Enter') e.preventDefault();
-                                            }}
-                                            onKeyDownCapture={(e) => {
-                                                // Extra guard so Select never sees these keys
-                                                e.stopPropagation();
-                                            }}
-                                            onFocus={() => setUserSelectOpen(true)}
-                                            onBlur={(e) => {
-                                                // Keep open while keyboard is visible; do not auto-close on minor blurs
-                                                // We'll rely on explicit outside taps or selection to close
-                                            }}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onPointerDown={(e) => e.stopPropagation()}
-                                            onTouchStart={(e) => e.stopPropagation()}
-                                            onTouchEnd={(e) => e.stopPropagation()}
-                                            onClick={(e) => e.stopPropagation()}
-                                            placeholder="Search LMC Manager user (type 3+ chars)"
-                                            className="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
-                                        />
-                                    </div>
-                                    <div className="max-h-60 overflow-auto" onScroll={handleUserScroll}>
-                                        {filteredUsers.map(u => (
-                                            <SelectItem key={u.id} value={u.id} className="text-base py-3">{`${u.name}${u.email ? ` (${u.email})` : ''}`}</SelectItem>
-                                        ))}
-                                        {(usersLoading || usersAppendLoading) && (
-                                            <div className="px-4 py-3 text-center text-gray-500 text-sm">Loading...</div>
-                                        )}
-                                        {!usersLoading && filteredUsers.length === 0 && (
-                                            <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                                                {restrictByCircle && !selectedCircle
-                                                    ? 'Please select a circle first'
-                                                    : 'No users found'
-                                                }
-                                            </div>
-                                        )}
-                                    </div>
-                                </SelectContent>
-                            </Select>
+                                    <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${userDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'}`}>
+                                        <SelectValue placeholder={usersLoading ? 'Loading LMC Manager users...' : userPlaceholder} />
+                                    </SelectTrigger>
+                                    <SelectContent
+                                        className="w-[var(--radix-select-trigger-width)]"
+                                        onOpenAutoFocus={(e: any) => { e.preventDefault(); /* we'll focus input manually */ }}
+                                        onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
+                                        onPointerDownOutside={(e: any) => {
+                                            const target = e.target as HTMLElement | null;
+                                            if (target && target.closest('input')) {
+                                                e.preventDefault();
+                                            }
+                                        }}
+                                    >
+                                        <div className="p-2 sticky top-0 bg-white border-b">
+                                            <input
+                                                ref={searchInputRef}
+                                                value={userSearch}
+                                                onChange={(e) => setUserSearch(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    e.stopPropagation();
+                                                    if (e.key === 'Enter') e.preventDefault();
+                                                }}
+                                                onKeyDownCapture={(e) => {
+                                                    e.stopPropagation();
+                                                }}
+                                                onFocus={() => setUserSelectOpen(true)}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
+                                                placeholder="Search LMC Manager user (type 3+ chars)"
+                                                className="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                                            />
+                                        </div>
+                                        <div className="max-h-60 overflow-auto" onScroll={handleUserScroll}>
+                                            {filteredUsers.map(u => (
+                                                <SelectItem key={u.id} value={u.id} className="text-base py-3">{`${u.name}${u.email ? ` (${u.email})` : ''}`}</SelectItem>
+                                            ))}
+                                            {(usersLoading || usersAppendLoading) && (
+                                                <div className="px-4 py-3 text-center text-gray-500 text-sm">Loading...</div>
+                                            )}
+                                            {!usersLoading && filteredUsers.length === 0 && (
+                                                <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                                                    {restrictByCircle && !selectedCircle ? 'Please select a circle first' : 'No users found'}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </SelectContent>
+                                </Select>
+                            )}
                         </div>
 
                         {/* Action Buttons */}
@@ -598,6 +622,49 @@ const MobileLMCPage: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Mobile User Picker Dialog */}
+                <Dialog open={userMobileDialogOpen} onOpenChange={setUserMobileDialogOpen}>
+                    <DialogContent className="w-[92vw] max-w-md p-4 rounded-xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-lg">Select LMC Manager</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-3">
+                            <input
+                                ref={mobileSearchInputRef}
+                                value={userSearch}
+                                onChange={(e) => setUserSearch(e.target.value)}
+                                placeholder="Search LMC Manager user (type 3+ chars)"
+                                className="w-full h-10 px-3 text-base border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                                inputMode="search"
+                            />
+                            <div className="max-h-80 overflow-auto rounded-md border" onScroll={handleUserScroll}>
+                                {filteredUsers.map(u => (
+                                    <button
+                                        key={u.id}
+                                        type="button"
+                                        className="w-full text-left px-3 py-3 border-b last:border-b-0 hover:bg-gray-50"
+                                        onClick={() => { setSelectedUser(u.id); setUserMobileDialogOpen(false); }}
+                                    >
+                                        <div className="text-sm font-medium">{u.name}</div>
+                                        {u.email && <div className="text-xs text-gray-500">{u.email}</div>}
+                                    </button>
+                                ))}
+                                {(usersLoading || usersAppendLoading) && (
+                                    <div className="px-4 py-3 text-center text-gray-500 text-sm">Loading...</div>
+                                )}
+                                {!usersLoading && filteredUsers.length === 0 && (
+                                    <div className="px-4 py-6 text-center text-gray-500 text-sm">
+                                        {restrictByCircle && !selectedCircle ? 'Please select a circle first' : 'No users found'}
+                                    </div>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                                <Button variant="outline" onClick={() => setUserMobileDialogOpen(false)}>Close</Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
 
                 {/* Result Modal */}
                 <Dialog open={resultModalOpen} onOpenChange={setResultModalOpen}>
