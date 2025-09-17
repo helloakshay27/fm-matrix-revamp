@@ -193,7 +193,10 @@ const EmployeeDeletionHistory: React.FC = () => {
                                     <tr>
                                         <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Serial Number</th>
                                         <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Name</th>
+                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted User Email</th>
+                                        <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted Date</th>
                                         <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Deleted By</th>
+
                                         <th className="h-12 px-4 text-left align-middle font-medium text-gray-600 border-b border-gray-200 whitespace-nowrap">Employee Detail</th>
                                     </tr>
                                 </thead>
@@ -202,7 +205,9 @@ const EmployeeDeletionHistory: React.FC = () => {
                                         <tr key={r.id} className="hover:bg-gray-50">
                                             <td className="p-4 align-middle whitespace-nowrap">{serialBase + idx + 1}</td>
                                             <td className="p-4 align-middle whitespace-nowrap font-medium">{renderName(r)}</td>
+                                            <td className="p-4 align-middle whitespace-nowrap">{r.detail?.email || r.user_email || '—'}</td>
                                             <td className="p-4 align-middle whitespace-nowrap">{r.deleted_by_email || '—'}</td>
+                                            <td className="p-4 align-middle whitespace-nowrap">{formatDateTime(r.created_at)}</td>
                                             <td className="p-4 align-middle">
                                                 <button
                                                     type="button"
