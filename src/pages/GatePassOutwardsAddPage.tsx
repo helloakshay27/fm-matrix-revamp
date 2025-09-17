@@ -253,87 +253,82 @@ export const GatePassOutwardsAddPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return; // Prevent double submit
-    setIsSubmitting(true);
+
     // Field-level validation
     if (!visitorDetails.contactPerson) {
-          toast.error("Visitor Name is required");
-          return;
-        }
-        if (!visitorDetails.contactPersonNo) {
-          toast.error("Mobile No. is required");
-          return;
-        }
-        if (visitorDetails.contactPersonNo.length !== 10) {
-          toast.error("Mobile No. must be 10 digits");
-          return;
-        }
-        
-        if (!visitorDetails.modeOfTransport) {
-          toast.error("Mode Of Transport is required");
-          return;
-        }
-        if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
-          toast.error("Vehicle No. is required");
-          return;
-        }
-        if (!visitorDetails.reportingTime) {
-          toast.error("Reporting Time is required");
-          return;
-        }
-        if (!selectedSite) {
-          toast.error("Site is required");
-          return;
-        }
-        if (!gatePassDetails.buildingId) {
-          toast.error("Building is required");
-          return;
-        }
-        if (!selectedCompany) {
-          toast.error("Company is required");
-          return;
-        }
-        if (!gatePassDetails.vendorId) {
-          toast.error("Vendor is required");
-          return;
-        }
-        console.log("Gate Pass Details:", gatePassDetails);
+      toast.error("Visitor Name is required");
+      return;
+    }
+    if (!visitorDetails.contactPersonNo) {
+      toast.error("Mobile No. is required");
+      return;
+    }
+    if (visitorDetails.contactPersonNo.length !== 10) {
+      toast.error("Mobile No. must be 10 digits");
+      return;
+    }
+    if (!visitorDetails.modeOfTransport) {
+      toast.error("Mode Of Transport is required");
+      return;
+    }
+    if (!visitorDetails.vehicleNo && (visitorDetails.modeOfTransport == "car" || visitorDetails.modeOfTransport == "bike" || visitorDetails.modeOfTransport == "truck")) {
+      toast.error("Vehicle No. is required");
+      return;
+    }
+    if (!visitorDetails.reportingTime) {
+      toast.error("Reporting Time is required");
+      return;
+    }
+    if (!selectedSite) {
+      toast.error("Site is required");
+      return;
+    }
+    if (!gatePassDetails.buildingId) {
+      toast.error("Building is required");
+      return;
+    }
+    if (!selectedCompany) {
+      toast.error("Company is required");
+      return;
+    }
+    if (!gatePassDetails.vendorId) {
+      toast.error("Vendor is required");
+      return;
+    }
+    if (!visitorDetails.gateNoId) {
+      toast.error("Gate Number is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassTypeId) {
+      toast.error("Gate Pass Type is required");
+      return;
+    }
+    if (!gatePassDetails.gatePassDate) {
+      toast.error("Gate Pass Date is required");
+      return;
+    }
+    // Validate all item details and show toast for each missing field
+    for (let idx = 0; idx < materialRows.length; idx++) {
+      const row = materialRows[idx];
+      if (!row.itemTypeId) {
+        toast.error(`Item Type is required for row ${idx + 1}`);
+        return;
+      }
+      if (!row.itemCategoryId) {
+        toast.error(`Item Category is required for row ${idx + 1}`);
+        return;
+      }
+      // Require either itemNameId or otherMaterialName (for "Other")
+      if (
+        (row.itemCategoryId === -1 && !row.otherMaterialName) ||
+        (row.itemCategoryId !== -1 && !row.itemNameId)
+      ) {
+        toast.error(`Item Name is required for row ${idx + 1}`);
+        return;
+      }
+    }
 
-        if (!visitorDetails.gateNoId) {
-          toast.error("Gate Number is required");
-          return;
-        }
-        if (!gatePassDetails.gatePassTypeId) {
-          toast.error("Gate Pass Type is required");
-          return;
-        }
-        if (!gatePassDetails.gatePassDate) {
-          toast.error("Gate Pass Date is required");
-          return;
-        }
-    
-        // Validate all item details and show toast for each missing field
-        for (let idx = 0; idx < materialRows.length; idx++) {
-          const row = materialRows[idx];
-          if (!row.itemTypeId) {
-            toast.error(`Item Type is required for row ${idx + 1}`);
-            return;
-          }
-          if (!row.itemCategoryId) {
-            toast.error(`Item Category is required for row ${idx + 1}`);
-            return;
-          }
-          // Require either itemNameId or otherMaterialName (for "Other")
-          if (
-            (row.itemCategoryId === -1 && !row.otherMaterialName) ||
-            (row.itemCategoryId !== -1 && !row.itemNameId)
-          ) {
-            toast.error(`Item Name is required for row ${idx + 1}`);
-            return;
-          }
-        }
-
-    // setFieldErrors(errors);
-    // if (Object.keys(errors).length > 0) return;
+    setIsSubmitting(true); // Only set after validation passes
 
     const formData = new FormData();
 
@@ -991,14 +986,14 @@ export const GatePassOutwardsAddPage = () => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-4 pt-4">
+        <div className="flex items-center justify-center gap-4 pt-4">
           <Button
-  type="submit"
-  className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
-  disabled={isSubmitting}
->
-  Submit
-</Button>
+            type="submit"
+            className="bg-[#C72030] hover:bg-[#C72030]/90 text-white px-8 py-2"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
           <Button type="button" variant="outline" className="border-[#C72030] text-[#C72030] hover:bg-red-50 px-8 py-2" onClick={() => navigate('/security/gate-pass/outwards')}>Cancel</Button>
         </div>
       </form>

@@ -254,7 +254,7 @@ export const AddGatePassInwardPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return; // Prevent double submit
-    setIsSubmitting(true);
+
     // Field-level validation
     if (!visitorDetails.contactPerson) {
       toast.error("Visitor Name is required");
@@ -268,7 +268,6 @@ export const AddGatePassInwardPage = () => {
       toast.error("Mobile No. must be 10 digits");
       return;
     }
-
     if (!visitorDetails.modeOfTransport) {
       toast.error("Mode Of Transport is required");
       return;
@@ -305,7 +304,6 @@ export const AddGatePassInwardPage = () => {
       toast.error("Gate Pass Date is required");
       return;
     }
-
     // Validate all item details and show toast for each missing field
     for (let idx = 0; idx < materialRows.length; idx++) {
       const row = materialRows[idx];
@@ -327,7 +325,7 @@ export const AddGatePassInwardPage = () => {
       }
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true); // Only set after validation passes
     const formData = new FormData();
 
     // Append gate pass details
