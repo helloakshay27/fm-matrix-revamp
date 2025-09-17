@@ -63,6 +63,7 @@ const MobileLMCPage: React.FC = () => {
     const [mappingLoading, setMappingLoading] = useState<boolean>(false);
     const [resolvingUserLoading, setResolvingUserLoading] = useState<boolean>(false);
     const [resolvingCircleLoading, setResolvingCircleLoading] = useState<boolean>(false);
+    const [userSelectOpen, setUserSelectOpen] = useState<boolean>(false);
     // Token must come from URL only (e.g., ?token=...)
     const authToken = searchParams.get('token') || '';
 
@@ -309,6 +310,16 @@ const MobileLMCPage: React.FC = () => {
         } finally { setRefreshing(false); }
     };
 
+    // Ensure the search input gains/keeps focus when the select opens (mobile-friendly)
+    useEffect(() => {
+        if (userSelectOpen) {
+            const t = setTimeout(() => {
+                try { searchInputRef.current?.focus({ preventScroll: true } as any); } catch { /* noop */ }
+            }, 0);
+            return () => clearTimeout(t);
+        }
+    }, [userSelectOpen]);
+
     const allLoading = circlesLoading || usersLoading || mappingLoading || resolvingUserLoading || resolvingCircleLoading;
     const circleDisabled = !restrictByCircle;
     const userDisabled = restrictByCircle && !selectedCircle;
@@ -451,6 +462,8 @@ const MobileLMCPage: React.FC = () => {
                                 value={selectedUser}
                                 onValueChange={v => setSelectedUser(v)}
                                 disabled={userDisabled || usersLoading || allLoading}
+                                open={userSelectOpen}
+                                onOpenChange={setUserSelectOpen}
                             >
                                 <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${userDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
                                     }`}>
@@ -458,6 +471,15 @@ const MobileLMCPage: React.FC = () => {
                                 </SelectTrigger>
                                 <SelectContent
                                     className="w-[var(--radix-select-trigger-width)]"
+                                    onOpenAutoFocus={(e: any) => { e.preventDefault(); /* we'll focus input manually */ }}
+                                    onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
+                                    onPointerDownOutside={(e: any) => {
+                                        // If tapping inside the input area, don't close
+                                        const target = e.target as HTMLElement | null;
+                                        if (target && target.closest('input')) {
+                                            e.preventDefault();
+                                        }
+                                    }}
                                 >
                                     <div className="p-2 sticky top-0 bg-white border-b">
                                         <input
@@ -473,11 +495,17 @@ const MobileLMCPage: React.FC = () => {
                                                 // Extra guard so Select never sees these keys
                                                 e.stopPropagation();
                                             }}
+                                            onFocus={() => setUserSelectOpen(true)}
+                                            onBlur={(e) => {
+                                                // Keep open while keyboard is visible; do not auto-close on minor blurs
+                                                // We'll rely on explicit outside taps or selection to close
+                                            }}
                                             onMouseDown={(e) => e.stopPropagation()}
                                             onPointerDown={(e) => e.stopPropagation()}
+                                            onTouchStart={(e) => e.stopPropagation()}
+                                            onTouchEnd={(e) => e.stopPropagation()}
                                             onClick={(e) => e.stopPropagation()}
                                             placeholder="Search LMC Manager user (type 3+ chars)"
-                                            autoFocus
                                             className="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
                                         />
                                     </div>
