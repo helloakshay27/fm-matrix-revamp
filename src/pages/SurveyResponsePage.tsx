@@ -148,6 +148,7 @@ export const SurveyResponsePage = () => {
   const [selectedItems, setSelectedItems] = useState<TransformedSurveyResponse[]>([]);
   const [responseData, setResponseData] = useState<TransformedSurveyResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [activeTab, setActiveTab] = useState('list');
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData>({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -239,6 +240,93 @@ export const SurveyResponsePage = () => {
     } catch (error) {
       console.error('❌ Error fetching survey response list:', error);
       throw error;
+    }
+  };
+
+  // Export handler for survey response data
+  const handleSurveyResponseExport = async () => {
+    try {
+      setIsExporting(true);
+      console.log('📤 Exporting survey response data with current filters:', appliedFilters);
+      
+      const url = getFullUrl('/survey_mappings/response_list.json');
+      const urlWithParams = new URL(url);
+      
+      // Add export parameter
+      urlWithParams.searchParams.append('export', 'true');
+      
+      // Add access_token parameter if available
+      if (API_CONFIG.TOKEN) {
+        urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+        console.log('🔑 Adding access_token to export request');
+      }
+      
+      // Add current filters to export
+      if (appliedFilters.surveyTitle && appliedFilters.surveyTitle.trim()) {
+        urlWithParams.searchParams.append('q[name_cont]', appliedFilters.surveyTitle.trim());
+        console.log('🔍 Adding survey title filter to export:', appliedFilters.surveyTitle);
+      }
+      
+      // Add survey type filter if provided
+      if (appliedFilters.surveyType && appliedFilters.surveyType.trim()) {
+        urlWithParams.searchParams.append('q[survey_type_eq]', appliedFilters.surveyType.trim());
+        console.log('🔍 Adding survey type filter to export:', appliedFilters.surveyType);
+      }
+      
+      // Add date range filters if provided
+      if (appliedFilters.startDate) {
+        urlWithParams.searchParams.append('q[created_at_gteq]', appliedFilters.startDate.toISOString());
+        console.log('🔍 Adding start date filter to export:', appliedFilters.startDate);
+      }
+      
+      if (appliedFilters.endDate) {
+        urlWithParams.searchParams.append('q[created_at_lteq]', appliedFilters.endDate.toISOString());
+        console.log('🔍 Adding end date filter to export:', appliedFilters.endDate);
+      }
+      
+      console.log('🚀 Calling export API:', urlWithParams.toString());
+      
+      const options = getAuthenticatedFetchOptions();
+      const response = await fetch(urlWithParams.toString(), options);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Export API Error Response:', errorText);
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the blob data
+      const blob = await response.blob();
+      
+      // Check if we got a valid file
+      if (blob.size === 0) {
+        throw new Error('Export file is empty');
+      }
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+      const filterSuffix = appliedFilters.surveyTitle ? `-${appliedFilters.surveyTitle.replace(/[^a-zA-Z0-9]/g, '_')}` : '';
+      link.download = `survey-response-export${filterSuffix}-${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ Survey response data exported successfully!');
+      toast.success('Survey response data exported successfully!');
+      
+    } catch (error) {
+      console.error('❌ Export error:', error);
+      toast.error('Failed to export survey response data. Please try again.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -761,6 +849,7 @@ export const SurveyResponsePage = () => {
                   storageKey="survey-response-table"
                   enableExport={true}
                   exportFileName="survey-response-data"
+                  handleExport={handleSurveyResponseExport}
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   searchPlaceholder="Search responses..."
