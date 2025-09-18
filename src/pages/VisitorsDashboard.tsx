@@ -27,6 +27,25 @@ import {
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
+// Get current site ID dynamically from localStorage
+const getCurrentSiteId = (): number => {
+  const siteId = localStorage.getItem('selectedSiteId') || 
+                localStorage.getItem('currentSiteId') ||
+                localStorage.getItem('site_id') || 
+                localStorage.getItem('siteId');
+  
+  if (!siteId) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSiteId = urlParams.get('site_id');
+    if (urlSiteId) return parseInt(urlSiteId);
+    
+    console.warn('Site ID not found in localStorage or URL, using default: 2189');
+    return 2189;
+  }
+  
+  return parseInt(siteId);
+};
+
 // API Service using apiConfig
 const getUnexpectedVisitors = async (siteId: number, page: number = 1, perPage: number = 20, personToMeetId?: string) => {
   try {
@@ -264,10 +283,12 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitors = async (page: number = 1) => {
     setLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = unexpectedFilters.personToMeet;
       console.log('🔍 Unexpected visitor filters:', unexpectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -286,10 +307,12 @@ export const VisitorsDashboard = () => {
   const fetchUnexpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
     setLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters directly:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getUnexpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getUnexpectedVisitors(siteId, page, 20, personToMeetId);
       setUnexpectedVisitors(data.unexpected_visitors);
       setPagination({
         currentPage: data.pagination.current_page,
@@ -308,10 +331,12 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitors = async (page: number = 1) => {
     setExpectedLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = expectedFilters.personToMeet;
       console.log('🔍 Expected visitor filters:', expectedFilters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -330,10 +355,12 @@ export const VisitorsDashboard = () => {
   const fetchExpectedVisitorsWithFilters = async (page: number = 1, filters?: VisitorFilters) => {
     setExpectedLoading(true);
     try {
+      const siteId = getCurrentSiteId();
       const personToMeetId = filters?.personToMeet;
       console.log('🔍 Applying filters to expected visitors:', filters);
       console.log('🔍 PersonToMeetId being passed:', personToMeetId);
-      const data = await getExpectedVisitors(2189, page, 20, personToMeetId); // Replace 2189 with your actual site ID
+      console.log('🔍 Using site ID:', siteId);
+      const data = await getExpectedVisitors(siteId, page, 20, personToMeetId);
       setExpectedVisitors(data.expected_visitors);
       setExpectedPagination({
         currentPage: data.pagination.current_page,
@@ -352,7 +379,9 @@ export const VisitorsDashboard = () => {
   const fetchVisitorHistory = async (page: number = 1) => {
     setHistoryLoading(true);
     try {
-      const data = await getVisitorHistory(2189, page); // Replace 2189 with your actual site ID
+      const siteId = getCurrentSiteId();
+      console.log('🔍 Using site ID for visitor history:', siteId);
+      const data = await getVisitorHistory(siteId, page);
       setVisitorHistoryData(data.visitors);
       setHistoryPagination({
         currentPage: data.pagination?.current_page || 1,
@@ -371,7 +400,9 @@ export const VisitorsDashboard = () => {
   const fetchVisitorsOut = async (page: number = 1) => {
     setVisitorsOutLoading(true);
     try {
-      const data = await getVisitorsOut(2189, page); // Replace 2189 with your actual site ID
+      const siteId = getCurrentSiteId();
+      console.log('🔍 Using site ID for visitors out:', siteId);
+      const data = await getVisitorsOut(siteId, page);
       // Flatten checked_in_at to checked_in_at.formatted for table display
       const mapped = (data.visitors || []).map((v: any) => ({
         ...v,
