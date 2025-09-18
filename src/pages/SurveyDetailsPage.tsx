@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, X, Plus, ChevronDown, CheckCircle } from "lucide-react";
+import { ArrowLeft, X, Plus, ChevronDown, CheckCircle, Edit } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
@@ -401,6 +401,10 @@ export const SurveyDetailsPage = () => {
     navigate("/maintenance/survey/list");
   };
 
+  const handleEdit = () => {
+    navigate(`/maintenance/survey/edit/${id}`);
+  };
+
   const handleSubmitLocation = async () => {
     try {
       // Validate that we have some location selected
@@ -484,7 +488,7 @@ export const SurveyDetailsPage = () => {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex items-center justify-between gap-4 mb-6">
         <Button
           variant="ghost"
           onClick={handleBack}
@@ -493,6 +497,16 @@ export const SurveyDetailsPage = () => {
           <ArrowLeft className="w-4 h-4" />
           Back to Question List
         </Button>
+        
+        {!loading && snagChecklist && (
+          <Button
+            onClick={handleEdit}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            <Edit className="w-4 h-4" />
+            Edit Survey
+          </Button>
+        )}
       </div>
 
       {/* Main Question Content Card */}
