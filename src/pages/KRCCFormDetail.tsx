@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -191,43 +191,53 @@ const SectionChecklist: React.FC<{ title: string; prefix: string; formDetails?: 
     );
   };
 
-const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined }> = ({ title, items }) => {
+// Enhanced gallery with preview modal
+const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined; onPreview: (items: IAttachmentItem[], index: number, title: string) => void }> = ({ title, items, onPreview }) => {
   if (!items || items.length === 0) return null;
-
-  // Only keep items that have an image we can show
   const imageItems = items.filter((item) => {
     const contentType = (item.document_content_type || item.doctype || '').toLowerCase();
+    const url = item.url || '';
     const isImageType = contentType.startsWith('image');
-    const urlLooksImage = item.url ? /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(item.url) : false;
-    return !!item.url && (isImageType || urlLooksImage);
+    const urlLooksImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
+    return !!url && (isImageType || urlLooksImage);
   });
-
   if (imageItems.length === 0) return null;
-
   return (
-    <div className="mt-4 mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <FileText className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-        <label className="block text-sm font-medium text-gray-700">{title}</label>
+    <div className="mt-6 group">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
+            <FileText className="h-3.5 w-3.5" />
+          </div>
+          <label className="text-sm font-semibold tracking-wide text-gray-800">{title}</label>
+          <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">{imageItems.length}</span>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {imageItems.map(item => {
-          const display = item.document_file_name || item.id;
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+        {imageItems.map((item, idx) => {
+          const display = item.document_file_name || `Image-${item.id}`;
           return (
-            <div key={item.id} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-center justify-center h-20 bg-white rounded border mb-2 relative overflow-hidden">
-                <img src={item.url} alt={display + ''} className="max-h-20 object-contain" />
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onPreview(imageItems, idx, title)}
+              className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
+            >
+              <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                <img
+                  src={item.url}
+                  alt={display + ''}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
+                />
+                <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+                  <Maximize2 className="h-5 w-5 text-white" />
+                </div>
               </div>
-              <div className="text-center">
-                <button
-                  onClick={() => window.open(item.url!, '_blank')}
-                  className="flex items-center justify-center gap-1 text-[#C72030] mx-auto"
-                >
-                  <Download className="h-3 w-3" />
-                  <span className="text-xs font-medium truncate max-w-[140px]" title={display + ''}>{display}</span>
-                </button>
+              <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                {display}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -391,10 +401,34 @@ export const KRCCFormDetail: React.FC = () => {
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
   const user = data?.user;
-  const mergedCategories = useMemo(
-    () => mergeKrccAttachmentsIntoCategories(data?.krcc_attachments, data?.categories),
-    [data?.krcc_attachments, data?.categories]
-  );
+  const mergedCategories = useMemo(() => data?.categories || {}, [data?.categories]);
+
+  // Preview (lightbox) state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<IAttachmentItem[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  const openPreview = useCallback((items: IAttachmentItem[], index: number, title: string) => {
+    setPreviewItems(items);
+    setPreviewIndex(index);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  }, []);
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
+  const gotoPrev = useCallback(() => setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length), [previewItems.length]);
+  const gotoNext = useCallback(() => setPreviewIndex(i => (i + 1) % previewItems.length), [previewItems.length]);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePreview();
+      if (e.key === 'ArrowLeft') gotoPrev();
+      if (e.key === 'ArrowRight') gotoNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
   const handleBack = () => navigate(-1);
 
@@ -456,7 +490,7 @@ export const KRCCFormDetail: React.FC = () => {
   if (!data) return null;
 
   return (
-    <div className="p-6 space-y-6">
+  <div className="p-6 flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -492,12 +526,12 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="2 Wheeler Reg. Number" value={bike.reg_number} />
             </div>
             <SectionChecklist title="2 Wheeler Checklist" prefix="2w_" formDetails={data.form_details} />
-            <AttachmentGroup title="M-Parivahan Attachments" items={bike.attachments?.mparivahan as IAttachmentItem[]} />
-            <AttachmentGroup title="Vehicle Attachments" items={bike.attachments?.vehicle as IAttachmentItem[]} />
-            <AttachmentGroup title="Insurance Attachments" items={bike.attachments?.insurance as IAttachmentItem[]} />
-            <AttachmentGroup title="Helmet Attachments" items={bike.attachments?.helmet as IAttachmentItem[]} />
-            <AttachmentGroup title="PUC Attachments" items={bike.attachments?.puc as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={bike.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="M-Parivahan" items={bike.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Vehicle" items={bike.attachments?.vehicle as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Insurance" items={bike.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Helmet" items={bike.attachments?.helmet as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="PUC" items={bike.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={bike.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -531,10 +565,10 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="Valid Till (If Applicable)" value={car.medical_certificate_valid_till} />
             </div>
             <SectionChecklist title="4 Wheeler Checklist" prefix="4w_" formDetails={data.form_details} />
-            <AttachmentGroup title="M-Parivahan Attachments" items={car.attachments?.mparivahan as IAttachmentItem[]} />
-            <AttachmentGroup title="Insurance Attachments" items={car.attachments?.insurance as IAttachmentItem[]} />
-            <AttachmentGroup title="PUC Attachments" items={car.attachments?.puc as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={car.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="M-Parivahan" items={car.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Insurance" items={car.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="PUC" items={car.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={car.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -546,7 +580,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work on Electrical System</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -561,11 +595,11 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue label="Valid Till" value={electrical.first_aid_valid_till} />
               </div>
             </div>
-            <AttachmentGroup title="Certificate Attachments" items={electrical.attachments?.certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="License Attachments" items={electrical.attachments?.license as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={electrical.attachments?.medical_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="Experience Certificate Attachments" items={electrical.attachments?.experience_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="First Aid Training Attachments" items={electrical.attachments?.first_aid as IAttachmentItem[]} />
+            <AttachmentGroup title="Certificates" items={electrical.attachments?.certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Licenses" items={electrical.attachments?.license as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificates" items={electrical.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Experience Certificates" items={electrical.attachments?.experience_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid Training" items={electrical.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -577,7 +611,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work at Height</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -591,8 +625,8 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue label="Valid Till" value={height.first_aid_certificate_valid_till} />
               </div>
             </div>
-            <AttachmentGroup title="Medical Certificate Attachments" items={height.attachments?.medical_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="First Aid Attachments" items={height.attachments?.first_aid as IAttachmentItem[]} />
+            <AttachmentGroup title="Medical Certificates" items={height.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid" items={height.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -604,7 +638,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work Underground</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -618,7 +652,7 @@ export const KRCCFormDetail: React.FC = () => {
               </div>
             </div>
             <SectionChecklist title="Work Underground Checklist" prefix="work_under_ground_" formDetails={data.form_details} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={underground.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="Medical Certificates" items={underground.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -640,7 +674,7 @@ export const KRCCFormDetail: React.FC = () => {
       )}
 
       {/* Operate MHE */}
-      {mhe && (
+  {mhe && (
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
@@ -665,6 +699,51 @@ export const KRCCFormDetail: React.FC = () => {
           </div>
           <div className="p-6 pt-2">
             <p className="text-sm text-gray-700">User selected "None of the above"; no category-specific details provided.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Preview Modal */}
+      {previewOpen && previewItems.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-3 text-white">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                <span className="font-medium text-sm tracking-wide">{previewTitle}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-white/10 border border-white/20">{previewIndex + 1}/{previewItems.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={gotoPrev} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={gotoNext} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
+                <button onClick={closePreview} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><X className="h-4 w-4" /></button>
+              </div>
+            </div>
+            <div className="relative rounded-lg overflow-hidden shadow-2xl bg-black/40 border border-white/10">
+              <img
+                src={previewItems[previewIndex].url}
+                alt={(previewItems[previewIndex].document_file_name || '') + ''}
+                className="mx-auto max-h-[70vh] object-contain w-full select-none"
+                draggable={false}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-32 overflow-y-auto pr-1">
+              {previewItems.map((it, i) => {
+                const active = i === previewIndex;
+                const thumbName = it.document_file_name || `Img-${it.id}`;
+                return (
+                  <button
+                    key={it.id}
+                    onClick={() => setPreviewIndex(i)}
+                    className={`relative group/thumb rounded border ${active ? 'border-[#C72030] ring-2 ring-[#C72030]/50' : 'border-white/20 hover:border-white/50'} overflow-hidden h-14 bg-white/5`}
+                    title={thumbName}
+                  >
+                    <img src={it.url} alt={thumbName} className="h-full w-full object-cover" loading="lazy" />
+                    {active && <span className="absolute inset-0 border-2 border-[#C72030] pointer-events-none"></span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
