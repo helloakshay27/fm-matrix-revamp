@@ -15,6 +15,13 @@ interface IUserInfo {
   blood_group?: string;
   birth_date?: string;
   avatar?: string;
+  circle_name?: string;
+  company_name?: string;
+  department_name?: string;
+  employee_id?: string;
+  employee_type?: string;
+  profile_photo?: string;
+  role_name?: string;
 }
 
 interface IAttachmentItem {
@@ -99,6 +106,7 @@ interface IApiResponse {
   id: number;
   status?: string;
   user?: IUserInfo;
+  approved_by?: IUserInfo | null;
   form_details?: Record<string, any>;
   krcc_attachments?: Array<{
     id: number;
@@ -403,6 +411,72 @@ export const KRCCFormDetail: React.FC = () => {
   const user = data?.user;
   const mergedCategories = useMemo(() => data?.categories || {}, [data?.categories]);
 
+  // Image preloading state (hide page until all images load)
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [imageProgress, setImageProgress] = useState({ loaded: 0, total: 0 });
+
+  // Helper to decide if url is image (matches AttachmentGroup logic)
+  const isImageUrl = (url?: string, contentType?: string) => {
+    if (!url) return false;
+    const ct = (contentType || '').toLowerCase();
+    const looksImage = /(\.png|\.jpe?g|\.gif|\.webp|\.bmp|\.svg)(\?.*)?$/i.test(url);
+    return ct.startsWith('image') || looksImage;
+  };
+
+  useEffect(() => {
+    if (!data) return;
+    // Collect all relevant image URLs (profile photos + attachment images)
+    const urls: string[] = [];
+    const push = (u?: string) => { if (u && !urls.includes(u)) urls.push(u); };
+    push(data.user?.profile_photo || data.user?.avatar);
+    push(data.approved_by?.profile_photo || data.approved_by?.avatar);
+
+    const addAttachmentImages = (attObj?: ICategoryCommonAttachments) => {
+      if (!attObj) return;
+      Object.values(attObj).forEach(list => {
+        (list || []).forEach(it => { if (isImageUrl(it.url, it.document_content_type || it.doctype)) push(it.url); });
+      });
+    };
+    addAttachmentImages(data.categories?.bike?.attachments);
+    addAttachmentImages(data.categories?.car?.attachments);
+    addAttachmentImages(data.categories?.electrical?.attachments);
+    addAttachmentImages(data.categories?.height?.attachments);
+    addAttachmentImages(data.categories?.underground?.attachments);
+    addAttachmentImages(data.categories?.bicycle ? (data.categories as any).bicycle?.attachments : undefined); // bicycle seems not to have attachments in interface
+    addAttachmentImages(data.categories?.mhe ? (data.categories as any).mhe?.attachments : undefined); // same for mhe
+
+    if (urls.length === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+    setImageProgress({ loaded: 0, total: urls.length });
+    setImagesLoaded(false);
+    let loaded = 0;
+    let cancelled = false;
+    const handleOne = () => {
+      if (cancelled) return;
+      loaded += 1;
+      setImageProgress({ loaded, total: urls.length });
+      if (loaded >= urls.length) {
+        setImagesLoaded(true);
+      }
+    };
+    const timers: number[] = [];
+    urls.forEach(u => {
+      const img = new Image();
+      img.onload = handleOne;
+      img.onerror = handleOne;
+      img.src = u;
+    });
+    // Fallback timeout (e.g., network issues) after 15s to avoid blocking forever
+    const timeoutId = window.setTimeout(() => { if (!cancelled) setImagesLoaded(true); }, 15000);
+    timers.push(timeoutId);
+    return () => {
+      cancelled = true;
+      timers.forEach(t => clearTimeout(t));
+    };
+  }, [data]);
+
   // Preview (lightbox) state
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewItems, setPreviewItems] = useState<IAttachmentItem[]>([]);
@@ -459,13 +533,42 @@ export const KRCCFormDetail: React.FC = () => {
   }, [data]);
 
   const personalDetailsGrid = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      <KeyValue label="First Name" value={user?.firstname} />
-      <KeyValue label="Last Name" value={user?.lastname} />
-      <KeyValue label="Email ID" value={user?.email} />
-      <KeyValue label="Gender" value={user?.gender} />
-      <KeyValue label="Blood Group" value={user?.blood_group} />
-      <KeyValue label="DOB" value={user?.birth_date} />
+    <div className="p-6">
+      <div className="flex items-center gap-4 mb-6">
+        {user?.profile_photo || user?.avatar ? (
+          <img
+            src={user.profile_photo || user.avatar}
+            alt={user.fullname || user.firstname || 'Profile'}
+            className="h-20 w-20 rounded-full object-cover border border-gray-200 shadow-sm"
+            loading="lazy"
+          />
+        ) : (
+          <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-medium">
+            {(user?.firstname?.[0] || user?.fullname?.[0] || '?').toUpperCase()}
+          </div>
+        )}
+        <div className="flex flex-col">
+          <span className="text-lg font-semibold text-gray-900">{user?.fullname || `${user?.firstname || ''} ${user?.lastname || ''}`.trim()}</span>
+          <span className="text-sm text-gray-600">{user?.role_name}</span>
+          {user?.employee_type && (
+            <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 capitalize">{user.employee_type}</span>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <KeyValue label="Employee ID" value={user?.employee_id} />
+        <KeyValue label="First Name" value={user?.firstname} />
+        <KeyValue label="Last Name" value={user?.lastname} />
+        <KeyValue label="Email ID" value={user?.email} />
+        <KeyValue label="Mobile" value={user?.mobile} />
+        <KeyValue label="Gender" value={user?.gender} />
+        <KeyValue label="Blood Group" value={user?.blood_group} />
+        <KeyValue label="DOB" value={user?.birth_date} />
+        <KeyValue label="Circle" value={user?.circle_name} />
+        <KeyValue label="Company" value={user?.company_name} />
+        <KeyValue label="Department" value={user?.department_name} />
+        <KeyValue label="Role" value={user?.role_name} />
+      </div>
     </div>
   ), [user]);
 
@@ -489,6 +592,16 @@ export const KRCCFormDetail: React.FC = () => {
 
   if (!data) return null;
 
+  // Wait for all images to load before showing full page
+  if (!imagesLoaded) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center gap-3 text-sm text-gray-600 min-h-[60vh]">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <div>Loading images {imageProgress.loaded}/{imageProgress.total}</div>
+      </div>
+    );
+  }
+
   return (
   <div className="p-6 flex flex-col gap-6">
       {/* Header */}
@@ -507,6 +620,50 @@ export const KRCCFormDetail: React.FC = () => {
         </div>
         {personalDetailsGrid}
       </div>
+
+      {/* Approved By */}
+      {data.approved_by && (data.approved_by.fullname || data.approved_by.firstname || data.approved_by.employee_id) && (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6">
+            <User className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
+            <h2 className="text-lg font-semibold">Approved By</h2>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-6">
+              {data.approved_by.profile_photo || data.approved_by.avatar ? (
+                <img
+                  src={data.approved_by.profile_photo || data.approved_by.avatar}
+                  alt={data.approved_by.fullname || data.approved_by.firstname || 'Approver'}
+                  className="h-16 w-16 rounded-full object-cover border border-gray-200 shadow-sm"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-medium">
+                  {(data.approved_by.firstname?.[0] || data.approved_by.fullname?.[0] || '?').toUpperCase()}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="text-base font-semibold text-gray-900">{data.approved_by.fullname || `${data.approved_by.firstname || ''} ${data.approved_by.lastname || ''}`.trim() || '-'}</span>
+                <span className="text-sm text-gray-600">{data.approved_by.role_name || '-'}</span>
+                {data.approved_by.employee_type && (
+                  <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 capitalize">{data.approved_by.employee_type}</span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <KeyValue label="Employee ID" value={data.approved_by.employee_id} />
+              <KeyValue label="Email" value={data.approved_by.email} />
+              <KeyValue label="Mobile" value={data.approved_by.mobile} />
+              <KeyValue label="Gender" value={data.approved_by.gender} />
+              <KeyValue label="Circle" value={data.approved_by.circle_name} />
+              <KeyValue label="Company" value={data.approved_by.company_name} />
+              <KeyValue label="Department" value={data.approved_by.department_name} />
+              <KeyValue label="Employee Type" value={data.approved_by.employee_type} />
+              <KeyValue label="Role" value={data.approved_by.role_name} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bike / 2 Wheeler */}
       {bike && (
