@@ -425,6 +425,17 @@ export const AddPODashboard = () => {
         ...formData,
         materialPR: materialPRId,
         supplier: response.supplier?.id,
+        plantDetail: response.plant_detail?.id,
+        poDate: response.po_date ? response.po_date.split("T")[0] : "",
+        billingAddress: response.billing_address_id,
+        deliveryAddress: response.shipping_address_id,
+        relatedTo: response.related_to,
+        retention: response.retention,
+        tds: response.tds,
+        qc: response.quality_holding,
+        paymentTenure: response.payment_tenure,
+        advanceAmount: response.advance_amount,
+        termsConditions: response.terms_conditions
       });
 
       // map all items from pms_po_inventories
@@ -435,7 +446,7 @@ export const AddPODashboard = () => {
           sacHsnCode: "",
           quantity: inv?.quantity || "",
           unit: "",
-          expectedDate: "",
+          expectedDate: inv.expected_date ? inv.expected_date.split("T")[0] : "",
           rate: "",
           cgstRate: "",
           cgstAmount: "",
