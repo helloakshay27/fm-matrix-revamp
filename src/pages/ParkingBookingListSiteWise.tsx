@@ -148,6 +148,7 @@ interface ParkingBookingSite {
   id: number;
   employee_name: string;
   schedule_date: string;
+  booking_schedule: string;
   category: string;
   building: string;
   floor: string;
@@ -215,6 +216,7 @@ const ParkingBookingListSiteWise = () => {
       id: booking.id,
       employee_name: booking.user.full_name,
       schedule_date: booking.booking_date,
+      booking_schedule: booking.booking_schedule,
       category: booking.parking_configuration.parking_category.name,
       building: booking.parking_configuration.building_name,
       floor: booking.parking_configuration.floor_name,
@@ -256,7 +258,7 @@ const ParkingBookingListSiteWise = () => {
     };
   };
 
-  // Helper function to convert date from YYYY-MM-DD to DD/MM/YY format
+  // Helper function to convert date from YYYY-MM-DD to DD/MM/YYYY format
   const formatDateForAPI = (dateString: string): string => {
     if (!dateString) return '';
     
@@ -264,8 +266,15 @@ const ParkingBookingListSiteWise = () => {
       const date = new Date(dateString);
       const day = date.getDate(); // No padding for single digits
       const month = date.getMonth() + 1; // No padding for single digits
-      const year = date.getFullYear().toString().slice(-2); // Get last 2 digits of year
-      return `${day}/${month}/${year}`;
+      const year = date.getFullYear(); // Get full 4-digit year
+      const formattedDate = `${day}/${month}/${year}`;
+      
+      console.log('🔍 Date Formatting Debug:');
+      console.log('Input date string:', dateString);
+      console.log('Parsed date object:', date);
+      console.log('Formatted date (DD/MM/YYYY):', formattedDate);
+      
+      return formattedDate;
     } catch (error) {
       console.error('Error formatting date:', error);
       return dateString; // Return original if conversion fails
@@ -293,15 +302,16 @@ const ParkingBookingListSiteWise = () => {
   // Column visibility state
   const [columns, setColumns] = useState([
     { key: 'sr_no', label: 'Sr No.', visible: true },
-    { key: 'id', label: 'ID', visible: true },
+    // { key: 'id', label: 'ID', visible: true },
     { key: 'employee_name', label: 'Employee Name', visible: true },
     { key: 'schedule_date', label: 'Schedule Date', visible: true },
+    { key: 'booking_schedule', label: 'Booking Time', visible: true },
     { key: 'category', label: 'Category', visible: true },
     { key: 'building', label: 'Building', visible: true },
     { key: 'floor', label: 'Floor', visible: true },
     { key: 'designation', label: 'Designation', visible: true },
     { key: 'department', label: 'Department', visible: true },
-    { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true },
+    // { key: 'slot_parking_no', label: 'Slot & Parking No.', visible: true },
     { key: 'status', label: 'Status', visible: true },
     { key: 'checked_in_at', label: 'Checked In At', visible: true },
     { key: 'checked_out_at', label: 'Checked Out At', visible: true },
@@ -562,24 +572,26 @@ const ParkingBookingListSiteWise = () => {
   const parkingStats = useMemo(() => {
     if (!cards) {
       return [
-        { title: "Total Slots", count: 0, icon: MapPin },
-        { title: "Two Wheeler Booked", count: 0, icon: Bike },
-        { title: "Two Wheeler Available", count: 0, icon: Bike },
-        { title: "Four Wheeler Booked", count: 0, icon: Car },
-        { title: "Four Wheeler Available", count: 0, icon: Car },
-        { title: "Total Alloted", count: 0, icon: CheckCircle },
-        { title: "Total Vacant", count: 0, icon: AlertTriangle }
+        // First row - Car parking stats
+        { title: "Total Parking for Car", count: 0, icon: Car },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle },
+        // Second row - Bike parking stats
+        { title: "Total Parking for Bikes", count: 0, icon: Bike },
+        { title: "Total Booked Parking", count: 0, icon: CheckCircle },
+        { title: "Total Vacant Parking", count: 0, icon: AlertTriangle }
       ];
     }
 
     return [
-      { title: "Total Slots", count: cards.total_slots, icon: MapPin },
-      { title: "Two Wheeler Booked", count: cards.total_two_wheeler, icon: Bike },
-      { title: "Two Wheeler Available", count: cards.vacant_two_wheeler, icon: Bike },
-      { title: "Four Wheeler Booked", count: cards.total_four_wheeler, icon: Car },
-      { title: "Four Wheeler Available", count: cards.vacant_four_wheeler, icon: Car },
-      { title: "Total Alloted", count: cards.alloted, icon: CheckCircle },
-      { title: "Total Vacant", count: cards.vacant, icon: AlertTriangle }
+      // First row - Car parking stats
+      { title: "Total Parking for Car", count: cards.total_four_wheeler, icon: Car },
+      { title: "Total Booked Parking", count: Math.abs(cards.total_four_wheeler - cards.vacant_four_wheeler), icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.vacant_four_wheeler, icon: AlertTriangle },
+      // Second row - Bike parking stats
+      { title: "Total Parking for Bikes", count: cards.total_two_wheeler, icon: Bike },
+      { title: "Total Booked Parking", count: Math.abs(cards.total_two_wheeler - cards.vacant_two_wheeler), icon: CheckCircle },
+      { title: "Total Vacant Parking", count: cards.vacant_two_wheeler, icon: AlertTriangle }
     ];
   }, [cards]);
 
@@ -835,6 +847,7 @@ const ParkingBookingListSiteWise = () => {
         booking.status,
         booking.slot_parking_no,
         booking.schedule_date,
+        booking.booking_schedule,
         booking.id.toString()
       ].filter(Boolean); // Remove null/undefined values
 
@@ -955,6 +968,12 @@ const ParkingBookingListSiteWise = () => {
     }
   };
 
+  // Helper function to capitalize first letter of status
+  const capitalizeStatus = (status: string): string => {
+    if (!status) return '';
+    return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+  };
+
   // Handle search
   const handleSearch = (term: string) => {
     console.log('🔍 Search Handler Debug:');
@@ -1016,9 +1035,9 @@ const ParkingBookingListSiteWise = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4">
         {loading ? (
-          Array.from({ length: 7 }).map((_, index) => (
+          Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
               className="p-3 sm:p-4 rounded-lg shadow-sm h-[100px] sm:h-[132px] flex items-center gap-2 sm:gap-4 animate-pulse bg-[#f6f4ee]"
@@ -1129,12 +1148,13 @@ const ParkingBookingListSiteWise = () => {
               {/* {isColumnVisible('id') && <TableHead className="font-semibold">ID</TableHead>} */}
               {isColumnVisible('employee_name') && <TableHead className="font-semibold">Employee Name</TableHead>}
               {isColumnVisible('schedule_date') && <TableHead className="font-semibold">Schedule Date</TableHead>}
+              {isColumnVisible('booking_schedule') && <TableHead className="font-semibold">Booking Time</TableHead>}
               {isColumnVisible('category') && <TableHead className="font-semibold">Category</TableHead>}
               {isColumnVisible('building') && <TableHead className="font-semibold">Building</TableHead>}
               {isColumnVisible('floor') && <TableHead className="font-semibold">Floor</TableHead>}
               {isColumnVisible('designation') && <TableHead className="font-semibold">Designation</TableHead>}
               {isColumnVisible('department') && <TableHead className="font-semibold">Department</TableHead>}
-              {isColumnVisible('slot_parking_no') && <TableHead className="font-semibold">Slot & Parking No.</TableHead>}
+              {/* {isColumnVisible('slot_parking_no') && <TableHead className="font-semibold">Slot & Parking No.</TableHead>} */}
               {isColumnVisible('status') && <TableHead className="font-semibold">Status</TableHead>}
               {isColumnVisible('checked_in_at') && <TableHead className="font-semibold">Checked In At</TableHead>}
               {isColumnVisible('checked_out_at') && <TableHead className="font-semibold">Checked Out At</TableHead>}
@@ -1172,6 +1192,7 @@ const ParkingBookingListSiteWise = () => {
                     <TableCell>{row.employee_name}</TableCell>
                   )}
                   {isColumnVisible('schedule_date') && <TableCell>{row.schedule_date}</TableCell>}
+                  {isColumnVisible('booking_schedule') && <TableCell>{row.booking_schedule}</TableCell>}
                   {isColumnVisible('category') && (
                     <TableCell>
                       <div className="flex items-center gap-1">
@@ -1184,17 +1205,17 @@ const ParkingBookingListSiteWise = () => {
                   {isColumnVisible('floor') && <TableCell>{row.floor}</TableCell>}
                   {isColumnVisible('designation') && <TableCell>{row.designation}</TableCell>}
                   {isColumnVisible('department') && <TableCell>{row.department || '-'}</TableCell>}
-                  {isColumnVisible('slot_parking_no') && <TableCell>{row.slot_parking_no}</TableCell>}
+                  {/* {isColumnVisible('slot_parking_no') && <TableCell>{row.slot_parking_no}</TableCell>} */}
                   {isColumnVisible('status') && (
                     <TableCell>
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        row.status === 'Approved' 
+                        row.status.toLowerCase() === 'confirmed' || row.status.toLowerCase() === 'approved'
                           ? 'bg-green-100 text-green-800' 
-                          : row.status === 'Cancelled'
+                          : row.status.toLowerCase() === 'cancelled'
                           ? 'bg-red-100 text-red-800'
                           : 'bg-yellow-100 text-yellow-800'
                       }`}>
-                        {row.status}
+                        {capitalizeStatus(row.status)}
                       </span>
                     </TableCell>
                   )}
