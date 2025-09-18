@@ -181,7 +181,8 @@ export const FMUserFilterDialog = ({ isOpen, onClose, onApplyFilters }: FMUserFi
             circle: circleName,
             department: departmentName,
             role: roleName,
-            report_to_id: selectedLineManager?.id ? String(selectedLineManager.id) : ''
+            // Pass actual email (used by parent to build q[report_to_email_cont])
+            report_to_id: selectedLineManager?.email ? String(selectedLineManager.email) : ''
         };
         onApplyFilters(filters);
         onClose();

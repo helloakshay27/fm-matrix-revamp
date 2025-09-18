@@ -139,6 +139,17 @@ export const MobileSurveyLanding: React.FC = () => {
     return Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
   };
 
+  // Check if survey has text-based questions (text, input, description)
+  const hasTextBasedQuestions = (): boolean => {
+    if (!surveyData) return false;
+    return surveyData.snag_checklist.snag_questions.some(
+      (question) => 
+        question.qtype === "text" || 
+        question.qtype === "input" || 
+        question.qtype === "description"
+    );
+  };
+
   // Check if current answer is valid
   const isCurrentAnswerValid = (): boolean => {
     const currentQuestion = getCurrentQuestion();
@@ -192,7 +203,8 @@ export const MobileSurveyLanding: React.FC = () => {
         handleSingleQuestionSubmit(answerData);
       } else {
         // For multi-question surveys, proceed to next question
-        handleNextQuestion();
+        // Data is already saved above, just move to next question
+        moveToNextQuestion();
       }
     }
   };
@@ -226,7 +238,8 @@ export const MobileSurveyLanding: React.FC = () => {
         handleSingleQuestionSubmit(answerData);
       } else {
         // For multi-question surveys, proceed to next question
-        handleNextQuestion();
+        // Data is already saved above, just move to next question
+        moveToNextQuestion();
       }
     }
   };
@@ -254,7 +267,8 @@ export const MobileSurveyLanding: React.FC = () => {
         handleSingleQuestionSubmit(answerData);
       } else {
         // For multi-question surveys, proceed to next question
-        handleNextQuestion();
+        // Data is already saved above, just move to next question
+        moveToNextQuestion();
       }
     }
   };
@@ -330,6 +344,11 @@ export const MobileSurveyLanding: React.FC = () => {
         answerData.value =
           emoji && label ? `${emoji} ${label}` : emoji || label || "Good";
         if (description) answerData.description = description;
+        
+        console.log(`[Save Answer ${currentQuestion.qtype}] Rating:`, answerData.rating);
+        console.log(`[Save Answer ${currentQuestion.qtype}] Emoji:`, answerData.emoji);
+        console.log(`[Save Answer ${currentQuestion.qtype}] Label:`, answerData.label);
+        
         if (answerData.selectedTags && answerData.selectedTags.length > 0) {
           console.log(
             `[${currentQuestion.qtype} Question ${currentQuestion.id}] Saved tags:`,
@@ -387,6 +406,11 @@ export const MobileSurveyLanding: React.FC = () => {
         response_text?: string;
         description?: string;
         final_description?: string;
+        ans_descr?: string;
+        level_id?: number;
+        comments?: string;
+        answer_type?: string;
+        answer_mode?: string;
       } = {
         mapping_id: mappingId || "",
         question_id: currentQuestion.id,
@@ -402,25 +426,54 @@ export const MobileSurveyLanding: React.FC = () => {
           ) {
             surveyResponse.option_id = currentAnswer.selectedOptions[0].id;
           }
+          // New fields for multiple choice
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "multiple_choice";
           break;
 
         case "emoji":
         case "smiley":
           if (currentAnswer.rating !== undefined) {
             surveyResponse.rating = currentAnswer.rating;
+            surveyResponse.level_id = currentAnswer.rating; // New field: level_id
           }
           if (currentAnswer.emoji) {
             surveyResponse.emoji = currentAnswer.emoji;
           }
           if (currentAnswer.label) {
             surveyResponse.label = currentAnswer.label;
+            surveyResponse.ans_descr = currentAnswer.label; // New field: ans_descr
+          }
+          // New fields for emoji/smiley
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "emoji_selection";
+          
+          // For emoji/smiley questions, find and add option_id based on rating - SAME LOGIC AS MULTI-QUESTION
+          if (currentAnswer.rating !== undefined) {
+            // Find the emoji option that matches the rating (you may need to adjust this logic based on your emoji options structure)
+            const emojiOptionMapping = [
+              { rating: 1, option_id: 1 }, // Terrible
+              { rating: 2, option_id: 2 }, // Bad
+              { rating: 3, option_id: 3 }, // Okay
+              { rating: 4, option_id: 4 }, // Good
+              { rating: 5, option_id: 5 }, // Amazing
+            ];
+            const emojiOption = emojiOptionMapping.find(opt => opt.rating === currentAnswer.rating);
+            if (emojiOption) {
+              surveyResponse.option_id = emojiOption.option_id;
+            }
           }
           break;
 
         case "rating":
           if (currentAnswer.rating !== undefined) {
             surveyResponse.rating = currentAnswer.rating;
+            surveyResponse.level_id = currentAnswer.rating; // New field: level_id
           }
+          // New fields for rating
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "star_rating";
+          surveyResponse.ans_descr = `${currentAnswer.rating} star${currentAnswer.rating > 1 ? 's' : ''}`;
           break;
 
         case "input":
@@ -431,12 +484,16 @@ export const MobileSurveyLanding: React.FC = () => {
               .toString()
               .trim();
           }
+          // New fields for text-based inputs
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "text_input";
           break;
       }
 
-      // Add description if available
+      // Add description/comments if available
       if (currentAnswer.description && currentAnswer.description.trim()) {
         surveyResponse.description = currentAnswer.description.trim();
+        surveyResponse.comments = currentAnswer.description.trim(); // New field: comments
       }
 
       console.log("Submitting single question survey:", surveyResponse);
@@ -491,6 +548,11 @@ export const MobileSurveyLanding: React.FC = () => {
         response_text?: string;
         description?: string;
         final_description?: string;
+        ans_descr?: string;
+        level_id?: number;
+        comments?: string;
+        answer_type?: string;
+        answer_mode?: string;
       } = {
         mapping_id: mappingId || "",
         question_id: currentQuestion.id,
@@ -506,25 +568,54 @@ export const MobileSurveyLanding: React.FC = () => {
           ) {
             surveyResponse.option_id = answerData.selectedOptions[0].id;
           }
+          // New fields for multiple choice
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "multiple_choice";
           break;
 
         case "emoji":
         case "smiley":
           if (answerData.rating !== undefined) {
             surveyResponse.rating = answerData.rating;
+            surveyResponse.level_id = answerData.rating; // New field: level_id
           }
           if (answerData.emoji) {
             surveyResponse.emoji = answerData.emoji;
           }
           if (answerData.label) {
             surveyResponse.label = answerData.label;
+            surveyResponse.ans_descr = answerData.label; // New field: ans_descr
+          }
+          // New fields for emoji/smiley
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "emoji_selection";
+          
+          // For emoji/smiley questions, find and add option_id based on rating - SAME AS OTHER SUBMISSIONS
+          if (answerData.rating !== undefined) {
+            // Find the emoji option that matches the rating
+            const emojiOptionMapping = [
+              { rating: 1, option_id: 1 }, // Terrible
+              { rating: 2, option_id: 2 }, // Bad
+              { rating: 3, option_id: 3 }, // Okay
+              { rating: 4, option_id: 4 }, // Good
+              { rating: 5, option_id: 5 }, // Amazing
+            ];
+            const emojiOption = emojiOptionMapping.find(opt => opt.rating === answerData.rating);
+            if (emojiOption) {
+              surveyResponse.option_id = emojiOption.option_id;
+            }
           }
           break;
 
         case "rating":
           if (answerData.rating !== undefined) {
             surveyResponse.rating = answerData.rating;
+            surveyResponse.level_id = answerData.rating; // New field: level_id
           }
+          // New fields for rating
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "star_rating";
+          surveyResponse.ans_descr = `${answerData.rating} star${answerData.rating > 1 ? 's' : ''}`;
           break;
 
         case "input":
@@ -533,12 +624,16 @@ export const MobileSurveyLanding: React.FC = () => {
           if (answerData.value && answerData.value.toString().trim()) {
             surveyResponse.response_text = answerData.value.toString().trim();
           }
+          // New fields for text-based inputs
+          surveyResponse.answer_type = currentQuestion.qtype;
+          surveyResponse.answer_mode = "text_input";
           break;
       }
 
-      // Add description if available
+      // Add description/comments if available
       if (answerData.description && answerData.description.trim()) {
         surveyResponse.description = answerData.description.trim();
+        surveyResponse.comments = answerData.description.trim(); // New field: comments
       }
 
       console.log(
@@ -572,9 +667,72 @@ export const MobileSurveyLanding: React.FC = () => {
     const currentQuestion = getCurrentQuestion();
     if (!currentQuestion) return;
 
-    // Save current answer
-    saveCurrentAnswer();
+    console.log(`[HandleNextQuestion] Question ${currentQuestion.id} type: ${currentQuestion.qtype}`);
+    console.log(`[HandleNextQuestion] Current selectedRating:`, selectedRating);
+    console.log(`[HandleNextQuestion] Current answers state:`, answers);
+    console.log(`[HandleNextQuestion] Existing answer for question:`, answers[currentQuestion.id]);
 
+    // Only save if we don't already have an answer for this question
+    const existingAnswer = answers[currentQuestion.id];
+    if (!existingAnswer) {
+      console.log(`[HandleNextQuestion] No existing answer found, saving new data`);
+      
+      // Save current answer with proper parameters for emoji/smiley questions
+      if (currentQuestion.qtype === "emoji" || currentQuestion.qtype === "smiley") {
+        // For emoji/smiley questions, we need to find the emoji and label based on selectedRating
+        if (selectedRating !== null) {
+          const emojiOptions = getStaticEmojiOptions();
+          const selectedOption = emojiOptions.find(opt => opt.rating === selectedRating);
+          console.log(`[${currentQuestion.qtype}] Selected rating:`, selectedRating);
+          console.log(`[${currentQuestion.qtype}] Found option:`, selectedOption);
+          if (selectedOption) {
+            const savedAnswer = saveCurrentAnswer(selectedRating, selectedOption.emoji, selectedOption.label);
+            console.log(`[${currentQuestion.qtype}] Saved answer:`, savedAnswer);
+          } else {
+            console.warn(`[${currentQuestion.qtype}] No option found for rating:`, selectedRating);
+            const savedAnswer = saveCurrentAnswer(selectedRating);
+            console.log(`[${currentQuestion.qtype}] Saved fallback answer:`, savedAnswer);
+          }
+        } else {
+          console.warn(`[${currentQuestion.qtype}] No rating selected`);
+          const savedAnswer = saveCurrentAnswer();
+          console.log(`[${currentQuestion.qtype}] Saved empty answer:`, savedAnswer);
+        }
+      } else if (currentQuestion.qtype === "rating") {
+        // For rating questions, save with the rating
+        console.log(`[Rating] Selected rating:`, selectedRating);
+        const savedAnswer = saveCurrentAnswer(selectedRating || undefined);
+        console.log(`[Rating] Saved answer:`, savedAnswer);
+      } else {
+        // For other question types, save normally
+        console.log(`[${currentQuestion.qtype}] Saving normally`);
+        const savedAnswer = saveCurrentAnswer();
+        console.log(`[${currentQuestion.qtype}] Saved answer:`, savedAnswer);
+      }
+    } else {
+      console.log(`[HandleNextQuestion] Answer already exists, skipping save:`, existingAnswer);
+    }
+
+    // Reset question-specific states
+    setCurrentQuestionValue("");
+    setSelectedOptions([]);
+    setSelectedRating(null);
+    setSelectedTags([]);
+    setShowGenericTags(false);
+
+    // Move to next question or show final description
+    if (currentQuestionIndex < surveyData!.snag_checklist.questions_count - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      // All questions completed, show final description step
+      setCurrentQuestionIndex(surveyData!.snag_checklist.questions_count);
+    }
+  };
+
+  // Move to next question without re-saving data (used when data is already saved)
+  const moveToNextQuestion = () => {
+    console.log(`[MoveToNextQuestion] Moving from question ${currentQuestionIndex} without re-saving data`);
+    
     // Reset question-specific states
     setCurrentQuestionValue("");
     setSelectedOptions([]);
@@ -616,7 +774,13 @@ export const MobileSurveyLanding: React.FC = () => {
           (q) => q.id === parseInt(questionId)
         );
 
-        if (!question || !answer) continue;
+        if (!question || !answer) {
+          console.log(`[Multi-Submit] Skipping question ${questionId} - missing question or answer`);
+          continue;
+        }
+
+        console.log(`[Multi-Submit] Processing question ${question.id} (${question.qtype})`);
+        console.log(`[Multi-Submit] Answer data:`, answer);
 
         const issues =
           answer.selectedTags?.map((tag) => tag.category_name) || [];
@@ -633,6 +797,11 @@ export const MobileSurveyLanding: React.FC = () => {
           response_text?: string;
           description?: string;
           final_description?: string;
+          ans_descr?: string;
+          level_id?: number;
+          comments?: string;
+          answer_type?: string;
+          answer_mode?: string;
         } = {
           mapping_id: mappingId || "",
           question_id: question.id,
@@ -645,25 +814,61 @@ export const MobileSurveyLanding: React.FC = () => {
             if (answer.selectedOptions && answer.selectedOptions.length > 0) {
               surveyResponse.option_id = answer.selectedOptions[0].id;
             }
+            // New fields for multiple choice
+            surveyResponse.answer_type = question.qtype;
+            surveyResponse.answer_mode = "multiple_choice";
             break;
 
           case "emoji":
           case "smiley":
             if (answer.rating !== undefined) {
               surveyResponse.rating = answer.rating;
+              surveyResponse.level_id = answer.rating; // New field: level_id
             }
             if (answer.emoji) {
               surveyResponse.emoji = answer.emoji;
             }
             if (answer.label) {
               surveyResponse.label = answer.label;
+              surveyResponse.ans_descr = answer.label; // New field: ans_descr
+            }
+            // New fields for emoji/smiley
+            surveyResponse.answer_type = question.qtype;
+            surveyResponse.answer_mode = "emoji_selection";
+            
+            console.log(`[Multi-Submit ${question.qtype}] Answer object:`, answer);
+            console.log(`[Multi-Submit ${question.qtype}] Rating:`, answer.rating);
+            console.log(`[Multi-Submit ${question.qtype}] Label:`, answer.label);
+            
+            // For emoji questions, find and add option_id based on rating - EXACTLY like single question
+            if (answer.rating !== undefined) {
+              // Find the emoji option that matches the rating (you may need to adjust this logic based on your emoji options structure)
+              const emojiOptionMapping = [
+                { rating: 1, option_id: 1 }, // Terrible
+                { rating: 2, option_id: 2 }, // Bad
+                { rating: 3, option_id: 3 }, // Okay
+                { rating: 4, option_id: 4 }, // Good
+                { rating: 5, option_id: 5 }, // Amazing
+              ];
+              const emojiOption = emojiOptionMapping.find(opt => opt.rating === answer.rating);
+              if (emojiOption) {
+                surveyResponse.option_id = emojiOption.option_id;
+                console.log(`[Multi-Submit ${question.qtype}] Found option_id:`, emojiOption.option_id);
+              } else {
+                console.warn(`[Multi-Submit ${question.qtype}] No option_id found for rating:`, answer.rating);
+              }
             }
             break;
 
           case "rating":
             if (answer.rating !== undefined) {
               surveyResponse.rating = answer.rating;
+              surveyResponse.level_id = answer.rating; // New field: level_id
             }
+            // New fields for rating
+            surveyResponse.answer_type = question.qtype;
+            surveyResponse.answer_mode = "star_rating";
+            surveyResponse.ans_descr = `${answer.rating} star${answer.rating > 1 ? 's' : ''}`;
             break;
 
           case "input":
@@ -672,12 +877,16 @@ export const MobileSurveyLanding: React.FC = () => {
             if (answer.value && answer.value.toString().trim()) {
               surveyResponse.response_text = answer.value.toString().trim();
             }
+            // New fields for text-based inputs
+            surveyResponse.answer_type = question.qtype;
+            surveyResponse.answer_mode = "text_input";
             break;
         }
 
-        // Add description if available
+        // Add description/comments if available
         if (answer.description && answer.description.trim()) {
           surveyResponse.description = answer.description.trim();
+          surveyResponse.comments = answer.description.trim(); // New field: comments
         }
 
         // Add final description if this is the last question and we have it
