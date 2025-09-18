@@ -626,7 +626,7 @@ export const KRCCFormDetail: React.FC = () => {
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 bg-[#f6f4ee] p-6">
             <User className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
-            <h2 className="text-lg font-semibold">Approved By</h2>
+            <h2 className="text-lg font-semibold">Approved Details</h2>
           </div>
           <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
