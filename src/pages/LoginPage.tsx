@@ -198,7 +198,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // Redirect to OTP verification page
         setTimeout(() => {
           navigate('/otp-verification');
-        }, 500);
+        });
       } else {
         toast.success("Login Successful", {
           description: `Welcome back, ${response.firstname}!`
