@@ -498,7 +498,7 @@ export const AddAMCPage = () => {
     if (formData.details === 'Asset' && formData.type === 'Individual' && Array.isArray(formData.asset_ids) && formData.asset_ids.length > 0) {
       formData.asset_ids.forEach((id) => {
         // Append as array param
-        sendData.append('pms_asset_amc[asset_id][]', String(id));
+        sendData.append('pms_asset_amc[asset_ids][]', String(id));
       });
     }
 
