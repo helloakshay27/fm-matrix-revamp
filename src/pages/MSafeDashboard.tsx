@@ -92,7 +92,9 @@ export const MSafeDashboard = () => {
           if (filters.circle) params.push(`q[lock_user_permissions_circle_name_cont]=${encodeURIComponent(filters.circle)}`);
           if (filters.department) params.push(`q[lock_user_permissions_pms_department_department_name_cont]=${encodeURIComponent(filters.department)}`);
           if (filters.role) params.push(`q[lock_user_permissions_lock_role_name_cont]=${encodeURIComponent(filters.role)}`);
-          if (filters.report_to_id) params.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          if (filters.report_to_id && filters.report_to_id.includes('@')) {
+            params.push(`q[report_to_email_cont]=${encodeURIComponent(filters.report_to_id)}`);
+          }
           if (params.length) url += `&${params.join('&')}`;
         } else {
           const emailQuery = debouncedSearch.trim();

@@ -130,7 +130,8 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
     const circleName = circle ? (circles.find(c => String(c.id) === String(circle))?.circle_name || circles.find(c => String(c.id) === String(circle))?.name || '') : '';
     const departmentName = department ? (departments.find(d => String(d.id) === String(department))?.department_name || '') : '';
     const roleName = role ? (roles.find(r => String(r.id) === String(role))?.name || roles.find(r => String(r.id) === String(role))?.display_name || '') : '';
-    const lineManagerName = selectedLineManager ? (selectedLineManager.name || selectedLineManager.email || '') : '';
+  // Use actual line manager email (not id or name) for filtering like MSafeDashboard
+  const lineManagerEmail = selectedLineManager?.email || '';
     onApplyFilters({
       firstname,
       lastname,
@@ -141,7 +142,7 @@ export const ExternalFilterDialog = ({ isOpen, onClose, onApplyFilters }: MSafeF
       circle: circleName,
       department: departmentName,
       role: roleName,
-      report_to_id: lineManagerName
+  report_to_id: lineManagerEmail
     });
     onClose();
   };

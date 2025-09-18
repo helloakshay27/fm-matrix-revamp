@@ -448,71 +448,60 @@ export const AttendanceDashboard = () => {
   }];
 
   const renderPaginationItems = () => {
-    const items = [] as React.ReactNode[];
-    const showEllipsis = totalPages > 7;
-    if (showEllipsis) {
-      items.push(<PaginationItem key={1}>
-        <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1}>
-          1
-        </PaginationLink>
-      </PaginationItem>);
-
-      if (currentPage > 4) {
-        items.push(<PaginationItem key="ellipsis1">
-          <PaginationEllipsis />
-        </PaginationItem>);
-      } else {
-        for (let i = 2; i <= Math.min(3, totalPages - 1); i++) {
-          items.push(<PaginationItem key={i}>
-            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-              {i}
-            </PaginationLink>
-          </PaginationItem>);
-        }
+    // Simplified, robust pagination logic:
+    // Always show: first page, last page, current page, neighbors, and ellipses where gaps exist.
+    const items: React.ReactNode[] = [];
+    if (totalPages <= 7) {
+      for (let p = 1; p <= totalPages; p++) {
+        items.push(
+          <PaginationItem key={p}>
+            <PaginationLink onClick={() => setCurrentPage(p)} isActive={currentPage === p}>{p}</PaginationLink>
+          </PaginationItem>
+        );
       }
-
-      if (currentPage > 3 && currentPage < totalPages - 2) {
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          items.push(<PaginationItem key={i}>
-            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-              {i}
-            </PaginationLink>
-          </PaginationItem>);
-        }
-      }
-
-      if (currentPage < totalPages - 3) {
-        items.push(<PaginationItem key="ellipsis2">
-          <PaginationEllipsis />
-        </PaginationItem>);
-      } else {
-        for (let i = Math.max(totalPages - 2, 2); i < totalPages; i++) {
-          if (!items.find(item => (item as any).key === i)) {
-            items.push(<PaginationItem key={i}>
-              <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-                {i}
-              </PaginationLink>
-            </PaginationItem>);
-          }
-        }
-      }
-
-      if (totalPages > 1) {
-        items.push(<PaginationItem key={totalPages}>
-          <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages}>
-            {totalPages}
-          </PaginationLink>
-        </PaginationItem>);
-      }
-    } else {
-      for (let i = 1; i <= totalPages; i++) {
-        items.push(<PaginationItem key={i}>
-          <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i}>
-            {i}
-          </PaginationLink>
-        </PaginationItem>);
-      }
+      return items;
     }
+
+    const addPage = (p: number) => {
+      items.push(
+        <PaginationItem key={p}>
+          <PaginationLink onClick={() => setCurrentPage(p)} isActive={currentPage === p}>{p}</PaginationLink>
+        </PaginationItem>
+      );
+    };
+    const addEllipsis = (key: string) => {
+      items.push(
+        <PaginationItem key={key}>
+          <PaginationEllipsis />
+        </PaginationItem>
+      );
+    };
+
+    addPage(1);
+
+    let start: number;
+    let end: number;
+    if (currentPage <= 3) {
+      start = 2;
+      end = 4; // ensures page 4 is visible when currentPage === 3
+    } else if (currentPage >= totalPages - 2) {
+      start = totalPages - 3;
+      end = totalPages - 1;
+    } else {
+      start = currentPage - 1;
+      end = currentPage + 1;
+    }
+
+    if (start > 2) addEllipsis('start-ellipsis');
+
+    for (let p = start; p <= end; p++) {
+      if (p > 1 && p < totalPages) addPage(p);
+    }
+
+    if (end < totalPages - 1) addEllipsis('end-ellipsis');
+
+    addPage(totalPages);
+
     return items;
   };
 
@@ -838,7 +827,7 @@ export const AttendanceDashboard = () => {
                           if (chartId === 'statusChart' && visibleSections.includes('statusChart')) {
                             return (
                               <SortableChartItem key={chartId} id={chartId}>
-                                <div 
+                                <div
                                   className="relative bg-white rounded-lg border border-gray-200 p-3 sm:p-6 shadow-sm min-h-[340px] h-[340px] flex flex-col"
                                 >
                                   <div className="flex items-center justify-between mb-4 sm:mb-6">
@@ -853,8 +842,8 @@ export const AttendanceDashboard = () => {
                                       onMouseDown={(e) => e.stopPropagation()}
                                       className="p-1 rounded hover:bg-gray-100 transition-colors"
                                     >
-                                      <Download 
-                                        className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer hover:text-[#A01828] transition-colors" 
+                                      <Download
+                                        className="w-4 h-4 sm:w-5 sm:h-5 text-[#C72030] cursor-pointer hover:text-[#A01828] transition-colors"
                                       />
                                     </div>
                                   </div>

@@ -767,38 +767,27 @@ export const EditExternalUserPage = () => {
                     return;
                   }
                   const today = dayjs();
-                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
-                    ? dayjs.min(dayjs(formData.birth_date), today)
-                    : today;
-                  if (d.isAfter(maxDate, 'day')) {
-                    setFieldErrors(prev => ({
-                      ...prev,
-                      birth_date: `Birth Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
-                    }));
+                  if (d.isAfter(today, 'day')) {
+                    setFieldErrors(prev => ({ ...prev, birth_date: `Birth Date cannot be after ${today.format('DD/MM/YYYY')}` }));
                     return;
                   }
+                  setFieldErrors(prev => ({ ...prev, birth_date: '' }));
+                  // Store in canonical ISO (YYYY-MM-DD) while displaying DD-MM-YYYY
                   handleChange('birth_date', d.format('YYYY-MM-DD'));
                 }}
-                maxDate={formData.birth_date && dayjs(formData.birth_date).isValid()
-                  ? dayjs.min(dayjs(formData.birth_date), dayjs())
-                  : dayjs()}
-                shouldDisableDate={(date) => {
-                  const today = dayjs();
-                  const maxDate = formData.birth_date && dayjs(formData.birth_date).isValid()
-                    ? dayjs.min(dayjs(formData.birth_date), today)
-                    : today;
-                  return dayjs(date).isAfter(maxDate, 'day');
-                }}
+                maxDate={dayjs()}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
                 slotProps={{
                   textField: {
                     size: 'small',
                     fullWidth: true,
                     error: !!fieldErrors.birth_date,
                     helperText: fieldErrors.birth_date || '',
-                    InputLabelProps: { shrink: true }
+                    InputLabelProps: { shrink: true },
+                    placeholder: 'DD-MM-YYYY'
                   }
                 }}
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </LocalizationProvider>
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -813,38 +802,26 @@ export const EditExternalUserPage = () => {
                     return;
                   }
                   const today = dayjs();
-                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
-                    ? dayjs.min(dayjs(formData.joining_date), today)
-                    : today;
-                  if (d.isAfter(maxDate, 'day')) {
-                    setFieldErrors(prev => ({
-                      ...prev,
-                      joining_date: `Joining Date cannot be after ${maxDate.format('DD/MM/YYYY')}`
-                    }));
+                  if (d.isAfter(today, 'day')) {
+                    setFieldErrors(prev => ({ ...prev, joining_date: `Joining Date cannot be after ${today.format('DD/MM/YYYY')}` }));
                     return;
                   }
+                  setFieldErrors(prev => ({ ...prev, joining_date: '' }));
                   handleChange('joining_date', d.format('YYYY-MM-DD'));
                 }}
-                maxDate={formData.joining_date && dayjs(formData.joining_date).isValid()
-                  ? dayjs.min(dayjs(formData.joining_date), dayjs())
-                  : dayjs()}
-                shouldDisableDate={(date) => {
-                  const today = dayjs();
-                  const maxDate = formData.joining_date && dayjs(formData.joining_date).isValid()
-                    ? dayjs.min(dayjs(formData.joining_date), today)
-                    : today;
-                  return dayjs(date).isAfter(maxDate, 'day');
-                }}
+                maxDate={dayjs()}
+                shouldDisableDate={(date) => dayjs(date).isAfter(dayjs(), 'day')}
                 slotProps={{
                   textField: {
                     size: 'small',
                     fullWidth: true,
                     error: !!fieldErrors.joining_date,
                     helperText: fieldErrors.joining_date || '',
-                    InputLabelProps: { shrink: true }
+                    InputLabelProps: { shrink: true },
+                    placeholder: 'DD-MM-YYYY'
                   }
                 }}
-                format="YYYY-MM-DD"
+                format="DD-MM-YYYY"
               />
             </LocalizationProvider>
           </div>
