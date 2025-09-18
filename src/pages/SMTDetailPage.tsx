@@ -248,20 +248,29 @@ const SMTDetailPage = () => {
       {/* Topics Discussed */}
       <div className="bg-white rounded-lg border border-gray-200 mb-6">
         <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-[#f6f4ee]">
-          <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
-            <ClipboardList className="w-5 h-5 text-white" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">Topics Discussed</h2>
+            <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-lg font-bold text-gray-900">Topics Discussed</h2>
         </div>
         <div className="p-6">
-          <ul className="mt-2 text-gray-900">
-            <li>Road Safety: {topics.road_safety ? 'Yes' : 'No'}</li>
-            <li>Electrical Safety: {topics.electrical_safety ? 'Yes' : 'No'}</li>
-            <li>Work/Height Safety: {topics.work_height_safety ? 'Yes' : 'No'}</li>
-            <li>OFC: {topics.ofc ? 'Yes' : 'No'}</li>
-            <li>Health and wellbeing initiatives by in: {topics.health_wellbeing ? 'Yes' : 'No'}</li>
-            <li>Tool Box Talk: {topics.tool_box_talk ? 'Yes' : 'No'}</li>
-            <li>Thank you card given: {topics.thank_you_card ? 'Yes' : 'No'}</li>
+          <ul className="space-y-2">
+            {[
+              { label: 'Road Safety', value: topics.road_safety },
+              { label: 'Electrical Safety', value: topics.electrical_safety },
+              { label: 'Work / Height Safety', value: topics.work_height_safety },
+              { label: 'OFC', value: topics.ofc },
+              { label: 'Health & Wellbeing', value: topics.health_wellbeing },
+              { label: 'Tool Box Talk', value: topics.tool_box_talk },
+              { label: 'Thank You Card Given', value: topics.thank_you_card },
+            ].map((t) => (
+              <li key={t.label} className="flex items-center justify-between border-b last:border-b-0 pb-2">
+                <span className="text-sm text-gray-700">{t.label}</span>
+                <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.value ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                  {t.value ? 'Yes' : 'No'}
+                </span>
+              </li>
+            ))}
           </ul>
         </div>
       </div>
