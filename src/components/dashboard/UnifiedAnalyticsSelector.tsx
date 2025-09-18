@@ -13,7 +13,7 @@ import { Separator } from '@/components/ui/separator';
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management' | 'surveys';
   endpoint: string;
   title: string;
 }
@@ -192,6 +192,17 @@ const analyticsOptions = {
     options: [
       { id: 'cm_progress_quarterly', endpoint: 'cm_progress_quarterly', label: 'Checklist Progress Status – Center-Wise Quarterly Comparison' },
       { id: 'cm_overdue_centerwise', endpoint: 'cm_overdue_centerwise', label: 'Top 10 Overdue Checklists – Center-wise Contribution Comparison' },
+    ]
+  },
+
+  surveys: {
+    icon: BarChart3,
+    label: 'Surveys',
+    color: '#8B5CF6',
+    options: [
+      { id: 'survey_summary', endpoint: 'survey_summary', label: 'Survey Summary' },
+      { id: 'survey_status_distribution', endpoint: 'survey_status_distribution', label: 'Survey Status Distribution' },
+      { id: 'top_surveys', endpoint: 'top_surveys', label: 'Top Surveys' },
     ]
   },
 
