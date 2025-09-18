@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Download, User, BadgeCheck, CalendarCheck2, Loader2, CheckCircle2, XCircle, Maximize2, X, ChevronLeft, ChevronRight, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -15,6 +15,13 @@ interface IUserInfo {
   blood_group?: string;
   birth_date?: string;
   avatar?: string;
+  circle_name?: string;
+  company_name?: string;
+  department_name?: string;
+  employee_id?: string;
+  employee_type?: string;
+  profile_photo?: string;
+  role_name?: string;
 }
 
 interface IAttachmentItem {
@@ -99,6 +106,7 @@ interface IApiResponse {
   id: number;
   status?: string;
   user?: IUserInfo;
+  approved_by?: IUserInfo | null;
   form_details?: Record<string, any>;
   krcc_attachments?: Array<{
     id: number;
@@ -191,43 +199,53 @@ const SectionChecklist: React.FC<{ title: string; prefix: string; formDetails?: 
     );
   };
 
-const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined }> = ({ title, items }) => {
+// Enhanced gallery with preview modal
+const AttachmentGroup: React.FC<{ title: string; items?: IAttachmentItem[] | undefined; onPreview: (items: IAttachmentItem[], index: number, title: string) => void }> = ({ title, items, onPreview }) => {
   if (!items || items.length === 0) return null;
-
-  // Only keep items that have an image we can show
   const imageItems = items.filter((item) => {
     const contentType = (item.document_content_type || item.doctype || '').toLowerCase();
+    const url = item.url || '';
     const isImageType = contentType.startsWith('image');
-    const urlLooksImage = item.url ? /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(item.url) : false;
-    return !!item.url && (isImageType || urlLooksImage);
+    const urlLooksImage = /\.(png|jpe?g|gif|webp|bmp|svg)(\?.*)?$/i.test(url);
+    return !!url && (isImageType || urlLooksImage);
   });
-
   if (imageItems.length === 0) return null;
-
   return (
-    <div className="mt-4 mb-6">
-      <div className="flex items-center gap-2 mb-3">
-        <FileText className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
-        <label className="block text-sm font-medium text-gray-700">{title}</label>
+    <div className="mt-6 group">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 bg-gradient-to-tr from-[#C72030] to-[#e54654] text-white rounded-md flex items-center justify-center shadow-sm">
+            <FileText className="h-3.5 w-3.5" />
+          </div>
+          <label className="text-sm font-semibold tracking-wide text-gray-800">{title}</label>
+          <span className="px-1.5 py-0.5 text-[10px] rounded bg-gray-200 text-gray-700 font-medium">{imageItems.length}</span>
+        </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {imageItems.map(item => {
-          const display = item.document_file_name || item.id;
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3">
+        {imageItems.map((item, idx) => {
+          const display = item.document_file_name || `Image-${item.id}`;
           return (
-            <div key={item.id} className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-              <div className="flex items-center justify-center h-20 bg-white rounded border mb-2 relative overflow-hidden">
-                <img src={item.url} alt={display + ''} className="max-h-20 object-contain" />
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onPreview(imageItems, idx, title)}
+              className="relative group/image rounded-lg overflow-hidden bg-white border border-gray-200 shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-[#C72030]/40"
+            >
+              <div className="aspect-square w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+                <img
+                  src={item.url}
+                  alt={display + ''}
+                  loading="lazy"
+                  className="h-full w-full object-cover object-center transition-transform duration-300 group-hover/image:scale-105"
+                />
+                <div className="absolute inset-0 opacity-0 group-hover/image:opacity-100 bg-black/40 flex items-center justify-center transition-opacity">
+                  <Maximize2 className="h-5 w-5 text-white" />
+                </div>
               </div>
-              <div className="text-center">
-                <button
-                  onClick={() => window.open(item.url!, '_blank')}
-                  className="flex items-center justify-center gap-1 text-[#C72030] mx-auto"
-                >
-                  <Download className="h-3 w-3" />
-                  <span className="text-xs font-medium truncate max-w-[140px]" title={display + ''}>{display}</span>
-                </button>
+              <div className="p-1.5 text-[11px] font-medium truncate text-gray-700 text-left w-full bg-white/80 backdrop-blur-sm border-t border-gray-100">
+                {display}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -391,10 +409,100 @@ export const KRCCFormDetail: React.FC = () => {
   useEffect(() => { fetchDetails(); }, [fetchDetails]);
 
   const user = data?.user;
-  const mergedCategories = useMemo(
-    () => mergeKrccAttachmentsIntoCategories(data?.krcc_attachments, data?.categories),
-    [data?.krcc_attachments, data?.categories]
-  );
+  const mergedCategories = useMemo(() => data?.categories || {}, [data?.categories]);
+
+  // Image preloading state (hide page until all images load)
+  const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [imageProgress, setImageProgress] = useState({ loaded: 0, total: 0 });
+
+  // Helper to decide if url is image (matches AttachmentGroup logic)
+  const isImageUrl = (url?: string, contentType?: string) => {
+    if (!url) return false;
+    const ct = (contentType || '').toLowerCase();
+    const looksImage = /(\.png|\.jpe?g|\.gif|\.webp|\.bmp|\.svg)(\?.*)?$/i.test(url);
+    return ct.startsWith('image') || looksImage;
+  };
+
+  useEffect(() => {
+    if (!data) return;
+    // Collect all relevant image URLs (profile photos + attachment images)
+    const urls: string[] = [];
+    const push = (u?: string) => { if (u && !urls.includes(u)) urls.push(u); };
+    push(data.user?.profile_photo || data.user?.avatar);
+    push(data.approved_by?.profile_photo || data.approved_by?.avatar);
+
+    const addAttachmentImages = (attObj?: ICategoryCommonAttachments) => {
+      if (!attObj) return;
+      Object.values(attObj).forEach(list => {
+        (list || []).forEach(it => { if (isImageUrl(it.url, it.document_content_type || it.doctype)) push(it.url); });
+      });
+    };
+    addAttachmentImages(data.categories?.bike?.attachments);
+    addAttachmentImages(data.categories?.car?.attachments);
+    addAttachmentImages(data.categories?.electrical?.attachments);
+    addAttachmentImages(data.categories?.height?.attachments);
+    addAttachmentImages(data.categories?.underground?.attachments);
+    addAttachmentImages(data.categories?.bicycle ? (data.categories as any).bicycle?.attachments : undefined); // bicycle seems not to have attachments in interface
+    addAttachmentImages(data.categories?.mhe ? (data.categories as any).mhe?.attachments : undefined); // same for mhe
+
+    if (urls.length === 0) {
+      setImagesLoaded(true);
+      return;
+    }
+    setImageProgress({ loaded: 0, total: urls.length });
+    setImagesLoaded(false);
+    let loaded = 0;
+    let cancelled = false;
+    const handleOne = () => {
+      if (cancelled) return;
+      loaded += 1;
+      setImageProgress({ loaded, total: urls.length });
+      if (loaded >= urls.length) {
+        setImagesLoaded(true);
+      }
+    };
+    const timers: number[] = [];
+    urls.forEach(u => {
+      const img = new Image();
+      img.onload = handleOne;
+      img.onerror = handleOne;
+      img.src = u;
+    });
+    // Fallback timeout (e.g., network issues) after 15s to avoid blocking forever
+    const timeoutId = window.setTimeout(() => { if (!cancelled) setImagesLoaded(true); }, 15000);
+    timers.push(timeoutId);
+    return () => {
+      cancelled = true;
+      timers.forEach(t => clearTimeout(t));
+    };
+  }, [data]);
+
+  // Preview (lightbox) state
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewItems, setPreviewItems] = useState<IAttachmentItem[]>([]);
+  const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewTitle, setPreviewTitle] = useState('');
+
+  const openPreview = useCallback((items: IAttachmentItem[], index: number, title: string) => {
+    setPreviewItems(items);
+    setPreviewIndex(index);
+    setPreviewTitle(title);
+    setPreviewOpen(true);
+  }, []);
+  const closePreview = useCallback(() => setPreviewOpen(false), []);
+  const gotoPrev = useCallback(() => setPreviewIndex(i => (i - 1 + previewItems.length) % previewItems.length), [previewItems.length]);
+  const gotoNext = useCallback(() => setPreviewIndex(i => (i + 1) % previewItems.length), [previewItems.length]);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closePreview();
+      if (e.key === 'ArrowLeft') gotoPrev();
+      if (e.key === 'ArrowRight') gotoNext();
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [previewOpen, closePreview, gotoPrev, gotoNext]);
 
   const handleBack = () => navigate(-1);
 
@@ -425,13 +533,42 @@ export const KRCCFormDetail: React.FC = () => {
   }, [data]);
 
   const personalDetailsGrid = useMemo(() => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-      <KeyValue label="First Name" value={user?.firstname} />
-      <KeyValue label="Last Name" value={user?.lastname} />
-      <KeyValue label="Email ID" value={user?.email} />
-      <KeyValue label="Gender" value={user?.gender} />
-      <KeyValue label="Blood Group" value={user?.blood_group} />
-      <KeyValue label="DOB" value={user?.birth_date} />
+    <div className="p-6">
+      <div className="flex items-center gap-4 mb-6">
+        {user?.profile_photo || user?.avatar ? (
+          <img
+            src={user.profile_photo || user.avatar}
+            alt={user.fullname || user.firstname || 'Profile'}
+            className="h-20 w-20 rounded-full object-cover border border-gray-200 shadow-sm"
+            loading="lazy"
+          />
+        ) : (
+          <div className="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-xl font-medium">
+            {(user?.firstname?.[0] || user?.fullname?.[0] || '?').toUpperCase()}
+          </div>
+        )}
+        <div className="flex flex-col">
+          <span className="text-lg font-semibold text-gray-900">{user?.fullname || `${user?.firstname || ''} ${user?.lastname || ''}`.trim()}</span>
+          <span className="text-sm text-gray-600">{user?.role_name}</span>
+          {user?.employee_type && (
+            <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 capitalize">{user.employee_type}</span>
+          )}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <KeyValue label="Employee ID" value={user?.employee_id} />
+        <KeyValue label="First Name" value={user?.firstname} />
+        <KeyValue label="Last Name" value={user?.lastname} />
+        <KeyValue label="Email ID" value={user?.email} />
+        <KeyValue label="Mobile" value={user?.mobile} />
+        <KeyValue label="Gender" value={user?.gender} />
+        <KeyValue label="Blood Group" value={user?.blood_group} />
+        <KeyValue label="DOB" value={user?.birth_date} />
+        <KeyValue label="Circle" value={user?.circle_name} />
+        <KeyValue label="Company" value={user?.company_name} />
+        <KeyValue label="Department" value={user?.department_name} />
+        <KeyValue label="Role" value={user?.role_name} />
+      </div>
     </div>
   ), [user]);
 
@@ -455,8 +592,18 @@ export const KRCCFormDetail: React.FC = () => {
 
   if (!data) return null;
 
+  // Wait for all images to load before showing full page
+  if (!imagesLoaded) {
+    return (
+      <div className="p-6 flex flex-col items-center justify-center gap-3 text-sm text-gray-600 min-h-[60vh]">
+        <Loader2 className="h-6 w-6 animate-spin" />
+        <div>Loading images {imageProgress.loaded}/{imageProgress.total}</div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-6 space-y-6">
+  <div className="p-6 flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
@@ -473,6 +620,50 @@ export const KRCCFormDetail: React.FC = () => {
         </div>
         {personalDetailsGrid}
       </div>
+
+      {/* Approved By */}
+      {data.approved_by && (data.approved_by.fullname || data.approved_by.firstname || data.approved_by.employee_id) && (
+        <div className="bg-white rounded-lg border border-gray-200">
+          <div className="flex items-center gap-2 bg-[#f6f4ee] p-6">
+            <User className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
+            <h2 className="text-lg font-semibold">Approved Details</h2>
+          </div>
+          <div className="p-6">
+            <div className="flex items-center gap-4 mb-6">
+              {data.approved_by.profile_photo || data.approved_by.avatar ? (
+                <img
+                  src={data.approved_by.profile_photo || data.approved_by.avatar}
+                  alt={data.approved_by.fullname || data.approved_by.firstname || 'Approver'}
+                  className="h-16 w-16 rounded-full object-cover border border-gray-200 shadow-sm"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-medium">
+                  {(data.approved_by.firstname?.[0] || data.approved_by.fullname?.[0] || '?').toUpperCase()}
+                </div>
+              )}
+              <div className="flex flex-col">
+                <span className="text-base font-semibold text-gray-900">{data.approved_by.fullname || `${data.approved_by.firstname || ''} ${data.approved_by.lastname || ''}`.trim() || '-'}</span>
+                <span className="text-sm text-gray-600">{data.approved_by.role_name || '-'}</span>
+                {data.approved_by.employee_type && (
+                  <span className="mt-1 inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700 capitalize">{data.approved_by.employee_type}</span>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <KeyValue label="Employee ID" value={data.approved_by.employee_id} />
+              <KeyValue label="Email" value={data.approved_by.email} />
+              <KeyValue label="Mobile" value={data.approved_by.mobile} />
+              <KeyValue label="Gender" value={data.approved_by.gender} />
+              <KeyValue label="Circle" value={data.approved_by.circle_name} />
+              <KeyValue label="Company" value={data.approved_by.company_name} />
+              <KeyValue label="Department" value={data.approved_by.department_name} />
+              <KeyValue label="Employee Type" value={data.approved_by.employee_type} />
+              <KeyValue label="Role" value={data.approved_by.role_name} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bike / 2 Wheeler */}
       {bike && (
@@ -492,12 +683,12 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="2 Wheeler Reg. Number" value={bike.reg_number} />
             </div>
             <SectionChecklist title="2 Wheeler Checklist" prefix="2w_" formDetails={data.form_details} />
-            <AttachmentGroup title="M-Parivahan Attachments" items={bike.attachments?.mparivahan as IAttachmentItem[]} />
-            <AttachmentGroup title="Vehicle Attachments" items={bike.attachments?.vehicle as IAttachmentItem[]} />
-            <AttachmentGroup title="Insurance Attachments" items={bike.attachments?.insurance as IAttachmentItem[]} />
-            <AttachmentGroup title="Helmet Attachments" items={bike.attachments?.helmet as IAttachmentItem[]} />
-            <AttachmentGroup title="PUC Attachments" items={bike.attachments?.puc as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={bike.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="M-Parivahan" items={bike.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Vehicle" items={bike.attachments?.vehicle as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Insurance" items={bike.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Helmet" items={bike.attachments?.helmet as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="PUC" items={bike.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={bike.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -531,10 +722,10 @@ export const KRCCFormDetail: React.FC = () => {
               <KeyValue label="Valid Till (If Applicable)" value={car.medical_certificate_valid_till} />
             </div>
             <SectionChecklist title="4 Wheeler Checklist" prefix="4w_" formDetails={data.form_details} />
-            <AttachmentGroup title="M-Parivahan Attachments" items={car.attachments?.mparivahan as IAttachmentItem[]} />
-            <AttachmentGroup title="Insurance Attachments" items={car.attachments?.insurance as IAttachmentItem[]} />
-            <AttachmentGroup title="PUC Attachments" items={car.attachments?.puc as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={car.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="M-Parivahan" items={car.attachments?.mparivahan as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Insurance" items={car.attachments?.insurance as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="PUC" items={car.attachments?.puc as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificate" items={car.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -546,7 +737,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work on Electrical System</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -561,11 +752,11 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue label="Valid Till" value={electrical.first_aid_valid_till} />
               </div>
             </div>
-            <AttachmentGroup title="Certificate Attachments" items={electrical.attachments?.certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="License Attachments" items={electrical.attachments?.license as IAttachmentItem[]} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={electrical.attachments?.medical_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="Experience Certificate Attachments" items={electrical.attachments?.experience_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="First Aid Training Attachments" items={electrical.attachments?.first_aid as IAttachmentItem[]} />
+            <AttachmentGroup title="Certificates" items={electrical.attachments?.certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Licenses" items={electrical.attachments?.license as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Medical Certificates" items={electrical.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="Experience Certificates" items={electrical.attachments?.experience_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid Training" items={electrical.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -577,7 +768,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work at Height</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -591,8 +782,8 @@ export const KRCCFormDetail: React.FC = () => {
                 <KeyValue label="Valid Till" value={height.first_aid_certificate_valid_till} />
               </div>
             </div>
-            <AttachmentGroup title="Medical Certificate Attachments" items={height.attachments?.medical_certificate as IAttachmentItem[]} />
-            <AttachmentGroup title="First Aid Attachments" items={height.attachments?.first_aid as IAttachmentItem[]} />
+            <AttachmentGroup title="Medical Certificates" items={height.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
+            <AttachmentGroup title="First Aid" items={height.attachments?.first_aid as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -604,7 +795,7 @@ export const KRCCFormDetail: React.FC = () => {
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
             <h2 className="text-lg font-semibold">Work Underground</h2>
           </div>
-          <div className="p-6 pt-2 space-y-6">
+          <div className="p-6 pt-2">
             <div>
               <div className="flex items-center gap-2 mb-4 mt-2">
                 <CalendarCheck2 className="h-4 w-4 text-white bg-[#C72030] rounded-full p-1" />
@@ -618,7 +809,7 @@ export const KRCCFormDetail: React.FC = () => {
               </div>
             </div>
             <SectionChecklist title="Work Underground Checklist" prefix="work_under_ground_" formDetails={data.form_details} />
-            <AttachmentGroup title="Medical Certificate Attachments" items={underground.attachments?.medical_certificate as IAttachmentItem[]} />
+            <AttachmentGroup title="Medical Certificates" items={underground.attachments?.medical_certificate as IAttachmentItem[]} onPreview={openPreview} />
           </div>
         </div>
       )}
@@ -640,7 +831,7 @@ export const KRCCFormDetail: React.FC = () => {
       )}
 
       {/* Operate MHE */}
-      {mhe && (
+  {mhe && (
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="flex items-center gap-2 bg-[#f6f4ee] p-6 mb-2">
             <BadgeCheck className="h-6 w-6 text-white bg-[#C72030] rounded-full p-1" />
@@ -665,6 +856,51 @@ export const KRCCFormDetail: React.FC = () => {
           </div>
           <div className="p-6 pt-2">
             <p className="text-sm text-gray-700">User selected "None of the above"; no category-specific details provided.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Preview Modal */}
+      {previewOpen && previewItems.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-5xl mx-auto">
+            <div className="flex items-center justify-between mb-3 text-white">
+              <div className="flex items-center gap-2">
+                <ImageIcon className="h-5 w-5" />
+                <span className="font-medium text-sm tracking-wide">{previewTitle}</span>
+                <span className="text-xs px-2 py-0.5 rounded bg-white/10 border border-white/20">{previewIndex + 1}/{previewItems.length}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={gotoPrev} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronLeft className="h-4 w-4" /></button>
+                <button onClick={gotoNext} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><ChevronRight className="h-4 w-4" /></button>
+                <button onClick={closePreview} className="h-8 w-8 rounded-md bg-white/10 hover:bg-white/20 flex items-center justify-center"><X className="h-4 w-4" /></button>
+              </div>
+            </div>
+            <div className="relative rounded-lg overflow-hidden shadow-2xl bg-black/40 border border-white/10">
+              <img
+                src={previewItems[previewIndex].url}
+                alt={(previewItems[previewIndex].document_file_name || '') + ''}
+                className="mx-auto max-h-[70vh] object-contain w-full select-none"
+                draggable={false}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2 max-h-32 overflow-y-auto pr-1">
+              {previewItems.map((it, i) => {
+                const active = i === previewIndex;
+                const thumbName = it.document_file_name || `Img-${it.id}`;
+                return (
+                  <button
+                    key={it.id}
+                    onClick={() => setPreviewIndex(i)}
+                    className={`relative group/thumb rounded border ${active ? 'border-[#C72030] ring-2 ring-[#C72030]/50' : 'border-white/20 hover:border-white/50'} overflow-hidden h-14 bg-white/5`}
+                    title={thumbName}
+                  >
+                    <img src={it.url} alt={thumbName} className="h-full w-full object-cover" loading="lazy" />
+                    {active && <span className="absolute inset-0 border-2 border-[#C72030] pointer-events-none"></span>}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

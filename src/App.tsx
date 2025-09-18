@@ -20,6 +20,7 @@ import { ProtectedRoute } from "./components/ProtectedRoute";
 import { Dashboard } from "./pages/Dashboard";
 import DashboardConfiguration from "./pages/DashboardConfiguration";
 import ParkingBookingListSiteWise from "./pages/ParkingBookingListSiteWise";
+import ConditionalParkingPage from "./pages/ConditionalParkingPage";
 
 // Import existing pages
 import Index from "./pages/Index";
@@ -2305,7 +2306,7 @@ function App() {
                       path="/vas/fnb/discounts"
                       element={<FnBDiscountsPage />}
                     />
-                    <Route path="/vas/parking" element={<ParkingDashboard />} />
+                    <Route path="/vas/parking" element={<ConditionalParkingPage />} />
                     <Route
                       path="/vas/parking/details/:clientId"
                       element={<ParkingDetailsPage />}
@@ -2366,7 +2367,7 @@ function App() {
                       path="/vas/fnb/discounts"
                       element={<FnBDiscountsPage />}
                     />
-                    <Route path="/vas/parking" element={<ParkingDashboard />} />
+                    <Route path="/vas/parking" element={<ConditionalParkingPage />} />
                     <Route
                       path="/vas/parking/details/:clientId"
                       element={<ParkingDetailsPage />}

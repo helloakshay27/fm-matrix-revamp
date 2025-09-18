@@ -930,7 +930,7 @@ export const WorkOrderAddPage: React.FC = () => {
                   <h3 className="text-md font-medium text-foreground">
                     Item {index + 1}
                   </h3>
-                  {/* {detailsForms.length > 1 && (
+                  {detailsForms.length > 1 && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -939,7 +939,7 @@ export const WorkOrderAddPage: React.FC = () => {
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                  )} */}
+                  )}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {/* First Row */}
@@ -1487,14 +1487,14 @@ export const WorkOrderAddPage: React.FC = () => {
             ))}
 
             {/* Add Items Button inside details card */}
-            {/* <div className="mt-6 pt-6 border-t border-gray-200">
+            <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
                 onClick={addNewDetailsForm}
               >
                 Add Items
               </Button>
-            </div> */}
+            </div>
           </div>
         </div>
 

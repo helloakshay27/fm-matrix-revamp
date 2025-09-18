@@ -198,7 +198,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         // Redirect to OTP verification page
         setTimeout(() => {
           navigate('/otp-verification');
-        }, 500);
+        });
       } else {
         toast.success("Login Successful", {
           description: `Welcome back, ${response.firstname}!`
@@ -208,7 +208,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
         setTimeout(() => {
           isViSite ? navigate('/maintenance/m-safe/internal') : navigate(from, { replace: true });
           // navigate(isViSite ? '/maintenance/m-safe/internal' : '/maintenance/asset');
-        }, 500);
+        });
       }
     } catch (error) {
       console.error("Login error:", error);
