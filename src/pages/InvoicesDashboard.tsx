@@ -267,8 +267,6 @@ export const InvoicesDashboard = () => {
     }
   };
 
-  const handleExport = () => { };
-
   const handlePageChange = async (page: number) => {
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
@@ -417,9 +415,6 @@ export const InvoicesDashboard = () => {
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search..."
-        enableExport={true}
-        exportFileName="invoices_export"
-        handleExport={handleExport}
         loading={loading}
         onFilterClick={() => setIsFilterDialogOpen(true)}
       />

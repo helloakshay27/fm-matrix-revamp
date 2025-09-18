@@ -77,6 +77,7 @@ export const EditMaterialPRDashboard = () => {
       expectedDate: "",
       amount: "",
       wbsCode: "",
+      _destroy: 0,
     },
   ]);
   const [supplierDetails, setSupplierDetails] = useState({
@@ -330,12 +331,17 @@ export const EditMaterialPRDashboard = () => {
         expectedDate: "",
         amount: "",
         wbsCode: "",
+        _destroy: 0
       },
     ]);
   };
 
   const removeItem = (id) => {
-    setItems(items.filter((item) => item.id !== id));
+    setItems(prevItems =>
+      prevItems.map(item =>
+        item.id === id ? { ...item, _destroy: 1 } : item
+      )
+    );
   };
 
   const calculateTotalAmount = () => {
@@ -428,6 +434,7 @@ export const EditMaterialPRDashboard = () => {
           expected_date: item.expectedDate,
           sac_hsn_code: item.sacHsnCodeId,
           prod_desc: item.productDescription,
+          _destroy: item._destroy,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
         })),
       },
@@ -763,150 +770,152 @@ export const EditMaterialPRDashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
-                >
-                  {items.length > 1 && (
-                    <Button
-                      onClick={() => removeItem(item.id)}
-                      size="sm"
-                      className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+              {items
+                .filter(item => !item._destroy) // Only render items that are not marked for destruction
+                .map((item) => (
+                  <div
+                    key={item.id}
+                    className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg relative"
+                  >
+                    {items.length > 1 && (
+                      <Button
+                        onClick={() => removeItem(item.id)}
+                        size="sm"
+                        className="absolute -top-3 -right-3 p-1 h-8 w-8 rounded-full"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    )}
 
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Item Details*</InputLabel>
-                    <MuiSelect
-                      label="Item Details*"
-                      value={item.itemDetails}
-                      onChange={(e) => {
-                        handleItemChange(item.id, "itemDetails", e.target.value);
-                        onInventoryChange(e.target.value, item.id);
-                      }}
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select Inventory</em>
-                      </MenuItem>
-                      {inventories.map((inventory) => (
-                        <MenuItem key={inventory.id} value={inventory.id}>
-                          {inventory.name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
-                  <TextField
-                    label="SAC/HSN Code"
-                    value={item.sacHsnCode}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "sacHsnCode", e.target.value)
-                    }
-                    placeholder="Enter Code"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Product Description*"
-                    value={item.productDescription}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "productDescription", e.target.value)
-                    }
-                    placeholder="Product Description"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Expected Date*"
-                    type="date"
-                    value={item.expectedDate}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "expectedDate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Rate"
-                    value={item.each}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "each", e.target.value)
-                    }
-                    placeholder="Enter Number"
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Quantity*"
-                    value={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "quantity", e.target.value)
-                    }
-                    placeholder="Enter Number"
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  <TextField
-                    label="Amount*"
-                    value={item.amount}
-                    placeholder="Calculated Amount"
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles, readOnly: true }}
-                    sx={{ mt: 1 }}
-                  />
-
-                  {wbsSelection === "individual" && (
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <InputLabel shrink>Item Details*</InputLabel>
                       <MuiSelect
-                        label="WBS Code*"
-                        value={item.wbsCode}
-                        onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                        label="Item Details*"
+                        value={item.itemDetails}
+                        onChange={(e) => {
+                          handleItemChange(item.id, "itemDetails", e.target.value);
+                          onInventoryChange(e.target.value, item.id);
+                        }}
                         displayEmpty
                         sx={fieldStyles}
                       >
                         <MenuItem value="">
-                          <em>Select WBS Code</em>
+                          <em>Select Inventory</em>
                         </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
+                        {inventories.map((inventory) => (
+                          <MenuItem key={inventory.id} value={inventory.id}>
+                            {inventory.name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
-                  )}
-                </div>
-              ))}
+
+                    <TextField
+                      label="SAC/HSN Code"
+                      value={item.sacHsnCode}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "sacHsnCode", e.target.value)
+                      }
+                      placeholder="Enter Code"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Product Description*"
+                      value={item.productDescription}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "productDescription", e.target.value)
+                      }
+                      placeholder="Product Description"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Expected Date*"
+                      type="date"
+                      value={item.expectedDate}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "expectedDate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Rate"
+                      value={item.each}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "each", e.target.value)
+                      }
+                      placeholder="Enter Number"
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Quantity*"
+                      value={item.quantity}
+                      onChange={(e) =>
+                        handleItemChange(item.id, "quantity", e.target.value)
+                      }
+                      placeholder="Enter Number"
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    <TextField
+                      label="Amount*"
+                      value={item.amount}
+                      placeholder="Calculated Amount"
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ sx: fieldStyles, readOnly: true }}
+                      sx={{ mt: 1 }}
+                    />
+
+                    {wbsSelection === "individual" && (
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>WBS Code*</InputLabel>
+                        <MuiSelect
+                          label="WBS Code*"
+                          value={item.wbsCode}
+                          onChange={(e) => handleItemChange(item.id, "wbsCode", e.target.value)}
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value="">
+                            <em>Select WBS Code</em>
+                          </MenuItem>
+                          {wbsCodes.map((wbs) => (
+                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                              {wbs.wbs_code}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    )}
+                  </div>
+                ))}
             </CardContent>
           </Card>
 

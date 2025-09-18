@@ -4,9 +4,9 @@ import createApiSlice from "../api/apiSlice";
 
 export const fetchPendingApprovals = createAsyncThunk(
     "fetchPendingApprovals",
-    async ({ baseUrl, token, page }: { baseUrl: string, token: string, page?: number }, { rejectWithValue }) => {
+    async ({ baseUrl, token, page, search = "", type = "" }: { baseUrl: string, token: string, page?: number, search?: string, type?: string }, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/pending_approvals.json?page=${page}`, {
+            const response = await axios.get(`https://${baseUrl}/pms/purchase_orders/pending_approvals.json?page=${page}&pr_no=${search}&type=${type}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
