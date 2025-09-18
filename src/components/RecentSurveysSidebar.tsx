@@ -7,7 +7,7 @@ import { ticketManagementAPI } from '../services/ticketManagementAPI';
 import { toast } from 'sonner';
 
 interface SurveyResponse {
-    answer_id: number;
+    // option_id: number;
     question_id: number;
     question_name: string;
     option_id: number;
