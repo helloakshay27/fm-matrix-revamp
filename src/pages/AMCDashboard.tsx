@@ -116,6 +116,7 @@ interface AMCRecord {
   total_days_remaining?: number;
   service_name?: string;
   status: string;
+  amc_assets?: Array<{ id: number; asset_id: number; asset_name: string }>;
 }
 
 const initialAmcData: AMCRecord[] = [];
@@ -552,7 +553,12 @@ export const AMCDashboard = () => {
         return <span className="font-medium">{item.id}</span>;
       case 'asset_name':
         if (item.amc_type === 'Asset') {
-          return item.asset_name || '-';
+          // Prefer first nested amc_assets entry if present
+            const first = item.amc_assets && item.amc_assets.length > 0 ? item.amc_assets[0] : null;
+            if (first) {
+              return first.asset_name || '-';
+            }
+            return item.asset_name || '-';
         } else if (item.amc_type === 'Service') {
           return item.service_name || '-';
         } else {

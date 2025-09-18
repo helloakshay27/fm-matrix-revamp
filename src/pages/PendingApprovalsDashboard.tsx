@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { EnhancedTable } from "@/components/enhanced-table/EnhancedTable";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchPendingApprovals } from "@/store/slices/pendingApprovalSlice";
 import { useNavigate } from "react-router-dom";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Dialog, DialogContent, FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 const columns: ColumnConfig[] = [
   {
@@ -54,6 +55,21 @@ const columns: ColumnConfig[] = [
   },
 ];
 
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  '& .MuiInputBase-input, & .MuiSelect-select': {
+    padding: { xs: '8px', sm: '10px', md: '12px' },
+  },
+};
+
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
+
 export const PendingApprovalsDashboard = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -65,16 +81,20 @@ export const PendingApprovalsDashboard = () => {
 
   const [searchQuery, setSearchQuery] = useState("")
   const [pendingApprovalsData, setPendingApprovalsData] = useState<any[]>([]);
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState({
+    type: "",
+  });
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
     total_pages: 0,
   });
 
-  const fetchData = async (page: number = 1) => {
+  const fetchData = async (filterParams = {}, page: number = 1) => {
     try {
       const response = await dispatch(
-        fetchPendingApprovals({ baseUrl, token, page })
+        fetchPendingApprovals({ baseUrl, token, page, ...filterParams })
       ).unwrap();
       const formattedResponse = response.pending_data.map((item: any) => ({
         id: item.resource_id,
@@ -111,6 +131,32 @@ export const PendingApprovalsDashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const debouncedFetchData = useCallback(
+    debounce((query: string) => {
+      fetchData({ search: query });
+    }, 500),
+    [pagination.current_page, filters]
+  );
+
+  const handleApply = async () => {
+    await fetchData({
+      type: filters.type,
+    });
+    setShowFilters(false)
+  };
+
+  const handleReset = async () => {
+    await fetchData();
+    setFilters({ type: "" });
+    setShowFilters(false)
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    debouncedFetchData(query);
+  };
 
   const renderCell = (item: any, columnKey: string) => {
     if (columnKey === "view") {
@@ -151,7 +197,11 @@ export const PendingApprovalsDashboard = () => {
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData(page);
+      await fetchData({
+        page,
+        type: filters.type,
+        search: searchQuery,
+      });
     } catch (error) {
       console.error("Error changing page:", error);
       toast.error("Failed to load page data. Please try again.");
@@ -291,13 +341,15 @@ export const PendingApprovalsDashboard = () => {
         storageKey="pending-approvals-table"
         className="bg-white rounded-lg shadow overflow-x-auto"
         emptyMessage="No pending approvals found"
+        searchPlaceholder="Search by PR no..."
         enableSearch={true}
         enableExport={true}
         exportFileName="pending-approvals"
         hideTableExport={true}
         loading={loading}
         searchTerm={searchQuery}
-        onSearchChange={setSearchQuery}
+        onSearchChange={handleSearchChange}
+        onFilterClick={() => setShowFilters(true)}
       />
 
       <div className="flex justify-center mt-6">
@@ -319,6 +371,60 @@ export const PendingApprovalsDashboard = () => {
           </PaginationContent>
         </Pagination>
       </div>
+
+      <Dialog open={showFilters} onClose={() => setShowFilters(false)} fullWidth maxWidth="xs">
+        <DialogContent>
+          <div className="flex items-center justify-between mb-3">
+            <h5 className="text-lg font-semibold">FILTER BY</h5>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilters(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="space-y-4">
+            <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+              <InputLabel shrink>Type</InputLabel>
+              <Select
+                label="Type"
+                value={filters.type}
+                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                displayEmpty
+                sx={fieldStyles}
+              >
+                <MenuItem value="" disabled><em>Select Type</em></MenuItem>
+                <MenuItem value="Material Pr">Material PR</MenuItem>
+                <MenuItem value="Service Pr">Service PR</MenuItem>
+                <MenuItem value="Purchase Order">Purchase Order</MenuItem>
+                <MenuItem value="Work Order">Work Order</MenuItem>
+                <MenuItem value="Grn">GRN</MenuItem>
+                <MenuItem value="Invoice">Invoices</MenuItem>
+              </Select>
+            </FormControl>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              onClick={handleApply}
+              className="flex-1 text-white"
+              style={{ backgroundColor: '#C72030' }}
+            >
+              Apply
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="flex-1"
+            >
+              Reset
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
