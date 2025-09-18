@@ -170,7 +170,7 @@ const LMCUserDetail = () => {
             </div>
 
             {/* Personal Details */}
-            <div className="bg-white rounded-lg border border-gray-200 mb-6">
+            {/* <div className="bg-white rounded-lg border border-gray-200 mb-6">
                 <div className="flex items-center gap-3 p-4 border-b border-gray-200 bg-[#f6f4ee]">
                     <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center">
                         <User className="w-5 h-5 text-white" />
@@ -193,7 +193,7 @@ const LMCUserDetail = () => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> */}
 
             {/* LMC Details - Done By */}
             <div className="bg-white rounded-lg border border-gray-200 mb-6">
