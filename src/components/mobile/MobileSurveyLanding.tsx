@@ -161,17 +161,6 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
-  // Check if survey has text-based questions (text, input, description)
-  const hasTextBasedQuestions = (): boolean => {
-    if (!surveyData) return false;
-    return surveyData.snag_checklist.snag_questions.some(
-      (question) => 
-        question.qtype === "text" || 
-        question.qtype === "input" || 
-        question.qtype === "description"
-    );
-  };
-
   // Handle option selection for multiple choice
   // Make multiple choice single-selectable (radio behavior)
   const handleOptionSelect = (option: SurveyOption) => {
@@ -1183,25 +1172,19 @@ export const MobileSurveyLanding: React.FC = () => {
                       })}
                     </div>
 
-                    {/* Description Field - Only show for emoji, multiple, and rating question types AND if survey doesn't have text-based questions */}
-                    {(pendingNegativeType === "emoji" || 
-                      pendingNegativeType === "smiley" || 
-                      pendingNegativeType === "multiple" || 
-                      pendingNegativeType === "rating") && 
-                      !hasTextBasedQuestions() && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Additional Comments (Optional)
-                        </label>
-                        <textarea
-                          value={finalDescription}
-                          onChange={(e) => setFinalDescription(e.target.value)}
-                          placeholder="Please describe any specific issues or suggestions..."
-                          className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                          disabled={isSubmitting}
-                        />
-                      </div>
-                    )}
+                    {/* Description Field */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Additional Comments (Optional)
+                      </label>
+                      <textarea
+                        value={finalDescription}
+                        onChange={(e) => setFinalDescription(e.target.value)}
+                        placeholder="Please describe any specific issues or suggestions..."
+                        className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        disabled={isSubmitting}
+                      />
+                    </div>
 
                     <button
                       onClick={async () => {
@@ -1263,13 +1246,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         }
                       }}
                       disabled={
-                        selectedTags.length === 0 && 
-                        (pendingNegativeType === "emoji" || 
-                         pendingNegativeType === "smiley" || 
-                         pendingNegativeType === "multiple" || 
-                         pendingNegativeType === "rating") && 
-                        !hasTextBasedQuestions() &&
-                        !finalDescription.trim()
+                        selectedTags.length === 0 && !finalDescription.trim()
                       }
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
