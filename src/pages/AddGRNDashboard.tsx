@@ -186,6 +186,7 @@ export const AddGRNDashboard = () => {
       setGrnDetails({
         ...grnDetails,
         purchaseOrder: id,
+        supplier: response.pms_supplier_id,
         relatedTo: response.related_to
       })
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
