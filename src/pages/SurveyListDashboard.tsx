@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Heading } from '@/components/ui/heading';
 import { Button } from '@/components/ui/button';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown } from 'lucide-react';
@@ -46,6 +46,7 @@ interface SurveyItem {
 interface FilterState {
   surveyName: string;
   categoryId: string;
+  checkType: string;
 }
 
 export const SurveyListDashboard = () => {
@@ -57,7 +58,8 @@ export const SurveyListDashboard = () => {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterState>({
     surveyName: '',
-    categoryId: 'all'
+    categoryId: 'all',
+    checkType: 'all'
   });
   const [allSurveys, setAllSurveys] = useState<SurveyItem[]>([]); // Store all surveys for filtering
 
@@ -65,7 +67,7 @@ export const SurveyListDashboard = () => {
     fetchSurveyData();
   }, []);
 
-  const fetchSurveyData = async (filters?: FilterState) => {
+  const fetchSurveyData = useCallback(async (filters?: FilterState) => {
     try {
       setLoading(true);
       // Get the site_id from localStorage or use a default value
@@ -81,16 +83,26 @@ export const SurveyListDashboard = () => {
         if (filters.categoryId && filters.categoryId !== 'all') {
           url += `&q[generic_tag_category_name_eq]=${filters.categoryId}`;
         }
+        if (filters.checkType && filters.checkType !== 'all') {
+          url += `&q[check_type_eq]=${filters.checkType}`;
+        }
       } else {
         // Default params when no filters
-        url += `&q[name_cont]=&q[snag_audit_sub_category_id_eq]=&q[generic_tag_category_name_eq]=`;
+        url += `&q[name_cont]=&q[snag_audit_sub_category_id_eq]=&q[generic_tag_category_name_eq]=&q[check_type_eq]=`;
       }
       
       const response = await apiClient.get(url);
       console.log('Question data response:', response.data);
       const surveyData = response.data || [];
       console.log('First survey item:', surveyData[0]); // Debug log
-      setSurveys(surveyData);
+      
+      // Only update state if data has changed
+      setSurveys(prevSurveys => {
+        if (JSON.stringify(prevSurveys) === JSON.stringify(surveyData)) {
+          return prevSurveys; // Return same reference to prevent re-render
+        }
+        return surveyData;
+      });
       
       // Store all surveys when no filters are applied
       if (!filters) {
@@ -107,7 +119,7 @@ export const SurveyListDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   const handleAddSurvey = () => {
     navigate('/master/survey/add');
@@ -121,20 +133,25 @@ export const SurveyListDashboard = () => {
     setIsFilterModalOpen(false);
   };
 
-  const handleApplyFilters = (filters: FilterState) => {
+  const handleApplyFilters = useCallback((filters: FilterState) => {
     setAppliedFilters(filters);
     // Fetch filtered data from API
     fetchSurveyData(filters);
-  };
+  }, [fetchSurveyData]);
 
-  const handleResetFilters = () => {
-    setAppliedFilters({
+  const handleResetFilters = useCallback(() => {
+    const defaultFilters = {
       surveyName: '',
-      categoryId: 'all'
-    });
-    // Fetch all data without filters
-    fetchSurveyData();
-  };
+      categoryId: 'all',
+      checkType: 'all'
+    };
+    
+    // Only update state and fetch if filters are actually different
+    if (JSON.stringify(appliedFilters) !== JSON.stringify(defaultFilters)) {
+      setAppliedFilters(defaultFilters);
+      fetchSurveyData();
+    }
+  }, [appliedFilters, fetchSurveyData]);
 
   const handleAction = (action: string, item: SurveyItem) => {
     console.log(`${action} action for Question ${item.id}`);
@@ -190,7 +207,7 @@ export const SurveyListDashboard = () => {
   const statusOptions = ['Active', 'Inactive'];
 
   // Updated columns according to requirements
-  const columns = [
+  const columns = useMemo(() => [
     { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true },
     { key: 'name', label: 'Title/Question Name', sortable: true, draggable: true, defaultVisible: true },
     { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true },
@@ -199,9 +216,9 @@ export const SurveyListDashboard = () => {
     { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
     { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
     // { key: 'snag_audit_sub_category', label: 'Sub Category', sortable: true, draggable: true, defaultVisible: true },
-  ];
+  ], []);
 
-  const renderCell = (item: SurveyItem, columnKey: string) => {
+  const renderCell = useCallback((item: SurveyItem, columnKey: string) => {
     switch (columnKey) {
       case 'actions':
         return (
@@ -277,16 +294,18 @@ export const SurveyListDashboard = () => {
         const value = item[columnKey as keyof SurveyItem];
         return <span>{value !== null && value !== undefined ? String(value) : '-'}</span>;
     }
-  };
+  }, [navigate, toast]);
 
   // Filter surveys based on search term (API filtering handles the main filters)
-  const filteredSurveys = surveys.filter(survey => {
-    const matchesSearch = survey.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (survey.snag_audit_category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (survey.snag_audit_sub_category || '').toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  const filteredSurveys = useMemo(() => {
+    return surveys.filter(survey => {
+      const matchesSearch = survey.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (survey.snag_audit_category || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (survey.snag_audit_sub_category || '').toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return matchesSearch;
+    });
+  }, [surveys, searchTerm]);
 
   // Debug logs
   console.log('Filtered surveys:', filteredSurveys);
@@ -348,6 +367,7 @@ export const SurveyListDashboard = () => {
         onClose={handleCloseFilterModal}
         onApplyFilters={handleApplyFilters}
         onResetFilters={handleResetFilters}
+        currentFilters={appliedFilters}
       />
     </div>
   );

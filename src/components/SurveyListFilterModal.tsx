@@ -13,11 +13,13 @@ interface FilterModalProps {
   onClose: () => void;
   onApplyFilters: (filters: FilterState) => void;
   onResetFilters: () => void;
+  currentFilters?: FilterState;
 }
 
 interface FilterState {
   surveyName: string;
   categoryId: string;
+  checkType: string;
 }
 
 interface Category {
@@ -29,11 +31,13 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   open,
   onClose,
   onApplyFilters,
-  onResetFilters
+  onResetFilters,
+  currentFilters
 }) => {
   const [filters, setFilters] = useState<FilterState>({
     surveyName: '',
-    categoryId: 'all'
+    categoryId: 'all',
+    checkType: 'all'
   });
   
   const [categories, setCategories] = useState<Category[]>([]);
@@ -45,6 +49,22 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
       fetchCategories();
     }
   }, [open]);
+
+  // Initialize filters with current applied filters when modal opens
+  useEffect(() => {
+    if (open) {
+      if (currentFilters) {
+        setFilters(currentFilters);
+      } else {
+        // Reset to default if no current filters
+        setFilters({
+          surveyName: '',
+          categoryId: 'all',
+          checkType: 'all'
+        });
+      }
+    }
+  }, [open, currentFilters]);
 
   const fetchCategories = async () => {
     try {
@@ -75,11 +95,11 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   const handleReset = () => {
     setFilters({
       surveyName: '',
-      categoryId: 'all'
+      categoryId: 'all',
+      checkType: 'all'
     });
     onResetFilters();
     toast.success('Filters reset successfully');
-    onClose();
   };
 
   const handleApply = () => {
@@ -112,7 +132,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
           {/* Survey Filter Section */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-[#C72030] mb-4">Survey Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Survey Name Filter */}
               <div className="space-y-2">
                 <Label htmlFor="surveyName">Survey Name</Label>
@@ -150,6 +170,24 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
                         </SelectItem>
                       ))
                     )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Check Type Filter */}
+              <div className="space-y-2">
+                <Label htmlFor="checkType">Check Type</Label>
+                <Select
+                  value={filters.checkType}
+                  onValueChange={(value) => handleInputChange('checkType', value)}
+                >
+                  <SelectTrigger className="h-10">
+                    <SelectValue placeholder="Select Check Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="patrolling">Patrolling</SelectItem>
+                    <SelectItem value="survey">Survey</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
