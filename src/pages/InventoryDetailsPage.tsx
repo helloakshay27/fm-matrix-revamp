@@ -163,32 +163,61 @@ export const InventoryDetailsPage = () => {
     }
   };
 
-  // Parse Ruby style changed_attr string into key/from/to objects
-  const parseChangedAttr = (raw: string): { key: string; from: string; to: string }[] => {
-    if (!raw || typeof raw !== 'string') return [];
-    const result: { key: string; from: string; to: string }[] = [];
-    try {
-      // Pattern captures key and bracket content
-      const regex = /"([^"]+)"=>\[(.*?)\]/g;
-      let match;
-      while ((match = regex.exec(raw)) !== null) {
-        const key = match[1];
-        const content = match[2];
-        const idx = content.lastIndexOf(',');
-        let from = content;
-        let to = '';
-        if (idx !== -1) {
-          from = content.slice(0, idx).trim();
-          to = content.slice(idx + 1).trim();
+  // Parse backend provided changed_attr which may now be an object { key: [old, new] } or legacy Ruby string
+  const parseChangedAttr = (raw: any): { key: string; from: string; to: string }[] => {
+    if (!raw) return [];
+    const rows: { key: string; from: string; to: string }[] = [];
+
+    // New format: object with arrays
+    if (typeof raw === 'object' && !Array.isArray(raw)) {
+      Object.entries(raw).forEach(([key, val]) => {
+        if (Array.isArray(val) && val.length === 2) {
+          const [from, to] = val as any[];
+          rows.push({ key, from: sanitizeChangedValue(from), to: sanitizeChangedValue(to) });
         }
-        // Clean potential surrounding quotes or nil
-        const clean = (v: string) => v.replace(/^\"|\"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
-        result.push({ key, from: clean(from), to: clean(to) });
-      }
-    } catch (e) {
-      console.warn('Failed to parse changed_attr', e);
+      });
+      return rows;
     }
-    return result;
+
+    // Legacy string format fallback
+    if (typeof raw === 'string') {
+      try {
+        const regex = /"([^\"]+)"=>\[(.*?)\]/g;
+        let match;
+        while ((match = regex.exec(raw)) !== null) {
+          const key = match[1];
+          const content = match[2];
+          const idx = content.lastIndexOf(',');
+            let from = content;
+            let to = '';
+            if (idx !== -1) {
+              from = content.slice(0, idx).trim();
+              to = content.slice(idx + 1).trim();
+            }
+          const clean = (v: string) => v.replace(/^\"|\"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
+          rows.push({ key, from: clean(from), to: clean(to) });
+        }
+      } catch (e) {
+        console.warn('Failed to parse legacy changed_attr', e);
+      }
+    }
+    return rows;
+  };
+
+  const sanitizeChangedValue = (v: any): string => {
+    if (v === null || v === undefined) return '—';
+    if (typeof v === 'string') return v === '' ? '—' : v;
+    if (typeof v === 'number') return String(v);
+    if (typeof v === 'boolean') return v ? 'true' : 'false';
+    // If object attempt common keys like name / code
+    try {
+      if (typeof v === 'object') {
+        if ((v as any).name) return String((v as any).name);
+        if ((v as any).code) return String((v as any).code);
+        return JSON.stringify(v);
+      }
+    } catch { /* ignore */ }
+    return String(v);
   };
 
   // Human-friendly labels for keys

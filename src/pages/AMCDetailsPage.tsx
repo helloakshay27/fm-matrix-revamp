@@ -80,6 +80,16 @@ interface AMCDetailsDataWithVisits extends AMCDetailsData {
   amc_invoices?: any[];
 }
 
+interface TicketRecord {
+  id: number;
+  heading: string | null;
+  category_type?: string | null;
+  status?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
+  updated_by?: string | null;
+}
+
 export const AMCDetailsPage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -95,6 +105,59 @@ export const AMCDetailsPage = () => {
   const [activeTab, setActiveTab] = useState('amc-information'); // Changed default to 'amc-information'
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  // Tickets state
+  const [tickets, setTickets] = useState<TicketRecord[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [ticketsError, setTicketsError] = useState<string | null>(null);
+
+  const fetchTicketsForAssets = async (assetIds: number[]) => {
+    if (!assetIds.length) return;
+    const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
+    if (!baseUrl || !token) return;
+    setTicketsLoading(true);
+    setTicketsError(null);
+    try {
+      const all: TicketRecord[] = [];
+      // Sequential to keep order; could parallelize with Promise.all if backend load ok
+      for (const assetId of assetIds) {
+        try {
+          const url = `https://${baseUrl}/pms/assets/${assetId}/tickets.json?id=${assetId}`;
+          const resp = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+          if (!resp.ok) throw new Error(`Asset ${assetId} tickets fetch failed`);
+          const data = await resp.json();
+            const arr = Array.isArray(data) ? data : (Array.isArray(data?.tickets) ? data.tickets : []);
+            arr.forEach((t: any) => {
+              all.push({
+                id: t.id,
+                heading: t.heading || null,
+                category_type: t.category_type || null,
+                status: t.status || null,
+                updated_at: t.updated_at || null,
+                created_at: t.created_at || null,
+                updated_by: t.updated_by || null,
+              });
+            });
+        } catch (inner) {
+          console.warn(inner);
+        }
+      }
+      setTickets(all);
+    } catch (e:any) {
+      setTicketsError(e.message || 'Failed to load tickets');
+    } finally {
+      setTicketsLoading(false);
+    }
+  };
+
+  // Fetch tickets when AMC details loaded
+  useEffect(() => {
+    if (amcDetails?.amc_assets?.length) {
+      const ids = amcDetails.amc_assets.map((a:any) => a.asset_id).filter((v: any) => !!v);
+      fetchTicketsForAssets(ids);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [amcDetails?.amc_assets]);
 
   useEffect(() => {
     if (id) {
@@ -202,6 +265,7 @@ export const AMCDetailsPage = () => {
               { label: 'Supplier Information', value: 'supplier-information' },
               { label: 'Attachments', value: 'attachments' },
               { label: 'AMC Visits', value: 'amc-visits' },
+              { label: 'Tickets', value: 'tickets' },
               {
                 label: amcDetails.amc_type === "Service" ? "Service Information" : "Asset Information",
                 value: "asset-information",
@@ -706,6 +770,67 @@ export const AMCDetailsPage = () => {
                   </div>
                 </div>
               )}
+            </Card>
+          </TabsContent>
+
+          {/* Tickets */}
+          <TabsContent value="tickets" className="p-3 sm:p-6">
+            <Card className="border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <FileTextIcon className="h-4 w-4" />
+                  </div>
+                  TICKETS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-[#F6F4EE]">
+                        <TableHead className="font-semibold">ID</TableHead>
+                        <TableHead className="font-semibold">Title</TableHead>
+                        <TableHead className="font-semibold">Category</TableHead>
+                        <TableHead className="font-semibold">Status</TableHead>
+                        <TableHead className="font-semibold">Updated By</TableHead>
+                        <TableHead className="font-semibold">Created At</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody className="bg-white">
+                      {ticketsLoading && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-gray-600">Loading tickets...</TableCell>
+                        </TableRow>
+                      )}
+                      {!ticketsLoading && ticketsError && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-red-600">{ticketsError}</TableCell>
+                        </TableRow>
+                      )}
+                      {!ticketsLoading && !ticketsError && tickets.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center text-gray-600">No tickets found.</TableCell>
+                        </TableRow>
+                      )}
+                      {!ticketsLoading && !ticketsError && tickets.length > 0 && tickets.map(t => (
+                        <TableRow key={t.id} className="hover:bg-[#f6f4ee] transition-colors">
+                          <TableCell>{t.id}</TableCell>
+                          <TableCell className="max-w-[360px] whitespace-normal break-words">{t.heading || '—'}</TableCell>
+                          <TableCell>{t.category_type || '—'}</TableCell>
+                          <TableCell>
+                            {t.status ? (
+                              <span className="px-2 py-1 text-xs rounded bg-gray-100 text-gray-800">{t.status}</span>
+                            ) : '—'}
+                          </TableCell>
+                          <TableCell>{t.updated_by || '—'}</TableCell>
+                          <TableCell>{t.created_at ? new Date(t.created_at).toLocaleDateString() : '—'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
             </Card>
           </TabsContent>
 

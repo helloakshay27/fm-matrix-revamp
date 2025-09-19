@@ -18,10 +18,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
   TextField,
 } from "@mui/material";
 import axios from "axios";
@@ -30,14 +26,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import DebitCreditModal from "@/components/DebitCreditModal";
 
-// Define the interface for Approval
 interface Approval {
   id: string;
   level: string;
   status: string;
   updated_by?: string;
   updated_at?: string;
-  rejection_reason?: string; // Added for rejection reason tooltip
+  rejection_reason?: string;
 }
 
 interface Attachment {
@@ -454,108 +449,104 @@ export const WODetailsPage = () => {
         Back
       </Button>
       {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-        <div className="flex flex-col">
-          <h1 className="font-work-sans font-semibold text-xl sm:text-2xl text-gray-900 mb-2">
-            WORK ORDER DETAILS
-          </h1>
-          <TooltipProvider>
-            <div className="flex items-start gap-3">
-              {
-                workOrder?.approvals?.map((approval: Approval) => (
-                  <div className='space-y-2' key={approval.id}>
-                    {approval.status.toLowerCase() === 'rejected' ? (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
-                            {`${approval.level} Approval : ${approval.status}`}
-                          </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
-                        {`${approval.level} Approval : ${approval.status}`}
-                      </div>
-                    )}
-                    {
-                      approval.updated_by && approval.updated_at &&
-                      <div className='ms-2 w-[190px]'>
-                        {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
-                      </div>
-                    }
-                  </div>
-                ))
-              }
-            </div>
-          </TooltipProvider>
-        </div>
-
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <div className="flex gap-2 flex-wrap">
-            {
-              buttonCondition.showSap && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white sap_button"
-                  onClick={handleSendToSap}
-                >
-                  Send To SAP Team
-                </Button>
-              )
-            }
-            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              Clone
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handlePrint}
-            >
-              <Printer className="w-4 h-4 mr-1" />
-              Print
-            </Button>
-            <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/feeds/${id}`)}>
-              <Rss className="w-4 h-4 mr-1" />
-              Feeds
-            </Button>
-            {workOrder.all_level_approved && (
-              <>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={() => setOpenInvoiceModal(true)}
-                >
-                  Add Invoice
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                  onClick={handleOpenDebitCreditModal}
-                >
-                  Debit/Credit Note
-                </Button>
-              </>
-            )}
-          </div>
+      <div className="flex justify-between items-end">
+        <h1 className="text-2xl font-semibold">
+          WORK ORDER DETAILS
+        </h1>
+        <div className="flex gap-2 flex-wrap">
+          {
+            buttonCondition.showSap && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white sap_button"
+                onClick={handleSendToSap}
+              >
+                Send To SAP Team
+              </Button>
+            )
+          }
+          <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={() => navigate(`/finance/wo/add?clone=${id}`)}
+          >
+            <Copy className="w-4 h-4 mr-1" />
+            Clone
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={handlePrint}
+          >
+            <Printer className="w-4 h-4 mr-1" />
+            Print
+          </Button>
+          <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/feeds/${id}`)}>
+            <Rss className="w-4 h-4 mr-1" />
+            Feeds
+          </Button>
+          {workOrder.all_level_approved && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={() => setOpenInvoiceModal(true)}
+              >
+                Add Invoice
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                onClick={handleOpenDebitCreditModal}
+              >
+                Debit/Credit Note
+              </Button>
+            </>
+          )}
         </div>
       </div>
+
+      <TooltipProvider>
+        <div className="flex items-start gap-3 my-4">
+          {
+            workOrder?.approvals?.map((approval: Approval) => (
+              <div className='space-y-2' key={approval.id}>
+                {approval.status.toLowerCase() === 'rejected' ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
+                        {`${approval.level} Approval : ${approval.status}`}
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
+                    {`${approval.level} Approval : ${approval.status}`}
+                  </div>
+                )}
+                {
+                  approval.updated_by && approval.updated_at &&
+                  <div className='ms-2 w-[190px]'>
+                    {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
+                  </div>
+                }
+              </div>
+            ))
+          }
+        </div>
+      </TooltipProvider>
 
       {/* Vendor/Contact Details Section */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6 p-6">

@@ -48,6 +48,10 @@ import {
 } from '@/components/ticket-analytics';
 import { ResponseTATCard } from '@/components/ResponseTATCard';
 import { ResolutionTATCard } from '@/components/ResolutionTATCard';
+// Import survey analytics components
+import { SurveyStatusOverviewCard } from '@/components/SurveyStatusOverviewCard';
+import { SurveyAnalyticsCard } from '@/components/SurveyAnalyticsCard';
+import { surveyAnalyticsAPI } from '@/services/surveyAnalyticsAPI';
 import { ticketAnalyticsAPI } from '@/services/ticketAnalyticsAPI';
 import { taskAnalyticsAPI } from '@/services/taskAnalyticsAPI';
 import { amcAnalyticsAPI } from '@/services/amcAnalyticsAPI';
@@ -92,7 +96,7 @@ import { TopOverdueChecklistsCenterwiseCard } from '@/components/checklist-manag
 
 interface SelectedAnalytic {
   id: string;
-  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management';
+  module: 'tickets' | 'tasks' | 'schedule' | 'inventory' | 'amc' | 'assets' | 'meeting_room' | 'community' | 'helpdesk' | 'asset_management' | 'inventory_management' | 'consumables_overview' | 'parking_management' | 'visitor_management' | 'checklist_management' | 'surveys';
   endpoint: string;
   title: string;
 }
@@ -113,6 +117,7 @@ interface DashboardData {
   parking_management?: any;
   visitor_management?: any;
   checklist_management?: any;
+  surveys?: any;
 }
 
 // Sortable Chart Item Component for Drag and Drop
@@ -507,6 +512,19 @@ export const Dashboard = () => {
                   promises.push(
                     checklistManagementAnalyticsAPI.getTopOverdueChecklistMatrix(dateRange.from!, dateRange.to!)
                   );
+                  break;
+                default:
+                  promises.push(Promise.resolve(null));
+              }
+            }
+            break;
+          case 'surveys':
+            for (const analytic of analytics) {
+              switch (analytic.endpoint) {
+                case 'survey_summary':
+                case 'survey_status_distribution':
+                case 'top_surveys':
+                  promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics());
                   break;
                 default:
                   promises.push(Promise.resolve(null));
@@ -1350,6 +1368,123 @@ export const Dashboard = () => {
             return (
               <SortableChartItem key={analytic.id} id={analytic.id}>
                 <CustomerRatingOverviewCard data={rawData} />
+              </SortableChartItem>
+            );
+          }
+          default:
+            return null;
+        }
+      case 'surveys':
+        switch (analytic.endpoint) {
+          case 'survey_summary':
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <SurveyStatusOverviewCard 
+                  dateRange={dateRange && dateRange.from && dateRange.to ? {
+                    startDate: dateRange.from,
+                    endDate: dateRange.to
+                  } : undefined}
+                />
+              </SortableChartItem>
+            );
+          case 'survey_status_distribution': {
+            // Transform raw API data to expected chart format
+            const transformStatusData = (apiData: unknown) => {
+              if (!apiData) return [];
+              
+              // Check if it's already in the expected format
+              if (Array.isArray(apiData) && apiData.length > 0 && apiData[0].name && apiData[0].value !== undefined) {
+                return apiData;
+              }
+              
+              // Handle getRealSurveyAnalytics response structure: { analytics: { positive_responses, negative_responses, neutral_responses } }
+              if (typeof apiData === 'object' && apiData !== null && 'analytics' in apiData) {
+                const analytics = (apiData as { analytics: Record<string, unknown> }).analytics;
+                const { positive_responses, negative_responses, neutral_responses } = analytics;
+                
+                return [
+                  { name: 'Positive', value: Number(positive_responses) || 0, color: '#22C55E' },
+                  { name: 'Negative', value: Number(negative_responses) || 0, color: '#EF4444' },
+                  { name: 'Neutral', value: Number(neutral_responses) || 0, color: '#F59E0B' }
+                ];
+              }
+              
+              return [];
+            };
+
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <SurveyAnalyticsCard 
+                  title="Survey Status Distribution" 
+                  data={transformStatusData(rawData)} 
+                  type="statusDistribution" 
+                  dateRange={dateRange && dateRange.from && dateRange.to ? {
+                    startDate: dateRange.from,
+                    endDate: dateRange.to
+                  } : undefined}
+                />
+              </SortableChartItem>
+            );
+          }
+          case 'top_surveys': {
+            // Transform raw API data to expected chart format
+            const transformTopSurveys = (apiData: unknown) => {
+              if (!apiData) return [];
+              
+              // Check if it's already in the expected format
+              if (Array.isArray(apiData) && apiData.length > 0 && apiData[0].name && apiData[0].value !== undefined) {
+                return apiData.slice(0, 3); // Limit to top 3
+              }
+              
+              // Transform API response to chart format
+              const surveyColors = ['#C72030', '#c6b692', '#d8dcdd'];
+              
+              // Handle getRealSurveyAnalytics response structure: { analytics: { top_surveys: [] } }
+              if (typeof apiData === 'object' && apiData !== null && 'analytics' in apiData) {
+                const analytics = (apiData as { analytics: { top_surveys?: Array<{ survey_name: string; response_count: number }> } }).analytics;
+                const surveysArray = analytics.top_surveys;
+                
+                if (Array.isArray(surveysArray)) {
+                  return surveysArray.slice(0, 3).map((survey, index) => ({
+                    name: survey.survey_name || `Survey ${index + 1}`,
+                    value: Number(survey.response_count) || 0,
+                    color: surveyColors[index % surveyColors.length]
+                  }));
+                }
+              }
+              
+              // Handle direct array format
+              if (Array.isArray(apiData)) {
+                return apiData.slice(0, 3).map((item: Record<string, unknown>, index) => ({
+                  name: (item.survey_name as string) || (item.name as string) || (item.survey_type as string) || `Survey ${index + 1}`,
+                  value: Number(item.response_count || item.responses || item.count || item.value || item.survey_count) || 0,
+                  color: surveyColors[index % surveyColors.length]
+                }));
+              }
+              
+              // Handle direct object format
+              if (typeof apiData === 'object' && !Array.isArray(apiData)) {
+                return Object.entries(apiData as Record<string, unknown>).slice(0, 3).map(([key, value], index) => ({
+                  name: key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                  value: Number(value) || 0,
+                  color: surveyColors[index % surveyColors.length]
+                }));
+              }
+              
+              return [];
+            };
+
+            return (
+              <SortableChartItem key={analytic.id} id={analytic.id}>
+                <SurveyAnalyticsCard 
+                  title="Top Surveys" 
+                  data={transformTopSurveys(rawData)} 
+                  type="surveyDistributions" 
+                  dateRange={dateRange && dateRange.from && dateRange.to ? {
+                    startDate: dateRange.from,
+                    endDate: dateRange.to
+                  } : undefined}
+                />
               </SortableChartItem>
             );
           }

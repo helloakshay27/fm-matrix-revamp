@@ -59,6 +59,7 @@ import { approveInvoiceReducer, getInvoiceByIdReducer, getInvoiceFeedsReducer, g
 import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchRecurringRulesReducer, fetchTransactionHistoryReducer, fetchWalletDetailsReducer, fetchWalletDetailsTransactionHistoryReducer, fetchWalletListReducer, topupWalletReducer } from './slices/walletListSlice'
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
 import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, updateAddressReducer } from './slices/addressMasterSlice'
+import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from './slices/wbsSlice'
 
 export const store = configureStore({
   reducer: {
@@ -236,6 +237,11 @@ export const store = configureStore({
     getInvoiceById: getInvoiceByIdReducer,
     approveInvoice: approveInvoiceReducer,
     getInvoiceFeeds: getInvoiceFeedsReducer,
+
+    // WBS Codes
+    fetchWBSList: fetchWBSListReducer,
+    createWBSCode: createWBSCodeReducer,
+    updateWBSCode: updateWBSCodeReducer,
 
     // Customer List
     getCustomerList: getCustomerListReducer,

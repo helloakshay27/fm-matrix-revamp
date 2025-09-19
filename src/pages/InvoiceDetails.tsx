@@ -18,6 +18,7 @@ import { approveInvoice, getInvoiceById } from "@/store/slices/invoicesSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 import axios from "axios";
+import DebitCreditModal from "@/components/DebitCreditModal";
 
 // Define interfaces for data structures
 interface BillingAddress {
@@ -59,6 +60,17 @@ interface ApprovalLevel {
     status_updated_at?: string;
 }
 
+interface DebitNote {
+    id?: string;
+    description?: string;
+    amount?: number;
+    approved?: string;
+    approved_on?: string;
+    approved_by?: string;
+    created_on?: string;
+    created_by?: string;
+}
+
 interface Invoice {
     id?: string;
     invoice_number?: string;
@@ -84,6 +96,7 @@ interface Invoice {
     total_value?: number;
     attachments?: Attachment[];
     approval_levels?: ApprovalLevel[];
+    debit_notes?: DebitNote[];
 }
 
 // Column configurations for tables
@@ -122,7 +135,6 @@ const debitNoteDetailsColumns: ColumnConfig[] = [
     { key: "approved_by", label: "Approved By", sortable: true, draggable: true },
     { key: "created_on", label: "Created On", sortable: true, draggable: true },
     { key: "created_by", label: "Created By", sortable: true, draggable: true },
-    { key: "attachment", label: "Attachment", sortable: true, draggable: true },
 ];
 
 export const InvoiceDetails = () => {
@@ -146,20 +158,26 @@ export const InvoiceDetails = () => {
     const [rejectComment, setRejectComment] = useState<string>("");
     const [selectedAttachment, setSelectedAttachment] = useState<any>(null);
     const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [openDebitModal, setOpenDebitModal] = useState(false)
+    const [debitCreditForm, setDebitCreditForm] = useState({
+        type: "",
+        amount: "",
+        description: "",
+    });
+
+    const fetchData = async () => {
+        try {
+            const response = await dispatch(
+                getInvoiceById({ baseUrl, token, id })
+            ).unwrap();
+            setInvoice(response);
+        } catch (error) {
+            console.error("Error fetching invoice:", error);
+            toast.error(String(error) || "Failed to fetch invoice");
+        }
+    };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await dispatch(
-                    getInvoiceById({ baseUrl, token, id })
-                ).unwrap();
-                setInvoice(response);
-            } catch (error) {
-                console.error("Error fetching invoice:", error);
-                toast.error(String(error) || "Failed to fetch invoice");
-            }
-        };
-
         if (id) {
             fetchData();
         }
@@ -191,6 +209,43 @@ export const InvoiceDetails = () => {
     const handleFeeds = () => {
         if (id) {
             navigate(`/finance/invoice/feeds/${id}`);
+        }
+    };
+
+    const handleDebitCreditChange = (e) => {
+        const { name, value } = e.target;
+        setDebitCreditForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    const handleSubmitDebitCredit = async () => {
+        try {
+            const payload = {
+                debit_note: {
+                    amount: debitCreditForm.amount,
+                    note: debitCreditForm.description,
+                    note_type: debitCreditForm.type,
+                    resource_id: Number(id),
+                    resource_type: "WorkOrderInvoice",
+                },
+            };
+
+            await axios.post(`https://${baseUrl}/debit_notes.json`, payload, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            fetchData();
+            setDebitCreditForm({
+                type: "",
+                amount: "",
+                description: "",
+            });
+            toast.success("Debit note created successfully");
+        } catch (error) {
+            console.log(error);
+            toast.error(error);
+        } finally {
+            setOpenDebitModal(false);
         }
     };
 
@@ -248,54 +303,62 @@ export const InvoiceDetails = () => {
                 Back
             </Button>
             {/* Header */}
-            <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-                <div className="flex flex-col">
-                    <h1 className="font-work-sans font-bold text-xl sm:text-2xl lg:text-3xl text-gray-900 mb-2">
-                        WORK ORDER INVOICE
-                    </h1>
-                    <div className='flex items-start gap-4 mt-2'>
-                        {
-                            invoice?.approval_levels?.map(level => (
-                                <div className='space-y-3'>
-                                    <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
-                                        {`${level?.name?.toUpperCase()} approved : ${level.status}`}
-                                    </div>
+            <div className="flex justify-between items-end">
+                <h1 className="text-2xl font-semibold">
+                    WORK ORDER INVOICE
+                </h1>
+                <div className="flex gap-2 flex-wrap">
+                    {
+                        invoice.all_level_approved && localStorage.getItem("userType") === 'pms_occupant' && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                                onClick={() => setOpenDebitModal(true)}
+                            >
+                                Debit Note
+                            </Button>
+                        )
+                    }
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        onClick={handleFeeds}
+                    >
+                        <Rss className="w-4 h-4 mr-1" />
+                        Feeds
+                    </Button>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+                        onClick={handlePrint}
+                    >
+                        <Printer className="w-4 h-4 mr-1" />
+                        Print
+                    </Button>
+                </div>
+            </div>
+
+            <div className='flex items-start gap-4 my-4'>
+                {
+                    invoice?.approval_levels?.map(level => (
+                        <div className='space-y-3'>
+                            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+                                {`${level?.name?.toUpperCase()} approved : ${level.status}`}
+                            </div>
+                            {
+                                level.updated_by && level.status_updated_at &&
+                                <div className='ms-2 w-[177px]'>
                                     {
-                                        level.updated_by && level.status_updated_at &&
-                                        <div className='ms-2 w-[177px]'>
-                                            {
-                                                `${level.updated_by} (${level.status_updated_at})`
-                                            }
-                                        </div>
+                                        `${level.updated_by} (${level.status_updated_at})`
                                     }
                                 </div>
-                            ))
-                        }
-                    </div>
-                </div>
-
-                <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-                    <div className="flex gap-2 flex-wrap">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                            onClick={handleFeeds}
-                        >
-                            <Rss className="w-4 h-4 mr-1" />
-                            Feeds
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                            onClick={handlePrint}
-                        >
-                            <Printer className="w-4 h-4 mr-1" />
-                            Print
-                        </Button>
-                    </div>
-                </div>
+                            }
+                        </div>
+                    ))
+                }
             </div>
 
             {/* Vendor/Contact Details Section */}
@@ -518,7 +581,7 @@ export const InvoiceDetails = () => {
                         <span className="font-medium text-gray-700">Amount In Words:</span>
                         <span className="font-medium">
                             {invoice.total_value
-                                ? numberToIndianCurrencyWords(invoice.total_value)
+                                ? numberToIndianCurrencyWords(invoice.total_value.toFixed(2))
                                 : "N/A"}
                         </span>
                     </div>
@@ -616,8 +679,14 @@ export const InvoiceDetails = () => {
                 </h3>
                 <div className="overflow-x-auto">
                     <EnhancedTable
-                        data={[]}
+                        data={invoice?.debit_notes || []}
                         columns={debitNoteDetailsColumns}
+                        renderCell={(item, columnKey) => {
+                            if (columnKey === "type") {
+                                return "Debit"
+                            }
+                            return item[columnKey] ?? "-";
+                        }}
                         storageKey="invoice-debit-credit-table"
                         hideColumnsButton={true}
                         hideTableExport={true}
@@ -688,6 +757,15 @@ export const InvoiceDetails = () => {
                     </Button>
                 </DialogActions>
             </Dialog>
+
+            <DebitCreditModal
+                options={["Debit"]}
+                openDebitCreditModal={openDebitModal}
+                handleCloseDebitCreditModal={() => setOpenDebitModal(false)}
+                debitCreditForm={debitCreditForm}
+                handleDebitCreditChange={handleDebitCreditChange}
+                handleSubmitDebitCredit={handleSubmitDebitCredit}
+            />
 
             <AttachmentPreviewModal
                 isModalOpen={isPreviewModalOpen}
