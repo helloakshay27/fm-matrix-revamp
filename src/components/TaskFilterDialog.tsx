@@ -224,7 +224,6 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
     setDateError(''); // Clear date error
     
     onApply({});
-    onClose();
     toast.success('Filters cleared successfully');
   };
 

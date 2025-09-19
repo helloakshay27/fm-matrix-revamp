@@ -485,13 +485,20 @@ export const AddSurveyMapping = () => {
                     variant="outlined" 
                     sx={{ "& .MuiInputBase-root": fieldStyles }}
                   >
-                    <InputLabel>Select Survey</InputLabel>
+                    <InputLabel shrink>Select Survey</InputLabel>
                     <Select
                       value={mapping.surveyId || ''}
                       onChange={(e) => handleSurveyChange(idx, e as SelectChangeEvent<number>)}
                       label="Select Survey"
+                      notched
+                      displayEmpty
                       disabled={loadingSurveys}
                     >
+                      {mapping.surveyId === null && (
+                        <MenuItem disabled value="">
+                          <em style={{ color: '#999', fontStyle: 'italic' }}>Select a survey...</em>
+                        </MenuItem>
+                      )}
                       {loadingSurveys ? (
                         <MenuItem disabled>
                           <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -544,24 +551,36 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel>Buildings</InputLabel>
+                  <InputLabel shrink>Buildings</InputLabel>
                   <Select
                     multiple
                     value={mapping.buildingIds}
                     onChange={(e) => handleLocationChange(mappingIdx, 'buildingIds', e)}
                     input={<OutlinedInput label="Buildings" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const building = buildings.find(b => b.id === value);
-                          return building ? (
-                            <Chip key={value} label={building.name} size="small" />
-                          ) : null;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em style={{ color: '#999', fontStyle: 'italic' }}>Select buildings...</em>;
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const building = buildings.find(b => b.id === value);
+                            return building ? (
+                              <Chip key={value} label={building.name} size="small" />
+                            ) : null;
+                          })}
+                        </Box>
+                      );
+                    }}
                     disabled={loadingBuildings}
+                    displayEmpty
+                    notched
                   >
+                    {mapping.buildingIds.length === 0 && (
+                      <MenuItem disabled value="">
+                        <em>Select buildings...</em>
+                      </MenuItem>
+                    )}
                     {loadingBuildings ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -583,24 +602,36 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel>Wings</InputLabel>
+                  <InputLabel shrink>Wings</InputLabel>
                   <Select
                     multiple
                     value={mapping.wingIds}
                     onChange={(e) => handleLocationChange(mappingIdx, 'wingIds', e)}
                     input={<OutlinedInput label="Wings" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const wing = wings.find(w => w.id === value);
-                          return wing ? (
-                            <Chip key={value} label={wing.name} size="small" />
-                          ) : null;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em style={{ color: '#999', fontStyle: 'italic' }}>Select wings...</em>;
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const wing = wings.find(w => w.id === value);
+                            return wing ? (
+                              <Chip key={value} label={wing.name} size="small" />
+                            ) : null;
+                          })}
+                        </Box>
+                      );
+                    }}
                     disabled={loadingWings}
+                    displayEmpty
+                    notched
                   >
+                    {mapping.wingIds.length === 0 && (
+                      <MenuItem disabled value="">
+                        <em>Select wings...</em>
+                      </MenuItem>
+                    )}
                     {loadingWings ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -622,24 +653,36 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel>Floors</InputLabel>
+                  <InputLabel shrink>Floors</InputLabel>
                   <Select
                     multiple
                     value={mapping.floorIds}
                     onChange={(e) => handleLocationChange(mappingIdx, 'floorIds', e)}
                     input={<OutlinedInput label="Floors" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const floor = floors.find(f => f.id === value);
-                          return floor ? (
-                            <Chip key={value} label={floor.name} size="small" />
-                          ) : null;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em style={{ color: '#999', fontStyle: 'italic' }}>Select floors...</em>;
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const floor = floors.find(f => f.id === value);
+                            return floor ? (
+                              <Chip key={value} label={floor.name} size="small" />
+                            ) : null;
+                          })}
+                        </Box>
+                      );
+                    }}
                     disabled={loadingFloors}
+                    displayEmpty
+                    notched
                   >
+                    {mapping.floorIds.length === 0 && (
+                      <MenuItem disabled value="">
+                        <em>Select floors...</em>
+                      </MenuItem>
+                    )}
                     {loadingFloors ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -661,24 +704,36 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel>Areas</InputLabel>
+                  <InputLabel shrink>Areas</InputLabel>
                   <Select
                     multiple
                     value={mapping.areaIds}
                     onChange={(e) => handleLocationChange(mappingIdx, 'areaIds', e)}
                     input={<OutlinedInput label="Areas" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const area = areas.find(a => a.id === value);
-                          return area ? (
-                            <Chip key={value} label={area.name} size="small" />
-                          ) : null;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em style={{ color: '#999', fontStyle: 'italic' }}>Select areas...</em>;
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const area = areas.find(a => a.id === value);
+                            return area ? (
+                              <Chip key={value} label={area.name} size="small" />
+                            ) : null;
+                          })}
+                        </Box>
+                      );
+                    }}
                     disabled={loadingAreas}
+                    displayEmpty
+                    notched
                   >
+                    {mapping.areaIds.length === 0 && (
+                      <MenuItem disabled value="">
+                        <em>Select areas...</em>
+                      </MenuItem>
+                    )}
                     {loadingAreas ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
@@ -700,24 +755,36 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel>Rooms</InputLabel>
+                  <InputLabel shrink>Rooms</InputLabel>
                   <Select
                     multiple
                     value={mapping.roomIds}
                     onChange={(e) => handleLocationChange(mappingIdx, 'roomIds', e)}
                     input={<OutlinedInput label="Rooms" />}
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const room = rooms.find(r => r.id === value);
-                          return room ? (
-                            <Chip key={value} label={room.name} size="small" />
-                          ) : null;
-                        })}
-                      </Box>
-                    )}
+                    renderValue={(selected) => {
+                      if (selected.length === 0) {
+                        return <em style={{ color: '#999', fontStyle: 'italic' }}>Select rooms...</em>;
+                      }
+                      return (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const room = rooms.find(r => r.id === value);
+                            return room ? (
+                              <Chip key={value} label={room.name} size="small" />
+                            ) : null;
+                          })}
+                        </Box>
+                      );
+                    }}
                     disabled={loadingRooms}
+                    displayEmpty
+                    notched
                   >
+                    {mapping.roomIds.length === 0 && (
+                      <MenuItem disabled value="">
+                        <em>Select rooms...</em>
+                      </MenuItem>
+                    )}
                     {loadingRooms ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />

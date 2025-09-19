@@ -8,6 +8,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { SurveyResponseFilterModal } from '@/components/SurveyResponseFilterModal';
 import { SurveyResponseAnalytics } from '@/components/SurveyResponseAnalytics';
 import { SurveyAnalyticsContent } from '@/components/SurveyAnalyticsContent';
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
 import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
 import { toast } from 'sonner';
@@ -171,6 +172,21 @@ export const SurveyResponsePage = () => {
     startDate: null,
     endDate: null
   });
+
+  // Column visibility state - matching SurveyMappingDashboard
+  const [columns, setColumns] = useState([
+    { key: 'actions', label: 'Actions', visible: true },
+    { key: 'survey_name', label: 'Survey Name', visible: true },
+    { key: 'site_name', label: 'Site Name', visible: true },
+    { key: 'building_name', label: 'Building Name', visible: true },
+    { key: 'wing_name', label: 'Wing Name', visible: true },
+    { key: 'floor_name', label: 'Floor Name', visible: true },
+    { key: 'area_name', label: 'Area Name', visible: true },
+    { key: 'room_name', label: 'Room Name', visible: true },
+    { key: 'total_responses', label: 'Total Responses', visible: true },
+    { key: 'total_complaints', label: 'Total Complaints', visible: true },
+    { key: 'latest_response_date', label: 'Latest Response', visible: true }
+  ]);
 
   // Handle analytics data updates from the analytics component
   const handleAnalyticsChange = (data: AnalyticsData) => {
@@ -575,20 +591,54 @@ export const SurveyResponsePage = () => {
     fetchSurveyResponses(resetFilters);
   };
 
-  const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false },
-    // { key: 'survey_id', label: 'Survey ID', sortable: true, draggable: true },
-    { key: 'survey_name', label: 'Survey Name', sortable: true, draggable: true },
-    { key: 'site_name', label: 'Site Name', sortable: true, draggable: true },
-    { key: 'building_name', label: 'Building Name', sortable: true, draggable: true },
-    { key: 'wing_name', label: 'Wing Name', sortable: true, draggable: true },
-    { key: 'floor_name', label: 'Floor Name', sortable: true, draggable: true },
-    { key: 'area_name', label: 'Area Name', sortable: true, draggable: true },
-    { key: 'room_name', label: 'Room Name', sortable: true, draggable: true },
-    { key: 'total_responses', label: 'Total Responses', sortable: true, draggable: true },
-    { key: 'total_complaints', label: 'Total Complaints', sortable: true, draggable: true },
-    { key: 'latest_response_date', label: 'Latest Response', sortable: true, draggable: true }
-  ];
+  // Column visibility handlers - matching SurveyMappingDashboard implementation
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    console.log('Column toggle called:', { columnKey, visible });
+    setColumns(prev => {
+      const updated = prev.map(col => 
+        col.key === columnKey ? { ...col, visible } : col
+      );
+      console.log('Updated columns:', updated);
+      return updated;
+    });
+  };
+
+  const isColumnVisible = React.useCallback((columnKey: string) => {
+    return columns.find(col => col.key === columnKey)?.visible ?? true;
+  }, [columns]);
+
+  const handleResetColumns = () => {
+    setColumns(prev => 
+      prev.map(col => ({ ...col, visible: true }))
+    );
+    toast.success('All columns have been restored to default visibility');
+  };
+
+  // Enhanced table columns for EnhancedTable component
+  const enhancedTableColumns = React.useMemo(() => {
+    const allColumns = [
+      { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, visible: isColumnVisible('actions'), hideable: false },
+      { key: 'survey_name', label: 'Survey Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('survey_name'), hideable: true },
+      { key: 'site_name', label: 'Site Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('site_name'), hideable: true },
+      { key: 'building_name', label: 'Building Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
+      { key: 'wing_name', label: 'Wing Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
+      { key: 'floor_name', label: 'Floor Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
+      { key: 'area_name', label: 'Area Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('area_name'), hideable: true },
+      { key: 'room_name', label: 'Room Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('room_name'), hideable: true },
+      { key: 'total_responses', label: 'Total Responses', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_responses'), hideable: true },
+      { key: 'total_complaints', label: 'Total Complaints', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_complaints'), hideable: true },
+      { key: 'latest_response_date', label: 'Latest Response', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('latest_response_date'), hideable: true }
+    ];
+    
+    // Filter to only show visible columns
+    return allColumns.filter(col => col.visible);
+  }, [isColumnVisible]);
+
+  // Transform columns for the dropdown (only hideable columns with simplified structure)
+  const dropdownColumns = React.useMemo(() => 
+    columns.filter(col => col.key !== 'actions'), // Exclude actions column from dropdown
+    [columns]
+  );
 
   const renderCell = (item: TransformedSurveyResponse, columnKey: string) => {
     switch (columnKey) {
@@ -844,7 +894,7 @@ export const SurveyResponsePage = () => {
               <>
                 <EnhancedTable
                   data={filteredResponses}
-                  columns={columns}
+                  columns={enhancedTableColumns}
                   renderCell={renderCell}
                   storageKey="survey-response-table"
                   enableExport={true}
@@ -854,9 +904,18 @@ export const SurveyResponsePage = () => {
                   onSearchChange={setSearchTerm}
                   searchPlaceholder="Search responses..."
                   pagination={false}
+                  hideColumnsButton={true}
                   leftActions={
                     <div className="flex flex-wrap gap-2">
                       {/* Filter button is now positioned next to search input in EnhancedTable */}
+                    </div>
+                  }
+                  rightActions={
+                    <div className="flex items-center gap-2">
+                      <ColumnVisibilityDropdown
+                        columns={dropdownColumns}
+                        onColumnToggle={handleColumnToggle}
+                      />
                     </div>
                   }
                   onFilterClick={handleFilterClick}

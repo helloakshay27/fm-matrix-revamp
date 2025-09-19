@@ -59,9 +59,9 @@ export const EditServicePRPage = () => {
   const [overallWbs, setOverallWbs] = useState("");
   const [wbsCodes, setWbsCodes] = useState([]);
   const [showRadio, setShowRadio] = useState(false);
-  const [existingAttachments, setExistingAttachments] = useState([]); // State for pre-existing attachments
-  const [attachedFiles, setAttachedFiles] = useState([]); // State for new attachments
-  const [attachmentsToDelete, setAttachmentsToDelete] = useState([]); // State for attachments to delete
+  const [existingAttachments, setExistingAttachments] = useState([]);
+  const [attachedFiles, setAttachedFiles] = useState([]);
+  const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
@@ -106,6 +106,7 @@ export const EditServicePRPage = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      _destroy: 0,
     },
   ]);
 
@@ -214,8 +215,9 @@ export const EditServicePRPage = () => {
             tcsAmt: item.tcs_amount,
             taxAmount: item.tax_amount,
             amount: item.total_value,
-            totalAmount: Number(item.total_value) + Number(item.tax_amount),
+            totalAmount: (Number(item.total_value) + Number(item.tax_amount)).toFixed(2),
             wbsCode: item.wbs_code,
+            _destroy: 0,
           }))
         );
 
@@ -338,13 +340,26 @@ export const EditServicePRPage = () => {
       amount: "",
       totalAmount: "",
       wbsCode: "",
+      _destroy: 0,
     };
     setDetailsForms((prev) => [...prev, newForm]);
   };
 
   const removeDetailsForm = (id) => {
     if (detailsForms.length > 1) {
-      setDetailsForms((prev) => prev.filter((form) => form.id !== id));
+      setDetailsForms((prev) =>
+        prev.map((form) =>
+          form.id === id
+            ? {
+              ...form,
+              _destroy: 1,
+              amount: "0.00",
+              taxAmount: "0.00",
+              totalAmount: "0.00",
+            }
+            : form
+        )
+      );
     }
   };
 
@@ -364,12 +379,9 @@ export const EditServicePRPage = () => {
     }
   }, [formData.plantDetail, dispatch, baseUrl, token]);
 
-  const handleFileUpload = (event) => {
-    const files = event.target.files;
-    if (files) {
-      const newFiles = Array.from(files);
-      setAttachedFiles((prev) => [...prev, ...newFiles]);
-    }
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    setAttachedFiles((prev) => [...prev, ...selectedFiles]);
   };
 
   const removeFile = (index, type) => {
@@ -382,13 +394,9 @@ export const EditServicePRPage = () => {
   };
 
   const grandTotal = detailsForms
+    .filter((item) => item._destroy !== 1)
     .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
     .toFixed(2);
-
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files);
-    setAttachedFiles((prev) => [...prev, ...selectedFiles]);
-  };
 
   const validateForm = () => {
     if (!formData.contractor) {
@@ -409,6 +417,7 @@ export const EditServicePRPage = () => {
     }
 
     for (const item of detailsForms) {
+      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
       if (!item.service) {
         toast.error("Service is required for all items");
         return false;
@@ -477,6 +486,7 @@ export const EditServicePRPage = () => {
           total_value: item.amount,
           total_amount: item.totalAmount,
           ...(wbsSelection === "individual" && { wbs_code: item.wbsCode }),
+          _destroy: item._destroy,
         })),
       },
       attachments: attachedFiles,
@@ -563,7 +573,7 @@ export const EditServicePRPage = () => {
                 label="Select WO Date*"
                 value={formData.woDate}
                 onChange={(e) =>
-                  handleInputChange("woDate", new Date(e.target.value))
+                  handleInputChange("woDate", e.target.value)
                 }
                 fullWidth
                 variant="outlined"
@@ -760,314 +770,316 @@ export const EditServicePRPage = () => {
           </div>
 
           <div className="p-6">
-            {detailsForms.map((detailsData, index) => (
-              <div
-                key={detailsData.id}
-                className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-md font-medium text-foreground">
-                    Item {index + 1}
-                  </h3>
-                  {detailsForms.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeDetailsForm(detailsData.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                  <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                    <InputLabel shrink>Select Service*</InputLabel>
-                    <MuiSelect
-                      label="Select Service*"
-                      value={detailsData.service}
-                      onChange={(e) =>
-                        handleDetailsChange(detailsData.id, "service", e.target.value)
-                      }
-                      displayEmpty
-                      sx={fieldStyles}
-                    >
-                      <MenuItem value="">
-                        <em>Select Service</em>
-                      </MenuItem>
-                      {services.map((service) => (
-                        <MenuItem key={service.id} value={service.id}>
-                          {service.service_name}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-
-                  <TextField
-                    label="Product Description*"
-                    value={detailsData.productDescription}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "productDescription",
-                        e.target.value
-                      )
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="Expected Date*"
-                    value={detailsData.expectedDate}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "expectedDate",
-                        new Date(e.target.value)
-                      )
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="date"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="UOM"
-                    value={detailsData.uom}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "uom", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="Quantity/Area*"
-                    value={detailsData.quantityArea}
-                    onChange={(e) =>
-                      handleDetailsChange(
-                        detailsData.id,
-                        "quantityArea",
-                        e.target.value
-                      )
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="Rate*"
-                    value={detailsData.rate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "rate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="CGST Rate"
-                    value={detailsData.cgstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "cgstRate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="CGST Amt"
-                    value={detailsData.cgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="SGST Rate"
-                    value={detailsData.sgstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "sgstRate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="SGST Amt"
-                    value={detailsData.sgstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="IGST Rate"
-                    value={detailsData.igstRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "igstRate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="IGST Amt"
-                    value={detailsData.igstAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="TCS Rate"
-                    value={detailsData.tcsRate}
-                    onChange={(e) =>
-                      handleDetailsChange(detailsData.id, "tcsRate", e.target.value)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    type="number"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
-
-                  <TextField
-                    label="TCS Amt"
-                    value={detailsData.tcsAmt}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="Tax Amount"
-                    value={detailsData.taxAmount}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 }
-                    }}
-                  />
-
-                  <TextField
-                    label="Amount"
-                    value={detailsData.amount}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  <TextField
-                    label="Total Amount"
-                    value={detailsData.totalAmount}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ readOnly: true }}
-                    sx={{
-                      mt: 1,
-                      "& .MuiInputBase-input": {
-                        padding: { xs: "8px", sm: "10px", md: "12px" },
-                      },
-                      height: { xs: 28, sm: 36, md: 45 },
-                    }}
-                  />
-
-                  {wbsSelection === "individual" && (
+            {detailsForms
+              .filter((detailsData) => detailsData._destroy !== 1)
+              .map((detailsData, index) => (
+                <div
+                  key={detailsData.id}
+                  className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-md font-medium text-foreground">
+                      Item {index + 1}
+                    </h3>
+                    {detailsForms.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeDetailsForm(detailsData.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                      <InputLabel shrink>WBS Code*</InputLabel>
+                      <InputLabel shrink>Select Service*</InputLabel>
                       <MuiSelect
-                        label="WBS Code*"
-                        value={detailsData.wbsCode}
+                        label="Select Service*"
+                        value={detailsData.service}
                         onChange={(e) =>
-                          handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                          handleDetailsChange(detailsData.id, "service", e.target.value)
                         }
                         displayEmpty
                         sx={fieldStyles}
                       >
                         <MenuItem value="">
-                          <em>Select WBS Code</em>
+                          <em>Select Service</em>
                         </MenuItem>
-                        {wbsCodes.map((wbs) => (
-                          <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
-                            {wbs.wbs_code}
+                        {services.map((service) => (
+                          <MenuItem key={service.id} value={service.id}>
+                            {service.service_name}
                           </MenuItem>
                         ))}
                       </MuiSelect>
                     </FormControl>
-                  )}
+
+                    <TextField
+                      label="Product Description*"
+                      value={detailsData.productDescription}
+                      onChange={(e) =>
+                        handleDetailsChange(
+                          detailsData.id,
+                          "productDescription",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="Expected Date*"
+                      value={detailsData.expectedDate}
+                      onChange={(e) =>
+                        handleDetailsChange(
+                          detailsData.id,
+                          "expectedDate",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="date"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="UOM"
+                      value={detailsData.uom}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "uom", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="Quantity/Area*"
+                      value={detailsData.quantityArea}
+                      onChange={(e) =>
+                        handleDetailsChange(
+                          detailsData.id,
+                          "quantityArea",
+                          e.target.value
+                        )
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="Rate*"
+                      value={detailsData.rate}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "rate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="CGST Rate"
+                      value={detailsData.cgstRate}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "cgstRate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="CGST Amt"
+                      value={detailsData.cgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    <TextField
+                      label="SGST Rate"
+                      value={detailsData.sgstRate}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "sgstRate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="SGST Amt"
+                      value={detailsData.sgstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    <TextField
+                      label="IGST Rate"
+                      value={detailsData.igstRate}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "igstRate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="IGST Amt"
+                      value={detailsData.igstAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    <TextField
+                      label="TCS Rate"
+                      value={detailsData.tcsRate}
+                      onChange={(e) =>
+                        handleDetailsChange(detailsData.id, "tcsRate", e.target.value)
+                      }
+                      fullWidth
+                      variant="outlined"
+                      type="number"
+                      InputLabelProps={{ shrink: true }}
+                      sx={fieldStyles}
+                    />
+
+                    <TextField
+                      label="TCS Amt"
+                      value={detailsData.tcsAmt}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    <TextField
+                      label="Tax Amount"
+                      value={detailsData.taxAmount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 }
+                      }}
+                    />
+
+                    <TextField
+                      label="Amount"
+                      value={detailsData.amount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    <TextField
+                      label="Total Amount"
+                      value={detailsData.totalAmount}
+                      fullWidth
+                      variant="outlined"
+                      InputLabelProps={{ shrink: true }}
+                      InputProps={{ readOnly: true }}
+                      sx={{
+                        mt: 1,
+                        "& .MuiInputBase-input": {
+                          padding: { xs: "8px", sm: "10px", md: "12px" },
+                        },
+                        height: { xs: 28, sm: 36, md: 45 },
+                      }}
+                    />
+
+                    {wbsSelection === "individual" && (
+                      <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                        <InputLabel shrink>WBS Code*</InputLabel>
+                        <MuiSelect
+                          label="WBS Code*"
+                          value={detailsData.wbsCode}
+                          onChange={(e) =>
+                            handleDetailsChange(detailsData.id, "wbsCode", e.target.value)
+                          }
+                          displayEmpty
+                          sx={fieldStyles}
+                        >
+                          <MenuItem value="">
+                            <em>Select WBS Code</em>
+                          </MenuItem>
+                          {wbsCodes.map((wbs) => (
+                            <MenuItem key={wbs.wbs_code} value={wbs.wbs_code}>
+                              {wbs.wbs_code}
+                            </MenuItem>
+                          ))}
+                        </MuiSelect>
+                      </FormControl>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <Button
@@ -1081,7 +1093,7 @@ export const EditServicePRPage = () => {
         </div>
 
         <div className="flex items-center justify-end my-4">
-          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white cursor-not-allowed" type="button">
             Total Amount: {grandTotal}
           </Button>
         </div>
@@ -1141,8 +1153,8 @@ export const EditServicePRPage = () => {
                               setSelectedDoc({
                                 id: attachment.id,
                                 url: attachment.url,
-                                document_name: attachment.document_name,
-                                document_file_name: attachment.document_file_name,
+                                document_name: attachment.name,
+                                document_file_name: attachment.name,
                               });
                               setIsModalOpen(true);
                             }}
@@ -1152,14 +1164,14 @@ export const EditServicePRPage = () => {
                           </button>
                           <img
                             src={attachment.url}
-                            alt={attachment.document_name}
+                            alt={attachment.name}
                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                             onClick={() => {
                               setSelectedDoc({
                                 id: attachment.id,
                                 url: attachment.url,
-                                document_name: attachment.document_name,
-                                document_file_name: attachment.document_file_name,
+                                document_name: attachment.name,
+                                document_file_name: attachment.name,
                               });
                               setIsModalOpen(true);
                             }}
@@ -1183,7 +1195,7 @@ export const EditServicePRPage = () => {
                         </div>
                       )}
                       <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {attachment.document_name} (Existing)
+                        {attachment.name}
                       </span>
                       <button
                         className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
@@ -1258,7 +1270,7 @@ export const EditServicePRPage = () => {
                         </div>
                       )}
                       <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                        {file.name} (New)
+                        {file.name}
                       </span>
                       <button
                         className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"

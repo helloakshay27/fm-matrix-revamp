@@ -7,6 +7,7 @@ import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { Switch } from "@/components/ui/switch";
+import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -98,6 +99,25 @@ export const SurveyMappingDashboard = () => {
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Column visibility state - using the same structure as parking page
+  const [columns, setColumns] = useState([
+    { key: 'actions', label: 'Actions', visible: true },
+    { key: 'survey_title', label: 'Survey Title', visible: true },
+    { key: 'building_name', label: 'Building', visible: true },
+    { key: 'wing_name', label: 'Wing', visible: true },
+    { key: 'floor_name', label: 'Floor', visible: true },
+    { key: 'room_name', label: 'Room', visible: true },
+    // { key: 'check_type', label: 'Check Type', visible: true },
+    { key: 'questions_count', label: 'Questions', visible: true },
+    { key: 'associations_count', label: 'Associations', visible: true },
+    { key: 'ticket_category', label: 'Ticket Category', visible: true },
+    { key: 'assigned_to', label: 'Assigned To', visible: true },
+    { key: 'created_by', label: 'Created By', visible: true },
+    { key: 'status', label: 'Status', visible: true },
+    { key: 'created_at', label: 'Created On', visible: true },
+    { key: 'qr_code', label: 'QR Code', visible: true }
+  ]);
+
   // Fetch survey mappings from API
   useEffect(() => {
     fetchSurveyMappings();
@@ -132,6 +152,32 @@ export const SurveyMappingDashboard = () => {
     toast({
       title: "Status Updated",
       description: `Survey mapping status ${item.active ? 'deactivated' : 'activated'}`
+    });
+  };
+
+  // Column visibility handlers - matching parking page implementation
+  const handleColumnToggle = (columnKey: string, visible: boolean) => {
+    console.log('Column toggle called:', { columnKey, visible });
+    setColumns(prev => {
+      const updated = prev.map(col => 
+        col.key === columnKey ? { ...col, visible } : col
+      );
+      console.log('Updated columns:', updated);
+      return updated;
+    });
+  };
+
+  const isColumnVisible = React.useCallback((columnKey: string) => {
+    return columns.find(col => col.key === columnKey)?.visible ?? true;
+  }, [columns]);
+
+  const handleResetColumns = () => {
+    setColumns(prev => 
+      prev.map(col => ({ ...col, visible: true }))
+    );
+    toast({
+      title: "Columns Reset",
+      description: "All columns have been restored to default visibility"
     });
   };
 
@@ -197,24 +243,35 @@ export const SurveyMappingDashboard = () => {
     }
   };
 
-  const columns = [
-    { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true },
-    { key: 'survey_title', label: 'Survey Title', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'site_name', label: 'Site', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'associations_count', label: 'Associations', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true },
-    // { key: 'status', label: 'Status', sortable: false, draggable: true, defaultVisible: true },
-    { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true },
-    { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true }
-  ];
+  // Enhanced table columns for EnhancedTable component
+  const enhancedTableColumns = React.useMemo(() => {
+    const allColumns = [
+      { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, visible: isColumnVisible('actions'), hideable: false },
+      { key: 'survey_title', label: 'Survey Title', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('survey_title'), hideable: true },
+      { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
+      { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
+      { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
+      { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('room_name'), hideable: true },
+      // { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('check_type'), hideable: true },
+      { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('questions_count'), hideable: true },
+      { key: 'associations_count', label: 'Associations', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('associations_count'), hideable: true },
+      { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('ticket_category'), hideable: true },
+      { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('assigned_to'), hideable: true },
+      { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_by'), hideable: true },
+      { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
+      { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_at'), hideable: true },
+      { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('qr_code'), hideable: true }
+    ];
+    
+    // Filter to only show visible columns
+    return allColumns.filter(col => col.visible);
+  }, [isColumnVisible]);
+
+  // Transform columns for the dropdown (only hideable columns with simplified structure)
+  const dropdownColumns = React.useMemo(() => 
+    columns.filter(col => col.key !== 'actions'), // Exclude actions column from dropdown
+    [columns]
+  );
 
   const renderCell = (item: SurveyMapping, columnKey: string) => {
     switch (columnKey) {
@@ -275,10 +332,18 @@ export const SurveyMappingDashboard = () => {
         return <span>{item.created_by}</span>;
       case 'status':
         return (
-          <Switch
-            checked={item.active}
-            onCheckedChange={() => handleStatusToggle(item)}
-          />
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => handleStatusToggle(item)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                item.active ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                item.active ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
         );
       case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
@@ -302,10 +367,11 @@ export const SurveyMappingDashboard = () => {
             )}
           </div>
         );
-      default:
+      default: {
         // Fallback for any other columns
         const value = item[columnKey as keyof SurveyMapping];
         return <span>{value !== null && value !== undefined ? String(value) : '-'}</span>;
+      }
     }
   };
 
@@ -325,7 +391,9 @@ export const SurveyMappingDashboard = () => {
 
   // Debug logs
   console.log('Filtered mappings:', filteredMappings);
-  console.log('Columns:', columns);
+  console.log('Columns state:', columns);
+  console.log('Enhanced table columns:', enhancedTableColumns);
+  console.log('Dropdown columns:', dropdownColumns);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -345,7 +413,7 @@ export const SurveyMappingDashboard = () => {
         <div>
           <EnhancedTable
             data={filteredMappings}
-            columns={columns}
+            columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
             storageKey="survey-mapping-table"
@@ -357,6 +425,7 @@ export const SurveyMappingDashboard = () => {
             searchPlaceholder="Search survey mappings..."
             pagination={true}
             pageSize={10}
+            hideColumnsButton={true}
             leftActions={
               <div className="flex flex-wrap items-center gap-2 md:gap-4">
                 <Button 
@@ -364,9 +433,16 @@ export const SurveyMappingDashboard = () => {
                   className="flex items-center gap-2 bg-[#F2EEE9] text-[#BF213E] border-0 hover:bg-[#F2EEE9]/80"
                 >
                   <Plus className="w-4 h-4" />
-                  Add Survey Mapping
+                  Add
                 </Button>
-            
+              </div>
+            }
+            rightActions={
+              <div className="flex items-center gap-2">
+                <ColumnVisibilityDropdown
+                  columns={dropdownColumns}
+                  onColumnToggle={handleColumnToggle}
+                />
               </div>
             }
           />

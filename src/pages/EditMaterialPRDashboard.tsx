@@ -99,8 +99,8 @@ export const EditMaterialPRDashboard = () => {
   const [files, setFiles] = useState([]);
   const [existingAttachments, setExistingAttachments] = useState([]);
   const [attachmentsToDelete, setAttachmentsToDelete] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState(null);
 
   useEffect(() => {
     if (Array.isArray(data) && data.length > 0) {
@@ -149,7 +149,7 @@ export const EditMaterialPRDashboard = () => {
 
         setItems(
           response.pms_po_inventories.map((item, index) => ({
-            id: index + 1, // Unique local ID
+            id: index + 1,
             item_id: item.id,
             itemDetails: item.inventory?.id,
             sacHsnCodeId: item.hsn_id,
@@ -160,6 +160,7 @@ export const EditMaterialPRDashboard = () => {
             expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
             amount: item.total_value,
             wbsCode: item.wbs_code,
+            _destroy: 0,
           }))
         );
 
@@ -339,13 +340,14 @@ export const EditMaterialPRDashboard = () => {
   const removeItem = (id) => {
     setItems(prevItems =>
       prevItems.map(item =>
-        item.id === id ? { ...item, _destroy: 1 } : item
+        item.id === id ? { ...item, _destroy: 1, amount: "0.00" } : item
       )
     );
   };
 
   const calculateTotalAmount = () => {
     return items
+      .filter(item => item._destroy !== 1)
       .reduce((total, item) => total + (parseFloat(item.amount) || 0), 0)
       .toFixed(2);
   };
@@ -377,6 +379,7 @@ export const EditMaterialPRDashboard = () => {
     }
 
     for (const item of items) {
+      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
       if (!item.itemDetails) {
         toast.error("Item Details is required for all items");
         return false;
@@ -771,7 +774,7 @@ export const EditMaterialPRDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-6">
               {items
-                .filter(item => !item._destroy) // Only render items that are not marked for destruction
+                .filter(item => !item._destroy)
                 .map((item) => (
                   <div
                     key={item.id}

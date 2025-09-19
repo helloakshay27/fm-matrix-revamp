@@ -252,14 +252,14 @@ export const SurveyMappingDetailsPage = () => {
                 </>
               )}
             </Badge>
-            {/* <Button
+            <Button
               onClick={handleEdit}
               variant="outline"
               className="border-[#C72030] text-[#C72030]"
             >
               <Edit className="w-4 h-4 mr-2" />
               Edit
-            </Button> */}
+            </Button>
             {/* <Button
               onClick={handleDelete}
               variant="destructive"
@@ -462,8 +462,10 @@ export const SurveyMappingDetailsPage = () => {
                         <TableHead>Image Required</TableHead>
                         <TableHead>Mandatory</TableHead>
                         <TableHead>Associations</TableHead>
-                        <TableHead>Generic Tags</TableHead>
+                       
+                        {/* <TableHead>Generic Tags</TableHead> */}
                         <TableHead>Options</TableHead>
+                         <TableHead>Created By</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
@@ -509,7 +511,8 @@ export const SurveyMappingDetailsPage = () => {
                               )}
                             </TableCell>
                             <TableCell>{question.no_of_associations}</TableCell>
-                            <TableCell>
+                            
+                            {/* <TableCell>
                               {question.generic_tags && question.generic_tags.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
                                   {question.generic_tags.map((tag, tagIndex) => (
@@ -525,7 +528,7 @@ export const SurveyMappingDetailsPage = () => {
                               ) : (
                                 "—"
                               )}
-                            </TableCell>
+                            </TableCell> */}
                             <TableCell>
                               {question.snag_quest_options && question.snag_quest_options.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
@@ -548,12 +551,15 @@ export const SurveyMappingDetailsPage = () => {
                                 "—"
                               )}
                             </TableCell>
+                            <TableCell>
+                              {mapping.created_by || "—"}
+                            </TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={9}
+                            colSpan={10}
                             className="text-center text-gray-600"
                           >
                             No questions available.
@@ -579,80 +585,92 @@ export const SurveyMappingDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Site Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Site Name:</strong> {mapping.site_name}
-                        </div>
-                        <div>
-                          <strong>Site ID:</strong> #{mapping.site_id}
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {/* Site Information */}
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-3">Site Information</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <strong>Site Name:</strong> {mapping.site_name}
+                      </div>
+                      <div>
+                        <strong>Site ID:</strong> #{mapping.site_id}
                       </div>
                     </div>
-                    
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Building Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Building Name:</strong> {mapping.building_name}
-                        </div>
-                     
+                  </div>
+                  
+                  {/* Building Information */}
+                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                    <h4 className="font-semibold text-gray-900 mb-3">Building Information</h4>
+                    <div className="space-y-2">
+                      <div>
+                        <strong>Building Name:</strong> {mapping.building_name}
                       </div>
+                      {/* <div>
+                        <strong>Building ID:</strong> #{mapping.building_id}
+                      </div> */}
                     </div>
                   </div>
 
-                  <div className="space-y-4">
-                    {mapping.wing_name && (
-                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3">Wing Information</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <strong>Wing Name:</strong> {mapping.wing_name}
-                          </div>
-                        
+                  {/* Wing Information */}
+                  {mapping.wing_name && (
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Wing Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Wing Name:</strong> {mapping.wing_name}
                         </div>
+                        {/* <div>
+                          <strong>Wing ID:</strong> #{mapping.wing_id}
+                        </div> */}
                       </div>
-                    )}
-                    
-                    {mapping.floor_name && (
-                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3">Floor Information</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <strong>Floor Name:</strong> {mapping.floor_name}
-                          </div>
-                         
+                    </div>
+                  )}
+                  
+                  {/* Floor Information */}
+                  {mapping.floor_name && (
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Floor Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Floor Name:</strong> {mapping.floor_name}
                         </div>
+                        {/* <div>
+                          <strong>Floor ID:</strong> #{mapping.floor_id}
+                        </div> */}
                       </div>
-                    )}
-                    
-                    {mapping.area_name && (
-                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3">Area Information</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <strong>Area Name:</strong> {mapping.area_name}
-                          </div>
-                        
+                    </div>
+                  )}
+                  
+                  {/* Area Information */}
+                  {mapping.area_name && (
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Area Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Area Name:</strong> {mapping.area_name}
                         </div>
+                        {/* <div>
+                          <strong>Area ID:</strong> #{mapping.area_id}
+                        </div> */}
                       </div>
-                    )}
-                    
-                    {mapping.room_name && (
-                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3">Room Information</h4>
-                        <div className="space-y-2">
-                          <div>
-                            <strong>Room Name:</strong> {mapping.room_name}
-                          </div>
-                     
+                    </div>
+                  )}
+                  
+                  {/* Room Information */}
+                  {mapping.room_name && (
+                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
+                      <h4 className="font-semibold text-gray-900 mb-3">Room Information</h4>
+                      <div className="space-y-2">
+                        <div>
+                          <strong>Room Name:</strong> {mapping.room_name}
                         </div>
+                        {/* <div>
+                          <strong>Room ID:</strong> #{mapping.room_id}
+                        </div> */}
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Location Summary */}

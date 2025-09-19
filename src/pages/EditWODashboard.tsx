@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Paperclip, Settings, Trash2, Upload, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Settings, Trash2, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     TextField,
@@ -49,7 +49,7 @@ export const EditWODashboard: React.FC = () => {
     const [formData, setFormData] = useState({
         contractor: "",
         plantDetail: "",
-        woDate: new Date(),
+        woDate: "",
         billingAddress: "",
         retention: "",
         tds: "",
@@ -85,6 +85,7 @@ export const EditWODashboard: React.FC = () => {
             taxAmount: "",
             amount: "",
             totalAmount: "",
+            _destroy: 0,
         },
     ]);
 
@@ -145,7 +146,7 @@ export const EditWODashboard: React.FC = () => {
         fetchPlantDetails();
         fetchAddresses();
         fetchServices();
-    }, []);
+    }, [dispatch, baseUrl, token]);
 
     useEffect(() => {
         const cloneData = async () => {
@@ -154,48 +155,50 @@ export const EditWODashboard: React.FC = () => {
                     getWorkOrderById({ baseUrl, token, id })
                 ).unwrap();
 
-                const data = response.page
+                const data = response.page;
 
                 setFormData({
-                    contractor: data.pms_supplier_id,
-                    plantDetail: data.work_order?.plant_detail_id,
-                    woDate: data.work_order.date ? data.work_order.date.split("T")[0] : "",
-                    billingAddress: data.work_order?.billing_address_id,
-                    retention: data.work_order?.payment_terms?.retention,
-                    tds: data.work_order?.payment_terms?.tds,
-                    qc: data.work_order?.payment_terms?.quality_holding,
-                    paymentTenure: data.work_order?.payment_terms?.payment_tenure,
-                    advanceAmount: data.work_order.advance_amount,
-                    relatedTo: data.work_order?.related_to,
-                    kindAttention: data.work_order?.kind_attention,
-                    subject: data.work_order.subject,
-                    description: data.work_order.description,
-                    termsConditions: data.work_order.term_condition,
+                    contractor: data.pms_supplier_id || "",
+                    plantDetail: data.work_order?.plant_detail_id || "",
+                    woDate: data.work_order?.date ? data.work_order.date.split("T")[0] : "",
+                    billingAddress: data.work_order?.billing_address_id || "",
+                    retention: data.work_order?.payment_terms?.retention || "",
+                    tds: data.work_order?.payment_terms?.tds || "",
+                    qc: data.work_order?.payment_terms?.quality_holding || "",
+                    paymentTenure: data.work_order?.payment_terms?.payment_tenure || "",
+                    advanceAmount: data.work_order?.advance_amount || "",
+                    relatedTo: data.work_order?.related_to || "",
+                    kindAttention: data.work_order?.kind_attention || "",
+                    subject: data.work_order?.subject || "",
+                    description: data.work_order?.description || "",
+                    termsConditions: data.work_order?.term_condition || "",
                     attachments: []
                 });
 
                 setDetailsForms(
-                    data.inventories.map((item, index) => ({
+                    data.inventories?.map((item, index) => ({
                         id: index + 1,
                         item_id: item.id,
-                        service: item.pms_service_id,
-                        productDescription: item.product_description,
-                        quantityArea: item.quantity,
-                        uom: item.uom,
+                        service: item.pms_service_id || "",
+                        productDescription: item.product_description || "",
+                        quantityArea: item.quantity || "",
+                        uom: item.uom || "",
                         expectedDate: item.expected_date ? item.expected_date.split("T")[0] : "",
-                        rate: item.rate,
-                        cgstRate: item.cgst_rate,
-                        cgstAmt: item.cgst_amount,
-                        sgstRate: item.sgst_rate,
-                        sgstAmt: item.sgst_amount,
-                        igstRate: item.igst_rate,
-                        igstAmt: item.igst_amount,
-                        tcsRate: item.tcs_rate,
-                        tcsAmt: item.tcs_amount,
-                        taxAmount: item.tax_amount,
-                        amount: item.total_amount,
-                        totalAmount: Number(item.tax_amount) + Number(item.total_amount),
-                    })))
+                        rate: item.rate || "",
+                        cgstRate: item.cgst_rate || "",
+                        cgstAmt: item.cgst_amount || "",
+                        sgstRate: item.sgst_rate || "",
+                        sgstAmt: item.sgst_amount || "",
+                        igstRate: item.igst_rate || "",
+                        igstAmt: item.igst_amount || "",
+                        tcsRate: item.tcs_rate || "",
+                        tcsAmt: item.tcs_amount || "",
+                        taxAmount: item.tax_amount || "",
+                        amount: item.total_amount || "",
+                        totalAmount: (Number(item.tax_amount) + Number(item.total_amount)).toFixed(2),
+                        _destroy: 0,
+                    })) || []
+                );
 
                 setExistingAttachments(
                     data.attachments?.map((attachment) => ({
@@ -211,9 +214,9 @@ export const EditWODashboard: React.FC = () => {
         };
 
         cloneData();
-    }, []);
+    }, [id, dispatch, baseUrl, token]);
 
-    const handleInputChange = (field: string, value: string | Date) => {
+    const handleInputChange = (field: string, value: string) => {
         setFormData((prev) => ({
             ...prev,
             [field]: value,
@@ -240,19 +243,12 @@ export const EditWODashboard: React.FC = () => {
         const igstRate = parseFloat(item.igstRate) || 0;
         const tcsRate = parseFloat(item.tcsRate) || 0;
 
-        // Calculate base amount
         const amount = quantity * rate;
-
-        // Calculate tax amounts
         const cgstAmt = (amount * cgstRate) / 100;
         const sgstAmt = (amount * sgstRate) / 100;
         const igstAmt = (amount * igstRate) / 100;
         const tcsAmt = (amount * tcsRate) / 100;
-
-        // Calculate total tax amount
         const taxAmount = cgstAmt + sgstAmt + igstAmt + tcsAmt;
-
-        // Calculate total amount
         const totalAmount = amount + taxAmount;
 
         return {
@@ -270,7 +266,7 @@ export const EditWODashboard: React.FC = () => {
     const handleDetailsChange = (
         id: number,
         field: string,
-        value: string | Date
+        value: string
     ) => {
         setDetailsForms((prev) =>
             prev.map((form) =>
@@ -303,24 +299,26 @@ export const EditWODashboard: React.FC = () => {
             taxAmount: "",
             amount: "",
             totalAmount: "",
+            _destroy: 0,
         };
         setDetailsForms((prev) => [...prev, newForm]);
     };
 
     const removeDetailsForm = (id: number) => {
         if (detailsForms.length > 1) {
-            setDetailsForms((prev) => prev.filter((form) => form.id !== id));
-        }
-    };
-
-    const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const files = event.target.files;
-        if (files) {
-            const newFiles = Array.from(files);
-            setFormData((prev) => ({
-                ...prev,
-                attachments: [...prev.attachments, ...newFiles],
-            }));
+            setDetailsForms((prev) =>
+                prev.map((form) =>
+                    form.id === id
+                        ? {
+                            ...form,
+                            _destroy: 1,
+                            amount: "0.00",
+                            taxAmount: "0.00",
+                            totalAmount: "0.00",
+                        }
+                        : form
+                )
+            );
         }
     };
 
@@ -335,11 +333,65 @@ export const EditWODashboard: React.FC = () => {
         }
     };
 
+    const validateForm = () => {
+        if (!formData.contractor) {
+            toast.error("Contractor is required");
+            return false;
+        }
+        if (!formData.plantDetail) {
+            toast.error("Plant Detail is required");
+            return false;
+        }
+        if (!formData.woDate) {
+            toast.error("WO Date is required");
+            return false;
+        }
+        if (!formData.billingAddress) {
+            toast.error("Billing Address is required");
+            return false;
+        }
+        if (!formData.relatedTo) {
+            toast.error("Related To is required");
+            return false;
+        }
+
+        for (const item of detailsForms) {
+            if (item._destroy === 1) continue;
+            if (!item.service) {
+                toast.error("Service is required for all items");
+                return false;
+            }
+            if (!item.productDescription) {
+                toast.error("Product Description is required for all items");
+                return false;
+            }
+            if (!item.quantityArea || isNaN(parseFloat(item.quantityArea)) || parseFloat(item.quantityArea) <= 0) {
+                toast.error("Quantity/Area must be a valid positive number for all items");
+                return false;
+            }
+            if (!item.expectedDate) {
+                toast.error("Expected Date is required for all items");
+                return false;
+            }
+            if (!item.rate || isNaN(parseFloat(item.rate)) || parseFloat(item.rate) <= 0) {
+                toast.error("Rate must be a valid positive number for all items");
+                return false;
+            }
+        }
+
+        return true;
+    };
+
     const grandTotal = detailsForms
+        .filter((item) => item._destroy !== 1)
         .reduce((acc, item) => acc + (parseFloat(item.totalAmount) || 0), 0)
         .toFixed(2);
 
-    const handleSubmit = async () => {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validateForm()) {
+            return;
+        }
         const payload = {
             pms_work_order: {
                 letter_of_indent: false,
@@ -376,6 +428,7 @@ export const EditWODashboard: React.FC = () => {
                     tcs_amount: item.tcsAmt,
                     taxable_value: item.taxAmount,
                     total_amount: item.totalAmount,
+                    _destroy: item._destroy,
                 })),
             },
             attachments: formData.attachments,
@@ -384,7 +437,7 @@ export const EditWODashboard: React.FC = () => {
         try {
             setSubmitting(true);
             await dispatch(editServicePR({ data: payload, baseUrl, token, id: Number(id) })).unwrap();
-            toast.success("Work Order created successfully");
+            toast.success("Work Order updated successfully");
             navigate('/finance/wo');
         } catch (error) {
             console.log(error);
@@ -396,7 +449,6 @@ export const EditWODashboard: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* Form Content */}
             <div className="p-6 mx-auto">
                 <Button
                     variant="ghost"
@@ -406,7 +458,6 @@ export const EditWODashboard: React.FC = () => {
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Back
                 </Button>
-                {/* Work Order Details Section Card */}
                 <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
@@ -421,7 +472,6 @@ export const EditWODashboard: React.FC = () => {
 
                     <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {/* First Row */}
                             <FormControl
                                 fullWidth
                                 variant="outlined"
@@ -508,7 +558,7 @@ export const EditWODashboard: React.FC = () => {
                                 label="Select WO Date*"
                                 value={formData.woDate}
                                 onChange={(e) =>
-                                    handleInputChange("woDate", new Date(e.target.value))
+                                    handleInputChange("woDate", e.target.value)
                                 }
                                 fullWidth
                                 variant="outlined"
@@ -533,7 +583,6 @@ export const EditWODashboard: React.FC = () => {
                                 }}
                             />
 
-                            {/* Second Row */}
                             <FormControl
                                 fullWidth
                                 variant="outlined"
@@ -639,7 +688,6 @@ export const EditWODashboard: React.FC = () => {
                                 }}
                             />
 
-                            {/* Third Row */}
                             <TextField
                                 label="QC(%)"
                                 placeholder="QC"
@@ -738,7 +786,6 @@ export const EditWODashboard: React.FC = () => {
                                 }}
                             />
 
-                            {/* Full Width Field */}
                             <div className="md:col-span-3">
                                 <TextField
                                     label="Related To*"
@@ -779,7 +826,6 @@ export const EditWODashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Details Section Card */}
                 <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
@@ -791,569 +837,564 @@ export const EditWODashboard: React.FC = () => {
                     </div>
 
                     <div className="p-6">
-                        {detailsForms.map((detailsData, index) => (
-                            <div
-                                key={detailsData.id}
-                                className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
-                            >
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-md font-medium text-foreground">
-                                        Item {index + 1}
-                                    </h3>
-                                    {detailsForms.length > 1 && (
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => removeDetailsForm(detailsData.id)}
-                                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        {detailsForms
+                            .filter((detailsData) => detailsData._destroy !== 1)
+                            .map((detailsData, index) => (
+                                <div
+                                    key={detailsData.id}
+                                    className={`${index > 0 ? "mt-8 pt-8 border-t border-gray-200" : ""}`}
+                                >
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-md font-medium text-foreground">
+                                            Item {index + 1}
+                                        </h3>
+                                        {detailsForms.length > 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => removeDetailsForm(detailsData.id)}
+                                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                                        <FormControl
+                                            fullWidth
+                                            variant="outlined"
+                                            sx={{
+                                                mt: 1,
+                                            }}
                                         >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    )}
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                                    {/* First Row */}
-                                    <FormControl
-                                        fullWidth
-                                        variant="outlined"
-                                        sx={{
-                                            mt: 1,
-                                        }}
-                                    >
-                                        <InputLabel shrink>Select Service*</InputLabel>
-                                        <MuiSelect
-                                            label="Select Service*"
-                                            value={detailsData.service}
+                                            <InputLabel shrink>Select Service*</InputLabel>
+                                            <MuiSelect
+                                                label="Select Service*"
+                                                value={detailsData.service}
+                                                onChange={(e) =>
+                                                    handleDetailsChange(
+                                                        detailsData.id,
+                                                        "service",
+                                                        e.target.value
+                                                    )
+                                                }
+                                                displayEmpty
+                                                sx={{
+                                                    height: {
+                                                        xs: 28,
+                                                        sm: 36,
+                                                        md: 45,
+                                                    },
+                                                    "& .MuiInputBase-input, & .MuiSelect-select": {
+                                                        padding: {
+                                                            xs: "8px",
+                                                            sm: "10px",
+                                                            md: "12px",
+                                                        },
+                                                    },
+                                                }}
+                                            >
+                                                <MenuItem value="">
+                                                    <em>Select Service</em>
+                                                </MenuItem>
+                                                {services.map((service) => (
+                                                    <MenuItem key={service.id} value={service.id}>
+                                                        {service.service_name}
+                                                    </MenuItem>
+                                                ))}
+                                            </MuiSelect>
+                                        </FormControl>
+
+                                        <TextField
+                                            label="Product Description*"
+                                            value={detailsData.productDescription}
                                             onChange={(e) =>
                                                 handleDetailsChange(
                                                     detailsData.id,
-                                                    "service",
+                                                    "productDescription",
                                                     e.target.value
                                                 )
                                             }
-                                            displayEmpty
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
                                             sx={{
-                                                height: {
-                                                    xs: 28,
-                                                    sm: 36,
-                                                    md: 45,
-                                                },
-                                                "& .MuiInputBase-input, & .MuiSelect-select": {
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
                                                     padding: {
                                                         xs: "8px",
                                                         sm: "10px",
                                                         md: "12px",
                                                     },
                                                 },
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
                                             }}
-                                        >
-                                            <MenuItem value="">
-                                                <em>Select Service</em>
-                                            </MenuItem>
-                                            {services.map((service) => (
-                                                <MenuItem key={service.id} value={service.id}>
-                                                    {service.service_name}
-                                                </MenuItem>
-                                            ))}
-                                        </MuiSelect>
-                                    </FormControl>
+                                        />
 
-                                    <TextField
-                                        label="Product Description*"
-                                        value={detailsData.productDescription}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "productDescription",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="Expected Date*"
+                                            value={detailsData.expectedDate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "expectedDate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="date"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
-
-                                    <TextField
-                                        label="Expected Date*"
-                                        value={detailsData.expectedDate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "expectedDate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="date"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="UOM"
-                                        value={detailsData.uom}
-                                        onChange={(e) =>
-                                            handleDetailsChange(detailsData.id, "uom", e.target.value)
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="UOM"
+                                            value={detailsData.uom}
+                                            onChange={(e) =>
+                                                handleDetailsChange(detailsData.id, "uom", e.target.value)
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
-
-
-                                    <TextField
-                                        label="Quantity/Area*"
-                                        value={detailsData.quantityArea}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "quantityArea",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="Rate*"
-                                        value={detailsData.rate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "rate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="Quantity/Area*"
+                                            value={detailsData.quantityArea}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "quantityArea",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    {/* Third Row */}
-                                    <TextField
-                                        label="CGST Rate"
-                                        value={detailsData.cgstRate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "cgstRate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="Rate*"
+                                            value={detailsData.rate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "rate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="CGST Amt"
-                                        value={detailsData.cgstAmt}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="CGST Rate"
+                                            value={detailsData.cgstRate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "cgstRate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="SGST Rate"
-                                        value={detailsData.sgstRate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "sgstRate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="CGST Amt"
+                                            value={detailsData.cgstAmt}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    {/* Fourth Row */}
-                                    <TextField
-                                        label="SGST Amt"
-                                        value={detailsData.sgstAmt}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="SGST Rate"
+                                            value={detailsData.sgstRate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "sgstRate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="IGST Rate"
-                                        value={detailsData.igstRate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "igstRate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="SGST Amt"
+                                            value={detailsData.sgstAmt}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="IGST Amt"
-                                        value={detailsData.igstAmt}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="IGST Rate"
+                                            value={detailsData.igstRate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "igstRate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    {/* Fifth Row */}
-                                    <TextField
-                                        label="TCS Rate"
-                                        value={detailsData.tcsRate}
-                                        onChange={(e) =>
-                                            handleDetailsChange(
-                                                detailsData.id,
-                                                "tcsRate",
-                                                e.target.value
-                                            )
-                                        }
-                                        fullWidth
-                                        variant="outlined"
-                                        type="number"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="IGST Amt"
+                                            value={detailsData.igstAmt}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="TCS Amt"
-                                        value={detailsData.tcsAmt}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="TCS Rate"
+                                            value={detailsData.tcsRate}
+                                            onChange={(e) =>
+                                                handleDetailsChange(
+                                                    detailsData.id,
+                                                    "tcsRate",
+                                                    e.target.value
+                                                )
+                                            }
+                                            fullWidth
+                                            variant="outlined"
+                                            type="number"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="Tax Amount"
-                                        value={detailsData.taxAmount}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="TCS Amt"
+                                            value={detailsData.tcsAmt}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    {/* Sixth Row */}
-                                    <TextField
-                                        label="Amount"
-                                        value={detailsData.amount}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="Tax Amount"
+                                            value={detailsData.taxAmount}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
 
-                                    <TextField
-                                        label="Total Amount"
-                                        value={detailsData.totalAmount}
-                                        fullWidth
-                                        variant="outlined"
-                                        InputLabelProps={{
-                                            shrink: true,
-                                        }}
-                                        InputProps={{
-                                            readOnly: true,
-                                        }}
-                                        sx={{
-                                            mt: 1,
-                                            "& .MuiInputBase-input": {
-                                                padding: {
-                                                    xs: "8px",
-                                                    sm: "10px",
-                                                    md: "12px",
+                                        <TextField
+                                            label="Amount"
+                                            value={detailsData.amount}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
                                                 },
-                                            },
-                                            height: {
-                                                xs: 28,
-                                                sm: 36,
-                                                md: 45,
-                                            },
-                                        }}
-                                    />
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
+
+                                        <TextField
+                                            label="Total Amount"
+                                            value={detailsData.totalAmount}
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true,
+                                            }}
+                                            InputProps={{
+                                                readOnly: true,
+                                            }}
+                                            sx={{
+                                                mt: 1,
+                                                "& .MuiInputBase-input": {
+                                                    padding: {
+                                                        xs: "8px",
+                                                        sm: "10px",
+                                                        md: "12px",
+                                                    },
+                                                },
+                                                height: {
+                                                    xs: 28,
+                                                    sm: 36,
+                                                    md: 45,
+                                                },
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
 
-                        {/* Add Items Button inside details card */}
                         <div className="mt-6 pt-6 border-t border-gray-200">
                             <Button
                                 className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
@@ -1365,14 +1406,12 @@ export const EditWODashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Total Amount Display - Outside the card */}
                 <div className="flex items-center justify-end mt-4">
-                    <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
                         Total Amount: {grandTotal}
                     </Button>
                 </div>
 
-                {/* Details Section Card */}
                 <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
@@ -1502,7 +1541,6 @@ export const EditWODashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Attachments Section Card */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-[#C72030] flex items-center">
@@ -1530,8 +1568,8 @@ export const EditWODashboard: React.FC = () => {
                                     accept="image/*,.pdf,.doc,.docx,.xlsx,.xls"
                                 />
                                 <span className="ml-1">
-                                    {formData.attachments.length > 0
-                                        ? `${formData.attachments.length} file(s) selected`
+                                    {(formData.attachments.length + existingAttachments.length) > 0
+                                        ? `${formData.attachments.length + existingAttachments.length} file(s) selected`
                                         : "No files chosen"}
                                 </span>
                             </div>
@@ -1559,8 +1597,8 @@ export const EditWODashboard: React.FC = () => {
                                                             setSelectedDoc({
                                                                 id: attachment.id,
                                                                 url: attachment.url,
-                                                                document_name: attachment.document_name,
-                                                                document_file_name: attachment.document_file_name,
+                                                                document_name: attachment.name,
+                                                                document_file_name: attachment.name,
                                                             });
                                                             setIsModalOpen(true);
                                                         }}
@@ -1570,14 +1608,14 @@ export const EditWODashboard: React.FC = () => {
                                                     </button>
                                                     <img
                                                         src={attachment.url}
-                                                        alt={attachment.document_name}
+                                                        alt={attachment.name}
                                                         className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                                                         onClick={() => {
                                                             setSelectedDoc({
                                                                 id: attachment.id,
                                                                 url: attachment.url,
-                                                                document_name: attachment.document_name,
-                                                                document_file_name: attachment.document_file_name,
+                                                                document_name: attachment.name,
+                                                                document_file_name: attachment.name,
                                                             });
                                                             setIsModalOpen(true);
                                                         }}
@@ -1601,7 +1639,7 @@ export const EditWODashboard: React.FC = () => {
                                                 </div>
                                             )}
                                             <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                                {attachment.document_name} (Existing)
+                                                {attachment.name}
                                             </span>
                                             <button
                                                 className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
@@ -1680,7 +1718,7 @@ export const EditWODashboard: React.FC = () => {
                                                 </div>
                                             )}
                                             <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                                                {file.name} (New)
+                                                {file.name}
                                             </span>
                                             <button
                                                 className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
@@ -1698,7 +1736,6 @@ export const EditWODashboard: React.FC = () => {
                     </CardContent>
                 </Card>
 
-                {/* Action Buttons */}
                 <div className="flex items-center justify-center gap-4 mt-8">
                     <Button
                         onClick={handleSubmit}
