@@ -145,7 +145,7 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/security/visitor-management/edit/${id}`);
+    navigate(`/settings/visitor-management/setup/edit/${id}`);
   };
 
   const handleDelete = (id: number) => {
@@ -154,7 +154,7 @@ export const VisitorManagementSetup = () => {
   };
 
   const handleAdd = () => {
-    navigate('/security/visitor-management/add-gate');
+    navigate('/settings/visitor-management/setup/add-gate');
   };
 
   const handleColumnToggle = (columnKey: string, visible: boolean) => {

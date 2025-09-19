@@ -2162,43 +2162,43 @@ function App() {
                       element={<VisitorDetailsPage />}
                     />
                     <Route
-                      path="/security/visitor-management/setup"
+                      path="/settings/visitor-management/setup"
                       element={<VisitorManagementSetup />}
                     />
                     <Route
-                      path="/security/visitor-management/add-gate"
+                      path="/settings/visitor-management/setup/add-gate"
                       element={<AddVisitorGatePage />}
                     />
                     <Route
-                      path="/security/visitor-management/edit/:id"
+                      path="/settings/visitor-management/setup/edit/:id"
                       element={<EditVisitorGatePage />}
                     />
                     <Route
-                      path="/security/visitor-management/support-staff"
+                      path="/settings/visitor-management/support-staff"
                       element={<SupportStaffPage />}
                     />
                     <Route
-                      path="/security/visitor-management/support-staff/edit/:id"
+                      path="/settings/visitor-management/support-staff/edit/:id"
                       element={<EditSupportStaffPage />}
                     />
                     <Route
-                      path="/security/visitor-management/visiting-purpose"
+                      path="/settings/visitor-management/visiting-purpose"
                       element={<VisitingPurposePage />}
                     />
                     <Route
-                      path="/security/visitor-management/icons"
+                      path="/settings/visitor-management/icons"
                       element={<IconsDashboard />}
                     />
                     <Route
-                      path="/security/visitor-management/icons/add"
+                      path="/settings/visitor-management/icons/add"
                       element={<AddIconPage />}
                     />
                     <Route
-                      path="/security/visitor-management/icons/edit/:iconId"
+                      path="/settings/visitor-management/icons/edit/:iconId"
                       element={<EditIconPage />}
                     />
                     <Route
-                      path="/security/staff"
+                      path="/settings/staff"
                       element={<StaffsDashboard />}
                     />
                     <Route
