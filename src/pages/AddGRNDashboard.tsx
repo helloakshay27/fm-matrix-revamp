@@ -274,6 +274,11 @@ export const AddGRNDashboard = () => {
     });
   };
 
+  const removeInventoryItem = (index: number) => {
+    setInventoryDetails((prev) => prev.filter((_, i) => i !== index));
+    toast.success("Inventory item removed successfully");
+  };
+
   const addBatchField = (index: number) => {
     setInventoryDetails((prev) => {
       const newDetails = [...prev];
@@ -748,6 +753,17 @@ export const AddGRNDashboard = () => {
                   INVENTORY DETAILS {index + 1}
                 </h2>
               </div>
+              {inventoryDetails.length > 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeInventoryItem(index)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

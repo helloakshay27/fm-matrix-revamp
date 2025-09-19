@@ -19,7 +19,7 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 
 // Define interfaces for type safety
 interface GRNDetails {
@@ -40,6 +40,7 @@ interface GRNDetails {
 interface Batch {
   batch_no: string;
   id: number;
+  _destroy: number;
 }
 
 interface InventoryItem {
@@ -63,6 +64,7 @@ interface InventoryItem {
   amount: string;
   totalAmount: string;
   batch: Batch[];
+  _destroy?: number; // Add _destroy to the interface
 }
 
 interface Supplier {
@@ -114,7 +116,7 @@ export const EditGRNDashboard = () => {
   const [inventoryDetails, setInventoryDetails] = useState<InventoryItem[]>([
     {
       id: "",
-      item_id: null,
+      item_id: "",
       inventoryType: "",
       expectedQuantity: "",
       receivedQuantity: "",
@@ -133,6 +135,7 @@ export const EditGRNDashboard = () => {
       amount: "",
       totalAmount: "",
       batch: [],
+      _destroy: 0, // Initialize _destroy
     },
   ]);
 
@@ -203,7 +206,7 @@ export const EditGRNDashboard = () => {
         });
 
         setInventoryDetails(
-          grn.grn_inventories.map((item: any, index) => ({
+          grn.grn_inventories.map((item: any, index: number) => ({
             id: index + 1,
             item_id: item.id,
             inventoryType: item.inventory_id,
@@ -227,10 +230,10 @@ export const EditGRNDashboard = () => {
               batch_no: product.batch_no,
               id: product.id,
             })) || [],
+            _destroy: 0, // Initialize _destroy for fetched items
           }))
         );
 
-        // Assuming grn.attachments contains an array of {id, name, url, size}
         setExistingAttachments(
           grn.attachments?.general_attachments?.map((att: any) => ({
             id: att.id,
@@ -274,19 +277,12 @@ export const EditGRNDashboard = () => {
     const igstRate = parseFloat(item.igstRate) || 0;
     const tcsRate = parseFloat(item.tcsRate) || 0;
 
-    // Calculate Amount (rate × approved quantity)
-    const amount = rate;
-
-    // Calculate Tax Amounts (rate * qty * %)
+    const amount = rate * approvedQty;
     const cgstAmount = (amount * cgstRate) / 100;
     const sgstAmount = (amount * sgstRate) / 100;
     const igstAmount = (amount * igstRate) / 100;
     const tcsAmount = (amount * tcsRate) / 100;
-
-    // Sum of all taxes
     const totalTaxes = cgstAmount + sgstAmount + igstAmount + tcsAmount;
-
-    // Total payable
     const totalAmount = amount + totalTaxes;
 
     return {
@@ -314,6 +310,8 @@ export const EditGRNDashboard = () => {
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,
+          id: "",
+          item_id: "",
           inventoryType: item.inventory.id,
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
@@ -332,6 +330,7 @@ export const EditGRNDashboard = () => {
           approvedQuantity: "",
           rejectedQuantity: "",
           batch: [],
+          _destroy: 0, // Initialize _destroy for fetched items
         };
         return calculateInventoryTaxes(inventoryItem);
       });
@@ -355,15 +354,13 @@ export const EditGRNDashboard = () => {
         const newBatch = [...newDetails[index].batch];
         newBatch[batchIndex] = {
           ...newBatch[batchIndex],
-          batch_no: value
+          batch_no: value,
         };
         newDetails[index] = { ...newDetails[index], batch: newBatch };
       } else {
         newDetails[index] = { ...newDetails[index], [field]: value };
         if (field === "receivedQuantity") {
-          // Set approvedQuantity to match receivedQuantity
           newDetails[index].approvedQuantity = value;
-          // Calculate rejectedQuantity as expectedQuantity - approvedQuantity
           const expected = parseFloat(newDetails[index].expectedQuantity) || 0;
           const approved = parseFloat(value) || 0;
           const rejected = expected - approved;
@@ -375,12 +372,31 @@ export const EditGRNDashboard = () => {
     });
   };
 
+  const removeInventoryItem = (index: number) => {
+    if (inventoryDetails.length > 1) {
+      setInventoryDetails((prev) =>
+        prev.map((item, i) =>
+          i === index
+            ? {
+              ...item,
+              _destroy: 1, // Mark item for deletion
+              amount: "0.00",
+              totalTaxes: "0.00",
+              totalAmount: "0.00",
+            }
+            : item
+        )
+      );
+      toast.success("Inventory item marked for deletion");
+    }
+  };
+
   const addBatchField = (index: number) => {
     setInventoryDetails((prev) => {
       const newDetails = [...prev];
       newDetails[index] = {
         ...newDetails[index],
-        batch: [...newDetails[index].batch, { batch_no: "", id: 0 }],
+        batch: [...newDetails[index].batch, { batch_no: "", id: 0, _destroy: 0 }],
       };
       return newDetails;
     });
@@ -391,11 +407,13 @@ export const EditGRNDashboard = () => {
       const newDetails = [...prev];
       newDetails[inventoryIndex] = {
         ...newDetails[inventoryIndex],
-        batch: newDetails[inventoryIndex].batch.filter((_, i) => i !== batchIndex),
+        batch: newDetails[inventoryIndex].batch.map((batch, i) =>
+          i === batchIndex ? { ...batch, _destroy: 1 } : batch
+        ),
       };
       return newDetails;
     });
-    toast.success("Batch field removed successfully");
+    toast.success("Batch field marked for deletion");
   };
 
   const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -476,27 +494,25 @@ export const EditGRNDashboard = () => {
     toast.success("Existing attachment removed successfully");
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    // Validation
+  const validateForm = () => {
     if (!grnDetails.purchaseOrder) {
       toast.error("Please select a Purchase Order");
-      return;
+      return false;
     }
     if (!grnDetails.supplier) {
       toast.error("Please select a Supplier");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceNumber) {
       toast.error("Please enter Invoice Number");
-      return;
+      return false;
     }
     if (!grnDetails.invoiceDate || !grnDetails.postingDate) {
       toast.error("Please provide valid Invoice and Posting Dates");
-      return;
+      return false;
     }
     for (const [index, item] of inventoryDetails.entries()) {
+      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
       if (
         !item.expectedQuantity ||
         isNaN(parseFloat(item.expectedQuantity)) ||
@@ -505,7 +521,7 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Expected Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
       if (
         !item.receivedQuantity ||
@@ -515,12 +531,14 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Received Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
       if (
-        item.receivedQuantity > item.expectedQuantity
+        parseFloat(item.receivedQuantity) > parseFloat(item.expectedQuantity)
       ) {
-        toast.error(`Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`);
+        toast.error(
+          `Received Quantity cannot be greater than Expected Quantity for item ${index + 1}`
+        );
         return false;
       }
       if (
@@ -531,11 +549,20 @@ export const EditGRNDashboard = () => {
         toast.error(
           `Please enter a valid Approved Quantity for inventory item ${index + 1}`
         );
-        return;
+        return false;
       }
     }
     if (selectedFiles.length === 0 && existingAttachments.length === 0) {
       toast.error("Please upload at least one attachment");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
       return;
     }
 
@@ -571,13 +598,15 @@ export const EditGRNDashboard = () => {
           tcs_amount: item.tcsAmount,
           taxable_value: item.totalTaxes,
           total_value: item.amount,
-          pms_products_attributes: item.batch.map(batch => ({
+          _destroy: item._destroy,
+          pms_products_attributes: item.batch.map((batch) => ({
             batch_no: batch.batch_no,
             id: batch.id,
+            _destroy: batch._destroy, // Include _destroy for batch
           })),
         })),
       },
-      attachments: selectedFiles, // Only send new files
+      attachments: selectedFiles,
     };
 
     setIsSubmitting(true);
@@ -597,7 +626,7 @@ export const EditGRNDashboard = () => {
       <Button
         variant="ghost"
         onClick={() => navigate(-1)}
-        className='p-0'
+        className="p-0"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
@@ -843,345 +872,359 @@ export const EditGRNDashboard = () => {
         </div>
 
         {/* Inventory Details Section */}
-        {inventoryDetails.map((item, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between gap-2 mb-6">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm">2</span>
+        {inventoryDetails
+          .filter((item) => item._destroy !== 1) // Hide items marked for deletion
+          .map((item, index) => (
+            <div key={index} className="bg-white rounded-lg shadow p-6">
+              <div className="flex items-center justify-between gap-2 mb-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-[#C72030] rounded-full flex items-center justify-center">
+                    <span className="text-white text-sm">2</span>
+                  </div>
+                  <h2 className="text-lg font-semibold text-[#C72030]">
+                    INVENTORY DETAILS {index + 1}
+                  </h2>
                 </div>
-                <h2 className="text-lg font-semibold text-[#C72030]">
-                  INVENTORY DETAILS {index + 1}
-                </h2>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-                <InputLabel shrink>Inventory Type</InputLabel>
-                <MuiSelect
-                  label="Inventory Type"
-                  value={item.inventoryType}
-                  onChange={(e) =>
-                    handleInventoryChange(
-                      index,
-                      "inventoryType",
-                      e.target.value
-                    )
-                  }
-                  displayEmpty
-                  sx={fieldStyles}
-                >
-                  <MenuItem value="">
-                    <em>Select</em>
-                  </MenuItem>
-                  {inventories.map((inventory) => (
-                    <MenuItem key={inventory.id} value={inventory.id}>
-                      {inventory.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-              </FormControl>
-
-              <TextField
-                label="Expected Quantity*"
-                type="number"
-                placeholder="Expected Quantity"
-                value={item.expectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "expectedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Received Quantity*"
-                type="number"
-                placeholder="Received Quantity"
-                value={item.receivedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "receivedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Approved Quantity*"
-                type="number"
-                placeholder="Approved Quantity"
-                value={item.approvedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "approvedQuantity",
-                    e.target.value
-                  )
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Rejected Quantity"
-                type="number"
-                placeholder="Rejected Quantity"
-                value={item.rejectedQuantity}
-                onChange={(e) =>
-                  handleInventoryChange(
-                    index,
-                    "rejectedQuantity",
-                    e.target.value
-                  )}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles },
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.rate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "rate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="CGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.cgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "cgstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="CGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.cgstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="SGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.sgstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "sgstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="SGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.sgstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="IGST Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.igstRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "igstRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="IGST Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.igstAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="TCS Rate"
-                type="number"
-                placeholder="Enter Number"
-                value={item.tcsRate}
-                onChange={(e) =>
-                  handleInventoryChange(index, "tcsRate", e.target.value)
-                }
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{ sx: fieldStyles }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="TCS Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.tcsAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Total Taxes"
-                type="number"
-                placeholder="Total Amount"
-                value={item.totalTaxes}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Amount"
-                type="number"
-                placeholder="Enter Number"
-                value={item.amount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-
-              <TextField
-                label="Total Amount"
-                type="number"
-                placeholder="Total Amount"
-                value={item.totalAmount}
-                fullWidth
-                variant="outlined"
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
-                  readOnly: true,
-                }}
-                sx={{ mt: 1 }}
-              />
-            </div>
-
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="text-md font-semibold">Batch Numbers</h3>
-              </div>
-              {item.batch.map((batch, batchIndex) => (
-                <div key={batchIndex} className="flex items-center gap-4 mb-2">
-                  <TextField
-                    label={`Batch ${batchIndex + 1}`}
-                    type="text"
-                    placeholder="Enter Batch Number"
-                    value={batch.batch_no}
-                    onChange={(e) =>
-                      handleInventoryChange(index, "batch", e.target.value, batchIndex)
-                    }
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    InputProps={{ sx: fieldStyles }}
-                    sx={{ mt: 1 }}
-                  />
+                {inventoryDetails.length > 1 && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => removeBatchField(index, batchIndex)}
+                    onClick={() => removeInventoryItem(index)}
                     className="text-red-600 hover:text-red-700"
                   >
-                    Remove
+                    <X className="w-4 h-4" />
                   </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                  <InputLabel shrink>Inventory Type</InputLabel>
+                  <MuiSelect
+                    label="Inventory Type"
+                    value={item.inventoryType}
+                    onChange={(e) =>
+                      handleInventoryChange(
+                        index,
+                        "inventoryType",
+                        e.target.value
+                      )
+                    }
+                    displayEmpty
+                    sx={fieldStyles}
+                  >
+                    <MenuItem value="">
+                      <em>Select</em>
+                    </MenuItem>
+                    {inventories.map((inventory) => (
+                      <MenuItem key={inventory.id} value={inventory.id}>
+                        {inventory.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+
+                <TextField
+                  label="Expected Quantity*"
+                  type="number"
+                  placeholder="Expected Quantity"
+                  value={item.expectedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "expectedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Received Quantity*"
+                  type="number"
+                  placeholder="Received Quantity"
+                  value={item.receivedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "receivedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Approved Quantity*"
+                  type="number"
+                  placeholder="Approved Quantity"
+                  value={item.approvedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "approvedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Rejected Quantity"
+                  type="number"
+                  placeholder="Rejected Quantity"
+                  value={item.rejectedQuantity}
+                  onChange={(e) =>
+                    handleInventoryChange(
+                      index,
+                      "rejectedQuantity",
+                      e.target.value
+                    )
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.rate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "rate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="CGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.cgstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "cgstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="CGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.cgstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="SGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.sgstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "sgstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="SGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.sgstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="IGST Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.igstRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "igstRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="IGST Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.igstAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="TCS Rate"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.tcsRate}
+                  onChange={(e) =>
+                    handleInventoryChange(index, "tcsRate", e.target.value)
+                  }
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="TCS Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.tcsAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Total Taxes"
+                  type="number"
+                  placeholder="Total Amount"
+                  value={item.totalTaxes}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Amount"
+                  type="number"
+                  placeholder="Enter Number"
+                  value={item.amount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+
+                <TextField
+                  label="Total Amount"
+                  type="number"
+                  placeholder="Total Amount"
+                  value={item.totalAmount}
+                  fullWidth
+                  variant="outlined"
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{
+                    sx: { ...fieldStyles, backgroundColor: "#f5f5f5" },
+                    readOnly: true,
+                  }}
+                  sx={{ mt: 1 }}
+                />
+              </div>
+
+              <div className="mt-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <h3 className="text-md font-semibold">Batch Numbers</h3>
                 </div>
-              ))}
-              <Button
-                type="button"
-                className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
-                onClick={() => addBatchField(index)}
-              >
-                Add Batch
-              </Button>
+                {item.batch
+                  .filter((batch) => !batch._destroy) // Hide batches marked for deletion
+                  .map((batch, batchIndex) => (
+                    <div key={batchIndex} className="flex items-center gap-4 mb-2">
+                      <TextField
+                        label={`Batch ${batchIndex + 1}`}
+                        type="text"
+                        placeholder="Enter Batch Number"
+                        value={batch.batch_no}
+                        onChange={(e) =>
+                          handleInventoryChange(index, "batch", e.target.value, batchIndex)
+                        }
+                        fullWidth
+                        variant="outlined"
+                        InputLabelProps={{ shrink: true }}
+                        InputProps={{ sx: fieldStyles }}
+                        sx={{ mt: 1 }}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBatchField(index, batchIndex)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                <Button
+                  type="button"
+                  className="bg-[#C72030] hover:bg-[#A01020] text-white mt-4"
+                  onClick={() => addBatchField(index)}
+                >
+                  Add Batch
+                </Button>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
         {/* Attachments Section */}
         <div className="bg-white rounded-lg shadow p-6">
@@ -1243,6 +1286,15 @@ export const EditGRNDashboard = () => {
                         (Existing)
                       </span>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeExistingAttachment(attachment.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      Remove
+                    </Button>
                   </div>
                 ))}
                 {selectedFiles.map((file, index) => (
@@ -1280,6 +1332,7 @@ export const EditGRNDashboard = () => {
           <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
             Total Amount -{" "}
             {inventoryDetails
+              .filter((item) => item._destroy !== 1) // Exclude items marked for deletion
               .reduce(
                 (sum, item) => sum + parseFloat(item.totalAmount || "0"),
                 0
