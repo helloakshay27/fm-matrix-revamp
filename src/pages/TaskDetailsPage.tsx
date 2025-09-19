@@ -1143,7 +1143,7 @@ export const TaskDetailsPage = () => {
               Job Sheet
             </DialogTitle>
             <div className="flex items-center gap-2">
-              <Button
+              {/* <Button
                 onClick={downloadJobSheetPDF}
                 variant="outline"
                 size="sm"
@@ -1151,7 +1151,7 @@ export const TaskDetailsPage = () => {
               >
                 <Download className="h-4 w-4" />
                 Download PDF
-              </Button>
+              </Button> */}
               <button
                 onClick={() => setShowJobSheetModal(false)}
                 className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"

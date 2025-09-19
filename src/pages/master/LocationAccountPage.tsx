@@ -187,7 +187,7 @@ export const LocationAccountPage = () => {
    
     // Check if user email allows editing - replace with your specific email or permission logic
     const userEmail = user.email || '';
-    const allowedEmails = ['abhishek.sharma@lockated.com', 'your-specific-email@domain.com']; // Add your specific email here
+    const allowedEmails = ['abhishek.sharma2@lockated.com', 'your-specific-email@domain.com']; // Add your specific email here
     setCanEditOrganization(allowedEmails.includes(userEmail));
     setCanEditCountry(allowedEmails.includes(userEmail));
     setCanEditCompany(allowedEmails.includes(userEmail));
@@ -1337,7 +1337,7 @@ export const LocationAccountPage = () => {
                     <TableHead className="font-semibold">Description</TableHead>
                     <TableHead className="font-semibold">Domain</TableHead>
                     <TableHead className="font-semibold">Country</TableHead>
-                    <TableHead className="font-semibold">Actions</TableHead>
+                    {/* <TableHead className="font-semibold">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1366,7 +1366,7 @@ export const LocationAccountPage = () => {
                         <TableCell>{org.description || '-'}</TableCell>
                         <TableCell>{org.domain || '-'}</TableCell>
                         <TableCell>{org.country?.name || '-'}</TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
@@ -1387,7 +1387,7 @@ export const LocationAccountPage = () => {
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))
                   )}
@@ -1727,7 +1727,7 @@ export const LocationAccountPage = () => {
                       <TableHead>Billing Rate</TableHead>
                       <TableHead>Live Date</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
+                      {/* <TableHead>Actions</TableHead> */}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1757,7 +1757,7 @@ export const LocationAccountPage = () => {
                                 {company.active ? 'Active' : 'Inactive'}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            {/* <TableCell>
                               <div className="flex space-x-2">
                                 <Button
                                   variant="ghost"
@@ -1777,7 +1777,7 @@ export const LocationAccountPage = () => {
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
-                            </TableCell>
+                            </TableCell> */}
                           </TableRow>
                         ))
                     )}
@@ -1896,7 +1896,7 @@ export const LocationAccountPage = () => {
                     <TableHead className="font-semibold">ID</TableHead>
                     <TableHead className="font-semibold">Country Name</TableHead>
                     <TableHead className="font-semibold">Logo</TableHead>
-                    <TableHead className="font-semibold">Actions</TableHead>
+                    {/* <TableHead className="font-semibold">Actions</TableHead> */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1932,7 +1932,7 @@ export const LocationAccountPage = () => {
                             '-'
                           )}
                         </TableCell>
-                        <TableCell>
+                        {/* <TableCell>
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
@@ -1953,7 +1953,7 @@ export const LocationAccountPage = () => {
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                        </TableCell>
+                        </TableCell> */}
                       </TableRow>
                     ))
                   )}
