@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
   roleService,
@@ -322,11 +322,6 @@ export const RoleDashboard = () => {
     navigate("/settings/roles/role/add");
   };
 
-  const handleSearchRole = () => {
-    console.log("Searching roles with term:", searchTerm);
-    // Search functionality is already handled by filteredRoles
-  };
-
   // Handle sub-function permission change
   const handleSubFunctionToggle = (
     moduleId: number,
@@ -464,19 +459,22 @@ export const RoleDashboard = () => {
 
         {/* Search */}
         <div className="mb-6 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-          <Input
-            placeholder="Search Role"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full sm:max-w-xs"
-          />
-          <Button
-            onClick={handleSearchRole}
-            className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
-          >
-            <Search className="w-4 h-4 mr-2" />
-            Search Role
-          </Button>
+          <div className="relative w-full sm:max-w-xs">
+            <Input
+              placeholder="Search Role"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pr-8"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Responsive Layout: Stack on mobile, side-by-side on desktop */}
@@ -714,7 +712,7 @@ export const RoleDashboard = () => {
             </div>
 
             {/* Update Button */}
-            <div className="mt-4 flex flex-col sm:flex-row justify-end">
+            <div className="mt-4 flex flex-col sm:flex-row justify-center">
               <Button
                 onClick={handleUpdatePermissions}
                 className="bg-[#C72030] hover:bg-[#A11D2A] text-white w-full sm:w-auto"
