@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   TextField,
@@ -19,7 +19,8 @@ import {
   getPurchaseOrdersList,
 } from "@/store/slices/grnSlice";
 import { getInventories, getSuppliers } from "@/store/slices/materialPRSlice";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Eye, File, FileSpreadsheet, FileText, Upload, X } from "lucide-react";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
 
 // Define interfaces for type safety
 interface GRNDetails {
@@ -64,7 +65,7 @@ interface InventoryItem {
   amount: string;
   totalAmount: string;
   batch: Batch[];
-  _destroy?: number; // Add _destroy to the interface
+  _destroy?: number;
 }
 
 interface Supplier {
@@ -78,10 +79,12 @@ interface Inventory {
 }
 
 interface Attachment {
-  id: string;
-  name: string;
+  id: number;
+  name?: string;
   url: string;
-  size: number;
+  size?: number;
+  document_name?: string;
+  document_file_name?: string;
 }
 
 const fieldStyles = {
@@ -97,6 +100,7 @@ export const EditGRNDashboard = () => {
   const token = localStorage.getItem("token");
   const baseUrl = localStorage.getItem("baseUrl");
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [grnDetails, setGrnDetails] = useState<GRNDetails>({
     purchaseOrder: 0,
@@ -135,7 +139,7 @@ export const EditGRNDashboard = () => {
       amount: "",
       totalAmount: "",
       batch: [],
-      _destroy: 0, // Initialize _destroy
+      _destroy: 0,
     },
   ]);
 
@@ -145,6 +149,8 @@ export const EditGRNDashboard = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [inventories, setInventories] = useState<Inventory[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedDoc, setSelectedDoc] = useState<Attachment | null>(null);
 
   useEffect(() => {
     const fetchPO = async () => {
@@ -229,8 +235,9 @@ export const EditGRNDashboard = () => {
             batch: item.products && item.products.map((product: any) => ({
               batch_no: product.batch_no,
               id: product.id,
+              _destroy: 0,
             })) || [],
-            _destroy: 0, // Initialize _destroy for fetched items
+            _destroy: 0,
           }))
         );
 
@@ -238,11 +245,14 @@ export const EditGRNDashboard = () => {
           grn.attachments?.general_attachments?.map((att: any) => ({
             id: att.id,
             name: att.filename,
-            url: att.url,
+            url: att.document_url,
+            document_name: att.filename,
+            document_file_name: att.filename,
           })) || []
         );
       } catch (error) {
         console.log(error);
+        toast.error("Failed to fetch GRN details.");
       }
     };
 
@@ -330,7 +340,7 @@ export const EditGRNDashboard = () => {
           approvedQuantity: "",
           rejectedQuantity: "",
           batch: [],
-          _destroy: 0, // Initialize _destroy for fetched items
+          _destroy: 0,
         };
         return calculateInventoryTaxes(inventoryItem);
       });
@@ -379,7 +389,7 @@ export const EditGRNDashboard = () => {
           i === index
             ? {
               ...item,
-              _destroy: 1, // Mark item for deletion
+              _destroy: 1,
               amount: "0.00",
               totalTaxes: "0.00",
               totalAmount: "0.00",
@@ -490,8 +500,12 @@ export const EditGRNDashboard = () => {
   };
 
   const removeExistingAttachment = (id: string) => {
-    setExistingAttachments((prev) => prev.filter((att) => att.id !== id));
+    setExistingAttachments((prev) => prev.filter((att) => att.id.toString() !== id));
     toast.success("Existing attachment removed successfully");
+  };
+
+  const handleDashedBorderClick = () => {
+    fileInputRef.current?.click();
   };
 
   const validateForm = () => {
@@ -512,7 +526,7 @@ export const EditGRNDashboard = () => {
       return false;
     }
     for (const [index, item] of inventoryDetails.entries()) {
-      if (item._destroy === 1) continue; // Skip validation for items marked for deletion
+      if (item._destroy === 1) continue;
       if (
         !item.expectedQuantity ||
         isNaN(parseFloat(item.expectedQuantity)) ||
@@ -602,7 +616,7 @@ export const EditGRNDashboard = () => {
           pms_products_attributes: item.batch.map((batch) => ({
             batch_no: batch.batch_no,
             id: batch.id,
-            _destroy: batch._destroy, // Include _destroy for batch
+            _destroy: batch._destroy,
           })),
         })),
       },
@@ -873,7 +887,7 @@ export const EditGRNDashboard = () => {
 
         {/* Inventory Details Section */}
         {inventoryDetails
-          .filter((item) => item._destroy !== 1) // Hide items marked for deletion
+          .filter((item) => item._destroy !== 1)
           .map((item, index) => (
             <div key={index} className="bg-white rounded-lg shadow p-6">
               <div className="flex items-center justify-between gap-2 mb-6">
@@ -1187,7 +1201,7 @@ export const EditGRNDashboard = () => {
                   <h3 className="text-md font-semibold">Batch Numbers</h3>
                 </div>
                 {item.batch
-                  .filter((batch) => !batch._destroy) // Hide batches marked for deletion
+                  .filter((batch) => !batch._destroy)
                   .map((batch, batchIndex) => (
                     <div key={batchIndex} className="flex items-center gap-4 mb-2">
                       <TextField
@@ -1254,88 +1268,184 @@ export const EditGRNDashboard = () => {
             className="border-2 border-dashed border-orange-300 rounded-lg p-8 text-center cursor-pointer hover:border-orange-400 transition-colors"
             onDragOver={handleDragOver}
             onDrop={handleDrop}
-            onClick={() => document.getElementById("file-upload")?.click()}
+            onClick={handleDashedBorderClick}
           >
-            <p className="text-gray-600 mb-2">
-              <span className="font-medium">Drag & Drop</span> or{" "}
-              <button type="button" className="text-[#C72030] underline">
-                Choose File
-              </button>{" "}
-              No file chosen
-            </p>
+            <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">Drag & Drop or Click to Upload</span>
+              <input
+                id="file-upload"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileUpload}
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                ref={fileInputRef}
+              />
+              <span className="ml-1">
+                {(selectedFiles.length + existingAttachments.length) > 0
+                  ? `${selectedFiles.length + existingAttachments.length} file(s) selected`
+                  : "No files chosen"}
+              </span>
+            </div>
           </div>
 
-          <input
-            id="file-upload"
-            type="file"
-            multiple
-            className="hidden"
-            onChange={handleFileUpload}
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-          />
-
           {(existingAttachments.length > 0 || selectedFiles.length > 0) && (
-            <div className="mt-4">
-              <h4 className="text-sm font-medium mb-2">Uploaded Files:</h4>
-              <div className="space-y-2">
-                {existingAttachments.map((attachment) => (
+            <div className="flex items-center flex-wrap gap-4 my-6">
+              {existingAttachments.map((attachment, index) => {
+                const isImage = attachment.url.match(/\.(jpeg|jpg|png|gif)$/i);
+                const isPdf = attachment.url.match(/\.pdf$/i);
+                const isExcel = attachment.url.match(/\.(xlsx|xls)$/i);
+                const isWord = attachment.url.match(/\.(doc|docx)$/i);
+
+                return (
                   <div
-                    key={attachment.id}
-                    className="flex items-center justify-between bg-gray-100 p-3 rounded"
+                    key={`existing-${attachment.id}`}
+                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
-                    <div className="flex items-center gap-2">
-                      <a
-                        href={attachment.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        {attachment.name}
-                      </a>
-                      <span className="text-xs text-gray-500">
-                        ({(attachment.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                      <span className="text-xs text-gray-500 italic">
-                        (Existing)
-                      </span>
-                    </div>
-                    <Button
+                    {isImage ? (
+                      <>
+                        <button
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: attachment.id,
+                              url: attachment.url,
+                              document_name: attachment.name,
+                              document_file_name: attachment.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <img
+                          src={attachment.url}
+                          alt={attachment.name}
+                          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: attachment.id,
+                              url: attachment.url,
+                              document_name: attachment.name,
+                              document_file_name: attachment.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                        />
+                      </>
+                    ) : isPdf ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <File className="w-6 h-6" />
+                      </div>
+                    )}
+                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                      {attachment.name}
+                    </span>
+                    <button
+                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      title="Remove"
+                      onClick={() => removeExistingAttachment(attachment.id.toString())}
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeExistingAttachment(attachment.id)}
-                      className="text-red-600 hover:text-red-700"
                     >
-                      Remove
-                    </Button>
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-                {selectedFiles.map((file, index) => (
+                );
+              })}
+              {selectedFiles.map((file, index) => {
+                const isImage = file.type.match(/image\/(jpeg|jpg|png|gif)/i);
+                const isPdf = file.type.match(/application\/pdf/i);
+                const isExcel = file.type.match(
+                  /application\/vnd\.ms-excel|application\/vnd\.openxmlformats-officedocument\.spreadsheetml\.sheet/i
+                );
+                const isWord = file.type.match(
+                  /application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document/i
+                );
+
+                return (
                   <div
                     key={`new-${index}`}
-                    className="flex items-center justify-between bg-gray-50 p-3 rounded"
+                    className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700">{file.name}</span>
-                      <span className="text-xs text-gray-500">
-                        ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                      </span>
-                      <span className="text-xs text-gray-500 italic">
-                        (New)
-                      </span>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
+                    {isImage ? (
+                      <>
+                        <button
+                          className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                          title="View"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: index,
+                              url: URL.createObjectURL(file),
+                              document_name: file.name,
+                              document_file_name: file.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                          type="button"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={file.name}
+                          className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                          onClick={() => {
+                            setSelectedDoc({
+                              id: index,
+                              url: URL.createObjectURL(file),
+                              document_name: file.name,
+                              document_file_name: file.name,
+                            });
+                            setIsModalOpen(true);
+                          }}
+                        />
+                      </>
+                    ) : isPdf ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : isExcel ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                        <FileSpreadsheet className="w-6 h-6" />
+                      </div>
+                    ) : isWord ? (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                        <File className="w-6 h-6" />
+                      </div>
+                    )}
+                    <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                      {file.name}
+                    </span>
+                    <button
+                      className="absolute top-2 left-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                      title="Remove"
                       onClick={() => removeFile(index)}
-                      className="text-red-600 hover:text-red-700"
+                      type="button"
                     >
-                      Remove
-                    </Button>
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                ))}
-              </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -1351,6 +1461,13 @@ export const EditGRNDashboard = () => {
           </Button>
         </div>
       </form>
+
+      <AttachmentPreviewModal
+        isModalOpen={isModalOpen}
+        setIsModalOpen={setIsModalOpen}
+        selectedDoc={selectedDoc}
+        setSelectedDoc={setSelectedDoc}
+      />
     </div>
   );
 };

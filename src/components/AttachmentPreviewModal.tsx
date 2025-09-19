@@ -20,7 +20,6 @@ interface AttachmentPreviewModalProps {
     document_file_name?: string;
     url: string;
   } | null>>;
-  modalTitle?: string; // <-- add optional prop for modal title
 }
 
 export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
@@ -28,7 +27,6 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
   setIsModalOpen,
   selectedDoc,
   setSelectedDoc,
-  modalTitle,
 }) => {
   const handleDownload = useCallback(async () => {
     if (!selectedDoc?.id) {
@@ -74,12 +72,10 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
     setSelectedDoc(null);
   }, [setIsModalOpen, setSelectedDoc]);
 
-  // Support both .url and .document for image/file preview
-  const fileUrl = selectedDoc?.url || (selectedDoc as any)?.document || '';
-  const isImage = fileUrl && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(fileUrl);
-  const isPdf = fileUrl && /\.pdf$/i.test(fileUrl);
-  const isExcel = fileUrl && /\.(xls|xlsx|csv)$/i.test(fileUrl);
-  const isWord = fileUrl && /\.(doc|docx)$/i.test(fileUrl);
+  const isImage = selectedDoc?.url && /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(selectedDoc.url);
+  const isPdf = selectedDoc?.url && /\.pdf$/i.test(selectedDoc.url);
+  const isExcel = selectedDoc?.url && /\.(xls|xlsx|csv)$/i.test(selectedDoc.url);
+  const isWord = selectedDoc?.url && /\.(doc|docx)$/i.test(selectedDoc.url);
 
   const renderFileIcon = () => {
     if (isPdf) {
@@ -104,30 +100,16 @@ export const AttachmentPreviewModal: React.FC<AttachmentPreviewModalProps> = ({
         </button>
         <DialogHeader>
           <DialogTitle className="text-center text-lg font-medium">
-            {modalTitle ??
-              (selectedDoc?.document_name ||
-                selectedDoc?.document_file_name ||
-                (fileUrl ? fileUrl.split('/').pop() : '') ||
-                'Document')}
+            {selectedDoc?.document_name || selectedDoc?.document_file_name || 'Document'}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col items-center justify-center gap-4 py-4 max-h-[70vh] overflow-y-auto">
-          {fileUrl ? (
-            isImage ? (
-              <img
-                src={fileUrl}
-                alt={
-                  selectedDoc?.document_name ||
-                  selectedDoc?.document_file_name ||
-                  (fileUrl ? fileUrl.split('/').pop() : '')
-                }
-                className="max-w-full max-h-[400px] rounded-md border object-contain"
-              />
-            ) : (
-              <div className="flex items-center justify-center w-20 h-20 bg-gray-100 rounded-md border">
-                {renderFileIcon()}
-              </div>
-            )
+        <div className="flex flex-col items-center justify-center gap-4 py-4">
+          {selectedDoc?.url ? (
+            <img
+              src={selectedDoc.url}
+              alt={selectedDoc.document_name || selectedDoc.document_file_name}
+              className="max-w-full max-h-[400px] rounded-md border object-contain"
+            />
           ) : (
             <div className="flex items-center justify-center w-20 h-20 bg-gray-100 rounded-md border">
               {renderFileIcon()}
