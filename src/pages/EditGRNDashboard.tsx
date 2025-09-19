@@ -1226,6 +1226,19 @@ export const EditGRNDashboard = () => {
             </div>
           ))}
 
+        <div className="flex items-center justify-end mt-4">
+          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
+            Total Amount :{" "}
+            {inventoryDetails
+              .filter((item) => item._destroy !== 1)
+              .reduce(
+                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
+                0
+              )
+              .toFixed(2)}
+          </Button>
+        </div>
+
         {/* Attachments Section */}
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex items-center gap-2 mb-6">
@@ -1328,17 +1341,7 @@ export const EditGRNDashboard = () => {
         </div>
 
         {/* Submit Section */}
-        <div className="flex justify-end items-center gap-4">
-          <div className="bg-[#C72030] text-white px-4 py-2 rounded text-right">
-            Total Amount -{" "}
-            {inventoryDetails
-              .filter((item) => item._destroy !== 1) // Exclude items marked for deletion
-              .reduce(
-                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
-                0
-              )
-              .toFixed(2)}
-          </div>
+        <div className="flex justify-center items-center gap-4">
           <Button
             type="submit"
             className="bg-[#C72030] hover:bg-[#A01020] text-white px-8"

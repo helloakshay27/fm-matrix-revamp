@@ -1093,6 +1093,18 @@ export const AddGRNDashboard = () => {
           </div>
         ))}
 
+        <div className="flex items-center justify-end mt-4">
+          <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
+            Total Amount :{" "}
+            {inventoryDetails
+              .reduce(
+                (sum, item) => sum + parseFloat(item.totalAmount || "0"),
+                0
+              )
+              .toFixed(2)}
+          </Button>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-[#C72030] flex items-center">

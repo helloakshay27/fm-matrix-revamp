@@ -1407,7 +1407,7 @@ export const EditWODashboard: React.FC = () => {
                 </div>
 
                 <div className="flex items-center justify-end mt-4">
-                    <Button className="bg-[#C72030] hover:bg-[#C72030] text-white">
+                    <Button className="bg-[#C72030] hover:bg-[#C72030] text-white" type="button">
                         Total Amount: {grandTotal}
                     </Button>
                 </div>
