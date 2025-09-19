@@ -55,9 +55,15 @@ export interface SurveySubmissionRequest {
     emoji?: string; // For emoji questions
     label?: string; // For emoji questions
     response_text?: string; // For input/description questions
-    description?: string; // Additional description
-    final_description?: string; // Final survey description
-  };
+    ans_descr?: string; // Answer description
+    level_id?: number; // Level ID for rating/emoji
+    comments?: string; // Individual question comment
+    answer_type?: string; // Question type
+    answer_mode?: string; // Answer mode
+  }[];
+  final_comment?: {
+    body: string;
+  }; // Overall survey comment as object
 }
 
 export const surveyApi = {
@@ -99,7 +105,7 @@ export const surveyApi = {
   // Get survey mapping details
   async getSurveyMapping(mappingId: string): Promise<SurveyMapping> {
     try {
-      const response = await baseClient.get(`https://fm-uat-api.lockated.com/survey_mappings/${mappingId}/survey.json`);
+      const response = await baseClient.get(`/survey_mappings/${mappingId}/survey.json`);
       return response.data;
     } catch (error) {
       console.error("Error fetching survey mapping:", error);
@@ -112,11 +118,11 @@ export const surveyApi = {
     try {
       console.log("=== SURVEY API SUBMISSION ===");
       console.log("Full payload being sent:", JSON.stringify(surveyData, null, 2));
-      console.log("survey_response object:", JSON.stringify(surveyData.survey_response, null, 2));
+      // console.log("survey_response object:", JSON.stringify(surveyData.survey_response, null, 2));
       
       const response = await baseClient.post("/add_survey_feedback.json?skp_dr=true", surveyData); 
       
-      console.log("API Response:", response.data);
+      // console.log("API Response:", response.data);
       return response.data.survey_response;
     } catch (error) {
       console.error("Error submitting survey response:", error);
