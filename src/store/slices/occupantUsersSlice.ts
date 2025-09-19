@@ -52,6 +52,7 @@ export interface OccupantUser {
   active: boolean;
   faceRecognition: boolean;
   appDownloaded: string;
+
 }
 
 interface Pagination {
@@ -97,7 +98,8 @@ export const fetchOccupantUsers = createAsyncThunk(
         type: user.user_type === "pms_occupant_admin" ? "Admin" : "Member",
         active: user.active ? "Yes" : "No",
         faceRecognition: user.face_added ? "Yes" : "No",
-        appDownloaded: user.app_downloaded
+        appDownloaded: user.app_downloaded,
+        lockUserId: user.lock_user_permission.id ?? null
       }));
 
     const pagination: Pagination = {

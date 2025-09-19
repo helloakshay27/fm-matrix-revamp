@@ -497,116 +497,113 @@ export const ServicePRDetailsPage = () => {
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
-      <div className="flex flex-col lg:flex-row justify-between items-start mb-6 gap-4">
-        <div className="flex flex-col items-start">
-          <h1 className="text-2xl font-semibold">Service PR Details</h1>
-          <TooltipProvider>
-            <div className="flex items-start gap-3 mt-3">
-              {servicePR?.approvals?.map((level: Approval) => (
-                <div className="space-y-2" key={level.level}>
-                  {level.status.toLowerCase() === "rejected" ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
-                            level.status
-                          )}`}
-                        >
-                          {`${level.level} Approval : ${level.status}`}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>
-                          Rejection Reason:{" "}
-                          {level.rejection_reason ?? "No reason provided"}
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
+      <div className="flex items-end justify-between">
+        <h1 className="text-2xl font-semibold">Service PR Details</h1>
+        <div className="flex items-center gap-2">
+          {buttonCondition.showSap && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300"
+            onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+          >
+            <Edit className="w-4 h-4 mr-1" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
+          >
+            <Copy className="w-4 h-4 mr-1" />
+            Clone
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
+            onClick={handlePrint}
+          >
+            <Printer className="w-4 h-4 mr-1" />
+            Print
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300"
+            onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
+          >
+            <Rss className="w-4 h-4 mr-1" />
+            Feeds
+          </Button>
+          {
+            buttonCondition.editWbsCode && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="border-gray-300 btn-primary"
+                onClick={() => setShowEditWbsModal(true)}
+              >
+                Edit WBS Codes
+              </Button>
+            )
+          }
+        </div>
+      </div>
+
+      <TooltipProvider>
+        <div className="flex items-start gap-3 my-4">
+          {servicePR?.approvals?.map((level: Approval) => (
+            <div className="space-y-2" key={level.level}>
+              {level.status.toLowerCase() === "rejected" ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <div
-                      className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
                         level.status
                       )}`}
                     >
                       {`${level.level} Approval : ${level.status}`}
                     </div>
-                  )}
-                  {level.updated_by && level.updated_at && (
-                    <div className="ms-2 w-[190px]">
-                      {`${level.updated_by} (${format(
-                        new Date(level.updated_at),
-                        "dd/MM/yyyy"
-                      )})`}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </TooltipProvider>
-        </div>
-        <div className="flex flex-col lg:flex-row items-start lg:items-center gap-3">
-          <div className="flex gap-2 flex-wrap">
-            {buttonCondition.showSap && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-                onClick={handleSendToSap}
-              >
-                Send To SAP Team
-              </Button>
-            )}
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
-            >
-              <Edit className="w-4 h-4 mr-1" />
-              Edit
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={() => navigate(`/finance/service-pr/add?clone=${id}`)}
-            >
-              <Copy className="w-4 h-4 mr-1" />
-              Clone
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300 bg-purple-600 text-white hover:bg-purple-700"
-              onClick={handlePrint}
-            >
-              <Printer className="w-4 h-4 mr-1" />
-              Print
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="border-gray-300"
-              onClick={() => navigate(`/finance/service-pr/feeds/${id}`)}
-            >
-              <Rss className="w-4 h-4 mr-1" />
-              Feeds
-            </Button>
-            {
-              buttonCondition.editWbsCode && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="border-gray-300 btn-primary"
-                  onClick={() => setShowEditWbsModal(true)}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Rejection Reason:{" "}
+                      {level.rejection_reason ?? "No reason provided"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div
+                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                    level.status
+                  )}`}
                 >
-                  Edit WBS Codes
-                </Button>
-              )
-            }
-          </div>
+                  {`${level.level} Approval : ${level.status}`}
+                </div>
+              )}
+              {level.updated_by && level.updated_at && (
+                <div className="ms-2 w-[190px]">
+                  {`${level.updated_by} (${format(
+                    new Date(level.updated_at),
+                    "dd/MM/yyyy"
+                  )})`}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-      </div>
+      </TooltipProvider>
 
       <div className="space-y-6">
         <Card className="shadow-sm border border-border">

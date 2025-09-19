@@ -182,6 +182,7 @@ export const LoginPage = ({ setBaseUrl, setToken }) => {
       setToken(response.access_token);
       saveBaseUrl(baseUrl);
       localStorage.setItem("userId", response.id.toString());
+      localStorage.setItem("userType", response.user_type.toString());
 
       const from = (location.state as { from?: Location })?.from?.pathname + (location.state as { from?: Location })?.from?.search || "/maintenance/asset";
 

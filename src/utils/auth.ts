@@ -29,6 +29,7 @@ export interface User {
     modules: string[];
     role_for: string;
   };
+  user_type?: string;
 }
 
 export interface LoginResponse {
@@ -117,7 +118,7 @@ export const saveBaseUrl = (baseUrl: string): void => {
 export const getBaseUrl = (): string | null => {
   const savedUrl = localStorage.getItem(AUTH_KEYS.BASE_URL);
   if (!savedUrl) return null;
-  
+
   // Ensure the URL includes the protocol
   return savedUrl.startsWith('http') ? savedUrl : `https://${savedUrl}`;
 };
@@ -141,16 +142,16 @@ export const clearAuth = (): void => {
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.BASE_URL);
   localStorage.clear();
-  
+
 };
 
 export const getOrganizationsByEmail = async (email: string): Promise<Organization[]> => {
   const response = await fetch(`https://uat.lockated.com/api/users/get_organizations_by_email.json?email=${email}`);
-  
+
   if (!response.ok) {
     throw new Error('Failed to fetch organizations');
   }
-  
+
   const data = await response.json();
   return data.organizations || [];
 };
@@ -202,10 +203,10 @@ export const loginUser = async (email: string, password: string, baseUrl: string
 export const loginWithPhone = async (phone: string, password: string): Promise<{ success: boolean; message: string }> => {
   // Simulate API call for phone login
   await new Promise(resolve => setTimeout(resolve, 1000));
-  
+
   // Store temp phone for OTP verification
   localStorage.setItem(AUTH_KEYS.TEMP_PHONE, phone);
-  
+
   // For now, simulate success - replace with actual API call
   return {
     success: true,
@@ -218,7 +219,7 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   const email = localStorage.getItem('temp_email');
   const baseUrl = getBaseUrl();
   const token = getToken();
-  
+
   if (!email) {
     throw new Error('Email not found. Please login again.');
   }
@@ -250,17 +251,17 @@ export const verifyOTP = async (otp: string): Promise<LoginResponse> => {
   }
 
   const data = await response.json();
-  
+
   // Clear temp email after successful verification
   localStorage.removeItem('temp_email');
-  
+
   return data;
 };
 
 // Send forgot password OTP
 export const sendForgotPasswordOTP = async (emailOrMobile: string): Promise<OTPResponse> => {
   const baseUrl = getBaseUrl();
-  
+
   if (!baseUrl) {
     throw new Error('Base URL not configured');
   }
@@ -294,7 +295,7 @@ export const sendForgotPasswordOTP = async (emailOrMobile: string): Promise<OTPR
   }
 
   const data = await response.json();
-  
+
   return {
     success: true,
     message: data.message || 'OTP sent successfully'
@@ -303,13 +304,13 @@ export const sendForgotPasswordOTP = async (emailOrMobile: string): Promise<OTPR
 
 // Verify forgot password OTP and reset password
 export const verifyForgotPasswordOTPAndResetPassword = async (
-  emailOrMobile: string, 
-  otp: string, 
-  newPassword: string, 
+  emailOrMobile: string,
+  otp: string,
+  newPassword: string,
   confirmPassword: string
 ): Promise<{ success: boolean; message: string }> => {
   const baseUrl = getBaseUrl();
-  
+
   if (!baseUrl) {
     throw new Error('Base URL not configured');
   }
@@ -347,11 +348,11 @@ export const verifyForgotPasswordOTPAndResetPassword = async (
   }
 
   const data = await response.json();
-  
+
   // Clear temp data
   localStorage.removeItem(AUTH_KEYS.TEMP_EMAIL);
   localStorage.removeItem(AUTH_KEYS.TEMP_PHONE);
-  
+
   return {
     success: true,
     message: data.message || 'Password reset successfully'
@@ -364,7 +365,7 @@ export const verifyForgotPasswordOTP = async (otp: string): Promise<{ success: b
   if (!otp) {
     throw new Error('OTP is required');
   }
-  
+
   return {
     success: true,
     message: 'OTP verified successfully'
@@ -376,11 +377,11 @@ export const resetPassword = async (newPassword: string, confirmPassword: string
   if (newPassword !== confirmPassword) {
     throw new Error('Passwords do not match');
   }
-  
+
   if (newPassword.length < 6) {
     throw new Error('Password must be at least 6 characters long');
   }
-  
+
   return {
     success: true,
     message: 'Password validation successful'

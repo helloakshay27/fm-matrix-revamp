@@ -231,7 +231,7 @@ export const PODashboard = () => {
         paymentTenure: item.payment_tenure,
         activeInactive: item.active,
         lastApprovedBy:
-          item.approval_levels[item.approval_levels.length - 1].approved_by,
+          item?.approval_levels[item.approval_levels.length - 1]?.approved_by,
         approvalStatus: item.all_level_approved
           ? "Approved"
           : item.all_level_approved === false

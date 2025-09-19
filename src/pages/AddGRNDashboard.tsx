@@ -183,6 +183,11 @@ export const AddGRNDashboard = () => {
   const fetchItem = async (id: number) => {
     try {
       const response = await dispatch(fetchItemDetails({ baseUrl, token, id })).unwrap();
+      setGrnDetails({
+        ...grnDetails,
+        purchaseOrder: id,
+        relatedTo: response.related_to
+      })
       const updatedInventoryDetails = response.pms_po_inventories.map((item: any) => {
         const inventoryItem = {
           ...item,
