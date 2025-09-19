@@ -384,8 +384,7 @@ export const ScheduledTaskDashboard = () => {
         overdue_count: data.overdue_count || 0
       });
 
-      // Update pagination state
-      setCurrentPage(data.current_page || 1);
+      // Update pagination state (don't update currentPage to avoid infinite loops)
       setTotalPages(data.pages || 1);
       // Use the transformed data length for display
       setTotalCount(transformedData.length);
@@ -400,18 +399,17 @@ export const ScheduledTaskDashboard = () => {
     }
   };
 
-  // Load tasks on component mount and when filters change
+  // Initial load on component mount
+  useEffect(() => {
+    fetchTasks();
+  }, []); // Only run once on mount
+
+  // Load tasks when filters, search, or status change (reset to page 1)
   useEffect(() => {
     console.log('Effect triggered - debouncedSearchQuery:', debouncedSearchQuery); // Debug log
-    fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus);
+    fetchTasks(currentFilters, 1, debouncedSearchQuery, selectedStatus);
+    setCurrentPage(1); // Reset to first page when filters change
   }, [currentFilters, debouncedSearchQuery, selectedStatus, showAll]);
-
-  // Separate effect for pagination to avoid infinite loops
-  useEffect(() => {
-    if (currentPage > 1) {
-      fetchTasks(currentFilters, currentPage, debouncedSearchQuery, selectedStatus);
-    }
-  }, [currentPage]);
 
   // Handle filter application
   const handleApplyFilters = (filters: TaskFilters) => {
@@ -422,8 +420,10 @@ export const ScheduledTaskDashboard = () => {
 
   // Handle pagination
   const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    fetchTasks(currentFilters, page, debouncedSearchQuery, selectedStatus);
+    if (page !== currentPage) {
+      setCurrentPage(page);
+      fetchTasks(currentFilters, page, debouncedSearchQuery, selectedStatus);
+    }
   };
 
   // Handle show all toggle
@@ -437,10 +437,7 @@ export const ScheduledTaskDashboard = () => {
     console.log('Search query:', query); // Debug log
     setSearchQuery(query);
     setCurrentPage(1); // Reset to first page when searching
-    // Force immediate search if query is empty (for clear search)
-    if (!query.trim()) {
-      fetchTasks(currentFilters, 1, '', selectedStatus);
-    }
+    // The useEffect will handle the API call when debouncedSearchQuery changes
   };
 
   // Handle status card click
@@ -674,6 +671,130 @@ export const ScheduledTaskDashboard = () => {
     setShowSelectionPanel(false);
   };
 
+  // Smart pagination rendering function (similar to AMC Dashboard)
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsis = totalPages > 7;
+
+    if (showEllipsis) {
+      // Always show first page
+      items.push(
+        <PaginationItem key={1}>
+          <PaginationLink
+            className='cursor-pointer'
+            onClick={() => handlePageChange(1)}
+            isActive={currentPage === 1}
+          >
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+
+      // Show pages 2, 3, 4 if currentPage is 1, 2, or 3
+      if (currentPage <= 3) {
+        for (let i = 2; i <= 4 && i < totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        if (totalPages > 5) {
+          items.push(
+            <PaginationItem key="ellipsis1">
+              <PaginationEllipsis />
+            </PaginationItem>
+          );
+        }
+      } else if (currentPage >= totalPages - 2) {
+        // Show ellipsis before last 4 pages
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = totalPages - 3; i < totalPages; i++) {
+          if (i > 1) {
+            items.push(
+              <PaginationItem key={i}>
+                <PaginationLink
+                  className='cursor-pointer'
+                  onClick={() => handlePageChange(i)}
+                  isActive={currentPage === i}
+                >
+                  {i}
+                </PaginationLink>
+              </PaginationItem>
+            );
+          }
+        }
+      } else {
+        // Show ellipsis, currentPage-1, currentPage, currentPage+1, ellipsis
+        items.push(
+          <PaginationItem key="ellipsis1">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                className='cursor-pointer'
+                onClick={() => handlePageChange(i)}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis2">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+
+      // Always show last page if more than 1 page
+      if (totalPages > 1) {
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              className='cursor-pointer'
+              onClick={() => handlePageChange(totalPages)}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show all pages if less than or equal to 7
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              className='cursor-pointer'
+              onClick={() => handlePageChange(i)}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
+
   return (
     <div className="p-2 sm:p-4 lg:p-6 max-w-full overflow-x-hidden">
       {/* Header Section */}
@@ -873,64 +994,31 @@ export const ScheduledTaskDashboard = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-6">
+            <div className="flex justify-center mt-6">
               <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => {
-                        if (currentPage > 1) {
-                          handlePageChange(currentPage - 1);
-                        }
-                      }}
-                      className={
-                        currentPage === 1
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                     />
                   </PaginationItem>
-
-                  {Array.from(
-                    { length: Math.min(totalPages, 10) },
-                    (_, i) => i + 1
-                  ).map((page) => (
-                    <PaginationItem key={page}>
-                      <PaginationLink
-                        onClick={() => handlePageChange(page)}
-                        isActive={currentPage === page}
-                      >
-                        {page}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
-
-                  {totalPages > 10 && (
-                    <PaginationItem>
-                      <PaginationEllipsis />
-                    </PaginationItem>
-                  )}
-
+                  {renderPaginationItems()}
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => {
-                        if (currentPage < totalPages) {
-                          handlePageChange(currentPage + 1);
-                        }
-                      }}
-                      className={
-                        currentPage === totalPages
-                          ? "pointer-events-none opacity-50"
-                          : ""
-                      }
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
                     />
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-
-              <div className="text-center mt-2 text-sm text-gray-600">
-                Showing page {currentPage} of {totalPages} ({totalCount} total tasks)
-              </div>
+            </div>
+          )}
+          
+          {/* Pagination Info */}
+          {totalPages > 1 && (
+            <div className="text-center mt-2 text-sm text-gray-600">
+              Showing page {currentPage} of {totalPages} ({totalCount} total tasks)
             </div>
           )}
         </TabsContent>
