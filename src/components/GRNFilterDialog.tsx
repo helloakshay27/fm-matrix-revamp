@@ -1,9 +1,8 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
-import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem } from '@mui/material';
+import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, Dialog, DialogContent, DialogTitle } from '@mui/material';
 
 const fieldStyles = {
   height: { xs: 28, sm: 36, md: 45 },
@@ -47,10 +46,10 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onClose={onOpenChange}>
       <DialogContent className="sm:max-w-md">
-        <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <DialogTitle className="text-lg font-semibold">FILTER BY</DialogTitle>
+        <div className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <h1 className="text-lg font-semibold">FILTER BY</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -59,8 +58,8 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
           >
             <X className="h-4 w-4" />
           </Button>
-        </DialogHeader>
-        
+        </div>
+
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <TextField
@@ -74,7 +73,7 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
               InputProps={{ sx: fieldStyles }}
               sx={{ mt: 1 }}
             />
-            
+
             <TextField
               label="PO Number"
               placeholder="Find By PO Number"
@@ -118,14 +117,14 @@ export const GRNFilterDialog: React.FC<GRNFilterDialogProps> = ({
         </div>
 
         <div className="flex gap-3 pt-4">
-          <Button 
+          <Button
             onClick={handleApply}
             className="flex-1 text-white"
             style={{ backgroundColor: '#C72030' }}
           >
             Apply
           </Button>
-          <Button 
+          <Button
             onClick={handleReset}
             variant="outline"
             className="flex-1"
