@@ -47,8 +47,14 @@ interface Question {
   selectedEmoji?: string;
   additionalFieldOnNegative?: boolean;
   additionalFields?: Array<{
+    id?: number;
     title: string;
     files: File[];
+    existingFiles?: Array<{
+      id: number;
+      file_name: string;
+      url: string;
+    }>;
   }>;
 }
 
@@ -231,36 +237,50 @@ export const EditSurveyPage = () => {
 
       // Map snag_questions to component questions format
       const mappedQuestions =
-        surveyData.snag_questions?.map((q: any) => ({
-          id: q.id.toString(),
-          text: q.descr,
-          answerType:
-            q.qtype === "multiple"
-              ? "multiple-choice"
-              : q.qtype === "input"
-              ? "input-box"
-              : q.qtype === "rating"
-              ? "rating"
-              : q.qtype === "emoji"
-              ? "emojis"
-              : q.qtype === "text"
-              ? "input-box"
-              : q.qtype === "description"
-              ? "description"
-              : "description",
-          mandatory: q.quest_mandatory,
-          answerOptions:
-            q.snag_quest_options?.map((option: any) => ({
-              id: option.id,
-              text: option.qname,
-              type: option.option_type === "p" ? "P" : "N",
-            })) || [],
-          rating: q.qtype === "rating" ? q.rating || 5 : undefined,
-          selectedEmoji:
-            q.qtype === "emoji" ? q.selected_emoji || "😊" : undefined,
-          additionalFieldOnNegative: q.additional_field_on_negative || false,
-          additionalFields: q.additional_fields || [],
-        })) || [];
+        surveyData.snag_questions?.map((q: any) => {
+          // Map generic_tags to additional fields
+          const additionalFields = q.generic_tags?.map((tag: any) => ({
+            id: tag.id,
+            title: tag.category_name,
+            files: [], // New files to be uploaded
+            existingFiles: tag.icons?.map((icon: any) => ({
+              id: icon.id,
+              file_name: icon.file_name,
+              url: icon.url
+            })) || []
+          })) || [];
+
+          return {
+            id: q.id.toString(),
+            text: q.descr,
+            answerType:
+              q.qtype === "multiple"
+                ? "multiple-choice"
+                : q.qtype === "input"
+                ? "input-box"
+                : q.qtype === "rating"
+                ? "rating"
+                : q.qtype === "emoji"
+                ? "emojis"
+                : q.qtype === "text"
+                ? "input-box"
+                : q.qtype === "description"
+                ? "description"
+                : "description",
+            mandatory: q.quest_mandatory,
+            answerOptions:
+              q.snag_quest_options?.map((option: any) => ({
+                id: option.id,
+                text: option.qname,
+                type: option.option_type === "p" ? "P" : "N",
+              })) || [],
+            rating: q.qtype === "rating" ? q.rating || 5 : undefined,
+            selectedEmoji:
+              q.qtype === "emoji" ? q.selected_emoji || "😊" : undefined,
+            additionalFieldOnNegative: additionalFields.length > 0,
+            additionalFields: additionalFields.length > 0 ? additionalFields : undefined,
+          };
+        }) || [];
 
       setQuestions(
         mappedQuestions.length > 0
@@ -400,6 +420,127 @@ export const EditSurveyPage = () => {
     );
   };
 
+  // Additional field handlers
+  const handleAddAdditionalField = (questionId: string) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: [
+                ...(q.additionalFields || []),
+                { title: "", files: [], existingFiles: [] },
+              ],
+            }
+          : q
+      )
+    );
+  };
+
+  const handleRemoveAdditionalField = (
+    questionId: string,
+    fieldIndex: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.filter(
+                (_, index) => index !== fieldIndex
+              ),
+            }
+          : q
+      )
+    );
+  };
+
+  const handleAdditionalFieldTitleChange = (
+    questionId: string,
+    fieldIndex: number,
+    value: string
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex ? { ...field, title: value } : field
+              ),
+            }
+          : q
+      )
+    );
+  };
+
+  const handleAdditionalFieldFilesChange = (
+    questionId: string,
+    fieldIndex: number,
+    files: File[]
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex ? { ...field, files } : field
+              ),
+            }
+          : q
+      )
+    );
+  };
+
+  const removeAdditionalFieldFile = (
+    questionId: string,
+    fieldIndex: number,
+    fileIndex: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex
+                  ? {
+                      ...field,
+                      files: field.files.filter((_, i) => i !== fileIndex),
+                    }
+                  : field
+              ),
+            }
+          : q
+      )
+    );
+  };
+
+  const removeExistingFile = (
+    questionId: string,
+    fieldIndex: number,
+    fileId: number
+  ) => {
+    setQuestions(
+      questions.map((q) =>
+        q.id === questionId
+          ? {
+              ...q,
+              additionalFields: q.additionalFields?.map((field, index) =>
+                index === fieldIndex
+                  ? {
+                      ...field,
+                      existingFiles: field.existingFiles?.filter((file) => file.id !== fileId),
+                    }
+                  : field
+              ),
+            }
+          : q
+      )
+    );
+  };
+
   const handleUpdateSurvey = async () => {
     // Validation
     if (!title.trim()) {
@@ -432,6 +573,60 @@ export const EditSurveyPage = () => {
           duration: 3000,
         });
         return;
+      }
+    }
+
+    // Validate questions
+    for (let i = 0; i < questions.length; i++) {
+      const question = questions[i];
+      if (!question.text.trim()) {
+        toast.error("Validation Error", {
+          description: `Please enter text for Question ${i + 1}`,
+          duration: 3000,
+        });
+        return;
+      }
+      if (!question.answerType) {
+        toast.error("Validation Error", {
+          description: `Please select an answer type for Question ${i + 1}`,
+          duration: 3000,
+        });
+        return;
+      }
+      
+      // Check if multiple choice questions have at least one option with text
+      if (question.answerType === "multiple-choice") {
+        if (!question.answerOptions || question.answerOptions.length === 0) {
+          toast.error("Validation Error", {
+            description: `Please add at least one option for Question ${i + 1}`,
+            duration: 3000,
+          });
+          return;
+        }
+        // Check if all options have text
+        for (let j = 0; j < question.answerOptions.length; j++) {
+          if (!question.answerOptions[j].text.trim()) {
+            toast.error("Validation Error", {
+              description: `Please enter text for option ${j + 1} in Question ${i + 1}`,
+              duration: 3000,
+            });
+            return;
+          }
+        }
+      }
+
+      // Validate additional fields
+      if (question.additionalFieldOnNegative && question.additionalFields) {
+        for (let k = 0; k < question.additionalFields.length; k++) {
+          const field = question.additionalFields[k];
+          if (!field.title.trim()) {
+            toast.error("Validation Error", {
+              description: `Please enter title for additional field ${k + 1} in Question ${i + 1}`,
+              duration: 3000,
+            });
+            return;
+          }
+        }
       }
     }
 
@@ -495,21 +690,27 @@ export const EditSurveyPage = () => {
           formData.append(`question[][selected_emoji]`, question.selectedEmoji);
         }
 
-        // Add additional field on negative selection
-        if (question.additionalFieldOnNegative) {
-          formData.append(`question[][additional_field_on_negative]`, "true");
-          
-          // Add additional fields if they exist
-          if (question.additionalFields) {
-            question.additionalFields.forEach((field, fieldIndex) => {
-              formData.append(`question[][additional_fields][][title]`, field.title);
-              
-              // Add uploaded files for this field
-              field.files.forEach((file, fileIdx) => {
-                formData.append(`question[][additional_fields][][files][]`, file);
+        // Handle additional fields (generic_tags) with files
+        if (question.additionalFieldOnNegative && question.additionalFields) {
+          question.additionalFields.forEach((field, fieldIndex) => {
+            // Add existing field ID if it exists (for updates)
+            if (field.id) {
+              formData.append(`question[][generic_tags][][id]`, field.id.toString());
+            }
+            
+            // Add generic tag metadata
+            formData.append(`question[][generic_tags][][category_name]`, field.title);
+            formData.append(`question[][generic_tags][][category_type]`, 'questions');
+            formData.append(`question[][generic_tags][][tag_type]`, 'not generic');
+            formData.append(`question[][generic_tags][][active]`, 'true');
+            
+            // Add new files as icons array
+            if (field.files && field.files.length > 0) {
+              field.files.forEach((file, fileIndex) => {
+                formData.append(`question[][generic_tags][][icons][]`, file);
               });
-            });
-          }
+            }
+          });
         }
 
         // Add multiple choice options with proper structure
@@ -533,13 +734,12 @@ export const EditSurveyPage = () => {
           });
         }
 
-        // Add generic tags if they exist (for ticket configuration)
-        if (createTicket && questionIndex === 0) {
-          // Add generic tags for the first question when ticket creation is enabled
-          formData.append(`question[][generic_tags][][category_name]`, ticketCategory);
-          formData.append(`question[][generic_tags][][category_type]`, "questions");
-          formData.append(`question[][generic_tags][][tag_type]`, "not generic");
-          formData.append(`question[][generic_tags][][active]`, "true");
+        // Add generic tags for ticket configuration only (separate from additional fields)
+        if (createTicket) {
+          formData.append(`question[][ticket_config][category_name]`, ticketCategory);
+          formData.append(`question[][ticket_config][assigned_to_id]`, assignTo);
+          formData.append(`question[][ticket_config][tag_type]`, "Ticket Setup");
+          formData.append(`question[][ticket_config][active]`, "true");
         }
       });
 
@@ -1033,21 +1233,16 @@ export const EditSurveyPage = () => {
                               <div className="flex gap-2">
                                 <Input
                                   value={field.title}
-                                  onChange={(e) => {
-                                    const updatedFields = [...(question.additionalFields || [])];
-                                    updatedFields[fieldIndex] = { ...field, title: e.target.value };
-                                    handleQuestionChange(question.id!, "additionalFields", updatedFields);
-                                  }}
+                                  onChange={(e) => 
+                                    handleAdditionalFieldTitleChange(question.id!, fieldIndex, e.target.value)
+                                  }
                                   placeholder="Field Title"
                                   className="flex-1"
                                 />
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  onClick={() => {
-                                    const updatedFields = question.additionalFields?.filter((_, idx) => idx !== fieldIndex) || [];
-                                    handleQuestionChange(question.id!, "additionalFields", updatedFields);
-                                  }}
+                                  onClick={() => handleRemoveAdditionalField(question.id!, fieldIndex)}
                                   className="p-2"
                                 >
                                   <X className="w-4 h-4" />
@@ -1065,12 +1260,7 @@ export const EditSurveyPage = () => {
                                     accept="image/*"
                                     onChange={(e) => {
                                       const files = Array.from(e.target.files || []);
-                                      const updatedFields = [...(question.additionalFields || [])];
-                                      updatedFields[fieldIndex] = { 
-                                        ...field, 
-                                        files: [...field.files, ...files] 
-                                      };
-                                      handleQuestionChange(question.id!, "additionalFields", updatedFields);
+                                      handleAdditionalFieldFilesChange(question.id!, fieldIndex, [...field.files, ...files]);
                                     }}
                                     className="hidden"
                                   />
@@ -1088,34 +1278,61 @@ export const EditSurveyPage = () => {
                                   </label>
                                 </div>
                                 
+                                {/* Display existing files */}
+                                {field.existingFiles && field.existingFiles.length > 0 && (
+                                  <div className="mb-2">
+                                    <Label className="text-xs text-gray-600">Existing Files</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                                      {field.existingFiles.map((existingFile, existingFileIndex) => (
+                                        <div key={`existing-${existingFile.id}`} className="relative">
+                                          <img
+                                            src={existingFile.url}
+                                            alt={existingFile.file_name}
+                                            className="w-full h-20 object-cover rounded border"
+                                          />
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => removeExistingFile(question.id!, fieldIndex, existingFile.id)}
+                                            className="absolute top-0 right-0 p-1 h-6 w-6 bg-red-500 text-white hover:bg-red-600"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </Button>
+                                          <span className="text-xs text-gray-600 block mt-1 truncate">
+                                            {existingFile.file_name}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                
                                 {/* Display uploaded files */}
                                 {field.files.length > 0 && (
-                                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                    {field.files.map((file, fileIndex) => (
-                                      <div key={fileIndex} className="relative">
-                                        <img
-                                          src={URL.createObjectURL(file)}
-                                          alt={file.name}
-                                          className="w-full h-20 object-cover rounded border"
-                                        />
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() => {
-                                            const updatedFields = [...(question.additionalFields || [])];
-                                            const updatedFiles = field.files.filter((_, idx) => idx !== fileIndex);
-                                            updatedFields[fieldIndex] = { ...field, files: updatedFiles };
-                                            handleQuestionChange(question.id!, "additionalFields", updatedFields);
-                                          }}
-                                          className="absolute top-0 right-0 p-1 h-6 w-6 bg-red-500 text-white hover:bg-red-600"
-                                        >
-                                          <X className="w-3 h-3" />
-                                        </Button>
-                                        <span className="text-xs text-gray-600 block mt-1 truncate">
-                                          {file.name}
-                                        </span>
-                                      </div>
-                                    ))}
+                                  <div>
+                                    <Label className="text-xs text-gray-600">New Files</Label>
+                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-1">
+                                      {field.files.map((file, fileIndex) => (
+                                        <div key={`new-${fileIndex}`} className="relative">
+                                          <img
+                                            src={URL.createObjectURL(file)}
+                                            alt={file.name}
+                                            className="w-full h-20 object-cover rounded border"
+                                          />
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => removeAdditionalFieldFile(question.id!, fieldIndex, fileIndex)}
+                                            className="absolute top-0 right-0 p-1 h-6 w-6 bg-red-500 text-white hover:bg-red-600"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </Button>
+                                          <span className="text-xs text-gray-600 block mt-1 truncate">
+                                            {file.name}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                               </div>
@@ -1125,10 +1342,7 @@ export const EditSurveyPage = () => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
-                              const updatedFields = [...(question.additionalFields || []), { title: "", files: [] }];
-                              handleQuestionChange(question.id!, "additionalFields", updatedFields);
-                            }}
+                            onClick={() => handleAddAdditionalField(question.id!)}
                             className="p-0 h-auto font-medium"
                             style={{ color: "#C72030" }}
                           >

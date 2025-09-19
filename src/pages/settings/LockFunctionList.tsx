@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Plus, Download, Filter, Upload, Printer, QrCode, Eye, Edit, Trash2, Loader2, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -159,6 +159,8 @@ export const LockFunctionList = () => {
   const debouncedSearchQuery = useDebounce(searchTerm, 1000);
   const [allLockFunctionData, setAllLockFunctionData] = useState<LockFunctionItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // API call to fetch lock function data
   const fetchLockFunctionData = async () => {
@@ -335,6 +337,89 @@ export const LockFunctionList = () => {
     setIsCreateDialogOpen(true);
   };
 
+  // Handle Excel file import
+  const handleImportExcel = async (file: File) => {
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append('excel_file', file);
+
+      // Using fetch since we need multipart/form-data
+      const response = await fetch('http://localhost:3000/lock_modules/import_from_excel', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Import failed' }));
+        throw new Error(errorData.message || `HTTP ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      toast.success('Excel file imported successfully!', {
+        description: `Imported ${result.count || 'data'} from Excel file`,
+        duration: 4000,
+      });
+
+      // Refresh the data after successful import
+      await fetchLockFunctionData();
+      
+    } catch (error: any) {
+      console.error('Error importing Excel file:', error);
+      toast.error('Failed to import Excel file', {
+        description: error.message || 'Please check your file format and try again',
+        duration: 5000,
+      });
+    } finally {
+      setImporting(false);
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  // Handle file input change
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+        'application/vnd.ms-excel', // .xls
+      ];
+      
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Invalid file type', {
+          description: 'Please select an Excel file (.xlsx or .xls)',
+          duration: 4000,
+        });
+        return;
+      }
+
+      // Check file size (limit to 10MB)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        toast.error('File too large', {
+          description: 'Please select a file smaller than 10MB',
+          duration: 4000,
+        });
+        return;
+      }
+
+      handleImportExcel(file);
+    }
+  };
+
+  // Trigger file input click
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="p-6 space-y-6">
       <header className="flex items-center justify-between">
@@ -368,13 +453,39 @@ export const LockFunctionList = () => {
             enableExport={false}
             exportFileName="lock-function-data"
             leftActions={
-              <Button 
-                onClick={handleAdd} 
-                className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-              >
-                <Plus className="w-4 h-4" />
-                Add
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button 
+                  onClick={handleAdd} 
+                  className="flex items-center gap-2 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add
+                </Button>
+                <Button
+                  onClick={handleImportClick}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white"
+                  disabled={importing}
+                >
+                  {importing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Importing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Import Excel
+                    </>
+                  )}
+                </Button>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  onChange={handleFileInputChange}
+                  ref={fileInputRef}
+                  className="hidden"
+                />
+              </div>
             }
             pagination={false} // Disable built-in pagination since we're adding custom
             loading={loading}

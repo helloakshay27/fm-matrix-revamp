@@ -216,7 +216,7 @@ export const AddVisitorGatePage = () => {
       });
       
       // Navigate to visitor management setup page
-      navigate('/security/visitor-management/setup');
+      navigate('/settings/visitor-management/setup');
       
     } catch (error) {
       console.error('Error creating visitor gate:', error);
@@ -231,7 +231,7 @@ export const AddVisitorGatePage = () => {
         <div className="mb-6">
           <Button
             variant="ghost"
-            onClick={() => navigate('/security/visitor-management/setup')}
+            onClick={() => navigate('/settings/visitor-management/setup')}
             className="mb-4 p-0 h-auto text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />

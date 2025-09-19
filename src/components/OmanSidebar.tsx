@@ -255,18 +255,18 @@ const navigationStructure = {
         name: "Visitor Management",
         icon: Users,
         subItems: [
-          { name: "Setup", href: "/security/visitor-management/setup" },
+          { name: "Setup", href: "/settings/visitor-management/setup" },
           {
             name: "Visiting Purpose",
-            href: "/security/visitor-management/visiting-purpose",
+            href: "/settings/visitor-management/visiting-purpose",
           },
           {
             name: "Support Staff",
-            href: "/security/visitor-management/support-staff",
+            href: "/settings/visitor-management/support-staff",
           },
           {
             name: "Icons",
-            href: "/security/visitor-management/icons",
+            href: "/settings/visitor-management/icons",
           },
         ],
       },

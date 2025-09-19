@@ -80,8 +80,14 @@ export const WBSElementDashboard = () => {
     setIsEditDialogOpen(true);
   };
 
-  const handleDeleteWBS = (id: string) => {
-    // Implement delete functionality here
+  const handleDeleteWBS = async (id: string) => {
+    try {
+      await dispatch(updateWBSCode({ baseUrl, token, data: { active: false }, id: Number(id) })).unwrap();
+      toast.success('WBS deleted successfully');
+      fetchWbsData();
+    } catch (error) {
+      console.log(error)
+    }
   };
 
   const handleBulkImport = (file: File) => {

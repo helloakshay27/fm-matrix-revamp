@@ -195,15 +195,15 @@ export const AddGRNDashboard = () => {
           inventoryType: item.inventory.id,
           rate: item.rate || "",
           cgstRate: item.cgst_rate || "",
-          cgstAmount: "",
+          cgstAmount: item.cgst_amount || "",
           sgstRate: item.sgst_rate || "",
-          sgstAmount: "",
+          sgstAmount: item.sgst_amount || "",
           igstRate: item.igst_rate || "",
-          igstAmount: "",
+          igstAmount: item.igst_amount || "",
           tcsRate: item.tcs_rate || "",
-          tcsAmount: "",
-          totalTaxes: "",
-          amount: "",
+          tcsAmount: item.tcs_amount || "",
+          totalTaxes: item.taxable_value || "",
+          amount: item.total_value || "",
           totalAmount: "",
           expectedQuantity: item.quantity || "",
           receivedQuantity: "",
@@ -221,7 +221,7 @@ export const AddGRNDashboard = () => {
 
   const calculateInventoryTaxes = (item: InventoryItem): InventoryItem => {
     const rate = parseFloat(item.rate) || 0;
-    const approvedQty = parseFloat(item.approvedQuantity) || 0;
+    const approvedQty = parseFloat(item.approvedQuantity ? item.approvedQuantity : item.expectedQuantity) || 0;
     const cgstRate = parseFloat(item.cgstRate) || 0;
     const sgstRate = parseFloat(item.sgstRate) || 0;
     const igstRate = parseFloat(item.igstRate) || 0;
