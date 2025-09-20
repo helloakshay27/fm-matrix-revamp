@@ -93,7 +93,7 @@ export const WOFilterDialog: React.FC<POFilterDialogProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <TextField
               label="Reference Number"
-              placeholder="PR Number"
+              placeholder="Reference Number"
               value={filters.referenceNumber}
               onChange={(e) => setFilters({ ...filters, referenceNumber: e.target.value })}
               fullWidth
@@ -104,8 +104,8 @@ export const WOFilterDialog: React.FC<POFilterDialogProps> = ({
             />
 
             <TextField
-              label="PO Number"
-              placeholder="PO Number"
+              label="WO Number"
+              placeholder="WO Number"
               value={filters.poNumber}
               onChange={(e) => setFilters({ ...filters, poNumber: e.target.value })}
               fullWidth

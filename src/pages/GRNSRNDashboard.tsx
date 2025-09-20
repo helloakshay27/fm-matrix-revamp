@@ -143,9 +143,9 @@ export const GRNSRNDashboard = () => {
     total_pages: 0,
   });
 
-  const fetchData = async (filterData = {}) => {
+  const fetchData = async (page = 1, filterData = {}) => {
     try {
-      const response = await dispatch(getGRN({ baseUrl, token, page: pagination.current_page })).unwrap();
+      const response = await dispatch(getGRN({ baseUrl, token, page: page })).unwrap();
       setGrn(response.grns);
       setPagination({
         current_page: Number(response.page),
@@ -257,14 +257,14 @@ export const GRNSRNDashboard = () => {
   );
 
   const handlePageChange = async (page: number) => {
+    console.log(page)
     if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
       return;
     }
 
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
-      await fetchData({
-        page,
+      await fetchData(page, {
         // reference_number: filters.referenceNumber,
         // external_id: filters.poNumber,
         // supplier_name: filters.supplierName,
