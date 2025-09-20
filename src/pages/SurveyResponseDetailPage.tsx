@@ -1,12 +1,79 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
 import { SurveyAnalyticsCard } from '@/components/SurveyAnalyticsCard';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
+
+// New interfaces for response list API
+interface ResponseAnswer {
+  answer_id: number;
+  quest_map_id: number;
+  question_id: number;
+  question_name: string;
+  answer_type: string;
+  created_at: string;
+  level_id: number | null;
+  comments: string;
+  responded_by: string;
+  option_id?: number;
+  option_name?: string;
+  option_type?: string;
+  ans_descr?: string;
+}
+
+interface ResponseComplaint {
+  complaint_id: number;
+  ticket_number: string;
+  heading: string;
+  assigned_to: number;
+  category: string;
+  assignee: string;
+  relation_id: number;
+  created_at: string;
+}
+
+interface SurveyResponse {
+  survey_id: number;
+  survey_name: string;
+  question_count: number;
+  mapping_id: number;
+  site_id: number;
+  building_id: number;
+  wing_id: number;
+  floor_id: number;
+  area_id: number;
+  room_id: number;
+  site_name: string;
+  building_name: string;
+  wing_name: string;
+  floor_name: string;
+  area_name: string;
+  room_name: string;
+  final_comment: string;
+  complaint_count: number;
+  complaints: ResponseComplaint[];
+  answers: ResponseAnswer[];
+}
+
+interface ResponseListData {
+  summary: {
+    total_surveys: number;
+    active_surveys: number;
+    inactive_surveys: number;
+    total_responses: number;
+  };
+  responses: SurveyResponse[];
+  pagination: {
+    current_page: number;
+    per_page: number;
+    total_count: number;
+    total_pages: number;
+  };
+}
 
 // TypeScript interfaces for the new survey details API response
 interface SurveyOption {
@@ -56,6 +123,38 @@ export const SurveyResponseDetailPage = () => {
   const [surveyData, setSurveyData] = useState<SurveyDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [surveyDetailsData, setSurveyDetailsData] = useState<SurveyDetailsResponse | null>(null);
+  const [responseListData, setResponseListData] = useState<ResponseListData | null>(null);
+
+  // Fetch response list data from new API
+  const fetchResponseListData = useCallback(async () => {
+    try {
+      const baseUrl = getFullUrl(`/survey_mappings/response_list.json`);
+      const url = new URL(baseUrl);
+      
+      // Add the required query parameter with dynamic survey ID
+      if (surveyId) {
+        url.searchParams.append('q[id_eq]', surveyId);
+      }
+      
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResponseListData(data);
+    } catch (error) {
+      console.error('Error fetching response list data:', error);
+      toast.error('Failed to fetch response list data');
+    }
+  }, [surveyId]);
 
   // API function to fetch survey details using the new endpoint
   const fetchSurveyDetails = async (surveyId: string) => {
@@ -133,9 +232,9 @@ export const SurveyResponseDetailPage = () => {
         setSurveyDetailsData(surveyDetailsResponse);
         
         // Extract survey data from the new API response
-        if (surveyDetailsResponse?.survey_details?.survey?.length > 0) {
-          const surveyDetail = surveyDetailsResponse.survey_details.survey[0];
-          
+        if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
+          const surveyDetail = surveyDetailsResponse.survey_details.surveys[0];
+
           // Set the survey data directly from the API response
           setSurveyData(surveyDetail);
           console.log('Survey data set:', surveyDetail);
@@ -180,8 +279,16 @@ export const SurveyResponseDetailPage = () => {
       }
     };
 
-    fetchSurveyData();
-  }, [surveyId, navigate]);
+    // Fetch both survey details and response list data
+    const fetchAllData = async () => {
+      await Promise.all([
+        fetchSurveyData(),
+        fetchResponseListData()
+      ]);
+    };
+
+    fetchAllData();
+  }, [surveyId, navigate, fetchResponseListData]);
 
   const handleCopyQuestion = async (questionId: number) => {
     const question = surveyData?.questions.find((q: SurveyQuestion) => q.question_id === questionId);
@@ -494,20 +601,22 @@ export const SurveyResponseDetailPage = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-500">Survey Details</div>
-                <div className="text-xs text-gray-400">Survey ID: {surveyData.survey_id}</div>
-                <div className="text-xs text-gray-400">Survey: {surveyData.survey_name}</div>
+                {/* <div className="text-xs text-gray-400">Survey ID: {surveyData.survey_id}</div> */}
+                {/* <div className="text-xs text-gray-400">Survey: {surveyData.survey_name}</div> */}
               </div>
             </div>
             
             <div className="flex items-center gap-8">
               <TabsList className="bg-transparent border-0 p-0 h-auto">
                 <TabsTrigger value="summary" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1">Summary</TabsTrigger>
-                <TabsTrigger value="tabular" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Analytics</TabsTrigger>
+                <TabsTrigger value="tabular" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Tabular</TabsTrigger>
+                                <TabsTrigger value="tickets" className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6">Tickets</TabsTrigger>
+
               </TabsList>
             </div>
             
             <div className="flex items-center gap-2">
-              <div className="text-sm text-gray-700">
+              {/* <div className="text-sm text-gray-700">
                 Total Responses: <span className="text-[#C72030] font-medium">
                   {surveyData.questions?.reduce((sum, q) => {
                     if (q.options && q.options.length > 0) {
@@ -516,11 +625,33 @@ export const SurveyResponseDetailPage = () => {
                     return sum;
                   }, 0) || 0}
                 </span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
           <TabsContent value="summary" className="space-y-6">
+            {/* Summary Statistics from new API */}
+            {responseListData?.summary && (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <div className="text-2xl font-bold text-blue-700">{responseListData.summary.total_surveys}</div>
+                  <div className="text-sm text-blue-600">Total Surveys</div>
+                </div>
+                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                  <div className="text-2xl font-bold text-green-700">{responseListData.summary.active_surveys}</div>
+                  <div className="text-sm text-green-600">Active Surveys</div>
+                </div>
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                  <div className="text-2xl font-bold text-orange-700">{responseListData.summary.total_responses}</div>
+                  <div className="text-sm text-orange-600">Total Responses</div>
+                </div>
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                  <div className="text-2xl font-bold text-purple-700">{responseListData.summary.inactive_surveys}</div>
+                  <div className="text-sm text-purple-600">Inactive Surveys</div>
+                </div>
+              </div>
+            )}
+            
             {/* Questions and Responses */}
             {surveyData.questions.map((question: SurveyQuestion) => {
               const totalResponses = question.options?.reduce((sum, opt) => sum + opt.response_count, 0) || 0;
@@ -586,7 +717,7 @@ export const SurveyResponseDetailPage = () => {
 
             {/* Survey Summary Statistics Pie Chart - Second Last Position */}
             <div className="mt-8">
-              <SurveyAnalyticsCard
+              {/* <SurveyAnalyticsCard
                 title="Survey Summary Statistics"
                 type="surveyDistributions"
                 data={getSurveyTypeDistributionData()}
@@ -595,12 +726,12 @@ export const SurveyResponseDetailPage = () => {
                   endDate: new Date() 
                 }}
                 onDownload={handleDownloadTypeChart}
-              />
+              /> */}
             </div>
 
             {/* Overall Response Distribution Pie Chart - Last Position */}
             <div className="mt-6">
-              <SurveyAnalyticsCard
+              {/* <SurveyAnalyticsCard
                 title="Overall Question Response Distribution"
                 type="statusDistribution"
                 data={getResponseDistributionData()}
@@ -609,97 +740,200 @@ export const SurveyResponseDetailPage = () => {
                   endDate: new Date() 
                 }}
                 onDownload={handleDownloadResponseChart}
-              />
+              /> */}
             </div>
           </TabsContent>
 
           <TabsContent value="tabular" className="mt-6">
             <div className="bg-white">
               <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Survey Question & Option Analytics</h3>
-                <p className="text-sm text-gray-600">Detailed breakdown of questions and their response distribution</p>
+                <h3 className="text-lg font-semibold text-gray-800">Survey Responses</h3>
+                <p className="text-sm text-gray-600">Detailed breakdown of all responses and answers</p>
+              </div>
+              
+              <div className="overflow-x-auto">
+                {(() => {
+                  // Get all unique questions from all responses dynamically
+                  const allUniqueQuestions = responseListData?.responses ? 
+                    Array.from(
+                      new Map(
+                        responseListData.responses
+                          .flatMap(response => response.answers || [])
+                          .map(answer => [answer.question_id, answer.question_name])
+                      ).entries()
+                    ) : [];
+
+                  return (
+                    <table className="w-full border-collapse border border-gray-300">
+                      <thead>
+                        <tr className="bg-gray-50">
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Response Id</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Date & Time</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Building</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Wing</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Area</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Floor</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Room</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Rating</th>
+                          {/* Dynamic question headers */}
+                          {allUniqueQuestions.map(([questionId, questionName]) => (
+                            <th key={questionId} className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">
+                              {questionName}
+                            </th>
+                          ))}
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Category</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]"> Final Comment</th>
+                          <th className="border border-gray-300 p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Ticket id</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {responseListData?.responses?.map((response: SurveyResponse, responseIndex: number) => {
+                          // Get all answers for this response
+                          const answers = response.answers || [];
+                          
+                          // Group answers by question for better display
+                          const questionAnswers: { [key: number]: ResponseAnswer[] } = {};
+                          answers.forEach(answer => {
+                            if (!questionAnswers[answer.question_id]) {
+                              questionAnswers[answer.question_id] = [];
+                            }
+                            questionAnswers[answer.question_id].push(answer);
+                          });
+                          
+                          return (
+                            <tr key={response.mapping_id} className="hover:bg-gray-50">
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.mapping_id}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {answers.length > 0 ? 
+                                  new Date(answers[0].created_at).toLocaleString('en-GB', {
+                                    day: '2-digit',
+                                    month: '2-digit', 
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
+                                  }) : '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.building_name || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.wing_name || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.area_name || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.floor_name || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.room_name || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {/* Get rating from emoji or rating type answers */}
+                                {(() => {
+                                  const ratingAnswer = answers.find(a => a.answer_type === 'emoji' || a.answer_type === 'rating');
+                                  return ratingAnswer?.ans_descr || ratingAnswer?.level_id || '-';
+                                })()}
+                              </td>
+                              {/* Dynamic question data */}
+                              {allUniqueQuestions.map(([questionId]) => {
+                                const questionAnswersForId = questionAnswers[questionId] || [];
+                                return (
+                                  <td key={questionId} className="border border-gray-300 p-3 text-sm text-gray-700">
+                                    {questionAnswersForId.length > 0 ? 
+                                      (questionAnswersForId[0].option_name || questionAnswersForId[0].ans_descr || '-') : '-'}
+                                  </td>
+                                );
+                              })}
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {answers[0]?.answer_type || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.final_comment || answers.find(a => a.comments)?.comments || '-'}
+                              </td>
+                              <td className="border border-gray-300 p-3 text-sm text-gray-700">
+                                {response.complaints && response.complaints.length > 0 ? response.complaints[0].complaint_id : '-'}
+                              </td>
+                            </tr>
+                          );
+                        }) || []}
+                      </tbody>
+                    </table>
+                  );
+                })()}
+                
+                {(!responseListData?.responses || responseListData.responses.length === 0) && (
+                  <div className="text-center py-8 text-gray-500">
+                    No response data available
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>          <TabsContent value="tickets" className="mt-6">
+            <div className="bg-white">
+              <div className="mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">Survey Tickets</h3>
+                <p className="text-sm text-gray-600">Complaints and tickets generated from survey responses</p>
               </div>
               
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[80px]">Question ID</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[200px]">Question</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Option</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Response Count</th>
-                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Percentage</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[100px]">Complaint ID</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Ticket Number</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[250px]">Heading</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[120px]">Category</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Assignee</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[130px]">Created At</th>
+                      <th className="p-3 text-left text-sm font-medium text-gray-700 min-w-[150px]">Location</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {surveyDetailsData?.survey_details?.survey?.[0]?.questions?.map((question: SurveyQuestion) => {
-                      const totalQuestionResponses = question.options?.reduce((sum: number, opt: SurveyOption) => sum + (opt.response_count || 0), 0) || 0;
-                      
-                      // Handle questions with no options
-                      if (!question.options || question.options.length === 0) {
-                        return (
-                          <tr key={`${question.question_id}-no-options`} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="p-3 text-sm text-gray-700">
-                              {question.question_id}
-                            </td>
-                            <td className="p-3 text-sm text-gray-700">
-                              {question.question}
-                            </td>
-                            <td className="p-3 text-sm text-gray-500 italic">
-                              No options configured
-                            </td>
-                            <td className="p-3 text-sm text-gray-700">
-                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                N/A
-                              </span>
-                            </td>
-                            <td className="p-3 text-sm text-gray-700">
-                              N/A
-                            </td>
-                          </tr>
-                        );
-                      }
-                      
-                      return question.options?.map((option: SurveyOption, optionIndex: number) => (
-                        <tr key={`${question.question_id}-${option.option_id}`} className="border-b border-gray-100 hover:bg-gray-50">
-                          {optionIndex === 0 && (
-                            <>
-                              <td className="p-3 text-sm text-gray-700" rowSpan={question.options.length}>
-                                {question.question_id}
-                              </td>
-                              <td className="p-3 text-sm text-gray-700" rowSpan={question.options.length}>
-                                {question.question}
-                              </td>
-                            </>
-                          )}
+                    {responseListData?.responses?.map((response: SurveyResponse) => 
+                      response.complaints?.map((complaint: ResponseComplaint) => (
+                        <tr key={`${response.mapping_id}-${complaint.complaint_id}`} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="p-3 text-sm text-gray-700">
-                            {option.option}
+                            {complaint.complaint_id}
                           </td>
                           <td className="p-3 text-sm text-gray-700">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              option.response_count > 0 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-gray-100 text-gray-800'
-                            }`}>
-                              {option.response_count || 0}
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                              {complaint.ticket_number}
                             </span>
                           </td>
                           <td className="p-3 text-sm text-gray-700">
-                            {totalQuestionResponses > 0 
-                              ? `${Math.round(((option.response_count || 0) / totalQuestionResponses) * 100)}%`
-                              : '0%'
+                            {complaint.heading}
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                              {complaint.category}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            {complaint.assignee}
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            {new Date(complaint.created_at).toLocaleDateString()}
+                          </td>
+                          <td className="p-3 text-sm text-gray-700">
+                            {response.site_name && response.building_name ? 
+                              `${response.site_name}, ${response.building_name}` : 
+                              (response.site_name || '-')
                             }
                           </td>
                         </tr>
                       )) || []
-                    }) || []}
+                    ) || []}
                   </tbody>
                 </table>
                 
-                {(!surveyDetailsData?.survey_details?.survey?.[0]?.questions || 
-                  surveyDetailsData.survey_details.survey[0].questions.length === 0) && (
+                {(!responseListData?.responses || 
+                  responseListData.responses.every(r => !r.complaints || r.complaints.length === 0)) && (
                   <div className="text-center py-8 text-gray-500">
-                    No question data available
+                    No tickets available
                   </div>
                 )}
               </div>
