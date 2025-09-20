@@ -20,6 +20,9 @@ export const InventoryDetailsPage = () => {
   const [feedsError, setFeedsError] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
   const [hsnCodeDisplay, setHsnCodeDisplay] = useState<string>('');
+  // Maps for displaying master names instead of IDs in history
+  const [invTypeMap, setInvTypeMap] = useState<Record<string, string>>({});
+  const [invSubTypeMap, setInvSubTypeMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     const fetchInventoryDetails = async () => {
@@ -37,6 +40,100 @@ export const InventoryDetailsPage = () => {
     };
     fetchInventoryDetails();
   }, [id]);
+
+  // Fetch inventory types to map IDs -> Names for history display
+  useEffect(() => {
+    let aborted = false;
+    const load = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const res = await fetch(`https://${baseUrl}/pms/inventory_types/autocomplete.json`, {
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (aborted) return;
+        const arr: any[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.inventory_types)
+            ? data.inventory_types
+            : Array.isArray(data?.item_types)
+              ? data.item_types
+              : Array.isArray(data?.data)
+                ? data.data
+                : Array.isArray(data?.items)
+                  ? data.items
+                  : Array.isArray(data?.inventory_types?.data)
+                    ? data.inventory_types.data
+                    : Array.isArray(data?.item_types?.data)
+                      ? data.item_types.data
+                      : [];
+        const map: Record<string, string> = {};
+        arr.forEach((it: any) => {
+          const id = it?.id != null ? String(it.id) : undefined;
+          const name = it?.name || it?.title || it?.label || '';
+          if (id && name) map[id] = String(name);
+        });
+        setInvTypeMap(map);
+      } catch { /* noop */ }
+    };
+    load();
+    return () => { aborted = true; };
+  }, []);
+
+  // Fetch sub types for the current inventory type to map IDs -> Names for history display
+  useEffect(() => {
+    let aborted = false;
+    const typeId = (inventoryData as any)?.pms_inventory_type_id
+      ?? (inventoryData as any)?.inventory_type_master_id
+      ?? (inventoryData as any)?.inventory_type_id
+      ?? (inventoryData as any)?.item_type_id;
+    if (!typeId) { setInvSubTypeMap({}); return; }
+    const load = async () => {
+      try {
+        const baseUrl = localStorage.getItem('baseUrl');
+        const token = localStorage.getItem('token');
+        if (!baseUrl || !token) return;
+        const url = `https://${baseUrl}/pms/inventory_types/get_subtype.json?inventory_type_id=${encodeURIComponent(String(typeId))}`;
+        const res = await fetch(url, { headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` } });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (aborted) return;
+        const arr: any[] = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.inventory_sub_types)
+            ? data.inventory_sub_types
+            : Array.isArray(data?.item_sub_types)
+              ? data.item_sub_types
+              : Array.isArray(data?.item_categories)
+                ? data.item_categories
+                : Array.isArray(data?.sub_types)
+                  ? data.sub_types
+                  : Array.isArray(data?.data)
+                    ? data.data
+                    : Array.isArray(data?.items)
+                      ? data.items
+                      : Array.isArray(data?.inventory_sub_types?.data)
+                        ? data.inventory_sub_types.data
+                        : Array.isArray(data?.item_sub_types?.data)
+                          ? data.item_sub_types.data
+                          : Array.isArray(data?.item_categories?.data)
+                            ? data.item_categories.data
+                            : [];
+        const map: Record<string, string> = {};
+        arr.forEach((it: any) => {
+          const id = it?.id != null ? String(it.id) : undefined;
+          const name = it?.name || it?.title || it?.label || '';
+          if (id && name) map[id] = String(name);
+        });
+        setInvSubTypeMap(map);
+      } catch { /* noop */ }
+    };
+    load();
+    return () => { aborted = true; };
+  }, [inventoryData]);
 
   // Derive or fetch human readable HSN/SAC code
   useEffect(() => {
@@ -58,7 +155,7 @@ export const InventoryDetailsPage = () => {
         const data = await resp.json();
         if (aborted) return;
         if (Array.isArray(data)) {
-          const match = data.find((d:any) => String(d.id) === String(hsnId));
+          const match = data.find((d: any) => String(d.id) === String(hsnId));
           if (match?.code) setHsnCodeDisplay(match.code);
         }
       } catch { /* silent */ }
@@ -85,7 +182,7 @@ export const InventoryDetailsPage = () => {
         if (!resp.ok) throw new Error('Failed to fetch history');
         const data = await resp.json();
         setFeeds(Array.isArray(data) ? data : []);
-      } catch (e:any) {
+      } catch (e: any) {
         console.error('Feeds fetch error', e);
         setFeedsError('Failed to load history');
       } finally {
@@ -188,12 +285,12 @@ export const InventoryDetailsPage = () => {
           const key = match[1];
           const content = match[2];
           const idx = content.lastIndexOf(',');
-            let from = content;
-            let to = '';
-            if (idx !== -1) {
-              from = content.slice(0, idx).trim();
-              to = content.slice(idx + 1).trim();
-            }
+          let from = content;
+          let to = '';
+          if (idx !== -1) {
+            from = content.slice(0, idx).trim();
+            to = content.slice(idx + 1).trim();
+          }
           const clean = (v: string) => v.replace(/^\"|\"$/g, '').replace(/ nil$/i, '—').replace(/^nil$/i, '—');
           rows.push({ key, from: clean(from), to: clean(to) });
         }
@@ -224,6 +321,14 @@ export const InventoryDetailsPage = () => {
   const LABELS: Record<string, string> = {
     name: 'Name',
     inventory_type: 'Type',
+    pms_inventory_type_id: 'Inventory Type',
+    inventory_type_master_id: 'Inventory Type',
+    inventory_type_id: 'Inventory Type',
+    item_type_id: 'Inventory Type',
+    pms_inventory_sub_type_id: 'Inventory Sub Type',
+    inventory_sub_type_id: 'Inventory Sub Type',
+    item_sub_type_id: 'Inventory Sub Type',
+    item_category_id: 'Inventory Sub Type',
     criticality: 'Criticality',
     asset_id: 'Asset',
     code: 'Code',
@@ -238,12 +343,12 @@ export const InventoryDetailsPage = () => {
     hsn_id: 'SAC/HSN',
     expiry_date: 'Expiry Date',
     unit: 'Unit',
-  category: 'Category',
-  category_id: 'Category',
-  category_name: 'Category',
-  inventory_category_id: 'Category',
-  pms_inventory_category_id: 'Category',
-  pms_inventory_category: 'Category',
+    category: 'Category',
+    category_id: 'Category',
+    category_name: 'Category',
+    inventory_category_id: 'Category',
+    pms_inventory_category_id: 'Category',
+    pms_inventory_category: 'Category',
     cost: 'Cost',
     rate_contract_vendor_code: 'Rate Contract Vendor',
   };
@@ -299,10 +404,94 @@ export const InventoryDetailsPage = () => {
     return val;
   };
 
+  // Normalize and map backend unit to a friendly label from a fixed list
+  const formatUnit = (unit: any): string => {
+    if (!unit) return '—';
+    const normalize = (s: string) => s.trim().toLowerCase().replace(/[\s\._-]/g, '').replace(/\.+/g, '');
+    const options = [
+      { value: 'Ea', label: 'Each' },
+      { value: 'Piece', label: 'Piece' },
+      { value: 'Kg', label: 'Kilogram' },
+      { value: 'Litre', label: 'Litre' },
+      { value: 'Box', label: 'Box' },
+      { value: 'Bottle', label: 'Bottle' },
+      { value: 'Packet', label: 'Packet' },
+      { value: 'Bag', label: 'Bag' },
+      { value: 'Qty', label: 'Quantity' },
+      { value: 'Meter', label: 'Meter' },
+      { value: 'Sq.Mtr', label: 'Square Meter' },
+      { value: 'Cu.Mtr', label: 'Cubic Meter' },
+      { value: 'Feet', label: 'Feet' },
+      { value: 'Sq.Ft', label: 'Square Feet' },
+      { value: 'Cu.Ft', label: 'Cubic Feet' },
+      { value: 'Inches', label: 'Inches' },
+      { value: 'Sq.Inches', label: 'Square Inches' },
+      { value: 'Nos', label: 'Numbers' },
+      { value: 'Pcs', label: 'Pieces' },
+      { value: 'Mm', label: 'Millimeter' },
+      { value: 'Size', label: 'Size' },
+      { value: 'Yards', label: 'Yards' },
+      { value: 'Sq.Yards', label: 'Square Yards' },
+      { value: 'Rs', label: 'Rupees' },
+      { value: 'Acre', label: 'Acre' },
+      { value: 'Kilometer', label: 'Kilometer' },
+      { value: 'Miles', label: 'Miles' },
+      { value: 'Grams', label: 'Grams' },
+      { value: 'Brass', label: 'Brass' },
+      { value: 'Tonnes', label: 'Tonnes' },
+    ];
+
+    const map = new Map<string, string>();
+    options.forEach(o => {
+      map.set(normalize(o.value), o.label);
+      map.set(normalize(o.label), o.label);
+    });
+
+    // Common synonyms from backend
+    const synonyms: Record<string, string> = {
+      ltr: 'Litre', liter: 'Litre', liters: 'Litre', litre: 'Litre', l: 'Litre',
+      qty: 'Quantity', quantity: 'Quantity',
+      m: 'Meter', metre: 'Meter',
+      sqm: 'Square Meter', squaremeter: 'Square Meter', sqmtr: 'Square Meter', sqmeter: 'Square Meter',
+      cumm: 'Cubic Meter', cubicmeter: 'Cubic Meter', cumtr: 'Cubic Meter',
+      ft: 'Feet', foot: 'Feet',
+      sqft: 'Square Feet', squarefeet: 'Square Feet', sqfeet: 'Square Feet',
+      cft: 'Cubic Feet', cubicfeet: 'Cubic Feet',
+      inch: 'Inches', in: 'Inches',
+      sqinch: 'Square Inches', squareinches: 'Square Inches', sqinches: 'Square Inches',
+      nos: 'Numbers', numbers: 'Numbers', no: 'Numbers',
+      pcs: 'Pieces', pieces: 'Pieces', piece: 'Piece',
+      mm: 'Millimeter', millimeter: 'Millimeter', millimetre: 'Millimeter',
+      yd: 'Yards', yard: 'Yards', yards: 'Yards',
+      sqyard: 'Square Yards', sqyards: 'Square Yards', squareyards: 'Square Yards',
+      rs: 'Rupees', inr: 'Rupees', rupees: 'Rupees',
+      km: 'Kilometer', kilometre: 'Kilometer', kilometres: 'Kilometer',
+      mile: 'Miles',
+      g: 'Grams', gm: 'Grams', gms: 'Grams', gram: 'Grams', grams: 'Grams',
+      ton: 'Tonnes', tons: 'Tonnes', tonne: 'Tonnes', mt: 'Tonnes',
+    };
+
+    const key = normalize(String(unit));
+    if (map.has(key)) return map.get(key)!;
+    if (synonyms[key]) return synonyms[key];
+    return String(unit); // fallback to original backend data
+  };
+
   const formatValue = (key: string, val: string): string => {
     if (!val || val === '—') return '—';
     // Strip surrounding quotes
     const v = val.replace(/^\"|\"$/g, '');
+    // Map master IDs to names for type and sub type if available
+    const TYPE_ID_KEYS = new Set(['pms_inventory_type_id', 'inventory_type_master_id', 'inventory_type_id', 'item_type_id']);
+    const SUBTYPE_ID_KEYS = new Set(['pms_inventory_sub_type_id', 'inventory_sub_type_id', 'item_sub_type_id', 'item_category_id']);
+    if (TYPE_ID_KEYS.has(key)) {
+      if (/^\d+$/.test(v) && invTypeMap[v]) return invTypeMap[v];
+      return v;
+    }
+    if (SUBTYPE_ID_KEYS.has(key)) {
+      if (/^\d+$/.test(v) && invSubTypeMap[v]) return invSubTypeMap[v];
+      return v;
+    }
     // Enumerations first
     const enumd = formatEnum(key, v);
     if (enumd !== v) return enumd;
@@ -310,7 +499,7 @@ export const InventoryDetailsPage = () => {
     const dated = formatMaybeDate(key, enumd);
     if (dated !== enumd) return dated;
     // Category-like keys: show as-is (name) or numeric id when no mapping available
-    if (['category','category_id','category_name','inventory_category_id','pms_inventory_category_id','pms_inventory_category'].includes(key)) {
+    if (['category', 'category_id', 'category_name', 'inventory_category_id', 'pms_inventory_category_id', 'pms_inventory_category'].includes(key)) {
       try {
         // If it looks like a JSON object/string, try to parse out name
         const trimmed = enumd.trim();
@@ -318,11 +507,11 @@ export const InventoryDetailsPage = () => {
           const obj = JSON.parse(trimmed);
           if (obj?.name) return String(obj.name);
         }
-      } catch {/* ignore */}
+      } catch {/* ignore */ }
       return enumd;
     }
     // Numbers for common numeric fields
-    if (['quantity','min_stock_level','max_stock_level','min_order_level','cgst_rate','sgst_rate','igst_rate','cost'].includes(key)) {
+    if (['quantity', 'min_stock_level', 'max_stock_level', 'min_order_level', 'cgst_rate', 'sgst_rate', 'igst_rate', 'cost'].includes(key)) {
       return formatNumberLike(key, enumd);
     }
     return enumd;
@@ -544,7 +733,7 @@ export const InventoryDetailsPage = () => {
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Unit</span>
-                    <span>: {inventoryData?.unit || '—'}</span>
+                    <span>: {formatUnit((inventoryData as any)?.unit)}</span>
                   </div>
                   <div className="flex text-sm">
                     <span className="text-gray-600 w-24">Category</span>
@@ -628,7 +817,7 @@ export const InventoryDetailsPage = () => {
                                   )}
                                   {changes.length > 0 && (
                                     <div className="flex flex-col gap-1">
-                                      {(expanded ? changes : changes.slice(0,3))
+                                      {(expanded ? changes : changes.slice(0, 3))
                                         .filter(c => !HIDDEN_KEYS.has(c.key))
                                         .map(c => (
                                           <div key={c.key} className="flex items-start flex-wrap gap-1 text-[12px] bg-gray-100 rounded px-2 py-1">

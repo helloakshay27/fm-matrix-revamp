@@ -937,28 +937,7 @@ export const AddAMCPage = () => {
 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label={
-                    <span>
-                      Cost<span style={{ color: 'red' }}>*</span>
-                    </span>
-                  }
-                  placeholder="Enter Cost"
-                  name="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={e => handleInputChange('cost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  error={!!errors.cost}
-                  helperText={errors.cost}
-                  disabled={isSubmitting}
-                />
-              </div>
-
+              {/* Row 1: Contract Name | Start Date | End Date */}
               <div>
                 <TextField
                   label={
@@ -1005,6 +984,35 @@ export const AddAMCPage = () => {
                 />
               </div>
 
+              <div>
+                <TextField
+                  fullWidth
+                  label={
+                    <span>
+                      End Date<span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
+                  type="date"
+                  value={formData.endDate || ''}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  size="small"
+                  InputLabelProps={{ shrink: true }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate}
+                  inputProps={{
+                    min: formData.startDate || undefined,
+                  }}
+                  sx={{
+                    height: '45px',
+                    '& .MuiInputBase-root': {
+                      height: '45px',
+                    },
+                  }}
+                  disabled={!formData.startDate || isSubmitting}
+                />
+              </div>
+
+              {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
               <div>
                 <TextField
                   fullWidth
@@ -1058,32 +1066,27 @@ export const AddAMCPage = () => {
 
               <div>
                 <TextField
-                  fullWidth
                   label={
                     <span>
-                      End Date<span style={{ color: 'red' }}>*</span>
+                      Cost<span style={{ color: 'red' }}>*</span>
                     </span>
                   }
-                  type="date"
-                  value={formData.endDate || ''}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  size="small"
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={e => handleInputChange('cost', e.target.value)}
+                  fullWidth
+                  variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate}
-                  inputProps={{
-                    min: formData.startDate || undefined,
-                  }}
-                  sx={{
-                    height: '45px',
-                    '& .MuiInputBase-root': {
-                      height: '45px',
-                    },
-                  }}
-                  disabled={!formData.startDate || isSubmitting}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
+                  disabled={isSubmitting}
                 />
               </div>
 
+              {/* Row 3: No. of Visits */}
               <div>
                 <TextField
                   label={
