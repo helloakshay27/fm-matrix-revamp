@@ -49,6 +49,8 @@ export const EditInventoryPage = () => {
   const [invSubTypeLoading, setInvSubTypeLoading] = useState(false);
   const [invTypeId, setInvTypeId] = useState<string>('');
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
+  // Preserve the originally saved expiry date (YYYY-MM-DD) to enforce as minimum in edit
+  const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -226,6 +228,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
+  // Keep a copy of the original expiry date for minDate/validation in edit
+  setInitialExpiryYMD(normalizedExpiry);
       // Prefer vendor name over id for display
       const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
@@ -395,7 +399,17 @@ export const EditInventoryPage = () => {
       setFormData(prev => ({ ...prev, expiryDate: val }));
       setErrors(prev => ({
         ...prev,
-        expiryDate: val && val < todayISO ? 'Expiry Date cannot be in the past.' : ''
+        // In edit, the minimum allowed should be the originally saved expiry date.
+        // Fallback to today only if we don't have an original.
+        expiryDate: (() => {
+          const minYMD = initialExpiryYMD || todayISO;
+          if (val && minYMD && val < minYMD) {
+            // Show friendly dd-MM-yyyy for the min date
+            const [y,m,d] = minYMD.split('-');
+            return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+          }
+          return '';
+        })()
       }));
       return;
     }
@@ -430,7 +444,13 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
-    if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
+    if (formData.expiryDate) {
+      const minYMD = initialExpiryYMD || todayISO;
+      if (formData.expiryDate < minYMD) {
+        const [y,m,d] = minYMD.split('-');
+        newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -877,7 +897,8 @@ export const EditInventoryPage = () => {
                         const ymd = formatDateToYMD(date as Date | null);
                         handleInputChange("expiryDate", ymd);
                       }}
-                      disablePast
+                      // In edit mode, allow any date on/after the originally saved expiry date
+                      minDate={parseYMDToDate(initialExpiryYMD) || undefined}
                       format='dd-MM-yyyy'
                       slotProps={{
                         textField: {

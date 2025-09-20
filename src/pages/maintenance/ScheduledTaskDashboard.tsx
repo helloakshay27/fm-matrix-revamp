@@ -341,7 +341,9 @@ export const ScheduledTaskDashboard = () => {
 
       // Add status filter
       if (status) {
-        queryParams.append('q[task_status_eq]', status);
+        // queryParams.append('q[task_status_eq]', status);
+        queryParams.append('type', status);
+
       }
 
       // Add general search functionality for checklist and asset
@@ -350,8 +352,11 @@ export const ScheduledTaskDashboard = () => {
         queryParams.append('q[custom_form_form_name_cont]', searchTerm.trim());
         // queryParams.append('q[asset_asset_name_cont]', searchTerm.trim());
       }
+      if (!status) {
+        queryParams.append('type', status || 'Open');
+      }
 
-      const apiUrl = getFullUrl(`/all_tasks_listing.json?show_all=true&${queryParams.toString()}`);
+      const apiUrl = getFullUrl(`/pms/users/scheduled_tasks.json?&${queryParams.toString()}`);
       console.log('API URL:', apiUrl); // Debug log
       console.log('Search term:', searchTerm); // Debug log
 
