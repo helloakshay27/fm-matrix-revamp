@@ -84,6 +84,7 @@ export const EditInventoryPage = () => {
     inventoryName?: string;
     inventoryCode?: string;
     minStockLevel?: string;
+    maxStockLevel?: string;
     expiryDate?: string;
   }>({});
   // Inventory name suggestion state
@@ -425,11 +426,29 @@ export const EditInventoryPage = () => {
       const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
       setErrors(prev => ({ ...prev, inventoryCode: msg }));
     }
-    if (field === 'minStockLevel') {
-      let msg = '';
-      if (!nextVal.trim()) msg = 'Min. Stock Level is required.';
-      else if (!/^\d+$/.test(nextVal)) msg = 'Enter a valid number.';
-      setErrors(prev => ({ ...prev, minStockLevel: msg }));
+    // Min/Max Stock cross-field validation (Edit page)
+    if (field === 'minStockLevel' || field === 'maxStockLevel') {
+      const newMin = field === 'minStockLevel' ? nextVal : formData.minStockLevel;
+      const newMax = field === 'maxStockLevel' ? nextVal : formData.maxStockLevel;
+
+      let minErr = '';
+      let maxErr = '';
+
+      // Validate formats
+      if (!newMin.trim()) minErr = 'Min. Stock Level is required.';
+      else if (!/^\d+$/.test(newMin)) minErr = 'Enter a valid number.';
+
+      if (newMax && !/^\d+$/.test(newMax)) maxErr = 'Max Stock Level must be a valid number';
+
+      // Cross-field compare when both present and numeric
+      if (/^\d+$/.test(newMin) && /^\d+$/.test(newMax)) {
+        if (parseInt(newMin, 10) > parseInt(newMax, 10)) {
+          minErr = 'Min Stock Level cannot be greater than Max Stock Level';
+          maxErr = 'Max Stock Level cannot be less than Min Stock Level';
+        }
+      }
+
+      setErrors(prev => ({ ...prev, minStockLevel: minErr, maxStockLevel: maxErr }));
     }
   };
 
@@ -444,6 +463,14 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
+    if (formData.maxStockLevel && !/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+    // Cross-field: Min <= Max when both provided
+    if (/^\d+$/.test(formData.minStockLevel) && /^\d+$/.test(formData.maxStockLevel)) {
+      if (parseInt(formData.minStockLevel, 10) > parseInt(formData.maxStockLevel, 10)) {
+        newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+        newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
+      }
+    }
     if (formData.expiryDate) {
       const minYMD = initialExpiryYMD || todayISO;
       if (formData.expiryDate < minYMD) {
@@ -1008,6 +1035,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={Boolean(errors.maxStockLevel)}
+                    helperText={errors.maxStockLevel || ''}
                     sx={fieldStyles}
                   />
                 </div>
