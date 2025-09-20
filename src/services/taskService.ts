@@ -174,10 +174,13 @@ export const taskService = {
         queryParams['q[task_status_eq]'] = params.status;
         delete queryParams.status; // Remove the status key to avoid duplication
       }
+      queryParams.append('type', status);
 
-      const response = await apiClient.get<TaskListResponse>('/all_tasks_listing.json/show_all=true', {
+
+      const response = await apiClient.get<TaskListResponse>('/pms/users/scheduled_tasks.json', {
         params: queryParams
       });
+      console.log('Fetched task list:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error fetching task list:', error);
@@ -185,13 +188,26 @@ export const taskService = {
     }
   },
 
-  async exportTasks(params?: { status?: string }): Promise<Blob> {
+  async exportTasks(params?: { status?: string,[key: string]: any; }): Promise<Blob> {
     try {
       const queryParams: any = {};
 
       // Handle status filtering
       if (params?.status) {
         queryParams['task_status_eq'] = params.status;
+        
+      }
+      console.log('Params for export:', params);
+      queryParams['type'] =  params.status.toLocaleLowerCase() || 'Open';
+      console.log('Export query params:', queryParams);
+      if (params) {
+        Object.entries(params).forEach(([key, value]) => {
+          if (key === 'status' && value) {
+            queryParams['task_status_eq'] = value;
+          } else if (value !== undefined && value !== null && value !== '') {
+            queryParams[key] = value;
+          }
+        });
       }
 
       const response = await apiClient.get('/pms/users/scheduled_tasks.xlsx', {
@@ -205,7 +221,7 @@ export const taskService = {
     }
   },
 
-  async downloadTaskExport(params?: { status?: string }): Promise<void> {
+  async downloadTaskExport(params?: { status?: string,[key: string]: any; }): Promise<void> {
     try {
       const blob = await this.exportTasks(params);
       const url = window.URL.createObjectURL(blob);

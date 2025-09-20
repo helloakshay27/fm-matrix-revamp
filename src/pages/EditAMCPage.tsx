@@ -946,23 +946,7 @@ useEffect(() => {
 
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <TextField
-                  label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
-                  placeholder="Enter Cost"
-                  name="cost"
-                  type="number"
-                  value={formData.cost}
-                  onChange={e => handleInputChange('cost', e.target.value)}
-                  fullWidth
-                  variant="outlined"
-                  InputLabelProps={{ shrink: true }}
-                  InputProps={{ sx: fieldStyles }}
-                  error={!!errors.cost}
-                  helperText={errors.cost}
-                />
-              </div>
-
+              {/* Row 1: Contract Name | Start Date | End Date */}
               <div>
                 <TextField
                   label={<span>Contract Name<span style={{ color: '#C72030' }}>*</span></span>}
@@ -994,6 +978,23 @@ useEffect(() => {
                 />
               </div>
 
+              <div>
+                <TextField
+                  fullWidth
+                  type="date"
+                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
+                  value={formData.endDate}
+                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
+                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
+                  error={!!errors.endDate}
+                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
+                  disabled={!formData.startDate || updateLoading}
+                />
+              </div>
+
+              {/* Row 2: First Service Date | Payment Terms | AMC Cost */}
               <div>
                 <TextField
                   fullWidth
@@ -1034,20 +1035,22 @@ useEffect(() => {
 
               <div>
                 <TextField
+                  label={<span>Cost<span style={{ color: '#C72030' }}>*</span></span>}
+                  placeholder="Enter Cost"
+                  name="cost"
+                  type="number"
+                  value={formData.cost}
+                  onChange={e => handleInputChange('cost', e.target.value)}
                   fullWidth
-                  type="date"
-                  label={<span>End Date<span style={{ color: '#C72030' }}>*</span></span>}
-                  value={formData.endDate}
-                  onChange={(e) => handleInputChange('endDate', e.target.value)}
+                  variant="outlined"
                   InputLabelProps={{ shrink: true }}
-                  inputProps={{ style: { height: 46 }, min: formData.startDate || undefined }}
-                  sx={{ '& .MuiInputBase-root': { height: 46 } }}
-                  error={!!errors.endDate}
-                  helperText={errors.endDate || (!formData.startDate && "Please select a start date first.")}
-                  disabled={!formData.startDate || updateLoading}
+                  InputProps={{ sx: fieldStyles }}
+                  error={!!errors.cost}
+                  helperText={errors.cost}
                 />
               </div>
 
+              {/* Row 3: No. of Visits */}
               <div>
                 <TextField
                   label={<span>No. of Visits<span style={{ color: '#C72030' }}>*</span></span>}

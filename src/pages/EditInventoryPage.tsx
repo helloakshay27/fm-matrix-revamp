@@ -8,6 +8,9 @@ import { fetchInventory, updateInventory, clearError, resetInventoryState } from
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
@@ -66,14 +69,20 @@ export const EditInventoryPage = () => {
     cgstRate: '',
     igstRate: ''
   });
-  // Today (YYYY-MM-DD) used to restrict selecting past dates for expiry
-  const todayISO = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  // Today (YYYY-MM-DD) in LOCAL time to align with DatePicker disablePast and comparisons
+  const todayISO = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, '0');
+    const d = String(now.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }, []);
   // Validation errors state for required fields
   const [errors, setErrors] = useState<{
     inventoryName?: string;
     inventoryCode?: string;
     minStockLevel?: string;
-  expiryDate?: string;
+    expiryDate?: string;
   }>({});
   // Inventory name suggestion state
   const [nameSuggestions, setNameSuggestions] = useState<any[]>([]); // raw API suggestions
@@ -81,6 +90,25 @@ export const EditInventoryPage = () => {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false); // actual dropdown visibility (only when filtered matches exist)
   const nameDebounceRef = useRef<number | null>(null);
   const inventoryNameWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  // Helpers to safely convert between YYYY-MM-DD and Date without timezone drift
+  const parseYMDToDate = (s: string | null | undefined): Date | null => {
+    if (!s) return null;
+    const parts = s.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+  const formatDateToYMD = (date: Date | null): string => {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
   const fetchSAC = async () => {
     const baseUrl = localStorage.getItem('baseUrl');
     const token = localStorage.getItem('token');
@@ -313,7 +341,7 @@ export const EditInventoryPage = () => {
         const data = await res.json();
         let arr: any[] = [];
         if (Array.isArray(data)) arr = data;
-        else if (Array.isArray(data?.item_types)) arr = data.item_types;       
+        else if (Array.isArray(data?.item_types)) arr = data.item_types;
         setInvTypeOptions(arr);
       } catch (e) {
         console.error('Error fetching inventory types', e);
@@ -355,10 +383,9 @@ export const EditInventoryPage = () => {
   }, [invTypeId]);
 
   const handleInputChange = (field: string, value: string) => {
-    // Basic sanitization for specific fields
+    // Sanitize numeric-only fields: Min/Max Stock and Min Order should accept digits only
     let nextVal = value;
-    if (field === 'minStockLevel') {
-      // Only digits allowed for Min. Stock Level
+    if (field === 'minStockLevel' || field === 'maxStockLevel' || field === 'minOrderLevel') {
       nextVal = value.replace(/\D/g, '');
     }
 
@@ -403,7 +430,7 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
-  if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
+    if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -439,9 +466,9 @@ export const EditInventoryPage = () => {
       max_stock_level: parseInt(formData.maxStockLevel) || 0,
       min_stock_level: parseInt(formData.minStockLevel) || 0,
       min_order_level: formData.minOrderLevel || "0",
-  // New master fields
-  pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
-  pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
+      // New master fields
+      pms_inventory_type_id: invTypeId ? parseInt(invTypeId, 10) : null,
+      pms_inventory_sub_type_id: invSubTypeId ? parseInt(invSubTypeId, 10) : null,
       green_product: ecoFriendly ? 1 : 0,
       // Use rate_contract_vendor_code to align with create endpoint (retain legacy key if backend still expects it)
       // Map vendor name back to id
@@ -528,6 +555,9 @@ export const EditInventoryPage = () => {
       </div>
     );
   }
+
+  // (removed duplicate today variable, rely on validations and DatePicker's disablePast)
+
 
   return (
     <div className="p-6 min-h-screen bg-gray-50">
@@ -839,19 +869,38 @@ export const EditInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label="Expiry Date"
-                    type="date"
-                    value={formData.expiryDate}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    inputProps={{ min: todayISO }}
-                    error={Boolean(errors.expiryDate)}
-                    helperText={errors.expiryDate || ''}
-                    fullWidth
-                    variant="outlined"
-                    InputLabelProps={{ shrink: true }}
-                    sx={fieldStyles}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Expiry Date"
+                      value={parseYMDToDate(formData.expiryDate)}
+                      onChange={(date) => {
+                        const ymd = formatDateToYMD(date as Date | null);
+                        handleInputChange("expiryDate", ymd);
+                      }}
+                      disablePast
+                      format='dd-MM-yyyy'
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: "outlined",
+                          size: "small", 
+                          InputLabelProps: { shrink: true },
+                          sx: {
+                            ...fieldStyles,
+                            "& .MuiInputBase-root": {
+                              height: 40, 
+                            },
+                            "& .MuiInputBase-input": {
+                              padding: "8px 12px", 
+                            },
+                          },
+                          error: Boolean(errors.expiryDate),
+                          helperText: errors.expiryDate || "",
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+
                 </div>
 
                 <div>

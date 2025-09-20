@@ -316,12 +316,16 @@ export const AddInventoryPage = () => {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    const updatedFormData = { ...formData, [field]: value };
+    // Sanitize numeric-only fields: Min/Max Stock and Min Order should accept digits only
+    const isNumericOnlyField = field === 'minStockLevel' || field === 'maxStockLevel' || field === 'minOrderLevel';
+    const sanitized = isNumericOnlyField ? value.replace(/\D/g, '') : value;
+
+    const updatedFormData = { ...formData, [field]: sanitized };
     setFormData(updatedFormData);
-    
-    // Validate the current field with the new value and updated form data
-    validateField(field, value, updatedFormData);
-    
+
+    // Validate the current field with the sanitized value and updated form data
+    validateField(field, sanitized, updatedFormData);
+
     // Re-validate related fields for stock level cross-validations using updated data
     if (field === 'minStockLevel') {
       if (updatedFormData.maxStockLevel) {
