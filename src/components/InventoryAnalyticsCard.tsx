@@ -323,77 +323,69 @@ export const InventoryAnalyticsCard: React.FC<InventoryAnalyticsCardProps> = ({
       }
 
       case 'itemsStatus': {
-        // Convert status data to chart format
+        // Convert status data to chart format with safe fallbacks
         const statusChartData = [
-          { name: 'Active', value: data.count_of_active_items, color: '#22C55E' },
-          { name: 'Inactive', value: data.count_of_inactive_items, color: '#EF4444' },
-          { name: 'Critical', value: data.count_of_critical_items, color: '#F97316' },
-          { name: 'Non-Critical', value: data.count_of_non_critical_items, color: '#3B82F6' }
+          { name: 'Active', value: Number(data?.count_of_active_items) || 0, color: '#22C55E' },
+          { name: 'Inactive', value: Number(data?.count_of_inactive_items) || 0, color: '#EF4444' },
+          { name: 'Critical', value: Number(data?.count_of_critical_items) || 0, color: '#F97316' },
+          { name: 'Non-Critical', value: Number(data?.count_of_non_critical_items) || 0, color: '#3B82F6' }
         ];
         const total = statusChartData.reduce((sum, item) => sum + (item.value || 0), 0);
-        // Custom label for PieChart to show value outside the arc
-        const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, value, index }) => {
-          if (!value) return null;
-          const RADIAN = Math.PI / 180;
-          const radius = outerRadius + 18; // smaller offset for smaller chart
-          const x = cx + radius * Math.cos(-midAngle * RADIAN);
-          const y = cy + radius * Math.sin(-midAngle * RADIAN);
-          return (
-            <text
-              x={x}
-              y={y}
-              fill="#222"
-              textAnchor={x > cx ? 'start' : 'end'}
-              dominantBaseline="central"
-              fontSize={15}
-              fontWeight={700}
-              stroke="#fff"
-              strokeWidth={0.5}
-            >
-              {value}
-            </text>
-          );
-        };
+        const withPct = statusChartData.map((s) => ({
+          ...s,
+          pct: total > 0 ? Math.round((s.value / total) * 100) : 0,
+        }));
+
         return (
-          <div className="flex flex-col items-center justify-center w-full h-full">
-            <div className="p-6 w-full flex flex-col items-center">
-              <div className="flex flex-col md:flex-row items-center justify-center gap-8 w-full">
-                <ResponsiveContainer width={170} height={170}>
+          <div className="w-full h-full">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+              {/* Donut with centered total */}
+              <div className="relative mx-auto">
+                <ResponsiveContainer width={240} height={240}>
                   <PieChart>
                     <Pie
-                      data={statusChartData}
+                      data={withPct}
                       cx="50%"
                       cy="50%"
-                      innerRadius={40}
-                      outerRadius={65}
+                      innerRadius={70}
+                      outerRadius={100}
                       paddingAngle={2}
                       dataKey="value"
-                      label={renderCustomLabel}
+                      isAnimationActive={false}
                       stroke="#fff"
                     >
-                      {statusChartData.map((entry, index) => (
+                      {withPct.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value: number, name: string, props: any) => [`${value}`, statusChartData[props.index]?.name]}
-                    />
+                    <Tooltip formatter={(value: number, name: string, props: any) => [`${value}`, withPct[props.index]?.name]} />
                   </PieChart>
                 </ResponsiveContainer>
-                <div className="flex flex-col gap-3 min-w-[160px]">
-                  {statusChartData.map((item, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <span className="inline-block w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></span>
-                      <span className="text-base font-medium text-gray-700">{item.name}</span>
-                      <span className="ml-auto text-base font-semibold text-gray-900">{item.value}</span>
-                    </div>
-                  ))}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="text-center">
+                    <div className="text-3xl font-extrabold text-gray-900 leading-tight">{total}</div>
+                    <div className="text-[11px] uppercase tracking-wide text-gray-500">Total Items</div>
+                  </div>
                 </div>
-
               </div>
 
+              {/* Legend with counts and tiny progress */}
+              <div className="space-y-3 w-full">
+                {withPct.map((item, idx) => (
+                  <div key={idx} className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-block w-3.5 h-3.5 rounded-full" style={{ backgroundColor: item.color }}></span>
+                      <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                      <span className="ml-auto text-sm font-semibold text-gray-900">{item.value}</span>
+                      <span className="text-xs text-gray-500 w-10 text-right">{item.pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 rounded">
+                      <div className="h-1.5 rounded" style={{ width: `${item.pct}%`, backgroundColor: item.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="text-2xl font-bold text-gray-800 mb-2">Total Items: {total}</div>
           </div>
         );
       }
