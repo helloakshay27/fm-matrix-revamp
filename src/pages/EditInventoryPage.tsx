@@ -810,7 +810,7 @@ export const EditInventoryPage = () => {
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -924,6 +924,29 @@ export const EditInventoryPage = () => {
 
                 </div>
 
+                {/* Inventory Type moved here before Select Category */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Type</InputLabel>
+                    <MuiSelect
+                      value={invTypeId}
+                      onChange={(e) => {
+                        setInvTypeId(e.target.value as string);
+                      }}
+                      label="Inventory Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
+                      {invTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+
                 <div>
                   <FormControl fullWidth variant="outlined" sx={selectStyles}>
                     <InputLabel shrink>Select Category</InputLabel>
@@ -1018,54 +1041,7 @@ export const EditInventoryPage = () => {
                 </div>
               </div>
 
-              {/* Inventory Type Masters - placed after Min Order Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        // Don't clear existing sub type id immediately; keep selected until list loads and validates
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Sub Type</InputLabel>
-                    <MuiSelect
-                      value={invSubTypeId}
-                      onChange={(e) => setInvSubTypeId(e.target.value as string)}
-                      label="Inventory Sub Type"
-                      notched
-                      displayEmpty
-                      disabled={!invTypeId || invSubTypeLoading}
-                    >
-                      <MenuItem value="">
-                        {invSubTypeLoading ? 'Loading...' : (!invTypeId ? 'Select Inventory Type first' : 'Select Inventory Sub Type')}
-                      </MenuItem>
-                      {invSubTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
+              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
 
             </div>
           )}
