@@ -969,7 +969,7 @@ export const PermitDetails = () => {
                         className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
                     >
                         <FileText className="w-4 h-4 mr-2" />
-                        Vendor Form
+                        Fill Form
                     </Button>
                     {permitData.show_complete_form_button && (
                         <Button
@@ -979,7 +979,7 @@ export const PermitDetails = () => {
                             className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
                         >
                             <Clipboard className="w-4 h-4 mr-2" />
-                            Fill Form
+                            Complete Form
                         </Button>
                     )}
                     {permitData.show_fill_jsa_button && (
