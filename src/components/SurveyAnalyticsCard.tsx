@@ -43,7 +43,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
           ))}
         </Pie>
         <Tooltip 
-          formatter={(value: any, name: any) => [value, name]}
+          formatter={(value: number, name: string) => [value, name]}
           labelFormatter={(label) => `${label}: `}
         />
       </PieChart>
@@ -61,9 +61,9 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
           height={80}
           fontSize={12}
         />
-        <YAxis />
+        <YAxis allowDecimals={false} />
         <Tooltip 
-          formatter={(value: any, name: any) => [value, 'Count']}
+          formatter={(value: number, name: string) => [value, 'Count']}
           labelFormatter={(label) => `Survey Type: ${label}`}
         />
         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
