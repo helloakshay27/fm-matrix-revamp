@@ -952,10 +952,10 @@ export const AddSurveyPage = () => {
                       <MenuItem value="multiple-choice">
                         Multiple Choice
                       </MenuItem>
-                      <MenuItem value="input-box">Input Box</MenuItem>
-                      <MenuItem value="description-box">
+                      {/* <MenuItem value="input-box">Input Box</MenuItem> */}
+                      {/* <MenuItem value="description-box">
                         Description Box
-                      </MenuItem>
+                      </MenuItem> */}
                       <MenuItem value="rating">Rating</MenuItem>
                       <MenuItem value="emojis">Emojis</MenuItem>
                     </MuiSelect>
