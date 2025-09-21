@@ -48,13 +48,20 @@ interface SurveyMapping {
   area_name: string | null;
   room_name: string | null;
   qr_code_url: string;
-  snag_checklist: {
+  qr_code?: {
     id: number;
-    name: string;
-    check_type: string;
-    questions_count: number;
-    snag_questions?: SnagQuestion[];
-    survey_mappings?: SurveyMappingItem[];
+    document_file_name: string;
+    document_content_type: string;
+    document_file_size: number;
+    document_updated_at: string;
+    relation: string;
+    relation_id: number;
+    active: boolean | null;
+    created_at: string;
+    updated_at: string;
+    changed_by: string | null;
+    added_from: string | null;
+    comments: string | null;
   };
 }
 
@@ -197,6 +204,7 @@ export const EditSurveyMapping = () => {
 
   // Form state - updated to match AddSurveyMapping pattern
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null);
+  const [userChangedSurvey, setUserChangedSurvey] = useState(false);
   const [surveyMappings, setSurveyMappings] = useState<SurveyMappingForm[]>([
     {
       id: `sm-${Date.now()}`,
@@ -237,9 +245,9 @@ export const EditSurveyMapping = () => {
     try {
       setPageLoading(true);
       
-      // First, try to fetch using the ID as survey_id (snag_checklist_id)
+      // Use the new mapping_show endpoint
       const response = await fetch(
-        getFullUrl(`/survey_mappings.json?q[snag_checklist_id_eq]=${id}`),
+        getFullUrl(`/survey_mappings/${id}/mapping_show.json`),
         {
           headers: {
             Authorization: getAuthHeader(),
@@ -252,136 +260,52 @@ export const EditSurveyMapping = () => {
         throw new Error("Failed to fetch survey mapping data");
       }
 
-      let mappingArray = await response.json();
-      console.log("Survey mapping details response:", mappingArray);
+      const mappingData = await response.json();
+      console.log("Survey mapping show response:", mappingData);
 
-      // If no results found, the ID might be a mapping ID instead of survey ID
-      // Try to fetch the specific mapping to get the survey ID
-      if (!mappingArray || mappingArray.length === 0) {
-        console.log("No mappings found with survey ID, trying as mapping ID...");
+      if (mappingData && mappingData.id) {
+        // Set the original mapping data directly (single object response)
+        setOriginalMapping(mappingData);
         
-        const mappingResponse = await fetch(
-          getFullUrl(`/survey_mappings/${id}.json`),
-          {
-            headers: {
-              Authorization: getAuthHeader(),
-              "Content-Type": "application/json",
-            },
-          }
-        );
+        // Set the survey ID from the mapping
+        setSelectedSurveyId(mappingData.survey_id);
 
-        if (mappingResponse.ok) {
-          const singleMapping = await mappingResponse.json();
-          console.log("Single mapping response:", singleMapping);
-          
-          if (singleMapping && singleMapping.survey_id) {
-            // Now fetch all mappings for this survey
-            const surveyResponse = await fetch(
-              getFullUrl(`/survey_mappings.json?q[snag_checklist_id_eq]=${singleMapping.survey_id}`),
-              {
-                headers: {
-                  Authorization: getAuthHeader(),
-                  "Content-Type": "application/json",
-                },
-              }
-            );
-            
-            if (surveyResponse.ok) {
-              mappingArray = await surveyResponse.json();
-              console.log("All survey mappings for survey ID:", mappingArray);
-            }
-          }
+        // Convert the single mapping to form structure
+        const formMapping = {
+          id: `sm-${mappingData.id}`,
+          selectedLocation: {
+            site: mappingData.site_id ? mappingData.site_id.toString() : "",
+            building: mappingData.building_id ? mappingData.building_id.toString() : "",
+            wing: mappingData.wing_id ? mappingData.wing_id.toString() : "",
+            area: mappingData.area_id ? mappingData.area_id.toString() : "",
+            floor: mappingData.floor_id ? mappingData.floor_id.toString() : "",
+            room: mappingData.room_id ? mappingData.room_id.toString() : "",
+          },
+          siteIds: mappingData.site_id ? [mappingData.site_id] : [],
+          buildingIds: mappingData.building_id ? [mappingData.building_id] : [],
+          wingIds: mappingData.wing_id ? [mappingData.wing_id] : [],
+          floorIds: mappingData.floor_id ? [mappingData.floor_id] : [],
+          areaIds: mappingData.area_id ? [mappingData.area_id] : [],
+          roomIds: mappingData.room_id ? [mappingData.room_id] : [],
+        };
+
+        setSurveyMappings([formMapping]);
+
+        // Fetch dependent location data to populate dropdowns
+        if (mappingData.site_id && mappingData.building_id) {
+          fetchBuildings(mappingData.site_id);
         }
-      }
-
-      if (mappingArray && mappingArray.length > 0) {
-        // Get the first mapping which contains the snag_checklist data
-        const firstMapping = mappingArray[0];
-        setOriginalMapping(firstMapping);
-
-        // Extract survey details from snag_checklist
-        const snagChecklist = firstMapping.snag_checklist;
-        if (snagChecklist) {
-          setSelectedSurveyId(snagChecklist.id);
-
-          // Extract survey questions from snag_questions
-          if (snagChecklist.snag_questions) {
-            const mappedQuestions = snagChecklist.snag_questions.map((q: SnagQuestion) => {
-              // Map API question types to UI input types
-              let inputType = '';
-              switch (q.qtype) {
-                case 'multiple':
-                  inputType = 'multiple_choice';
-                  break;
-                case 'yesno':
-                  inputType = 'yes_no';
-                  break;
-                case 'rating':
-                  inputType = 'rating';
-                  break;
-                case 'input':
-                  inputType = 'text_input';
-                  break;
-                case 'description':
-                  inputType = 'description';
-                  break;
-                case 'emoji':
-                  inputType = 'emoji';
-                  break;
-                default:
-                  inputType = '';
-              }
-
-              return {
-                id: q.id.toString(),
-                task: q.descr,
-                inputType,
-                mandatory: !!q.quest_mandatory,
-                options: q.snag_quest_options ? q.snag_quest_options.map((opt: SnagQuestOption) => opt.qname) : [],
-                optionsText: q.snag_quest_options ? q.snag_quest_options.map((opt: SnagQuestOption) => opt.qname).join(', ') : ''
-              };
-            });
-            setSelectedSurveyQuestions(mappedQuestions);
-          }
-
-          // Convert all survey mappings to form structure
-          const formMappings = mappingArray.map((mapping: SurveyMapping, index: number) => ({
-            id: `sm-${mapping.id}`,
-            selectedLocation: {
-              site: mapping.site_id ? mapping.site_id.toString() : "",
-              building: mapping.building_id ? mapping.building_id.toString() : "",
-              wing: mapping.wing_id ? mapping.wing_id.toString() : "",
-              area: mapping.area_id ? mapping.area_id.toString() : "",
-              floor: mapping.floor_id ? mapping.floor_id.toString() : "",
-              room: mapping.room_id ? mapping.room_id.toString() : "",
-            },
-            siteIds: mapping.site_id ? [mapping.site_id] : [],
-            buildingIds: mapping.building_id ? [mapping.building_id] : [],
-            wingIds: mapping.wing_id ? [mapping.wing_id] : [],
-            floorIds: mapping.floor_id ? [mapping.floor_id] : [],
-            areaIds: mapping.area_id ? [mapping.area_id] : [],
-            roomIds: mapping.room_id ? [mapping.room_id] : [],
-          }));
-
-          setSurveyMappings(formMappings);
-
-          // Fetch dependent location data for the first mapping to populate dropdowns
-          const firstMappingData = mappingArray[0];
-          if (firstMappingData.site_id && firstMappingData.building_id) {
-            fetchBuildings(firstMappingData.site_id);
-          }
-          if (firstMappingData.building_id && firstMappingData.wing_id) {
-            fetchWings(firstMappingData.building_id);
-          }
-          if (firstMappingData.wing_id && firstMappingData.area_id) {
-            fetchAreas(firstMappingData.wing_id);
-          }
-          if (firstMappingData.area_id && firstMappingData.floor_id) {
-            fetchFloors(firstMappingData.area_id);
-          }
-          if (firstMappingData.floor_id && firstMappingData.room_id) {
-            fetchRooms(firstMappingData.floor_id);
-          }
+        if (mappingData.building_id && mappingData.wing_id) {
+          fetchWings(mappingData.building_id);
+        }
+        if (mappingData.wing_id && mappingData.area_id) {
+          fetchAreas(mappingData.wing_id);
+        }
+        if (mappingData.area_id && mappingData.floor_id) {
+          fetchFloors(mappingData.area_id);
+        }
+        if (mappingData.floor_id && mappingData.room_id) {
+          fetchRooms(mappingData.floor_id);
         }
       } else {
         toast.error("Survey mapping not found");
@@ -548,6 +472,7 @@ export const EditSurveyMapping = () => {
   const handleSurveyChange = (event: SelectChangeEvent<number>) => {
     const value = event.target.value as number;
     setSelectedSurveyId(value);
+    setUserChangedSurvey(true); // Mark that user has manually changed the survey
     
     // Update survey questions based on selected survey
     updateSurveyQuestions(value);
@@ -769,13 +694,13 @@ export const EditSurveyMapping = () => {
 
   // Effect to show questions for the selected survey when data is loaded
   useEffect(() => {
-    if (originalMapping && surveys.length > 0) {
-      // Set the survey ID from original mapping
+    if (originalMapping && surveys.length > 0 && originalMapping.survey_id && !userChangedSurvey) {
+      // Only set the survey ID from original mapping if user hasn't manually changed it
       setSelectedSurveyId(originalMapping.survey_id);
-      // Update questions using the new function
+      // Update questions using the survey ID from the mapping
       updateSurveyQuestions(originalMapping.survey_id);
     }
-  }, [originalMapping, surveys, updateSurveyQuestions]);
+  }, [originalMapping, surveys, updateSurveyQuestions, userChangedSurvey]);
 
   if (pageLoading) {
     return (
@@ -857,11 +782,9 @@ export const EditSurveyMapping = () => {
                     displayEmpty
                     disabled={loadingSurveys}
                   >
-                    {selectedSurveyId === null && (
-                      <MenuItem disabled value="">
-                        <em style={{ color: '#999', fontStyle: 'italic' }}>Select a survey...</em>
-                      </MenuItem>
-                    )}
+                    <MenuItem disabled value="">
+                      <em style={{ color: '#999', fontStyle: 'italic' }}>Select a survey...</em>
+                    </MenuItem>
                     {loadingSurveys ? (
                       <MenuItem disabled>
                         <CircularProgress size={20} sx={{ mr: 1 }} />
