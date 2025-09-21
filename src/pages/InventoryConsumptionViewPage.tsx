@@ -46,6 +46,25 @@ const InventoryConsumptionViewPage = () => {
   });
   const [errors, setErrors] = useState<{ quantity: string; moveType: string }>({ quantity: '', moveType: '' });
 
+  // Map backend error verbiage to friendly messages
+  const mapBackendError = (raw: any): string => {
+    let msg = '';
+    if (!raw) return msg;
+    if (Array.isArray(raw)) msg = raw.join(', ');
+    else if (typeof raw === 'object') {
+      try { msg = (Object.values(raw) as any[]).flat().join(', '); }
+      catch { msg = JSON.stringify(raw); }
+    } else if (typeof raw === 'string') {
+      msg = raw;
+    }
+    const normalized = msg.replace(/\s+/g, ' ').trim();
+    // Specific remap requested by product
+    if (/difference\s+quantity\s+is\s+invalid/i.test(normalized)) {
+      return 'Quantity exceeds available stock';
+    }
+    return normalized || '';
+  };
+
   // EnhancedTable: columns config
   const columns = useMemo(
     () => [
@@ -163,13 +182,8 @@ const InventoryConsumptionViewPage = () => {
 
       // Backend may return 200 with success:false and an errors field
       if (resp?.data && resp.data.success === false) {
-        const rawErrors = resp.data.errors || resp.data.message;
-        let msg = '';
-        if (Array.isArray(rawErrors)) msg = rawErrors.join(', ');
-        else if (typeof rawErrors === 'object' && rawErrors !== null) {
-          // Flatten object values
-            msg = Object.values(rawErrors).flat().join(', ');
-        } else msg = rawErrors;
+        const rawErrors = resp.data.errors || resp.data.message || resp.data.error;
+        const msg = mapBackendError(rawErrors);
         toast.error(msg || 'Submission failed');
         // Keep modal open so user can adjust values
         setIsSubmitting(false);
@@ -194,9 +208,10 @@ const InventoryConsumptionViewPage = () => {
       } else if (err.response?.status === 404) {
         toast.error('Resource not found. Please check the request and try again.');
       } else {
-        toast.error(
-          err.response?.data?.message || err.message || 'An unexpected error occurred. Please try again.'
+        const apiMsg = mapBackendError(
+          err.response?.data?.errors || err.response?.data?.message || err.response?.data?.error || err.message
         );
+        toast.error(apiMsg || 'An unexpected error occurred. Please try again.');
       }
       handleCloseModal();
     } finally {
@@ -235,18 +250,15 @@ const InventoryConsumptionViewPage = () => {
           return item?.date || '-';
         case 'opening':
           return item?.opening ?? '-';
-        case 'add_or_consume':
+        case 'add_or_consume': {
+          const type = String(item?.consumption_type || '').toLowerCase();
+          const isNegative = ['consume', 'lost', 'breakage', 'spillage'].includes(type);
           return (
-            <span
-              className={
-                item?.consumption_type === 'Consume'
-                  ? 'text-red-500 font-medium'
-                  : 'text-green-500 font-medium'
-              }
-            >
+            <span className={isNegative ? 'text-red-500 font-medium' : 'text-green-500 font-medium'}>
               {item?.add_or_consume ?? '-'}
             </span>
           );
+        }
         case 'closing':
           return item?.closing ?? '-';
         case 'consumption_type':

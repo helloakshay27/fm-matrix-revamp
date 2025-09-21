@@ -124,7 +124,8 @@ export const EditSurveyPage = () => {
   const [title, setTitle] = useState("");
   const [checkType, setCheckType] = useState("");
   const [createTicket, setCreateTicket] = useState(false);
-  const [ticketCategory, setTicketCategory] = useState("");
+  const [ticketCategory, setTicketCategory] = useState(""); // Store category name for display
+  const [ticketCategoryId, setTicketCategoryId] = useState(""); // Store category ID for backend
   const [assignTo, setAssignTo] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [ticketCategories, setTicketCategories] = useState<CategoryResponse[]>(
@@ -187,6 +188,7 @@ export const EditSurveyPage = () => {
     } else {
       // Reset selections when unchecked
       setTicketCategory("");
+      setTicketCategoryId("");
       setAssignTo("");
     }
   }, [createTicket, loadTicketCategories, loadFMUsers]);
@@ -231,7 +233,18 @@ export const EditSurveyPage = () => {
 
       if (hasTicketConfig && surveyData.snag_questions?.[0]?.ticket_configs) {
         const ticketConfig = surveyData.snag_questions[0].ticket_configs;
-        setTicketCategory(ticketConfig.category || "");
+        // Check if we have category_id or just category name
+        if (ticketConfig.category_id) {
+          setTicketCategoryId(ticketConfig.category_id.toString());
+          // Find the category name from the loaded categories
+          const category = ticketCategories.find(cat => cat.id === ticketConfig.category_id);
+          setTicketCategory(category?.name || ticketConfig.category || "");
+        } else {
+          // Fallback: if only category name is available, find the ID
+          setTicketCategory(ticketConfig.category || "");
+          const category = ticketCategories.find(cat => cat.name === ticketConfig.category);
+          setTicketCategoryId(category?.id.toString() || "");
+        }
         setAssignTo(ticketConfig.assigned_to_id ? ticketConfig.assigned_to_id.toString() : "");
       }
 
@@ -560,7 +573,7 @@ export const EditSurveyPage = () => {
 
     // Validate ticket fields if create ticket is checked
     if (createTicket) {
-      if (!ticketCategory) {
+      if (!ticketCategoryId) {
         toast.error("Validation Error", {
           description: "Please select a ticket category",
           duration: 3000,
@@ -644,7 +657,7 @@ export const EditSurveyPage = () => {
       // Add ticket creation fields if enabled
       if (createTicket) {
         formData.append("create_ticket", "true");
-        formData.append("category_name", ticketCategory);
+        formData.append("category_id", ticketCategoryId); // Send ID instead of name
         formData.append("category_type", assignTo); // This should be the user ID
         formData.append("tag_type", "Ticket Setup");
       }
@@ -736,7 +749,7 @@ export const EditSurveyPage = () => {
 
         // Add generic tags for ticket configuration only (separate from additional fields)
         if (createTicket) {
-          formData.append(`question[][ticket_config][category_name]`, ticketCategory);
+          formData.append(`question[][ticket_config][category_id]`, ticketCategoryId); // Send ID instead of name
           formData.append(`question[][ticket_config][assigned_to_id]`, assignTo);
           formData.append(`question[][ticket_config][tag_type]`, "Ticket Setup");
           formData.append(`question[][ticket_config][active]`, "true");
@@ -910,13 +923,18 @@ export const EditSurveyPage = () => {
                       <MuiSelect
                         labelId="ticket-category-label"
                         id="ticketCategory"
-                        value={ticketCategory}
+                        value={ticketCategoryId}
                         label="Select Category"
-                        onChange={(e) => setTicketCategory(e.target.value)}
+                        onChange={(e) => {
+                          const selectedCategoryId = e.target.value;
+                          const selectedCategory = ticketCategories.find(cat => cat.id.toString() === selectedCategoryId);
+                          setTicketCategoryId(selectedCategoryId);
+                          setTicketCategory(selectedCategory?.name || "");
+                        }}
                         disabled={loadingTicketCategories}
                       >
                         {ticketCategories.map((category) => (
-                          <MenuItem key={category.id} value={category.name}>
+                          <MenuItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </MenuItem>
                         ))}
@@ -1034,13 +1052,13 @@ export const EditSurveyPage = () => {
                             <SelectValue placeholder="Choose Answer Type" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="description">
+                            {/* <SelectItem value="description">
                               Description Box
-                            </SelectItem>
+                            </SelectItem> */}
                             <SelectItem value="multiple-choice">
                               Multiple Choice
                             </SelectItem>
-                            <SelectItem value="input-box">Input Box</SelectItem>
+                            {/* <SelectItem value="input-box">Input Box</SelectItem> */}
                             <SelectItem value="rating">Rating</SelectItem>
                             <SelectItem value="emojis">Emojis</SelectItem>
                           </SelectContent>
