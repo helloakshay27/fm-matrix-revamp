@@ -24,31 +24,48 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
   dateRange,
   onDownload
 }) => {
+  console.log("🎯 SurveyAnalyticsCard - Props received:");
+  console.log("🎯 Title:", title);
+  console.log("🎯 Data:", data);
+  console.log("🎯 Type:", type);
+  console.log("🎯 Data items count:", data?.length || 0);
+  
   const total = data.reduce((sum, item) => sum + item.value, 0);
+  console.log("🎯 Calculated total:", total);
 
-  const renderPieChart = () => (
-    <ResponsiveContainer width="100%" height={350}>
-      <PieChart>
-        <Pie
-          data={data}
-          cx="50%"
-          cy="50%"
-          outerRadius={120}
-          dataKey="value"
-          label={({ name, value, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
-          labelLine={false}
-        >
-          {data.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={entry.color} />
-          ))}
-        </Pie>
-        <Tooltip 
-          formatter={(value: number, name: string) => [value, name]}
-          labelFormatter={(label) => `${label}: `}
-        />
-      </PieChart>
-    </ResponsiveContainer>
-  );
+  const renderPieChart = () => {
+    console.log("🎯 SurveyAnalyticsCard - Rendering pie chart with data:", data);
+    console.log("🎯 SurveyAnalyticsCard - Data length:", data.length);
+    console.log("🎯 SurveyAnalyticsCard - Total value:", total);
+    
+    return (
+      <ResponsiveContainer width="100%" height={350}>
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            outerRadius={120}
+            dataKey="value"
+            label={({ name, value, percent }) => {
+              console.log(`🎯 Pie label: ${name} = ${value} (${(percent * 100).toFixed(1)}%)`);
+              return `${name}: ${(percent * 100).toFixed(1)}%`;
+            }}
+            labelLine={false}
+          >
+            {data.map((entry, index) => {
+              console.log(`🎯 Creating cell ${index}:`, entry);
+              return <Cell key={`cell-${index}`} fill={entry.color} />;
+            })}
+          </Pie>
+          <Tooltip 
+            formatter={(value: number, name: string) => [value, name]}
+            labelFormatter={(label) => `${label}: `}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
 
   const renderBarChart = () => (
     <ResponsiveContainer width="100%" height={350}>
@@ -100,26 +117,29 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
 
         {/* Data Summary Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {data.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-4 h-4 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="text-sm font-medium text-gray-700">{item.name}</span>
-              </div>
-              <div className="text-right">
-                <div className="font-bold text-gray-900">{item.value}</div>
-                <div className="text-xs text-gray-500">
-                  {((item.value / total) * 100).toFixed(1)}%
+          {data.map((item, index) => {
+            console.log(`🎯 Rendering summary item ${index}:`, item);
+            return (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-4 h-4 rounded-full"
+                    style={{ backgroundColor: item.color }}
+                  />
+                  <span className="text-sm font-medium text-gray-700">{item.name}</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-bold text-gray-900">{item.value}</div>
+                  <div className="text-xs text-gray-500">
+                    {((item.value / total) * 100).toFixed(1)}%
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Total Summary */}
