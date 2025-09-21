@@ -7,6 +7,8 @@ import { surveyApi, SurveyResponseData } from '@/services/surveyApi';
 import { SurveyAnalyticsCard } from '@/components/SurveyAnalyticsCard';
 import { API_CONFIG, getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { toast } from 'sonner';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // New interfaces for response list API
 interface ResponseAnswer {
@@ -532,6 +534,26 @@ export const SurveyResponseDetailPage = () => {
     toast.success('Survey type chart download initiated');
   };
 
+  // Helper to build summary bar chart data
+  const getSummaryBarChartData = () => {
+    if (!responseListData?.summary) return [];
+    return [
+      { name: 'Total Surveys', value: responseListData.summary.total_surveys },
+      { name: 'Active Surveys', value: responseListData.summary.active_surveys },
+      { name: 'Inactive Surveys', value: responseListData.summary.inactive_surveys },
+      { name: 'Total Responses', value: responseListData.summary.total_responses },
+    ];
+  };
+
+  // Helper to build question-wise response bar chart data
+  const getQuestionWiseBarChartData = () => {
+    if (!surveyData?.questions) return [];
+    return surveyData.questions.map(q => ({
+      name: q.question.substring(0, 30) + (q.question.length > 30 ? '...' : ''),
+      responses: q.options?.reduce((sum, opt) => sum + opt.response_count, 0) || 0
+    }));
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -630,6 +652,46 @@ export const SurveyResponseDetailPage = () => {
             </div>
           </div>
           <TabsContent value="summary" className="space-y-6">
+            {/* Bar Chart 1: Survey Summary Statistics */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base font-bold text-[#C72030]">Survey Summary Statistics</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getSummaryBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                      <XAxis dataKey="name" angle={-20} textAnchor="end" fontSize={12} tick={{ fill: '#374151' }} interval={0} height={60} />
+                      <YAxis fontSize={12} tick={{ fill: '#374151' }} />
+                      <Tooltip />
+                      <Bar dataKey="value" fill="#C72030" name="Count" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Bar Chart 2: Question-wise Response Distribution */}
+            <Card className="shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-base font-bold text-[#3b82f6]">Question-wise Response Distribution</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={getQuestionWiseBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
+                      <XAxis dataKey="name" angle={-20} textAnchor="end" fontSize={12} tick={{ fill: '#374151' }} interval={0} height={60} />
+                      <YAxis fontSize={12} tick={{ fill: '#374151' }} />
+                      <Tooltip />
+                      <Bar dataKey="responses" fill="#3b82f6" name="Responses" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Summary Statistics from new API */}
             {/* {responseListData?.summary && (
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
