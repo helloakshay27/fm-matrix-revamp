@@ -314,7 +314,7 @@ export const EditSurveyPage = () => {
 
   const handleAddQuestion = () => {
     const newQuestion: Question = {
-      id: Date.now().toString(),
+      id: `new_${Date.now()}`, // Use a clear prefix for new questions
       text: "",
       answerType: "",
       mandatory: false,
@@ -665,10 +665,13 @@ export const EditSurveyPage = () => {
       // Process questions with proper FormData structure matching server expectations
       questions.forEach((question, questionIndex) => {
         // Add question ID only for existing questions (not new ones)
-        // New questions have IDs that start with a timestamp
-        const isNewQuestion = question.id && question.id.length > 10 && /^\d+$/.test(question.id) && Date.now().toString().startsWith(question.id.slice(0, 10));
+        // New questions have IDs that start with "new_" or are "1" (default)
+        const isNewQuestion = !question.id || 
+                             question.id === "1" || 
+                             question.id.startsWith("new_");
         
-        if (question.id && question.id !== "1" && !isNewQuestion) {
+        // Only add ID for existing questions that came from the server
+        if (!isNewQuestion && question.id) {
           formData.append(`question[][id]`, question.id);
         }
 

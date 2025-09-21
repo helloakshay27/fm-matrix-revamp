@@ -81,7 +81,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
         <CardTitle className="text-lg font-bold text-[#C72030]">
           {title}
         </CardTitle>
-        {onDownload && (
+        {/* {onDownload && (
           <Button
             variant="ghost"
             size="sm"
@@ -90,7 +90,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
           >
             <Download className="h-4 w-4" />
           </Button>
-        )}
+        )} */}
       </CardHeader>
       <CardContent className="pt-0">
         {/* Chart Section */}
@@ -99,7 +99,7 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
         </div>
 
         {/* Data Summary Grid */}
-        {/* <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {data.map((item, index) => (
             <div
               key={index}
@@ -120,12 +120,12 @@ export const SurveyAnalyticsCard: React.FC<SurveyAnalyticsCardProps> = ({
               </div>
             </div>
           ))}
-        </div> */}
+        </div>
 
         {/* Total Summary */}
         {/* <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
           <div className="flex justify-between items-center">
-            <span className="text-sm font-medium text-blue-800">Total Surveys</span>
+            <span className="text-sm font-medium text-blue-800">Total Responses</span>
             <span className="text-lg font-bold text-blue-900">{total}</span>
           </div>
           {dateRange && (

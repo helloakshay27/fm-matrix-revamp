@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,6 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+
+interface LocationTableItem {
+  site: string;
+  building: string;
+  wing: string | null;
+  floor: string | null;
+  room: string | null;
+  qr_code: string | null;
+}
 
 interface SurveyMappingDetail {
   id: number;
@@ -78,7 +89,7 @@ interface SurveyMappingDetail {
         active: boolean;
         created_at: string;
         updated_at: string;
-        icons: any[];
+        icons: unknown[];
       }>;
       snag_quest_options: Array<{
         id: number;
@@ -108,13 +119,7 @@ export const SurveyMappingDetailsPage = () => {
   const [activeTab, setActiveTab] = useState("survey-information");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchSurveyMappingDetails();
-    }
-  }, [id]);
-
-  const fetchSurveyMappingDetails = async () => {
+  const fetchSurveyMappingDetails = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(`/survey_mappings.json?q[id_eq]=${id}`);
@@ -127,7 +132,7 @@ export const SurveyMappingDetailsPage = () => {
       } else {
         setMapping(null);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching survey mapping details:', error);
       toast({
         title: "Error",
@@ -138,7 +143,13 @@ export const SurveyMappingDetailsPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, toast]);
+
+  useEffect(() => {
+    if (id) {
+      fetchSurveyMappingDetails();
+    }
+  }, [id, fetchSurveyMappingDetails]);
 
   const handleBack = () => {
     navigate('/maintenance/survey/mapping');
@@ -183,6 +194,108 @@ export const SurveyMappingDetailsPage = () => {
       });
     } catch {
       return "—";
+    }
+  };
+
+  // Location details table configuration
+  const locationTableColumns: ColumnConfig[] = [
+    {
+      key: "site",
+      label: "Site",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "building",
+      label: "Building",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "wing",
+      label: "Wing",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "floor",
+      label: "Floor",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "room",
+      label: "Room",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "qr_code",
+      label: "QR Code",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+  ];
+
+  // Prepare location data for table
+  const locationTableData = React.useMemo((): LocationTableItem[] => {
+    if (!mapping) return [];
+    
+    // Return a single row with all location data
+    return [{
+      site: mapping.site_name,
+      building: mapping.building_name,
+      wing: mapping.wing_name,
+      floor: mapping.floor_name,
+      room: mapping.room_name,
+      qr_code: mapping.qr_code_url,
+    }];
+  }, [mapping]);
+
+  // Custom cell renderer for the table
+  const renderLocationCell = (item: LocationTableItem, columnKey: string): React.ReactNode => {
+    switch (columnKey) {
+      case 'site':
+        return <span className="font-medium">{item.site}</span>;
+      case 'building':
+        return <span className="font-medium">{item.building}</span>;
+      case 'wing':
+        return item.wing ? <span className="font-medium">{item.wing}</span> : <span className="text-gray-400">—</span>;
+      case 'floor':
+        return item.floor ? <span className="font-medium">{item.floor}</span> : <span className="text-gray-400">—</span>;
+      case 'room':
+        return item.room ? <span className="font-medium">{item.room}</span> : <span className="text-gray-400">—</span>;
+      case 'qr_code':
+        return item.qr_code ? (
+          <div className="flex items-center gap-2">
+            <img 
+              src={item.qr_code}
+              alt="QR Code"
+              className="w-12 h-12 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
+              onClick={() => window.open(item.qr_code, '_blank')}
+              title="Click to view full size"
+            />
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open(item.qr_code, '_blank')}
+              className="text-xs"
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              View
+            </Button>
+          </div>
+        ) : (
+          <span className="text-gray-400 text-sm">No QR Code</span>
+        );
+      default:
+        return item[columnKey];
     }
   };
 
@@ -585,93 +698,19 @@ export const SurveyMappingDetailsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {/* Site Information */}
-                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-3">Site Information</h4>
-                    <div className="space-y-2">
-                      <div>
-                        <strong>Site Name:</strong> {mapping.site_name}
-                      </div>
-                      <div>
-                        <strong>Site ID:</strong> #{mapping.site_id}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Building Information */}
-                  <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                    <h4 className="font-semibold text-gray-900 mb-3">Building Information</h4>
-                    <div className="space-y-2">
-                      <div>
-                        <strong>Building Name:</strong> {mapping.building_name}
-                      </div>
-                      {/* <div>
-                        <strong>Building ID:</strong> #{mapping.building_id}
-                      </div> */}
-                    </div>
-                  </div>
-
-                  {/* Wing Information */}
-                  {mapping.wing_name && (
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Wing Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Wing Name:</strong> {mapping.wing_name}
-                        </div>
-                        {/* <div>
-                          <strong>Wing ID:</strong> #{mapping.wing_id}
-                        </div> */}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Floor Information */}
-                  {mapping.floor_name && (
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Floor Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Floor Name:</strong> {mapping.floor_name}
-                        </div>
-                        {/* <div>
-                          <strong>Floor ID:</strong> #{mapping.floor_id}
-                        </div> */}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Area Information */}
-                  {mapping.area_name && (
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Area Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Area Name:</strong> {mapping.area_name}
-                        </div>
-                        {/* <div>
-                          <strong>Area ID:</strong> #{mapping.area_id}
-                        </div> */}
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Room Information */}
-                  {mapping.room_name && (
-                    <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                      <h4 className="font-semibold text-gray-900 mb-3">Room Information</h4>
-                      <div className="space-y-2">
-                        <div>
-                          <strong>Room Name:</strong> {mapping.room_name}
-                        </div>
-                        {/* <div>
-                          <strong>Room ID:</strong> #{mapping.room_id}
-                        </div> */}
-                      </div>
-                    </div>
-                  )}
-                </div>
+                <EnhancedTable
+                  data={locationTableData}
+                  columns={locationTableColumns}
+                  renderCell={renderLocationCell}
+                  storageKey="location-details-table"
+                  className="min-w-[800px]"
+                  emptyMessage="No location details found"
+                  enableSearch={false}
+                  enableSelection={false}
+                  hideTableExport={true}
+                  hideTableSearch={true}
+                  pagination={false}
+                />
                 
                 {/* Location Summary */}
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg">

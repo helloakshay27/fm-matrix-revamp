@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, X, Calendar as CalendarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { surveyApi, SurveyResponseData } from "@/services/surveyApi";
 import { SurveyAnalyticsCard } from "@/components/SurveyAnalyticsCard";
@@ -139,6 +143,7 @@ interface TabularResponseData {
   area: string;
   floor: string;
   room: string;
+  icon_category: string;
   rating: string;
   category: string;
   final_comment: string;
@@ -157,6 +162,24 @@ interface TicketData {
   location: string;
 }
 
+// Filter interface for survey responses
+interface SurveyResponseFilters {
+  dateRange?: {
+    from?: Date;
+    to?: Date;
+  };
+  building?: string;
+  wing?: string;
+  area?: string;
+  floor?: string;
+  room?: string;
+  iconCategory?: string;
+  rating?: string;
+  category?: string;
+  hasTickets?: boolean;
+  assignee?: string;
+}
+
 export const SurveyResponseDetailPage = () => {
   const { surveyId } = useParams();
   const navigate = useNavigate();
@@ -168,6 +191,12 @@ export const SurveyResponseDetailPage = () => {
     useState<SurveyDetailsResponse | null>(null);
   const [responseListData, setResponseListData] =
     useState<ResponseListData | null>(null);
+  
+  // Filter states
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<SurveyResponseFilters>({});
+  const [filteredTabularData, setFilteredTabularData] = useState<TabularResponseData[]>([]);
+  const [filteredTicketData, setFilteredTicketData] = useState<TicketData[]>([]);
 
   // Fetch response list data from new API
   const fetchResponseListData = useCallback(async () => {
@@ -890,86 +919,90 @@ export const SurveyResponseDetailPage = () => {
     
     console.log("🔍 Transforming response data for table:", responseListData.responses);
     
-    const transformedData = responseListData.responses.map((response: SurveyResponse) => {
+    const transformedData: TabularResponseData[] = [];
+    
+    // Get all unique questions across all responses for consistent columns
+    const allUniqueQuestions = Array.from(
+      new Map(
+        responseListData.responses
+          .flatMap((r) => r.answers || [])
+          .map((answer) => [answer.question_id, answer.question_name])
+      ).entries()
+    );
+
+    responseListData.responses.forEach((response: SurveyResponse) => {
       const answers = response.answers || [];
       console.log(`🔍 Processing response ${response.mapping_id} with ${answers.length} answers`);
       
-      const questionAnswers: { [key: number]: ResponseAnswer[] } = {};
+      // Group answers by timestamp to show individual response entries
+      const answersByTimestamp: { [key: string]: ResponseAnswer[] } = {};
       
-      // Group answers by question
       answers.forEach((answer) => {
-        if (!questionAnswers[answer.question_id]) {
-          questionAnswers[answer.question_id] = [];
+        const timestamp = answer.created_at;
+        if (!answersByTimestamp[timestamp]) {
+          answersByTimestamp[timestamp] = [];
         }
-        questionAnswers[answer.question_id].push(answer);
+        answersByTimestamp[timestamp].push(answer);
       });
 
-      // Get rating from emoji or rating type answers (use the latest one)
-      const ratingAnswers = answers.filter(
-        (a) => a.answer_type === "emoji" || a.answer_type === "rating"
-      );
-      const ratingAnswer = ratingAnswers.length > 0 ? ratingAnswers[ratingAnswers.length - 1] : null;
+      // Create a row for each timestamp (individual response submission)
+      Object.entries(answersByTimestamp).forEach(([timestamp, answersAtTime]) => {
+        // Get rating/emoji answer from this timestamp
+        const ratingAnswer = answersAtTime.find(
+          (a) => a.answer_type === "emoji" || a.answer_type === "rating"
+        );
 
-      // Get the latest timestamp from all answers
-      const latestAnswer = answers.length > 0 ? 
-        answers.reduce((latest, current) => 
-          new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-        ) : null;
+        // Get the first answer's answer_id for this timestamp (all answers at same timestamp should have similar IDs)
+        const answerIdForTimestamp = answersAtTime[0]?.answer_id || response.mapping_id;
 
-      // Create base row data
-      const rowData: TabularResponseData = {
-        id: `response-${response.mapping_id}`,
-        response_id: response.mapping_id.toString(),
-        date_time: latestAnswer
-          ? new Date(latestAnswer.created_at).toLocaleString("en-GB", {
-              day: "2-digit",
-              month: "2-digit", 
-              year: "numeric",
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            })
-          : "-",
-        building: response.building_name || "-",
-        wing: response.wing_name || "-",
-        area: response.area_name || "-",
-        floor: response.floor_name || "-",
-        room: response.room_name || "-",
-        rating: ratingAnswer?.ans_descr || ratingAnswer?.level_id?.toString() || "-",
-        category: answers[0]?.answer_type || "-",
-        final_comment: response.final_comment || answers.find((a) => a.comments && a.comments.trim() !== "")?.comments || "-",
-        ticket_id: response.complaints && response.complaints.length > 0
-          ? response.complaints[0].complaint_id?.toString()
-          : "-",
-      };
+        // Create row data for this timestamp
+        const rowData: TabularResponseData = {
+          id: `response-${response.mapping_id}-${timestamp}`,
+          response_id: answerIdForTimestamp.toString(),
+          date_time: new Date(timestamp).toLocaleString("en-GB", {
+            day: "2-digit",
+            month: "2-digit", 
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }),
+          building: response.building_name || "-",
+          wing: response.wing_name || "-",
+          area: response.area_name || "-",
+          floor: response.floor_name || "-",
+          room: response.room_name || "-",
+          rating: ratingAnswer?.ans_descr || ratingAnswer?.level_id?.toString() || "-",
+          category: answersAtTime[0]?.answer_type || "-",
+          icon_category: response.complaints && response.complaints.length > 0
+            ? response.complaints[0].heading
+            : "-",
+          final_comment: response.final_comment || answersAtTime.find((a) => a.comments && a.comments.trim() !== "")?.comments || "-",
+          ticket_id: response.complaints && response.complaints.length > 0
+            ? response.complaints[0].complaint_id?.toString()
+            : "-",
+        };
 
-      // Add dynamic question data
-      const allUniqueQuestions = Array.from(
-        new Map(
-          responseListData.responses
-            .flatMap((r) => r.answers || [])
-            .map((answer) => [answer.question_id, answer.question_name])
-        ).entries()
-      );
+        // Add question data for this specific timestamp
+        allUniqueQuestions.forEach(([questionId, questionName]) => {
+          const columnKey = `question_${questionId}`;
+          const answerForQuestion = answersAtTime.find(a => a.question_id === questionId);
+          
+          if (answerForQuestion) {
+            rowData[columnKey] = answerForQuestion.option_name || answerForQuestion.ans_descr || "-";
+          } else {
+            rowData[columnKey] = "-";
+          }
+        });
 
-      allUniqueQuestions.forEach(([questionId, questionName]) => {
-        const questionAnswersForId = questionAnswers[questionId] || [];
-        const columnKey = `question_${questionId}`;
-        
-        // For multiple answers to the same question, use the latest one
-        if (questionAnswersForId.length > 0) {
-          const latestQuestionAnswer = questionAnswersForId.reduce((latest, current) => 
-            new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-          );
-          rowData[columnKey] = latestQuestionAnswer.option_name || latestQuestionAnswer.ans_descr || "-";
-        } else {
-          rowData[columnKey] = "-";
-        }
+        transformedData.push(rowData);
+        console.log(`🔍 Transformed row data for response ${response.mapping_id} at ${timestamp}:`, rowData);
+        console.log(`🔍 Icon category value: "${rowData.icon_category}"`);
       });
-
-      console.log(`🔍 Transformed row data for response ${response.mapping_id}:`, rowData);
-      return rowData;
     });
+    
+    // Sort by timestamp (most recent first)
+    transformedData.sort((a, b) => new Date(b.date_time).getTime() - new Date(a.date_time).getTime());
     
     console.log("🎯 Final transformed data for table:", transformedData);
     return transformedData;
@@ -990,7 +1023,11 @@ export const SurveyResponseDetailPage = () => {
           heading: complaint.heading,
           category: complaint.category,
           assignee: complaint.assignee,
-          created_at: new Date(complaint.created_at).toLocaleDateString(),
+          created_at: new Date(complaint.created_at).toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+          }),
           location: response.site_name && response.building_name
             ? `${response.site_name}, ${response.building_name}`
             : response.site_name || "-",
@@ -1011,7 +1048,9 @@ export const SurveyResponseDetailPage = () => {
       { key: 'area', label: 'Area', defaultVisible: true, sortable: true },
       { key: 'floor', label: 'Floor', defaultVisible: true, sortable: true },
       { key: 'room', label: 'Room', defaultVisible: true, sortable: true },
-      { key: 'rating', label: 'Rating', defaultVisible: true, sortable: true },
+      
+      // { key: 'category', label: 'Answer Type', defaultVisible: true, sortable: true },
+      // { key: 'rating', label: 'Rating', defaultVisible: true, sortable: true },
     ];
 
     // Add dynamic question columns
@@ -1035,12 +1074,13 @@ export const SurveyResponseDetailPage = () => {
     }
 
     baseColumns.push(
-      { key: 'category', label: 'Category', defaultVisible: true, sortable: true },
       { key: 'final_comment', label: 'Final Comment', defaultVisible: true, sortable: true },
+      { key: 'icon_category', label: 'Icon Category', defaultVisible: true, sortable: true },
       { key: 'ticket_id', label: 'Ticket Id', defaultVisible: true, sortable: true }
     );
 
     console.log("🔍 Generated columns:", baseColumns);
+    console.log("🔍 Icon Category column included:", baseColumns.find(col => col.key === 'icon_category'));
     return baseColumns;
   };
 
@@ -1050,11 +1090,150 @@ export const SurveyResponseDetailPage = () => {
     { key: 'ticket_number', label: 'Ticket Number', defaultVisible: true, sortable: true },
     { key: 'heading', label: 'Heading', defaultVisible: true, sortable: true },
     { key: 'category', label: 'Category', defaultVisible: true, sortable: true },
-    { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
-    { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
-    { key: 'created_date', label: 'Created Date', defaultVisible: true, sortable: true },
-    { key: 'description', label: 'Description', defaultVisible: true, sortable: true },
-  ];  if (isLoading) {
+    { key: 'assignee', label: 'Assignee', defaultVisible: true, sortable: true },
+    // { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
+    // { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
+    { key: 'created_at', label: 'Created Date', defaultVisible: true, sortable: true },
+    // { key: 'description', label: 'Description', defaultVisible: true, sortable: true },
+  ];
+
+  // Filter functions
+  const applyFiltersToTabularData = (data: TabularResponseData[], filters: SurveyResponseFilters): TabularResponseData[] => {
+    return data.filter(item => {
+      // Date range filter
+      if (filters.dateRange?.from || filters.dateRange?.to) {
+        // Parse the date_time string which is in format like "22/09/2025, 15:04"
+        const dateTimeParts = item.date_time.split(', ');
+        const datePart = dateTimeParts[0]; // "22/09/2025"
+        const [day, month, year] = datePart.split('/').map(Number);
+        const itemDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+        
+        if (filters.dateRange.from) {
+          const fromDate = new Date(filters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0); // Start of day
+          if (itemDate < fromDate) return false;
+        }
+        
+        if (filters.dateRange.to) {
+          const toDate = new Date(filters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999); // End of day
+          if (itemDate > toDate) return false;
+        }
+      }
+
+      // Location filters
+      if (filters.building && !(item.building || '').toLowerCase().includes(filters.building.toLowerCase())) return false;
+      if (filters.wing && !(item.wing || '').toLowerCase().includes(filters.wing.toLowerCase())) return false;
+      if (filters.area && !(item.area || '').toLowerCase().includes(filters.area.toLowerCase())) return false;
+      if (filters.floor && !(item.floor || '').toLowerCase().includes(filters.floor.toLowerCase())) return false;
+      if (filters.room && !(item.room || '').toLowerCase().includes(filters.room.toLowerCase())) return false;
+
+      // Icon Category filter
+      if (filters.iconCategory && !(item.icon_category || '').toLowerCase().includes(filters.iconCategory.toLowerCase())) return false;
+
+      // Rating filter
+      if (filters.rating && !(item.rating || '').includes(filters.rating)) return false;
+
+      // Category filter
+      if (filters.category && item.category !== filters.category) return false;
+
+      // Has tickets filter
+      if (filters.hasTickets && !item.ticket_id) return false;
+
+      return true;
+    });
+  };
+
+  const applyFiltersToTicketData = (data: TicketData[], filters: SurveyResponseFilters): TicketData[] => {
+    return data.filter(item => {
+      // Date range filter
+      if (filters.dateRange?.from || filters.dateRange?.to) {
+        // Parse the created_at string which is in format like "22/09/2025"
+        const [day, month, year] = item.created_at.split('/').map(Number);
+        const itemDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+        
+        if (filters.dateRange.from) {
+          const fromDate = new Date(filters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0); // Start of day
+          if (itemDate < fromDate) return false;
+        }
+        
+        if (filters.dateRange.to) {
+          const toDate = new Date(filters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999); // End of day
+          if (itemDate > toDate) return false;
+        }
+      }
+
+      // Assignee filter
+      if (filters.assignee && !(item.assignee || '').toLowerCase().includes(filters.assignee.toLowerCase())) return false;
+
+      // Category filter
+      if (filters.category && !(item.category || '').toLowerCase().includes(filters.category.toLowerCase())) return false;
+
+      return true;
+    });
+  };
+
+  // Filter handlers
+  const handleFilterClick = () => {
+    setShowFilterModal(true);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (currentFilters.dateRange?.from || currentFilters.dateRange?.to) count++;
+    if (currentFilters.building) count++;
+    if (currentFilters.wing) count++;
+    if (currentFilters.area) count++;
+    if (currentFilters.floor) count++;
+    if (currentFilters.room) count++;
+    if (currentFilters.iconCategory) count++;
+    if (currentFilters.rating) count++;
+    if (currentFilters.category) count++;
+    if (currentFilters.assignee) count++;
+    if (currentFilters.hasTickets) count++;
+    return count;
+  };
+
+  const hasActiveFilters = () => getActiveFiltersCount() > 0;
+
+  const handleApplyFilters = (filters: SurveyResponseFilters) => {
+    setCurrentFilters(filters);
+    
+    // Apply filters to both datasets
+    const baseTabularData = getTabularData();
+    const baseTicketData = getTicketData();
+    
+    setFilteredTabularData(applyFiltersToTabularData(baseTabularData, filters));
+    setFilteredTicketData(applyFiltersToTicketData(baseTicketData, filters));
+    
+    setShowFilterModal(false);
+  };
+
+  const handleClearFilters = () => {
+    setCurrentFilters({});
+    setFilteredTabularData([]);
+    setFilteredTicketData([]);
+    setShowFilterModal(false);
+  };
+
+  // Get data to display (filtered or original)
+  const getDisplayTabularData = () => {
+    if (Object.keys(currentFilters).length > 0) {
+      return filteredTabularData;
+    }
+    return getTabularData();
+  };
+
+  const getDisplayTicketData = () => {
+    if (Object.keys(currentFilters).length > 0) {
+      return filteredTicketData;
+    }
+    return getTicketData();
+  };
+
+  if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
         <div className="text-center py-8">
@@ -1105,6 +1284,225 @@ export const SurveyResponseDetailPage = () => {
     );
   }
 
+  // Filter Modal Component
+  const FilterModal = () => (
+    <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              Filter Survey Responses
+              {hasActiveFilters() && (
+                <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
+                  {getActiveFiltersCount()}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilterModal(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Date Range Filter */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Date Range</Label>
+                <p className="text-xs text-gray-500 mt-1">Filter responses by date range</p>
+              </div>
+              {(currentFilters.dateRange?.from || currentFilters.dateRange?.to) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCurrentFilters(prev => ({ 
+                    ...prev, 
+                    dateRange: undefined 
+                  }))}
+                  className="text-xs text-gray-500 hover:text-red-600"
+                >
+                  Clear dates
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">From Date</Label>
+                <Input
+                  type="date"
+                  value={currentFilters.dateRange?.from ? new Date(currentFilters.dateRange.from).toISOString().split('T')[0] : ""}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    setCurrentFilters(prev => ({
+                      ...prev,
+                      dateRange: {
+                        ...prev.dateRange,
+                        from: date
+                      }
+                    }));
+                  }}
+                  className="w-full"
+                  placeholder="Select start date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">To Date</Label>
+                <Input
+                  type="date"
+                  value={currentFilters.dateRange?.to ? new Date(currentFilters.dateRange.to).toISOString().split('T')[0] : ""}
+                  min={currentFilters.dateRange?.from ? new Date(currentFilters.dateRange.from).toISOString().split('T')[0] : undefined}
+                  onChange={(e) => {
+                    const date = e.target.value ? new Date(e.target.value) : undefined;
+                    setCurrentFilters(prev => ({
+                      ...prev,
+                      dateRange: {
+                        ...prev.dateRange,
+                        to: date
+                      }
+                    }));
+                  }}
+                  className="w-full"
+                  placeholder="Select end date"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Location Filters */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Building</Label>
+              <Input
+                placeholder="Filter by building"
+                value={currentFilters.building || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, building: e.target.value || undefined }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Wing</Label>
+              <Input
+                placeholder="Filter by wing"
+                value={currentFilters.wing || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, wing: e.target.value || undefined }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Area</Label>
+              <Input
+                placeholder="Filter by area"
+                value={currentFilters.area || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, area: e.target.value || undefined }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Floor</Label>
+              <Input
+                placeholder="Filter by floor"
+                value={currentFilters.floor || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, floor: e.target.value || undefined }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Room</Label>
+              <Input
+                placeholder="Filter by room"
+                value={currentFilters.room || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, room: e.target.value || undefined }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Icon Category</Label>
+              <Input
+                placeholder="Filter by icon category"
+                value={currentFilters.iconCategory || ""}
+                onChange={(e) => setCurrentFilters(prev => ({ ...prev, iconCategory: e.target.value || undefined }))}
+              />
+            </div>
+          </div>
+
+          {/* Survey Specific Filters */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Rating</Label>
+              <Select
+                value={currentFilters.rating || "all"}
+                onValueChange={(value) => setCurrentFilters(prev => ({ ...prev, rating: value === "all" ? undefined : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select rating" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Ratings</SelectItem>
+                  <SelectItem value="5">5 Stars</SelectItem>
+                  <SelectItem value="4">4 Stars</SelectItem>
+                  <SelectItem value="3">3 Stars</SelectItem>
+                  <SelectItem value="2">2 Stars</SelectItem>
+                  <SelectItem value="1">1 Star</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Answer Type</Label>
+              <Select
+                value={currentFilters.category || "all"}
+                onValueChange={(value) => setCurrentFilters(prev => ({ ...prev, category: value === "all" ? undefined : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="multiple">Multiple</SelectItem>
+                  <SelectItem value="rating">Rating</SelectItem>
+                  <SelectItem value="emoji">Emoji</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Assignee Filter */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700">Assignee</Label>
+            <Input
+              placeholder="Filter by assignee"
+              value={currentFilters.assignee || ""}
+              onChange={(e) => setCurrentFilters(prev => ({ ...prev, assignee: e.target.value || undefined }))}
+            />
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            className="px-6"
+          >
+            Clear All
+          </Button>
+          <Button
+            onClick={() => handleApplyFilters(currentFilters)}
+            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            Apply Filters
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
       {/* Header */}
@@ -1119,7 +1517,7 @@ export const SurveyResponseDetailPage = () => {
         </Button>
 
         <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">
-          Response Detail
+          Response Details
         </h1>
 
         {/* Tabs wrapper encompasses everything that needs tab context */}
@@ -1127,11 +1525,11 @@ export const SurveyResponseDetailPage = () => {
           <div className="bg-[#F5F3EF] p-4 mb-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
+                {/* <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
                   S
-                </div>
+                </div> */}
                 <div>
-                  <div className="text-sm text-gray-500">Survey Details</div>
+                  {/* <div className="text-sm text-gray-500">Survey Details</div> */}
                   {/* <div className="text-xs text-gray-400">Survey ID: {surveyData.survey_id}</div> */}
                   {/* <div className="text-xs text-gray-400">Survey: {surveyData.survey_name}</div> */}
                 </div>
@@ -1276,10 +1674,19 @@ export const SurveyResponseDetailPage = () => {
                   {/* Question Response Distribution Chart - Dynamic Type */}
                   <div className="mb-4">
                     <SurveyAnalyticsCard
-                      title={`Response Distribution: ${question.question.substring(
-                        0,
-                        50
-                      )}${question.question.length > 50 ? "..." : ""}`}
+                      title={(() => {
+                        const questionType = getQuestionType(question.options || []);
+                        if (questionType === "rating") {
+                          return "Rating Response";
+                        } else if (questionType === "emoji") {
+                          return "Emoji Responses";
+                        } else {
+                          return `Response Distribution: ${question.question.substring(
+                            0,
+                            50
+                          )}${question.question.length > 50 ? "..." : ""}`;
+                        }
+                      })()}
                       type={getChartType(question.question_id)}
                       data={getQuestionOptionsData(question.question_id)}
                       dateRange={{
@@ -1364,10 +1771,10 @@ export const SurveyResponseDetailPage = () => {
               </div>
 
               <EnhancedTaskTable
-                data={getTabularData()}
+                data={getDisplayTabularData()}
                 columns={getTabularColumns()}
-                storageKey="survey-response-tabular"
-                enableExport={true}
+                storageKey="survey-response-tabular-v2"
+                // enableExport={true}
                 exportFileName="survey-responses-tabular"
                 enableSearch={true}
                 searchPlaceholder="Search responses..."
@@ -1376,9 +1783,29 @@ export const SurveyResponseDetailPage = () => {
                 pageSize={10}
                 className="border border-gray-200 rounded-lg"
                 loading={isLoading}
+                onFilterClick={handleFilterClick}
                 getItemId={(item: TabularResponseData) => item.id}
                 renderCell={(item: TabularResponseData, columnKey: string) => {
                   const cellValue = item[columnKey as keyof TabularResponseData];
+                  
+                  // Format the Answer Type column to capitalize properly
+                  if (columnKey === 'category') {
+                    const answerType = cellValue as string;
+                    if (answerType === 'multiple') return 'Multiple';
+                    if (answerType === 'rating') return 'Rating';
+                    if (answerType === 'emoji') return 'Emoji';
+                    return answerType || '-';
+                  }
+                  
+                  // Special handling for Icon Category to ensure it's visible
+                  if (columnKey === 'icon_category') {
+                    return (
+                      <span className="text-gray-900 font-medium">
+                        {cellValue || '-'}
+                      </span>
+                    );
+                  }
+                  
                   return cellValue || '-';
                 }}
               />
@@ -1390,16 +1817,16 @@ export const SurveyResponseDetailPage = () => {
                 <h3 className="text-lg font-semibold text-gray-800">
                   Survey Tickets
                 </h3>
-                <p className="text-sm text-gray-600">
+                {/* <p className="text-sm text-gray-600">
                   Complaints and tickets generated from survey responses
-                </p>
+                </p> */}
               </div>
 
               <EnhancedTaskTable
-                data={getTicketData()}
+                data={getDisplayTicketData()}
                 columns={getTicketColumns()}
                 storageKey="survey-response-tickets"
-                enableExport={true}
+                // enableExport={true}
                 exportFileName="survey-tickets"
                 enableSearch={true}
                 searchPlaceholder="Search tickets..."
@@ -1408,6 +1835,7 @@ export const SurveyResponseDetailPage = () => {
                 pageSize={10}
                 className="border border-gray-200 rounded-lg"
                 loading={isLoading}
+                onFilterClick={handleFilterClick}
                 getItemId={(item: TicketData) => item.id}
                 renderCell={(item: TicketData, columnKey: string) => {
                   if (columnKey === 'ticket_number') {
@@ -1424,6 +1852,13 @@ export const SurveyResponseDetailPage = () => {
                       </span>
                     );
                   }
+                  if (columnKey === 'assignee') {
+                    return (
+                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {item.assignee}
+                      </span>
+                    );
+                  }
                   return item[columnKey as keyof TicketData];
                 }}
               />
@@ -1431,6 +1866,9 @@ export const SurveyResponseDetailPage = () => {
           </TabsContent>
         </Tabs>
       </div>
+      
+      {/* Filter Modal */}
+      <FilterModal />
     </div>
   );
 };
