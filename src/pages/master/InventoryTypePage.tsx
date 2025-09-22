@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { SelectionPanel } from '@/components/water-asset-details/PannelTab';
 import { Plus, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
@@ -18,6 +18,12 @@ export interface InventoryType {
 
 const InventoryTypePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Determine base path from current location
+  const isSettingsRoute = location.pathname.includes('/settings/inventory-management');
+  const basePath = isSettingsRoute ? '/settings/inventory-management/inventory-type' : '/master/inventory-type';
+
   const [inventoryTypes, setInventoryTypes] = useState<InventoryType[]>([]);
   const [loading, setLoading] = useState(true);
   const [optimisticActive, setOptimisticActive] = useState<Record<number, boolean>>({});
@@ -62,11 +68,11 @@ const InventoryTypePage = () => {
 
   const [showActionPanel, setShowActionPanel] = useState(false);
   const handleAdd = () => {
-    navigate('/master/inventory-type/add');
+    navigate(`${basePath}/add`);
   };
 
   const handleEdit = (id: number) => {
-    navigate(`/master/inventory-type/edit/${id}`);
+    navigate(`${basePath}/edit/${id}`);
   };
 
   const handleDelete = (id: number) => {
@@ -118,13 +124,13 @@ const InventoryTypePage = () => {
       <EnhancedTable
         loading={loading}
         columns={[
-          { key: 'srno', label: 'Sr. No.' },
-          { key: 'actions', label: 'Actions' },
-          { key: 'name', label: 'Name' },
-          { key: 'material_type_code', label: 'Code' },
-          { key: 'category', label: 'Category' },
-          { key: 'material_type_description', label: 'Description' },
-          { key: 'active', label: 'Status' },
+          { key: 'srno', label: 'Sr. No.', sortable: true },
+          { key: 'actions', label: 'Actions', sortable: false },
+          { key: 'name', label: 'Name', sortable: true },
+          { key: 'material_type_code', label: 'Code', sortable: true },
+          { key: 'category', label: 'Category', sortable: true },
+          { key: 'material_type_description', label: 'Description', sortable: true },
+          { key: 'active', label: 'Status', sortable: false },
         ]}
         data={inventoryTypes.map((it, idx) => ({ ...it, srno: idx + 1 }))}
         leftActions={

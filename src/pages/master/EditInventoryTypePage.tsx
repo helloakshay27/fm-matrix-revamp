@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { TextField, Box, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
@@ -23,6 +23,7 @@ interface DropdownOption {
 const EditInventoryTypePage = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const location = useLocation();
   const inventoryTypeId = Number(id);
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
   const {
@@ -31,6 +32,10 @@ const EditInventoryTypePage = () => {
     formState: { errors },
     reset,
   } = useForm<InventoryTypeFormValues>();
+
+  // Determine base path from current location
+  const isSettingsRoute = location.pathname.includes('/settings/inventory-management');
+  const basePath = isSettingsRoute ? '/settings/inventory-management/inventory-type' : '/master/inventory-type';
 
   useEffect(() => {
     gateNumberService.getCompanies().then(setCompanies).catch(() => toast.error("Failed to load companies."));
@@ -53,13 +58,21 @@ const EditInventoryTypePage = () => {
   const onSubmit = async (data: InventoryTypeFormValues) => {
     try {
       const payload = {
-        pms_inventory_type: { ...data, deleted: false, active: true },
+        pms_inventory_type: { 
+          ...data, 
+          deleted: false, 
+          active: true,
+          // Ensure description is properly formatted
+          material_type_description: data.material_type_description?.trim() || ''
+        },
       };
       await inventoryTypeService.updateInventoryType(inventoryTypeId, payload);
       toast.success("Inventory type updated successfully");
-      navigate("/master/inventory-type");
-    } catch (error) {
-      console.error(error);
+      navigate(basePath);
+    } catch (error: any) {
+      console.error('Update error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to update inventory type";
+      toast.error(errorMessage);
     }
   };
 
@@ -75,15 +88,23 @@ const EditInventoryTypePage = () => {
                 control={control}
                 rules={{ required: 'Name is required' }}
                 render={({ field }) => (
-                  <TextField {...field} label="Name" variant="outlined" fullWidth error={!!errors.name} helperText={errors.name?.message} />
+                  <TextField {...field} label={
+                    <span style={{ fontSize: '16px' }}>
+                      Name <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  } variant="outlined" fullWidth error={!!errors.name} helperText={errors.name?.message} />
                 )}
               />
               <Controller
                 name="material_type_code"
                 control={control}
-                rules={{ required: 'Code is required' }}
+                rules={{ required: 'Material Code is required' }}
                 render={({ field }) => (
-                  <TextField {...field} label="Material Code" variant="outlined" fullWidth error={!!errors.material_type_code} helperText={errors.material_type_code?.message} />
+                  <TextField {...field} label={
+                    <span style={{ fontSize: '16px' }}>
+                      Material Code <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  } variant="outlined" fullWidth error={!!errors.material_type_code} helperText={errors.material_type_code?.message} />
                 )}
               />
               <Controller
@@ -102,7 +123,7 @@ const EditInventoryTypePage = () => {
                         value={field.value || ''}
                         onChange={e => field.onChange(e.target.value || null)}
                       >
-                        <MenuItem value="">Select Company</MenuItem>
+                        <MenuItem value="">Select Company <span style={{ color: 'red' }}>*</span></MenuItem>
                         {companies.map(option => (
                           <MenuItem key={option.id} value={option.id}>{option.name}</MenuItem>
                         ))}
@@ -116,16 +137,25 @@ const EditInventoryTypePage = () => {
                 control={control}
                 rules={{ required: 'Category is required' }}
                 render={({ field }) => (
-                  <TextField {...field} label="Category" variant="outlined" fullWidth error={!!errors.category} helperText={errors.category?.message} />
+                  <TextField {...field} label={
+                    
+                    <span style={{ fontSize: '16px' }}>
+                      Category <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  } placeholder="Enter Category" variant="outlined" fullWidth error={!!errors.category} helperText={errors.category?.message} />
                 )}
               />
               <div className="md:col-span-2">
                 <Controller
                   name="material_type_description"
                   control={control}
+                  rules={{ 
+                    maxLength: {
+                      value: 1000,
+                      message: "Description cannot exceed 1000 characters"
+                    }
+                  }}
                   render={({ field }) => (
-                    // <TextField {...field} label="Description" variant="outlined" fullWidth multiline rows={3} />
-
                     <TextField
                       {...field}
                       label={
@@ -137,28 +167,33 @@ const EditInventoryTypePage = () => {
                       fullWidth
                       multiline
                       minRows={4}
+                      maxRows={8}
+                      error={!!errors.material_type_description}
+                      helperText={
+                        errors.material_type_description?.message || 
+                        `${field.value?.length || 0}/1000 characters`
+                      }
                       sx={{
                         mb: 3,
                         "& textarea": {
-                          width: "100% !important",   // force full width
-                          resize: "both",             // allow resizing
+                          width: "100% !important",
+                          resize: "both",
                           overflow: "auto",
                           boxSizing: "border-box",
                           display: "block",
                         },
                         "& textarea[aria-hidden='true']": {
-                          display: "none !important", // hide shadow textarea
+                          display: "none !important",
                         },
                       }}
                     />
-
                   )}
                 />
               </div>
             </div>
             <div className="flex justify-center space-x-4 pt-4">
               <Button type="submit" className="w-32">Save</Button>
-              <Button type="button" variant="outline" className="w-32" onClick={() => navigate(-1)}>Cancel</Button>
+              <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
             </div>
           </form>
         </div>

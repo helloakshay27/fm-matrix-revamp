@@ -583,10 +583,10 @@ export function EnhancedTable<T extends Record<string, any>>({
                       <SortableColumnHeader
                         key={column.key}
                         id={column.key}
-                        sortable={column.sortable}
+                        sortable={column.sortable !== false} // Default to true unless explicitly set to false
                         draggable={column.draggable}
                         sortDirection={sortState.column === column.key ? sortState.direction : null}
-                        onSort={() => handleSort(column.key)}
+                        onSort={() => column.sortable !== false && handleSort(column.key)} // Only call handleSort if sortable
                         className="bg-[#f6f4ee] text-center text-black min-w-32 sticky top-0"
                       >
                         {column.label}
