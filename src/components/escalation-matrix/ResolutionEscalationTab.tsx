@@ -607,7 +607,7 @@ export const ResolutionEscalationTab: React.FC = () => {
       {/* Create Form */}
       <Card>
         <CardHeader>
-          <CardTitle>on submit if for the api it will get the 422 error please give toast as Category alredy been taken.</CardTitle>
+          <CardTitle>Resolution Escalation Configuration</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
