@@ -285,14 +285,16 @@ export const GRNSRNDashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => handleEdit(item.id)}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
+      {
+        item.approved_status === 'Pending' && <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => handleEdit(item.id)}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      }
     </div>
   );
 

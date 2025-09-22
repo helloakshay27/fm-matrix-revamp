@@ -237,6 +237,7 @@ export const PODashboard = () => {
           : item.all_level_approved === false
             ? "Rejected"
             : "Pending",
+        allLevelApproved: item.all_level_approved,
         advanceAmount: item.advance_amount,
         poAmount: item.po_amount,
         retention: item.retention,
@@ -251,6 +252,7 @@ export const PODashboard = () => {
         totalAmountPaid: item.total_amount_paid,
         outstanding: item.outstanding,
         debitCreditNoteRaised: item.debit_credit_note_raised,
+
       }));
 
       setPoList(formattedData);
@@ -403,17 +405,19 @@ export const PODashboard = () => {
       >
         <Eye className="w-4 h-4" />
       </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/po/edit/${item.id}`);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
+      {
+        item.allLevelApproved === null && <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/po/edit/${item.id}`);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      }
     </div>
   );
 
