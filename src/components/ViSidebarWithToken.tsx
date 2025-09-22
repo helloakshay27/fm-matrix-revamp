@@ -57,20 +57,20 @@ const ViSidebarWithToken: React.FC = () => {
         const access_token = query.get("access_token");
         const company_id = query.get("company_id");
         const user_id = query.get("user_id");
-        
+
         console.log('VI Sidebar Token Check:', { access_token: access_token ? 'Present' : 'Missing', company_id, user_id });
-        
+
         if (access_token) {
             // Store token using auth utility
             saveToken(access_token);
-            
+
             // Store company and user data
             if (company_id) {
                 localStorage.setItem("selectedCompanyId", String(company_id));
             }
             if (user_id) {
                 localStorage.setItem("user_id", String(user_id));
-                
+
                 // Create a basic user object for VI with token access
                 const viUser = {
                     id: parseInt(user_id),
@@ -82,16 +82,28 @@ const ViSidebarWithToken: React.FC = () => {
                 };
                 saveUser(viUser);
             }
-            
+
             setHasValidToken(true);
         } else {
             // Check if token exists from previous session
             const existingToken = getToken();
             setHasValidToken(!!existingToken);
         }
-        
+
         setIsLoading(false);
     }, [location.search]);
+
+    // Ensure section shows Maintenance for VI routes (must be before any returns to keep hook order stable)
+    useEffect(() => {
+        if (location.pathname.startsWith('/maintenance')) {
+            setCurrentSection('Maintenance');
+        }
+    }, [location.pathname, setCurrentSection]);
+
+    // Keep expanded items in sync with collapsed state (also before any returns)
+    useEffect(() => {
+        if (isSidebarCollapsed) setExpandedItems([]);
+    }, [isSidebarCollapsed]);
 
     // Don't render sidebar if no valid token
     if (isLoading) {
@@ -135,17 +147,6 @@ const ViSidebarWithToken: React.FC = () => {
         // If no deeper items, return the first sub-item's href
         return item.subItems[0]?.href || null;
     };
-
-    useEffect(() => {
-        // Ensure section shows Maintenance for VI routes
-        if (location.pathname.startsWith('/maintenance')) {
-            setCurrentSection('Maintenance');
-        }
-    }, [location.pathname, setCurrentSection]);
-
-    useEffect(() => {
-        if (isSidebarCollapsed) setExpandedItems([]);
-    }, [isSidebarCollapsed]);
 
     const currentModules = modulesByPackage['Maintenance'];
 
