@@ -17,8 +17,6 @@ const getApiConfig = () => {
     baseUrlValue: finalBaseUrl
   });
 
-  
-
   return {
     BASE_URL: finalBaseUrl,
     TOKEN: savedToken,

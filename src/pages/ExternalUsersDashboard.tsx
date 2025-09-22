@@ -94,7 +94,9 @@ export const ExternalUsersDashboard = () => {
           setLoading(false);
           return;
         }
-        let url = `https://${baseUrl}/pms/users/non_fte_users.json?page=${page}`;
+        // Ensure baseUrl doesn't get double https://
+        const cleanBaseUrl = baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`;
+        let url = `${cleanBaseUrl}/pms/users/non_fte_users.json?page=${page}`;
         // If any filter is applied, use the correct param for each filter
         const hasFilters = Object.values(filters).some(v => v && v !== '');
         const hasSearch = Boolean(debouncedSearch.trim());
