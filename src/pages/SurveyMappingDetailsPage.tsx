@@ -5,22 +5,29 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info } from 'lucide-react';
+import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiClient } from '@/utils/apiClient';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
 
-interface LocationTableItem {
-  site: string;
-  building: string;
-  wing: string | null;
-  floor: string | null;
-  room: string | null;
-  qr_code: string | null;
+interface QRCodeData {
+  id: number;
+  document_file_name: string;
+  document_content_type: string;
+  document_file_size: number;
+  document_updated_at: string;
+  relation: string;
+  relation_id: number;
+  active: boolean | null;
+  created_at: string;
+  updated_at: string;
+  changed_by: string | null;
+  added_from: string | null;
+  comments: string | null;
 }
 
-interface SurveyMappingDetail {
+interface SurveyMapping {
   id: number;
   survey_id: number;
   created_by_id: number;
@@ -30,21 +37,7 @@ interface SurveyMappingDetail {
   floor_id: number | null;
   area_id: number | null;
   room_id: number | null;
-  qr_code: {
-    id: number;
-    document_file_name: string;
-    document_content_type: string;
-    document_file_size: number;
-    document_updated_at: string;
-    relation: string;
-    relation_id: number;
-    active: boolean | null;
-    created_at: string;
-    updated_at: string;
-    changed_by: string | null;
-    added_from: string | null;
-    comments: string | null;
-  };
+  qr_code: QRCodeData;
   active: boolean;
   created_at: string;
   updated_at: string;
@@ -57,56 +50,53 @@ interface SurveyMappingDetail {
   area_name: string | null;
   room_name: string | null;
   qr_code_url: string;
-  snag_checklist: {
-    id: number;
-    name: string;
-    snag_audit_category_id: number | null;
-    snag_audit_sub_category_id: number | null;
-    active: number;
-    project_id: number | null;
-    company_id: number;
-    created_at: string;
-    updated_at: string;
-    check_type: string;
-    user_id: number | null;
-    resource_id: number;
-    resource_type: string;
-    snag_audit_category: string | null;
-    snag_audit_sub_category: string | null;
-    questions_count: number;
-    snag_questions: Array<{
-      id: number;
-      qtype: string;
-      descr: string;
-      checklist_id: number;
-      img_mandatory: boolean;
-      quest_mandatory: boolean;
-      generic_tags: Array<{
-        id: number;
-        category_name: string;
-        category_type: string;
-        tag_type: string;
-        active: boolean;
-        created_at: string;
-        updated_at: string;
-        icons: unknown[];
-      }>;
-      snag_quest_options: Array<{
-        id: number;
-        qname: string;
-        option_type: string;
-      }>;
-      no_of_associations: number;
-      ticket_configs: {
-        category: string | null;
-        category_id: number | null;
-        assigned_to: string | null;
-        assigned_to_id: number | null;
-        tag_type: string | null;
-        active: boolean | null;
-      };
-    }>;
-  };
+}
+
+interface QuestionOption {
+  id: number;
+  question_id: number;
+  qname: string;
+  option_type: string;
+  active: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface SurveyQuestion {
+  id: number;
+  checklist_id: number;
+  descr: string;
+  qtype: string;
+  qnumber: number;
+  active: number;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  options: QuestionOption[];
+}
+
+interface SurveyMappingDetail {
+  id: number;
+  name: string;
+  check_type: string;
+  active: number;
+  no_of_associations: number;
+  questions_count: number;
+  mappings: SurveyMapping[];
+  questions: SurveyQuestion[];
+}
+
+interface LocationTableItem {
+  mapping_id: number;
+  site: string;
+  building: string;
+  wing: string | null;
+  floor: string | null;
+  area: string | null;
+  room: string | null;
+  qr_code: string | null;
+  created_by: string;
+  created_at: string;
 }
 
 export const SurveyMappingDetailsPage = () => {
@@ -122,13 +112,13 @@ export const SurveyMappingDetailsPage = () => {
   const fetchSurveyMappingDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/survey_mappings.json?q[id_eq]=${id}`);
+      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[survey_id_eq]=${id}`);
       console.log('Survey mapping details response:', response.data);
       
-      // The API returns an array, so we need to get the first item
-      const mappingArray = response.data || [];
-      if (mappingArray.length > 0) {
-        setMapping(mappingArray[0]);
+      // The API returns an object with survey_mappings array
+      const surveyMappings = response.data.survey_mappings || [];
+      if (surveyMappings.length > 0) {
+        setMapping(surveyMappings[0]);
       } else {
         setMapping(null);
       }
@@ -163,9 +153,34 @@ export const SurveyMappingDetailsPage = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const handleQRCodeClick = () => {
-    if (mapping?.qr_code_url) {
-      window.open(mapping.qr_code_url, '_blank');
+  const handleDownloadQRCode = async (qrCodeUrl: string, mappingId: number) => {
+    try {
+      const response = await apiClient.post(`/survey_mappings/download_qr_codes?survey_mapping_ids=${mappingId}`, {}, {
+        responseType: 'blob'
+      });
+      
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `qr-code-mapping-${mappingId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Success",
+        description: "QR Code PDF downloaded successfully",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error downloading QR code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to download QR code PDF",
+        variant: "destructive"
+      });
     }
   };
 
@@ -200,6 +215,13 @@ export const SurveyMappingDetailsPage = () => {
   // Location details table configuration
   const locationTableColumns: ColumnConfig[] = [
     {
+      key: "mapping_id",
+      label: "Mapping ID",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
       key: "site",
       label: "Site",
       sortable: false,
@@ -228,6 +250,13 @@ export const SurveyMappingDetailsPage = () => {
       defaultVisible: true,
     },
     {
+      key: "area",
+      label: "Area",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
       key: "room",
       label: "Room",
       sortable: false,
@@ -241,26 +270,46 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
+    {
+      key: "created_by",
+      label: "Created By",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+    {
+      key: "created_at",
+      label: "Created Date",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
   ];
 
   // Prepare location data for table
   const locationTableData = React.useMemo((): LocationTableItem[] => {
-    if (!mapping) return [];
+    if (!mapping || !mapping.mappings) return [];
     
-    // Return a single row with all location data
-    return [{
-      site: mapping.site_name,
-      building: mapping.building_name,
-      wing: mapping.wing_name,
-      floor: mapping.floor_name,
-      room: mapping.room_name,
-      qr_code: mapping.qr_code_url,
-    }];
+    // Return all mappings as separate rows
+    return mapping.mappings.map(mappingItem => ({
+      mapping_id: mappingItem.id,
+      site: mappingItem.site_name,
+      building: mappingItem.building_name,
+      wing: mappingItem.wing_name,
+      floor: mappingItem.floor_name,
+      area: mappingItem.area_name,
+      room: mappingItem.room_name,
+      qr_code: mappingItem.qr_code_url,
+      created_by: mappingItem.created_by,
+      created_at: mappingItem.created_at,
+    }));
   }, [mapping]);
 
   // Custom cell renderer for the table
   const renderLocationCell = (item: LocationTableItem, columnKey: string): React.ReactNode => {
     switch (columnKey) {
+      case 'mapping_id':
+        return <Badge variant="outline" className="text-xs">#{item.mapping_id}</Badge>;
       case 'site':
         return <span className="font-medium">{item.site}</span>;
       case 'building':
@@ -269,33 +318,50 @@ export const SurveyMappingDetailsPage = () => {
         return item.wing ? <span className="font-medium">{item.wing}</span> : <span className="text-gray-400">—</span>;
       case 'floor':
         return item.floor ? <span className="font-medium">{item.floor}</span> : <span className="text-gray-400">—</span>;
+      case 'area':
+        return item.area ? <span className="font-medium">{item.area}</span> : <span className="text-gray-400">—</span>;
       case 'room':
         return item.room ? <span className="font-medium">{item.room}</span> : <span className="text-gray-400">—</span>;
       case 'qr_code':
         return item.qr_code ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col items-center gap-2">
             <img 
               src={item.qr_code}
               alt="QR Code"
-              className="w-12 h-12 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
+              className="w-16 h-16 object-contain border border-gray-200 rounded cursor-pointer hover:scale-110 transition-transform"
               onClick={() => window.open(item.qr_code, '_blank')}
               title="Click to view full size"
             />
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => window.open(item.qr_code, '_blank')}
-              className="text-xs"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              View
-            </Button>
+            <div className="flex gap-1">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => window.open(item.qr_code, '_blank')}
+                className="text-xs px-2 py-1"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                View
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => handleDownloadQRCode(item.qr_code!, item.mapping_id)}
+                className="text-xs px-2 py-1"
+              >
+                <Download className="w-3 h-3 mr-1" />
+                Download
+              </Button>
+            </div>
           </div>
         ) : (
           <span className="text-gray-400 text-sm">No QR Code</span>
         );
+      case 'created_by':
+        return <span className="text-sm">{item.created_by}</span>;
+      case 'created_at':
+        return <span className="text-sm">{formatDate(item.created_at)}</span>;
       default:
-        return item[columnKey];
+        return item[columnKey as keyof LocationTableItem];
     }
   };
 
@@ -346,7 +412,7 @@ export const SurveyMappingDetailsPage = () => {
         </Button>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-[#1a1a1a]">
-            Survey Mapping Details - {mapping.survey_title}
+            Survey Details - {mapping.name}
           </h1>
           <div className="flex gap-2">
             <Badge
@@ -393,7 +459,7 @@ export const SurveyMappingDetailsPage = () => {
               { label: "Survey Information", value: "survey-information" },
               { label: "Questions", value: "questions" },
               { label: "Location Details", value: "location-details" },
-              { label: "QR Code", value: "qr-code" },
+              // { label: "QR Code", value: "qr-code" },
             ].map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -415,7 +481,21 @@ export const SurveyMappingDetailsPage = () => {
                     <div>
                       <p className="text-sm text-gray-600">Questions</p>
                       <p className="text-xl font-semibold">
-                        {mapping.snag_checklist?.questions_count || 0}
+                        {mapping.questions_count || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="w-8 h-8 text-gray-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Locations</p>
+                      <p className="text-xl font-semibold">
+                        {mapping.mappings?.length || 0}
                       </p>
                     </div>
                   </div>
@@ -429,21 +509,7 @@ export const SurveyMappingDetailsPage = () => {
                     <div>
                       <p className="text-sm text-gray-600">Check Type</p>
                       <p className="text-xl font-semibold capitalize">
-                        {mapping.snag_checklist?.check_type || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3">
-                    <Users className="w-8 h-8 text-gray-600" />
-                    <div>
-                      <p className="text-sm text-gray-600">Created By</p>
-                      <p className="text-xl font-semibold">
-                        {mapping.created_by}
+                        {mapping.check_type || 'N/A'}
                       </p>
                     </div>
                   </div>
@@ -457,19 +523,22 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <Shield className="h-4 w-4" />
                   </div>
-                  SURVEY MAPPING INFORMATION
+                  SURVEY INFORMATION
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <strong>Survey Title:</strong> {mapping.survey_title}
+                    <strong>Survey Name:</strong> {mapping.name}
                   </div>
                   <div>
-                    <strong>Survey ID:</strong> #{mapping.survey_id}
+                    <strong>Survey ID:</strong> #{mapping.id}
                   </div>
                   <div>
-                    <strong>Mapping ID:</strong> #{mapping.id}
+                    <strong>Check Type:</strong>
+                    <Badge variant="outline" className="ml-2 capitalize">
+                      {mapping.check_type}
+                    </Badge>
                   </div>
                   <div>
                     <strong>Status:</strong>
@@ -481,72 +550,67 @@ export const SurveyMappingDetailsPage = () => {
                     </Badge>
                   </div>
                   <div>
-                    <strong>Created on:</strong>{" "}
-                    {formatDateTime(mapping.created_at)}
+                    <strong>Total Locations:</strong>{" "}
+                    {mapping.mappings?.length || 0}
                   </div>
                   <div>
-                    <strong>Last Updated:</strong>{" "}
-                    {formatDateTime(mapping.updated_at)}
+                    <strong>Total Questions:</strong>{" "}
+                    {mapping.questions_count || 0}
+                  </div>
+                  <div>
+                    <strong>Associations:</strong>{" "}
+                    {mapping.no_of_associations || 0}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Checklist Information */}
-            {mapping.snag_checklist && (
+            {/* Location Summary */}
+            {mapping.mappings && mapping.mappings.length > 0 && (
               <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
                 <CardHeader className="bg-[#F6F4EE] mb-6">
                   <CardTitle className="text-lg flex items-center">
                     <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
-                      <List className="h-4 w-4" />
+                      <MapPin className="h-4 w-4" />
                     </div>
-                    SURVEY CHECKLIST INFORMATION
+                    LOCATION SUMMARY
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <strong>Checklist Name:</strong>{" "}
-                      {mapping.snag_checklist.name}
-                    </div>
-                    <div>
-                      <strong>Check Type:</strong>{" "}
-                      <Badge variant="outline" className="capitalize ml-2">
-                        {mapping.snag_checklist.check_type}
-                      </Badge>
-                    </div>
-                    <div>
-                      <strong>Questions Count:</strong>{" "}
-                      {mapping.snag_checklist.questions_count || 0}
-                    </div>
-                    <div>
-                      <strong>Status:</strong>
-                      <Badge
-                        variant={
-                          mapping.snag_checklist.active ? "default" : "secondary"
-                        }
-                        className="ml-2"
-                      >
-                        {mapping.snag_checklist.active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                    {mapping.snag_checklist.snag_audit_category && (
-                      <div>
-                        <strong>Category:</strong>{" "}
-                        {mapping.snag_checklist.snag_audit_category}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {mapping.mappings.slice(0, 6).map((mappingItem, index) => (
+                      <div key={mappingItem.id} className="p-3 bg-white border border-gray-200 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            #{mappingItem.id}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {mappingItem.created_by}
+                          </span>
+                        </div>
+                        <div className="text-sm space-y-1">
+                          <div><strong>Site:</strong> {mappingItem.site_name}</div>
+                          <div><strong>Building:</strong> {mappingItem.building_name}</div>
+                          {mappingItem.wing_name && (
+                            <div><strong>Wing:</strong> {mappingItem.wing_name}</div>
+                          )}
+                          {mappingItem.floor_name && (
+                            <div><strong>Floor:</strong> {mappingItem.floor_name}</div>
+                          )}
+                          {mappingItem.room_name && (
+                            <div><strong>Room:</strong> {mappingItem.room_name}</div>
+                          )}
+                        </div>
                       </div>
-                    )}
-                    {mapping.snag_checklist.snag_audit_sub_category && (
-                      <div>
-                        <strong>Sub Category:</strong>{" "}
-                        {mapping.snag_checklist.snag_audit_sub_category}
-                      </div>
-                    )}
-                    <div>
-                      <strong>Created on:</strong>{" "}
-                      {formatDateTime(mapping.snag_checklist.created_at)}
-                    </div>
+                    ))}
                   </div>
+                  {mapping.mappings.length > 6 && (
+                    <div className="mt-4 text-center">
+                      <Badge variant="secondary">
+                        +{mapping.mappings.length - 6} more locations
+                      </Badge>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -560,7 +624,7 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <List className="h-4 w-4" />
                   </div>
-                  SURVEY QUESTIONS ({mapping.snag_checklist?.snag_questions?.length || 0})
+                  SURVEY QUESTIONS ({mapping.questions?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -572,18 +636,16 @@ export const SurveyMappingDetailsPage = () => {
                         <TableHead>ID</TableHead>
                         <TableHead>Question</TableHead>
                         <TableHead>Type</TableHead>
-                        <TableHead>Image Required</TableHead>
-                        <TableHead>Mandatory</TableHead>
-                        <TableHead>Associations</TableHead>
-                       
-                        {/* <TableHead>Generic Tags</TableHead> */}
+                        <TableHead>Question Number</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Options</TableHead>
-                         <TableHead>Created By</TableHead>
+                        <TableHead>Created By</TableHead>
+                        <TableHead>Created Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody className="bg-white">
-                      {mapping.snag_checklist?.snag_questions && mapping.snag_checklist.snag_questions.length > 0 ? (
-                        mapping.snag_checklist.snag_questions.map((question, index) => (
+                      {mapping.questions && mapping.questions.length > 0 ? (
+                        mapping.questions.map((question, index) => (
                           <TableRow key={question.id}>
                             <TableCell>
                               <Badge variant="outline" className="text-xs">
@@ -602,50 +664,25 @@ export const SurveyMappingDetailsPage = () => {
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              {question.img_mandatory ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  Required
+                              <Badge variant="secondary" className="text-xs">
+                                {question.qnumber}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {question.active ? (
+                                <Badge variant="default" className="text-xs">
+                                  Active
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary" className="text-xs">
-                                  Optional
+                                  Inactive
                                 </Badge>
                               )}
                             </TableCell>
                             <TableCell>
-                              {question.quest_mandatory ? (
-                                <Badge variant="destructive" className="text-xs">
-                                  Required
-                                </Badge>
-                              ) : (
-                                <Badge variant="secondary" className="text-xs">
-                                  Optional
-                                </Badge>
-                              )}
-                            </TableCell>
-                            <TableCell>{question.no_of_associations}</TableCell>
-                            
-                            {/* <TableCell>
-                              {question.generic_tags && question.generic_tags.length > 0 ? (
+                              {question.options && question.options.length > 0 ? (
                                 <div className="flex flex-wrap gap-1">
-                                  {question.generic_tags.map((tag, tagIndex) => (
-                                    <span
-                                      key={tagIndex}
-                                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                                      title={`${tag.category_type} - ${tag.tag_type}`}
-                                    >
-                                      {tag.category_name}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell> */}
-                            <TableCell>
-                              {question.snag_quest_options && question.snag_quest_options.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {question.snag_quest_options.map((option, optIndex) => (
+                                  {question.options.map((option, optIndex) => (
                                     <span
                                       key={optIndex}
                                       className={`text-xs px-2 py-1 rounded ${
@@ -661,18 +698,17 @@ export const SurveyMappingDetailsPage = () => {
                                   ))}
                                 </div>
                               ) : (
-                                "—"
+                                <span className="text-gray-400">—</span>
                               )}
                             </TableCell>
-                            <TableCell>
-                              {mapping.created_by || "—"}
-                            </TableCell>
+                            <TableCell>{question.created_by || "—"}</TableCell>
+                            <TableCell>{formatDate(question.created_at)}</TableCell>
                           </TableRow>
                         ))
                       ) : (
                         <TableRow>
                           <TableCell
-                            colSpan={10}
+                            colSpan={9}
                             className="text-center text-gray-600"
                           >
                             No questions available.
@@ -694,7 +730,7 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <MapPin className="h-4 w-4" />
                   </div>
-                  LOCATION DETAILS
+                  LOCATION DETAILS ({mapping.mappings?.length || 0} Locations)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -703,31 +739,14 @@ export const SurveyMappingDetailsPage = () => {
                   columns={locationTableColumns}
                   renderCell={renderLocationCell}
                   storageKey="location-details-table"
-                  className="min-w-[800px]"
+                  className="min-w-[1200px]"
                   emptyMessage="No location details found"
-                  enableSearch={false}
+                  enableSearch={true}
                   enableSelection={false}
-                  hideTableExport={true}
-                  hideTableSearch={true}
-                  pagination={false}
+                  hideTableExport={false}
+                  hideTableSearch={false}
+                  pagination={true}
                 />
-                
-                {/* Location Summary */}
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="w-5 h-5 text-gray-600" />
-                    <p className="text-sm font-medium text-gray-800">
-                      Complete Location Path
-                    </p>
-                  </div>
-                  <p className="text-sm text-gray-700">
-                    {mapping.site_name} → {mapping.building_name}
-                    {mapping.wing_name && ` → ${mapping.wing_name}`}
-                    {mapping.floor_name && ` → ${mapping.floor_name}`}
-                    {mapping.area_name && ` → ${mapping.area_name}`}
-                    {mapping.room_name && ` → ${mapping.room_name}`}
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -740,89 +759,101 @@ export const SurveyMappingDetailsPage = () => {
                   <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
                     <QrCode className="h-4 w-4" />
                   </div>
-                  QR CODE INFORMATION
+                  QR CODES ({mapping.mappings?.length || 0} Locations)
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {mapping.qr_code_url ? (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* QR Code Display */}
-                    <div className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-lg">
-                      <div className="mb-4">
-                        <img 
-                          src={mapping.qr_code_url}
-                          alt="Survey Mapping QR Code"
-                          className="w-48 h-48 object-contain border border-gray-200 rounded-lg shadow-sm"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          onClick={handleQRCodeClick}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="w-4 h-4" />
-                          View Full Size
-                        </Button>
-                      </div>
-                    </div>
+                {mapping.mappings && mapping.mappings.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {mapping.mappings.map((mappingItem) => (
+                      <div key={mappingItem.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge variant="outline" className="text-xs">
+                            Mapping #{mappingItem.id}
+                          </Badge>
+                          <span className="text-xs text-gray-500">
+                            {mappingItem.created_by}
+                          </span>
+                        </div>
+                        
+                        {/* Location Info */}
+                        <div className="mb-4 text-sm space-y-1">
+                          <div><strong>Site:</strong> {mappingItem.site_name}</div>
+                          <div><strong>Building:</strong> {mappingItem.building_name}</div>
+                          {mappingItem.wing_name && (
+                            <div><strong>Wing:</strong> {mappingItem.wing_name}</div>
+                          )}
+                          {mappingItem.floor_name && (
+                            <div><strong>Floor:</strong> {mappingItem.floor_name}</div>
+                          )}
+                          {mappingItem.room_name && (
+                            <div><strong>Room:</strong> {mappingItem.room_name}</div>
+                          )}
+                        </div>
 
-                    {/* QR Code Details */}
-                    {/* <div className="space-y-4">
-                      <div className="bg-white border border-gray-200 p-4 rounded-lg">
-                        <h4 className="font-semibold text-gray-900 mb-3">QR Code Details</h4>
-                        {mapping.qr_code && (
-                          <div className="space-y-2 text-sm">
-                            <div>
-                              <strong>File Name:</strong>
-                              <p className="text-gray-600">{mapping.qr_code.document_file_name}</p>
+                        {/* QR Code Display */}
+                        {mappingItem.qr_code_url ? (
+                          <div className="flex flex-col items-center">
+                            <div className="mb-3">
+                              <img 
+                                src={mappingItem.qr_code_url}
+                                alt={`QR Code for Mapping ${mappingItem.id}`}
+                                className="w-32 h-32 object-contain border border-gray-200 rounded-lg shadow-sm"
+                              />
                             </div>
-                            <div>
-                              <strong>File Size:</strong>
-                              <p className="text-gray-600">{mapping.qr_code.document_file_size} bytes</p>
-                            </div>
-                            <div>
-                              <strong>Content Type:</strong>
-                              <p className="text-gray-600">{mapping.qr_code.document_content_type}</p>
-                            </div>
-                            <div>
-                              <strong>Created:</strong>
-                              <p className="text-gray-600">{formatDateTime(mapping.qr_code.created_at)}</p>
-                            </div>
-                            <div>
-                              <strong>Last Updated:</strong>
-                              <p className="text-gray-600">{formatDateTime(mapping.qr_code.updated_at)}</p>
-                            </div>
-                            <div>
-                              <strong>QR Code ID:</strong>
-                              <p className="text-gray-600">#{mapping.qr_code.id}</p>
-                            </div>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => window.open(mappingItem.qr_code_url, '_blank')}
+                              className="flex items-center gap-2 text-xs"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View Full Size
+                            </Button>
+                            
+                            {/* QR Code Details */}
+                            {mappingItem.qr_code && (
+                              <div className="mt-3 text-xs text-gray-600 space-y-1">
+                                <div><strong>File:</strong> {mappingItem.qr_code.document_file_name}</div>
+                                <div><strong>Size:</strong> {mappingItem.qr_code.document_file_size} bytes</div>
+                                <div><strong>Type:</strong> {mappingItem.qr_code.document_content_type}</div>
+                                <div><strong>Created:</strong> {formatDate(mappingItem.qr_code.created_at)}</div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6 border-2 border-dashed border-gray-200 rounded-lg">
+                            <QrCode className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                            <p className="text-xs text-gray-500">No QR Code</p>
                           </div>
                         )}
                       </div>
-
-                      <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Info className="w-5 h-5 text-blue-600" />
-                          <p className="text-sm font-medium text-blue-800">
-                            QR Code Usage
-                          </p>
-                        </div>
-                        <p className="text-xs text-blue-700">
-                          This QR code can be scanned to quickly access the survey for this specific location. 
-                          Place the QR code at the mapped location for easy access by survey respondents.
-                        </p>
-                      </div>
-                    </div> */}
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-12 bg-white rounded-lg border-2 border-dashed border-gray-200">
                     <QrCode className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No QR Code Available
+                      No QR Codes Available
                     </h3>
                     <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      No QR code has been generated for this survey mapping yet.
+                      No QR codes have been generated for this survey mapping yet.
+                    </p>
+                  </div>
+                )}
+
+                {mapping.mappings && mapping.mappings.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Info className="w-5 h-5 text-blue-600" />
+                      <p className="text-sm font-medium text-blue-800">
+                        QR Code Usage
+                      </p>
+                    </div>
+                    <p className="text-xs text-blue-700">
+                      Each QR code is specific to its location mapping. Place each QR code at its respective 
+                      mapped location for easy access by survey respondents. Scanning a QR code will direct 
+                      users to the survey for that specific location.
                     </p>
                   </div>
                 )}
