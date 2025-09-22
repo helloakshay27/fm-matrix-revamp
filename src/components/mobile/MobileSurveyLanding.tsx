@@ -548,7 +548,10 @@ export const MobileSurveyLanding: React.FC = () => {
       console.log("Current answer comments:", currentAnswer.comments);
       if (currentAnswer.comments && currentAnswer.comments.trim()) {
         surveyResponseItem.comments = currentAnswer.comments.trim();
-        console.log("Setting comments in payload:", currentAnswer.comments.trim());
+        console.log(
+          "Setting comments in payload:",
+          currentAnswer.comments.trim()
+        );
       } else {
         surveyResponseItem.comments = ""; // Ensure comments field is always present
         console.log("No comments found, setting empty string");
@@ -824,7 +827,7 @@ export const MobileSurveyLanding: React.FC = () => {
       setSelectedRating(null);
       setSelectedTags([]);
       setShowGenericTags(false);
-      
+
       // Move to previous question
       setCurrentQuestionIndex((prev) => prev - 1);
     }
@@ -838,7 +841,7 @@ export const MobileSurveyLanding: React.FC = () => {
     try {
       console.log("=== MULTI-QUESTION SURVEY SUBMISSION ===");
       console.log("All answers in state:", answers);
-      
+
       // For multi-question surveys, we need to create answers array for each question
       const allAnswers = Object.values(answers);
       console.log("All answers values:", allAnswers);
@@ -858,12 +861,14 @@ export const MobileSurveyLanding: React.FC = () => {
         const question = surveyData.snag_checklist.snag_questions.find(
           (q) => q.id === parseInt(questionId)
         );
-        
+
         console.log(`Found question:`, question);
         console.log(`Answer for question ${questionId}:`, answer);
 
         if (!question || !answer) {
-          console.log(`Skipping question ${questionId} - missing question or answer`);
+          console.log(
+            `Skipping question ${questionId} - missing question or answer`
+          );
           continue;
         }
 
@@ -969,13 +974,21 @@ export const MobileSurveyLanding: React.FC = () => {
 
         // Add individual question comment if available
         console.log(`[Multi-Submit] Question ${question.id} answer:`, answer);
-        console.log(`[Multi-Submit] Question ${question.id} comments:`, answer.comments);
+        console.log(
+          `[Multi-Submit] Question ${question.id} comments:`,
+          answer.comments
+        );
         if (answer.comments && answer.comments.trim()) {
           surveyResponseItem.comments = answer.comments.trim();
-          console.log(`[Multi-Submit] Setting comments for question ${question.id}:`, answer.comments.trim());
+          console.log(
+            `[Multi-Submit] Setting comments for question ${question.id}:`,
+            answer.comments.trim()
+          );
         } else {
           surveyResponseItem.comments = ""; // Ensure comments field is always present
-          console.log(`[Multi-Submit] No comments for question ${question.id}, setting empty string`);
+          console.log(
+            `[Multi-Submit] No comments for question ${question.id}, setting empty string`
+          );
         }
 
         surveyResponseArray.push(surveyResponseItem);
@@ -1050,14 +1063,28 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="bg-gray-50 py-4 px-4 text-center">
         <div className="flex justify-center items-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
-            <img
-              src="/Without bkg.svg"
-              alt="OIG Logo"
-              className="w-full h-full object-contain"
-            />
+            {window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="Gophygital Logo"
+                className="bg-white rounded"
+                style={{ 
+                  backgroundColor: "#fff",
+                  maxWidth: "200%",
+                  height: "auto"
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
+  
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
@@ -1088,7 +1115,10 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
           {/* Back button - positioned above survey title */}
-          {((currentQuestion && !isLastStep && currentQuestionIndex > 0 && !showGenericTags) || 
+          {((currentQuestion &&
+            !isLastStep &&
+            currentQuestionIndex > 0 &&
+            !showGenericTags) ||
             (isLastStep && isMultiQuestion)) && (
             <div className="w-full flex justify-start mb-4">
               <button
@@ -1112,7 +1142,7 @@ export const MobileSurveyLanding: React.FC = () => {
               </button>
             </div>
           )}
-          
+
           <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
             {surveyData.survey_title}
           </h1>
@@ -1408,7 +1438,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </button>
                   </>
                 )}
-                
+
                 {/* Emoji/Smiley Question */}
                 {(currentQuestion.qtype === "emoji" ||
                   currentQuestion.qtype === "smiley") &&
@@ -1499,7 +1529,9 @@ export const MobileSurveyLanding: React.FC = () => {
                       </label>
                       <textarea
                         value={getCurrentNegativeComments()}
-                        onChange={(e) => setCurrentNegativeComments(e.target.value)}
+                        onChange={(e) =>
+                          setCurrentNegativeComments(e.target.value)
+                        }
                         placeholder="Please describe any specific issues or suggestions..."
                         className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
@@ -1514,7 +1546,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         // Save answer with tags and description, then proceed
                         let answerData;
                         const currentComments = getCurrentNegativeComments();
-                        
+
                         if (
                           (pendingNegativeType === "emoji" ||
                             pendingNegativeType === "smiley") &&
@@ -1569,7 +1601,8 @@ export const MobileSurveyLanding: React.FC = () => {
                         }
                       }}
                       disabled={
-                        selectedTags.length === 0 && !getCurrentNegativeComments().trim()
+                        selectedTags.length === 0 &&
+                        !getCurrentNegativeComments().trim()
                       }
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >
