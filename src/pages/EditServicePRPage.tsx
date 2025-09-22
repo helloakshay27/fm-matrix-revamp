@@ -1098,6 +1098,159 @@ export const EditServicePRPage = () => {
           </Button>
         </div>
 
+        <div className="my-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+          <div className="p-4 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+                <Settings className="w-4 h-4 text-white" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">DETAILS</h2>
+            </div>
+          </div>
+
+          <div className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <TextField
+                  label="Kind Attention"
+                  placeholder="Kind Attention"
+                  fullWidth
+                  variant="outlined"
+                  onChange={(e) =>
+                    handleInputChange("kindAttention", e.target.value)
+                  }
+                  value={formData.kindAttention}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    mt: 1,
+                    "& .MuiInputBase-input": {
+                      padding: {
+                        xs: "8px",
+                        sm: "10px",
+                        md: "12px",
+                      },
+                    },
+                    height: {
+                      xs: 28,
+                      sm: 36,
+                      md: 45,
+                    },
+                  }}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="Subject"
+                  placeholder="Subject"
+                  fullWidth
+                  value={formData.subject}
+                  variant="outlined"
+                  onChange={(e) =>
+                    handleInputChange("subject", e.target.value)
+                  }
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    mt: 1,
+                    "& .MuiInputBase-input": {
+                      padding: {
+                        xs: "8px",
+                        sm: "10px",
+                        md: "12px",
+                      },
+                    },
+                    height: {
+                      xs: 28,
+                      sm: 36,
+                      md: 45,
+                    },
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+              <div>
+                <TextField
+                  label="Description"
+                  placeholder="Enter description here..."
+                  fullWidth
+                  value={formData.description}
+                  variant="outlined"
+                  onChange={(e) =>
+                    handleInputChange("description", e.target.value)
+                  }
+                  multiline
+                  rows={3}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
+                />
+              </div>
+
+              <div>
+                <TextField
+                  label="Terms & Conditions"
+                  placeholder="Enter terms and conditions here..."
+                  fullWidth
+                  value={formData.termsConditions}
+                  variant="outlined"
+                  onChange={(e) =>
+                    handleInputChange("termsConditions", e.target.value)
+                  }
+                  multiline
+                  rows={3}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  sx={{
+                    mt: 1,
+                    "& .MuiOutlinedInput-root": {
+                      height: "auto !important",
+                      padding: "2px !important",
+                      display: "flex",
+                    },
+                    "& .MuiInputBase-input[aria-hidden='true']": {
+                      flex: 0,
+                      width: 0,
+                      height: 0,
+                      padding: "0 !important",
+                      margin: 0,
+                      display: "none",
+                    },
+                    "& .MuiInputBase-input": {
+                      resize: "none !important",
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="text-[#C72030] flex items-center">
