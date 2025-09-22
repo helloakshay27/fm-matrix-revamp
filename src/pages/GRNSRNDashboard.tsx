@@ -229,17 +229,17 @@ export const GRNSRNDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => handleEdit(item.id)}
+        onClick={() => handleView(item.id)}
       >
-        <Edit className="w-4 h-4" />
+        <Eye className="w-4 h-4" />
       </Button>
       <Button
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => handleView(item.id)}
+        onClick={() => handleEdit(item.id)}
       >
-        <Eye className="w-4 h-4" />
+        <Edit className="w-4 h-4" />
       </Button>
     </div>
   );

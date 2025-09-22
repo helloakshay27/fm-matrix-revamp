@@ -399,20 +399,20 @@ export const PODashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
+        onClick={() => navigate(`/finance/po/details/${item.id}`)}
+      >
+        <Eye className="w-4 h-4" />
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        className="p-1"
         onClick={(e) => {
           e.stopPropagation();
           navigate(`/finance/po/edit/${item.id}`);
         }}
       >
         <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={() => navigate(`/finance/po/details/${item.id}`)}
-      >
-        <Eye className="w-4 h-4" />
       </Button>
     </div>
   );
