@@ -1274,12 +1274,12 @@ export const SurveyResponseDetailPage = () => {
 
   // Static columns for ticket data
   const getTicketColumns = () => [
-    {
-      key: "complaint_id",
-      label: "Complaint ID",
-      defaultVisible: true,
-      sortable: true,
-    },
+    // {
+    //   key: "complaint_id",
+    //   label: "Complaint ID",
+    //   defaultVisible: true,
+    //   sortable: true,
+    // },
     {
       key: "ticket_number",
       label: "Ticket Number",
@@ -1998,14 +1998,14 @@ export const SurveyResponseDetailPage = () => {
                     }
                     if (columnKey === "category") {
                       return (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium ">
                           {item.category}
                         </span>
                       );
                     }
                     if (columnKey === "assignee") {
                       return (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium">
                           {item.assignee}
                         </span>
                       );
