@@ -68,18 +68,25 @@ const MobileLMCPage: React.FC = () => {
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [userMobileDialogOpen, setUserMobileDialogOpen] = useState<boolean>(false);
     const mobileSearchInputRef = useRef<HTMLInputElement>(null);
-    // Token must come from URL only (e.g., ?token=...)
-    const authToken = searchParams.get('token') || '';
+    // Token must come from URL only (supports both ?token=... and ?access_token=...)
+    const authToken = searchParams.get('token') || searchParams.get('access_token') || '';
 
     // Derive baseUrl
     const rawBase = localStorage.getItem('baseUrl') || '';
     const baseUrl = rawBase && !/^https?:\/\//i.test(rawBase) ? `https://${rawBase}` : rawBase;
 
-    // Load circles (company id from localStorage if available)
+    // One-time warn if company_id missing (prevents silent no-op when loading circles/users)
+    const didWarnCompanyMissingRef = useRef(false);
+
+    // Load circles (company id from localStorage or URL if available)
     const loadCircles = async () => {
         const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
         if (!companyId) {
             setCircles([]);
+            if (!didWarnCompanyMissingRef.current) {
+                didWarnCompanyMissingRef.current = true;
+                toast.error('Missing company_id. Please append company_id to the URL or select a company first.');
+            }
             return;
         }
         try {
@@ -124,7 +131,7 @@ const MobileLMCPage: React.FC = () => {
         } catch (e) {
             // If GET fails, treat as no existing mapping
             setHasExistingMapping(false);
-    } finally { setMappingLoading(false); }
+        } finally { setMappingLoading(false); }
     };
 
     // Resolve a user's display name by ID via company_wise_users, if available
@@ -288,6 +295,12 @@ const MobileLMCPage: React.FC = () => {
 
     // Initial loads
     useEffect(() => { loadCircles(); }, []);
+    // If company_id is missing, auto-disable circle restriction so users list can load
+    useEffect(() => {
+        const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
+        if (!companyId) setRestrictByCircle(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // Read user_id from URL and load existing mapping once
     useEffect(() => {
         const u = searchParams.get('user_id') || '';
@@ -503,7 +516,7 @@ const MobileLMCPage: React.FC = () => {
                             </Label>
                             {isMobile ? (
                                 <>
-                    <Button
+                                    <Button
                                         type="button"
                                         disabled={userDisabled || allLoading}
                                         onClick={() => setUserMobileDialogOpen(true)}
@@ -511,7 +524,7 @@ const MobileLMCPage: React.FC = () => {
                                         className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 ${userDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030]'} justify-between`}
                                     >
                                         <span className="truncate text-left">
-                        {selectedUser ? (selectedUserBestLabel || 'Selected user') : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
+                                            {selectedUser ? (selectedUserBestLabel || 'Selected user') : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
                                         </span>
                                         <span className="ml-2 text-gray-400">▼</span>
                                     </Button>
@@ -529,7 +542,6 @@ const MobileLMCPage: React.FC = () => {
                                     </SelectTrigger>
                                     <SelectContent
                                         className="w-[var(--radix-select-trigger-width)]"
-                                        onOpenAutoFocus={(e: any) => { e.preventDefault(); /* we'll focus input manually */ }}
                                         onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
                                         onPointerDownOutside={(e: any) => {
                                             const target = e.target as HTMLElement | null;

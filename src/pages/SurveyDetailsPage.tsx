@@ -514,7 +514,7 @@ export const SurveyDetailsPage = () => {
         <CardHeader className="px-6 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg font-semibold text-gray-900">
-              Question Information
+              Question Details
             </CardTitle>
             <div className="flex items-center gap-2">
               {!loading && snagChecklist && (
