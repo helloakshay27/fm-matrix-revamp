@@ -42,9 +42,17 @@ export const MSafeDashboard = () => {
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     const access_token = query.get("access_token");
+    const company_id = query.get('company_id');
+    const user_id = query.get('user_id');
     console.log(access_token)
     if (access_token) {
       localStorage.setItem("token", access_token);
+    }
+    if (company_id) {
+      localStorage.setItem('selectedCompanyId', String(company_id));
+    }
+    if (user_id) {
+      localStorage.setItem('user_id', String(user_id));
     }
   }, [location.search]);
 
