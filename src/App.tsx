@@ -913,6 +913,8 @@ function App() {
                     }
                   />
 
+           
+
                   <Route
                     path="/"
                     element={
@@ -1451,6 +1453,12 @@ function App() {
                     <Route
                       path="/maintenance/m-safe/training-list/training-user-details/:id"
                       element={<TrainingUserDetailPage />}
+                    />
+
+                    {/* M-Safe Routes */}
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
                     />
 
                     <Route
@@ -2149,9 +2157,9 @@ function App() {
                       path="/security/visitor"
                       element={<VisitorsDashboard />}
                     />
-                    <Route 
-                      path="/security/visitor/add" 
-                      element={<VisitorFormPage />} 
+                    <Route
+                      path="/security/visitor/add"
+                      element={<VisitorFormPage />}
                     />
                     <Route
                       path="/security/visitor/history"
@@ -2201,6 +2209,7 @@ function App() {
                       path="/settings/staff"
                       element={<StaffsDashboard />}
                     />
+
                     <Route
                       path="/maintenance/msafe-report"
                       element={<MsafeReportDownload />}
@@ -2510,10 +2519,7 @@ function App() {
                         <Navigate to="/maintenance/m-safe/internal" replace />
                       }
                     />
-                    <Route
-                      path="/maintenance/m-safe/internal"
-                      element={<MSafeDashboard />}
-                    />
+
                     <Route
                       path="/maintenance/m-safe/external"
                       element={<ExternalUsersDashboard />}
@@ -2994,7 +3000,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                   <Route
+                  <Route
                     path="/mobile/lmc"
                     element={<MobileLMCPage />}
                   />

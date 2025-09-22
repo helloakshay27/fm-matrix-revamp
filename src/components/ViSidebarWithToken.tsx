@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLayout } from '../contexts/LayoutContext';
 import { Users, Car, Download, ChevronDown, ChevronRight, ChevronLeft, FolderTree, Trash, ChartColumnIncreasing } from 'lucide-react';
+import { saveToken, saveUser, getToken, isAuthenticated } from '../utils/auth';
 
 
 
@@ -43,12 +44,79 @@ const modulesByPackage = {
     ],
 }
 
-const ViSidebar: React.FC = () => {
+const ViSidebarWithToken: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { currentSection, setCurrentSection, isSidebarCollapsed, setIsSidebarCollapsed } = useLayout();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [hasValidToken, setHasValidToken] = useState<boolean>(false);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
+    useEffect(() => {
+        const query = new URLSearchParams(location.search);
+        const access_token = query.get("access_token");
+        const company_id = query.get("company_id");
+        const user_id = query.get("user_id");
+        
+        console.log('VI Sidebar Token Check:', { access_token: access_token ? 'Present' : 'Missing', company_id, user_id });
+        
+        if (access_token) {
+            // Store token using auth utility
+            saveToken(access_token);
+            
+            // Store company and user data
+            if (company_id) {
+                localStorage.setItem("selectedCompanyId", String(company_id));
+            }
+            if (user_id) {
+                localStorage.setItem("user_id", String(user_id));
+                
+                // Create a basic user object for VI with token access
+                const viUser = {
+                    id: parseInt(user_id),
+                    email: '', // VI access might not have email
+                    firstname: 'VI',
+                    lastname: 'User',
+                    access_token: access_token,
+                    user_type: 'vi_token_user'
+                };
+                saveUser(viUser);
+            }
+            
+            setHasValidToken(true);
+        } else {
+            // Check if token exists from previous session
+            const existingToken = getToken();
+            setHasValidToken(!!existingToken);
+        }
+        
+        setIsLoading(false);
+    }, [location.search]);
+
+    // Don't render sidebar if no valid token
+    if (isLoading) {
+        return (
+            <div className="w-16 bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300"
+                style={{ top: '4rem', height: '91vh' }}>
+                <div className="flex items-center justify-center h-full">
+                    <div className="text-sm text-gray-500">Loading...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!hasValidToken) {
+        return (
+            <div className="w-16 bg-[#f6f4ee] border-r border-[#D5DbDB] fixed left-0 top-0 overflow-y-auto transition-all duration-300"
+                style={{ top: '4rem', height: '91vh' }}>
+                <div className="flex items-center justify-center h-full">
+                    <div className="text-xs text-red-500 text-center px-2">
+                        Access Token Required
+                    </div>
+                </div>
+            </div>
+        );
+    }
     // Helper function to find the deepest navigable sub-item
     const findDeepestNavigableItem = (item: any): string | null => {
         if (!item.subItems || item.subItems.length === 0) {
@@ -235,4 +303,4 @@ const ViSidebar: React.FC = () => {
     );
 };
 
-export default ViSidebar;
+export default ViSidebarWithToken;

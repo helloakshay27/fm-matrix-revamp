@@ -23,7 +23,8 @@ const MsafeReportDownload = () => {
 
   const getBaseUrl = () => {
     const fromLS = localStorage.getItem('baseUrl');
-    return fromLS ? `https://${fromLS}` : 'https://fm-uat-api.lockated.com';
+    if (!fromLS) return 'https://fm-uat-api.lockated.com';
+    return fromLS.startsWith('http') ? fromLS : `https://${fromLS}`;
   };
 
   const fetchStatusOnce = async (): Promise<{ state?: string; status?: string; url?: string; download_url?: string; message?: string } | null> => {
