@@ -7,23 +7,19 @@ interface Site {
 }
 
 interface Building {
-  building: {
-    id: number;
-    name: string;
-    has_wing: boolean;
-    has_floor: boolean;
-    has_area: boolean;
-    has_room: boolean;
-    available_seats: number | null;
-    available_parkings: number | null;
-  };
+  id: number;
+  name: string;
+  has_wing?: boolean;
+  has_floor?: boolean;
+  has_area?: boolean;
+  has_room?: boolean;
+  available_seats?: number | null;
+  available_parkings?: number | null;
 }
 
 interface Wing {
-  wings: {
-    id: number;
-    name: string;
-  };
+  id: number;
+  name: string;
 }
 
 interface Area {
@@ -37,10 +33,8 @@ interface Floor {
 }
 
 interface Room {
-  rooms: {
-    id: number;
-    name: string;
-  };
+  id: number;
+  name: string;
 }
 
 export const useLocationData = () => {
@@ -50,7 +44,6 @@ export const useLocationData = () => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [rooms, setRooms] = useState<Room[]>([]);
-
   const [loading, setLoading] = useState({
     sites: false,
     buildings: false,
@@ -71,6 +64,7 @@ export const useLocationData = () => {
         },
       });
       const data = await response.json();
+      console.log('Sites response data:', data);
       setSites(data.sites || []);
     } catch (error) {
       console.error('Error fetching sites:', error);
@@ -87,15 +81,23 @@ export const useLocationData = () => {
       return;
     }
 
+    console.log('fetchBuildings called with siteId:', siteId);
     setLoading(prev => ({ ...prev, buildings: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`, {
+      const url = `${API_CONFIG.BASE_URL}/pms/sites/${siteId}/buildings.json`;
+      console.log('Fetching buildings from URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('Buildings response status:', response.status);
       const data = await response.json();
+      console.log('Buildings response data:', data);
+      
       setBuildings(data.buildings || []);
     } catch (error) {
       console.error('Error fetching buildings:', error);
@@ -112,16 +114,23 @@ export const useLocationData = () => {
       return;
     }
 
+    console.log('fetchWings called with buildingId:', buildingId);
     setLoading(prev => ({ ...prev, wings: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/buildings/${buildingId}/wings.json`, {
+      const url = `${API_CONFIG.BASE_URL}/pms/wings.json?building_id=${buildingId}`;
+      console.log('Fetching wings from URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('Wings response status:', response.status);
       const data = await response.json();
-      setWings(data || []);
+      console.log('Wings response data:', data);
+      setWings(data.wings || []);
     } catch (error) {
       console.error('Error fetching wings:', error);
       setWings([]);
@@ -137,15 +146,22 @@ export const useLocationData = () => {
       return;
     }
 
+    console.log('fetchAreas called with wingId:', wingId);
     setLoading(prev => ({ ...prev, areas: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/wings/${wingId}/areas.json`, {
+      const url = `${API_CONFIG.BASE_URL}/pms/areas.json?wing_id=${wingId}`;
+      console.log('Fetching areas from URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('Areas response status:', response.status);
       const data = await response.json();
+      console.log('Areas response data:', data);
       setAreas(data.areas || []);
     } catch (error) {
       console.error('Error fetching areas:', error);
@@ -162,15 +178,22 @@ export const useLocationData = () => {
       return;
     }
 
+    console.log('fetchFloors called with areaId:', areaId);
     setLoading(prev => ({ ...prev, floors: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/areas/${areaId}/floors.json`, {
+      const url = `${API_CONFIG.BASE_URL}/pms/floors.json?area_id=${areaId}`;
+      console.log('Fetching floors from URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('Floors response status:', response.status);
       const data = await response.json();
+      console.log('Floors response data:', data);
       setFloors(data.floors || []);
     } catch (error) {
       console.error('Error fetching floors:', error);
@@ -187,16 +210,29 @@ export const useLocationData = () => {
       return;
     }
 
+    console.log('fetchRooms called with floorId:', floorId);
     setLoading(prev => ({ ...prev, rooms: true }));
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/pms/floors/${floorId}/rooms.json`, {
+      const url = `${API_CONFIG.BASE_URL}/pms/rooms.json?floor_id=${floorId}`;
+      console.log('Fetching rooms from URL:', url);
+      
+      const response = await fetch(url, {
         headers: {
           'Authorization': getAuthHeader(),
           'Content-Type': 'application/json',
         },
       });
+      
+      console.log('Rooms response status:', response.status);
       const data = await response.json();
-      setRooms(data || []);
+      console.log('Rooms response data:', data);
+      
+      // Handle both array format and object with rooms property
+      if (Array.isArray(data)) {
+        setRooms(data);
+      } else {
+        setRooms(data.rooms || []);
+      }
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setRooms([]);

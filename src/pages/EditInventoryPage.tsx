@@ -49,6 +49,8 @@ export const EditInventoryPage = () => {
   const [invSubTypeLoading, setInvSubTypeLoading] = useState(false);
   const [invTypeId, setInvTypeId] = useState<string>('');
   const [invSubTypeId, setInvSubTypeId] = useState<string>('');
+  // Preserve the originally saved expiry date (YYYY-MM-DD) to enforce as minimum in edit
+  const [initialExpiryYMD, setInitialExpiryYMD] = useState<string>('');
   // Main form data state (moved up so suggestion filtering can reference it)
   const [formData, setFormData] = useState({
     assetName: '',
@@ -82,6 +84,7 @@ export const EditInventoryPage = () => {
     inventoryName?: string;
     inventoryCode?: string;
     minStockLevel?: string;
+    maxStockLevel?: string;
     expiryDate?: string;
   }>({});
   // Inventory name suggestion state
@@ -226,6 +229,8 @@ export const EditInventoryPage = () => {
   useEffect(() => {
     if (fetchedInventory) {
       const normalizedExpiry = fetchedInventory.expiry_date ? formatDateForInput(fetchedInventory.expiry_date) : '';
+  // Keep a copy of the original expiry date for minDate/validation in edit
+  setInitialExpiryYMD(normalizedExpiry);
       // Prefer vendor name over id for display
       const vendorName = (fetchedInventory as any)?.vendor_name || (fetchedInventory as any)?.vendor?.company_name || '';
       setFormData({
@@ -395,7 +400,17 @@ export const EditInventoryPage = () => {
       setFormData(prev => ({ ...prev, expiryDate: val }));
       setErrors(prev => ({
         ...prev,
-        expiryDate: val && val < todayISO ? 'Expiry Date cannot be in the past.' : ''
+        // In edit, the minimum allowed should be the originally saved expiry date.
+        // Fallback to today only if we don't have an original.
+        expiryDate: (() => {
+          const minYMD = initialExpiryYMD || todayISO;
+          if (val && minYMD && val < minYMD) {
+            // Show friendly dd-MM-yyyy for the min date
+            const [y,m,d] = minYMD.split('-');
+            return `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+          }
+          return '';
+        })()
       }));
       return;
     }
@@ -411,11 +426,29 @@ export const EditInventoryPage = () => {
       const msg = nextVal.trim() ? '' : 'Inventory Code is required.';
       setErrors(prev => ({ ...prev, inventoryCode: msg }));
     }
-    if (field === 'minStockLevel') {
-      let msg = '';
-      if (!nextVal.trim()) msg = 'Min. Stock Level is required.';
-      else if (!/^\d+$/.test(nextVal)) msg = 'Enter a valid number.';
-      setErrors(prev => ({ ...prev, minStockLevel: msg }));
+    // Min/Max Stock cross-field validation (Edit page)
+    if (field === 'minStockLevel' || field === 'maxStockLevel') {
+      const newMin = field === 'minStockLevel' ? nextVal : formData.minStockLevel;
+      const newMax = field === 'maxStockLevel' ? nextVal : formData.maxStockLevel;
+
+      let minErr = '';
+      let maxErr = '';
+
+      // Validate formats
+      if (!newMin.trim()) minErr = 'Min. Stock Level is required.';
+      else if (!/^\d+$/.test(newMin)) minErr = 'Enter a valid number.';
+
+      if (newMax && !/^\d+$/.test(newMax)) maxErr = 'Max Stock Level must be a valid number';
+
+      // Cross-field compare when both present and numeric
+      if (/^\d+$/.test(newMin) && /^\d+$/.test(newMax)) {
+        if (parseInt(newMin, 10) > parseInt(newMax, 10)) {
+          minErr = 'Min Stock Level cannot be greater than Max Stock Level';
+          maxErr = 'Max Stock Level cannot be less than Min Stock Level';
+        }
+      }
+
+      setErrors(prev => ({ ...prev, minStockLevel: minErr, maxStockLevel: maxErr }));
     }
   };
 
@@ -430,7 +463,21 @@ export const EditInventoryPage = () => {
     if (!formData.inventoryCode.trim()) newErrors.inventoryCode = 'Inventory Code is required.';
     if (!formData.minStockLevel.trim()) newErrors.minStockLevel = 'Min. Stock Level is required.';
     else if (!/^\d+$/.test(formData.minStockLevel)) newErrors.minStockLevel = 'Enter a valid number.';
-    if (formData.expiryDate && formData.expiryDate < todayISO) newErrors.expiryDate = 'Expiry Date cannot be in the past.';
+    if (formData.maxStockLevel && !/^\d+$/.test(formData.maxStockLevel)) newErrors.maxStockLevel = 'Max Stock Level must be a valid number';
+    // Cross-field: Min <= Max when both provided
+    if (/^\d+$/.test(formData.minStockLevel) && /^\d+$/.test(formData.maxStockLevel)) {
+      if (parseInt(formData.minStockLevel, 10) > parseInt(formData.maxStockLevel, 10)) {
+        newErrors.minStockLevel = 'Min Stock Level cannot be greater than Max Stock Level';
+        newErrors.maxStockLevel = 'Max Stock Level cannot be less than Min Stock Level';
+      }
+    }
+    if (formData.expiryDate) {
+      const minYMD = initialExpiryYMD || todayISO;
+      if (formData.expiryDate < minYMD) {
+        const [y,m,d] = minYMD.split('-');
+        newErrors.expiryDate = `Expiry Date cannot be earlier than ${d}-${m}-${y}.`;
+      }
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -790,7 +837,7 @@ export const EditInventoryPage = () => {
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -877,7 +924,8 @@ export const EditInventoryPage = () => {
                         const ymd = formatDateToYMD(date as Date | null);
                         handleInputChange("expiryDate", ymd);
                       }}
-                      disablePast
+                      // In edit mode, allow any date on/after the originally saved expiry date
+                      minDate={parseYMDToDate(initialExpiryYMD) || undefined}
                       format='dd-MM-yyyy'
                       slotProps={{
                         textField: {
@@ -901,6 +949,29 @@ export const EditInventoryPage = () => {
                     />
                   </LocalizationProvider>
 
+                </div>
+
+                {/* Inventory Type moved here before Select Category */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Type</InputLabel>
+                    <MuiSelect
+                      value={invTypeId}
+                      onChange={(e) => {
+                        setInvTypeId(e.target.value as string);
+                      }}
+                      label="Inventory Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
+                      {invTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
                 <div>
@@ -964,6 +1035,8 @@ export const EditInventoryPage = () => {
                     fullWidth
                     variant="outlined"
                     InputLabelProps={{ shrink: true }}
+                    error={Boolean(errors.maxStockLevel)}
+                    helperText={errors.maxStockLevel || ''}
                     sx={fieldStyles}
                   />
                 </div>
@@ -997,54 +1070,7 @@ export const EditInventoryPage = () => {
                 </div>
               </div>
 
-              {/* Inventory Type Masters - placed after Min Order Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        // Don't clear existing sub type id immediately; keep selected until list loads and validates
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Sub Type</InputLabel>
-                    <MuiSelect
-                      value={invSubTypeId}
-                      onChange={(e) => setInvSubTypeId(e.target.value as string)}
-                      label="Inventory Sub Type"
-                      notched
-                      displayEmpty
-                      disabled={!invTypeId || invSubTypeLoading}
-                    >
-                      <MenuItem value="">
-                        {invSubTypeLoading ? 'Loading...' : (!invTypeId ? 'Select Inventory Type first' : 'Select Inventory Sub Type')}
-                      </MenuItem>
-                      {invSubTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
+              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
 
             </div>
           )}

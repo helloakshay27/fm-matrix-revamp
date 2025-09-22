@@ -3,9 +3,101 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, Edit, Trash2 } from 'lucide-react';
 import { API_CONFIG, getAuthenticatedFetchOptions, getFullUrl } from '@/config/apiConfig';
+import {
+  FormControl,
+  InputLabel,
+  Select as MuiSelect,
+  MenuItem,
+  ThemeProvider,
+  createTheme
+} from '@mui/material';
+
+// MUI Theme for consistent styling
+const muiTheme = createTheme({
+  components: {
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          width: '100%',
+          '& .MuiOutlinedInput-root': {
+            height: '45px',
+            '@media (max-width: 768px)': {
+              height: '36px',
+            },
+            backgroundColor: '#FFFFFF',
+            '& fieldset': {
+              borderColor: '#d1d5db',
+            },
+            '&:hover fieldset': {
+              borderColor: '#9ca3af',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#C72030',
+              borderWidth: '2px',
+            },
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: '#374151',
+          fontWeight: 500,
+          '&.Mui-focused': {
+            color: '#C72030',
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          '& .MuiSelect-select': {
+            padding: '10px 14px',
+            display: 'flex',
+            alignItems: 'center',
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          '&:hover': {
+            backgroundColor: '#f3f4f6',
+          },
+          '&.Mui-selected': {
+            backgroundColor: '#C72030',
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: '#b91c1c',
+            },
+          },
+        },
+      },
+    },
+  },
+});
+
+// Menu props for consistent dropdown behavior
+const menuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: 300,
+      zIndex: 9999,
+      backgroundColor: 'white',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    },
+  },
+  MenuListProps: {
+    style: {
+      padding: 0,
+    },
+  },
+};
 
 export const PermitSetupDashboard = () => {
   const [permitType, setPermitType] = useState('');
@@ -791,775 +883,819 @@ export const PermitSetupDashboard = () => {
   });
 
   return (
-    <div className="flex-1 p-6 bg-white min-h-screen">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Permit Setup</h1>
+    <ThemeProvider theme={muiTheme}>
+      <div className="flex-1 p-6 bg-white min-h-screen">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Permit Setup</h1>
+            </div>
+            <Button className="bg-gray-600 hover:bg-gray-700 text-white">
+              <Download className="w-4 h-4 mr-2" />
+              Import Permit Tags
+            </Button>
           </div>
-          <Button className="bg-gray-600 hover:bg-gray-700 text-white">
-            <Download className="w-4 h-4 mr-2" />
-            Import Permit Tags
-          </Button>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="permit-type" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-white border border-gray-200">
-          <TabsTrigger value="permit-type" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
-            Permit Type
-          </TabsTrigger>
-          <TabsTrigger value="permit-activity" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Activity</TabsTrigger>
-          <TabsTrigger value="permit-sub-activity" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Sub Activity</TabsTrigger>
-          <TabsTrigger value="permit-hazard-category" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Hazard Category</TabsTrigger>
-          <TabsTrigger value="permit-risk" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Risk</TabsTrigger>
-          <TabsTrigger value="permit-safety-equipment" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Safety Equipment</TabsTrigger>
-        </TabsList>
+        {/* Tabs */}
+        <Tabs defaultValue="permit-type" className="w-full">
+          <TabsList className="grid w-full grid-cols-6 bg-white border border-gray-200">
+            <TabsTrigger value="permit-type" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">
+              Permit Type
+            </TabsTrigger>
+            <TabsTrigger value="permit-activity" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Activity</TabsTrigger>
+            <TabsTrigger value="permit-sub-activity" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Sub Activity</TabsTrigger>
+            <TabsTrigger value="permit-hazard-category" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Hazard Category</TabsTrigger>
+            <TabsTrigger value="permit-risk" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Risk</TabsTrigger>
+            <TabsTrigger value="permit-safety-equipment" className="data-[state=active]:bg-[#EDEAE3] data-[state=active]:text-[#C72030] data-[state=inactive]:bg-white data-[state=inactive]:text-black border-none font-semibold">Permit Safety Equipment</TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="permit-type" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitType}
-                  onChange={(e) => setPermitType(e.target.value)}
-                  className="w-full"
-                  placeholder="Enter permit type name"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? 'Submitting...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
-
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoadingPermitTypes ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-gray-500">
-                      Loading permit types...
-                    </TableCell>
-                  </TableRow>
-                ) : permitTypes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-gray-500">
-                      No permit types found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  permitTypes.map((type, index) => (
-                    <TableRow key={type.id}>
-                      <TableCell className="py-4">{type.name}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-600"
-                            onClick={() => handleDelete(index)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permit-activity" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handlePermitActivitySubmit} className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <Select value={selectedPermitType} onValueChange={setSelectedPermitType}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select Type"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPermitTypes ? (
-                      <SelectItem value="loading" disabled>
-                        Loading permit types...
-                      </SelectItem>
-                    ) : permitTypes.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No permit types available
-                      </SelectItem>
-                    ) : (
-                      permitTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitActivity}
-                  onChange={(e) => setPermitActivity(e.target.value)}
-                  className="w-full"
-                  placeholder="Enter permit activity name"
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isSubmittingPermitActivity}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmittingPermitActivity ? 'Submitting...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
-
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoadingPermitActivities ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                      Loading permit activities...
-                    </TableCell>
-                  </TableRow>
-                ) : permitActivities.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-gray-500">
-                      No permit activities found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  permitActivities.map((activity) => (
-                    <TableRow key={activity.id}>
-                      <TableCell className="py-4">{activity.permitType}</TableCell>
-                      <TableCell className="py-4">{activity.permitActivity}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-red-500 hover:text-red-600"
-                            onClick={() => handlePermitActivityDelete(activity.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permit-sub-activity" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handlePermitSubActivitySubmit} className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <Select value={selectedPermitTypeForSub} onValueChange={setSelectedPermitTypeForSub}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select Category"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPermitTypes ? (
-                      <SelectItem value="loading" disabled>
-                        Loading permit types...
-                      </SelectItem>
-                    ) : permitTypes.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No permit types available
-                      </SelectItem>
-                    ) : (
-                      permitTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub category
-                </label>
-                <Select
-                  value={selectedPermitActivity}
-                  onValueChange={setSelectedPermitActivity}
-                  disabled={!selectedPermitTypeForSub}
+          <TabsContent value="permit-type" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitType}
+                    onChange={(e) => setPermitType(e.target.value)}
+                    className="w-full"
+                    placeholder="Enter permit type name"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitActivities.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id.toString()}>
-                        {activity.permitActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </Button>
               </div>
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitSubActivity}
-                  onChange={(e) => setPermitSubActivity(e.target.value)}
-                  className="w-full"
-                  placeholder=""
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isSubmittingPermitSubActivity}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmittingPermitSubActivity ? 'Submitting...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
+            </form>
 
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {permitSubActivities.map((subActivity) => (
-                  <TableRow key={subActivity.id}>
-                    <TableCell className="py-4">{subActivity.permitType}</TableCell>
-                    <TableCell className="py-4">{subActivity.permitActivity}</TableCell>
-                    <TableCell className="py-4">{subActivity.permitSubActivity}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handlePermitSubActivityDelete(subActivity.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permit-hazard-category" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handlePermitHazardCategorySubmit} className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <Select value={selectedCategoryForHazard} onValueChange={setSelectedCategoryForHazard}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select Category"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPermitTypes ? (
-                      <SelectItem value="loading" disabled>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingPermitTypes ? (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center py-8 text-gray-500">
                         Loading permit types...
-                      </SelectItem>
-                    ) : permitTypes.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No permit types available
-                      </SelectItem>
-                    ) : (
-                      permitTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub category
-                </label>
-                <Select value={selectedSubCategoryForHazard} onValueChange={setSelectedSubCategoryForHazard}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitActivitiesForHazard.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id.toString()}>
-                        {activity.permitActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub sub category
-                </label>
-                <Select value={selectedSubSubCategoryForHazard} onValueChange={setSelectedSubSubCategoryForHazard}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitSubActivitiesForHazard.map((subActivity) => (
-                      <SelectItem key={subActivity.id} value={subActivity.id.toString()}>
-                        {subActivity.permitSubActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitHazardCategory}
-                  onChange={(e) => setPermitHazardCategory(e.target.value)}
-                  className="w-full"
-                  placeholder=""
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isSubmittingPermitHazardCategory}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmittingPermitHazardCategory ? 'Submitting...' : 'Submit'}
-              </Button>
+                      </TableCell>
+                    </TableRow>
+                  ) : permitTypes.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={2} className="text-center py-8 text-gray-500">
+                        No permit types found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    permitTypes.map((type, index) => (
+                      <TableRow key={type.id}>
+                        <TableCell className="py-4">{type.name}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600"
+                              onClick={() => handleDelete(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </form>
+          </TabsContent>
 
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {permitHazardCategories.map((hazard) => (
-                  <TableRow key={hazard.id}>
-                    <TableCell className="py-4">{hazard.category}</TableCell>
-                    <TableCell className="py-4">{hazard.subCategory}</TableCell>
-                    <TableCell className="py-4">{hazard.subSubCategory}</TableCell>
-                    <TableCell className="py-4">{hazard.permitHazardCategory}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handlePermitHazardCategoryDelete(hazard.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <TabsContent value="permit-activity" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handlePermitActivitySubmit} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Category</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitType}
+                      onChange={(e) => setSelectedPermitType(e.target.value)}
+                      label="Category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      {isLoadingPermitTypes ? (
+                        <MenuItem value="" disabled>
+                          Loading permit types...
+                        </MenuItem>
+                      ) : permitTypes.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No permit types available
+                        </MenuItem>
+                      ) : (
+                        permitTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitActivity}
+                    onChange={(e) => setPermitActivity(e.target.value)}
+                    className="w-full"
+                    placeholder="Enter permit activity name"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPermitActivity}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingPermitActivity ? 'Submitting...' : 'Submit'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permit-risk" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handlePermitRiskSubmit} className="space-y-4">
-            <div className="flex items-end gap-4">
-              <div className="flex-1">
-                <label htmlFor="permit-type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit type
-                </label>
-                <Select value={selectedPermitTypeForRisk} onValueChange={setSelectedPermitTypeForRisk}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoadingPermitTypes ? "Loading permit types..." : "Select Category"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPermitTypes ? (
-                      <SelectItem value="loading" disabled>
-                        Loading permit types...
-                      </SelectItem>
-                    ) : permitTypes.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No permit types available
-                      </SelectItem>
-                    ) : (
-                      permitTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub category
-                </label>
-                <Select value={selectedSubCategoryForRisk} onValueChange={setSelectedSubCategoryForRisk}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitActivitiesForRisk.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id.toString()}>
-                        {activity.permitActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub sub category
-                </label>
-                <Select value={selectedSubSubCategoryForRisk} onValueChange={setSelectedSubSubCategoryForRisk}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitSubActivitiesForRisk.map((subActivity) => (
-                      <SelectItem key={subActivity.id} value={subActivity.id.toString()}>
-                        {subActivity.permitSubActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="sub-sub-sub-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Sub sub sub category
-                </label>
-                <Select value={selectedSubSubSubCategoryForRisk} onValueChange={setSelectedSubSubSubCategoryForRisk}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select Sub Sub Sub Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitHazardCategoriesForRisk.map((hazard) => (
-                      <SelectItem key={hazard.id} value={hazard.id.toString()}>
-                        {hazard.permitHazardCategory}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitRisk}
-                  onChange={(e) => setPermitRisk(e.target.value)}
-                  className="w-full"
-                  placeholder=""
-                />
-              </div>
-              <Button
-                type="submit"
-                disabled={isSubmittingPermitRisk}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmittingPermitRisk ? 'Submitting...' : 'Submit'}
-              </Button>
+                </TableHeader>
+                <TableBody>
+                  {isLoadingPermitActivities ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                        Loading permit activities...
+                      </TableCell>
+                    </TableRow>
+                  ) : permitActivities.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center py-8 text-gray-500">
+                        No permit activities found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    permitActivities.map((activity) => (
+                      <TableRow key={activity.id}>
+                        <TableCell className="py-4">{activity.permitType}</TableCell>
+                        <TableCell className="py-4">{activity.permitActivity}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600"
+                              onClick={() => handlePermitActivityDelete(activity.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          </form>
+          </TabsContent>
 
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {permitRisks.map((risk) => (
-                  <TableRow key={risk.id}>
-                    <TableCell className="py-4">{risk.permitType}</TableCell>
-                    <TableCell className="py-4">{risk.subCategory}</TableCell>
-                    <TableCell className="py-4">{risk.subSubCategory}</TableCell>
-                    <TableCell className="py-4">{risk.subSubSubCategory}</TableCell>
-                    <TableCell className="py-4">{risk.permitRisk}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handlePermitRiskDelete(risk.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <TabsContent value="permit-sub-activity" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handlePermitSubActivitySubmit} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Category</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitTypeForSub}
+                      onChange={(e) => setSelectedPermitTypeForSub(e.target.value)}
+                      label="Category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      {isLoadingPermitTypes ? (
+                        <MenuItem value="" disabled>
+                          Loading permit types...
+                        </MenuItem>
+                      ) : permitTypes.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No permit types available
+                        </MenuItem>
+                      ) : (
+                        permitTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitActivity}
+                      onChange={(e) => setSelectedPermitActivity(e.target.value)}
+                      label="Sub category"
+                      displayEmpty
+                      disabled={!selectedPermitTypeForSub}
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitActivities.map((activity) => (
+                        <MenuItem key={activity.id} value={activity.id.toString()}>
+                          {activity.permitActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitSubActivity}
+                    onChange={(e) => setPermitSubActivity(e.target.value)}
+                    className="w-full"
+                    placeholder=""
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPermitSubActivity}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingPermitSubActivity ? 'Submitting...' : 'Submit'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="permit-safety-equipment" className="space-y-6 mt-6">
-          {/* Form */}
-          <form onSubmit={handlePermitSafetyEquipmentSubmit} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div>
-                <label htmlFor="permit-type" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit type
-                </label>
-                <Select value={selectedPermitTypeForSafety} onValueChange={setSelectedPermitTypeForSafety}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={isLoadingPermitTypes ? "Loading..." : "Permit Type"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingPermitTypes ? (
-                      <SelectItem value="loading" disabled>
-                        Loading permit types...
-                      </SelectItem>
-                    ) : permitTypes.length === 0 ? (
-                      <SelectItem value="no-data" disabled>
-                        No permit types available
-                      </SelectItem>
-                    ) : (
-                      permitTypes.map((type) => (
-                        <SelectItem key={type.id} value={type.id.toString()}>
-                          {type.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="permit-activity" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit activity
-                </label>
-                <Select value={selectedPermitActivityForSafety} onValueChange={setSelectedPermitActivityForSafety}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Permit Activity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitActivitiesForSafety.map((activity) => (
-                      <SelectItem key={activity.id} value={activity.id.toString()}>
-                        {activity.permitActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="permit-sub-activity" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit sub activity
-                </label>
-                <Select value={selectedPermitSubActivityForSafety} onValueChange={setSelectedPermitSubActivityForSafety}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Permit Sub Activity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitSubActivitiesForSafety.map((subActivity) => (
-                      <SelectItem key={subActivity.id} value={subActivity.id.toString()}>
-                        {subActivity.permitSubActivity}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="permit-hazard-category" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit hazard category
-                </label>
-                <Select value={selectedPermitHazardCategoryForSafety} onValueChange={setSelectedPermitHazardCategoryForSafety}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Permit Hazard Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitHazardCategoriesForSafety.map((hazard) => (
-                      <SelectItem key={hazard.id} value={hazard.id.toString()}>
-                        {hazard.permitHazardCategory}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="permit-risk" className="block text-sm font-medium text-gray-700 mb-2">
-                  Permit risk
-                </label>
-                <Select value={selectedPermitRiskForSafety} onValueChange={setSelectedPermitRiskForSafety}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Permit Risk" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredPermitRisksForSafety.map((risk) => (
-                      <SelectItem key={risk.id} value={risk.id.toString()}>
-                        {risk.permitRisk}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Name
-                </label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={permitSafetyEquipment}
-                  onChange={(e) => setPermitSafetyEquipment(e.target.value)}
-                  className="w-full"
-                  placeholder=""
-                />
-              </div>
+                </TableHeader>
+                <TableBody>
+                  {permitSubActivities.map((subActivity) => (
+                    <TableRow key={subActivity.id}>
+                      <TableCell className="py-4">{subActivity.permitType}</TableCell>
+                      <TableCell className="py-4">{subActivity.permitActivity}</TableCell>
+                      <TableCell className="py-4">{subActivity.permitSubActivity}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handlePermitSubActivityDelete(subActivity.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
-            <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmittingPermitSafetyEquipment}
-                className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isSubmittingPermitSafetyEquipment ? 'Submitting...' : 'Submit'}
-              </Button>
-            </div>
-          </form>
+          </TabsContent>
 
-          {/* Table */}
-          <div className="bg-white rounded-lg border overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
-                  <TableHead className="font-semibold text-gray-900">Permit Safety Equipment</TableHead>
-                  <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {permitSafetyEquipments.map((safety) => (
-                  <TableRow key={safety.id}>
-                    <TableCell className="py-4">{safety.permitType}</TableCell>
-                    <TableCell className="py-4">{safety.permitActivity}</TableCell>
-                    <TableCell className="py-4">{safety.permitSubActivity}</TableCell>
-                    <TableCell className="py-4">{safety.permitHazardCategory}</TableCell>
-                    <TableCell className="py-4">{safety.permitRisk}</TableCell>
-                    <TableCell className="py-4">{safety.permitSafetyEquipment}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-500 hover:text-red-600"
-                          onClick={() => handlePermitSafetyEquipmentDelete(safety.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <TabsContent value="permit-hazard-category" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handlePermitHazardCategorySubmit} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Category</InputLabel>
+                    <MuiSelect
+                      value={selectedCategoryForHazard}
+                      onChange={(e) => setSelectedCategoryForHazard(e.target.value)}
+                      label="Category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      {isLoadingPermitTypes ? (
+                        <MenuItem value="" disabled>
+                          Loading permit types...
+                        </MenuItem>
+                      ) : permitTypes.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No permit types available
+                        </MenuItem>
+                      ) : (
+                        permitTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedSubCategoryForHazard}
+                      onChange={(e) => setSelectedSubCategoryForHazard(e.target.value)}
+                      label="Sub category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitActivitiesForHazard.map((activity) => (
+                        <MenuItem key={activity.id} value={activity.id.toString()}>
+                          {activity.permitActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedSubSubCategoryForHazard}
+                      onChange={(e) => setSelectedSubSubCategoryForHazard(e.target.value)}
+                      label="Sub sub category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitSubActivitiesForHazard.map((subActivity) => (
+                        <MenuItem key={subActivity.id} value={subActivity.id.toString()}>
+                          {subActivity.permitSubActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitHazardCategory}
+                    onChange={(e) => setPermitHazardCategory(e.target.value)}
+                    className="w-full"
+                    placeholder=""
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPermitHazardCategory}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingPermitHazardCategory ? 'Submitting...' : 'Submit'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </div>
+                </TableHeader>
+                <TableBody>
+                  {permitHazardCategories.map((hazard) => (
+                    <TableRow key={hazard.id}>
+                      <TableCell className="py-4">{hazard.category}</TableCell>
+                      <TableCell className="py-4">{hazard.subCategory}</TableCell>
+                      <TableCell className="py-4">{hazard.subSubCategory}</TableCell>
+                      <TableCell className="py-4">{hazard.permitHazardCategory}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handlePermitHazardCategoryDelete(hazard.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="permit-risk" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handlePermitRiskSubmit} className="space-y-4">
+              <div className="flex items-end gap-4">
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit type</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitTypeForRisk}
+                      onChange={(e) => setSelectedPermitTypeForRisk(e.target.value)}
+                      label="Permit type"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      {isLoadingPermitTypes ? (
+                        <MenuItem value="" disabled>
+                          Loading permit types...
+                        </MenuItem>
+                      ) : permitTypes.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No permit types available
+                        </MenuItem>
+                      ) : (
+                        permitTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedSubCategoryForRisk}
+                      onChange={(e) => setSelectedSubCategoryForRisk(e.target.value)}
+                      label="Sub category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitActivitiesForRisk.map((activity) => (
+                        <MenuItem key={activity.id} value={activity.id.toString()}>
+                          {activity.permitActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedSubSubCategoryForRisk}
+                      onChange={(e) => setSelectedSubSubCategoryForRisk(e.target.value)}
+                      label="Sub sub category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitSubActivitiesForRisk.map((subActivity) => (
+                        <MenuItem key={subActivity.id} value={subActivity.id.toString()}>
+                          {subActivity.permitSubActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Sub sub sub category</InputLabel>
+                    <MuiSelect
+                      value={selectedSubSubSubCategoryForRisk}
+                      onChange={(e) => setSelectedSubSubSubCategoryForRisk(e.target.value)}
+                      label="Sub sub sub category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Select Sub Sub Sub Category</em>
+                      </MenuItem>
+                      {filteredPermitHazardCategoriesForRisk.map((hazard) => (
+                        <MenuItem key={hazard.id} value={hazard.id.toString()}>
+                          {hazard.permitHazardCategory}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitRisk}
+                    onChange={(e) => setPermitRisk(e.target.value)}
+                    className="w-full"
+                    placeholder=""
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPermitRisk}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingPermitRisk ? 'Submitting...' : 'Submit'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {permitRisks.map((risk) => (
+                    <TableRow key={risk.id}>
+                      <TableCell className="py-4">{risk.permitType}</TableCell>
+                      <TableCell className="py-4">{risk.subCategory}</TableCell>
+                      <TableCell className="py-4">{risk.subSubCategory}</TableCell>
+                      <TableCell className="py-4">{risk.subSubSubCategory}</TableCell>
+                      <TableCell className="py-4">{risk.permitRisk}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handlePermitRiskDelete(risk.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="permit-safety-equipment" className="space-y-6 mt-6">
+            {/* Form */}
+            <form onSubmit={handlePermitSafetyEquipmentSubmit} className="space-y-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit type</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitTypeForSafety}
+                      onChange={(e) => setSelectedPermitTypeForSafety(e.target.value)}
+                      label="Permit type"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      {isLoadingPermitTypes ? (
+                        <MenuItem value="" disabled>
+                          Loading permit types...
+                        </MenuItem>
+                      ) : permitTypes.length === 0 ? (
+                        <MenuItem value="" disabled>
+                          No permit types available
+                        </MenuItem>
+                      ) : (
+                        permitTypes.map((type) => (
+                          <MenuItem key={type.id} value={type.id.toString()}>
+                            {type.name}
+                          </MenuItem>
+                        ))
+                      )}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit activity</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitActivityForSafety}
+                      onChange={(e) => setSelectedPermitActivityForSafety(e.target.value)}
+                      label="Permit activity"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Permit Activity</em>
+                      </MenuItem>
+                      {filteredPermitActivitiesForSafety.map((activity) => (
+                        <MenuItem key={activity.id} value={activity.id.toString()}>
+                          {activity.permitActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit sub activity</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitSubActivityForSafety}
+                      onChange={(e) => setSelectedPermitSubActivityForSafety(e.target.value)}
+                      label="Permit sub activity"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Permit Sub Activity</em>
+                      </MenuItem>
+                      {filteredPermitSubActivitiesForSafety.map((subActivity) => (
+                        <MenuItem key={subActivity.id} value={subActivity.id.toString()}>
+                          {subActivity.permitSubActivity}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit hazard category</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitHazardCategoryForSafety}
+                      onChange={(e) => setSelectedPermitHazardCategoryForSafety(e.target.value)}
+                      label="Permit hazard category"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Permit Hazard Category</em>
+                      </MenuItem>
+                      {filteredPermitHazardCategoriesForSafety.map((hazard) => (
+                        <MenuItem key={hazard.id} value={hazard.id.toString()}>
+                          {hazard.permitHazardCategory}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel shrink>Permit risk</InputLabel>
+                    <MuiSelect
+                      value={selectedPermitRiskForSafety}
+                      onChange={(e) => setSelectedPermitRiskForSafety(e.target.value)}
+                      label="Permit risk"
+                      displayEmpty
+                      MenuProps={menuProps}
+                    >
+                      <MenuItem value="">
+                        <em>Permit Risk</em>
+                      </MenuItem>
+                      {filteredPermitRisksForSafety.map((risk) => (
+                        <MenuItem key={risk.id} value={risk.id.toString()}>
+                          {risk.permitRisk}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
+                </div>
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                    Name
+                  </label>
+                  <Input
+                    id="name"
+                    type="text"
+                    value={permitSafetyEquipment}
+                    onChange={(e) => setPermitSafetyEquipment(e.target.value)}
+                    className="w-full"
+                    placeholder=""
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  disabled={isSubmittingPermitSafetyEquipment}
+                  className="bg-green-500 hover:bg-green-600 text-white px-8 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmittingPermitSafetyEquipment ? 'Submitting...' : 'Submit'}
+                </Button>
+              </div>
+            </form>
+
+            {/* Table */}
+            <div className="bg-white rounded-lg border overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-gray-50">
+                    <TableHead className="font-semibold text-gray-900">Permit Type</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Sub Activity</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Hazard Category</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Risk</TableHead>
+                    <TableHead className="font-semibold text-gray-900">Permit Safety Equipment</TableHead>
+                    <TableHead className="font-semibold text-gray-900 text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {permitSafetyEquipments.map((safety) => (
+                    <TableRow key={safety.id}>
+                      <TableCell className="py-4">{safety.permitType}</TableCell>
+                      <TableCell className="py-4">{safety.permitActivity}</TableCell>
+                      <TableCell className="py-4">{safety.permitSubActivity}</TableCell>
+                      <TableCell className="py-4">{safety.permitHazardCategory}</TableCell>
+                      <TableCell className="py-4">{safety.permitRisk}</TableCell>
+                      <TableCell className="py-4">{safety.permitSafetyEquipment}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="sm" className="text-orange-500 hover:text-orange-600">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-600"
+                            onClick={() => handlePermitSafetyEquipmentDelete(safety.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </ThemeProvider>
   );
 };
 

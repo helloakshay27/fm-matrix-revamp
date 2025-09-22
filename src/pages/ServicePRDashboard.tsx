@@ -257,10 +257,10 @@ export const ServicePRDashboard = () => {
         className="p-1"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/finance/service-pr/edit/${item.id}`);
+          navigate(`/finance/service-pr/details/${item.id}`);
         }}
       >
-        <Edit className="w-4 h-4" />
+        <Eye className="w-4 h-4" />
       </Button>
       <Button
         size="sm"
@@ -268,10 +268,10 @@ export const ServicePRDashboard = () => {
         className="p-1"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/finance/service-pr/details/${item.id}`);
+          navigate(`/finance/service-pr/edit/${item.id}`);
         }}
       >
-        <Eye className="w-4 h-4" />
+        <Edit className="w-4 h-4" />
       </Button>
     </div>
   );

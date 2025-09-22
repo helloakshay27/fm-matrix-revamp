@@ -7,11 +7,13 @@ import { fetchSuppliersData } from '@/store/slices/suppliersSlice';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { TextField, FormControl, InputLabel, Select as MuiSelect, MenuItem, SelectChangeEvent, Radio, RadioGroup, FormControlLabel, Box } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ArrowLeft, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getFullUrl, getAuthHeader } from '@/config/apiConfig';
 import { getUser } from '@/utils/auth';
-import { ResponsiveDatePicker } from '@/components/ui/responsive-date-picker';
 import { toast } from 'sonner';
 
 // Helper: strip HTML tags / stray wrappers returned by backend so toast doesn't show raw tags
@@ -250,6 +252,25 @@ export const AddInventoryPage = () => {
     }
 
     setErrors(newErrors);
+  };
+
+  // Helpers to safely convert between YYYY-MM-DD and Date without timezone drift
+  const parseYMDToDate = (s: string | null | undefined): Date | null => {
+    if (!s) return null;
+    const parts = s.split('-');
+    if (parts.length !== 3) return null;
+    const y = Number(parts[0]);
+    const m = Number(parts[1]);
+    const d = Number(parts[2]);
+    if (!y || !m || !d) return null;
+    return new Date(y, m - 1, d);
+  };
+  const formatDateToYMD = (date: Date | null): string => {
+    if (!date) return '';
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   // Validate all required fields before submission
@@ -883,7 +904,7 @@ export const AddInventoryPage = () => {
               </div>
 
               {/* Form Grid - Second Row */}
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
                 <div>
                   <TextField
                     label="Cost"
@@ -966,24 +987,56 @@ export const AddInventoryPage = () => {
                 </div>
 
                 <div>
-                  <TextField
-                    label="Expiry Date"
-                    type="date"
-                    value={formData.expiryDate || ''}
-                    onChange={(e) => handleInputChange('expiryDate', e.target.value)}
-                    InputLabelProps={{
-                      shrink: true, // ensures the label floats above the field
-                    }}
-                    fullWidth
-                    error={Boolean(errors.expiryDate)}
-                    helperText={errors.expiryDate}
-                    sx={{
-                      height: '45px',
-                      '& .MuiInputBase-root': {
-                        height: '45px',
-                      },
-                    }}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDateFns}>
+                    <DatePicker
+                      label="Expiry Date"
+                      value={parseYMDToDate(formData.expiryDate)}
+                      onChange={(date) => {
+                        const ymd = formatDateToYMD(date as Date | null);
+                        handleInputChange('expiryDate', ymd);
+                      }}
+                      format='dd-MM-yyyy'
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          size: 'small',
+                          InputLabelProps: { shrink: true },
+                          sx: {
+                            ...fieldStyles,
+                            '& .MuiInputBase-root': { height: 40 },
+                            '& .MuiInputBase-input': { padding: '8px 12px' },
+                          },
+                          error: Boolean(errors.expiryDate),
+                          helperText: errors.expiryDate || '',
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
+                </div>
+
+                {/* Inventory Type moved here before Select Category */}
+                <div>
+                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
+                    <InputLabel shrink>Inventory Type</InputLabel>
+                    <MuiSelect
+                      value={invTypeId}
+                      onChange={(e) => {
+                        setInvTypeId(e.target.value as string);
+                        setInvSubTypeId('');
+                      }}
+                      label="Inventory Type"
+                      notched
+                      displayEmpty
+                    >
+                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
+                      {invTypeOptions.map((opt) => (
+                        <MenuItem key={opt.id} value={String(opt.id)}>
+                          {opt.name || opt.title || opt.label || String(opt.id)}
+                        </MenuItem>
+                      ))}
+                    </MuiSelect>
+                  </FormControl>
                 </div>
 
 
@@ -1082,53 +1135,7 @@ export const AddInventoryPage = () => {
               </div>
 
               {/* Inventory Type Masters - placed after Min Order Level */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Type</InputLabel>
-                    <MuiSelect
-                      value={invTypeId}
-                      onChange={(e) => {
-                        setInvTypeId(e.target.value as string);
-                        setInvSubTypeId('');
-                      }}
-                      label="Inventory Type"
-                      notched
-                      displayEmpty
-                    >
-                      <MenuItem value="">{invTypeLoading ? 'Loading...' : 'Select Inventory Type'}</MenuItem>
-                      {invTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-
-                <div>
-                  <FormControl fullWidth variant="outlined" sx={selectStyles}>
-                    <InputLabel shrink>Inventory Sub Type</InputLabel>
-                    <MuiSelect
-                      value={invSubTypeId}
-                      onChange={(e) => setInvSubTypeId(e.target.value as string)}
-                      label="Inventory Sub Type"
-                      notched
-                      displayEmpty
-                      disabled={!invTypeId || invSubTypeLoading}
-                    >
-                      <MenuItem value="">
-                        {invSubTypeLoading ? 'Loading...' : (!invTypeId ? 'Select Inventory Type first' : 'Select Inventory Sub Type')}
-                      </MenuItem>
-                      {invSubTypeOptions.map((opt) => (
-                        <MenuItem key={opt.id} value={String(opt.id)}>
-                          {opt.name || opt.title || opt.label || String(opt.id)}
-                        </MenuItem>
-                      ))}
-                    </MuiSelect>
-                  </FormControl>
-                </div>
-              </div>
+              {/* Removed Inventory Sub Type field; Inventory Type moved above in Second Row */}
             </div>
           )}
         </div>

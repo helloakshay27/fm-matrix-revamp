@@ -169,6 +169,7 @@ export const ScheduleFilterDialog = ({
                 <option value="PPM">PPM</option>
                 <option value="Routine">Routine</option>
                 <option value="AMC">AMC</option>
+                <option value="Preparedness">Preparedness</option>
               </MuiSelect>
             </FormControl>
           </div>
@@ -197,7 +198,7 @@ export const ScheduleFilterDialog = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-10">
             <Button
               onClick={handleApply}
             >
