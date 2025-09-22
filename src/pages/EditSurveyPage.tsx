@@ -226,26 +226,19 @@ export const EditSurveyPage = () => {
       setCheckType(mappedCheckType);
 
       // Check if ticket creation is enabled based on existing data
-      const hasTicketConfig = surveyData.snag_questions?.some(
-        (q: any) => q.ticket_configs
-      );
+      const hasTicketConfig = surveyData.ticket_configs && surveyData.ticket_configs.active;
       setCreateTicket(hasTicketConfig);
 
-      if (hasTicketConfig && surveyData.snag_questions?.[0]?.ticket_configs) {
-        const ticketConfig = surveyData.snag_questions[0].ticket_configs;
-        // Check if we have category_id or just category name
+      if (hasTicketConfig && surveyData.ticket_configs) {
+        const ticketConfig = surveyData.ticket_configs;
+        // Set ticket configuration data
         if (ticketConfig.category_id) {
           setTicketCategoryId(ticketConfig.category_id.toString());
-          // Find the category name from the loaded categories
-          const category = ticketCategories.find(cat => cat.id === ticketConfig.category_id);
-          setTicketCategory(category?.name || ticketConfig.category || "");
-        } else {
-          // Fallback: if only category name is available, find the ID
           setTicketCategory(ticketConfig.category || "");
-          const category = ticketCategories.find(cat => cat.name === ticketConfig.category);
-          setTicketCategoryId(category?.id.toString() || "");
         }
-        setAssignTo(ticketConfig.assigned_to_id ? ticketConfig.assigned_to_id.toString() : "");
+        if (ticketConfig.assigned_to_id) {
+          setAssignTo(ticketConfig.assigned_to_id.toString());
+        }
       }
 
       // Map snag_questions to component questions format
@@ -654,12 +647,12 @@ export const EditSurveyPage = () => {
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
 
-      // Add ticket creation fields - always send the state
+      // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
+      
       if (createTicket) {
-        formData.append("category_name", ticketCategoryId); // Send ID as string
-        formData.append("category_type", assignTo); // This should be the user ID
-        formData.append("tag_type", "Ticket Setup");
+        formData.append("category_name", ticketCategoryId);
+        formData.append("category_type", assignTo);
       }
 
       // Process questions with proper FormData structure matching server expectations
@@ -751,12 +744,7 @@ export const EditSurveyPage = () => {
         }
 
         // Add generic tags for ticket configuration only (separate from additional fields)
-        if (createTicket) {
-          formData.append(`question[][ticket_config][category_id]`, ticketCategoryId); // Send ID instead of name
-          formData.append(`question[][ticket_config][assigned_to_id]`, assignTo);
-          formData.append(`question[][ticket_config][tag_type]`, "Ticket Setup");
-          formData.append(`question[][ticket_config][active]`, "true");
-        }
+        // Note: Ticket configuration is now handled at survey level, not question level
       });
 
       console.log(
