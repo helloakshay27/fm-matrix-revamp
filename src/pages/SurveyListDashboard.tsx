@@ -30,6 +30,16 @@ interface SurveyItem {
   questions_count: number;
   active: number;
   check_type: string;
+  ticket_configs?: {
+    category: string;
+    category_id: number;
+    assigned_to: string;
+    assigned_to_id: number;
+    tag_type: string | null;
+    active: boolean;
+    tag_created_at: string;
+    tag_updated_at: string;
+  };
   snag_questions?: Array<{
     id: number;
     qtype: string;
@@ -38,16 +48,6 @@ interface SurveyItem {
     img_mandatory: boolean;
     quest_mandatory: boolean;
     no_of_associations: number;
-    ticket_configs: {
-      category: string;
-      category_id: number;
-      assigned_to: string;
-      assigned_to_id: number;
-      tag_type: string | null;
-      active: boolean;
-      tag_created_at: string;
-      tag_updated_at: string;
-    };
   }>;
 }
 
@@ -78,8 +78,7 @@ export const SurveyListDashboard = () => {
   const getCurrentSiteId = (): string => {
     return (
       localStorage.getItem("selectedSiteId") ||
-      new URLSearchParams(window.location.search).get("site_id") ||
-      "2189"
+      new URLSearchParams(window.location.search).get("site_id")
     );
   };
 
@@ -360,13 +359,13 @@ export const SurveyListDashboard = () => {
         case "ticket_category":
           return (
             <span>
-              {item.snag_questions?.[0]?.ticket_configs?.category || "-"}
+              {item.ticket_configs?.category || "-"}
             </span>
           );
         case "assigned_to":
           return (
             <span>
-              {item.snag_questions?.[0]?.ticket_configs?.assigned_to || "-"}
+              {item.ticket_configs?.assigned_to || "-"}
             </span>
           );
         case "snag_audit_sub_category":
