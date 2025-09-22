@@ -913,12 +913,7 @@ function App() {
                     }
                   />
 
-                  <Route path="/" element={<Layout />}>
-                    <Route
-                      path="/maintenance/m-safe/internal"
-                      element={<MSafeDashboard />}
-                    />
-                  </Route>
+           
 
                   <Route
                     path="/"
@@ -1458,6 +1453,12 @@ function App() {
                     <Route
                       path="/maintenance/m-safe/training-list/training-user-details/:id"
                       element={<TrainingUserDetailPage />}
+                    />
+
+                    {/* M-Safe Routes */}
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
                     />
 
                     <Route
@@ -2208,6 +2209,7 @@ function App() {
                       path="/settings/staff"
                       element={<StaffsDashboard />}
                     />
+
                     <Route
                       path="/maintenance/msafe-report"
                       element={<MsafeReportDownload />}
