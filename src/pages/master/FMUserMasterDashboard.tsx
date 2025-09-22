@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
   Plus,
-  Upload,
   Download,
   Eye,
   Users,
@@ -115,6 +114,56 @@ const transformFMUserData = (apiUser: FMUser): TransformedFMUser => ({
   lockUserId: apiUser.lock_user_permission?.id ?? null,
 });
 
+const columns: ColumnConfig[] = [
+  { key: "active", label: "Active", sortable: true, draggable: true },
+  { key: "id", label: "ID", sortable: true, draggable: true },
+  { key: "userName", label: "User Name", sortable: true, draggable: true },
+  { key: "gender", label: "Gender", sortable: true, draggable: true },
+  { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
+  { key: "email", label: "Email", sortable: true, draggable: true },
+  {
+    key: "vendorCompany",
+    label: "Vendor Company Name",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "entityName",
+    label: "Entity Name",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "unit", label: "Unit", sortable: true, draggable: true },
+  { key: "role", label: "Role", sortable: true, draggable: true },
+  {
+    key: "employeeId",
+    label: "Employee ID",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "createdBy", label: "Created By", sortable: true, draggable: true },
+  {
+    key: "accessLevel",
+    label: "Access Level",
+    sortable: true,
+    draggable: true,
+  },
+  { key: "type", label: "Type", sortable: true, draggable: true },
+  { key: "status", label: "Status", sortable: true, draggable: true },
+  {
+    key: "faceRecognition",
+    label: "Face Recognition",
+    sortable: true,
+    draggable: true,
+  },
+  {
+    key: "appDownloaded",
+    label: "App Downloaded",
+    sortable: true,
+    draggable: true,
+  },
+];
+
 export const FMUserMasterDashboard = () => {
   const baseUrl = localStorage.getItem("baseUrl") ?? "";
   const token = localStorage.getItem("token") ?? "";
@@ -141,11 +190,15 @@ export const FMUserMasterDashboard = () => {
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [showActionPanel, setShowActionPanel] = useState<boolean>(false);
   const [filters, setFilters] = useState<{
-    name: string;
-    email: string;
+    name?: string;
+    email?: string;
+    status?: string;
+    downloaded?: undefined | boolean;
   }>({
     name: "",
     email: "",
+    status: "",
+    downloaded: undefined,
   });
 
   const [fmUsersData, setFmUsersData] = useState<TransformedFMUser[]>([]);
@@ -157,58 +210,10 @@ export const FMUserMasterDashboard = () => {
     total_pages: 0,
   });
 
-  // Debounced search function
-  const debouncedSearch = useCallback(
-    debounce(async (searchQuery: string) => {
-      try {
-        if (searchQuery.trim() === "") {
-          const response = await dispatch(
-            getFMUsers({
-              baseUrl,
-              token,
-              perPage: 10,
-              currentPage: 1,
-            })
-          ).unwrap() as FMUserAPIResponse;
-          const transformedData = response.fm_users.map(transformFMUserData);
-          setFmUsersData(transformedData);
-          setFilteredFMUsersData(transformedData);
-          setPagination({
-            current_page: response.current_page,
-            total_count: response.total_count,
-            total_pages: response.total_pages,
-          });
-          return;
-        }
-
-        const response = await axios.get<FMUserAPIResponse>(
-          `https://${baseUrl}/pms/account_setups/fm_users.json?q[search_all_fields_cont]=${searchQuery}&per_page=10&page=${pagination.current_page}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const transformedData = response.data.fm_users.map(transformFMUserData);
-        setFilteredFMUsersData(transformedData);
-        setPagination({
-          current_page: response.data.current_page,
-          total_count: response.data.total_count,
-          total_pages: response.data.total_pages,
-        });
-      } catch (error: unknown) {
-        console.error("Search error:", error);
-        toast.error("Failed to perform search.");
-      }
-    }, 500),
-    [dispatch, baseUrl, token, pagination.current_page]
-  );
-
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1, filterParams = {}) => {
     try {
       const response = await dispatch(
-        getFMUsers({ baseUrl, token, perPage: 10, currentPage: pagination.current_page })
+        getFMUsers({ baseUrl, token, perPage: 10, currentPage: page, ...filterParams })
       ).unwrap() as FMUserAPIResponse;
       const transformedData = response.fm_users.map(transformFMUserData);
       setFmUsersData(transformedData);
@@ -226,9 +231,17 @@ export const FMUserMasterDashboard = () => {
 
   useEffect(() => {
     if (baseUrl && token) {
-      fetchUsers();
+      fetchUsers(1);
     }
-  }, [dispatch, baseUrl, token, pagination.current_page]);
+  }, [baseUrl, token]);
+
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce(async (searchQuery: string) => {
+      fetchUsers(1, { search_all_fields_cont: searchQuery });
+    }, 500),
+    [dispatch, baseUrl, token, pagination.current_page]
+  );
 
   useEffect(() => {
     setCurrentSection("Master");
@@ -239,56 +252,6 @@ export const FMUserMasterDashboard = () => {
     setSearchTerm(value);
     debouncedSearch(value);
   };
-
-  const columns: ColumnConfig[] = [
-    { key: "active", label: "Active", sortable: true, draggable: true },
-    { key: "id", label: "ID", sortable: true, draggable: true },
-    { key: "userName", label: "User Name", sortable: true, draggable: true },
-    { key: "gender", label: "Gender", sortable: true, draggable: true },
-    { key: "mobile", label: "Mobile Number", sortable: true, draggable: true },
-    { key: "email", label: "Email", sortable: true, draggable: true },
-    {
-      key: "vendorCompany",
-      label: "Vendor Company Name",
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: "entityName",
-      label: "Entity Name",
-      sortable: true,
-      draggable: true,
-    },
-    { key: "unit", label: "Unit", sortable: true, draggable: true },
-    { key: "role", label: "Role", sortable: true, draggable: true },
-    {
-      key: "employeeId",
-      label: "Employee ID",
-      sortable: true,
-      draggable: true,
-    },
-    { key: "createdBy", label: "Created By", sortable: true, draggable: true },
-    {
-      key: "accessLevel",
-      label: "Access Level",
-      sortable: true,
-      draggable: true,
-    },
-    { key: "type", label: "Type", sortable: true, draggable: true },
-    { key: "status", label: "Status", sortable: true, draggable: true },
-    {
-      key: "faceRecognition",
-      label: "Face Recognition",
-      sortable: true,
-      draggable: true,
-    },
-    {
-      key: "appDownloaded",
-      label: "App Downloaded",
-      sortable: true,
-      draggable: true,
-    },
-  ];
 
   const totalUsers = userCounts?.total_users ?? fmUsersData.length;
   const approvedUsers =
@@ -439,39 +402,18 @@ export const FMUserMasterDashboard = () => {
     }
   };
 
-  const handleFilter = async () => {
-    try {
-      const [firstName, lastName = ""] = filters.name.trim().split(" ");
-      const newFilterParams = {
-        "q[firstname_cont]": firstName,
-        "q[lastname_cont]": lastName,
-        "q[email_cont]": filters.email,
-      };
-
-      const queryString = new URLSearchParams(newFilterParams).toString();
-      const response = await axios.get<FMUserAPIResponse>(
-        `https://${baseUrl}/pms/account_setups/fm_users.json?${queryString}&per_page=10&page=${pagination.current_page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const transformedFilteredData = response.data.fm_users.map(transformFMUserData);
-      setFilteredFMUsersData(transformedFilteredData);
-      setPagination({
-        current_page: 1,
-        total_pages: response.data.total_pages,
-        total_count: response.data.total_count,
-      });
-      setFilterDialogOpen(false);
-
-      toast.success("Filters applied successfully!");
-    } catch (error: unknown) {
-      console.error(error);
-      toast.error("Failed to apply filters.");
-    }
+  const handleFilter = async (newFilters: {
+    name?: string;
+    email?: string;
+  }) => {
+    setFilters(newFilters);
+    const [firstName, lastName = ""] = newFilters.name.trim().split(" ");
+    await fetchUsers(pagination.current_page, {
+      firstname_cont: firstName,
+      lastname_cont: lastName,
+      email_cont: newFilters.email,
+    });
+    setFilterDialogOpen(false);
   };
 
   const getStatusBadgeProps = (status: string | null) => {
@@ -496,10 +438,6 @@ export const FMUserMasterDashboard = () => {
         children: "Pending",
       };
     }
-  };
-
-  const handleApplyFilters = () => {
-    handleFilter();
   };
 
   const handleCloneRoleSubmit = async () => {
@@ -543,9 +481,6 @@ export const FMUserMasterDashboard = () => {
       ...pagination,
       current_page: 1,
     });
-    setFilterDialogOpen(false);
-
-    toast.success("Filters reset successfully!");
   };
 
   const handleFilterChange = (field: "name" | "email", value: string) => {
@@ -555,39 +490,35 @@ export const FMUserMasterDashboard = () => {
     }));
   };
 
-  const cardFilter = async ({ status, downloaded }: { status?: string, downloaded?: boolean }) => {
-    try {
-      const response = await dispatch(
-        getFMUsers({ baseUrl, token, perPage: 10, currentPage: 1, status, downloaded })
-      ).unwrap() as FMUserAPIResponse;
-      const transformedData = response.fm_users.map(transformFMUserData);
-      setFmUsersData(transformedData);
-      setFilteredFMUsersData(transformedData);
-      setPagination({
-        current_page: response.current_page,
-        total_count: response.total_count,
-        total_pages: response.total_pages,
-      });
-    } catch (error: unknown) {
-      console.error(error);
-      toast.error("Failed to filter users");
-    }
+  const cardFilter = async (newFilters: {
+    status?: string;
+    downloaded?: undefined | boolean;
+  }) => {
+    setFilters(newFilters);
+    await fetchUsers(pagination.current_page, {
+      lock_user_permission_status_eq: newFilters.status,
+      app_downloaded_eq: newFilters.downloaded,
+    });
   };
-
   const handlePageChange = async (page: number) => {
-    setPagination((prev) => ({
-      ...prev,
-      current_page: page,
-    }));
+    console.log(page)
+    if (page < 1 || page > pagination.total_pages || page === pagination.current_page || loading) {
+      return;
+    }
+
     try {
-      const response = await dispatch(
-        getFMUsers({ baseUrl, token, perPage: 10, currentPage: page })
-      ).unwrap() as FMUserAPIResponse;
-      const transformedData = response.fm_users.map(transformFMUserData);
-      setFmUsersData(transformedData);
-      setFilteredFMUsersData(transformedData);
-    } catch (error: unknown) {
-      toast.error("Failed to fetch users");
+      setPagination((prev) => ({ ...prev, current_page: page }));
+      fetchUsers(page, {
+        lock_user_permission_status_eq: filters.status,
+        app_downloaded_eq: filters.downloaded,
+        firstname_cont: filters.name,
+        lastname_cont: filters.name,
+        email_cont: filters.email,
+        search_all_fields_cont: searchTerm
+      });
+    } catch (error) {
+      console.error("Error changing page:", error);
+      toast.error("Failed to load page data. Please try again.");
     }
   };
 
@@ -814,7 +745,7 @@ export const FMUserMasterDashboard = () => {
           title="Total Users"
           value={totalUsers}
           icon={<Users className="w-6 h-6" />}
-          onClick={fetchUsers}
+          onClick={() => fetchUsers(pagination.current_page)}
           className="cursor-pointer"
         />
         <StatsCard
@@ -951,7 +882,7 @@ export const FMUserMasterDashboard = () => {
               Reset
             </Button>
             <Button
-              onClick={handleApplyFilters}
+              onClick={() => handleFilter(filters)}
               className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-none px-6 py-2 text-sm font-medium rounded-lg mt-4"
             >
               Apply
