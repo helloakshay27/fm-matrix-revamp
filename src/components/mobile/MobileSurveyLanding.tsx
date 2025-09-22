@@ -178,6 +178,10 @@ export const MobileSurveyLanding: React.FC = () => {
   const getProgressPercentage = (): number => {
     if (!surveyData) return 0;
     const totalQuestions = surveyData.snag_checklist.questions_count;
+    // For the final "Any additional comments?" page, show 100%
+    if (currentQuestionIndex >= totalQuestions) {
+      return 100;
+    }
     return Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
   };
 
@@ -811,6 +815,21 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
+  // Move to previous question
+  const moveToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      // Reset current question states
+      setCurrentQuestionValue("");
+      setSelectedOptions([]);
+      setSelectedRating(null);
+      setSelectedTags([]);
+      setShowGenericTags(false);
+      
+      // Move to previous question
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
   // Handle survey submission - ARRAY FORMAT FOR ALL QUESTIONS
   const handleSubmitSurvey = async () => {
     if (!surveyData) return;
@@ -1068,6 +1087,32 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
+          {/* Back button - positioned above survey title */}
+          {((currentQuestion && !isLastStep && currentQuestionIndex > 0 && !showGenericTags) || 
+            (isLastStep && isMultiQuestion)) && (
+            <div className="w-full flex justify-start mb-4">
+              <button
+                onClick={moveToPreviousQuestion}
+                className="flex items-center text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Back
+              </button>
+            </div>
+          )}
+          
           <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
             {surveyData.survey_title}
           </h1>
@@ -1125,11 +1170,13 @@ export const MobileSurveyLanding: React.FC = () => {
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
             <div className="w-full space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
-                  {currentQuestion.descr}
-                </h3>
-              </div>
+              {!showGenericTags && (
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
+                    {currentQuestion.descr}
+                  </h3>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
@@ -1361,7 +1408,7 @@ export const MobileSurveyLanding: React.FC = () => {
                     </button>
                   </>
                 )}
-
+                
                 {/* Emoji/Smiley Question */}
                 {(currentQuestion.qtype === "emoji" ||
                   currentQuestion.qtype === "smiley") &&
