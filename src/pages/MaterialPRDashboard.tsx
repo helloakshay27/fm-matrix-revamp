@@ -283,10 +283,10 @@ export const MaterialPRDashboard = () => {
         className="p-1"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/finance/material-pr/edit/${item.id}`);
+          navigate(`/finance/material-pr/details/${item.id}`);
         }}
       >
-        <Edit className="w-4 h-4" />
+        <Eye className="w-4 h-4" />
       </Button>
       <Button
         size="sm"
@@ -294,10 +294,10 @@ export const MaterialPRDashboard = () => {
         className="p-1"
         onClick={(e) => {
           e.stopPropagation();
-          navigate(`/finance/material-pr/details/${item.id}`);
+          navigate(`/finance/material-pr/edit/${item.id}`);
         }}
       >
-        <Eye className="w-4 h-4" />
+        <Edit className="w-4 h-4" />
       </Button>
     </div>
   );
