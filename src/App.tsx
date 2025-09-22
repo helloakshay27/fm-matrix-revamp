@@ -913,6 +913,13 @@ function App() {
                     }
                   />
 
+                  <Route path="/" element={<Layout />}>
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
+                    />
+                  </Route>
+
                   <Route
                     path="/"
                     element={
@@ -2149,9 +2156,9 @@ function App() {
                       path="/security/visitor"
                       element={<VisitorsDashboard />}
                     />
-                    <Route 
-                      path="/security/visitor/add" 
-                      element={<VisitorFormPage />} 
+                    <Route
+                      path="/security/visitor/add"
+                      element={<VisitorFormPage />}
                     />
                     <Route
                       path="/security/visitor/history"
@@ -2510,10 +2517,7 @@ function App() {
                         <Navigate to="/maintenance/m-safe/internal" replace />
                       }
                     />
-                    <Route
-                      path="/maintenance/m-safe/internal"
-                      element={<MSafeDashboard />}
-                    />
+
                     <Route
                       path="/maintenance/m-safe/external"
                       element={<ExternalUsersDashboard />}
@@ -2982,7 +2986,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                   <Route
+                  <Route
                     path="/mobile/lmc"
                     element={<MobileLMCPage />}
                   />

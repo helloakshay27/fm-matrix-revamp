@@ -375,21 +375,23 @@ export const WODashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/wo/edit/${item.id}`);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
         onClick={() => navigate(`/finance/wo/details/${item.id}`)}
       >
         <Eye className="w-4 h-4" />
       </Button>
+      {
+        item.all_level_approved === null && <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/wo/edit/${item.id}`);
+          }}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      }
     </div>
   );
 
