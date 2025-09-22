@@ -410,12 +410,13 @@ export const Header = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
+                  navigate("/login");
+
                   permissionService.clearUserData();
                   clearAuth();
 
                   window.location.reload();
                   // Clear stored user data from permissionService
-                  navigate("/login");
                 }}
                 className="flex items-center gap-2 text-red-600 focus:text-red-700 focus:bg-red-50"
               >

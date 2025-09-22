@@ -23,7 +23,8 @@ const MsafeDetailReportDownload: React.FC = () => {
 
   const getBaseUrl = () => {
     const fromLS = localStorage.getItem('baseUrl');
-    return fromLS ? `https://${fromLS}` : 'https://live-api.gophygital.work';
+    if (!fromLS) return 'https://live-api.gophygital.work';
+    return fromLS.startsWith('http') ? fromLS : `https://${fromLS}`;
   };
 
   const handleGenerate = async () => {

@@ -98,14 +98,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     // Check for token-based VI access first
     const urlParams = new URLSearchParams(window.location.search);
     const hasTokenParam = urlParams.has("access_token");
+    const storedToken = localStorage.getItem("token");
+    const hasToken = hasTokenParam || storedToken;
     
     // Domain-based logic takes precedence for backward compatibility
     if (isOmanSite) {
       return <OmanSidebar />;
     }
 
-    // Check for VI site with token parameter
-    if (isViSite && hasTokenParam) {
+    // Check for VI site with token parameter or stored token
+    if (isViSite && hasToken) {
       return <ViSidebarWithToken />;
     }
     
