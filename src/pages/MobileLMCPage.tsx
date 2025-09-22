@@ -75,20 +75,12 @@ const MobileLMCPage: React.FC = () => {
     const rawBase = localStorage.getItem('baseUrl') || '';
     const baseUrl = rawBase && !/^https?:\/\//i.test(rawBase) ? `https://${rawBase}` : rawBase;
 
-    // One-time warn if company_id missing (prevents silent no-op when loading circles/users)
-    const didWarnCompanyMissingRef = useRef(false);
+    // Static company id for circles API
+    const STATIC_COMPANY_ID = '145';
 
-    // Load circles (company id from localStorage or URL if available)
+    // Load circles using static company id
     const loadCircles = async () => {
-        const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
-        if (!companyId) {
-            setCircles([]);
-            if (!didWarnCompanyMissingRef.current) {
-                didWarnCompanyMissingRef.current = true;
-                toast.error('Missing company_id. Please append company_id to the URL or select a company first.');
-            }
-            return;
-        }
+        const companyId = STATIC_COMPANY_ID;
         try {
             setCirclesLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
@@ -185,12 +177,12 @@ const MobileLMCPage: React.FC = () => {
         setResolvingUserLoading(false);
     };
 
-    // Resolve circle name by id via get_circles and select it in the dropdown
+    // Resolve circle name by id via get_circles and select it in the dropdown (uses static company id)
     const resolveCircleNameById = async (id: string) => {
         try {
             setResolvingCircleLoading(true);
             mappedCircleIdRef.current = String(id);
-            const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
+            const companyId = STATIC_COMPANY_ID;
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
             const url = `https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`;
             const data = await authedGet(url, authToken);
@@ -295,9 +287,9 @@ const MobileLMCPage: React.FC = () => {
 
     // Initial loads
     useEffect(() => { loadCircles(); }, []);
-    // If company_id is missing, auto-disable circle restriction so users list can load
+    // Keep restriction as-is; static company id ensures circles API works
     useEffect(() => {
-        const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
+        const companyId = STATIC_COMPANY_ID;
         if (!companyId) setRestrictByCircle(false);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
