@@ -1,7 +1,22 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { surveyApi, SurveyResponseData } from "@/services/surveyApi";
 import { SurveyAnalyticsCard } from "@/components/SurveyAnalyticsCard";
@@ -139,6 +154,7 @@ interface TabularResponseData {
   area: string;
   floor: string;
   room: string;
+  icon_category: string;
   rating: string;
   category: string;
   final_comment: string;
@@ -157,6 +173,24 @@ interface TicketData {
   location: string;
 }
 
+// Filter interface for survey responses
+interface SurveyResponseFilters {
+  dateRange?: {
+    from?: Date;
+    to?: Date;
+  };
+  building?: string;
+  wing?: string;
+  area?: string;
+  floor?: string;
+  room?: string;
+  iconCategory?: string;
+  rating?: string;
+  category?: string;
+  hasTickets?: boolean;
+  assignee?: string;
+}
+
 export const SurveyResponseDetailPage = () => {
   const { surveyId } = useParams();
   const navigate = useNavigate();
@@ -168,6 +202,18 @@ export const SurveyResponseDetailPage = () => {
     useState<SurveyDetailsResponse | null>(null);
   const [responseListData, setResponseListData] =
     useState<ResponseListData | null>(null);
+
+  // Filter states
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [currentFilters, setCurrentFilters] = useState<SurveyResponseFilters>(
+    {}
+  );
+  const [filteredTabularData, setFilteredTabularData] = useState<
+    TabularResponseData[]
+  >([]);
+  const [filteredTicketData, setFilteredTicketData] = useState<TicketData[]>(
+    []
+  );
 
   // Fetch response list data from new API
   const fetchResponseListData = useCallback(async () => {
@@ -181,7 +227,10 @@ export const SurveyResponseDetailPage = () => {
       }
 
       // Add token parameter instead of Authorization header
-      url.searchParams.append("token", "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU");
+      url.searchParams.append(
+        "token",
+        "fkLRVExOU3z0SUElnlKtEkNd7fJ4jOUL8hKd190ONrU"
+      );
 
       console.log("🚀 Fetching response list from:", url.toString());
 
@@ -400,29 +449,44 @@ export const SurveyResponseDetailPage = () => {
     }
   };
 
-  // Prepare pie chart data for response distribution for this single response
+  // Prepare pie chart data for response distribution across all questions
   const getResponseDistributionData = () => {
-    console.log("🔍 Getting response distribution data for single response");
+    console.log("🔍 Getting response distribution data for all questions");
+    console.log("🔍 Survey details data:", surveyDetailsData);
     console.log("🔍 Survey data:", surveyData);
 
-    // For a single response, show the distribution of answers across questions
-    if (surveyData?.questions && surveyData.questions.length > 0) {
-      const responseDistribution = surveyData.questions.map(
+    // Use the survey details data which has the most accurate and complete information
+    if (surveyDetailsData?.survey_details?.surveys?.[0]?.questions) {
+      const questions = surveyDetailsData.survey_details.surveys[0].questions;
+      console.log("🔍 Found questions in survey details:", questions.length);
+
+      const responseDistribution = questions.map(
         (question: SurveyQuestion, index: number) => {
-          // Only count responses for questions that have options
+          // Calculate total responses for this question
           const totalResponses =
             question.options && question.options.length > 0
               ? question.options.reduce(
-                  (sum, opt) => sum + opt.response_count,
+                  (sum, opt) => sum + (opt.response_count || 0),
                   0
                 )
               : 0;
 
+          // Create a shorter, more readable question name
+          let questionName = question.question;
+          if (questionName.length > 25) {
+            questionName = questionName.substring(0, 25) + "...";
+          }
+
+          console.log(
+            `🔍 Question ${index + 1}: "${
+              question.question
+            }" - ${totalResponses} total responses`
+          );
+          console.log(`🔍 Question ${index + 1} options:`, question.options);
+
           return {
-            name: `${question.question.substring(0, 30)}${
-              question.question.length > 30 ? "..." : ""
-            }`,
-            value: totalResponses || 1, // Show at least 1 for visualization
+            name: questionName,
+            value: totalResponses, // Use actual count, don't force minimum
             color: [
               "#C72030",
               "#c6b692",
@@ -437,23 +501,114 @@ export const SurveyResponseDetailPage = () => {
         }
       );
 
+      // Filter out questions with zero responses for cleaner visualization
+      const filteredDistribution = responseDistribution.filter(
+        (item) => item.value > 0
+      );
+
       console.log(
-        "🔍 Response distribution from survey data:",
+        "🔍 All questions with response counts:",
         responseDistribution
       );
-      return responseDistribution;
+      console.log(
+        "🔍 Filtered questions (only with responses):",
+        filteredDistribution
+      );
+      console.log(
+        "🔍 Number of questions with responses:",
+        filteredDistribution.length
+      );
+
+      // If no questions have responses, show a placeholder
+      if (filteredDistribution.length === 0) {
+        console.log("⚠️ No questions have responses, showing placeholder");
+        return [
+          {
+            name: "No responses yet",
+            value: 1,
+            color: "#E5E5E5",
+          },
+        ];
+      }
+
+      console.log(
+        "✅ Returning filtered distribution with",
+        filteredDistribution.length,
+        "questions"
+      );
+      return filteredDistribution;
     }
 
-    // Ultimate fallback: Show single response
+    // Fallback to original survey data if survey details not available
+    if (surveyData?.questions && surveyData.questions.length > 0) {
+      const responseDistribution = surveyData.questions.map(
+        (question: SurveyQuestion, index: number) => {
+          const totalResponses =
+            question.options && question.options.length > 0
+              ? question.options.reduce(
+                  (sum, opt) => sum + (opt.response_count || 0),
+                  0
+                )
+              : 0;
+
+          let questionName = question.question;
+          if (questionName.length > 25) {
+            questionName = questionName.substring(0, 25) + "...";
+          }
+
+          return {
+            name: questionName,
+            value: totalResponses,
+            color: [
+              "#C72030",
+              "#c6b692",
+              "#d8dcdd",
+              "#8B5CF6",
+              "#10B981",
+              "#F59E0B",
+              "#EF4444",
+              "#3B82F6",
+            ][index % 8],
+          };
+        }
+      );
+
+      const filteredDistribution = responseDistribution.filter(
+        (item) => item.value > 0
+      );
+
+      console.log(
+        "🔍 Fallback - All questions with response counts:",
+        responseDistribution
+      );
+      console.log(
+        "🔍 Fallback - Filtered questions (only with responses):",
+        filteredDistribution
+      );
+
+      if (filteredDistribution.length === 0) {
+        return [
+          {
+            name: "No responses yet",
+            value: 1,
+            color: "#E5E5E5",
+          },
+        ];
+      }
+
+      return filteredDistribution;
+    }
+
+    // Ultimate fallback
     const fallbackData = [
       {
-        name: "Single Response",
+        name: "No data available",
         value: 1,
         color: "#C72030",
       },
     ];
 
-    console.log("🔍 Using fallback response distribution:", fallbackData);
+    console.log("🔍 Using ultimate fallback:", fallbackData);
     return fallbackData;
   };
 
@@ -537,6 +692,7 @@ export const SurveyResponseDetailPage = () => {
   const getQuestionType = (
     options: SurveyOption[]
   ): "rating" | "emoji" | "regular" => {
+    // Check if any option has a type property
     const hasRatingType = options.some((option) => option.type === "rating");
     const hasEmojiType = options.some((option) => option.type === "emoji");
 
@@ -561,6 +717,7 @@ export const SurveyResponseDetailPage = () => {
     if (hasStarsText) return "rating";
     if (hasEmojiText) return "emoji";
 
+    // If no type field exists and no special text patterns, treat as regular multiple choice
     return "regular";
   };
 
@@ -644,14 +801,9 @@ export const SurveyResponseDetailPage = () => {
         console.log("🔍 Options data from survey details:", optionsData);
         console.log(`🔍 Question ${questionId} type: ${questionType}`);
 
-        // For regular questions, only return options that have responses, or all options if none have responses
-        const hasResponses = optionsData.some((item) => item.value > 0);
-        if (hasResponses) {
-          return optionsData.filter((item) => item.value > 0);
-        } else {
-          // Show all options with 0 values if no responses yet
-          return optionsData;
-        }
+        // For regular multiple choice questions, show all options in pie chart
+        // This ensures pie chart displays all available options, even those with 0 responses
+        return optionsData;
       }
     }
 
@@ -887,100 +1039,132 @@ export const SurveyResponseDetailPage = () => {
       console.log("❌ No response data available");
       return [];
     }
-    
-    console.log("🔍 Transforming response data for table:", responseListData.responses);
-    
-    const transformedData = responseListData.responses.map((response: SurveyResponse) => {
+
+    console.log(
+      "🔍 Transforming response data for table:",
+      responseListData.responses
+    );
+
+    const transformedData: TabularResponseData[] = [];
+
+    // Get all unique questions across all responses for consistent columns
+    const allUniqueQuestions = Array.from(
+      new Map(
+        responseListData.responses
+          .flatMap((r) => r.answers || [])
+          .map((answer) => [answer.question_id, answer.question_name])
+      ).entries()
+    );
+
+    responseListData.responses.forEach((response: SurveyResponse) => {
       const answers = response.answers || [];
-      console.log(`🔍 Processing response ${response.mapping_id} with ${answers.length} answers`);
-      
-      const questionAnswers: { [key: number]: ResponseAnswer[] } = {};
-      
-      // Group answers by question
+      console.log(
+        `🔍 Processing response ${response.mapping_id} with ${answers.length} answers`
+      );
+
+      // Group answers by timestamp to show individual response entries
+      const answersByTimestamp: { [key: string]: ResponseAnswer[] } = {};
+
       answers.forEach((answer) => {
-        if (!questionAnswers[answer.question_id]) {
-          questionAnswers[answer.question_id] = [];
+        const timestamp = answer.created_at;
+        if (!answersByTimestamp[timestamp]) {
+          answersByTimestamp[timestamp] = [];
         }
-        questionAnswers[answer.question_id].push(answer);
+        answersByTimestamp[timestamp].push(answer);
       });
 
-      // Get rating from emoji or rating type answers (use the latest one)
-      const ratingAnswers = answers.filter(
-        (a) => a.answer_type === "emoji" || a.answer_type === "rating"
-      );
-      const ratingAnswer = ratingAnswers.length > 0 ? ratingAnswers[ratingAnswers.length - 1] : null;
+      // Create a row for each timestamp (individual response submission)
+      Object.entries(answersByTimestamp).forEach(
+        ([timestamp, answersAtTime]) => {
+          // Get rating/emoji answer from this timestamp
+          const ratingAnswer = answersAtTime.find(
+            (a) => a.answer_type === "emoji" || a.answer_type === "rating"
+          );
 
-      // Get the latest timestamp from all answers
-      const latestAnswer = answers.length > 0 ? 
-        answers.reduce((latest, current) => 
-          new Date(current.created_at) > new Date(latest.created_at) ? current : latest
-        ) : null;
+          // Get the first answer's answer_id for this timestamp (all answers at same timestamp should have similar IDs)
+          const answerIdForTimestamp =
+            answersAtTime[0]?.answer_id || response.mapping_id;
 
-      // Create base row data
-      const rowData: TabularResponseData = {
-        id: `response-${response.mapping_id}`,
-        response_id: response.mapping_id.toString(),
-        date_time: latestAnswer
-          ? new Date(latestAnswer.created_at).toLocaleString("en-GB", {
+          // Create row data for this timestamp
+          const rowData: TabularResponseData = {
+            id: `response-${response.mapping_id}-${timestamp}`,
+            response_id: answerIdForTimestamp.toString(),
+            date_time: new Date(timestamp).toLocaleString("en-GB", {
               day: "2-digit",
-              month: "2-digit", 
+              month: "2-digit",
               year: "numeric",
               hour: "2-digit",
               minute: "2-digit",
               hour12: false,
-            })
-          : "-",
-        building: response.building_name || "-",
-        wing: response.wing_name || "-",
-        area: response.area_name || "-",
-        floor: response.floor_name || "-",
-        room: response.room_name || "-",
-        rating: ratingAnswer?.ans_descr || ratingAnswer?.level_id?.toString() || "-",
-        category: answers[0]?.answer_type || "-",
-        final_comment: response.final_comment || answers.find((a) => a.comments && a.comments.trim() !== "")?.comments || "-",
-        ticket_id: response.complaints && response.complaints.length > 0
-          ? response.complaints[0].complaint_id?.toString()
-          : "-",
-      };
+            }),
+            building: response.building_name || "-",
+            wing: response.wing_name || "-",
+            area: response.area_name || "-",
+            floor: response.floor_name || "-",
+            room: response.room_name || "-",
+            rating:
+              ratingAnswer?.ans_descr ||
+              ratingAnswer?.level_id?.toString() ||
+              "-",
+            category: answersAtTime[0]?.answer_type || "-",
+            icon_category:
+              response.complaints && response.complaints.length > 0
+                ? response.complaints[0].heading
+                : "-",
+            final_comment:
+              response.final_comment ||
+              answersAtTime.find((a) => a.comments && a.comments.trim() !== "")
+                ?.comments ||
+              "-",
+            ticket_id:
+              response.complaints && response.complaints.length > 0
+                ? response.complaints[0].complaint_id?.toString()
+                : "-",
+          };
 
-      // Add dynamic question data
-      const allUniqueQuestions = Array.from(
-        new Map(
-          responseListData.responses
-            .flatMap((r) => r.answers || [])
-            .map((answer) => [answer.question_id, answer.question_name])
-        ).entries()
-      );
+          // Add question data for this specific timestamp
+          allUniqueQuestions.forEach(([questionId, questionName]) => {
+            const columnKey = `question_${questionId}`;
+            const answerForQuestion = answersAtTime.find(
+              (a) => a.question_id === questionId
+            );
 
-      allUniqueQuestions.forEach(([questionId, questionName]) => {
-        const questionAnswersForId = questionAnswers[questionId] || [];
-        const columnKey = `question_${questionId}`;
-        
-        // For multiple answers to the same question, use the latest one
-        if (questionAnswersForId.length > 0) {
-          const latestQuestionAnswer = questionAnswersForId.reduce((latest, current) => 
-            new Date(current.created_at) > new Date(latest.created_at) ? current : latest
+            if (answerForQuestion) {
+              rowData[columnKey] =
+                answerForQuestion.option_name ||
+                answerForQuestion.ans_descr ||
+                "-";
+            } else {
+              rowData[columnKey] = "-";
+            }
+          });
+
+          transformedData.push(rowData);
+          console.log(
+            `🔍 Transformed row data for response ${response.mapping_id} at ${timestamp}:`,
+            rowData
           );
-          rowData[columnKey] = latestQuestionAnswer.option_name || latestQuestionAnswer.ans_descr || "-";
-        } else {
-          rowData[columnKey] = "-";
+          console.log(`🔍 Icon category value: "${rowData.icon_category}"`);
         }
-      });
-
-      console.log(`🔍 Transformed row data for response ${response.mapping_id}:`, rowData);
-      return rowData;
+      );
     });
-    
+
+    // Sort by timestamp (most recent first)
+    transformedData.sort(
+      (a, b) =>
+        new Date(b.date_time).getTime() - new Date(a.date_time).getTime()
+    );
+
     console.log("🎯 Final transformed data for table:", transformedData);
     return transformedData;
   };
 
-  // Transform ticket data for tickets EnhancedTable  
+  // Transform ticket data for tickets EnhancedTable
   const getTicketData = (): TicketData[] => {
     if (!responseListData?.responses) return [];
-    
+
     const ticketData: TicketData[] = [];
-    
+
     responseListData.responses.forEach((response: SurveyResponse) => {
       response.complaints?.forEach((complaint: ResponseComplaint) => {
         ticketData.push({
@@ -990,28 +1174,53 @@ export const SurveyResponseDetailPage = () => {
           heading: complaint.heading,
           category: complaint.category,
           assignee: complaint.assignee,
-          created_at: new Date(complaint.created_at).toLocaleDateString(),
-          location: response.site_name && response.building_name
-            ? `${response.site_name}, ${response.building_name}`
-            : response.site_name || "-",
+          created_at: new Date(complaint.created_at).toLocaleDateString(
+            "en-GB",
+            {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+            }
+          ),
+          location:
+            response.site_name && response.building_name
+              ? `${response.site_name}, ${response.building_name}`
+              : response.site_name || "-",
         });
       });
     });
-    
+
     return ticketData;
   };
 
   // Get dynamic columns for tabular data
   const getTabularColumns = () => {
     const baseColumns = [
-      { key: 'response_id', label: 'Response Id', defaultVisible: true, sortable: true },
-      { key: 'date_time', label: 'Date & Time', defaultVisible: true, sortable: true },
-      { key: 'building', label: 'Building', defaultVisible: true, sortable: true },
-      { key: 'wing', label: 'Wing', defaultVisible: true, sortable: true },
-      { key: 'area', label: 'Area', defaultVisible: true, sortable: true },
-      { key: 'floor', label: 'Floor', defaultVisible: true, sortable: true },
-      { key: 'room', label: 'Room', defaultVisible: true, sortable: true },
-      { key: 'rating', label: 'Rating', defaultVisible: true, sortable: true },
+      {
+        key: "response_id",
+        label: "Response Id",
+        defaultVisible: true,
+        sortable: true,
+      },
+      {
+        key: "date_time",
+        label: "Date & Time",
+        defaultVisible: true,
+        sortable: true,
+      },
+      {
+        key: "building",
+        label: "Building",
+        defaultVisible: true,
+        sortable: true,
+      },
+      { key: "wing", label: "Wing", defaultVisible: true, sortable: true },
+      { key: "area", label: "Area", defaultVisible: true, sortable: true },
+      { key: "floor", label: "Floor", defaultVisible: true, sortable: true },
+      { key: "room", label: "Room", defaultVisible: true, sortable: true },
+
+      // { key: 'category', label: 'Answer Type', defaultVisible: true, sortable: true },
+      // { key: 'rating', label: 'Rating', defaultVisible: true, sortable: true },
     ];
 
     // Add dynamic question columns
@@ -1035,26 +1244,256 @@ export const SurveyResponseDetailPage = () => {
     }
 
     baseColumns.push(
-      { key: 'category', label: 'Category', defaultVisible: true, sortable: true },
-      { key: 'final_comment', label: 'Final Comment', defaultVisible: true, sortable: true },
-      { key: 'ticket_id', label: 'Ticket Id', defaultVisible: true, sortable: true }
+      {
+        key: "final_comment",
+        label: "Final Comment",
+        defaultVisible: true,
+        sortable: true,
+      },
+      {
+        key: "icon_category",
+        label: "Icon Category",
+        defaultVisible: true,
+        sortable: true,
+      },
+      {
+        key: "ticket_id",
+        label: "Ticket Id",
+        defaultVisible: true,
+        sortable: true,
+      }
     );
 
     console.log("🔍 Generated columns:", baseColumns);
+    console.log(
+      "🔍 Icon Category column included:",
+      baseColumns.find((col) => col.key === "icon_category")
+    );
     return baseColumns;
   };
 
   // Static columns for ticket data
   const getTicketColumns = () => [
-    { key: 'complaint_id', label: 'Complaint ID', defaultVisible: true, sortable: true },
-    { key: 'ticket_number', label: 'Ticket Number', defaultVisible: true, sortable: true },
-    { key: 'heading', label: 'Heading', defaultVisible: true, sortable: true },
-    { key: 'category', label: 'Category', defaultVisible: true, sortable: true },
-    { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
-    { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
-    { key: 'created_date', label: 'Created Date', defaultVisible: true, sortable: true },
-    { key: 'description', label: 'Description', defaultVisible: true, sortable: true },
-  ];  if (isLoading) {
+    {
+      key: "complaint_id",
+      label: "Complaint ID",
+      defaultVisible: true,
+      sortable: true,
+    },
+    {
+      key: "ticket_number",
+      label: "Ticket Number",
+      defaultVisible: true,
+      sortable: true,
+    },
+    { key: "heading", label: "Heading", defaultVisible: true, sortable: true },
+    {
+      key: "category",
+      label: "Category",
+      defaultVisible: true,
+      sortable: true,
+    },
+    {
+      key: "assignee",
+      label: "Assignee",
+      defaultVisible: true,
+      sortable: true,
+    },
+    // { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
+    // { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
+    {
+      key: "created_at",
+      label: "Created Date",
+      defaultVisible: true,
+      sortable: true,
+    },
+    // { key: 'description', label: 'Description', defaultVisible: true, sortable: true },
+  ];
+
+  // Filter functions
+  const applyFiltersToTabularData = (
+    data: TabularResponseData[],
+    filters: SurveyResponseFilters
+  ): TabularResponseData[] => {
+    return data.filter((item) => {
+      // Date range filter
+      if (filters.dateRange?.from || filters.dateRange?.to) {
+        // Parse the date_time string which is in format like "22/09/2025, 15:04"
+        const dateTimeParts = item.date_time.split(", ");
+        const datePart = dateTimeParts[0]; // "22/09/2025"
+        const [day, month, year] = datePart.split("/").map(Number);
+        const itemDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+
+        if (filters.dateRange.from) {
+          const fromDate = new Date(filters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0); // Start of day
+          if (itemDate < fromDate) return false;
+        }
+
+        if (filters.dateRange.to) {
+          const toDate = new Date(filters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999); // End of day
+          if (itemDate > toDate) return false;
+        }
+      }
+
+      // Location filters
+      if (
+        filters.building &&
+        !(item.building || "")
+          .toLowerCase()
+          .includes(filters.building.toLowerCase())
+      )
+        return false;
+      if (
+        filters.wing &&
+        !(item.wing || "").toLowerCase().includes(filters.wing.toLowerCase())
+      )
+        return false;
+      if (
+        filters.area &&
+        !(item.area || "").toLowerCase().includes(filters.area.toLowerCase())
+      )
+        return false;
+      if (
+        filters.floor &&
+        !(item.floor || "").toLowerCase().includes(filters.floor.toLowerCase())
+      )
+        return false;
+      if (
+        filters.room &&
+        !(item.room || "").toLowerCase().includes(filters.room.toLowerCase())
+      )
+        return false;
+
+      // Icon Category filter
+      if (
+        filters.iconCategory &&
+        !(item.icon_category || "")
+          .toLowerCase()
+          .includes(filters.iconCategory.toLowerCase())
+      )
+        return false;
+
+      // Rating filter
+      if (filters.rating && !(item.rating || "").includes(filters.rating))
+        return false;
+
+      // Category filter
+      if (filters.category && item.category !== filters.category) return false;
+
+      // Has tickets filter
+      if (filters.hasTickets && !item.ticket_id) return false;
+
+      return true;
+    });
+  };
+
+  const applyFiltersToTicketData = (
+    data: TicketData[],
+    filters: SurveyResponseFilters
+  ): TicketData[] => {
+    return data.filter((item) => {
+      // Date range filter
+      if (filters.dateRange?.from || filters.dateRange?.to) {
+        // Parse the created_at string which is in format like "22/09/2025"
+        const [day, month, year] = item.created_at.split("/").map(Number);
+        const itemDate = new Date(year, month - 1, day); // month is 0-indexed in JS Date
+
+        if (filters.dateRange.from) {
+          const fromDate = new Date(filters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0); // Start of day
+          if (itemDate < fromDate) return false;
+        }
+
+        if (filters.dateRange.to) {
+          const toDate = new Date(filters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999); // End of day
+          if (itemDate > toDate) return false;
+        }
+      }
+
+      // Assignee filter
+      if (
+        filters.assignee &&
+        !(item.assignee || "")
+          .toLowerCase()
+          .includes(filters.assignee.toLowerCase())
+      )
+        return false;
+
+      // Category filter
+      if (
+        filters.category &&
+        !(item.category || "")
+          .toLowerCase()
+          .includes(filters.category.toLowerCase())
+      )
+        return false;
+
+      return true;
+    });
+  };
+
+  // Filter handlers
+  const handleFilterClick = () => {
+    setShowFilterModal(true);
+  };
+
+  const getActiveFiltersCount = () => {
+    let count = 0;
+    if (currentFilters.dateRange?.from || currentFilters.dateRange?.to) count++;
+    if (currentFilters.building) count++;
+    if (currentFilters.wing) count++;
+    if (currentFilters.area) count++;
+    if (currentFilters.floor) count++;
+    if (currentFilters.room) count++;
+    if (currentFilters.iconCategory) count++;
+    if (currentFilters.rating) count++;
+    if (currentFilters.category) count++;
+    if (currentFilters.assignee) count++;
+    if (currentFilters.hasTickets) count++;
+    return count;
+  };
+
+  const hasActiveFilters = () => getActiveFiltersCount() > 0;
+
+  const handleApplyFilters = (filters: SurveyResponseFilters) => {
+    setCurrentFilters(filters);
+
+    // Apply filters to both datasets
+    const baseTabularData = getTabularData();
+    const baseTicketData = getTicketData();
+
+    setFilteredTabularData(applyFiltersToTabularData(baseTabularData, filters));
+    setFilteredTicketData(applyFiltersToTicketData(baseTicketData, filters));
+
+    setShowFilterModal(false);
+  };
+
+  const handleClearFilters = () => {
+    setCurrentFilters({});
+    setFilteredTabularData([]);
+    setFilteredTicketData([]);
+    setShowFilterModal(false);
+  };
+
+  // Get data to display (filtered or original)
+  const getDisplayTabularData = () => {
+    if (Object.keys(currentFilters).length > 0) {
+      return filteredTabularData;
+    }
+    return getTabularData();
+  };
+
+  const getDisplayTicketData = () => {
+    if (Object.keys(currentFilters).length > 0) {
+      return filteredTicketData;
+    }
+    return getTicketData();
+  };
+
+  if (isLoading) {
     return (
       <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
         <div className="text-center py-8">
@@ -1105,332 +1544,483 @@ export const SurveyResponseDetailPage = () => {
     );
   }
 
+  // Filter Modal Component
+  const FilterModal = () => (
+    <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              Filter Survey Responses
+              {hasActiveFilters() && (
+                <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
+                  {getActiveFiltersCount()}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilterModal(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Date Range Filter */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+             
+              {(currentFilters.dateRange?.from ||
+                currentFilters.dateRange?.to) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      dateRange: undefined,
+                    }))
+                  }
+                  className="text-xs text-gray-500 hover:text-red-600"
+                >
+                  Clear dates
+                </Button>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">From Date</Label>
+                <Input
+                  type="date"
+                  value={
+                    currentFilters.dateRange?.from
+                      ? new Date(currentFilters.dateRange.from)
+                          .toISOString()
+                          .split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) => {
+                    const date = e.target.value
+                      ? new Date(e.target.value)
+                      : undefined;
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      dateRange: {
+                        ...prev.dateRange,
+                        from: date,
+                      },
+                    }));
+                  }}
+                  className="w-full"
+                  placeholder="Select start date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">To Date</Label>
+                <Input
+                  type="date"
+                  value={
+                    currentFilters.dateRange?.to
+                      ? new Date(currentFilters.dateRange.to)
+                          .toISOString()
+                          .split("T")[0]
+                      : ""
+                  }
+                  min={
+                    currentFilters.dateRange?.from
+                      ? new Date(currentFilters.dateRange.from)
+                          .toISOString()
+                          .split("T")[0]
+                      : undefined
+                  }
+                  onChange={(e) => {
+                    const date = e.target.value
+                      ? new Date(e.target.value)
+                      : undefined;
+                    setCurrentFilters((prev) => ({
+                      ...prev,
+                      dateRange: {
+                        ...prev.dateRange,
+                        to: date,
+                      },
+                    }));
+                  }}
+                  className="w-full"
+                  placeholder="Select end date"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            className="px-6"
+          >
+            Clear All
+          </Button>
+          <Button
+            onClick={() => handleApplyFilters(currentFilters)}
+            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            Apply Filters
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
-    <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
+    <div className="p-6">
       {/* Header */}
       <div className="mb-6">
         <Button
           variant="ghost"
           onClick={() => navigate("/maintenance/survey/response")}
-          className="mb-4 p-0 h-auto text-gray-600 hover:text-gray-800"
+          className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Response List
         </Button>
-
-        <h1 className="text-xl sm:text-2xl font-semibold text-gray-800 mb-6">
-          Response Detail
-        </h1>
-
-        {/* Tabs wrapper encompasses everything that needs tab context */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="bg-[#F5F3EF] p-4 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-8 h-8 bg-[#C72030] rounded-full flex items-center justify-center text-white font-bold text-sm">
-                  S
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Survey Details</div>
-                  {/* <div className="text-xs text-gray-400">Survey ID: {surveyData.survey_id}</div> */}
-                  {/* <div className="text-xs text-gray-400">Survey: {surveyData.survey_name}</div> */}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-8">
-                <TabsList className="bg-transparent border-0 p-0 h-auto">
-                  <TabsTrigger
-                    value="summary"
-                    className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1"
-                  >
-                    Summary
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="tabular"
-                    className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6"
-                  >
-                    Tabular
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="tickets"
-                    className="bg-transparent border-0 text-gray-600 data-[state=active]:bg-transparent data-[state=active]:text-gray-900 data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-gray-400 rounded-none pb-1 ml-6"
-                  >
-                    Tickets
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {/* <div className="text-sm text-gray-700">
-                Total Responses: <span className="text-[#C72030] font-medium">
-                  {surveyData.questions?.reduce((sum, q) => {
-                    if (q.options && q.options.length > 0) {
-                      return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
-                    }
-                    return sum;
-                  }, 0) || 0}
-                </span>
-              </div> */}
-              </div>
+        
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-[#1a1a1a]">
+            Survey Response Details - {surveyData.survey_name}
+          </h1>
+          <div className="flex gap-2">
+            <div className="text-sm text-gray-600">
+              Total Responses: <span className="text-[#C72030] font-medium">
+                {surveyData.questions?.reduce((sum, q) => {
+                  if (q.options && q.options.length > 0) {
+                    return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+                  }
+                  return sum;
+                }, 0) || 0}
+              </span>
             </div>
           </div>
-          <TabsContent value="summary" className="space-y-6">
-            {/* Bar Chart 1: Survey Summary Statistics */}
-            {/* <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-bold text-[#C72030]">Survey Summary Statistics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getSummaryBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                      <XAxis dataKey="name" angle={-20} textAnchor="end" fontSize={12} tick={{ fill: '#374151' }} interval={0} height={60} />
-                      <YAxis fontSize={12} tick={{ fill: '#374151' }} />
-                      <Tooltip />
-                      <Bar dataKey="value" fill="#C72030" name="Count" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card> */}
+        </div>
+      </div>
 
-            {/* Bar Chart 2: Question-wise Response Distribution */}
-            {/* <Card className="shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-base font-bold text-[#3b82f6]">Question-wise Response Distribution</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={getQuestionWiseBarChartData()} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e4e7" />
-                      <XAxis dataKey="name" angle={-20} textAnchor="end" fontSize={12} tick={{ fill: '#374151' }} interval={0} height={60} />
-                      <YAxis fontSize={12} tick={{ fill: '#374151' }} />
-                      <Tooltip />
-                      <Bar dataKey="responses" fill="#3b82f6" name="Responses" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card> */}
-
-            {/* Summary Statistics from new API */}
-            {/* {responseListData?.summary && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="text-2xl font-bold text-blue-700">{responseListData.summary.total_surveys}</div>
-                  <div className="text-sm text-blue-600">Total Surveys</div>
-                </div>
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <div className="text-2xl font-bold text-green-700">{responseListData.summary.active_surveys}</div>
-                  <div className="text-sm text-green-600">Active Surveys</div>
-                </div>
-                <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <div className="text-2xl font-bold text-orange-700">{responseListData.summary.total_responses}</div>
-                  <div className="text-sm text-orange-600">Total Responses</div>
-                </div>
-                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                  <div className="text-2xl font-bold text-purple-700">{responseListData.summary.inactive_surveys}</div>
-                  <div className="text-sm text-purple-600">Inactive Surveys</div>
-                </div>
-              </div>
-            )} */}
-
-            {/* Questions and Responses */}
-            {surveyData.questions.map((question: SurveyQuestion) => {
-              const totalResponses =
-                question.options?.reduce(
-                  (sum, opt) => sum + opt.response_count,
-                  0
-                ) || 0;
-              const responseTexts =
-                question.options
-                  ?.filter((opt) => opt.response_count > 0)
-                  .map(
-                    (opt) => `${opt.option} (${opt.response_count} responses)`
-                  ) || [];
-
-              // Check if question has any options configured
-              const hasOptions =
-                question.options && question.options.length > 0;
-
-              return (
-                <div
-                  key={question.question_id}
-                  className="bg-[#F5F3EF] p-4 rounded-lg border"
-                >
-                  <div className="flex items-center justify-between mb-3">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="flex flex-nowrap justify-start overflow-x-auto no-scrollbar bg-gray-50 rounded-t-lg h-auto p-0 text-sm">
+            {[
+              { label: "Summary", value: "summary" },
+              { label: "Tabular", value: "tabular" },
+              { label: "Tickets", value: "tickets" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="bg-white data-[state=active]:bg-[#EDEAE3] px-3 py-2 data-[state=active]:text-[#C72030] whitespace-nowrap"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <TabsContent value="summary" className="p-3 sm:p-6">
+            {/* Summary Statistics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center">
+                      <List className="w-4 h-4" />
+                    </div>
                     <div>
-                      <h3 className="font-medium text-gray-800 mb-1 text-base">
-                        {question.question}
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        {hasOptions
-                          ? `${totalResponses} Responses`
-                          : "No options configured"}
+                      <p className="text-sm text-gray-600">Total Questions</p>
+                      <p className="text-xl font-semibold">
+                        {surveyData.questions?.length || 0}
                       </p>
                     </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Question Response Distribution Chart - Dynamic Type */}
-                  <div className="mb-4">
-                    <SurveyAnalyticsCard
-                      title={`Response Distribution: ${question.question.substring(
-                        0,
-                        50
-                      )}${question.question.length > 50 ? "..." : ""}`}
-                      type={getChartType(question.question_id)}
-                      data={getQuestionOptionsData(question.question_id)}
-                      dateRange={{
-                        startDate: new Date(
-                          Date.now() - 30 * 24 * 60 * 60 * 1000
-                        ),
-                        endDate: new Date(),
-                      }}
-                      onDownload={() => {
-                        console.log(
-                          `Download chart for question ${question.question_id}`
-                        );
-                        toast.success(
-                          `Chart for question ${question.question_id} download initiated`
-                        );
-                      }}
-                    />
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center">
+                      <BarChart3 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Total Responses</p>
+                      <p className="text-xl font-semibold">
+                        {surveyData.questions?.reduce((sum, q) => {
+                          if (q.options && q.options.length > 0) {
+                            return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+                          }
+                          return sum;
+                        }, 0) || 0}
+                      </p>
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Rsponse Total counts */}
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center">
+                      <Activity className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Survey Status</p>
+                      <p className="text-xl font-semibold text-green-600">
+                        Active
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                  {/* <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                    {hasOptions ? (
-                      responseTexts.length > 0 ? (
-                        responseTexts.map((response: string, index: number) => (
-                          <div
-                            key={index}
-                            className="bg-white p-3 rounded border border-gray-200 text-gray-700"
-                          >
-                            {response}
+            {/* Overall Response Distribution */}
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <BarChart3 className="h-4 w-4" />
+                  </div>
+                  OVERALL RESPONSE DISTRIBUTION
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <SurveyAnalyticsCard
+                  title="Overall Question Response Distribution"
+                  type="statusDistribution"
+                  data={getResponseDistributionData()}
+                  dateRange={{
+                    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                  }}
+                  onDownload={handleDownloadResponseChart}
+                />
+              </CardContent>
+            </Card>  
+
+            {/* Questions Response Details */}
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <List className="h-4 w-4" />
+                  </div>
+                  QUESTION RESPONSE DETAILS ({surveyData.questions?.length || 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {surveyData.questions.map((question: SurveyQuestion) => {
+                    const totalResponses =
+                      question.options?.reduce(
+                        (sum, opt) => sum + opt.response_count,
+                        0
+                      ) || 0;
+                    const responseTexts =
+                      question.options
+                        ?.filter((opt) => opt.response_count > 0)
+                        .map(
+                          (opt) => `${opt.option} (${opt.response_count} responses)`
+                        ) || [];
+
+                    // Check if question has any options configured
+                    const hasOptions =
+                      question.options && question.options.length > 0;
+
+                    return (
+                      <div
+                        key={question.question_id}
+                        className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="font-medium text-gray-800 mb-1 text-base">
+                              {question.question}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {hasOptions
+                                ? `${totalResponses} Responses`
+                                : "No options configured"}
+                            </p>
                           </div>
-                        ))
-                      ) : (
-                        <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
-                          No responses yet
                         </div>
-                      )
-                    ) : (
-                      <div className="bg-white p-3 rounded border border-gray-200 text-gray-500 text-center">
-                        This question has no configured options
+
+                        {/* Question Response Distribution Chart - Dynamic Type */}
+                        <div className="mb-4">
+                          <SurveyAnalyticsCard
+                            title={(() => {
+                              const questionType = getQuestionType(
+                                question.options || []
+                              );
+                              if (questionType === "rating") {
+                                return "Rating Response";
+                              } else if (questionType === "emoji") {
+                                return "Emoji Responses";
+                              } else {
+                                return `Response Distribution: ${question.question.substring(
+                                  0,
+                                  50
+                                )}${question.question.length > 50 ? "..." : ""}`;
+                              }
+                            })()}
+                            type={getChartType(question.question_id)}
+                            data={getQuestionOptionsData(question.question_id)}
+                            dateRange={{
+                              startDate: new Date(
+                                Date.now() - 30 * 24 * 60 * 60 * 1000
+                              ),
+                              endDate: new Date(),
+                            }}
+                            onDownload={() => {
+                              console.log(
+                                `Download chart for question ${question.question_id}`
+                              );
+                              toast.success(
+                                `Chart for question ${question.question_id} download initiated`
+                              );
+                            }}
+                          />
+                        </div>
                       </div>
-                    )}
-                  </div> */}
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </CardContent>
+            </Card>
 
-            {/* Survey Summary Statistics Pie Chart - Second Last Position */}
-            <div className="mt-8">
-              {/* <SurveyAnalyticsCard
-                title="Survey Summary Statistics"
-                type="surveyDistributions"
-                data={getSurveyTypeDistributionData()}
-                dateRange={{ 
-                  startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
-                  endDate: new Date() 
-                }}
-                onDownload={handleDownloadTypeChart}
-              /> */}
-            </div>
-
-            {/* Overall Response Distribution Pie Chart - Last Position */}
-            <div className="mt-6">
-              {/* <SurveyAnalyticsCard
-                title="Overall Question Response Distribution"
-                type="statusDistribution"
-                data={getResponseDistributionData()}
-                dateRange={{ 
-                  startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), 
-                  endDate: new Date() 
-                }}
-                onDownload={handleDownloadResponseChart}
-              /> */}
-            </div>
           </TabsContent>
-          <TabsContent value="tabular" className="mt-6">
-            <div className="bg-white">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Survey Responses
-                </h3>
-              </div>
-
-              <EnhancedTaskTable
-                data={getTabularData()}
-                columns={getTabularColumns()}
-                storageKey="survey-response-tabular"
-                enableExport={true}
-                exportFileName="survey-responses-tabular"
-                enableSearch={true}
-                searchPlaceholder="Search responses..."
-                emptyMessage={!responseListData ? "Loading response data..." : `No response data available (${getTabularData().length} items processed)`}
-                pagination={true}
-                pageSize={10}
-                className="border border-gray-200 rounded-lg"
-                loading={isLoading}
-                getItemId={(item: TabularResponseData) => item.id}
-                renderCell={(item: TabularResponseData, columnKey: string) => {
-                  const cellValue = item[columnKey as keyof TabularResponseData];
-                  return cellValue || '-';
-                }}
-              />
-            </div>
-          </TabsContent>{" "}
-          <TabsContent value="tickets" className="mt-6">
-            <div className="bg-white">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
-                  Survey Tickets
-                </h3>
-                <p className="text-sm text-gray-600">
-                  Complaints and tickets generated from survey responses
-                </p>
-              </div>
-
-              <EnhancedTaskTable
-                data={getTicketData()}
-                columns={getTicketColumns()}
-                storageKey="survey-response-tickets"
-                enableExport={true}
-                exportFileName="survey-tickets"
-                enableSearch={true}
-                searchPlaceholder="Search tickets..."
-                emptyMessage={!responseListData ? "Loading ticket data..." : "No tickets available"}
-                pagination={true}
-                pageSize={10}
-                className="border border-gray-200 rounded-lg"
-                loading={isLoading}
-                getItemId={(item: TicketData) => item.id}
-                renderCell={(item: TicketData, columnKey: string) => {
-                  if (columnKey === 'ticket_number') {
-                    return (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        {item.ticket_number}
-                      </span>
-                    );
+          
+          <TabsContent value="tabular" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Table className="h-4 w-4" />
+                  </div>
+                  SURVEY RESPONSES
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EnhancedTaskTable
+                  data={getDisplayTabularData()}
+                  columns={getTabularColumns()}
+                  storageKey="survey-response-tabular-v2"
+                  exportFileName="survey-responses-tabular"
+                  enableSearch={true}
+                  searchPlaceholder="Search responses..."
+                  emptyMessage={
+                    !responseListData
+                      ? "Loading response data..."
+                      : `No response data available (${
+                          getTabularData().length
+                        } items processed)`
                   }
-                  if (columnKey === 'category') {
-                    return (
-                      <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {item.category}
-                      </span>
-                    );
+                  pagination={true}
+                  pageSize={10}
+                  className="border border-gray-200 rounded-lg"
+                  loading={isLoading}
+                  onFilterClick={handleFilterClick}
+                  getItemId={(item: TabularResponseData) => item.id}
+                  renderCell={(item: TabularResponseData, columnKey: string) => {
+                    const cellValue =
+                      item[columnKey as keyof TabularResponseData];
+
+                    // Format the Answer Type column to capitalize properly
+                    if (columnKey === "category") {
+                      const answerType = cellValue as string;
+                      if (answerType === "multiple") return "Multiple";
+                      if (answerType === "rating") return "Rating";
+                      if (answerType === "emoji") return "Emoji";
+                      return answerType || "-";
+                    }
+
+                    // Special handling for Icon Category to ensure it's visible
+                    if (columnKey === "icon_category") {
+                      return (
+                        <span className="text-gray-900 font-medium">
+                          {cellValue || "-"}
+                        </span>
+                      );
+                    }
+
+                    return cellValue || "-";
+                  }}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="tickets" className="p-3 sm:p-6">
+            <Card className="mb-6 border border-[#D9D9D9] bg-[#F6F7F7]">
+              <CardHeader className="bg-[#F6F4EE] mb-6">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-8 h-8 bg-[#C72030] text-white rounded-full flex items-center justify-center mr-3">
+                    <Ticket className="h-4 w-4" />
+                  </div>
+                  SURVEY TICKETS
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EnhancedTaskTable
+                  data={getDisplayTicketData()}
+                  columns={getTicketColumns()}
+                  storageKey="survey-response-tickets"
+                  exportFileName="survey-tickets"
+                  enableSearch={true}
+                  searchPlaceholder="Search tickets..."
+                  emptyMessage={
+                    !responseListData
+                      ? "Loading ticket data..."
+                      : "No tickets available"
                   }
-                  return item[columnKey as keyof TicketData];
-                }}
-              />
-            </div>
+                  pagination={true}
+                  pageSize={10}
+                  className="border border-gray-200 rounded-lg"
+                  loading={isLoading}
+                  // onFilterClick={handleFilterClick}
+                  getItemId={(item: TicketData) => item.id}
+                  renderCell={(item: TicketData, columnKey: string) => {
+                    if (columnKey === "ticket_number") {
+                      return (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                          {item.ticket_number}
+                        </span>
+                      );
+                    }
+                    if (columnKey === "category") {
+                      return (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                          {item.category}
+                        </span>
+                      );
+                    }
+                    if (columnKey === "assignee") {
+                      return (
+                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {item.assignee}
+                        </span>
+                      );
+                    }
+                    return item[columnKey as keyof TicketData];
+                  }}
+                />
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Filter Modal */}
+      <FilterModal />
     </div>
   );
 };

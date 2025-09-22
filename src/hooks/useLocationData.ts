@@ -226,7 +226,13 @@ export const useLocationData = () => {
       console.log('Rooms response status:', response.status);
       const data = await response.json();
       console.log('Rooms response data:', data);
-      setRooms(data.rooms || []);
+      
+      // Handle both array format and object with rooms property
+      if (Array.isArray(data)) {
+        setRooms(data);
+      } else {
+        setRooms(data.rooms || []);
+      }
     } catch (error) {
       console.error('Error fetching rooms:', error);
       setRooms([]);

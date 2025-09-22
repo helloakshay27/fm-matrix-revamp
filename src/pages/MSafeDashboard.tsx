@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Users, UserCheck, Clock, Settings, Shield, UserPlus, Search, Filter, Download, RefreshCw, Eye, Trash2, Plus, UploadIcon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ interface ApiPagination { current_page: number; total_pages: number; total_count
 
 export const MSafeDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation()
   const dispatch = useAppDispatch();
 
   const [fmUsers, setFmUsers] = useState<any[]>([]);
@@ -38,6 +39,22 @@ export const MSafeDashboard = () => {
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState<ApiPagination>({ current_page: 1, total_pages: 1, total_count: 0 });
 
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const access_token = query.get("access_token");
+    const company_id = query.get('company_id');
+    const user_id = query.get('user_id');
+    console.log(access_token)
+    if (access_token) {
+      localStorage.setItem("token", access_token);
+    }
+    if (company_id) {
+      localStorage.setItem('selectedCompanyId', String(company_id));
+    }
+    if (user_id) {
+      localStorage.setItem('user_id', String(user_id));
+    }
+  }, [location.search]);
 
   const cardData = [
     {

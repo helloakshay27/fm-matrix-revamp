@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +10,14 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getGRN } from "@/store/slices/grnSlice";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+const debounce = (func: (...args: any[]) => void, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return (...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func(...args), wait);
+  };
+};
 
 const columns: ColumnConfig[] = [
   {
@@ -137,6 +145,17 @@ export const GRNSRNDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [grn, setGrn] = useState([]);
+  const [filters, setFilters] = useState<{
+    grnNumber?: string;
+    poNumber?: string;
+    supplierName?: string;
+    status?: string;
+  }>({
+    grnNumber: '',
+    poNumber: '',
+    supplierName: '',
+    status: ''
+  });
   const [pagination, setPagination] = useState({
     current_page: 1,
     total_count: 0,
@@ -145,7 +164,7 @@ export const GRNSRNDashboard = () => {
 
   const fetchData = async (page = 1, filterData = {}) => {
     try {
-      const response = await dispatch(getGRN({ baseUrl, token, page: page })).unwrap();
+      const response = await dispatch(getGRN({ baseUrl, token, page: page, ...filterData })).unwrap();
       setGrn(response.grns);
       setPagination({
         current_page: Number(response.page),
@@ -161,6 +180,39 @@ export const GRNSRNDashboard = () => {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const handleApplyFilters = (newFilters: {
+    grnNumber?: string;
+    poNumber?: string;
+    supplierName?: string;
+    status?: string;
+  }) => {
+    setFilters(newFilters);
+    fetchData(1, {
+      grn_number: newFilters.grnNumber,
+      po_number: newFilters.poNumber,
+      supplier_name: newFilters.supplierName,
+      approval_status: newFilters.status,
+    });
+  };
+
+  const debouncedFetchData = useCallback(
+    debounce((query: string) => {
+      fetchData(1, { search: query });
+    }, 500),
+    [pagination.current_page, filters]
+  );
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setPagination((prev) => ({ ...prev, current_page: 1 })); // Reset to first page on search
+    debouncedFetchData(query, {
+      grn_number: filters.grnNumber,
+      po_number: filters.poNumber,
+      supplier_name: filters.supplierName,
+      approval_status: filters.status,
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -229,18 +281,20 @@ export const GRNSRNDashboard = () => {
         size="sm"
         variant="ghost"
         className="p-1"
-        onClick={() => handleEdit(item.id)}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
         onClick={() => handleView(item.id)}
       >
         <Eye className="w-4 h-4" />
       </Button>
+      {
+        item.approved_status === 'Pending' && <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => handleEdit(item.id)}
+        >
+          <Edit className="w-4 h-4" />
+        </Button>
+      }
     </div>
   );
 
@@ -265,9 +319,10 @@ export const GRNSRNDashboard = () => {
     try {
       setPagination((prev) => ({ ...prev, current_page: page }));
       await fetchData(page, {
-        // reference_number: filters.referenceNumber,
-        // external_id: filters.poNumber,
-        // supplier_name: filters.supplierName,
+        grn_number: filters.grnNumber,
+        po_number: filters.poNumber,
+        supplier_name: filters.supplierName,
+        approval_status: filters.status,
         search: searchQuery,
       });
     } catch (error) {
@@ -409,8 +464,8 @@ export const GRNSRNDashboard = () => {
         renderActions={renderActions}
         storageKey="grn-srn-table"
         searchTerm={searchQuery}
-        onSearchChange={setSearchQuery}
-        searchPlaceholder="Search..."
+        onSearchChange={handleSearchChange}
+        searchPlaceholder="Search by PO Number..."
         hideTableExport={true}
         exportFileName="grn_srn_export"
         enableSearch={true}
@@ -442,6 +497,9 @@ export const GRNSRNDashboard = () => {
       <GRNFilterDialog
         open={isFilterDialogOpen}
         onOpenChange={setIsFilterDialogOpen}
+        filters={filters}
+        setFilters={setFilters}
+        onApplyFilters={handleApplyFilters}
       />
     </div>
   );

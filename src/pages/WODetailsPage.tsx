@@ -1,7 +1,23 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Edit, Copy, Printer, Rss, ArrowLeft, FileText, File, Eye, FileSpreadsheet, Download } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Edit,
+  Copy,
+  Printer,
+  Rss,
+  ArrowLeft,
+  FileText,
+  File,
+  Eye,
+  FileSpreadsheet,
+  Download,
+} from "lucide-react";
 import { useAppDispatch } from "@/store/hooks";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -82,27 +98,32 @@ const invoiceColumns: ColumnConfig[] = [
   {
     key: "invoice_number",
     label: "Invoice Number",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "invoice_date",
     label: "Invoice Date",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "total_amount",
     label: "Total Invoice Amount",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "payable_amount",
     label: "Payable Amount",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "retention_amount",
     label: "Retention Amount",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   { key: "tds_amount", label: "TDS Amount", sortable: true, draggable: true },
   { key: "qc_amount", label: "QC Amount", sortable: true, draggable: true },
@@ -110,12 +131,14 @@ const invoiceColumns: ColumnConfig[] = [
   {
     key: "physical_sent",
     label: "Physical Invoice Sent to Accounts",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "physical_received",
     label: "Physical Invoice Received",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
 ];
 
@@ -125,24 +148,28 @@ const paymentColumn: ColumnConfig[] = [
   {
     key: "payment_mode",
     label: "Payment Mode",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   {
     key: "transaction_number",
     label: "Transaction Number",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   { key: "status", label: "Status", sortable: true, draggable: true },
   {
     key: "payment_date",
     label: "Payment Date",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
   { key: "note", label: "Note", sortable: true, draggable: true },
   {
     key: "date_of_entry",
     label: "Date of Entry",
-    sortable: true, draggable: true,
+    sortable: true,
+    draggable: true,
   },
 ];
 
@@ -195,7 +222,7 @@ export const WODetailsPage = () => {
   });
   const [buttonCondition, setButtonCondition] = useState({
     showSap: false,
-    editWbsCode: false
+    editWbsCode: false,
   });
 
   const [workOrder, setWorkOrder] = useState({
@@ -262,7 +289,7 @@ export const WODetailsPage = () => {
       setInvoices(response.page.invoices);
       setButtonCondition({
         showSap: response.show_send_sap_yes,
-        editWbsCode: response.can_edit_wbs_codes
+        editWbsCode: response.can_edit_wbs_codes,
       });
     } catch (error) {
       console.log(error);
@@ -419,57 +446,56 @@ export const WODetailsPage = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-          responseType: 'blob'
+          responseType: "blob",
         }
       );
 
-      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const blob = new Blob([response.data], { type: "application/pdf" });
       const downloadUrl = URL.createObjectURL(blob);
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = 'work_order.pdf';
+      link.download = "work_order.pdf";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast.error(error.message);
     }
   };
 
   return (
     <div className="p-4 sm:p-6 bg-[#fafafa] min-h-screen">
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className='p-0'
-      >
+      <Button variant="ghost" onClick={() => navigate(-1)} className="p-0">
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back
       </Button>
       {/* Header */}
       <div className="flex justify-between items-end">
-        <h1 className="text-2xl font-semibold">
-          WORK ORDER DETAILS
-        </h1>
+        <h1 className="text-2xl font-semibold">WORK ORDER DETAILS</h1>
         <div className="flex gap-2 flex-wrap">
-          {
-            buttonCondition.showSap && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-gray-300 bg-purple-600 text-white sap_button"
-                onClick={handleSendToSap}
-              >
-                Send To SAP Team
-              </Button>
-            )
-          }
-          <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/edit/${id}`)}>
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
+          {buttonCondition.showSap && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300 bg-purple-600 text-white sap_button"
+              onClick={handleSendToSap}
+            >
+              Send To SAP Team
+            </Button>
+          )}
+          {workOrder.all_level_approved === null && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/wo/edit/${id}`)}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
@@ -488,7 +514,12 @@ export const WODetailsPage = () => {
             <Printer className="w-4 h-4 mr-1" />
             Print
           </Button>
-          <Button size="sm" variant="outline" className="border-gray-300" onClick={() => navigate(`/finance/wo/feeds/${id}`)}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-gray-300"
+            onClick={() => navigate(`/finance/wo/feeds/${id}`)}
+          >
             <Rss className="w-4 h-4 mr-1" />
             Feeds
           </Button>
@@ -517,34 +548,45 @@ export const WODetailsPage = () => {
 
       <TooltipProvider>
         <div className="flex items-start gap-3 my-4">
-          {
-            workOrder?.approvals?.map((approval: Approval) => (
-              <div className='space-y-2' key={approval.id}>
-                {approval.status.toLowerCase() === 'rejected' ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(approval.status)}`}>
-                        {`${approval.level} Approval : ${approval.status}`}
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Rejection Reason: {approval.rejection_reason ?? 'No reason provided'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                ) : (
-                  <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(approval.status)}`}>
-                    {`${approval.level} Approval : ${approval.status}`}
-                  </div>
-                )}
-                {
-                  approval.updated_by && approval.updated_at &&
-                  <div className='ms-2 w-[190px]'>
-                    {`${approval.updated_by} (${format(new Date(approval.updated_at), 'dd/MM/yyyy')})`}
-                  </div>
-                }
-              </div>
-            ))
-          }
+          {workOrder?.approvals?.map((approval: Approval) => (
+            <div className="space-y-2" key={approval.id}>
+              {approval.status.toLowerCase() === "rejected" ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className={`px-3 py-1 text-sm rounded-md font-medium w-max cursor-pointer ${getStatusColor(
+                        approval.status
+                      )}`}
+                    >
+                      {`${approval.level} Approval : ${approval.status}`}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      Rejection Reason:{" "}
+                      {approval.rejection_reason ?? "No reason provided"}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <div
+                  className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(
+                    approval.status
+                  )}`}
+                >
+                  {`${approval.level} Approval : ${approval.status}`}
+                </div>
+              )}
+              {approval.updated_by && approval.updated_at && (
+                <div className="ms-2 w-[190px]">
+                  {`${approval.updated_by} (${format(
+                    new Date(approval.updated_at),
+                    "dd/MM/yyyy"
+                  )})`}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </TooltipProvider>
 
@@ -615,7 +657,12 @@ export const WODetailsPage = () => {
               <span className="text-sm font-medium text-gray-700 w-40">
                 WO Date
               </span>
-              <span className="text-sm">: {workOrder.work_order?.wo_date ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy") : "-"}</span>
+              <span className="text-sm">
+                :{" "}
+                {workOrder.work_order?.wo_date
+                  ? format(workOrder.work_order?.wo_date, "dd/MM/yyyy")
+                  : "-"}
+              </span>
             </div>
             <div className="flex">
               <span className="text-sm font-medium text-gray-700 w-40">
@@ -786,7 +833,13 @@ export const WODetailsPage = () => {
               if (columnKey === "total_amount") {
                 return <span className="font-medium">{item[columnKey]}</span>;
               } else if (columnKey === "expected_date") {
-                return <span className="font-medium">{item[columnKey] ? format(item[columnKey], "dd/MM/yyyy") : "-"}</span>;
+                return (
+                  <span className="font-medium">
+                    {item[columnKey]
+                      ? format(item[columnKey], "dd/MM/yyyy")
+                      : "-"}
+                  </span>
+                );
               }
               return item[columnKey];
             }}
@@ -856,10 +909,13 @@ export const WODetailsPage = () => {
           <CardTitle className="text-lg font-medium">Attachments</CardTitle>
         </CardHeader>
         <CardContent>
-          {Array.isArray(workOrder.attachments) && workOrder.attachments.length > 0 ? (
+          {Array.isArray(workOrder.attachments) &&
+            workOrder.attachments.length > 0 ? (
             <div className="flex items-center flex-wrap gap-4">
               {workOrder.attachments.map((attachment: Attachment) => {
-                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachment.url);
+                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(
+                  attachment.url
+                );
                 const isPdf = /\.pdf$/i.test(attachment.url);
                 const isExcel = /\.(xls|xlsx|csv)$/i.test(attachment.url);
                 const isWord = /\.(doc|docx)$/i.test(attachment.url);
@@ -885,7 +941,10 @@ export const WODetailsPage = () => {
                         </button>
                         <img
                           src={attachment.url}
-                          alt={attachment.document_name || attachment.document_file_name}
+                          alt={
+                            attachment.document_name ||
+                            attachment.document_file_name
+                          }
                           className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                           onClick={() => {
                             setSelectedAttachment(attachment);
@@ -911,7 +970,9 @@ export const WODetailsPage = () => {
                       </div>
                     )}
                     <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
-                      {attachment.document_name || attachment.document_file_name || `Document_${attachment.id}`}
+                      {attachment.document_name ||
+                        attachment.document_file_name ||
+                        `Document_${attachment.id}`}
                     </span>
                     {isDownloadable && (
                       <Button

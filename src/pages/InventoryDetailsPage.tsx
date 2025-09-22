@@ -344,6 +344,7 @@ export const InventoryDetailsPage = () => {
     expiry_date: 'Expiry Date',
     unit: 'Unit',
     category: 'Category',
+  green_product: 'Green Product',
     category_id: 'Category',
     category_name: 'Category',
     inventory_category_id: 'Category',
@@ -481,6 +482,19 @@ export const InventoryDetailsPage = () => {
     if (!val || val === '—') return '—';
     // Strip surrounding quotes
     const v = val.replace(/^\"|\"$/g, '');
+    // Booleans: show Yes/No for known boolean flags
+    const BOOLEAN_KEYS = new Set([
+      'green_product',
+      'active',
+      'expired',
+      'is_active',
+    ]);
+    if (BOOLEAN_KEYS.has(key)) {
+      const lower = v.toLowerCase();
+      if (['true', '1', 'yes'].includes(lower)) return 'Yes';
+      if (['false', '0', 'no'].includes(lower)) return 'No';
+      return v;
+    }
     // Map master IDs to names for type and sub type if available
     const TYPE_ID_KEYS = new Set(['pms_inventory_type_id', 'inventory_type_master_id', 'inventory_type_id', 'item_type_id']);
     const SUBTYPE_ID_KEYS = new Set(['pms_inventory_sub_type_id', 'inventory_sub_type_id', 'item_sub_type_id', 'item_category_id']);

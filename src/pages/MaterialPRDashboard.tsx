@@ -140,6 +140,7 @@ export const MaterialPRDashboard = () => {
             : "Pending",
         prAmount: item.total_amount,
         activeInactive: item.active,
+        allLevelApproved: item.all_level_approved,
       }));
       setMaterialPR(formatedResponse);
       setPagination({
@@ -275,32 +276,36 @@ export const MaterialPRDashboard = () => {
     }
   };
 
-  const renderActions = (item: any) => (
-    <div className="flex gap-2">
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/material-pr/edit/${item.id}`);
-        }}
-      >
-        <Edit className="w-4 h-4" />
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        className="p-1"
-        onClick={(e) => {
-          e.stopPropagation();
-          navigate(`/finance/material-pr/details/${item.id}`);
-        }}
-      >
-        <Eye className="w-4 h-4" />
-      </Button>
-    </div>
-  );
+  const renderActions = (item: any) => {
+    return (
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/finance/material-pr/details/${item.id}`);
+          }}
+        >
+          <Eye className="w-4 h-4" />
+        </Button>
+        {
+          item.allLevelApproved === null && <Button
+            size="sm"
+            variant="ghost"
+            className="p-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/finance/material-pr/edit/${item.id}`);
+            }}
+          >
+            <Edit className="w-4 h-4" />
+          </Button>
+        }
+      </div>
+    )
+  };
 
   const leftActions = (
     <>

@@ -506,9 +506,9 @@ export const AddSurveyPage = () => {
     
      
       
-      // Add ticket creation fields if enabled
+      // Add ticket creation fields - always send the state
+      formData.append('create_ticket', createTicket ? 'true' : 'false');
       if (createTicket) {
-        formData.append('create_ticket', 'true');
         formData.append('category_name', ticketCategory);
         formData.append('category_type', assignTo);
       }
@@ -1059,13 +1059,14 @@ export const AddSurveyPage = () => {
                     </FormControl>
                   )}
 
-                  {/* {question.answerType === 'emojis' && (
+                  {question.answerType === 'emojis' && (
                       <FormControl fullWidth>
                           <InputLabel shrink sx={{position: 'relative', top: '-8px', background: '#F9FAFB', paddingX: '4px'}}>Select Reaction</InputLabel>
                            <div className="flex items-center justify-around p-3 border border-gray-200 rounded-lg bg-white">
                               {EMOJIS.map((emoji) => (
                                 <button
                                   key={emoji}
+                                  type="button"
                                   onClick={() => handleQuestionChange(question.id, 'selectedEmoji', emoji)}
                                   className={`text-3xl p-2 rounded-full transition-transform transform hover:scale-125 ${question.selectedEmoji === emoji ? 'bg-red-100 scale-110' : ''}`}
                                 >
@@ -1074,7 +1075,7 @@ export const AddSurveyPage = () => {
                               ))}
                             </div>
                       </FormControl>
-                  )} */}
+                  )}
 
                   <div className="flex items-center space-x-2 pt-2">
                     <Checkbox

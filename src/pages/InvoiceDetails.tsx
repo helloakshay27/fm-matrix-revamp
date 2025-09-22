@@ -217,6 +217,19 @@ export const InvoiceDetails = () => {
         setDebitCreditForm((prev) => ({ ...prev, [name]: value }));
     };
 
+    const getStatusColor = (status: string) => {
+        switch (status.toLowerCase()) {
+            case "approved":
+                return "bg-green-100 text-green-800";
+            case "rejected":
+                return "bg-red-100 text-red-800";
+            case "pending":
+                return "bg-yellow-100 text-yellow-800";
+            default:
+                return "bg-gray-100 text-gray-800";
+        }
+    };
+
     const handleSubmitDebitCredit = async () => {
         try {
             const payload = {
@@ -345,7 +358,9 @@ export const InvoiceDetails = () => {
                 {
                     invoice?.approval_levels?.map(level => (
                         <div className='space-y-3'>
-                            <div className="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max">
+                            <div className={`px-3 py-1 bg-green-100 text-green-800 text-sm rounded-md font-medium w-max ${getStatusColor(
+                                level.status
+                            )}`}>
                                 {`${level?.name?.toUpperCase()} approved : ${level.status}`}
                             </div>
                             {
