@@ -48,9 +48,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       // Save base URL for API calls (detect from current hostname)
       const hostname = window.location.hostname;
       if (hostname.includes("vi-web.gophygital.work")) {
-        saveBaseUrl("https://live-api.gophygital.work/");
+        saveBaseUrl("live-api.gophygital.work/");
       } else if (hostname.includes("localhost")) {
-        saveBaseUrl("https://live-api.gophygital.work/"); // Default for local development
+        saveBaseUrl("live-api.gophygital.work/"); // Default for local development
       }
       
       // Store company and user data
