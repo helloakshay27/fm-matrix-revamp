@@ -2730,6 +2730,18 @@ function App() {
                       element={<EditInventoryTypePage />}
                     />
                     <Route
+                      path="/settings/inventory-management/inventory-type"
+                      element={<InventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/add"
+                      element={<AddInventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/edit/:id"
+                      element={<EditInventoryTypePage />}
+                    />
+                    <Route
                       path="/master/inventory-sub-type"
                       element={<InventorySubTypePage />}
                     />

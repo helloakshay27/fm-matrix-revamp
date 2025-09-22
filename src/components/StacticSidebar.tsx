@@ -1012,6 +1012,10 @@ const modulesByPackage = {
               name: "SAC/HSN Code",
               href: "/settings/inventory-management/sac-hsn-code",
             },
+            {
+              name: "Inventory Type",
+              href: "/settings/inventory-management/inventory-type",
+            },
           ],
         },
         {
@@ -1477,8 +1481,8 @@ export const StacticSidebar = () => {
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           title={module.name}
         >
@@ -1573,8 +1577,8 @@ export const StacticSidebar = () => {
                     }
                   }}
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-                      ? "bg-[#f0e8dc] shadow-inner"
-                      : "hover:bg-[#DBC2A9]"
+                    ? "bg-[#f0e8dc] shadow-inner"
+                    : "hover:bg-[#DBC2A9]"
                     }`}
                   title={module.name}
                 >
@@ -1583,8 +1587,8 @@ export const StacticSidebar = () => {
                   )}
                   <module.icon
                     className={`w-5 h-5 ${isActiveRoute(module.href)
-                        ? "text-[#C72030]"
-                        : "text-[#1a1a1a]"
+                      ? "text-[#C72030]"
+                      : "text-[#1a1a1a]"
                       }`}
                   />
                 </button>
