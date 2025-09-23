@@ -316,7 +316,7 @@ export const EditExternalUserPage = () => {
         };
         setFormData((prev: any) => ({
           ...prev,
-          company_id: data.company_id || data.lock_user_permission?.company_id || prev.company_id || '',
+          company_id: data.account_id || data.lock_user_permission?.account_id || prev.company_id || '',
           firstname: sanitizeName(data.firstname || ''),
             lastname: sanitizeName(data.lastname || ''),
           email: data.email || '',
@@ -357,7 +357,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_departments.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.departments || [];
@@ -385,7 +385,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyIdForRoles = formData.company_id;
+        const companyIdForRoles = getSelectedCompanyId() ?? formData.company_id;
         const url = `https://${baseUrl}/pms/users/get_lock_roles.json?company_id=${companyIdForRoles}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         const list = resp.data?.lock_roles || [];
@@ -413,7 +413,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_circles.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setCircles(resp.data?.circles || []);
@@ -438,7 +438,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 145;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 145);
         const url = `https://${baseUrl}/pms/users/get_clusters.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setClusters(resp.data?.clusters || []);
@@ -463,7 +463,7 @@ export const EditExternalUserPage = () => {
         const baseUrl = localStorage.getItem('baseUrl');
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
-        const companyId = formData.company_id || 15;
+        const companyId = getSelectedCompanyId() ?? (formData.company_id || 15);
         const url = `https://${baseUrl}/pms/users/get_work_locations.json?company_id=${companyId}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         setWorkLocations(resp.data?.work_locations || []);
@@ -501,7 +501,7 @@ export const EditExternalUserPage = () => {
         const token = localStorage.getItem('token');
         if (!baseUrl || !token) return;
         setLmLoading(true);
-        const companyId = (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
+        const companyId = getSelectedCompanyId() ?? (originalUser?.company_id || originalUser?.lock_user_permission?.company_id || formData.company_id || 145 || 15);
         const url = `https://${baseUrl}/pms/users/company_wise_users.json?company_id=${companyId}&q[email_cont]=${encodeURIComponent(lmQuery)}`;
         const resp = await axios.get(url, { headers: { Authorization: `Bearer ${token}` } });
         if (!active) return;
@@ -537,6 +537,18 @@ export const EditExternalUserPage = () => {
     document.addEventListener('input', onInput, true);
     return () => document.removeEventListener('input', onInput, true);
   }, [lmMenuId]);
+
+  // Helper to read selectedCompanyId from localStorage
+  const getSelectedCompanyId = () => {
+    try {
+      const val = localStorage.getItem('selectedCompanyId');
+      if (!val) return null;
+      const n = Number(val);
+      return Number.isFinite(n) && n > 0 ? n : null;
+    } catch {
+      return null;
+    }
+  };
 
   if (loading) {
     return (

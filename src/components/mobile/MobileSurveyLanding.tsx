@@ -52,6 +52,7 @@ interface SurveyMapping {
     id: number;
     name: string;
     questions_count: number;
+    checklist_image_url?: string;
     snag_questions: SurveyQuestion[];
   };
 }
@@ -219,76 +220,97 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Handle option selection for multiple choice
-  // Make multiple choice single-selectable (radio behavior)
+  // Auto-progress based on selection (positive/negative)
   const handleOptionSelect = (option: SurveyOption) => {
     setSelectedOptions([option]);
-  };
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
 
-  // Handle next for multiple choice (with negative flow)
-  const handleMultipleNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    // Check for negative option (option_type === 'n')
-    const hasNegative = selectedOptions.some((opt) => opt.option_type === "n");
-    if (
-      hasNegative &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("multiple");
-      setPendingNegativeAnswer(selectedOptions);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
+      // Check for negative option (option_type === 'n')
+      const hasNegative = option.option_type === "n";
+      if (
+        hasNegative &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("multiple");
+        setPendingNegativeAnswer([option]);
+        setShowGenericTags(true);
       } else {
-        // For multi-question surveys, proceed to next question
-        // Data is already saved above, just move to next question
-        moveToNextQuestion();
+        // Positive response - auto-progress
+        // Save with the selected option data - pass option directly to ensure it's included
+        const tempAnswerData = {
+          qtype: currentQuestion.qtype,
+          value: option.qname,
+          selectedOptions: [option],
+          comments: ""
+        };
+        
+        // Update answers object
+        setAnswers(prev => ({
+          ...prev,
+          [currentQuestion.id]: tempAnswerData
+        }));
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(tempAnswerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
       }
-    }
+    }, 300); // Small delay for visual feedback
   };
+
+
 
   // Handle rating selection
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
+
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+
+      if (
+        rating <= 3 &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("rating");
+        setPendingNegativeAnswer(rating);
+        setShowGenericTags(true);
+      } else {
+        // Positive response - auto-progress
+        // Save with the rating data
+        const answerData = saveCurrentAnswer(rating);
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(answerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
+      }
+    }, 300); // Small delay for visual feedback
   };
 
   // Handle next for rating (with negative flow)
-  const handleRatingNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    if (
-      selectedRating !== null &&
-      selectedRating <= 3 &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("rating");
-      setPendingNegativeAnswer(selectedRating);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
-      } else {
-        // For multi-question surveys, proceed to next question
-        // Data is already saved above, just move to next question
-        moveToNextQuestion();
-      }
-    }
-  };
 
   // Handle emoji/smiley selection
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
@@ -527,6 +549,23 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.ans_descr = `${currentAnswer.rating} star${
             currentAnswer.rating > 1 ? "s" : ""
           }`;
+          
+          // Add option_id mapping for rating questions (similar to emoji)
+          if (currentAnswer.rating !== undefined) {
+            const ratingOptionMapping = [
+              { rating: 1, option_id: 1 }, // 1 star
+              { rating: 2, option_id: 2 }, // 2 stars  
+              { rating: 3, option_id: 3 }, // 3 stars
+              { rating: 4, option_id: 4 }, // 4 stars
+              { rating: 5, option_id: 5 }, // 5 stars
+            ];
+            const ratingOption = ratingOptionMapping.find(
+              (opt) => opt.rating === currentAnswer.rating
+            );
+            if (ratingOption) {
+              surveyResponseItem.option_id = ratingOption.option_id;
+            }
+          }
           break;
 
         case "input":
@@ -958,6 +997,28 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.ans_descr = `${answer.rating} star${
               answer.rating > 1 ? "s" : ""
             }`;
+            
+            // Add option_id mapping for rating questions (similar to emoji)
+            if (answer.rating !== undefined) {
+              const ratingOptionMapping = [
+                { rating: 1, option_id: 1 }, // 1 star
+                { rating: 2, option_id: 2 }, // 2 stars  
+                { rating: 3, option_id: 3 }, // 3 stars
+                { rating: 4, option_id: 4 }, // 4 stars
+                { rating: 5, option_id: 5 }, // 5 stars
+              ];
+              const ratingOption = ratingOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (ratingOption) {
+                surveyResponseItem.option_id = ratingOption.option_id;
+              } else {
+                console.warn(
+                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                  answer.rating
+                );
+              }
+            }
             break;
 
           case "input":
@@ -1151,7 +1212,7 @@ export const MobileSurveyLanding: React.FC = () => {
           {!showGenericTags && (
             <div className="text-center mb-6">
               <img
-                src="/9019830 1.png"
+                src={surveyData?.snag_checklist?.checklist_image_url || "/9019830 1.png"}
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
               />
@@ -1211,57 +1272,42 @@ export const MobileSurveyLanding: React.FC = () => {
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <>
-                    <div className="space-y-3 mt-10">
-                      {currentQuestion.snag_quest_options.map((option) => (
-                        <button
-                          key={option.id}
-                          onClick={() => handleOptionSelect(option)}
-                          className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
-                            selectedOptions.some((opt) => opt.id === option.id)
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-200 bg-white hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm sm:text-base">
-                              {option.qname}
-                            </span>
-                            {selectedOptions.some(
-                              (opt) => opt.id === option.id
-                            ) && (
-                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={handleMultipleNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
-                  </>
+                  <div className="space-y-3 mt-10">
+                    {currentQuestion.snag_quest_options.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleOptionSelect(option)}
+                        className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
+                          selectedOptions.some((opt) => opt.id === option.id)
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm sm:text-base">
+                            {option.qname}
+                          </span>
+                          {selectedOptions.some(
+                            (opt) => opt.id === option.id
+                          ) && (
+                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 {/* Input Question */}
@@ -1299,9 +1345,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1341,9 +1384,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1383,9 +1423,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1423,19 +1460,6 @@ export const MobileSurveyLanding: React.FC = () => {
                         </span>
                       </div>
                     )}
-
-                    <button
-                      onClick={handleRatingNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
                   </>
                 )}
 

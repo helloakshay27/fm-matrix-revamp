@@ -50,6 +50,8 @@ export const Header = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userDisplayName, setUserDisplayName] = useState<string | null>(null);
   const [userRoleName, setUserRoleName] = useState<string | null>(null);
+  // VI account details (for vi-web only)
+  const [viAccount, setViAccount] = useState<{ firstname?: string; lastname?: string; email?: string; role_name?: string } | null>(null);
   const dispatch = useDispatch<AppDispatch>();
 
   const currentPath = window.location.pathname;
@@ -70,6 +72,7 @@ export const Header = () => {
 
   // Check if it's Oman site
   const isOmanSite = hostname.includes("oig.gophygital.work");
+  // Treat vi-web prod and localhost as VI for dev account fetch
   const isViSite = hostname.includes("vi-web.gophygital.work");
 
   const navigate = useNavigate();
@@ -118,6 +121,37 @@ export const Header = () => {
 
     loadUserInfo();
   }, []);
+
+  // Fetch VI account from baseUrl for vi-web (and localhost for dev)
+  useEffect(() => {
+    if (!isViSite) return;
+    try {
+      let token = localStorage.getItem('token');
+      if (!token) {
+        const params = new URLSearchParams(window.location.search);
+        const urlToken = params.get('access_token') || params.get('token');
+        if (urlToken) {
+          localStorage.setItem('token', urlToken);
+          token = urlToken;
+        }
+      }
+      if (!token) return;
+      const raw = localStorage.getItem('baseUrl') || 'https://live-api.gophygital.work';
+      const base = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+      const url = `${base.replace(/\/+$/, '')}/api/users/account.json`;
+      fetch(url, { headers: { Authorization: `Bearer ${token}` } })
+        .then(res => res.ok ? res.json() : Promise.reject(res))
+        .then(data => {
+          setViAccount({
+            firstname: data?.firstname,
+            lastname: data?.lastname,
+            email: data?.email,
+            role_name: data?.role_name,
+          });
+        })
+        .catch(() => { });
+    } catch { /* no-op */ }
+  }, [isViSite]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -174,6 +208,16 @@ export const Header = () => {
       console.error("Failed to change site:", error);
     }
   };
+
+  // Compute profile display name (prefer VI account when available)
+  const profileDisplayName = (
+    (isViSite && viAccount
+      ? `${viAccount.firstname || ""} ${viAccount.lastname || ""}`.trim()
+      : `${user.firstname || ""} ${user.lastname || ""}`.trim()) ||
+    userDisplayName ||
+    user.firstname ||
+    "User"
+  );
 
   return (
     <header className="h-16 bg-white border-b border-[#D5DbDB] fixed top-0 right-0 left-0 z-10 w-full shadow-sm">
@@ -330,7 +374,7 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Site Dropdown */}
+          {/* Site Dropdown (hidden for VI and localhost) */}
           {!isViSite && (
             <DropdownMenu>
               <DropdownMenuTrigger className="flex items-center gap-2 text-[#1a1a1a] hover:text-[#C72030] transition-colors">
@@ -387,23 +431,23 @@ export const Header = () => {
                 <User className="w-5 h-5 text-[#1a1a1a]" />
               </div>
               <div className="hidden md:block">
-                <span className="text-sm font-medium text-[#1a1a1a]">
-                  {user.firstname}
-                </span>
+                <span className="text-sm font-medium text-[#1a1a1a]">{profileDisplayName}</span>
                 <ChevronDown className="w-3 h-3 text-[#1a1a1a] inline-block ml-1" />
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 bg-white border border-[#D5DbDB] shadow-lg p-2">
               <div className="px-2 py-2 mb-2 border-b border-gray-100">
                 <p className="font-medium text-sm">
-                  {`${user.firstname} ${user.lastname}`}
+                  {isViSite && viAccount
+                    ? `${viAccount.firstname || ''} ${viAccount.lastname || ''}`.trim() || 'User'
+                    : `${user.firstname} ${user.lastname}`}
                 </p>
                 <div className="flex items-center text-gray-600 text-xs mt-1">
                   <Mail className="w-3 h-3 mr-1" />
-                  <span>{user.email}</span>
+                  <span>{(isViSite && viAccount ? (viAccount.email || '') : user.email) || ''}</span>
                 </div>
                 <div className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded mt-2 inline-block">
-                  {userRoleName || user?.lock_role?.name || "No Role"}{" "}
+                  {(isViSite && viAccount ? (viAccount.role_name || '') : (userRoleName || user?.lock_role?.name)) || "No Role"}{" "}
                 </div>
               </div>
 
