@@ -112,7 +112,7 @@ export const SurveyMappingDetailsPage = () => {
   const fetchSurveyMappingDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[survey_id_eq]=${id}`);
+      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[id_eq]=${id}`);
       console.log('Survey mapping details response:', response.data);
       
       // The API returns an object with survey_mappings array

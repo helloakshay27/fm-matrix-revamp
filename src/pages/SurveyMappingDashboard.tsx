@@ -239,7 +239,7 @@ export const SurveyMappingDashboard = () => {
 
   const handleViewClick = (item: SurveyMapping) => {
     console.log('View clicked for item:', item.id);
-    navigate(`/maintenance/survey/mapping/details/${item.id}`);
+    navigate(`/maintenance/survey/mapping/details/${item.survey_id}`);
   };
 
   const handleEditClick = (item: SurveyMapping) => {
