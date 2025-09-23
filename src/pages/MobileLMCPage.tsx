@@ -68,20 +68,19 @@ const MobileLMCPage: React.FC = () => {
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [userMobileDialogOpen, setUserMobileDialogOpen] = useState<boolean>(false);
     const mobileSearchInputRef = useRef<HTMLInputElement>(null);
-    // Token must come from URL only (e.g., ?token=...)
-    const authToken = searchParams.get('token') || '';
+    // Token must come from URL only (supports both ?token=... and ?access_token=...)
+    const authToken = searchParams.get('token') || searchParams.get('access_token') || '';
 
     // Derive baseUrl
     const rawBase = localStorage.getItem('baseUrl') || '';
     const baseUrl = rawBase && !/^https?:\/\//i.test(rawBase) ? `https://${rawBase}` : rawBase;
 
-    // Load circles (company id from localStorage if available)
+    // Static company id for circles API
+    const STATIC_COMPANY_ID = '145';
+
+    // Load circles using static company id
     const loadCircles = async () => {
-        const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
-        if (!companyId) {
-            setCircles([]);
-            return;
-        }
+        const companyId = STATIC_COMPANY_ID;
         try {
             setCirclesLoading(true);
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
@@ -124,7 +123,7 @@ const MobileLMCPage: React.FC = () => {
         } catch (e) {
             // If GET fails, treat as no existing mapping
             setHasExistingMapping(false);
-    } finally { setMappingLoading(false); }
+        } finally { setMappingLoading(false); }
     };
 
     // Resolve a user's display name by ID via company_wise_users, if available
@@ -178,12 +177,12 @@ const MobileLMCPage: React.FC = () => {
         setResolvingUserLoading(false);
     };
 
-    // Resolve circle name by id via get_circles and select it in the dropdown
+    // Resolve circle name by id via get_circles and select it in the dropdown (uses static company id)
     const resolveCircleNameById = async (id: string) => {
         try {
             setResolvingCircleLoading(true);
             mappedCircleIdRef.current = String(id);
-            const companyId = localStorage.getItem('selectedCompanyId') || searchParams.get('company_id') || '';
+            const companyId = STATIC_COMPANY_ID;
             const host = baseUrl ? baseUrl.replace(/^https?:\/\//, '') : 'live-api.gophygital.work';
             const url = `https://${host}/pms/users/get_circles.json?company_id=${encodeURIComponent(companyId)}`;
             const data = await authedGet(url, authToken);
@@ -288,6 +287,12 @@ const MobileLMCPage: React.FC = () => {
 
     // Initial loads
     useEffect(() => { loadCircles(); }, []);
+    // Keep restriction as-is; static company id ensures circles API works
+    useEffect(() => {
+        const companyId = STATIC_COMPANY_ID;
+        if (!companyId) setRestrictByCircle(false);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     // Read user_id from URL and load existing mapping once
     useEffect(() => {
         const u = searchParams.get('user_id') || '';
@@ -503,7 +508,7 @@ const MobileLMCPage: React.FC = () => {
                             </Label>
                             {isMobile ? (
                                 <>
-                    <Button
+                                    <Button
                                         type="button"
                                         disabled={userDisabled || allLoading}
                                         onClick={() => setUserMobileDialogOpen(true)}
@@ -511,7 +516,7 @@ const MobileLMCPage: React.FC = () => {
                                         className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 ${userDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030]'} justify-between`}
                                     >
                                         <span className="truncate text-left">
-                        {selectedUser ? (selectedUserBestLabel || 'Selected user') : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
+                                            {selectedUser ? (selectedUserBestLabel || 'Selected user') : (usersLoading ? 'Loading LMC Manager users...' : userPlaceholder)}
                                         </span>
                                         <span className="ml-2 text-gray-400">▼</span>
                                     </Button>
@@ -529,7 +534,6 @@ const MobileLMCPage: React.FC = () => {
                                     </SelectTrigger>
                                     <SelectContent
                                         className="w-[var(--radix-select-trigger-width)]"
-                                        onOpenAutoFocus={(e: any) => { e.preventDefault(); /* we'll focus input manually */ }}
                                         onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
                                         onPointerDownOutside={(e: any) => {
                                             const target = e.target as HTMLElement | null;

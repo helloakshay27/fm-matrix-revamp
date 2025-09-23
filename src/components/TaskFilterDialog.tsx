@@ -125,7 +125,8 @@ export const TaskFilterDialog: React.FC<TaskFilterDialogProps> = ({ isOpen, onCl
   const typeOptions = [
     'PPM',
     'AMC',
-    'Preparedness'
+    'Preparedness',
+    'Routine'
   ];
 
   // Date validation function

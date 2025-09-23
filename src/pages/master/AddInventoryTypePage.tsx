@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography } from '@mui/material';
@@ -24,28 +24,51 @@ interface DropdownOption {
 
 const AddInventoryTypePage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [companies, setCompanies] = useState<DropdownOption[]>([]);
   const selectedCompany = useSelector((state: any) => state.project.selectedCompany);
   const {
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<InventoryTypeFormValues>();
+    setValue,
+  } = useForm<InventoryTypeFormValues>({
+    defaultValues: {
+      company_id: selectedCompany?.id || null,
+    }
+  });
+
+  // Determine base path from current location or referrer
+  const isSettingsRoute = location.pathname.includes('/settings/inventory-management');
+  const basePath = isSettingsRoute ? '/settings/inventory-management/inventory-type' : '/master/inventory-type';
 
   useEffect(() => {
     gateNumberService.getCompanies().then(setCompanies).catch(() => toast.error("Failed to load companies."));
-  }, []);
+    
+    // Set company_id when selectedCompany changes
+    if (selectedCompany?.id) {
+      setValue('company_id', selectedCompany.id);
+    }
+  }, [selectedCompany, setValue]);
 
   const onSubmit = async (data: InventoryTypeFormValues) => {
     try {
       const payload = {
-        pms_inventory_type: { ...data, deleted: false, active: true },
+        pms_inventory_type: { 
+          ...data, 
+          deleted: false, 
+          active: true,
+          // Ensure description is properly formatted
+          material_type_description: data.material_type_description?.trim() || ''
+        },
       };
       await inventoryTypeService.createInventoryType(payload);
       toast.success("Inventory type created successfully");
-      navigate("/master/inventory-type");
-    } catch (error) {
-      console.error(error);
+      navigate(basePath);
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      const errorMessage = error?.response?.data?.message || error?.message || "Failed to create inventory type";
+      toast.error(errorMessage);
     }
   };
 
@@ -81,7 +104,7 @@ const AddInventoryTypePage = () => {
           <Controller
             name="material_type_code"
             control={control}
-            rules={{ required: 'Code is required' }}
+            rules={{ required: 'Material Code is required' }}
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
@@ -108,10 +131,11 @@ const AddInventoryTypePage = () => {
                 <FormControl fullWidth variant="outlined">
                   <InputLabel shrink>Company <span style={{ color: 'red' }}>*</span></InputLabel>
                   <Select
+                    {...field}
                     label="Company"
                     notched
                     displayEmpty
-                    value={selectedCompany ? selectedCompany.id : ''}
+                    value={selectedCompany?.id || ''}
                     disabled
                   >
                     <MenuItem value="">Select Company</MenuItem>
@@ -128,18 +152,15 @@ const AddInventoryTypePage = () => {
           <Controller
             name="category"
             control={control}
-            rules={{ required: 'Category is required' }}
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Category</InputLabel>
                   <TextField
                     {...field}
                     label="Category"
                     variant="outlined"
                     fullWidth
-                    error={!!errors.category}
-                    helperText={errors.category?.message}
                   />
                 </FormControl>
               </Box>
@@ -150,6 +171,13 @@ const AddInventoryTypePage = () => {
             <Controller
               name="material_type_description"
               control={control}
+              rules={{ 
+                maxLength: {
+                  value: 1000,
+                  message: "Description cannot exceed 1000 characters"
+                },
+                required: { value: true, message: "Description is required" }
+              }}
               render={({ field }) => (
                 <TextField
                   {...field}
@@ -162,6 +190,12 @@ const AddInventoryTypePage = () => {
                   fullWidth
                   multiline
                   minRows={4}
+                  maxRows={8}
+                  error={!!errors.material_type_description}
+                  helperText={
+                    errors.material_type_description?.message || 
+                    `${field.value?.length || 0}/1000 characters`
+                  }
                   sx={{
                     mb: 3,
                     "& textarea": {
@@ -184,7 +218,7 @@ const AddInventoryTypePage = () => {
         </div>
         <div className="flex justify-center space-x-4 pt-4">
           <Button type="submit" className="w-32">Save</Button>
-          <Button type="button" variant="outline" className="w-32" onClick={() => navigate(-1)}>Cancel</Button>
+          <Button type="button" variant="outline" className="w-32" onClick={() => navigate(basePath)}>Cancel</Button>
         </div>
       </form>
       </div>

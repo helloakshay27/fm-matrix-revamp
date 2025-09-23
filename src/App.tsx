@@ -720,6 +720,12 @@ import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import MobileLMCPage from "./pages/MobileLMCPage";
+import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
+import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
+import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
+import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
+import BannerDetailsPage from "./pages/BannerDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -912,6 +918,8 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
+
+
 
                   <Route
                     path="/"
@@ -1451,6 +1459,12 @@ function App() {
                     <Route
                       path="/maintenance/m-safe/training-list/training-user-details/:id"
                       element={<TrainingUserDetailPage />}
+                    />
+
+                    {/* M-Safe Routes */}
+                    <Route
+                      path="/maintenance/m-safe/internal"
+                      element={<MSafeDashboard />}
                     />
 
                     <Route
@@ -2149,9 +2163,9 @@ function App() {
                       path="/security/visitor"
                       element={<VisitorsDashboard />}
                     />
-                    <Route 
-                      path="/security/visitor/add" 
-                      element={<VisitorFormPage />} 
+                    <Route
+                      path="/security/visitor/add"
+                      element={<VisitorFormPage />}
                     />
                     <Route
                       path="/security/visitor/history"
@@ -2201,6 +2215,7 @@ function App() {
                       path="/settings/staff"
                       element={<StaffsDashboard />}
                     />
+
                     <Route
                       path="/maintenance/msafe-report"
                       element={<MsafeReportDownload />}
@@ -2494,6 +2509,8 @@ function App() {
                       element={<ExportDashboard />}
                     />
 
+
+
                     {/* M Safe Routes */}
 
                     <Route
@@ -2510,10 +2527,7 @@ function App() {
                         <Navigate to="/maintenance/m-safe/internal" replace />
                       }
                     />
-                    <Route
-                      path="/maintenance/m-safe/internal"
-                      element={<MSafeDashboard />}
-                    />
+
                     <Route
                       path="/maintenance/m-safe/external"
                       element={<ExternalUsersDashboard />}
@@ -2730,6 +2744,18 @@ function App() {
                       element={<EditInventoryTypePage />}
                     />
                     <Route
+                      path="/settings/inventory-management/inventory-type"
+                      element={<InventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/add"
+                      element={<AddInventoryTypePage />}
+                    />
+                    <Route
+                      path="/settings/inventory-management/inventory-type/edit/:id"
+                      element={<EditInventoryTypePage />}
+                    />
+                    <Route
                       path="/master/inventory-sub-type"
                       element={<InventorySubTypePage />}
                     />
@@ -2929,6 +2955,30 @@ function App() {
                       path="/settings/account/lock-sub-function/edit/:id"
                       element={<LockSubFunctionEdit />}
                     />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup"
+                      element={<TestimonialsSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup/:id"
+                      element={<TestimonialDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/company-partner-setup"
+                      element={<CompanyPartnersSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup"
+                      element={<BannerSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup/:id"
+                      element={<BannerDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/amenity-setup"
+                      element={<AmenitySetupDashboard />}
+                    />
                   </Route>
 
                   {/* Setup Routes - Outside of settings parent route */}
@@ -2982,7 +3032,7 @@ function App() {
                       </ProtectedRoute>
                     }
                   />
-                   <Route
+                  <Route
                     path="/mobile/lmc"
                     element={<MobileLMCPage />}
                   />

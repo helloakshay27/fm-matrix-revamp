@@ -131,6 +131,7 @@ export const CalendarFilterModal: React.FC<CalendarFilterModalProps> = ({
                     <SelectItem value="PPM" className="hover:bg-gray-100 focus:bg-gray-100">PPM</SelectItem>
                     <SelectItem value="AMC" className="hover:bg-gray-100 focus:bg-gray-100">AMC</SelectItem>
                     <SelectItem value="Preparedness" className="hover:bg-gray-100 focus:bg-gray-100">Preparedness</SelectItem>
+                    <SelectItem value="Routine" className="hover:bg-gray-100 focus:bg-gray-100">Routine</SelectItem>
                    
                   </SelectContent>
                 </Select>

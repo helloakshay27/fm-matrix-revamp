@@ -1274,12 +1274,12 @@ export const SurveyResponseDetailPage = () => {
 
   // Static columns for ticket data
   const getTicketColumns = () => [
-    {
-      key: "complaint_id",
-      label: "Complaint ID",
-      defaultVisible: true,
-      sortable: true,
-    },
+    // {
+    //   key: "complaint_id",
+    //   label: "Complaint ID",
+    //   defaultVisible: true,
+    //   sortable: true,
+    // },
     {
       key: "ticket_number",
       label: "Ticket Number",
@@ -1573,14 +1573,7 @@ export const SurveyResponseDetailPage = () => {
           {/* Date Range Filter */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-sm font-medium text-gray-700">
-                  Date Range
-                </Label>
-                <p className="text-xs text-gray-500 mt-1">
-                  Filter responses by date range
-                </p>
-              </div>
+             
               {(currentFilters.dateRange?.from ||
                 currentFilters.dateRange?.to) && (
                 <Button
@@ -1661,169 +1654,6 @@ export const SurveyResponseDetailPage = () => {
                 />
               </div>
             </div>
-          </div>
-
-          {/* Location Filters */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Building
-              </Label>
-              <Input
-                placeholder="Filter by building"
-                value={currentFilters.building || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    building: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Wing</Label>
-              <Input
-                placeholder="Filter by wing"
-                value={currentFilters.wing || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    wing: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Area</Label>
-              <Input
-                placeholder="Filter by area"
-                value={currentFilters.area || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    area: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Floor</Label>
-              <Input
-                placeholder="Filter by floor"
-                value={currentFilters.floor || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    floor: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">Room</Label>
-              <Input
-                placeholder="Filter by room"
-                value={currentFilters.room || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    room: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Icon Category
-              </Label>
-              <Input
-                placeholder="Filter by icon category"
-                value={currentFilters.iconCategory || ""}
-                onChange={(e) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    iconCategory: e.target.value || undefined,
-                  }))
-                }
-              />
-            </div>
-          </div>
-
-          {/* Survey Specific Filters */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Rating
-              </Label>
-              <Select
-                value={currentFilters.rating || "all"}
-                onValueChange={(value) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    rating: value === "all" ? undefined : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select rating" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Ratings</SelectItem>
-                  <SelectItem value="5">5 Stars</SelectItem>
-                  <SelectItem value="4">4 Stars</SelectItem>
-                  <SelectItem value="3">3 Stars</SelectItem>
-                  <SelectItem value="2">2 Stars</SelectItem>
-                  <SelectItem value="1">1 Star</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Answer Type
-              </Label>
-              <Select
-                value={currentFilters.category || "all"}
-                onValueChange={(value) =>
-                  setCurrentFilters((prev) => ({
-                    ...prev,
-                    category: value === "all" ? undefined : value,
-                  }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="multiple">Multiple</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                  <SelectItem value="emoji">Emoji</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Assignee Filter */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
-              Assignee
-            </Label>
-            <Input
-              placeholder="Filter by assignee"
-              value={currentFilters.assignee || ""}
-              onChange={(e) =>
-                setCurrentFilters((prev) => ({
-                  ...prev,
-                  assignee: e.target.value || undefined,
-                }))
-              }
-            />
           </div>
         </div>
 
@@ -2156,7 +1986,7 @@ export const SurveyResponseDetailPage = () => {
                   pageSize={10}
                   className="border border-gray-200 rounded-lg"
                   loading={isLoading}
-                  onFilterClick={handleFilterClick}
+                  // onFilterClick={handleFilterClick}
                   getItemId={(item: TicketData) => item.id}
                   renderCell={(item: TicketData, columnKey: string) => {
                     if (columnKey === "ticket_number") {
@@ -2168,14 +1998,14 @@ export const SurveyResponseDetailPage = () => {
                     }
                     if (columnKey === "category") {
                       return (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium ">
                           {item.category}
                         </span>
                       );
                     }
                     if (columnKey === "assignee") {
                       return (
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span className="px-2 py-1 rounded-full text-xs font-medium">
                           {item.assignee}
                         </span>
                       );

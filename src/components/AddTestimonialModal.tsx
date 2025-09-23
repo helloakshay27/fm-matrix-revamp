@@ -1,27 +1,20 @@
 
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { Close } from '@mui/icons-material';
 
 interface AddTestimonialModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
+  },
+};
 
 export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProps) => {
   const [formData, setFormData] = useState({
@@ -30,8 +23,9 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
     designation: '',
     companyName: '',
     description: '',
-    image: null as File | null
   });
+
+  const [attachmentPreviews, setAttachmentPreviews] = useState<{ file: File, preview: string }[]>([]);
 
   const [characterCount, setCharacterCount] = useState(0);
   const maxCharacters = 250;
@@ -44,9 +38,15 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData({ ...formData, image: file });
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      const files = Array.from(event.target.files);
+      const newPreviews = files.map(file => ({
+        file,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+      }));
+      setAttachmentPreviews(prev => [...prev, ...newPreviews]);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -56,113 +56,168 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
     onClose();
   };
 
+  const handleRemoveAttachment = (fileToRemove: File) => {
+    setAttachmentPreviews(prev => prev.filter(({ file }) => file !== fileToRemove));
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md mx-auto">
-        <DialogHeader>
-          <DialogTitle>Add Testimonial</DialogTitle>
-        </DialogHeader>
-        
+    <Dialog open={isOpen} onClose={onClose}>
+      <DialogContent>
+        <div>
+          <h1 className='text-xl mb-6 mt-2 font-semibold'>Add Testimonial</h1>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Site Dropdown */}
-          <div className="space-y-2">
-            <Label htmlFor="site">
-              Site <span className="text-red-500">*</span>
-            </Label>
-            <Select value={formData.site} onValueChange={(value) => setFormData({ ...formData, site: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select site..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lockated">Lockated</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
+          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+            <InputLabel shrink>Site</InputLabel>
+            <Select
+              label="Site"
+              name="site"
+              displayEmpty
+              sx={fieldStyles}
+            >
+              <MenuItem value="">
+                <em>Select Site</em>
+              </MenuItem>
             </Select>
-          </div>
+          </FormControl>
 
-          {/* Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
+          <TextField
+            label="Name*"
+            name="name"
+            type='text'
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          {/* Designation Field */}
-          <div className="space-y-2">
-            <Label htmlFor="designation">
-              Designation <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="designation"
-              type="text"
-              value={formData.designation}
-              onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-              required
-            />
-          </div>
+          <TextField
+            label="Designation*"
+            name="designation"
+            type='text'
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          {/* Company Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="companyName">
-              Company name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="companyName"
-              type="text"
-              value={formData.companyName}
-              onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-              required
-            />
-          </div>
+          <TextField
+            label="Company Name*"
+            name="companyName"
+            type='text'
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{ mt: 1 }}
+          />
 
-          {/* Description Field */}
-          <div className="space-y-2">
-            <Label htmlFor="description">
-              Description <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={handleDescriptionChange}
-              rows={4}
-              required
-            />
-            <div className="text-sm text-gray-500 text-right">
-              {maxCharacters - characterCount} characters remaining
-            </div>
-          </div>
+          <TextField
+            label="Description*"
+            name="description"
+            multiline
+            rows={2}
+            type='text'
+            fullWidth
+            variant="outlined"
+            InputLabelProps={{ shrink: true }}
+            InputProps={{ sx: fieldStyles }}
+            sx={{
+              mt: 1,
+              "& .MuiOutlinedInput-root": {
+                height: "auto !important",
+                padding: "2px !important",
+                display: "flex",
+              },
+              "& .MuiInputBase-input[aria-hidden='true']": {
+                flex: 0,
+                width: 0,
+                height: 0,
+                padding: "0 !important",
+                margin: 0,
+                display: "none",
+              },
+              "& .MuiInputBase-input": {
+                resize: "none !important",
+              },
+            }}
+          />
 
-          {/* Upload Image Field */}
-          <div className="space-y-2">
-            <Label htmlFor="image">
-              Upload Image <span className="text-red-500">*</span>
-            </Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-md p-4">
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="body1" sx={{ mb: 2, color: 'hsl(var(--label-text))', fontWeight: 500 }}>
+              Attachment
+            </Typography>
+
+            <div className="">
               <input
-                id="image"
                 type="file"
-                accept=".png,.jpg,.jpeg"
+                multiple
+                accept="image/*,application/pdf,.xlsx,.xls"
+                className="hidden"
+                id="file-upload"
                 onChange={handleFileChange}
-                className="w-full"
-                required
               />
+              <label htmlFor="file-upload" className="block cursor-pointer">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
+                  <span className="text-gray-600">
+                    Drag & Drop or{" "}
+                    <span className="text-red-500 underline">Choose files</span>{" "}
+                  </span>
+                </div>
+              </label>
+
+              {/* Attachment Previews */}
+              {attachmentPreviews.length > 0 && (
+                <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  {attachmentPreviews.map(({ file, preview }, index) => (
+                    <Box
+                      key={index}
+                      sx={{
+                        position: 'relative',
+                        width: 100,
+                        height: 100,
+                        border: '1px solid hsl(var(--form-border))',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        backgroundColor: 'hsl(var(--background))'
+                      }}
+                    >
+                      <img
+                        src={preview}
+                        alt={file.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+
+                      <IconButton
+                        onClick={() => handleRemoveAttachment(file)}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          right: 0,
+                          backgroundColor: 'hsl(var(--background))',
+                          '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' }
+                        }}
+                      >
+                        <Close fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              )}
             </div>
-            <div className="text-xs text-gray-500">
-              Accepted file formats: PNG/JPEG (height: 115px, width: 93px) (max 5 mb)
-            </div>
-          </div>
+          </Box>
 
           {/* Submit Button */}
           <div className="pt-4">
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="bg-purple-600 hover:bg-purple-700 text-white w-full"
             >
               Submit

@@ -91,6 +91,7 @@ interface WorkOrder {
   plant_detail?: string;
   wo_status?: string;
   term_condition?: string;
+  all_level_approved?: boolean;
 }
 
 interface ServiceItem {
@@ -146,6 +147,7 @@ interface ServicePR {
   preparedBy?: string;
   signature?: string;
   contractor?: string;
+  all_level_approved?: boolean;
 }
 
 // Column configurations
@@ -510,15 +512,18 @@ export const ServicePRDetailsPage = () => {
               Send To SAP Team
             </Button>
           )}
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-gray-300"
-            onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
-          >
-            <Edit className="w-4 h-4 mr-1" />
-            Edit
-          </Button>
+          {
+            servicePR?.all_level_approved === null &&
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-gray-300"
+              onClick={() => navigate(`/finance/service-pr/edit/${id}`)}
+            >
+              <Edit className="w-4 h-4 mr-1" />
+              Edit
+            </Button>
+          }
           <Button
             size="sm"
             variant="outline"

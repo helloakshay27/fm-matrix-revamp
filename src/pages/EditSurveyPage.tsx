@@ -226,26 +226,19 @@ export const EditSurveyPage = () => {
       setCheckType(mappedCheckType);
 
       // Check if ticket creation is enabled based on existing data
-      const hasTicketConfig = surveyData.snag_questions?.some(
-        (q: any) => q.ticket_configs
-      );
+      const hasTicketConfig = surveyData.ticket_configs && surveyData.ticket_configs.active;
       setCreateTicket(hasTicketConfig);
 
-      if (hasTicketConfig && surveyData.snag_questions?.[0]?.ticket_configs) {
-        const ticketConfig = surveyData.snag_questions[0].ticket_configs;
-        // Check if we have category_id or just category name
+      if (hasTicketConfig && surveyData.ticket_configs) {
+        const ticketConfig = surveyData.ticket_configs;
+        // Set ticket configuration data
         if (ticketConfig.category_id) {
           setTicketCategoryId(ticketConfig.category_id.toString());
-          // Find the category name from the loaded categories
-          const category = ticketCategories.find(cat => cat.id === ticketConfig.category_id);
-          setTicketCategory(category?.name || ticketConfig.category || "");
-        } else {
-          // Fallback: if only category name is available, find the ID
           setTicketCategory(ticketConfig.category || "");
-          const category = ticketCategories.find(cat => cat.name === ticketConfig.category);
-          setTicketCategoryId(category?.id.toString() || "");
         }
-        setAssignTo(ticketConfig.assigned_to_id ? ticketConfig.assigned_to_id.toString() : "");
+        if (ticketConfig.assigned_to_id) {
+          setAssignTo(ticketConfig.assigned_to_id.toString());
+        }
       }
 
       // Map snag_questions to component questions format
@@ -654,12 +647,12 @@ export const EditSurveyPage = () => {
       formData.append("snag_checklist[name]", title);
       formData.append("snag_checklist[check_type]", checkType);
 
-      // Add ticket creation fields - always send the state
+      // Add ticket creation fields - send create_tickets flag and related data
       formData.append("create_ticket", createTicket ? "true" : "false");
+      
       if (createTicket) {
-        formData.append("category_name", ticketCategoryId); // Send ID as string
-        formData.append("category_type", assignTo); // This should be the user ID
-        formData.append("tag_type", "Ticket Setup");
+        formData.append("category_name", ticketCategoryId);
+        formData.append("category_type", assignTo);
       }
 
       // Process questions with proper FormData structure matching server expectations
@@ -751,12 +744,7 @@ export const EditSurveyPage = () => {
         }
 
         // Add generic tags for ticket configuration only (separate from additional fields)
-        if (createTicket) {
-          formData.append(`question[][ticket_config][category_id]`, ticketCategoryId); // Send ID instead of name
-          formData.append(`question[][ticket_config][assigned_to_id]`, assignTo);
-          formData.append(`question[][ticket_config][tag_type]`, "Ticket Setup");
-          formData.append(`question[][ticket_config][active]`, "true");
-        }
+        // Note: Ticket configuration is now handled at survey level, not question level
       });
 
       console.log(
@@ -919,7 +907,10 @@ export const EditSurveyPage = () => {
               {createTicket && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
                   <div className="space-y-2">
-                    <FormControl fullWidth sx={fieldStyles}>
+                    <FormControl fullWidth required sx={{
+                      ...fieldStyles,
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    }}>
                       <InputLabel id="ticket-category-label">
                         Ticket Category
                       </InputLabel>
@@ -927,7 +918,7 @@ export const EditSurveyPage = () => {
                         labelId="ticket-category-label"
                         id="ticketCategory"
                         value={ticketCategoryId}
-                        label="Select Category"
+                        label="Ticket Category"
                         onChange={(e) => {
                           const selectedCategoryId = e.target.value;
                           const selectedCategory = ticketCategories.find(cat => cat.id.toString() === selectedCategoryId);
@@ -946,7 +937,10 @@ export const EditSurveyPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <FormControl fullWidth sx={fieldStyles}>
+                    <FormControl fullWidth required sx={{
+                      ...fieldStyles,
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    }}>
                       <InputLabel id="assign-to-label">
                        Assign To
                       </InputLabel>
@@ -954,7 +948,7 @@ export const EditSurveyPage = () => {
                         labelId="assign-to-label"
                         id="assignTo"
                         value={assignTo}
-                        label="Select Engineer"
+                        label="Assign To"
                         onChange={(e) => setAssignTo(e.target.value)}
                         disabled={loadingFmUsers}
                       >
@@ -963,7 +957,7 @@ export const EditSurveyPage = () => {
                             key={user.id}
                             value={user.id.toString()}
                           >
-                            {`${user.full_name}`}
+                            {`${user.firstname} ${user.lastname}`}
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -1026,21 +1020,27 @@ export const EditSurveyPage = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea
-                        value={question.text}
-                        onChange={(e) =>
-                          handleQuestionChange(
-                            question.id!,
-                            "text",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Enter your Question"
-                        className="min-h-20"
-                      />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Question Text <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          value={question.text}
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              question.id!,
+                              "text",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Enter your Question"
+                          className="min-h-20"
+                          required
+                        />
+                      </div>
 
                       <div className="space-y-2">
-                        <Label>Select Answer Type</Label>
+                        <Label>Select Answer Type <span className="text-red-500">*</span></Label>
                         <Select
                           value={question.answerType}
                           onValueChange={(value) =>

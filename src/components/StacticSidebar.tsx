@@ -888,7 +888,7 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
-    },
+    }
   ],
   "Market Place": [
     {
@@ -1011,6 +1011,10 @@ const modulesByPackage = {
             {
               name: "SAC/HSN Code",
               href: "/settings/inventory-management/sac-hsn-code",
+            },
+            {
+              name: "Inventory Type",
+              href: "/settings/inventory-management/inventory-type",
             },
           ],
         },
@@ -1137,6 +1141,32 @@ const modulesByPackage = {
         },
       ],
     },
+    {
+      name: "Community Modules",
+      icon: Users,
+      subItems: [
+        {
+          name: "Testimonial Setup",
+          href: "/settings/community-modules/testimonial-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Company Partner Setup",
+          href: "/settings/community-modules/company-partner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Banner Setup",
+          href: "/settings/community-modules/banner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Amenity Setup",
+          href: "/settings/community-modules/amenity-setup",
+          color: "text-[#1a1a1a]",
+        },
+      ]
+    }
     // {
     //   name: 'Currency',
     //   icon: Currency,
@@ -1477,8 +1507,8 @@ export const StacticSidebar = () => {
             }
           }}
           className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${active || isExpanded
-              ? "bg-[#f0e8dc] shadow-inner"
-              : "hover:bg-[#DBC2A9]"
+            ? "bg-[#f0e8dc] shadow-inner"
+            : "hover:bg-[#DBC2A9]"
             }`}
           title={module.name}
         >
@@ -1573,8 +1603,8 @@ export const StacticSidebar = () => {
                     }
                   }}
                   className={`flex items-center justify-center p-2 rounded-lg relative transition-all duration-200 ${isActiveRoute(module.href)
-                      ? "bg-[#f0e8dc] shadow-inner"
-                      : "hover:bg-[#DBC2A9]"
+                    ? "bg-[#f0e8dc] shadow-inner"
+                    : "hover:bg-[#DBC2A9]"
                     }`}
                   title={module.name}
                 >
@@ -1583,8 +1613,8 @@ export const StacticSidebar = () => {
                   )}
                   <module.icon
                     className={`w-5 h-5 ${isActiveRoute(module.href)
-                        ? "text-[#C72030]"
-                        : "text-[#1a1a1a]"
+                      ? "text-[#C72030]"
+                      : "text-[#1a1a1a]"
                       }`}
                   />
                 </button>
