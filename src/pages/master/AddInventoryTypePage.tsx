@@ -152,18 +152,15 @@ const AddInventoryTypePage = () => {
           <Controller
             name="category"
             control={control}
-            rules={{ required: 'Category is required' }}
             render={({ field }) => (
               <Box>
                 <FormControl fullWidth variant="outlined">
-                  <InputLabel shrink>Category <span style={{ color: 'red' }}>*</span></InputLabel>
+                  <InputLabel shrink>Category</InputLabel>
                   <TextField
                     {...field}
                     label="Category"
                     variant="outlined"
                     fullWidth
-                    error={!!errors.category}
-                    helperText={errors.category?.message}
                   />
                 </FormControl>
               </Box>
@@ -178,7 +175,8 @@ const AddInventoryTypePage = () => {
                 maxLength: {
                   value: 1000,
                   message: "Description cannot exceed 1000 characters"
-                }
+                },
+                required: { value: true, message: "Description is required" }
               }}
               render={({ field }) => (
                 <TextField

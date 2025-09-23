@@ -135,14 +135,13 @@ const EditInventoryTypePage = () => {
               <Controller
                 name="category"
                 control={control}
-                rules={{ required: 'Category is required' }}
                 render={({ field }) => (
                   <TextField {...field} label={
                     
                     <span style={{ fontSize: '16px' }}>
-                      Category <span style={{ color: 'red' }}>*</span>
+                      Category
                     </span>
-                  } placeholder="Enter Category" variant="outlined" fullWidth error={!!errors.category} helperText={errors.category?.message} />
+                  } placeholder="Enter Category" variant="outlined" fullWidth />
                 )}
               />
               <div className="md:col-span-2">
@@ -153,7 +152,8 @@ const EditInventoryTypePage = () => {
                     maxLength: {
                       value: 1000,
                       message: "Description cannot exceed 1000 characters"
-                    }
+                    },
+                    required: { value: true, message: "Description is required" }
                   }}
                   render={({ field }) => (
                     <TextField
