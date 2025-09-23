@@ -957,7 +957,7 @@ export const EditSurveyPage = () => {
                             key={user.id}
                             value={user.id.toString()}
                           >
-                            {`${user.firstname} ${user.lastname}`}
+                         {user.full_name} 
                           </MenuItem>
                         ))}
                       </MuiSelect>
