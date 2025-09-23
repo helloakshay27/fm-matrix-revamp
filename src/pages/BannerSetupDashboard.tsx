@@ -117,6 +117,7 @@ const BannerSetupDashboard = () => {
                             handleCheckboxChange(item)
                         }
                         className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                        disabled={updatingStatus[item.id]}
                     />
                 );
             default:

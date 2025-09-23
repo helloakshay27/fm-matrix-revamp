@@ -1,12 +1,18 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
 import { Close } from '@mui/icons-material';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { toast } from 'sonner';
+import { createTestimonial, editTestimonial } from '@/store/slices/testimonialSlice';
 
 interface AddTestimonialModalProps {
   isOpen: boolean;
   onClose: () => void;
+  fetchData: () => void;
+  isEditing?: boolean;
+  record?: any;
 }
 
 const fieldStyles = {
@@ -16,76 +22,161 @@ const fieldStyles = {
   },
 };
 
-export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProps) => {
+export const AddTestimonialModal = ({ isOpen, onClose, fetchData, isEditing, record }: AddTestimonialModalProps) => {
+  const dispatch = useAppDispatch();
+  const token = localStorage.getItem('token');
+  const baseUrl = localStorage.getItem('baseUrl');
+  const { sites } = useAppSelector(state => state.site);
+
   const [formData, setFormData] = useState({
-    site: '',
+    site: [],
     name: '',
     designation: '',
     companyName: '',
     description: '',
   });
 
-  const [attachmentPreviews, setAttachmentPreviews] = useState<{ file: File, preview: string }[]>([]);
+  const [attachmentPreview, setAttachmentPreview] = useState<{ file?: File; preview: string } | null>(null);
 
-  const [characterCount, setCharacterCount] = useState(0);
-  const maxCharacters = 250;
-
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const text = e.target.value;
-    if (text.length <= maxCharacters) {
-      setFormData({ ...formData, description: text });
-      setCharacterCount(text.length);
+  useEffect(() => {
+    if (isEditing && record) {
+      setFormData({
+        ...formData,
+        name: record.name,
+        designation: record.designation,
+        companyName: record.company_name,
+        description: record.description,
+      })
+      setAttachmentPreview({ file: undefined, preview: record?.video_preview_image })
     }
+  }, [record, isEditing])
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | { target: { name: string; value: any } }) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
-      const files = Array.from(event.target.files);
-      const newPreviews = files.map(file => ({
-        file,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
-      }));
-      setAttachmentPreviews(prev => [...prev, ...newPreviews]);
+      const file = event.target.files[0];
+      const preview = file.type.startsWith('image/') ? URL.createObjectURL(file) : '';
+      setAttachmentPreview({ file, preview });
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
+    const payload = new FormData();
+    if (isEditing) {
+      payload.append('testimonial[site_ids][]', localStorage.getItem("selectedSiteId") || '');
+      payload.append('testimonial[name]', formData.name);
+      payload.append('testimonial[designation]', formData.designation);
+      payload.append('testimonial[company_name]', formData.companyName);
+      payload.append('testimonial[description]', formData.description);
+      if (attachmentPreview?.file) {
+        payload.append('testimonial_image', attachmentPreview.file);
+      }
+
+      try {
+        const response = await dispatch(editTestimonial({ baseUrl, token, data: payload, id: record.id })).unwrap();
+        toast.success(response.message);
+        fetchData();
+        handleClose();
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    } else {
+      formData.site.forEach((site) => {
+        payload.append('testimonial[site_ids][]', site);
+      });
+      payload.append('testimonial[name]', formData.name);
+      payload.append('testimonial[designation]', formData.designation);
+      payload.append('testimonial[company_name]', formData.companyName);
+      payload.append('testimonial[description]', formData.description);
+      if (attachmentPreview?.file) {
+        payload.append('testimonial_image', attachmentPreview.file);
+      }
+      payload.append('testimonial[active]', String(1));
+
+      try {
+        const response = await dispatch(createTestimonial({ baseUrl, token, data: payload })).unwrap();
+        toast.success(response.message);
+        fetchData();
+        handleClose();
+      } catch (error) {
+        console.log(error);
+        toast.dismiss();
+        toast.error(error);
+      }
+    }
+  };
+
+  const handleRemoveAttachment = () => {
+    setAttachmentPreview(null);
+  };
+
+  const handleClose = () => {
+    setFormData({
+      site: [],
+      name: '',
+      designation: '',
+      companyName: '',
+      description: '',
+    })
+    setAttachmentPreview(null);
     onClose();
   };
 
-  const handleRemoveAttachment = (fileToRemove: File) => {
-    setAttachmentPreviews(prev => prev.filter(({ file }) => file !== fileToRemove));
-  };
-
   return (
-    <Dialog open={isOpen} onClose={onClose}>
+    <Dialog open={isOpen} onClose={handleClose}>
       <DialogContent>
         <div>
-          <h1 className='text-xl mb-6 mt-2 font-semibold'>Add Testimonial</h1>
+          <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Testimonial' : 'Add Testimonial'}</h1>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
-            <InputLabel shrink>Site</InputLabel>
-            <Select
-              label="Site"
-              name="site"
-              displayEmpty
-              sx={fieldStyles}
-            >
-              <MenuItem value="">
-                <em>Select Site</em>
-              </MenuItem>
-            </Select>
-          </FormControl>
+          {
+            !isEditing && (
+              <FormControl fullWidth variant="outlined" sx={{ mt: 1 }}>
+                <InputLabel shrink>Site</InputLabel>
+                <Select
+                  multiple
+                  label="Site"
+                  name="site"
+                  value={formData.site}
+                  onChange={handleFormChange}
+                  displayEmpty
+                  sx={fieldStyles}
+                  renderValue={(selected) => {
+                    if (selected.length === 0) {
+                      return <em>Select Site</em>;
+                    }
+                    return selected
+                      .map((value) => sites.find((option) => option.id === value)?.name)
+                      .join(', ');
+                  }}
+                >
+                  {sites.map((option) => (
+                    <MenuItem key={option.id} value={option.id}>
+                      {option.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )
+          }
 
           <TextField
             label="Name*"
             name="name"
             type='text'
+            value={formData.name}
+            onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
@@ -97,6 +188,8 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
             label="Designation*"
             name="designation"
             type='text'
+            value={formData.designation}
+            onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
@@ -108,6 +201,8 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
             label="Company Name*"
             name="companyName"
             type='text'
+            value={formData.companyName}
+            onChange={handleFormChange}
             fullWidth
             variant="outlined"
             InputLabelProps={{ shrink: true }}
@@ -118,6 +213,8 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
           <TextField
             label="Description*"
             name="description"
+            value={formData.description}
+            onChange={handleFormChange}
             multiline
             rows={2}
             type='text'
@@ -151,10 +248,9 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
               Attachment
             </Typography>
 
-            <div className="">
+            <div>
               <input
                 type="file"
-                multiple
                 accept="image/*,application/pdf,.xlsx,.xls"
                 className="hidden"
                 id="file-upload"
@@ -164,51 +260,46 @@ export const AddTestimonialModal = ({ isOpen, onClose }: AddTestimonialModalProp
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center bg-orange-50 hover:bg-orange-100 transition-colors">
                   <span className="text-gray-600">
                     Drag & Drop or{" "}
-                    <span className="text-red-500 underline">Choose files</span>{" "}
+                    <span className="text-red-500 underline">Choose file</span>{" "}
                   </span>
                 </div>
               </label>
 
-              {/* Attachment Previews */}
-              {attachmentPreviews.length > 0 && (
+              {attachmentPreview && (
                 <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                  {attachmentPreviews.map(({ file, preview }, index) => (
-                    <Box
-                      key={index}
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      width: 100,
+                      height: 100,
+                      border: '1px solid hsl(var(--form-border))',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: 'hsl(var(--background))'
+                    }}
+                  >
+                    <img
+                      src={attachmentPreview.preview}
+                      alt={attachmentPreview.file?.name || 'Attachment'}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                    <IconButton
+                      onClick={handleRemoveAttachment}
+                      size="small"
                       sx={{
-                        position: 'relative',
-                        width: 100,
-                        height: 100,
-                        border: '1px solid hsl(var(--form-border))',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        backgroundColor: 'hsl(var(--background))'
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        backgroundColor: 'hsl(var(--background))',
+                        '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' }
                       }}
                     >
-                      <img
-                        src={preview}
-                        alt={file.name}
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      />
-
-                      <IconButton
-                        onClick={() => handleRemoveAttachment(file)}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          top: 0,
-                          right: 0,
-                          backgroundColor: 'hsl(var(--background))',
-                          '&:hover': { backgroundColor: 'hsl(var(--destructive))', color: 'white' }
-                        }}
-                      >
-                        <Close fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  ))}
+                      <Close fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
               )}
             </div>
