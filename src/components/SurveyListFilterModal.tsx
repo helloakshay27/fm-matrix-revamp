@@ -4,7 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Loader2 } from 'lucide-react';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { X, Loader2, Check, ChevronsUpDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { apiClient } from '@/utils/apiClient';
 import { toast } from 'sonner';
 
@@ -42,6 +45,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
   
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [categoryPopoverOpen, setCategoryPopoverOpen] = useState(false);
 
   // Fetch categories when modal opens
   useEffect(() => {
@@ -117,7 +121,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl min-h-[200px]">
         <DialogHeader className="relative">
           <DialogTitle className="text-xl text-slate-950 font-normal">FILTER BY</DialogTitle>
           <button
@@ -131,47 +135,88 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
         <div className="py-4">
           {/* Survey Filter Section */}
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-[#C72030] mb-4">Survey Details</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h3 className="text-lg font-semibold text-[#C72030] mb-4">Question Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
               {/* Survey Name Filter */}
               <div className="space-y-2">
-                <Label htmlFor="surveyName">Survey Name</Label>
+                <Label htmlFor="surveyName">Title</Label>
                 <Input
                   id="surveyName"
-                  placeholder="Enter Survey Name"
+                  placeholder="Enter Title"
                   value={filters.surveyName}
                   onChange={(e) => handleInputChange('surveyName', e.target.value)}
-                  className="h-10"
+                  className="h-10 border-gray-300 focus-visible:border-gray-500 text-black"
                 />
               </div>
 
               {/* Category Filter */}
               <div className="space-y-2">
                 <Label htmlFor="category">Ticket Category</Label>
-                <Select
-                  value={filters.categoryId}
-                  onValueChange={(value) => handleInputChange('categoryId', value)}
-                  disabled={loadingCategories}
-                >
-                  <SelectTrigger className="h-10">
-                    <SelectValue placeholder="Select Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {loadingCategories ? (
-                      <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Loading categories...
-                      </div>
-                    ) : (
-                      Array.isArray(categories) && categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id.toString()}>
-                          {category.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                <Popover open={categoryPopoverOpen} onOpenChange={setCategoryPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={categoryPopoverOpen}
+                      className="h-10 w-full justify-between text-left font-normal"
+                      disabled={loadingCategories}
+                    >
+                      {filters.categoryId === 'all' 
+                        ? "All Categories" 
+                        : categories.find((category) => category.id.toString() === filters.categoryId)?.name || "Select Category"
+                      }
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search categories..." className="h-9" />
+                      <CommandEmpty>No category found.</CommandEmpty>
+                      <CommandGroup className="max-h-48 overflow-y-auto">
+                        <CommandItem
+                          value="all-categories"
+                          onSelect={() => {
+                            handleInputChange('categoryId', 'all');
+                            setCategoryPopoverOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              filters.categoryId === 'all' ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          All Categories
+                        </CommandItem>
+                        {loadingCategories ? (
+                          <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Loading categories...
+                          </div>
+                        ) : (
+                          Array.isArray(categories) && categories.map((category) => (
+                            <CommandItem
+                              key={category.id}
+                              value={category.name.toLowerCase()}
+                              onSelect={() => {
+                                handleInputChange('categoryId', category.id.toString());
+                                setCategoryPopoverOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  filters.categoryId === category.id.toString() ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {category.name}
+                            </CommandItem>
+                          ))
+                        )}
+                      </CommandGroup>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Check Type Filter */}
@@ -184,7 +229,13 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
                   <SelectTrigger className="h-10">
                     <SelectValue placeholder="Select Check Type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent 
+                    side="bottom" 
+                    align="start" 
+                    className="z-[9999] max-h-48 overflow-y-auto"
+                    avoidCollisions={false}
+                    sideOffset={4}
+                  >
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="patrolling">Patrolling</SelectItem>
                     <SelectItem value="survey">Survey</SelectItem>

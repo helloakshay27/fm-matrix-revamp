@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket } from "lucide-react";
+import { ArrowLeft, Copy, X, Calendar as CalendarIcon, List, BarChart3, Activity, Table, Ticket, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -203,11 +203,18 @@ export const SurveyResponseDetailPage = () => {
   const [responseListData, setResponseListData] =
     useState<ResponseListData | null>(null);
 
-  // Filter states
+  // Filter states - separate for each tab
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [currentFilters, setCurrentFilters] = useState<SurveyResponseFilters>(
-    {}
-  );
+  const [activeFilterTab, setActiveFilterTab] = useState<'summary' | 'tabular'>('summary');
+  
+  // Summary tab filters
+  const [summaryCurrentFilters, setSummaryCurrentFilters] = useState<SurveyResponseFilters>({});
+  const [summaryFormFilters, setSummaryFormFilters] = useState<SurveyResponseFilters>({});
+  
+  // Tabular tab filters
+  const [tabularCurrentFilters, setTabularCurrentFilters] = useState<SurveyResponseFilters>({});
+  const [tabularFormFilters, setTabularFormFilters] = useState<SurveyResponseFilters>({});
+  
   const [filteredTabularData, setFilteredTabularData] = useState<
     TabularResponseData[]
   >([]);
@@ -449,11 +456,81 @@ export const SurveyResponseDetailPage = () => {
     }
   };
 
+  // Helper function to filter responses by date range for summary analytics
+  const getSummaryFilteredResponseData = useCallback(() => {
+    if (!responseListData?.responses) return [];
+    
+    // If no date filters are applied, return all responses
+    if (!summaryCurrentFilters.dateRange?.from && !summaryCurrentFilters.dateRange?.to) {
+      return responseListData.responses;
+    }
+
+    return responseListData.responses.filter((response: SurveyResponse) => {
+      // Check if any answer in this response falls within the date range
+      const answersInRange = response.answers?.some((answer: ResponseAnswer) => {
+        const answerDate = new Date(answer.created_at);
+        
+        if (summaryCurrentFilters.dateRange?.from) {
+          const fromDate = new Date(summaryCurrentFilters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          if (answerDate < fromDate) return false;
+        }
+        
+        if (summaryCurrentFilters.dateRange?.to) {
+          const toDate = new Date(summaryCurrentFilters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          if (answerDate > toDate) return false;
+        }
+        
+        return true;
+      });
+
+      return answersInRange;
+    });
+  }, [responseListData, summaryCurrentFilters.dateRange]);
+
+  // Helper function to filter responses by date range for tabular data
+  const getTabularFilteredResponseData = useCallback(() => {
+    if (!responseListData?.responses) return [];
+    
+    // If no date filters are applied, return all responses
+    if (!tabularCurrentFilters.dateRange?.from && !tabularCurrentFilters.dateRange?.to) {
+      return responseListData.responses;
+    }
+
+    return responseListData.responses.filter((response: SurveyResponse) => {
+      // Check if any answer in this response falls within the date range
+      const answersInRange = response.answers?.some((answer: ResponseAnswer) => {
+        const answerDate = new Date(answer.created_at);
+        
+        if (tabularCurrentFilters.dateRange?.from) {
+          const fromDate = new Date(tabularCurrentFilters.dateRange.from);
+          fromDate.setHours(0, 0, 0, 0);
+          if (answerDate < fromDate) return false;
+        }
+        
+        if (tabularCurrentFilters.dateRange?.to) {
+          const toDate = new Date(tabularCurrentFilters.dateRange.to);
+          toDate.setHours(23, 59, 59, 999);
+          if (answerDate > toDate) return false;
+        }
+        
+        return true;
+      });
+
+      return answersInRange;
+    });
+  }, [responseListData, tabularCurrentFilters.dateRange]);
+
   // Prepare pie chart data for response distribution across all questions
   const getResponseDistributionData = () => {
     console.log("🔍 Getting response distribution data for all questions");
     console.log("🔍 Survey details data:", surveyDetailsData);
     console.log("🔍 Survey data:", surveyData);
+
+    // Get filtered response data based on summary filters
+    const filteredResponses = getSummaryFilteredResponseData();
+    console.log("🔍 Filtered responses count:", filteredResponses.length);
 
     // Use the survey details data which has the most accurate and complete information
     if (surveyDetailsData?.survey_details?.surveys?.[0]?.questions) {
@@ -462,14 +539,27 @@ export const SurveyResponseDetailPage = () => {
 
       const responseDistribution = questions.map(
         (question: SurveyQuestion, index: number) => {
-          // Calculate total responses for this question
-          const totalResponses =
-            question.options && question.options.length > 0
+          // Calculate total responses for this question from filtered data
+          let totalResponses = 0;
+          
+          if (filteredResponses.length > 0 && (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to)) {
+            // Count responses from filtered data
+            filteredResponses.forEach((response: SurveyResponse) => {
+              response.answers?.forEach((answer: ResponseAnswer) => {
+                if (answer.question_id === question.question_id) {
+                  totalResponses += 1;
+                }
+              });
+            });
+          } else {
+            // Fallback to original data if no filters applied
+            totalResponses = question.options && question.options.length > 0
               ? question.options.reduce(
                   (sum, opt) => sum + (opt.response_count || 0),
                   0
                 )
               : 0;
+          }
 
           // Create a shorter, more readable question name
           let questionName = question.question;
@@ -480,13 +570,12 @@ export const SurveyResponseDetailPage = () => {
           console.log(
             `🔍 Question ${index + 1}: "${
               question.question
-            }" - ${totalResponses} total responses`
+            }" - ${totalResponses} total responses (filtered)`
           );
-          console.log(`🔍 Question ${index + 1} options:`, question.options);
 
           return {
             name: questionName,
-            value: totalResponses, // Use actual count, don't force minimum
+            value: totalResponses,
             color: [
               "#C72030",
               "#c6b692",
@@ -730,6 +819,10 @@ export const SurveyResponseDetailPage = () => {
     console.log("🔍 Survey details data:", surveyDetailsData);
     console.log("🔍 Survey data questions:", surveyData?.questions);
 
+    // Get filtered response data for summary
+    const filteredResponses = getSummaryFilteredResponseData();
+    console.log("🔍 Using filtered responses:", filteredResponses.length);
+
     // Check if this is a rating/emoji question to determine color scheme
     const isRatingQuestion = shouldUseBarChart(questionId);
 
@@ -755,6 +848,77 @@ export const SurveyResponseDetailPage = () => {
           ];
         }
 
+        // If we have filtered data, calculate response counts from filtered responses
+        if (filteredResponses.length > 0 && (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to)) {
+          const optionCounts = new Map<number, number>();
+          
+          // Initialize all options with 0 counts
+          question.options.forEach((option: SurveyOption) => {
+            optionCounts.set(option.option_id, 0);
+          });
+
+          // Count responses from filtered data
+          filteredResponses.forEach((response: SurveyResponse) => {
+            response.answers?.forEach((answer: ResponseAnswer) => {
+              if (answer.question_id === questionId && answer.option_id) {
+                const currentCount = optionCounts.get(answer.option_id) || 0;
+                optionCounts.set(answer.option_id, currentCount + 1);
+              }
+            });
+          });
+
+          // Create filtered options data
+          const filteredOptionsData = question.options.map((option: SurveyOption, index: number) => {
+            const responseCount = optionCounts.get(option.option_id) || 0;
+            
+            let color: string;
+            if (responseCount > 0) {
+              color = [
+                "#C72030",
+                "#c6b692",
+                "#d8dcdd",
+                "#8B5CF6",
+                "#10B981",
+                "#F59E0B",
+                "#EF4444",
+                "#3B82F6",
+              ][index % 8];
+            } else {
+              color = "#E5E5E5";
+            }
+
+            return {
+              name: option.option || `Option ${index + 1}`,
+              value: responseCount,
+              color: color,
+            };
+          });
+
+          // Determine question type and return standardized data if needed
+          const questionType = getQuestionType(question.options);
+
+          if (questionType === "rating") {
+            console.log(`🎯 Using standardized rating options for filtered question ${questionId}`);
+            return getStandardizedRatingOptions(filteredOptionsData.map(item => ({
+              option_id: 0,
+              option: item.name,
+              response_count: item.value,
+              type: 'rating'
+            })));
+          } else if (questionType === "emoji") {
+            console.log(`🎯 Using standardized emoji options for filtered question ${questionId}`);
+            return getStandardizedEmojiOptions(filteredOptionsData.map(item => ({
+              option_id: 0,
+              option: item.name,
+              response_count: item.value,
+              type: 'emoji'
+            })));
+          }
+
+          return filteredOptionsData;
+        }
+
+        // Use original data if no filters applied
         // Determine question type and return standardized data
         const questionType = getQuestionType(question.options);
 
@@ -1033,8 +1197,8 @@ export const SurveyResponseDetailPage = () => {
     }));
   };
 
-  // Transform response data for tabular EnhancedTable
-  const getTabularData = (): TabularResponseData[] => {
+  // Memoized data functions
+  const getTabularData = useCallback((): TabularResponseData[] => {
     if (!responseListData?.responses) {
       console.log("❌ No response data available");
       return [];
@@ -1157,10 +1321,10 @@ export const SurveyResponseDetailPage = () => {
 
     console.log("🎯 Final transformed data for table:", transformedData);
     return transformedData;
-  };
+  }, [responseListData]);
 
   // Transform ticket data for tickets EnhancedTable
-  const getTicketData = (): TicketData[] => {
+  const getTicketData = useCallback((): TicketData[] => {
     if (!responseListData?.responses) return [];
 
     const ticketData: TicketData[] = [];
@@ -1191,7 +1355,7 @@ export const SurveyResponseDetailPage = () => {
     });
 
     return ticketData;
-  };
+  }, [responseListData]);
 
   // Get dynamic columns for tabular data
   const getTabularColumns = () => {
@@ -1435,63 +1599,224 @@ export const SurveyResponseDetailPage = () => {
     });
   };
 
-  // Filter handlers
-  const handleFilterClick = () => {
+  // Local state for date inputs to prevent blinking
+  const [localFromDate, setLocalFromDate] = useState("");
+  const [localToDate, setLocalToDate] = useState("");
+
+  // Sync local date state with form filters when modal opens
+  useEffect(() => {
+    if (showFilterModal) {
+      const activeFormFilters = activeFilterTab === 'summary' ? summaryFormFilters : tabularFormFilters;
+      setLocalFromDate(activeFormFilters.dateRange?.from 
+        ? new Date(activeFormFilters.dateRange.from).toISOString().split("T")[0] 
+        : "");
+      setLocalToDate(activeFormFilters.dateRange?.to 
+        ? new Date(activeFormFilters.dateRange.to).toISOString().split("T")[0] 
+        : "");
+    }
+  }, [showFilterModal, summaryFormFilters.dateRange, tabularFormFilters.dateRange, activeFilterTab]);
+
+  // Optimized date handlers using useCallback to prevent unnecessary re-renders
+  // Use local state for immediate UI feedback and batch update to form state
+  const handleFromDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateValue = e.target.value;
+    setLocalFromDate(dateValue);
+    
+    const date = dateValue ? new Date(dateValue) : undefined;
+    
+    if (activeFilterTab === 'summary') {
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        dateRange: {
+          ...prev.dateRange,
+          from: date,
+        },
+      }));
+    } else {
+      setTabularFormFilters(prev => ({
+        ...prev,
+        dateRange: {
+          ...prev.dateRange,
+          from: date,
+        },
+      }));
+    }
+  }, [activeFilterTab]);
+
+  const handleToDateChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const dateValue = e.target.value;
+    setLocalToDate(dateValue);
+    
+    const date = dateValue ? new Date(dateValue) : undefined;
+    
+    if (activeFilterTab === 'summary') {
+      setSummaryFormFilters(prev => ({
+        ...prev,
+        dateRange: {
+          ...prev.dateRange,
+          to: date,
+        },
+      }));
+    } else {
+      setTabularFormFilters(prev => ({
+        ...prev,
+        dateRange: {
+          ...prev.dateRange,
+          to: date,
+        },
+      }));
+    }
+  }, [activeFilterTab]);
+
+  // Filter handlers - now specific to tabular tab
+  const handleFilterClick = useCallback(() => {
+    setActiveFilterTab('tabular');
+    setTabularFormFilters(tabularCurrentFilters); // Initialize form with current applied filters
     setShowFilterModal(true);
-  };
+  }, [tabularCurrentFilters]);
 
-  const getActiveFiltersCount = () => {
+  const handleApplyFilters = useCallback(() => {
+    if (activeFilterTab === 'summary') {
+      setSummaryCurrentFilters(summaryFormFilters);
+    } else {
+      setTabularCurrentFilters(tabularFormFilters);
+
+      // Apply filters to both datasets for tabular tab
+      const baseTabularData = getTabularData();
+      const baseTicketData = getTicketData();
+
+      setFilteredTabularData(applyFiltersToTabularData(baseTabularData, tabularFormFilters));
+      setFilteredTicketData(applyFiltersToTicketData(baseTicketData, tabularFormFilters));
+    }
+
+    setShowFilterModal(false);
+  }, [activeFilterTab, summaryFormFilters, tabularFormFilters, getTabularData, getTicketData]);
+
+  const handleClearFilters = useCallback(() => {
+    if (activeFilterTab === 'summary') {
+      setSummaryCurrentFilters({});
+      setSummaryFormFilters({});
+    } else {
+      setTabularCurrentFilters({});
+      setTabularFormFilters({});
+      setFilteredTabularData([]);
+      setFilteredTicketData([]);
+    }
+    setShowFilterModal(false);
+  }, [activeFilterTab]);
+
+  const getActiveFiltersCount = useCallback(() => {
+    const filters = activeFilterTab === 'summary' ? summaryCurrentFilters : tabularCurrentFilters;
     let count = 0;
-    if (currentFilters.dateRange?.from || currentFilters.dateRange?.to) count++;
-    if (currentFilters.building) count++;
-    if (currentFilters.wing) count++;
-    if (currentFilters.area) count++;
-    if (currentFilters.floor) count++;
-    if (currentFilters.room) count++;
-    if (currentFilters.iconCategory) count++;
-    if (currentFilters.rating) count++;
-    if (currentFilters.category) count++;
-    if (currentFilters.assignee) count++;
-    if (currentFilters.hasTickets) count++;
+    if (filters.dateRange?.from || filters.dateRange?.to) count++;
+    if (filters.building) count++;
+    if (filters.wing) count++;
+    if (filters.area) count++;
+    if (filters.floor) count++;
+    if (filters.room) count++;
+    if (filters.iconCategory) count++;
+    if (filters.rating) count++;
+    if (filters.category) count++;
+    if (filters.assignee) count++;
+    if (filters.hasTickets) count++;
     return count;
-  };
+  }, [activeFilterTab, summaryCurrentFilters, tabularCurrentFilters]);
 
-  const hasActiveFilters = () => getActiveFiltersCount() > 0;
+  const hasActiveFilters = useCallback(() => getActiveFiltersCount() > 0, [getActiveFiltersCount]);
 
-  const handleApplyFilters = (filters: SurveyResponseFilters) => {
-    setCurrentFilters(filters);
+  // Memoized date values to prevent unnecessary re-computation
+  const minDateValue = useMemo(() => {
+    return localFromDate || undefined;
+  }, [localFromDate]);
 
-    // Apply filters to both datasets
-    const baseTabularData = getTabularData();
-    const baseTicketData = getTicketData();
-
-    setFilteredTabularData(applyFiltersToTabularData(baseTabularData, filters));
-    setFilteredTicketData(applyFiltersToTicketData(baseTicketData, filters));
-
-    setShowFilterModal(false);
-  };
-
-  const handleClearFilters = () => {
-    setCurrentFilters({});
-    setFilteredTabularData([]);
-    setFilteredTicketData([]);
-    setShowFilterModal(false);
-  };
-
-  // Get data to display (filtered or original)
-  const getDisplayTabularData = () => {
-    if (Object.keys(currentFilters).length > 0) {
+  // Get data to display (filtered or original) - for tabular tab
+  const getDisplayTabularData = useCallback(() => {
+    if (Object.keys(tabularCurrentFilters).length > 0) {
       return filteredTabularData;
     }
     return getTabularData();
-  };
+  }, [tabularCurrentFilters, filteredTabularData, getTabularData]);
 
-  const getDisplayTicketData = () => {
-    if (Object.keys(currentFilters).length > 0) {
+  const getDisplayTicketData = useCallback(() => {
+    if (Object.keys(tabularCurrentFilters).length > 0) {
       return filteredTicketData;
     }
     return getTicketData();
-  };
+  }, [tabularCurrentFilters, filteredTicketData, getTicketData]);
+
+  // Filter Modal Component - Memoized to prevent unnecessary re-renders
+  const FilterModal = useMemo(() => (
+    <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
+      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              Filter Survey Responses
+              {hasActiveFilters() && (
+                <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
+                  {getActiveFiltersCount()}
+                </span>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFilterModal(false)}
+              className="h-6 w-6 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-6 py-4">
+          {/* Date Range Filter */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">From Date</Label>
+                <Input
+                  type="date"
+                  value={localFromDate}
+                  onChange={handleFromDateChange}
+                  className="w-full"
+                  placeholder="Select start date"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-500">To Date</Label>
+                <Input
+                  type="date"
+                  value={localToDate}
+                  min={minDateValue}
+                  onChange={handleToDateChange}
+                  className="w-full"
+                  placeholder="Select end date"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            className="px-6"
+          >
+            Clear All
+          </Button>
+          <Button
+            onClick={handleApplyFilters}
+            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
+          >
+            Apply Filters
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  ), [showFilterModal, hasActiveFilters, getActiveFiltersCount, minDateValue, handleFromDateChange, handleToDateChange, handleClearFilters, handleApplyFilters, localFromDate, localToDate]);
 
   if (isLoading) {
     return (
@@ -1544,139 +1869,6 @@ export const SurveyResponseDetailPage = () => {
     );
   }
 
-  // Filter Modal Component
-  const FilterModal = () => (
-    <Dialog open={showFilterModal} onOpenChange={setShowFilterModal}>
-      <DialogContent className="max-w-2xl bg-white max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-lg font-semibold text-gray-800 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              Filter Survey Responses
-              {hasActiveFilters() && (
-                <span className="bg-[#C72030] text-white text-xs px-2 py-1 rounded-full">
-                  {getActiveFiltersCount()}
-                </span>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilterModal(false)}
-              className="h-6 w-6 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Date Range Filter */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-             
-              {(currentFilters.dateRange?.from ||
-                currentFilters.dateRange?.to) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setCurrentFilters((prev) => ({
-                      ...prev,
-                      dateRange: undefined,
-                    }))
-                  }
-                  className="text-xs text-gray-500 hover:text-red-600"
-                >
-                  Clear dates
-                </Button>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-500">From Date</Label>
-                <Input
-                  type="date"
-                  value={
-                    currentFilters.dateRange?.from
-                      ? new Date(currentFilters.dateRange.from)
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) => {
-                    const date = e.target.value
-                      ? new Date(e.target.value)
-                      : undefined;
-                    setCurrentFilters((prev) => ({
-                      ...prev,
-                      dateRange: {
-                        ...prev.dateRange,
-                        from: date,
-                      },
-                    }));
-                  }}
-                  className="w-full"
-                  placeholder="Select start date"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs text-gray-500">To Date</Label>
-                <Input
-                  type="date"
-                  value={
-                    currentFilters.dateRange?.to
-                      ? new Date(currentFilters.dateRange.to)
-                          .toISOString()
-                          .split("T")[0]
-                      : ""
-                  }
-                  min={
-                    currentFilters.dateRange?.from
-                      ? new Date(currentFilters.dateRange.from)
-                          .toISOString()
-                          .split("T")[0]
-                      : undefined
-                  }
-                  onChange={(e) => {
-                    const date = e.target.value
-                      ? new Date(e.target.value)
-                      : undefined;
-                    setCurrentFilters((prev) => ({
-                      ...prev,
-                      dateRange: {
-                        ...prev.dateRange,
-                        to: date,
-                      },
-                    }));
-                  }}
-                  className="w-full"
-                  placeholder="Select end date"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClearFilters}
-            className="px-6"
-          >
-            Clear All
-          </Button>
-          <Button
-            onClick={() => handleApplyFilters(currentFilters)}
-            className="px-6 bg-[#C72030] hover:bg-[#C72030]/90 text-white"
-          >
-            Apply Filters
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-
   return (
     <div className="p-6">
       {/* Header */}
@@ -1727,6 +1919,48 @@ export const SurveyResponseDetailPage = () => {
             ))}
           </TabsList>
           <TabsContent value="summary" className="p-3 sm:p-6">
+            {/* Summary Tab Header with Filter */}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-semibold text-gray-800">Survey Analytics Summary</h2>
+              <div className="flex items-center gap-3">
+                {Object.keys(summaryCurrentFilters).length > 0 && (
+                  <span className="text-sm text-gray-600">
+                    {(() => {
+                      let count = 0;
+                      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
+                      return count;
+                    })()} filter{(() => {
+                      let count = 0;
+                      if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
+                      return count !== 1 ? 's' : '';
+                    })()} active
+                  </span>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setActiveFilterTab('summary');
+                    setSummaryFormFilters(summaryCurrentFilters);
+                    setShowFilterModal(true);
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <Filter className="w-4 h-4" />
+                  Filter
+                  {Object.keys(summaryCurrentFilters).length > 0 && (
+                    <span className="ml-1 px-1.5 py-0.5 text-xs bg-[#C72030] text-white rounded-full">
+                      {(() => {
+                        let count = 0;
+                        if (summaryCurrentFilters.dateRange?.from || summaryCurrentFilters.dateRange?.to) count++;
+                        return count;
+                      })()}
+                    </span>
+                  )}
+                </Button>
+              </div>
+            </div>
+
             {/* Summary Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <Card>
@@ -1740,6 +1974,9 @@ export const SurveyResponseDetailPage = () => {
                       <p className="text-xl font-semibold">
                         {surveyData.questions?.length || 0}
                       </p>
+                      {Object.keys(summaryCurrentFilters).length > 0 && (
+                        <p className="text-xs text-gray-500">All questions shown</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1752,15 +1989,30 @@ export const SurveyResponseDetailPage = () => {
                       <BarChart3 className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Total Responses</p>
-                      <p className="text-xl font-semibold">
-                        {surveyData.questions?.reduce((sum, q) => {
-                          if (q.options && q.options.length > 0) {
-                            return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
-                          }
-                          return sum;
-                        }, 0) || 0}
+                      <p className="text-sm text-gray-600">
+                        {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Total Responses"}
                       </p>
+                      <p className="text-xl font-semibold">
+                        {(() => {
+                          const filteredResponses = getSummaryFilteredResponseData();
+                          if (Object.keys(summaryCurrentFilters).length > 0 && filteredResponses.length > 0) {
+                            // Count total answers from filtered responses
+                            return filteredResponses.reduce((total, response) => {
+                              return total + (response.answers?.length || 0);
+                            }, 0);
+                          }
+                          // Original count
+                          return surveyData.questions?.reduce((sum, q) => {
+                            if (q.options && q.options.length > 0) {
+                              return sum + (q.options.reduce((optSum, opt) => optSum + opt.response_count, 0) || 0);
+                            }
+                            return sum;
+                          }, 0) || 0;
+                        })()}
+                      </p>
+                      {Object.keys(summaryCurrentFilters).length > 0 && (
+                        <p className="text-xs text-gray-500">Based on date filter</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -1773,10 +2025,15 @@ export const SurveyResponseDetailPage = () => {
                       <Activity className="w-4 h-4" />
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600">Survey Status</p>
-                      <p className="text-xl font-semibold text-green-600">
-                        Active
+                      <p className="text-sm text-gray-600">
+                        {Object.keys(summaryCurrentFilters).length > 0 ? "Filtered Responses" : "Survey Status"}
                       </p>
+                      <p className="text-xl font-semibold text-green-600">
+                        {Object.keys(summaryCurrentFilters).length > 0 ? `${getSummaryFilteredResponseData().length} Records` : "Active"}
+                      </p>
+                      {Object.keys(summaryCurrentFilters).length > 0 && (
+                        <p className="text-xs text-gray-500">Matching criteria</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -2020,7 +2277,7 @@ export const SurveyResponseDetailPage = () => {
       </div>
 
       {/* Filter Modal */}
-      <FilterModal />
+      {FilterModal}
     </div>
   );
 };

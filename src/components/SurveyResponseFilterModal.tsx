@@ -67,20 +67,11 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
   // Common field styling for consistent height across desktop and mobile
   const fieldSx = {
     '& .MuiOutlinedInput-root': {
-      height: {
-        xs: '36px',
-        sm: '45px'
-      },
+      height: '45px',
       borderRadius: '6px',
       '& input': {
-        height: {
-          xs: '36px',
-          sm: '45px'
-        },
-        padding: {
-          xs: '8px 14px',
-          sm: '10px 14px'
-        },
+        height: '45px',
+        padding: '10px 14px',
         boxSizing: 'border-box'
       },
       '&:hover fieldset': {
@@ -96,18 +87,15 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
       }
     },
     '& .MuiInputLabel-shrink': {
-      transform: {
-        xs: 'translate(14px, -9px) scale(0.75)',
-        sm: 'translate(14px, -9px) scale(0.75)'
-      }
+      transform: 'translate(14px, -9px) scale(0.75)'
     }
   };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader className="relative">
+        <DialogContent className="max-w-lg">
+          <DialogHeader className="relative pb-4">
             <DialogTitle className="text-xl text-slate-950 font-normal">FILTER BY</DialogTitle>
             <button
               onClick={onClose}
@@ -117,11 +105,11 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
             </button>
           </DialogHeader>
           
-          <div className="py-4">
+          <div className="space-y-6">
             {/* Survey Details Section */}
-            <div className="mb-6">
+            <div>
               <h3 className="text-lg font-semibold text-[#C72030] mb-4">Survey Details</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-4">
                 {/* Survey Title Filter */}
                 <Box>
                   <TextField 
@@ -135,64 +123,11 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
                     InputLabelProps={{ shrink: true }}
                   />
                 </Box>
-
-                {/* Survey Type Filter */}
-                {/* <Box>
-                  <FormControl fullWidth variant="outlined" sx={fieldSx}>
-                    <InputLabel shrink>Survey Type</InputLabel>
-                    <Select 
-                      value={filters.surveyType} 
-                      onChange={e => handleInputChange('surveyType', e.target.value)} 
-                      label="Survey Type"
-                      displayEmpty
-                    >
-                      <MenuItem value="">All Types</MenuItem>
-                      <MenuItem value="feedback">Feedback</MenuItem>
-                      <MenuItem value="evaluation">Evaluation</MenuItem>
-                      <MenuItem value="satisfaction">Satisfaction</MenuItem>
-                      <MenuItem value="research">Research</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box> */}
               </div>
             </div>
-
-            {/* Date Range Section */}
-            {/* <div className="mb-6">
-              <h3 className="text-lg font-semibold text-[#C72030] mb-4">Date Range</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               
-                <Box>
-                  <DateField 
-                    label="From Date" 
-                    value={filters.startDate} 
-                    onChange={date => handleInputChange('startDate', date)} 
-                    format="dd/MM/yyyy" 
-                    variant="outlined" 
-                    fullWidth 
-                    sx={fieldSx}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Box>
-
-               
-                <Box>
-                  <DateField 
-                    label="To Date" 
-                    value={filters.endDate} 
-                    onChange={date => handleInputChange('endDate', date)} 
-                    format="dd/MM/yyyy" 
-                    variant="outlined" 
-                    fullWidth 
-                    sx={fieldSx}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Box>
-              </div>
-            </div> */}
           </div>
 
-          <DialogFooter className="flex justify-end gap-3">
+          <DialogFooter className="flex justify-center items-center gap-3 pt-4 w-full">
             <Button 
               onClick={handleReset} 
               variant="outline" 
