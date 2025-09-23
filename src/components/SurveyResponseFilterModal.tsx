@@ -49,11 +49,13 @@ export const SurveyResponseFilterModal: React.FC<FilterModalProps> = ({
     if (onResetFilters) {
       onResetFilters();
     }
-    onClose();
+    toast.success('Filters reset successfully');
+    // Keep modal open, don't call onClose()
   };
 
   const handleApply = () => {
     onApplyFilters(filters);
+    toast.success('Filters applied successfully');
     onClose();
   };
 
