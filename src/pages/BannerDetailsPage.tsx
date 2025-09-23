@@ -1,9 +1,10 @@
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppDispatch } from '@/store/hooks';
 import { fetchBannersById } from '@/store/slices/bannerSlice';
-import { ArrowLeft } from 'lucide-react';
-import React, { useEffect, useState } from 'react'
+import { ArrowLeft, Eye } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
 const BannerDetailsPage = () => {
     const { id } = useParams();
@@ -12,6 +13,8 @@ const BannerDetailsPage = () => {
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedDoc, setSelectedDoc] = useState(null);
     const [banner, setBanner] = useState({
         active: '',
         geo_link: '',
@@ -87,14 +90,41 @@ const BannerDetailsPage = () => {
                                 </div>
                                 <div className="flex">
                                     <span className="text-[#1A1A1A80] w-40 text-14">Banner</span>
-                                    <span className="font-medium text-16">
-                                        <img src={banner.url} alt="" className='w-20 h-20' />
-                                    </span>
+                                    <div
+                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                    >
+                                        <button
+                                            className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                            title="View"
+                                            type="button"
+                                            onClick={() => {
+                                                setSelectedDoc({
+                                                    url: banner.url,
+                                                    document: "Banner Image"
+                                                });
+                                                setIsModalOpen(true);
+                                            }}
+                                        >
+                                            <Eye className="w-4 h-4" />
+                                        </button>
+                                        <img
+                                            src={banner.url}
+                                            alt={"Banner Image"}
+                                            className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </CardContent>
                 </Card>
+
+                <AttachmentPreviewModal
+                    isModalOpen={isModalOpen}
+                    setIsModalOpen={setIsModalOpen}
+                    selectedDoc={selectedDoc}
+                    setSelectedDoc={setSelectedDoc}
+                />
             </>
         </div>
     )

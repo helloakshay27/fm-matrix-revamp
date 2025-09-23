@@ -52,7 +52,7 @@ const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data }) =
           <ResponsiveContainer>
             <BarChart
               data={rows}
-              margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
+              margin={{ top: 24, right: 24, left: 84, bottom: 84 }}
               barCategoryGap={20}
             >
               <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
@@ -64,9 +64,14 @@ const ConsumableInventoryQuarterlyComparisonCard: React.FC<Props> = ({ data }) =
                 height={100}
                 tick={{ fontSize: 12 }}
               />
-              <YAxis domain={[0, consumableMaxRaw || 0]} ticks={consumableTicks} tickFormatter={(v) => formatToK(v)}>
-                <Label angle={-90} position="insideLeft" className="text-sm" />
-              </YAxis>
+              <YAxis
+                domain={[0, consumableMaxRaw || 0]}
+                ticks={consumableTicks}
+                tickFormatter={(v) => formatToK(v)}
+                width={84}
+                tickMargin={8}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip formatter={(val: any) => formatToK(val)} cursor={{ fill: 'rgba(0, 0, 0, 0.05)' }} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} verticalAlign="top" align="right" />
               <Bar
