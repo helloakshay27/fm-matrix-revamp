@@ -378,8 +378,20 @@ export const FMUserMasterDashboard = () => {
 
   const handleExportUser = async () => {
     try {
+      const [firstName, lastName = ""] = filters.name?.trim().split(" ") || ["", ""];
+      const queryParams = new URLSearchParams({
+        ...(firstName && { "q[firstname_cont]": firstName }),
+        ...(lastName && { "q[lastname_cont]": lastName }),
+        ...(filters.email && { "q[email_cont]": filters.email }),
+        ...(filters.status && { "q[lock_user_permission_status_eq]": filters.status }),
+        ...(filters.downloaded !== undefined && { "q[app_downloaded_eq]": filters.downloaded.toString() }),
+        ...(searchTerm && { "q[search_all_fields_cont]": searchTerm }),
+      }).toString();
+
+      console.log("Query Params:", queryParams)
+
       const response = await axios.get(
-        `https://${baseUrl}/pms/account_setups/export_users.xlsx`,
+        `https://${baseUrl}/pms/account_setups/export_users.xlsx${queryParams ? `?${queryParams}` : ''}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

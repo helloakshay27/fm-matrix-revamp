@@ -1412,7 +1412,7 @@ export const EditWODashboard: React.FC = () => {
                     </Button>
                 </div>
 
-                <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-sm">
+                <div className="my-8 bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-4 border-b border-gray-200">
                         <div className="flex items-center gap-2">
                             <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
@@ -1508,6 +1508,18 @@ export const EditWODashboard: React.FC = () => {
                                         "& .MuiOutlinedInput-root": {
                                             height: "auto !important",
                                             padding: "2px !important",
+                                            display: "flex",
+                                        },
+                                        "& .MuiInputBase-input[aria-hidden='true']": {
+                                            flex: 0,
+                                            width: 0,
+                                            height: 0,
+                                            padding: "0 !important",
+                                            margin: 0,
+                                            display: "none",
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            resize: "none !important",
                                         },
                                     }}
                                 />
@@ -1533,6 +1545,18 @@ export const EditWODashboard: React.FC = () => {
                                         "& .MuiOutlinedInput-root": {
                                             height: "auto !important",
                                             padding: "2px !important",
+                                            display: "flex",
+                                        },
+                                        "& .MuiInputBase-input[aria-hidden='true']": {
+                                            flex: 0,
+                                            width: 0,
+                                            height: 0,
+                                            padding: "0 !important",
+                                            margin: 0,
+                                            display: "none",
+                                        },
+                                        "& .MuiInputBase-input": {
+                                            resize: "none !important",
                                         },
                                     }}
                                 />

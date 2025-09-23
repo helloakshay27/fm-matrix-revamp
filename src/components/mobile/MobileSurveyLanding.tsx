@@ -52,6 +52,7 @@ interface SurveyMapping {
     id: number;
     name: string;
     questions_count: number;
+    checklist_image_url?: string;
     snag_questions: SurveyQuestion[];
   };
 }
@@ -178,6 +179,10 @@ export const MobileSurveyLanding: React.FC = () => {
   const getProgressPercentage = (): number => {
     if (!surveyData) return 0;
     const totalQuestions = surveyData.snag_checklist.questions_count;
+    // For the final "Any additional comments?" page, show 100%
+    if (currentQuestionIndex >= totalQuestions) {
+      return 100;
+    }
     return Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
   };
 
@@ -215,76 +220,97 @@ export const MobileSurveyLanding: React.FC = () => {
   };
 
   // Handle option selection for multiple choice
-  // Make multiple choice single-selectable (radio behavior)
+  // Auto-progress based on selection (positive/negative)
   const handleOptionSelect = (option: SurveyOption) => {
     setSelectedOptions([option]);
-  };
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
 
-  // Handle next for multiple choice (with negative flow)
-  const handleMultipleNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    // Check for negative option (option_type === 'n')
-    const hasNegative = selectedOptions.some((opt) => opt.option_type === "n");
-    if (
-      hasNegative &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("multiple");
-      setPendingNegativeAnswer(selectedOptions);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
+      // Check for negative option (option_type === 'n')
+      const hasNegative = option.option_type === "n";
+      if (
+        hasNegative &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("multiple");
+        setPendingNegativeAnswer([option]);
+        setShowGenericTags(true);
       } else {
-        // For multi-question surveys, proceed to next question
-        // Data is already saved above, just move to next question
-        moveToNextQuestion();
+        // Positive response - auto-progress
+        // Save with the selected option data - pass option directly to ensure it's included
+        const tempAnswerData = {
+          qtype: currentQuestion.qtype,
+          value: option.qname,
+          selectedOptions: [option],
+          comments: ""
+        };
+        
+        // Update answers object
+        setAnswers(prev => ({
+          ...prev,
+          [currentQuestion.id]: tempAnswerData
+        }));
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(tempAnswerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
       }
-    }
+    }, 300); // Small delay for visual feedback
   };
+
+
 
   // Handle rating selection
   const handleRatingSelect = (rating: number) => {
     setSelectedRating(rating);
+    
+    // Auto-progress after selection
+    setTimeout(() => {
+      const currentQuestion = getCurrentQuestion();
+      if (!currentQuestion) return;
+
+      const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
+
+      if (
+        rating <= 3 &&
+        currentQuestion.generic_tags &&
+        currentQuestion.generic_tags.length > 0
+      ) {
+        // Negative response - go to generic tags page
+        setPendingNegativeType("rating");
+        setPendingNegativeAnswer(rating);
+        setShowGenericTags(true);
+      } else {
+        // Positive response - auto-progress
+        // Save with the rating data
+        const answerData = saveCurrentAnswer(rating);
+
+        if (isSingleQuestion) {
+          // For single question surveys, submit immediately with answer data
+          handleSingleQuestionSubmit(answerData);
+        } else {
+          // For multi-question surveys, proceed to next question
+          // Data is already saved above, just move to next question
+          moveToNextQuestion();
+        }
+      }
+    }, 300); // Small delay for visual feedback
   };
 
   // Handle next for rating (with negative flow)
-  const handleRatingNext = () => {
-    const currentQuestion = getCurrentQuestion();
-    if (!currentQuestion) return;
 
-    const isSingleQuestion = surveyData!.snag_checklist.questions_count === 1;
-
-    if (
-      selectedRating !== null &&
-      selectedRating <= 3 &&
-      currentQuestion.generic_tags &&
-      currentQuestion.generic_tags.length > 0
-    ) {
-      setPendingNegativeType("rating");
-      setPendingNegativeAnswer(selectedRating);
-      setShowGenericTags(true);
-    } else {
-      const answerData = saveCurrentAnswer();
-
-      if (isSingleQuestion) {
-        // For single question surveys, submit immediately with answer data
-        handleSingleQuestionSubmit(answerData);
-      } else {
-        // For multi-question surveys, proceed to next question
-        // Data is already saved above, just move to next question
-        moveToNextQuestion();
-      }
-    }
-  };
 
   // Handle emoji/smiley selection
   const handleEmojiSelect = (rating: number, emoji: string, label: string) => {
@@ -523,6 +549,23 @@ export const MobileSurveyLanding: React.FC = () => {
           surveyResponseItem.ans_descr = `${currentAnswer.rating} star${
             currentAnswer.rating > 1 ? "s" : ""
           }`;
+          
+          // Add option_id mapping for rating questions (similar to emoji)
+          if (currentAnswer.rating !== undefined) {
+            const ratingOptionMapping = [
+              { rating: 1, option_id: 1 }, // 1 star
+              { rating: 2, option_id: 2 }, // 2 stars  
+              { rating: 3, option_id: 3 }, // 3 stars
+              { rating: 4, option_id: 4 }, // 4 stars
+              { rating: 5, option_id: 5 }, // 5 stars
+            ];
+            const ratingOption = ratingOptionMapping.find(
+              (opt) => opt.rating === currentAnswer.rating
+            );
+            if (ratingOption) {
+              surveyResponseItem.option_id = ratingOption.option_id;
+            }
+          }
           break;
 
         case "input":
@@ -544,7 +587,10 @@ export const MobileSurveyLanding: React.FC = () => {
       console.log("Current answer comments:", currentAnswer.comments);
       if (currentAnswer.comments && currentAnswer.comments.trim()) {
         surveyResponseItem.comments = currentAnswer.comments.trim();
-        console.log("Setting comments in payload:", currentAnswer.comments.trim());
+        console.log(
+          "Setting comments in payload:",
+          currentAnswer.comments.trim()
+        );
       } else {
         surveyResponseItem.comments = ""; // Ensure comments field is always present
         console.log("No comments found, setting empty string");
@@ -811,6 +857,21 @@ export const MobileSurveyLanding: React.FC = () => {
     }
   };
 
+  // Move to previous question
+  const moveToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      // Reset current question states
+      setCurrentQuestionValue("");
+      setSelectedOptions([]);
+      setSelectedRating(null);
+      setSelectedTags([]);
+      setShowGenericTags(false);
+
+      // Move to previous question
+      setCurrentQuestionIndex((prev) => prev - 1);
+    }
+  };
+
   // Handle survey submission - ARRAY FORMAT FOR ALL QUESTIONS
   const handleSubmitSurvey = async () => {
     if (!surveyData) return;
@@ -819,7 +880,7 @@ export const MobileSurveyLanding: React.FC = () => {
     try {
       console.log("=== MULTI-QUESTION SURVEY SUBMISSION ===");
       console.log("All answers in state:", answers);
-      
+
       // For multi-question surveys, we need to create answers array for each question
       const allAnswers = Object.values(answers);
       console.log("All answers values:", allAnswers);
@@ -839,12 +900,14 @@ export const MobileSurveyLanding: React.FC = () => {
         const question = surveyData.snag_checklist.snag_questions.find(
           (q) => q.id === parseInt(questionId)
         );
-        
+
         console.log(`Found question:`, question);
         console.log(`Answer for question ${questionId}:`, answer);
 
         if (!question || !answer) {
-          console.log(`Skipping question ${questionId} - missing question or answer`);
+          console.log(
+            `Skipping question ${questionId} - missing question or answer`
+          );
           continue;
         }
 
@@ -934,6 +997,28 @@ export const MobileSurveyLanding: React.FC = () => {
             surveyResponseItem.ans_descr = `${answer.rating} star${
               answer.rating > 1 ? "s" : ""
             }`;
+            
+            // Add option_id mapping for rating questions (similar to emoji)
+            if (answer.rating !== undefined) {
+              const ratingOptionMapping = [
+                { rating: 1, option_id: 1 }, // 1 star
+                { rating: 2, option_id: 2 }, // 2 stars  
+                { rating: 3, option_id: 3 }, // 3 stars
+                { rating: 4, option_id: 4 }, // 4 stars
+                { rating: 5, option_id: 5 }, // 5 stars
+              ];
+              const ratingOption = ratingOptionMapping.find(
+                (opt) => opt.rating === answer.rating
+              );
+              if (ratingOption) {
+                surveyResponseItem.option_id = ratingOption.option_id;
+              } else {
+                console.warn(
+                  `[Multi-Submit ${question.qtype}] No option_id found for rating:`,
+                  answer.rating
+                );
+              }
+            }
             break;
 
           case "input":
@@ -950,13 +1035,21 @@ export const MobileSurveyLanding: React.FC = () => {
 
         // Add individual question comment if available
         console.log(`[Multi-Submit] Question ${question.id} answer:`, answer);
-        console.log(`[Multi-Submit] Question ${question.id} comments:`, answer.comments);
+        console.log(
+          `[Multi-Submit] Question ${question.id} comments:`,
+          answer.comments
+        );
         if (answer.comments && answer.comments.trim()) {
           surveyResponseItem.comments = answer.comments.trim();
-          console.log(`[Multi-Submit] Setting comments for question ${question.id}:`, answer.comments.trim());
+          console.log(
+            `[Multi-Submit] Setting comments for question ${question.id}:`,
+            answer.comments.trim()
+          );
         } else {
           surveyResponseItem.comments = ""; // Ensure comments field is always present
-          console.log(`[Multi-Submit] No comments for question ${question.id}, setting empty string`);
+          console.log(
+            `[Multi-Submit] No comments for question ${question.id}, setting empty string`
+          );
         }
 
         surveyResponseArray.push(surveyResponseItem);
@@ -1031,14 +1124,28 @@ export const MobileSurveyLanding: React.FC = () => {
       <div className="bg-gray-50 py-4 px-4 text-center">
         <div className="flex justify-center items-center">
           <div className="w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
-            <img
-              src="/Without bkg.svg"
-              alt="OIG Logo"
-              className="w-full h-full object-contain"
-            />
+            {window.location.origin === "https://oig.gophygital.work" ? (
+              <img
+                src="/Without bkg.svg"
+                alt="OIG Logo"
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              <img
+                src="/gophygital-logo-min.jpg"
+                alt="Gophygital Logo"
+                className="bg-white rounded"
+                style={{ 
+                  backgroundColor: "#fff",
+                  maxWidth: "200%",
+                  height: "auto"
+                }}
+              />
+            )}
           </div>
         </div>
       </div>
+  
 
       {/* Progress Bar for Multi-Question Surveys */}
       {isMultiQuestion && (
@@ -1068,6 +1175,35 @@ export const MobileSurveyLanding: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col px-4 py-4 sm:px-6 sm:py-6 overflow-y-auto">
         <div className="flex flex-col items-center justify-center max-w-md mx-auto w-full min-h-full">
+          {/* Back button - positioned above survey title */}
+          {((currentQuestion &&
+            !isLastStep &&
+            currentQuestionIndex > 0 &&
+            !showGenericTags) ||
+            (isLastStep && isMultiQuestion)) && (
+            <div className="w-full flex justify-start mb-4">
+              <button
+                onClick={moveToPreviousQuestion}
+                className="flex items-center text-gray-600 hover:text-gray-800 text-sm font-medium transition-colors"
+              >
+                <svg
+                  className="w-4 h-4 mr-1"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+                Back
+              </button>
+            </div>
+          )}
+
           <h1 className="text-lg sm:text-xl md:text-2xl font-medium text-black mb-4 text-center leading-tight">
             {surveyData.survey_title}
           </h1>
@@ -1076,7 +1212,7 @@ export const MobileSurveyLanding: React.FC = () => {
           {!showGenericTags && (
             <div className="text-center mb-6">
               <img
-                src="/9019830 1.png"
+                src={surveyData?.snag_checklist?.checklist_image_url || "/9019830 1.png"}
                 alt="Survey Illustration"
                 className="w-60 h-60 sm:w-48 sm:h-48 md:w-56 md:h-56 object-contain mx-auto"
               />
@@ -1125,66 +1261,53 @@ export const MobileSurveyLanding: React.FC = () => {
           {/* Show Current Question */}
           {currentQuestion && !isLastStep && (
             <div className="w-full space-y-4">
-              <div className="text-center">
-                <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
-                  {currentQuestion.descr}
-                </h3>
-              </div>
+              {!showGenericTags && (
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-black mb-2 leading-tight">
+                    {currentQuestion.descr}
+                  </h3>
+                </div>
+              )}
 
               <div className="space-y-4">
                 {/* Multiple Choice Question */}
                 {currentQuestion.qtype === "multiple" && !showGenericTags && (
-                  <>
-                    <div className="space-y-3 mt-10">
-                      {currentQuestion.snag_quest_options.map((option) => (
-                        <button
-                          key={option.id}
-                          onClick={() => handleOptionSelect(option)}
-                          className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
-                            selectedOptions.some((opt) => opt.id === option.id)
-                              ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-200 bg-white hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm sm:text-base">
-                              {option.qname}
-                            </span>
-                            {selectedOptions.some(
-                              (opt) => opt.id === option.id
-                            ) && (
-                              <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
-                                <svg
-                                  className="w-3 h-3 text-white"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-
-                    <button
-                      onClick={handleMultipleNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
-                  </>
+                  <div className="space-y-3 mt-10">
+                    {currentQuestion.snag_quest_options.map((option) => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleOptionSelect(option)}
+                        className={`w-full p-3 sm:p-4 rounded-lg border-2 text-left transition-all ${
+                          selectedOptions.some((opt) => opt.id === option.id)
+                            ? "border-blue-500 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm sm:text-base">
+                            {option.qname}
+                          </span>
+                          {selectedOptions.some(
+                            (opt) => opt.id === option.id
+                          ) && (
+                            <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-3 h-3 text-white"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
 
                 {/* Input Question */}
@@ -1222,9 +1345,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1264,9 +1384,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1306,9 +1423,6 @@ export const MobileSurveyLanding: React.FC = () => {
                     >
                       {surveyData!.snag_checklist.questions_count === 1
                         ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
                         : "Continue"}
                     </button>
                   </>
@@ -1346,19 +1460,6 @@ export const MobileSurveyLanding: React.FC = () => {
                         </span>
                       </div>
                     )}
-
-                    <button
-                      onClick={handleRatingNext}
-                      disabled={!isCurrentAnswerValid()}
-                      className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                    >
-                      {surveyData!.snag_checklist.questions_count === 1
-                        ? "Submit Survey"
-                        : currentQuestionIndex <
-                          surveyData.snag_checklist.questions_count - 1
-                        ? "Next Question"
-                        : "Continue"}
-                    </button>
                   </>
                 )}
 
@@ -1452,7 +1553,9 @@ export const MobileSurveyLanding: React.FC = () => {
                       </label>
                       <textarea
                         value={getCurrentNegativeComments()}
-                        onChange={(e) => setCurrentNegativeComments(e.target.value)}
+                        onChange={(e) =>
+                          setCurrentNegativeComments(e.target.value)
+                        }
                         placeholder="Please describe any specific issues or suggestions..."
                         className="w-full h-20 sm:h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                         disabled={isSubmitting}
@@ -1467,7 +1570,7 @@ export const MobileSurveyLanding: React.FC = () => {
                         // Save answer with tags and description, then proceed
                         let answerData;
                         const currentComments = getCurrentNegativeComments();
-                        
+
                         if (
                           (pendingNegativeType === "emoji" ||
                             pendingNegativeType === "smiley") &&
@@ -1522,7 +1625,8 @@ export const MobileSurveyLanding: React.FC = () => {
                         }
                       }}
                       disabled={
-                        selectedTags.length === 0 && !getCurrentNegativeComments().trim()
+                        selectedTags.length === 0 &&
+                        !getCurrentNegativeComments().trim()
                       }
                       className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
                     >

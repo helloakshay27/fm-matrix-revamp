@@ -7,7 +7,7 @@ const getApiConfig = () => {
 
   // Fallback base URL - can be overridden by environment variable or login process
   // In Vite, use import.meta.env instead of process.env
-  const finalBaseUrl = savedBaseUrl || import.meta.env.VITE_API_BASE_URL || 'https://live-api.gophygital.work/';
+  const finalBaseUrl = savedBaseUrl || import.meta.env.VITE_API_BASE_URL || 'ive-api.gophygital.work/';
 
   console.log('API Config Debug:', {
     savedToken: savedToken ? 'Present' : 'Missing',
@@ -16,8 +16,6 @@ const getApiConfig = () => {
     tokenLength: savedToken?.length || 0,
     baseUrlValue: finalBaseUrl
   });
-
-  
 
   return {
     BASE_URL: finalBaseUrl,
@@ -244,6 +242,8 @@ export const API_CONFIG = {
     SOCIETY_GATE_BY_ID: '/admin/society_gates', // Base path, will append /{id}.json
     UPDATE_SOCIETY_GATE: '/admin/society_gates', // Base path, will append /{id}.json
     RECENT_SURVEYS: '/survey_mappings/response_list.json?&recent=true',
+    // Visitor history export endpoint
+    VISITOR_HISTORY_EXPORT: '/pms/admin/visitors/visitors_history.xlsx',
 
   },
 } as const

@@ -183,7 +183,7 @@ export const SurveyResponsePage = () => {
   const [columns, setColumns] = useState([
     { key: 'actions', label: 'Actions', visible: true },
     { key: 'survey_name', label: 'Survey Name', visible: true },
-    { key: 'site_name', label: 'Site Name', visible: true },
+    // { key: 'site_name', label: 'Site Name', visible: true },
     { key: 'building_name', label: 'Building Name', visible: true },
     { key: 'wing_name', label: 'Wing Name', visible: true },
     { key: 'floor_name', label: 'Floor Name', visible: true },
@@ -192,7 +192,7 @@ export const SurveyResponsePage = () => {
     { key: 'total_responses', label: 'Total Responses', visible: true },
     { key: 'total_complaints', label: 'Total Complaints', visible: true },
     { key: 'latest_response_date', label: 'Latest Response', visible: true },
-    { key: 'answer_type', label: 'Answer Type', visible: true },
+    // { key: 'answer_type', label: 'Answer Type', visible: true },
     { key: 'responded_by', label: 'Responded By', visible: true }
   ]);
 
@@ -212,7 +212,7 @@ export const SurveyResponsePage = () => {
   };
 
   // New function to fetch survey response list from the API
-  const fetchSurveyResponseList = async (page: number = 1, filters?: FilterState) => {
+  const fetchSurveyResponseList = async (page: number = 1, filters?: FilterState, searchQuery?: string) => {
     try {
       const url = getFullUrl('/survey_mappings/response_list.json');
       const options = getAuthenticatedFetchOptions();
@@ -229,6 +229,12 @@ export const SurveyResponsePage = () => {
       if (API_CONFIG.TOKEN) {
         urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
         console.log('🔑 Adding access_token to request');
+      }
+      
+      // Add search query if provided
+      if (searchQuery && searchQuery.trim()) {
+        urlWithParams.searchParams.append('q[name_cont]', searchQuery.trim());
+        console.log('🔍 Adding search query:', searchQuery);
       }
       
       // Add survey title filter if provided
@@ -404,13 +410,14 @@ export const SurveyResponsePage = () => {
     return transformedData;
   };
 
-  const fetchSurveyResponses = useCallback(async (filters?: FilterState) => {
+  const fetchSurveyResponses = useCallback(async (filters?: FilterState, searchQuery?: string) => {
     setIsLoading(true);
     try {
       console.log('📡 Fetching survey responses for page:', currentPage);
       console.log('🔍 Applied filters:', filters);
+      console.log('🔍 Search query:', searchQuery);
       
-      const data = await fetchSurveyResponseList(currentPage, filters);
+      const data = await fetchSurveyResponseList(currentPage, filters, searchQuery);
       const transformedData = transformSurveyData(data.responses);
       
       console.log('Fetched and transformed survey responses:', transformedData);
@@ -570,8 +577,8 @@ export const SurveyResponsePage = () => {
     setAppliedFilters(filters);
     // Reset to page 1 when filters are applied
     setCurrentPage(1);
-    // Fetch data with filters
-    fetchSurveyResponses(filters);
+    // Fetch data with filters and current search term
+    fetchSurveyResponses(filters, debouncedSearchTerm);
   };
 
   const handleResetFilters = () => {
@@ -585,8 +592,30 @@ export const SurveyResponsePage = () => {
     setAppliedFilters(resetFilters);
     // Reset to page 1 when filters are reset
     setCurrentPage(1);
-    // Fetch data without filters
-    fetchSurveyResponses(resetFilters);
+    // Clear search term
+    setSearchTerm('');
+    setDebouncedSearchTerm('');
+    // Fetch data without filters and search
+    fetchSurveyResponses(resetFilters, '');
+  };
+
+  // Handle search term changes with debouncing
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // 500ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Handle search term changes
+  const handleSearchChange = (newSearchTerm: string) => {
+    setSearchTerm(newSearchTerm);
+    // Reset to page 1 when searching
+    setCurrentPage(1);
   };
 
   // Column visibility handlers - matching SurveyMappingDashboard implementation
@@ -617,7 +646,7 @@ export const SurveyResponsePage = () => {
     const allColumns = [
       { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, visible: isColumnVisible('actions'), hideable: false },
       { key: 'survey_name', label: 'Survey Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('survey_name'), hideable: true },
-      { key: 'site_name', label: 'Site Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('site_name'), hideable: true },
+      // { key: 'site_name', label: 'Site Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('site_name'), hideable: true },
       { key: 'building_name', label: 'Building Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
       { key: 'wing_name', label: 'Wing Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
       { key: 'floor_name', label: 'Floor Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
@@ -626,7 +655,7 @@ export const SurveyResponsePage = () => {
       { key: 'total_responses', label: 'Total Responses', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_responses'), hideable: true },
       { key: 'total_complaints', label: 'Total Complaints', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('total_complaints'), hideable: true },
       { key: 'latest_response_date', label: 'Latest Response', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('latest_response_date'), hideable: true },
-      { key: 'answer_type', label: 'Answer Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('answer_type'), hideable: true },
+      // { key: 'answer_type', label: 'Answer Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('answer_type'), hideable: true },
       { key: 'responded_by', label: 'Responded By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('responded_by'), hideable: true }
     ];
     
@@ -671,8 +700,8 @@ export const SurveyResponsePage = () => {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             item.total_responses > 0 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-gray-100 text-gray-800'
+             
+              
           }`}>
             {item.total_responses}
           </span>
@@ -681,8 +710,7 @@ export const SurveyResponsePage = () => {
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
             item.total_complaints > 0 
-              ? 'bg-red-100 text-red-800' 
-              : 'bg-gray-100 text-gray-800'
+             
           }`}>
             {item.total_complaints}
           </span>
@@ -710,12 +738,9 @@ export const SurveyResponsePage = () => {
 
 
   // Filter responses based on search term
-  const filteredResponses = responseData.filter(item =>
-    item.survey_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.survey_id.toString().includes(searchTerm) ||
-    item.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.building_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Note: Since we're using server-side pagination, we should show exactly what the API returns
+  // The search filtering is now handled server-side through the API
+  const filteredResponses = responseData;
 
   // Handle page change
   const handlePageChange = (page: number) => {
@@ -751,9 +776,9 @@ export const SurveyResponsePage = () => {
 
   // Fetch survey responses when component mounts, page changes, or filters change
   useEffect(() => {
-    console.log('🔄 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters);
-    fetchSurveyResponses(appliedFilters); // Fetch with current filters and page
-  }, [currentPage, appliedFilters, fetchSurveyResponses]); // Trigger when currentPage or filters change
+    console.log('🔄 Data fetch triggered - page:', currentPage, 'filters:', appliedFilters, 'search:', debouncedSearchTerm);
+    fetchSurveyResponses(appliedFilters, debouncedSearchTerm); // Fetch with current filters, search term, and page
+  }, [currentPage, appliedFilters, debouncedSearchTerm, fetchSurveyResponses]); // Trigger when currentPage, filters, or debounced search term change
 
   return (
     <div className="flex-1 p-4 sm:p-6 bg-white min-h-screen">
@@ -912,14 +937,10 @@ export const SurveyResponsePage = () => {
                   exportFileName="survey-response-data"
                   handleExport={handleSurveyResponseExport}
                   searchTerm={searchTerm}
-                  onSearchChange={setSearchTerm}
+                  onSearchChange={handleSearchChange}
                   searchPlaceholder="Search responses..."
-                  pagination={true}
+                  pagination={false} // Disable client-side pagination since we're doing server-side
                   pageSize={pagination.per_page}
-                  currentPage={pagination.current_page}
-                  totalPages={pagination.total_pages}
-                  totalItems={pagination.total_count}
-                  onPageChange={handlePageChange}
                   hideColumnsButton={true}
                   leftActions={
                     <div className="flex flex-wrap gap-2">
@@ -937,8 +958,52 @@ export const SurveyResponsePage = () => {
                   onFilterClick={handleFilterClick}
                 />
                 
-                {/* Custom API-based Pagination - Hidden when using EnhancedTable pagination */}
-                {/* The pagination is now handled by EnhancedTable component */}
+                {/* Server-side Pagination Controls */}
+                {pagination.total_pages > 1 && (
+                  <div className="mt-6">
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => {
+                              if (currentPage > 1) handlePageChange(currentPage - 1);
+                            }}
+                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                        {Array.from(
+                          { length: Math.min(pagination.total_pages, 10) },
+                          (_, i) => i + 1
+                        ).map((page) => (
+                          <PaginationItem key={page}>
+                            <PaginationLink
+                              onClick={() => handlePageChange(page)}
+                              isActive={currentPage === page}
+                            >
+                              {page}
+                            </PaginationLink>
+                          </PaginationItem>
+                        ))}
+                        {pagination.total_pages > 10 && (
+                          <PaginationItem>
+                            <PaginationEllipsis />
+                          </PaginationItem>
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => {
+                              if (currentPage < pagination.total_pages) handlePageChange(currentPage + 1);
+                            }}
+                            className={currentPage === pagination.total_pages ? "pointer-events-none opacity-50" : ""}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                    <div className="text-center mt-2 text-sm text-gray-600">
+                      Showing page {currentPage} of {pagination.total_pages} ({pagination.total_count} total survey responses)
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

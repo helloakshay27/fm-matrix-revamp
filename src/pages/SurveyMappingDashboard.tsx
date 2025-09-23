@@ -117,6 +117,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'building_name', label: 'Building', visible: true },
     { key: 'wing_name', label: 'Wing', visible: true },
     { key: 'floor_name', label: 'Floor', visible: true },
+    { key: 'area_name', label: 'Area', visible: true },
     { key: 'room_name', label: 'Room', visible: true },
     // { key: 'check_type', label: 'Check Type', visible: true },
     { key: 'questions_count', label: 'Questions', visible: true },
@@ -126,7 +127,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'created_by', label: 'Created By', visible: true },
     { key: 'status', label: 'Status', visible: true },
     { key: 'created_at', label: 'Created On', visible: true },
-    { key: 'qr_code', label: 'QR Code', visible: true }
+    // { key: 'qr_code', label: 'QR Code', visible: true }
   ]);
 
   // Initial load
@@ -238,7 +239,7 @@ export const SurveyMappingDashboard = () => {
 
   const handleViewClick = (item: SurveyMapping) => {
     console.log('View clicked for item:', item.id);
-    navigate(`/maintenance/survey/mapping/details/${item.id}`);
+    navigate(`/maintenance/survey/mapping/details/${item.survey_id}`);
   };
 
   const handleEditClick = (item: SurveyMapping) => {
@@ -360,6 +361,7 @@ export const SurveyMappingDashboard = () => {
       { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
       { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
       { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
+      { key: 'area_name', label: 'Area', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('area_name'), hideable: true },
       { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('room_name'), hideable: true },
       // { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('check_type'), hideable: true },
       { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('questions_count'), hideable: true },
@@ -369,11 +371,17 @@ export const SurveyMappingDashboard = () => {
       { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_by'), hideable: true },
       { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
       { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_at'), hideable: true },
-      { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('qr_code'), hideable: true }
+      // { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('qr_code'), hideable: true }
     ];
     
+    console.log('All columns before filtering:', allColumns);
+    console.log('Area column config:', allColumns.find(col => col.key === 'area_name'));
+    
     // Filter to only show visible columns
-    return allColumns.filter(col => col.visible);
+    const visibleColumns = allColumns.filter(col => col.visible);
+    console.log('Visible columns after filtering:', visibleColumns);
+    
+    return visibleColumns;
   }, [isColumnVisible]);
 
   // Transform columns for the dropdown (only hideable columns with simplified structure)
@@ -417,7 +425,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.building_name}
               {allBuildings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -441,7 +449,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.wing_name || '-'}
               {allWings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -465,7 +473,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.floor_name || '-'}
               {allFloors.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -474,6 +482,30 @@ export const SurveyMappingDashboard = () => {
               <div className="font-semibold mb-1">All Floors ({allFloors.length}):</div>
               {allFloors.map((floor, index) => (
                 <div key={index} className="py-0.5">{floor}</div>
+              ))}
+            </div>
+          </div>
+        );
+      }
+      case 'area_name': {
+        // Get all areas for this survey from the complete data
+        const surveyData = allMappingsData.find(s => s.id === item.survey_id);
+        const allAreas = surveyData ? [...new Set(surveyData.mappings.map(m => m.area_name).filter(Boolean))] : [item.area_name].filter(Boolean);
+        
+        if (allAreas.length <= 1) {
+          return <span>{item.area_name || '-'}</span>;
+        }
+        
+        return (
+          <div className=" group">
+            <span className="cursor-pointer">
+              {item.area_name || '-'}
+              {allAreas.length > 1 && <span className="text-blue-600 ml-1">...</span>}
+            </span>
+            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+              <div className="font-semibold mb-1">All Areas ({allAreas.length}):</div>
+              {allAreas.map((area, index) => (
+                <div key={index} className="py-0.5">{area}</div>
               ))}
             </div>
           </div>
@@ -489,7 +521,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.room_name || '-'}
               {allRooms.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -587,6 +619,8 @@ export const SurveyMappingDashboard = () => {
   console.log('Columns state:', columns);
   console.log('Enhanced table columns:', enhancedTableColumns);
   console.log('Dropdown columns:', dropdownColumns);
+  console.log('Area column visible?', isColumnVisible('area_name'));
+  console.log('Sample mapping area_name:', filteredMappings[0]?.area_name);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

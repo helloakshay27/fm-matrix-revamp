@@ -112,7 +112,7 @@ export const SurveyMappingDetailsPage = () => {
   const fetchSurveyMappingDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[survey_id_eq]=${id}`);
+      const response = await apiClient.get(`/survey_mappings/mappings_list.json?q[id_eq]=${id}`);
       console.log('Survey mapping details response:', response.data);
       
       // The API returns an object with survey_mappings array
@@ -264,13 +264,6 @@ export const SurveyMappingDetailsPage = () => {
       defaultVisible: true,
     },
     {
-      key: "qr_code",
-      label: "QR Code",
-      sortable: false,
-      draggable: false,
-      defaultVisible: true,
-    },
-    {
       key: "created_by",
       label: "Created By",
       sortable: false,
@@ -280,6 +273,13 @@ export const SurveyMappingDetailsPage = () => {
     {
       key: "created_at",
       label: "Created Date",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
+     {
+      key: "qr_code",
+      label: "QR Code",
       sortable: false,
       draggable: false,
       defaultVisible: true,
@@ -333,7 +333,7 @@ export const SurveyMappingDetailsPage = () => {
               title="Click to view full size"
             />
             <div className="flex gap-1">
-              <Button 
+              {/* <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => window.open(item.qr_code, '_blank')}
@@ -341,7 +341,7 @@ export const SurveyMappingDetailsPage = () => {
               >
                 <Eye className="w-3 h-3 mr-1" />
                 View
-              </Button>
+              </Button> */}
               <Button 
                 variant="outline" 
                 size="sm"

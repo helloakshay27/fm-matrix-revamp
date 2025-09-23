@@ -907,7 +907,10 @@ export const EditSurveyPage = () => {
               {createTicket && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-gray-50 rounded-lg">
                   <div className="space-y-2">
-                    <FormControl fullWidth sx={fieldStyles}>
+                    <FormControl fullWidth required sx={{
+                      ...fieldStyles,
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    }}>
                       <InputLabel id="ticket-category-label">
                         Ticket Category
                       </InputLabel>
@@ -915,7 +918,7 @@ export const EditSurveyPage = () => {
                         labelId="ticket-category-label"
                         id="ticketCategory"
                         value={ticketCategoryId}
-                        label="Select Category"
+                        label="Ticket Category"
                         onChange={(e) => {
                           const selectedCategoryId = e.target.value;
                           const selectedCategory = ticketCategories.find(cat => cat.id.toString() === selectedCategoryId);
@@ -934,7 +937,10 @@ export const EditSurveyPage = () => {
                   </div>
 
                   <div className="space-y-2">
-                    <FormControl fullWidth sx={fieldStyles}>
+                    <FormControl fullWidth required sx={{
+                      ...fieldStyles,
+                      "& .MuiInputLabel-asterisk": { color: "#ef4444" }
+                    }}>
                       <InputLabel id="assign-to-label">
                        Assign To
                       </InputLabel>
@@ -942,7 +948,7 @@ export const EditSurveyPage = () => {
                         labelId="assign-to-label"
                         id="assignTo"
                         value={assignTo}
-                        label="Select Engineer"
+                        label="Assign To"
                         onChange={(e) => setAssignTo(e.target.value)}
                         disabled={loadingFmUsers}
                       >
@@ -951,7 +957,7 @@ export const EditSurveyPage = () => {
                             key={user.id}
                             value={user.id.toString()}
                           >
-                            {`${user.full_name}`}
+                         {user.full_name} 
                           </MenuItem>
                         ))}
                       </MuiSelect>
@@ -1014,21 +1020,27 @@ export const EditSurveyPage = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <Textarea
-                        value={question.text}
-                        onChange={(e) =>
-                          handleQuestionChange(
-                            question.id!,
-                            "text",
-                            e.target.value
-                          )
-                        }
-                        placeholder="Enter your Question"
-                        className="min-h-20"
-                      />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Question Text <span className="text-red-500">*</span>
+                        </Label>
+                        <Textarea
+                          value={question.text}
+                          onChange={(e) =>
+                            handleQuestionChange(
+                              question.id!,
+                              "text",
+                              e.target.value
+                            )
+                          }
+                          placeholder="Enter your Question"
+                          className="min-h-20"
+                          required
+                        />
+                      </div>
 
                       <div className="space-y-2">
-                        <Label>Select Answer Type</Label>
+                        <Label>Select Answer Type <span className="text-red-500">*</span></Label>
                         <Select
                           value={question.answerType}
                           onValueChange={(value) =>

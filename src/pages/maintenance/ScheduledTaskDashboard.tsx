@@ -279,7 +279,7 @@ export const ScheduledTaskDashboard = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [showAll, setShowAll] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>('Open');
   const [statusCounts, setStatusCounts] = useState({
     scheduled_count: 0,
     open_count: 0,
@@ -341,9 +341,10 @@ export const ScheduledTaskDashboard = () => {
 
       // Add status filter
       if (status) {
-        // queryParams.append('q[task_status_eq]', status);
         queryParams.append('type', status);
-
+      } else {
+        // Default to 'Open' when no status is selected
+        queryParams.append('type', 'Open');
       }
 
       // Add general search functionality for checklist and asset
@@ -351,9 +352,6 @@ export const ScheduledTaskDashboard = () => {
         // Try multiple search parameters that the API might understand
         queryParams.append('q[custom_form_form_name_cont]', searchTerm.trim());
         // queryParams.append('q[asset_asset_name_cont]', searchTerm.trim());
-      }
-      if (!status) {
-        queryParams.append('type', status || 'Open');
       }
 
       const apiUrl = getFullUrl(`/pms/users/scheduled_tasks.json?&${queryParams.toString()}`);

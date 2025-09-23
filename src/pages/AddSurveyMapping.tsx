@@ -522,7 +522,7 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Select Survey</InputLabel>
+                  <InputLabel shrink>Select Survey <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={selectedSurveyId || ''}
                     onChange={handleSurveyChange}
@@ -604,7 +604,7 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Site</InputLabel>
+                  <InputLabel shrink>Site <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={mapping.selectedLocation.site}
                     onChange={(e) => handleLocationChange(mappingIdx, 'site', e.target.value as string)}

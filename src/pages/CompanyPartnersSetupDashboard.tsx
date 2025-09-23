@@ -4,8 +4,38 @@ import { Button } from "@/components/ui/button";
 import { Plus, Eye, Edit } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AddCompanyPartnerModal } from "@/components/AddCompanyPartnerModal";
+import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
+import { ColumnConfig } from '@/hooks/useEnhancedTable';
+import { Switch } from '@/components/ui/switch';
+import { useNavigate } from 'react-router-dom';
+
+const columns: ColumnConfig[] = [
+  {
+    key: "companyName",
+    label: "Company Name",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "companyBanner",
+    label: "Company Banner",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+  {
+    key: "status",
+    label: "Status",
+    sortable: true,
+    draggable: true,
+    defaultVisible: true,
+  },
+]
 
 export const CompanyPartnersSetupDashboard = () => {
+  const navigate = useNavigate()
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const partnersData = [
@@ -47,86 +77,68 @@ export const CompanyPartnersSetupDashboard = () => {
     }
   ];
 
-  return (
-    <div className="p-6">
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
-        Settings &gt; Company Partner Setup
-      </div>
+  const renderCell = (item: any, columnKey: string) => {
+    switch (columnKey) {
+      case "status":
+        return (
+          <Switch
+            checked={item.status}
+            className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+          />
+        );
+      default:
+        return item[columnKey] || "-";
+    }
+  };
 
-      {/* Page Title and Add Button */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Company Partner Setup LIST</h1>
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white"
+  const renderActions = (item: any) => {
+    return (
+      <div className="flex justify-center gap-2">
+        {/* <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+          onClick={() => navigate(`/settings/community-modules/testimonial-setup/${item.id}`)}
         >
-          Add Partner
+          <Eye className="w-4 h-4" />
+        </Button> */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="p-1"
+        >
+          <Edit className="w-4 h-4" />
         </Button>
       </div>
+    )
+  };
 
-      {/* Search Bar */}
-      <div className="mb-6 flex justify-end">
-        <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="px-3 py-2 border border-gray-300 rounded-md w-64"
-          />
-          <Button variant="outline" className="px-4">
-            Go!
-          </Button>
-          <Button variant="outline" className="px-4">
-            Reset
-          </Button>
-        </div>
-      </div>
+  const leftActions = (
+    <>
+      <Button
+        className="bg-[#C72030] hover:bg-[#A01020] text-white"
+        onClick={() => setIsAddModalOpen(true)}
+      >
+        <Plus className="w-4 h-4 mr-2" />
+        Add
+      </Button>
+    </>
+  );
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="font-semibold">Actions</TableHead>
-              <TableHead className="font-semibold">Company Name</TableHead>
-              <TableHead className="font-semibold">Company Banner</TableHead>
-              <TableHead className="font-semibold">Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {partnersData.map((item) => (
-              <TableRow key={item.id}>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="ghost" className="p-1">
-                      <Eye className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="p-1">
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-                <TableCell className="text-blue-600">{item.companyName}</TableCell>
-                <TableCell>
-                  <img 
-                    src={item.companyBanner} 
-                    alt="Company Banner" 
-                    className="w-16 h-12 object-cover rounded"
-                  />
-                </TableCell>
-                <TableCell>
-                  <div className={`w-6 h-6 rounded-full ${item.status ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+  return (
+    <div className="p-6">
+      <EnhancedTable
+        data={partnersData}
+        columns={columns}
+        renderCell={renderCell}
+        renderActions={renderActions}
+        leftActions={leftActions}
+      />
 
       {/* Add Company Partner Modal */}
-      <AddCompanyPartnerModal 
-        isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+      <AddCompanyPartnerModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
       />
     </div>
   );
