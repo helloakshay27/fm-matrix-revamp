@@ -1758,8 +1758,8 @@ const AllContent = () => {
                     {/* Red Rectangle */}
                     <div className="absolute left-[200px] top-[-100px] w-[450px] print:h-[750px] h-[600px] bg-[#bf0c0c] z-10 flex flex-col items-end justify-center space-y-6 text-white 
                     print:left-[50px] print:top-[-300px] print:w-[50%] print:text-right  print:items-end print:justify-center print:space-y-1">
-                        <div className="text-5xl print:ml-10 font-bold print:text-6xl">GOPHYGITAL</div>
-                        <div className="text-6xl font-extrabold print:text-7xl">REP</div>
+                        <div className="text-5xl print:ml-10 font-bold print:text-4xl">GOPHYGITAL</div>
+                        <div className="text-6xl font-extrabold print:text-4xl">REP</div>
                     </div>
 
                     {/* White Box with Right Half */}
@@ -1769,12 +1769,12 @@ const AllContent = () => {
                         {/* Overlaid Report Letters */}
                         <div className="absolute top-[-100px] print:top-[-76px] print:left-[45%] left-[45%] w-[450px] h-[600px] z-10 flex flex-col items-start print:justify-start justify-center space-y-6 text-left text-red-700
                        print:space-y-1 print:text-left print:text-red-700 print:items-start">
-                            <div className="text-5xl print:ml-20 print:mt-[75px] font-bold ml-2 print:text-6xl">WORK</div>
-                            <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-7xl">ORT</div>
+                            <div className="text-5xl print:ml-20 print:mt-[105px] font-bold ml-2 print:text-4xl">WORK</div>
+                            <div className="text-6xl  print:ml-20  font-extrabold ml-2 print:text-4xl">ORT</div>
                         </div>
 
                         <div className="flex justify-end items-end print:mt-[110px]  print:mr-[110px] mb-4 mt-[10px] ml-[120px] print:w-full">
-                            <p className="text-xl print:text-[23px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
+                            <p className="text-xl print:text-[18px] font-medium text-red-700 print:text-red-700 print:mt-[40px]">
                                 {dateRangeLabel}
                             </p>
                         </div>
