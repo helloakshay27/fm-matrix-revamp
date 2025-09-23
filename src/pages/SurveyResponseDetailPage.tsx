@@ -262,7 +262,7 @@ export const SurveyResponseDetailPage = () => {
   }, [surveyId]);
 
   // API function to fetch survey details using the new endpoint
-  const fetchSurveyDetails = async (surveyId: string) => {
+  const fetchSurveyDetails = useCallback(async (surveyId: string, fromDate?: Date, toDate?: Date) => {
     try {
       // Validate survey ID
       if (!surveyId || surveyId.trim() === "") {
@@ -277,6 +277,17 @@ export const SurveyResponseDetailPage = () => {
 
       // Add survey_id parameter
       urlWithParams.searchParams.append("survey_id", surveyId.trim());
+
+      // Add date filters if provided
+      if (fromDate) {
+        const fromDateStr = fromDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        urlWithParams.searchParams.append("from_date", fromDateStr);
+      }
+
+      if (toDate) {
+        const toDateStr = toDate.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+        urlWithParams.searchParams.append("to_date", toDateStr);
+      }
 
       // Add access_token from API_CONFIG if available
       if (API_CONFIG.TOKEN) {
@@ -322,7 +333,7 @@ export const SurveyResponseDetailPage = () => {
       console.error("❌ Error fetching survey details:", error);
       throw error;
     }
-  };
+  }, []); // Empty dependency array since it only uses external utilities
 
   useEffect(() => {
     const fetchSurveyData = async () => {
@@ -409,7 +420,7 @@ export const SurveyResponseDetailPage = () => {
     };
 
     fetchAllData();
-  }, [surveyId, navigate, fetchResponseListData]);
+  }, [surveyId, navigate, fetchResponseListData, fetchSurveyDetails]);
 
   const handleCopyQuestion = async (questionId: number) => {
     const question = surveyData?.questions.find(
@@ -1614,7 +1625,7 @@ export const SurveyResponseDetailPage = () => {
         ? new Date(activeFormFilters.dateRange.to).toISOString().split("T")[0] 
         : "");
     }
-  }, [showFilterModal, summaryFormFilters.dateRange, tabularFormFilters.dateRange, activeFilterTab]);
+  }, [showFilterModal, summaryFormFilters, tabularFormFilters, activeFilterTab]);
 
   // Optimized date handlers using useCallback to prevent unnecessary re-renders
   // Use local state for immediate UI feedback and batch update to form state
@@ -1668,16 +1679,65 @@ export const SurveyResponseDetailPage = () => {
     }
   }, [activeFilterTab]);
 
-  // Filter handlers - now specific to tabular tab
+  // Filter handlers
+  const handleSummaryFilterClick = useCallback(() => {
+    setActiveFilterTab('summary');
+    setSummaryFormFilters(summaryCurrentFilters); // Initialize form with current applied filters
+    setShowFilterModal(true);
+  }, [summaryCurrentFilters]);
+
+  const handleTabularFilterClick = useCallback(() => {
+    setActiveFilterTab('tabular');
+    setTabularFormFilters(tabularCurrentFilters); // Initialize form with current applied filters
+    setShowFilterModal(true);
+  }, [tabularCurrentFilters]);
+
+  // Legacy filter click handler for backwards compatibility
   const handleFilterClick = useCallback(() => {
     setActiveFilterTab('tabular');
     setTabularFormFilters(tabularCurrentFilters); // Initialize form with current applied filters
     setShowFilterModal(true);
   }, [tabularCurrentFilters]);
 
-  const handleApplyFilters = useCallback(() => {
+  // Function to refetch survey details with current summary filters
+  const refetchSurveyDetailsWithFilters = useCallback(async (filters: SurveyResponseFilters) => {
+    if (!surveyId) return;
+
+    try {
+      setIsLoading(true);
+      console.log("🔄 Refetching survey details with filters:", filters);
+
+      const fromDate = filters.dateRange?.from;
+      const toDate = filters.dateRange?.to;
+
+      const surveyDetailsResponse = await fetchSurveyDetails(surveyId, fromDate, toDate);
+      console.log("✅ Filtered survey details received:", surveyDetailsResponse);
+      
+      setSurveyDetailsData(surveyDetailsResponse);
+
+      // Extract survey data from the filtered API response
+      if (surveyDetailsResponse?.survey_details?.surveys?.length > 0) {
+        const surveyDetail = surveyDetailsResponse.survey_details.surveys[0];
+        setSurveyData(surveyDetail);
+        console.log("📊 Survey data updated with filters:", surveyDetail);
+      } else {
+        console.warn("⚠️ No survey data found for the applied filters");
+        toast.info("No data found for the selected date range");
+      }
+    } catch (error) {
+      console.error("❌ Error refetching survey details with filters:", error);
+      toast.error("Failed to apply date filters to survey data");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [surveyId, fetchSurveyDetails]);
+
+  const handleApplyFilters = useCallback(async () => {
     if (activeFilterTab === 'summary') {
       setSummaryCurrentFilters(summaryFormFilters);
+      
+      // Refetch survey details with the new date filters for summary tab
+      await refetchSurveyDetailsWithFilters(summaryFormFilters);
     } else {
       setTabularCurrentFilters(tabularFormFilters);
 
@@ -1690,12 +1750,15 @@ export const SurveyResponseDetailPage = () => {
     }
 
     setShowFilterModal(false);
-  }, [activeFilterTab, summaryFormFilters, tabularFormFilters, getTabularData, getTicketData]);
+  }, [activeFilterTab, summaryFormFilters, tabularFormFilters, getTabularData, getTicketData, refetchSurveyDetailsWithFilters]);
 
-  const handleClearFilters = useCallback(() => {
+  const handleClearFilters = useCallback(async () => {
     if (activeFilterTab === 'summary') {
       setSummaryCurrentFilters({});
       setSummaryFormFilters({});
+      
+      // Refetch survey details without any date filters for summary tab
+      await refetchSurveyDetailsWithFilters({});
     } else {
       setTabularCurrentFilters({});
       setTabularFormFilters({});
@@ -1703,7 +1766,7 @@ export const SurveyResponseDetailPage = () => {
       setFilteredTicketData([]);
     }
     setShowFilterModal(false);
-  }, [activeFilterTab]);
+  }, [activeFilterTab, refetchSurveyDetailsWithFilters]);
 
   const getActiveFiltersCount = useCallback(() => {
     const filters = activeFilterTab === 'summary' ? summaryCurrentFilters : tabularCurrentFilters;
@@ -1772,6 +1835,16 @@ export const SurveyResponseDetailPage = () => {
         <div className="space-y-6 py-4">
           {/* Date Range Filter */}
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-gray-700">
+                {activeFilterTab === 'summary' ? 'Filter Summary Data' : 'Filter Tabular Data'}
+              </h3>
+              <span className="text-xs text-gray-500">
+                {activeFilterTab === 'summary' 
+                  ? 'Apply date filters to survey analytics' 
+                  : 'Filter response records'}
+              </span>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label className="text-xs text-gray-500">From Date</Label>
@@ -1816,7 +1889,7 @@ export const SurveyResponseDetailPage = () => {
         </div>
       </DialogContent>
     </Dialog>
-  ), [showFilterModal, hasActiveFilters, getActiveFiltersCount, minDateValue, handleFromDateChange, handleToDateChange, handleClearFilters, handleApplyFilters, localFromDate, localToDate]);
+  ), [showFilterModal, hasActiveFilters, getActiveFiltersCount, minDateValue, handleFromDateChange, handleToDateChange, handleClearFilters, handleApplyFilters, localFromDate, localToDate, activeFilterTab]);
 
   if (isLoading) {
     return (
