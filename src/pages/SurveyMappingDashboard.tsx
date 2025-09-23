@@ -62,6 +62,17 @@ interface SurveyMappingItem {
   area_name: string | null;
   room_name: string | null;
   qr_code_url: string;
+  create_ticket_flag?: boolean;
+  ticket_configs?: {
+    category: string;
+    category_id: number;
+    assigned_to: string;
+    assigned_to_id: number;
+    tag_type: string | null;
+    active: boolean;
+    tag_created_at: string;
+    tag_updated_at: string;
+  };
 }
 
 // Survey group from the API
@@ -125,7 +136,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'ticket_category', label: 'Ticket Category', visible: true },
     { key: 'assigned_to', label: 'Assigned To', visible: true },
     { key: 'created_by', label: 'Created By', visible: true },
-    { key: 'status', label: 'Status', visible: true },
+    // { key: 'status', label: 'Status', visible: true },
     { key: 'created_at', label: 'Created On', visible: true },
     // { key: 'qr_code', label: 'QR Code', visible: true }
   ]);
@@ -369,7 +380,7 @@ export const SurveyMappingDashboard = () => {
       { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('ticket_category'), hideable: true },
       { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('assigned_to'), hideable: true },
       { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_by'), hideable: true },
-      { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
+      // { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
       { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_at'), hideable: true },
       // { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('qr_code'), hideable: true }
     ];
@@ -547,11 +558,11 @@ export const SurveyMappingDashboard = () => {
         );
       case 'ticket_category':
         return (
-          <span>-</span> // This info is not available in the new API structure
+          <span>{item.ticket_configs?.category || '-'}</span>
         );
       case 'assigned_to':
         return (
-          <span>-</span> // This info is not available in the new API structure
+          <span>{item.ticket_configs?.assigned_to || '-'}</span>
         );
       case 'created_by':
         return <span>{item.created_by}</span>;
