@@ -78,6 +78,12 @@ export const Header = () => {
   const navigate = useNavigate();
   const [notificationCount, setNotificationCount] = useState(3);
 
+  useEffect(() => {
+    if (selectedSite) {
+      localStorage.setItem("selectedSiteName", selectedSite.name);
+    }
+  }, [selectedSite])
+
   // Get user data from localStorage
   const user = getUser() || {
     id: 0,

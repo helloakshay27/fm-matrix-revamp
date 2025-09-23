@@ -888,7 +888,7 @@ const modulesByPackage = {
       name: "Redemption Marketplace",
       icon: Globe,
       href: "/vas/redemonection-marketplace",
-    },
+    }
   ],
   "Market Place": [
     {
@@ -1141,6 +1141,32 @@ const modulesByPackage = {
         },
       ],
     },
+    {
+      name: "Community Modules",
+      icon: Users,
+      subItems: [
+        {
+          name: "Testimonial Setup",
+          href: "/settings/community-modules/testimonial-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Company Partner Setup",
+          href: "/settings/community-modules/company-partner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Banner Setup",
+          href: "/settings/community-modules/banner-setup",
+          color: "text-[#1a1a1a]",
+        },
+        {
+          name: "Amenity Setup",
+          href: "/settings/community-modules/amenity-setup",
+          color: "text-[#1a1a1a]",
+        },
+      ]
+    }
     // {
     //   name: 'Currency',
     //   icon: Currency,
