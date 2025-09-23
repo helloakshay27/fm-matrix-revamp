@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { X, Download } from 'lucide-react';
+import { X, Download, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { TextField } from '@mui/material';
 import { useToast } from '@/hooks/use-toast';
@@ -27,6 +27,7 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
 }) => {
   const { toast } = useToast();
   const [jobSheetComments, setJobSheetComments] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
   const pdfGenerator = new JobSheetPDFGenerator();
 
   React.useEffect(() => {
@@ -55,6 +56,8 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
 
   const handleDownloadPDF = async () => {
     if (!taskDetails || !jobSheetData) return;
+    
+    setIsDownloading(true);
     try {
       // Pass the correct data structure to PDF generator
       await pdfGenerator.generateJobSheetPDF(taskDetails, jobSheetData.data || jobSheetData, jobSheetComments);
@@ -69,6 +72,8 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
         description: 'Failed to generate PDF. Please try again.',
         variant: 'destructive'
       });
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -122,9 +127,19 @@ export const JobSheetModal: React.FC<JobSheetModalProps> = ({
               variant="outline"
               size="sm"
               className="flex items-center gap-1"
+              disabled={isDownloading}
             >
-              <Download className="h-4 w-4" />
-              Download PDF
+              {isDownloading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Generating PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Download PDF
+                </>
+              )}
             </Button>
             <button
               onClick={onClose}

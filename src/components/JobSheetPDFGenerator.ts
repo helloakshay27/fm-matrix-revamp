@@ -388,7 +388,7 @@ export class JobSheetPDFGenerator {
         /* Page Setup */
         @page {
           size: A4;
-          margin: 8mm;
+          margin: 4mm;
         }
 
         * {
@@ -397,7 +397,7 @@ export class JobSheetPDFGenerator {
 
         body {
           font-family: 'Arial', 'Helvetica', sans-serif;
-          font-size: 9px;
+          font-size: 12px;
           color: #1a1a1a;
           margin: 8px;
           padding: 8px;
