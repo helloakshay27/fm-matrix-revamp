@@ -25,57 +25,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
 
   // Handle token-based authentication from URL parameters
-  useEffect(() => {
-    const urlParams = new URLSearchParams(location.search);
-    const access_token = urlParams.get("access_token");
-    const company_id = urlParams.get("company_id");
-    const user_id = urlParams.get("user_id");
-
-    console.log('Layout Token Check:', { 
-      access_token: access_token ? 'Present' : 'Missing', 
-      company_id, 
-      user_id,
-      currentPath: location.pathname 
-    });
-
-    // If token is present in URL, store it immediately for authentication
-    if (access_token) {
-      console.log('Storing token from URL parameters');
-      
-      // Save token using auth utility
-      saveToken(access_token);
-      
-      // Save base URL for API calls (detect from current hostname)
-      const hostname = window.location.hostname;
-      if (hostname.includes("vi-web.gophygital.work")) {
-        saveBaseUrl("live-api.gophygital.work/");
-      } else if (hostname.includes("localhost")) {
-        saveBaseUrl("live-api.gophygital.work/"); // Default for local development
-      }
-      
-      // Store company and user data
-      if (company_id) {
-        localStorage.setItem("selectedCompanyId", String(company_id));
-      }
-      
-      if (user_id) {
-        localStorage.setItem("user_id", String(user_id));
-        
-        // Create a user object for VI token access
-        const viUser = {
-          id: parseInt(user_id),
-          email: '', // VI access might not have email
-          firstname: 'VI',
-          lastname: 'User',
-          access_token: access_token,
-          user_type: 'vi_token_user'
-        };
-        saveUser(viUser);
-        
-        console.log('VI User created and stored:', viUser);
-      }
-    }
-  }, [location.search]);
 
   // Get current domain for backward compatibility
   const hostname = window.location.hostname;
@@ -152,6 +101,59 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         return <DynamicHeader />;
     }
   };
+
+    useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const access_token = urlParams.get("access_token");
+    const company_id = urlParams.get("company_id");
+    const user_id = urlParams.get("user_id");
+
+    console.log('Layout Token Check:', { 
+      access_token: access_token ? 'Present' : 'Missing', 
+      company_id, 
+      user_id,
+      currentPath: location.pathname 
+    });
+
+    // If token is present in URL, store it immediately for authentication
+    if (access_token) {
+      console.log('Storing token from URL parameters');
+      
+      // Save token using auth utility
+      saveToken(access_token);
+      
+      // Save base URL for API calls (detect from current hostname)
+      const hostname = window.location.hostname;
+      if (hostname.includes("vi-web.gophygital.work")) {
+        saveBaseUrl("live-api.gophygital.work/");
+      } else if (hostname.includes("localhost")) {
+        saveBaseUrl("live-api.gophygital.work/"); // Default for local development
+      }
+      
+      // Store company and user data
+      if (company_id) {
+        localStorage.setItem("selectedCompanyId", String(company_id));
+      }
+      
+      if (user_id) {
+        localStorage.setItem("user_id", String(user_id));
+        
+        // Create a user object for VI token access
+        const viUser = {
+          id: parseInt(user_id),
+          email: '', // VI access might not have email
+          firstname: 'VI',
+          lastname: 'User',
+          access_token: access_token,
+          user_type: 'vi_token_user'
+        };
+        saveUser(viUser);
+        
+        console.log('VI User created and stored:', viUser);
+      }
+    }
+  }, [location.search]);
+
 
   return (
     <div
