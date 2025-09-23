@@ -720,6 +720,12 @@ import EmployeeDeletionHistory from "./components/EmployeeDeletionHistory";
 import AddAddressMaster from "./pages/master/AddAddressMaster";
 import EditAddressMaster from "./pages/master/EditAddressMaster";
 import MobileLMCPage from "./pages/MobileLMCPage";
+import { CompanyPartnersSetupDashboard } from "./pages/CompanyPartnersSetupDashboard";
+import { TestimonialsSetupDashboard } from "./pages/TestimonialsSetupDashboard";
+import BannerSetupDashboard from "./pages/BannerSetupDashboard";
+import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
+import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
+import BannerDetailsPage from "./pages/BannerDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -913,7 +919,7 @@ function App() {
                     }
                   />
 
-           
+
 
                   <Route
                     path="/"
@@ -2503,6 +2509,8 @@ function App() {
                       element={<ExportDashboard />}
                     />
 
+
+
                     {/* M Safe Routes */}
 
                     <Route
@@ -2946,6 +2954,30 @@ function App() {
                     <Route
                       path="/settings/account/lock-sub-function/edit/:id"
                       element={<LockSubFunctionEdit />}
+                    />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup"
+                      element={<TestimonialsSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/testimonial-setup/:id"
+                      element={<TestimonialDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/company-partner-setup"
+                      element={<CompanyPartnersSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup"
+                      element={<BannerSetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/banner-setup/:id"
+                      element={<BannerDetailsPage />}
+                    />
+                    <Route
+                      path="/settings/community-modules/amenity-setup"
+                      element={<AmenitySetupDashboard />}
                     />
                   </Route>
 

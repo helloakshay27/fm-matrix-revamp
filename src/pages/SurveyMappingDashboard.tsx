@@ -239,7 +239,7 @@ export const SurveyMappingDashboard = () => {
 
   const handleViewClick = (item: SurveyMapping) => {
     console.log('View clicked for item:', item.id);
-    navigate(`/maintenance/survey/mapping/details/${item.id}`);
+    navigate(`/maintenance/survey/mapping/details/${item.survey_id}`);
   };
 
   const handleEditClick = (item: SurveyMapping) => {
@@ -425,7 +425,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.building_name}
               {allBuildings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -449,7 +449,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.wing_name || '-'}
               {allWings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -473,7 +473,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.floor_name || '-'}
               {allFloors.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -497,7 +497,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.area_name || '-'}
               {allAreas.length > 1 && <span className="text-blue-600 ml-1">...</span>}
@@ -521,7 +521,7 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className="relative group">
+          <div className=" group">
             <span className="cursor-pointer">
               {item.room_name || '-'}
               {allRooms.length > 1 && <span className="text-blue-600 ml-1">...</span>}

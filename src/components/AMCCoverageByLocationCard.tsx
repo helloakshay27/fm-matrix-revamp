@@ -23,8 +23,10 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     }));
   };
 
-  const getLocationIcon = (level: string) => {
-    switch (level.toLowerCase()) {
+  // Safely map level to an icon (handles undefined/null)
+  const getLocationIcon = (level?: string) => {
+    const l = String(level || '').toLowerCase();
+    switch (l) {
       case 'site':
         return <Building2 className="w-4 h-4 text-blue-600" />;
       case 'building':
@@ -36,17 +38,26 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
     }
   };
 
-  const getCoverageColor = (coveragePercentage: number) => {
-    if (coveragePercentage >= 80) return 'text-green-600 bg-green-50';
-    if (coveragePercentage >= 60) return 'text-yellow-600 bg-yellow-50';
-    if (coveragePercentage >= 40) return 'text-orange-600 bg-orange-50';
+  // Safely compute coverage color
+  const getCoverageColor = (coveragePercentage?: number) => {
+    const p = Number(coveragePercentage ?? 0);
+    if (p >= 80) return 'text-green-600 bg-green-50';
+    if (p >= 60) return 'text-yellow-600 bg-yellow-50';
+    if (p >= 40) return 'text-orange-600 bg-orange-50';
     return 'text-red-600 bg-red-50';
   };
 
   const renderLocationNode = (node: AMCLocationCoverageNode, level: number = 0, parentId: string = '') => {
-    const nodeId = `${parentId}-${node.name}-${level}`;
+    const nodeId = `${parentId}-${String((node as any)?.name ?? 'node')}-${level}`;
     const isExpanded = expandedNodes[nodeId];
-    const hasChildren = node.children && node.children.length > 0;
+    const hasChildren = Array.isArray((node as any)?.children) && (node as any).children.length > 0;
+
+    // Safe numeric values
+    const total = Number((node as any)?.total ?? 0);
+    const covered = Number((node as any)?.covered ?? 0);
+    const percent = Number.isFinite(Number((node as any)?.percent))
+      ? Number((node as any)?.percent)
+      : (total > 0 ? (covered / total) * 100 : 0);
 
     return (
       <div key={nodeId} className="mb-2">
@@ -63,26 +74,26 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
               {hasChildren && (
                 isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronRight className="w-4 h-4 text-gray-400" />
               )}
-              {getLocationIcon(node.level)}
+              {getLocationIcon((node as any)?.level)}
             </div>
             <div className="flex-1">
-              <div className="font-medium text-gray-900">{node.name}</div>
-              <div className="text-sm text-gray-500 capitalize">{node.level}</div>
+              <div className="font-medium text-gray-900">{(node as any)?.name ?? '—'}</div>
+              <div className="text-sm text-gray-500 capitalize">{(node as any)?.level ?? 'location'}</div>
             </div>
           </div>
           
           <div className="flex items-center gap-4 text-sm">
             <div className="text-center">
-              <div className="font-semibold text-gray-900">{node.total}</div>
+              <div className="font-semibold text-gray-900">{total}</div>
               <div className="text-xs text-gray-500">Assets</div>
             </div>
             <div className="text-center">
-              <div className="font-semibold text-gray-900">{node.covered}</div>
+              <div className="font-semibold text-gray-900">{covered}</div>
               <div className="text-xs text-gray-500">Under AMC</div>
             </div>
             <div className="text-center">
-              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCoverageColor(node.percent)}`}>
-                {node.percent.toFixed(1)}%
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getCoverageColor(percent)}`}>
+                {percent.toFixed(1)}%
               </span>
             </div>
           </div>
@@ -90,17 +101,21 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
 
         {hasChildren && isExpanded && (
           <div className="mt-2">
-            {node.children!.map(child => renderLocationNode(child, level + 1, nodeId))}
+            {(node as any).children!.map((child: AMCLocationCoverageNode, idx: number) => (
+              <React.Fragment key={`${nodeId}-${idx}`}>
+                {renderLocationNode(child, level + 1, nodeId)}
+              </React.Fragment>
+            ))}
           </div>
         )}
       </div>
     );
   };
 
-  // Calculate summary statistics
-  const totalLocations = data?.length || 0;
-  const totalAssets = data?.reduce((sum, location) => sum + location.total, 0) || 0;
-  const totalAssetsUnderAMC = data?.reduce((sum, location) => sum + location.covered, 0) || 0;
+  // Calculate summary statistics safely
+  const totalLocations = Array.isArray(data) ? data.length : 0;
+  const totalAssets = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.total ?? 0), 0);
+  const totalAssetsUnderAMC = (Array.isArray(data) ? data : []).reduce((sum, location: any) => sum + Number(location?.covered ?? 0), 0);
   const overallCoverage = totalAssets > 0 ? (totalAssetsUnderAMC / totalAssets) * 100 : 0;
 
   return (
@@ -183,7 +198,7 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
 
         {/* Location Tree */}
         <div className="flex-1 overflow-hidden">
-          {!data || data.length === 0 ? (
+          {!data || (Array.isArray(data) ? data.length === 0 : false) ? (
             <div className="flex items-center justify-center h-32">
               <div className="text-center">
                 <MapPin className="w-8 h-8 text-gray-400 mx-auto mb-2" />
@@ -192,7 +207,14 @@ export function AMCCoverageByLocationCard({ data, onDownload }: AMCCoverageByLoc
             </div>
           ) : (
             <div className="h-full overflow-auto">
-              {data.map(location => renderLocationNode(location))}
+              {(() => {
+                const list = Array.isArray(data) ? data : (data ? [data as any] : []);
+                return list.map((location, idx) => (
+                  <React.Fragment key={`root-${idx}`}>
+                    {renderLocationNode(location as any)}
+                  </React.Fragment>
+                ));
+              })()}
             </div>
           )}
         </div>

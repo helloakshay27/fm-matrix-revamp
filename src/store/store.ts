@@ -60,6 +60,7 @@ import { createRuleReducer, fetchCardCountReducer, fetchCustomersReducer, fetchR
 import { createExpiryRuleReducer, editExpiryRuleReducer, fetchLogsReducer, fetchWalletRuleReducer } from './slices/pointExpirySlice'
 import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, updateAddressReducer } from './slices/addressMasterSlice'
 import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from './slices/wbsSlice'
+import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fetchBannersReducers } from './slices/bannerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -271,6 +272,12 @@ export const store = configureStore({
     createAddress: createAddressReducer,
     updateAddress: updateAddressReducer,
     getAddressById: getAddressByIdReducer,
+
+    // Banner
+    fetchBanners: fetchBannersReducers,
+    fetchBannersById: fetchBannersByIdReducers,
+    createBanner: createBannerReducers,
+    editBanner: editBannerReducers,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

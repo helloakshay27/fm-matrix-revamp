@@ -6,7 +6,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Calendar, BarChart3, TrendingUp, Activity, Package, Settings, Home } from 'lucide-react';
+import { Calendar, BarChart3, TrendingUp, Activity, Package, Settings, Home, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -120,6 +120,14 @@ interface DashboardData {
   surveys?: any;
 }
 
+// Track errors per module/endpoint so we can show error state inside each analytic
+type DashboardErrors = Partial<Record<keyof DashboardData, Record<string, string | null>>> & Record<string, Record<string, string | null>>;
+
+// Track last successful fetch key (by date range) per module/endpoint to prevent redundant network calls
+type LastFetchedMap = Partial<Record<keyof DashboardData, Record<string, string>>> & Record<string, Record<string, string>>;
+// Track last failed fetch key (by date range) per module/endpoint to suppress auto-retries for the same range
+type LastFailedMap = Partial<Record<keyof DashboardData, Record<string, string>>> & Record<string, Record<string, string>>;
+
 // Sortable Chart Item Component for Drag and Drop
 const SortableChartItem = ({
   id,
@@ -182,6 +190,20 @@ const SortableChartItem = ({
   );
 };
 
+// Simple loader overlay to show on each section while data is loading
+const SectionLoader: React.FC<{ loading: boolean; children: React.ReactNode }> = ({ loading, children }) => {
+  return (
+    <div className="relative">
+      {children}
+      {loading && (
+        <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   const [selectedAnalytics, setSelectedAnalytics] = useState<SelectedAnalytic[]>([]);
@@ -198,6 +220,11 @@ export const Dashboard = () => {
     assets: null,
     meeting_room: null,
   });
+  const [dashboardErrors, setDashboardErrors] = useState<DashboardErrors>({});
+  const [lastFetchedKey, setLastFetchedKey] = useState<LastFetchedMap>({});
+  const [lastFailedKey, setLastFailedKey] = useState<LastFailedMap>({});
+  // Per-analytic loading map: { [module]: { [endpoint]: boolean } }
+  const [loadingMap, setLoadingMap] = useState<Record<string, Record<string, boolean>>>({});
   const [loading, setLoading] = useState(false);
   const [chartOrder, setChartOrder] = useState<string[]>([]);
 
@@ -226,10 +253,23 @@ export const Dashboard = () => {
   const fetchAnalyticsData = async () => {
     if (!dateRange?.from || !dateRange?.to || selectedAnalytics.length === 0) return;
 
-    setLoading(true);
     try {
+  const SKIP_RETRY = '__SKIP_RETRY__';
       const promises: Promise<any>[] = [];
-      const updatedData: Partial<DashboardData> = {};
+  const updatedData: Partial<DashboardData> = {};
+  const updatedErrors: Partial<DashboardErrors> = {};
+      const updatedFetchedKeys: Partial<LastFetchedMap> = {};
+  const updatedFailedKeys: Partial<LastFailedMap> = {};
+  const toLoad: Record<string, Record<string, boolean>> = {};
+
+      // Build a stable key for this date range (YYYY-MM-DD) to use in caching
+      const toKey = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const dateKey = `${toKey(dateRange.from)}_${toKey(dateRange.to)}`;
 
       // Group analytics by module to minimize API calls
       const moduleGroups = selectedAnalytics.reduce((groups, analytic) => {
@@ -243,6 +283,25 @@ export const Dashboard = () => {
         switch (module) {
           case 'tickets':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                // Use cached data to keep Promise order alignment and avoid network hit
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                // Suppress retry for the same date range; maintain order with a rejected sentinel
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              // Mark real fetches in toLoad
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'tickets_categorywise':
                   promises.push(ticketAnalyticsAPI.getTicketsCategorywiseData(dateRange.from, dateRange.to));
@@ -274,6 +333,22 @@ export const Dashboard = () => {
 
           case 'tasks':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'technical_checklist':
                   promises.push(taskAnalyticsAPI.getTechnicalChecklistData(dateRange.from, dateRange.to));
@@ -293,6 +368,22 @@ export const Dashboard = () => {
 
           case 'amc':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'status_overview':
                   promises.push(amcAnalyticsAPI.getAMCStatusSummary(dateRange.from, dateRange.to));
@@ -308,6 +399,8 @@ export const Dashboard = () => {
                   break;
                 case 'expiry_analysis':
                   promises.push(amcAnalyticsAPI.getAMCExpiryAnalysis(dateRange.from, dateRange.to));
+                  break;
+                case 'service_tracking':
                   promises.push(amcAnalyticsAPI.getAMCServiceTracking(dateRange.from, dateRange.to));
                   break;
                 case 'coverage_by_location':
@@ -326,6 +419,22 @@ export const Dashboard = () => {
 
           case 'inventory':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'items_status':
                   promises.push(inventoryAnalyticsAPI.getItemsStatus(dateRange.from, dateRange.to));
@@ -351,6 +460,22 @@ export const Dashboard = () => {
 
           case 'schedule':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'schedule_overview':
                   promises.push(scheduleAnalyticsAPI.getScheduleOverview(dateRange.from, dateRange.to));
@@ -367,6 +492,22 @@ export const Dashboard = () => {
 
           case 'assets':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'asset_status':
                   promises.push(assetAnalyticsAPI.getAssetStatus(dateRange.from, dateRange.to));
@@ -388,6 +529,22 @@ export const Dashboard = () => {
             break;
           case 'meeting_room':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'revenue_generation_overview':
                   promises.push(meetingRoomAnalyticsAPI.getMeetingRoomRevenueOverview(dateRange.from, dateRange.to));
@@ -409,6 +566,22 @@ export const Dashboard = () => {
             break;
           case 'community':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'engagement_metrics':
                   promises.push(communityAnalyticsAPI.getCommunityEngagementMetrics());
@@ -421,6 +594,22 @@ export const Dashboard = () => {
             break;
           case 'asset_management':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'company_asset_overview':
                 case 'center_assets_downtime':
@@ -440,6 +629,22 @@ export const Dashboard = () => {
             break;
           case 'helpdesk':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'snapshot':
                   promises.push(helpdeskAnalyticsAPI.getHelpdeskSnapshot(dateRange.from!, dateRange.to!));
@@ -462,6 +667,22 @@ export const Dashboard = () => {
             break;
           case 'inventory_management':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'inventory_overview_summary':
                 case 'inventory_overstock_top10':
@@ -472,6 +693,22 @@ export const Dashboard = () => {
             break;
           case 'consumables_overview':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'top_consumables_center':
                   promises.push(inventoryManagementAnalyticsAPI.getCenterWiseConsumables(dateRange.from!, dateRange.to!));
@@ -484,6 +721,22 @@ export const Dashboard = () => {
             break;
           case 'parking_management':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'parking_allocation_overview':
                   promises.push(parkingManagementAnalyticsAPI.getParkingAllocationOverview(dateRange.from!, dateRange.to!));
@@ -493,6 +746,22 @@ export const Dashboard = () => {
             break;
           case 'visitor_management':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'visitor_trend_analysis':
                   promises.push(visitorManagementAnalyticsAPI.getVisitorTrendAnalysis(dateRange.from!, dateRange.to!));
@@ -502,6 +771,22 @@ export const Dashboard = () => {
             break;
           case 'checklist_management':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
+              toLoad[module] = toLoad[module] || {};
+              toLoad[module][analytic.endpoint] = true;
               switch (analytic.endpoint) {
                 case 'cm_progress_quarterly':
                   promises.push(
@@ -520,10 +805,26 @@ export const Dashboard = () => {
             break;
           case 'surveys':
             for (const analytic of analytics) {
+              const cachedOk =
+                (lastFetchedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                (dashboardData as any)?.[module]?.[analytic.endpoint] != null;
+              if (cachedOk) {
+                promises.push(Promise.resolve((dashboardData as any)[module][analytic.endpoint]));
+                continue;
+              }
+              const failedSameRange =
+                (lastFailedKey as any)?.[module]?.[analytic.endpoint] === dateKey &&
+                ((dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? null) != null;
+              if (failedSameRange) {
+                promises.push(Promise.reject(SKIP_RETRY));
+                continue;
+              }
               switch (analytic.endpoint) {
                 case 'survey_summary':
                 case 'survey_status_distribution':
                 case 'top_surveys':
+                  toLoad[module] = toLoad[module] || {};
+                  toLoad[module][analytic.endpoint] = true;
                   promises.push(surveyAnalyticsAPI.getRealSurveyAnalytics());
                   break;
                 default:
@@ -534,29 +835,104 @@ export const Dashboard = () => {
         }
       }
 
+      // Determine if there are any real API calls for this run
+      const hasRealCalls = Object.values(toLoad).some(mod => Object.values(mod).some(Boolean));
+      setLoading(hasRealCalls);
+      if (hasRealCalls) {
+        // Flip on per-analytic loading for those endpoints
+        setLoadingMap(prev => {
+          const merged: Record<string, Record<string, boolean>> = { ...prev };
+          for (const [mod, map] of Object.entries(toLoad)) {
+            merged[mod] = { ...(merged[mod] || {}) };
+            for (const [ep, flag] of Object.entries(map)) {
+              if (flag) merged[mod][ep] = true;
+            }
+          }
+          return merged;
+        });
+      }
+
       const results = await Promise.allSettled(promises);
 
       // Process results and map to dashboard data
       let resultIndex = 0;
       for (const [module, analytics] of Object.entries(moduleGroups)) {
         const moduleData: any = {};
+        const moduleErrs: Record<string, string | null> = {};
+        const moduleFetched: Record<string, string> = (lastFetchedKey as any)?.[module]
+          ? { ...(lastFetchedKey as any)[module] }
+          : {};
         for (const analytic of analytics) {
           const result = results[resultIndex++];
           if (result.status === 'fulfilled') {
             console.log(`Successfully fetched ${module}.${analytic.endpoint}:`, result.value);
             moduleData[analytic.endpoint] = result.value;
+            moduleErrs[analytic.endpoint] = null;
+            moduleFetched[analytic.endpoint] = dateKey;
+            // on success, clear any previous failed state
+            if ((lastFailedKey as any)?.[module]?.[analytic.endpoint]) {
+              // defer clearing by not setting failed key for this endpoint
+            }
           } else {
-            console.error(`Failed to fetch ${module}.${analytic.endpoint}:`, result.reason);
-            toast.error(`Failed to fetch ${analytic.title}`);
-            // Set empty data to prevent undefined errors
-            moduleData[analytic.endpoint] = null;
+            const reason = (result as PromiseRejectedResult).reason;
+            if (reason === SKIP_RETRY) {
+              // Preserve previous data and error without re-toasting
+              moduleData[analytic.endpoint] = (dashboardData as any)?.[module]?.[analytic.endpoint] ?? null;
+              moduleErrs[analytic.endpoint] = (dashboardErrors as any)?.[module]?.[analytic.endpoint] ?? 'Request failed';
+              updatedFailedKeys[module as keyof DashboardData] = {
+                ...((updatedFailedKeys as any)[module] || {}),
+                [analytic.endpoint]: dateKey,
+              } as any;
+            } else {
+              const msg = typeof reason === 'string'
+                ? reason
+                : reason?.message || reason?.statusText || 'Request failed';
+              console.error(`Failed to fetch ${module}.${analytic.endpoint}:`, reason);
+              toast.error(`Failed to fetch ${analytic.title}`);
+              moduleData[analytic.endpoint] = null;
+              moduleErrs[analytic.endpoint] = msg;
+              updatedFailedKeys[module as keyof DashboardData] = {
+                ...((updatedFailedKeys as any)[module] || {}),
+                [analytic.endpoint]: dateKey,
+              } as any;
+            }
           }
         }
         updatedData[module as keyof DashboardData] = moduleData;
+        updatedErrors[module as keyof DashboardData] = moduleErrs;
+        updatedFetchedKeys[module as keyof DashboardData] = moduleFetched;
       }
 
       console.log('Updated dashboard data:', updatedData);
-      setDashboardData(prev => ({ ...prev, ...updatedData }));
+  setDashboardData(prev => ({ ...prev, ...updatedData }));
+  setDashboardErrors(prev => ({ ...prev, ...updatedErrors }));
+      setLastFetchedKey(prev => {
+        const merged: any = { ...prev };
+        for (const [module, map] of Object.entries(updatedFetchedKeys)) {
+          merged[module] = { ...(prev as any)[module], ...map };
+        }
+        return merged;
+      });
+      setLastFailedKey(prev => {
+        const merged: any = { ...prev };
+        for (const [module, map] of Object.entries(updatedFailedKeys)) {
+          merged[module] = { ...(prev as any)[module], ...map };
+        }
+        return merged;
+      });
+      if (hasRealCalls) {
+        // Clear per-analytic loading states for called endpoints
+        setLoadingMap(prev => {
+          const merged: Record<string, Record<string, boolean>> = { ...prev };
+          for (const [mod, map] of Object.entries(toLoad)) {
+            merged[mod] = { ...(merged[mod] || {}) };
+            for (const ep of Object.keys(map)) {
+              merged[mod][ep] = false;
+            }
+          }
+          return merged;
+        });
+      }
       toast.success('Dashboard data updated successfully');
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -640,6 +1016,32 @@ export const Dashboard = () => {
   const summaryStats = getSummaryStats();
 
   const renderAnalyticsCard = (analytic: SelectedAnalytic) => {
+    const errorFor = (a: SelectedAnalytic): string | null => {
+      const modErrs = (dashboardErrors as any)?.[a.module] as Record<string, string | null> | undefined;
+      return modErrs ? (modErrs[a.endpoint] ?? null) : null;
+    };
+
+    const errorMessage = errorFor(analytic);
+    if (errorMessage) {
+      return (
+        <SortableChartItem key={analytic.id} id={analytic.id}>
+          <Card className="border border-red-200 bg-red-50">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2 text-red-700">
+                <AlertCircle className="w-4 h-4" />
+                {analytic.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-red-700">
+                Failed to load this analytic. {errorMessage}
+              </div>
+            </CardContent>
+          </Card>
+        </SortableChartItem>
+      );
+    }
+
     const rawData = dashboardData[analytic.module]?.[analytic.endpoint];
 
     // Transform ticket data to match TicketAnalyticsCard expectations
@@ -1598,7 +2000,14 @@ export const Dashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                   {chartOrder.map(chartId => {
                     const analytic = selectedAnalytics.find(a => a.id === chartId);
-                    return analytic ? renderAnalyticsCard(analytic) : null;
+                    if (!analytic) return null;
+                    const card = renderAnalyticsCard(analytic);
+                    const perCardLoading = !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+                    return card ? (
+                      <SectionLoader key={chartId} loading={perCardLoading}>
+                        {card}
+                      </SectionLoader>
+                    ) : null;
                   })}
                 </div>
               </SortableContext>

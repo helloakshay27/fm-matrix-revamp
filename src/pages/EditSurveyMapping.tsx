@@ -302,7 +302,7 @@ export const EditSurveyMapping = () => {
       
       // Use the new mappings_list endpoint with survey_id
       const response = await fetch(
-        getFullUrl(`/survey_mappings/mappings_list.json?per_page=100&page=1&q[survey_id_eq]=${id}`),
+        getFullUrl(`/survey_mappings/mappings_list.json?q[id_eq]=${id}`),
         {
           headers: {
             Authorization: getAuthHeader(),
