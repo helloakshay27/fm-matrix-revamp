@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -24,7 +24,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions } from '@/config/apiConfig';
+import { API_CONFIG, getFullUrl, getAuthenticatedFetchOptions, getAuthHeader, ENDPOINTS } from '@/config/apiConfig';
 import { toast } from 'sonner';
 
 // Get current site ID dynamically from localStorage
@@ -191,6 +191,7 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
+  const [isExportLoading, setIsExportLoading] = useState(false);
   const navigate = useNavigate();
 
   // API State
@@ -1287,6 +1288,77 @@ export const VisitorsDashboard = () => {
     // This could open a file dialog, navigate to import page, etc.
   };
 
+  const handleExport = async () => {
+    console.log('VisitorsDashboard - Export clicked');
+    
+    setIsExportLoading(true);
+    
+    try {
+      console.log('📥 Exporting visitor history data');
+      
+      // Build the export URL using the configured endpoint
+      const exportUrl = getFullUrl(ENDPOINTS.VISITOR_HISTORY_EXPORT);
+      
+      console.log('📥 Export URL:', exportUrl);
+
+      // Make the API call to get the Excel file
+      const response = await fetch(exportUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': getAuthHeader(),
+        },
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('❌ Export API error response:', errorText);
+        
+        if (response.status === 401) {
+          console.error('401 Authentication failed during export - invalid or expired token');
+          throw new Error('Authentication failed. Please login again.');
+        }
+        
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Get the file blob
+      const blob = await response.blob();
+      
+      // Create download link
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().slice(0, 10);
+      link.download = `visitor_history_${timestamp}.xlsx`;
+      
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      // Clean up the blob URL
+      window.URL.revokeObjectURL(downloadUrl);
+      
+      console.log('✅ Export completed successfully');
+      toast.success('Visitor history exported successfully.');
+      
+    } catch (error) {
+      console.error('❌ Export failed:', error);
+      
+      // Handle authentication errors specifically
+      if (error instanceof Error && error.message.includes('Authentication failed')) {
+        toast.error("Your session has expired. Please login again.");
+        return;
+      }
+      
+      toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsExportLoading(false);
+    }
+  };
+
   // Column visibility handlers for visitor history table
   const handleVisitorHistoryColumnToggle = (columnKey: string) => {
     setVisitorHistoryColumnVisibility(prev => ({
@@ -1658,7 +1730,7 @@ export const VisitorsDashboard = () => {
               }
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
-              enableExport={true}
+              // enableExport={true}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
@@ -1679,6 +1751,26 @@ export const VisitorsDashboard = () => {
               }
               rightActions={
                 <div className="flex gap-2">
+                  {/* Export Button */}
+                  <Button
+                    onClick={handleExport}
+                    disabled={isExportLoading}
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
+                  >
+                    {isExportLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Exporting...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 " />
+                        
+                      </>
+                    )}
+                  </Button>
                   <ColumnVisibilityMenu
                     columns={visitorHistoryColumns}
                     columnVisibility={visitorHistoryColumnVisibility}

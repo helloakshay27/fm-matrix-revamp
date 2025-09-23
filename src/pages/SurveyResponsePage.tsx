@@ -183,7 +183,7 @@ export const SurveyResponsePage = () => {
   const [columns, setColumns] = useState([
     { key: 'actions', label: 'Actions', visible: true },
     { key: 'survey_name', label: 'Survey Name', visible: true },
-    { key: 'site_name', label: 'Site Name', visible: true },
+    // { key: 'site_name', label: 'Site Name', visible: true },
     { key: 'building_name', label: 'Building Name', visible: true },
     { key: 'wing_name', label: 'Wing Name', visible: true },
     { key: 'floor_name', label: 'Floor Name', visible: true },
@@ -646,7 +646,7 @@ export const SurveyResponsePage = () => {
     const allColumns = [
       { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, visible: isColumnVisible('actions'), hideable: false },
       { key: 'survey_name', label: 'Survey Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('survey_name'), hideable: true },
-      { key: 'site_name', label: 'Site Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('site_name'), hideable: true },
+      // { key: 'site_name', label: 'Site Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('site_name'), hideable: true },
       { key: 'building_name', label: 'Building Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
       { key: 'wing_name', label: 'Wing Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
       { key: 'floor_name', label: 'Floor Name', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
