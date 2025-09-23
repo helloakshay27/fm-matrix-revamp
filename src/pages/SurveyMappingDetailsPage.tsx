@@ -597,6 +597,9 @@ export const SurveyMappingDetailsPage = () => {
                           {mappingItem.floor_name && (
                             <div><strong>Floor:</strong> {mappingItem.floor_name}</div>
                           )}
+                          {mappingItem.area_name && (
+                            <div><strong>area:</strong> {mappingItem.area_name}</div>
+                            )}
                           {mappingItem.room_name && (
                             <div><strong>Room:</strong> {mappingItem.room_name}</div>
                           )}
