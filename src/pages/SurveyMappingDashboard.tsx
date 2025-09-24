@@ -433,12 +433,13 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className=" group">
+          <div className="group">
             <span className="cursor-pointer">
               {item.building_name}
               {allBuildings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+            <div className="fixed z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none" 
+                 style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <div className="font-semibold mb-1">All Buildings ({allBuildings.length}):</div>
               {allBuildings.map((building, index) => (
                 <div key={index} className="py-0.5">{building}</div>
@@ -457,12 +458,13 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className=" group">
+          <div className="group">
             <span className="cursor-pointer">
               {item.wing_name || '-'}
               {allWings.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+            <div className="fixed z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none"
+                 style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <div className="font-semibold mb-1">All Wings ({allWings.length}):</div>
               {allWings.map((wing, index) => (
                 <div key={index} className="py-0.5">{wing}</div>
@@ -481,12 +483,13 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className=" group">
+          <div className="group">
             <span className="cursor-pointer">
               {item.floor_name || '-'}
               {allFloors.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+            <div className="fixed z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none"
+                 style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <div className="font-semibold mb-1">All Floors ({allFloors.length}):</div>
               {allFloors.map((floor, index) => (
                 <div key={index} className="py-0.5">{floor}</div>
@@ -505,12 +508,13 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className=" group">
+          <div className="group">
             <span className="cursor-pointer">
               {item.area_name || '-'}
               {allAreas.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+            <div className="fixed z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none"
+                 style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <div className="font-semibold mb-1">All Areas ({allAreas.length}):</div>
               {allAreas.map((area, index) => (
                 <div key={index} className="py-0.5">{area}</div>
@@ -529,12 +533,13 @@ export const SurveyMappingDashboard = () => {
         }
         
         return (
-          <div className=" group">
+          <div className="group">
             <span className="cursor-pointer">
               {item.room_name || '-'}
               {allRooms.length > 1 && <span className="text-blue-600 ml-1">...</span>}
             </span>
-            <div className="absolute z-10 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 left-0 top-full mt-1 min-w-max max-w-xs shadow-lg">
+            <div className="fixed z-50 invisible group-hover:visible bg-black text-white text-xs rounded py-2 px-3 min-w-max max-w-xs shadow-lg pointer-events-none"
+                 style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
               <div className="font-semibold mb-1">All Rooms ({allRooms.length}):</div>
               {allRooms.map((room, index) => (
                 <div key={index} className="py-0.5">{room}</div>
