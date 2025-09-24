@@ -1102,12 +1102,11 @@ export const ViewSchedulePage = () => {
                   </Select>
                 </FormControl>
               </div> */}
-              {customForm?.submission_time_type && (
-                <>
+              
               <div className="space-y-2">
                 <TextField
                   label="Submission Type"
-                  value={customForm?.submission_time_type || ''}
+                  value={customForm?.submission_time_type || 'No Submission Time'}
                   InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
@@ -1118,7 +1117,7 @@ export const ViewSchedulePage = () => {
               <div className="space-y-2">
                 <TextField
                   label="Submission Time Value"
-                  value={customForm?.submission_time_value?.toString() || ''}
+                  value={customForm?.submission_time_value?.toString() || 'No Submission Value'}
                   InputProps={{ readOnly: true, disabled: true }}
                   fullWidth
                   variant="outlined"
@@ -1126,8 +1125,6 @@ export const ViewSchedulePage = () => {
                   sx={muiFieldStyles}
                 />
               </div>
-                </>
-              )}
             </div>
 
             <div className="grid grid-cols-3 gap-4">
