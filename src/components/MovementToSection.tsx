@@ -264,14 +264,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Wing</span>;
                 }
-                const wing = wings.find(w => w.wings.id === Number(selected));
-                return wing?.wings.name || 'Select Wing';
+                const wing = wings.find(w => w.id === Number(selected));
+                return wing?.name || 'Select Wing';
               },
             }}
           >
             {wings.map((wing) => (
-              <MenuItem key={wing.wings.id} value={wing.wings.id}>
-                {wing.wings.name}
+              <MenuItem key={wing.id} value={wing.id}>
+                {wing.name}
               </MenuItem>
             ))}
           </TextField>
@@ -354,14 +354,14 @@ export const MovementToSection: React.FC<MovementToSectionProps> = ({
                 if (!selected) {
                   return <span style={{ color: '#9CA3AF' }}>Select Room</span>;
                 }
-                const room = rooms.find(r => r.rooms.id === Number(selected));
-                return room?.rooms.name || 'Select Room';
+                const room = rooms.find(r => r.id === Number(selected));
+                return room?.name || 'Select Room';
               },
             }}
           >
             {rooms.map((room) => (
-              <MenuItem key={room.rooms.id} value={room.rooms.id}>
-                {room.rooms.name}
+              <MenuItem key={room.id} value={room.id}>
+                {room.name}
               </MenuItem>
             ))}
           </TextField>
