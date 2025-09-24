@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { EnhancedTable } from "../components/enhanced-table/EnhancedTable";
-import { toast } from "@/components/ui/sonner";
+import { toast as sonnerToast } from "@/components/ui/sonner";
 import { useToast } from "@/components/ui/use-toast";
 import { apiClient } from "@/utils/apiClient";
 import { Switch } from "@/components/ui/switch";
@@ -266,7 +266,10 @@ export const SurveyMappingDashboard = () => {
   }, []);
 
   const handleStatusToggle = async (item: SurveyMapping) => {
-    const newStatus = !item.active;
+    // Handle both boolean and number (0/1) status values
+    const currentStatus = item.survey_active || item.active;
+    const isCurrentlyActive = currentStatus === 1 || currentStatus === true;
+    const newStatus = !isCurrentlyActive; // Send boolean true/false to API
 
     try {
       // Call the API to toggle status
@@ -281,24 +284,20 @@ export const SurveyMappingDashboard = () => {
       setMappings((prev) =>
         prev.map((mapping) =>
           mapping.survey_id === item.survey_id
-            ? { ...mapping, active: newStatus }
+            ? { ...mapping, survey_active: newStatus ? 1 : 0, active: newStatus }
             : mapping
         )
       );
 
-      toast({
-        title: "Success",
-        description: `Survey mapping status ${
-          item.active ? "deactivated" : "activated"
-        }`,
-      });
+      // Sonner toast
+      sonnerToast.success(`Survey mapping status ${
+        isCurrentlyActive ? "deactivated" : "activated"
+      }`);
     } catch (error: unknown) {
       console.error("Error toggling survey mapping status:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update survey mapping status",
-        variant: "destructive",
-      });
+      
+      // Sonner toast for error
+      sonnerToast.error("Failed to update survey mapping status");
     }
   };
 
@@ -830,23 +829,28 @@ export const SurveyMappingDashboard = () => {
         return <span>{item.ticket_configs?.assigned_to || "-"}</span>;
       case "created_by":
         return <span>{item.created_by}</span>;
-      case "status":
+      case "status": {
+        // Handle both boolean and number (0/1) status values
+        const currentStatus = item.survey_active || item.active;
+        const isActive = currentStatus === 1 || currentStatus === true;
+        
         return (
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleStatusToggle(item)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? "bg-green-500" : "bg-gray-300"
+                isActive ? "bg-green-500" : "bg-gray-300"
               }`}
             >
               <div
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  item.active ? "translate-x-6" : "translate-x-1"
+                  isActive ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
           </div>
         );
+      }
       case "created_at":
         return item.created_at
           ? new Date(item.created_at).toLocaleDateString()
