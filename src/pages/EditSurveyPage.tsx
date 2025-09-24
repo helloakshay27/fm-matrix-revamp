@@ -143,6 +143,12 @@ export const EditSurveyPage = () => {
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Destroy IDs tracking for smart deletion
+  const [destroyQuestionIds, setDestroyQuestionIds] = useState<string[]>([]);
+  const [destroyTagIds, setDestroyTagIds] = useState<number[]>([]);
+  const [destroyOptionIds, setDestroyOptionIds] = useState<number[]>([]);
+  const [destroyIconIds, setDestroyIconIds] = useState<number[]>([]);
+
   useEffect(() => {
     fetchCategories();
     if (id) {
@@ -336,8 +342,35 @@ export const EditSurveyPage = () => {
         const updatedQuestions = prevQuestions.map((q) => {
           if (q.id === id) {
             console.log("Marking question for deletion:", q);
-            // Instead of removing the question, mark it for deletion
-            // This preserves the original question ID for proper API handling
+            
+            // Track destroy IDs for existing questions (not new ones)
+            if (q.id && !q.id.startsWith("new_") && q.id !== "1") {
+              setDestroyQuestionIds(prev => [...prev, q.id!]);
+              
+              // Collect option IDs for destruction
+              if (q.answerOptions) {
+                const optionIds = q.answerOptions
+                  .filter(option => option.id)
+                  .map(option => option.id!);
+                setDestroyOptionIds(prev => [...prev, ...optionIds]);
+              }
+              
+              // Collect additional field (tag) IDs for destruction
+              if (q.additionalFields) {
+                const tagIds = q.additionalFields
+                  .filter(field => field.id)
+                  .map(field => field.id!);
+                setDestroyTagIds(prev => [...prev, ...tagIds]);
+                
+                // Collect icon IDs from existing files
+                const iconIds = q.additionalFields
+                  .flatMap(field => field.existingFiles || [])
+                  .map(file => file.id);
+                setDestroyIconIds(prev => [...prev, ...iconIds]);
+              }
+            }
+            
+            // Mark question for deletion
             return {
               ...q,
               markedForDeletion: true
@@ -431,16 +464,24 @@ export const EditSurveyPage = () => {
     optionIndex: number
   ) => {
     setQuestions(
-      questions.map((q) =>
-        q.id === questionId
-          ? {
-              ...q,
-              answerOptions: q.answerOptions?.filter(
-                (_, index) => index !== optionIndex
-              ),
-            }
-          : q
-      )
+      questions.map((q) => {
+        if (q.id === questionId && q.answerOptions) {
+          const optionToRemove = q.answerOptions[optionIndex];
+          
+          // Track destroy ID for existing options
+          if (optionToRemove?.id) {
+            setDestroyOptionIds(prev => [...prev, optionToRemove.id!]);
+          }
+          
+          return {
+            ...q,
+            answerOptions: q.answerOptions.filter(
+              (_, index) => index !== optionIndex
+            ),
+          };
+        }
+        return q;
+      })
     );
   };
 
@@ -504,16 +545,30 @@ export const EditSurveyPage = () => {
     fieldIndex: number
   ) => {
     setQuestions(
-      questions.map((q) =>
-        q.id === questionId
-          ? {
-              ...q,
-              additionalFields: q.additionalFields?.filter(
-                (_, index) => index !== fieldIndex
-              ),
-            }
-          : q
-      )
+      questions.map((q) => {
+        if (q.id === questionId && q.additionalFields) {
+          const fieldToRemove = q.additionalFields[fieldIndex];
+          
+          // Track destroy ID for existing additional fields (tags)
+          if (fieldToRemove?.id) {
+            setDestroyTagIds(prev => [...prev, fieldToRemove.id!]);
+          }
+          
+          // Track destroy IDs for existing files (icons)
+          if (fieldToRemove?.existingFiles) {
+            const iconIds = fieldToRemove.existingFiles.map(file => file.id);
+            setDestroyIconIds(prev => [...prev, ...iconIds]);
+          }
+          
+          return {
+            ...q,
+            additionalFields: q.additionalFields.filter(
+              (_, index) => index !== fieldIndex
+            ),
+          };
+        }
+        return q;
+      })
     );
   };
 
@@ -584,6 +639,9 @@ export const EditSurveyPage = () => {
     fieldIndex: number,
     fileId: number
   ) => {
+    // Track destroy ID for existing files (icons)
+    setDestroyIconIds(prev => [...prev, fileId]);
+    
     setQuestions(
       questions.map((q) =>
         q.id === questionId
@@ -731,6 +789,23 @@ export const EditSurveyPage = () => {
         formData.append("category_type", assignTo);
       }
 
+      // Add destroy IDs for smart deletion
+      destroyQuestionIds.forEach(questionId => {
+        formData.append("destroy_questions_ids[]", questionId);
+      });
+      
+      destroyTagIds.forEach(tagId => {
+        formData.append("destroy_tags_ids[]", tagId.toString());
+      });
+      
+      destroyOptionIds.forEach(optionId => {
+        formData.append("destroy_options_ids[]", optionId.toString());
+      });
+      
+      destroyIconIds.forEach(iconId => {
+        formData.append("destroy_icons_ids[]", iconId.toString());
+      });
+
       // Process questions with proper FormData structure matching server expectations
       questions.forEach((question, questionIndex) => {
         // Skip questions marked for deletion in the main processing
@@ -849,6 +924,12 @@ export const EditSurveyPage = () => {
         }
       );
       console.log("Question updated successfully:", response.data);
+
+      // Clear destroy IDs after successful update
+      setDestroyQuestionIds([]);
+      setDestroyTagIds([]);
+      setDestroyOptionIds([]);
+      setDestroyIconIds([]);
 
       // Show success toast
       toast.success("Question Updated Successfully!", {
