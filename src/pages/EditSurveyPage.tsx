@@ -436,6 +436,31 @@ export const EditSurveyPage = () => {
           ) {
             updatedQuestion.additionalFields = [{ title: "", files: [] }];
           }
+          
+          // Handle smart deletion when additionalFieldOnNegative is unchecked
+          if (
+            field === "additionalFieldOnNegative" &&
+            value === false &&
+            updatedQuestion.additionalFields
+          ) {
+            // Mark existing additional fields (tags) for deletion
+            updatedQuestion.additionalFields.forEach((additionalField) => {
+              if (additionalField.id) {
+                setDestroyTagIds(prev => [...prev, additionalField.id!]);
+              }
+              
+              // Mark existing files (icons) for deletion
+              if (additionalField.existingFiles) {
+                additionalField.existingFiles.forEach((file) => {
+                  setDestroyIconIds(prev => [...prev, file.id]);
+                });
+              }
+            });
+            
+            // Clear the additional fields
+            updatedQuestion.additionalFields = undefined;
+          }
+          
           return updatedQuestion;
         }
         return q;
@@ -762,6 +787,18 @@ export const EditSurveyPage = () => {
           if (!field.title.trim()) {
             toast.error("Validation Error", {
               description: `Please enter title for additional field ${k + 1} in Question ${displayIndex}`,
+              duration: 3000,
+            });
+            return;
+          }
+          
+          // Check if file attachment is required
+          const hasNewFiles = field.files && field.files.length > 0;
+          const hasExistingFiles = field.existingFiles && field.existingFiles.length > 0;
+          
+          if (!hasNewFiles && !hasExistingFiles) {
+            toast.error("Validation Error", {
+              description: `Please upload at least one file for additional field ${k + 1} in Question ${displayIndex}`,
               duration: 3000,
             });
             return;
@@ -1469,7 +1506,11 @@ export const EditSurveyPage = () => {
                                     }
                                     fullWidth
                                     variant="outlined"
-                                    InputLabelProps={{ shrink: true }}
+                                    required
+                                    InputLabelProps={{ 
+                                      shrink: true,
+                                      sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                                    }}
                                     InputProps={{
                                       sx: { ...fieldStyles, height: "36px" },
                                     }}
@@ -1485,7 +1526,11 @@ export const EditSurveyPage = () => {
                                       }
                                       fullWidth
                                       variant="outlined"
-                                      InputLabelProps={{ shrink: true }}
+                                      required
+                                      InputLabelProps={{ 
+                                        shrink: true,
+                                        sx: { '& .MuiInputLabel-asterisk': { color: '#ef4444' } }
+                                      }}
                                       InputProps={{
                                         sx: {
                                           ...fieldStyles,
