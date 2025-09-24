@@ -30,6 +30,7 @@ import {
 } from '@/components/ticket-analytics';
 import { useToast } from '@/hooks/use-toast';
 import { useDebounce } from '@/hooks/useDebounce';
+import { toast as sonnerToast } from 'sonner';
 
 // Sortable Chart Item Component
 const SortableChartItem = ({
@@ -195,6 +196,8 @@ export const TicketDashboard = () => {
   const isSearchingRef = useRef(false);
   const [isEditStatusOpen, setIsEditStatusOpen] = useState(false);
   const [selectedTicketForEdit, setSelectedTicketForEdit] = useState<TicketResponse | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const perPage = 20;
 
   // Drag and drop sensors
@@ -828,6 +831,18 @@ export const TicketDashboard = () => {
   };
   const handleExport = async () => {
     console.log('TicketDashboard - Export action for tickets:', selectedTickets);
+    
+    if (isExporting) {
+      return; // Prevent multiple simultaneous exports
+    }
+    
+    setIsExporting(true);
+    
+    // Show loading toast
+    const loadingToastId = sonnerToast.loading("Preparing export file...", {
+      duration: Infinity, // Keep it visible until we dismiss it
+    });
+    
     try {
       const blob = await ticketManagementAPI.exportTicketsExcel(filters);
       const url = window.URL.createObjectURL(blob);
@@ -836,17 +851,19 @@ export const TicketDashboard = () => {
       a.download = `tickets_${new Date().toISOString().split('T')[0]}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-      toast({
-        title: "Success",
-        description: "Tickets exported successfully"
-      });
+      
+      // Dismiss loading toast and show success
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.success("Tickets exported successfully!");
+      
     } catch (error) {
       console.error('Export failed:', error);
-      toast({
-        title: "Error",
-        description: "Failed to export tickets",
-        variant: "destructive"
-      });
+      
+      // Dismiss loading toast and show error
+      sonnerToast.dismiss(loadingToastId);
+      sonnerToast.error("Failed to export tickets. Please try again.");
+    } finally {
+      setIsExporting(false);
     }
   };
   const handleFilterApply = (newFilters: TicketFilters) => {
@@ -1473,6 +1490,7 @@ export const TicketDashboard = () => {
               pagination={false}
               enableExport={true}
               exportFileName="tickets"
+              handleExport={handleExport}
               storageKey="tickets-table"
               enableSelection={true}
               selectedItems={selectedTickets.map(id => id.toString())}
@@ -1493,6 +1511,7 @@ export const TicketDashboard = () => {
               className="transition-all duration-500 ease-in-out"
               loading={loading}
               loadingMessage="Loading tickets..."
+              exportLoading={isExporting}
             />
 
                 {/* Add custom CSS for smooth row transitions */}

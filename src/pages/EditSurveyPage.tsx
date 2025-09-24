@@ -56,6 +56,8 @@ interface Question {
       url: string;
     }>;
   }>;
+  // Add flag to track if question should be deleted
+  markedForDeletion?: boolean;
 }
 
 interface Category {
@@ -316,8 +318,62 @@ export const EditSurveyPage = () => {
   };
 
   const handleRemoveQuestion = (id: string) => {
-    if (questions.length > 1) {
-      setQuestions(questions.filter((q) => q.id !== id));
+    console.log("Removing question with ID:", id);
+    const activeQuestions = questions.filter(q => {
+      const isMarkedForDeletion = q.markedForDeletion === true;
+      const hasValidId = q.id && q.id.trim() !== "";
+      const hasValidText = q.text && q.text.trim() !== "";
+      const hasValidAnswerType = q.answerType && q.answerType.trim() !== "";
+      const isNotNullData = q.text !== null && q.answerType !== null;
+      return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
+    });
+    console.log("Active questions before removal:", activeQuestions.length);
+    
+    // Only allow removal if there will be at least one active question remaining
+    if (activeQuestions.length > 1) {
+      setQuestions(prevQuestions => {
+        console.log("Previous questions:", prevQuestions);
+        const updatedQuestions = prevQuestions.map((q) => {
+          if (q.id === id) {
+            console.log("Marking question for deletion:", q);
+            // Instead of removing the question, mark it for deletion
+            // This preserves the original question ID for proper API handling
+            return {
+              ...q,
+              markedForDeletion: true
+            };
+          }
+          return q;
+        });
+        
+        console.log("Updated questions after marking:", updatedQuestions);
+        
+        // Check if all questions are now marked for deletion or have null content
+        const remainingActiveQuestions = updatedQuestions.filter(q => {
+          const isMarkedForDeletion = q.markedForDeletion === true;
+          const hasValidId = q.id && q.id.trim() !== "";
+          const hasValidText = q.text && q.text.trim() !== "";
+          const hasValidAnswerType = q.answerType && q.answerType.trim() !== "";
+          const isNotNullData = q.text !== null && q.answerType !== null;
+          return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
+        });
+        console.log("Remaining active questions:", remainingActiveQuestions.length);
+        
+        // If no active questions remain, add a new blank question
+        if (remainingActiveQuestions.length === 0) {
+          console.log("No active questions remain, adding new blank question");
+          updatedQuestions.push({
+            id: `new_${Date.now()}`,
+            text: "",
+            answerType: "",
+            mandatory: false,
+          });
+        }
+        
+        return updatedQuestions;
+      });
+    } else {
+      console.log("Cannot remove - would leave no active questions");
     }
   };
 
@@ -582,19 +638,39 @@ export const EditSurveyPage = () => {
       }
     }
 
-    // Validate questions
-    for (let i = 0; i < questions.length; i++) {
-      const question = questions[i];
+    // Validate questions (exclude deleted ones and null/empty ones)
+    const activeQuestions = questions.filter(q => {
+      const isMarkedForDeletion = q.markedForDeletion === true;
+      const hasValidId = q.id && q.id.trim() !== "";
+      const hasValidText = q.text && q.text.trim() !== "";
+      const hasValidAnswerType = q.answerType && q.answerType.trim() !== "";
+      const isNotNullData = q.text !== null && q.answerType !== null;
+      return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
+    });
+    
+    console.log("Validation - Active questions:", activeQuestions);
+    
+    if (activeQuestions.length === 0) {
+      toast.error("Validation Error", {
+        description: "Please add at least one question",
+        duration: 3000,
+      });
+      return;
+    }
+    
+    for (let i = 0; i < activeQuestions.length; i++) {
+      const question = activeQuestions[i];
+      const displayIndex = i + 1; // Use sequential index for display
       if (!question.text.trim()) {
         toast.error("Validation Error", {
-          description: `Please enter text for Question ${i + 1}`,
+          description: `Please enter text for Question ${displayIndex}`,
           duration: 3000,
         });
         return;
       }
       if (!question.answerType) {
         toast.error("Validation Error", {
-          description: `Please select an answer type for Question ${i + 1}`,
+          description: `Please select an answer type for Question ${displayIndex}`,
           duration: 3000,
         });
         return;
@@ -604,7 +680,7 @@ export const EditSurveyPage = () => {
       if (question.answerType === "multiple-choice") {
         if (!question.answerOptions || question.answerOptions.length === 0) {
           toast.error("Validation Error", {
-            description: `Please add at least one option for Question ${i + 1}`,
+            description: `Please add at least one option for Question ${displayIndex}`,
             duration: 3000,
           });
           return;
@@ -613,7 +689,7 @@ export const EditSurveyPage = () => {
         for (let j = 0; j < question.answerOptions.length; j++) {
           if (!question.answerOptions[j].text.trim()) {
             toast.error("Validation Error", {
-              description: `Please enter text for option ${j + 1} in Question ${i + 1}`,
+              description: `Please enter text for option ${j + 1} in Question ${displayIndex}`,
               duration: 3000,
             });
             return;
@@ -627,7 +703,7 @@ export const EditSurveyPage = () => {
           const field = question.additionalFields[k];
           if (!field.title.trim()) {
             toast.error("Validation Error", {
-              description: `Please enter title for additional field ${k + 1} in Question ${i + 1}`,
+              description: `Please enter title for additional field ${k + 1} in Question ${displayIndex}`,
               duration: 3000,
             });
             return;
@@ -657,6 +733,17 @@ export const EditSurveyPage = () => {
 
       // Process questions with proper FormData structure matching server expectations
       questions.forEach((question, questionIndex) => {
+        // Skip questions marked for deletion in the main processing
+        // but handle them separately for deletion
+        if (question.markedForDeletion) {
+          // For questions marked for deletion, we need to send the ID with a destroy flag
+          if (question.id && !question.id.startsWith("new_") && question.id !== "1") {
+            formData.append(`question[][id]`, question.id);
+            formData.append(`question[][_destroy]`, "true");
+          }
+          return; // Skip the rest of the processing for deleted questions
+        }
+
         // Add question ID only for existing questions (not new ones)
         // New questions have IDs that start with "new_" or are "1" (default)
         const isNewQuestion = !question.id || 
@@ -983,7 +1070,17 @@ export const EditSurveyPage = () => {
                   </span>
                   <div className="flex items-center gap-2 bg-gray-50 px-3 py-1 rounded">
                     <span className="text-sm">
-                      {questions.length.toString().padStart(2, "0")}
+                      {(() => {
+                        const activeCount = questions.filter(q => {
+                          const isMarkedForDeletion = q.markedForDeletion === true;
+                          const hasValidId = q.id && q.id.trim() !== "";
+                          const hasValidText = q.text && q.text.trim() !== "";
+                          const hasValidAnswerType = q.answerType && q.answerType.trim() !== "";
+                          const isNotNullData = q.text !== null && q.answerType !== null;
+                          return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
+                        }).length;
+                        return activeCount.toString().padStart(2, "0");
+                      })()}
                     </span>
                     <Button
                       size="sm"
@@ -996,14 +1093,45 @@ export const EditSurveyPage = () => {
                   </div>
                   <span className="text-sm">No. of Questions</span>
                   <span className="bg-gray-200 px-2 py-1 rounded text-sm">
-                    {questions.length}
+                    {questions.filter(q => {
+                      const isMarkedForDeletion = q.markedForDeletion === true;
+                      const hasValidId = q.id && q.id.trim() !== "";
+                      const hasValidText = q.text && q.text.trim() !== "";
+                      const hasValidAnswerType = q.answerType && q.answerType.trim() !== "";
+                      const isNotNullData = q.text !== null && q.answerType !== null;
+                      return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || q.id.startsWith("new_"));
+                    }).length}
                   </span>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {questions.map((question, index) => (
-                  <Card key={question.id} className="relative">
+                {(() => {
+                  // Debug: Log current questions state
+                  console.log("All questions:", questions);
+                  
+                  // Filter out questions marked for deletion and questions with null/empty essential content
+                  const activeQuestions = questions.filter(question => {
+                    const isMarkedForDeletion = question.markedForDeletion === true;
+                    const hasValidId = question.id && question.id.trim() !== "";
+                    const hasValidText = question.text && question.text.trim() !== "";
+                    const hasValidAnswerType = question.answerType && question.answerType.trim() !== "";
+                    const isNotNullData = question.text !== null && question.answerType !== null;
+                    
+                    console.log(`Question ${question.id}: markedForDeletion=${isMarkedForDeletion}, hasValidId=${hasValidId}, hasValidText=${hasValidText}, hasValidAnswerType=${hasValidAnswerType}, isNotNullData=${isNotNullData}`);
+                    
+                    // Only show questions that are:
+                    // - NOT marked for deletion
+                    // - Have valid ID
+                    // - Have non-null, non-empty text content
+                    // - Have valid answer type (or are new questions being created)
+                    return !isMarkedForDeletion && hasValidId && isNotNullData && (hasValidText || hasValidAnswerType || question.id.startsWith("new_"));
+                  });
+                  
+                  console.log("Active questions after filtering:", activeQuestions);
+                  return activeQuestions;
+                })().map((question, index) => (
+                  <Card key={`active-${question.id}-${index}`} className="relative">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium text-black">
