@@ -16,6 +16,7 @@ import {
   StepConnector,
   TextareaAutosize,
   IconButton,
+  CircularProgress,
 } from '@mui/material';
 import {
   ArrowLeft,
@@ -34,6 +35,7 @@ import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { vendorService } from '@/services/vendorService';
 import { toast } from 'sonner';
+import { useApiData } from '@/hooks/useApiData';
 
 const CustomStepConnector = styled(StepConnector)(({ theme }) => ({
   '& .MuiStepConnector-line': {
@@ -211,6 +213,7 @@ const initialContactPerson = {
 
 export const AddVendorPage = () => {
   const navigate = useNavigate();
+  const { suppliers, services, loading } = useApiData();
   const [activeStep, setActiveStep] = useState(0);
   const [completedSteps, setCompletedSteps] = useState<number[]>([]);
   const [formData, setFormData] = useState(initialFormData);
@@ -239,28 +242,13 @@ export const AddVendorPage = () => {
     const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
     
     if (activeStep === 0) {
-      // Company Name validation
+      // Company Name validation (REQUIRED - has red asterisk)
       if (!formData.companyName.trim()) {
         newErrors.companyName = 'Company Name is required';
         isValid = false;
       }
       
-      // Primary Phone validation
-      if (!formData.primaryPhone.trim()) {
-        newErrors.primaryPhone = 'Primary Phone is required';
-        isValid = false;
-      } else if (!phoneRegex.test(formData.primaryPhone.trim())) {
-        newErrors.primaryPhone = 'Please enter a valid 10-digit phone number';
-        isValid = false;
-      }
-      
-      // Secondary Phone validation (optional but if provided should be valid)
-      if (formData.secondaryPhone.trim() && !phoneRegex.test(formData.secondaryPhone.trim())) {
-        newErrors.secondaryPhone = 'Please enter a valid 10-digit phone number';
-        isValid = false;
-      }
-      
-      // Email validation
+      // Email validation (REQUIRED - has red asterisk)
       if (!formData.email.trim()) {
         newErrors.email = 'Email is required';
         isValid = false;
@@ -269,19 +257,27 @@ export const AddVendorPage = () => {
         isValid = false;
       }
       
-      // PAN validation (optional but if provided should be valid)
+      // Optional fields - only validate format if provided
+      if (formData.primaryPhone.trim() && !phoneRegex.test(formData.primaryPhone.trim())) {
+        newErrors.primaryPhone = 'Please enter a valid 10-digit phone number';
+        isValid = false;
+      }
+      
+      if (formData.secondaryPhone.trim() && !phoneRegex.test(formData.secondaryPhone.trim())) {
+        newErrors.secondaryPhone = 'Please enter a valid 10-digit phone number';
+        isValid = false;
+      }
+      
       if (formData.pan.trim() && !panRegex.test(formData.pan.trim().toUpperCase())) {
         newErrors.pan = 'Please enter a valid PAN number (e.g., ABCDE1234F)';
         isValid = false;
       }
       
-      // GST validation (optional but if provided should be valid)
       if (formData.gst.trim() && !gstRegex.test(formData.gst.trim().toUpperCase())) {
         newErrors.gst = 'Please enter a valid GST number (15 characters)';
         isValid = false;
       }
       
-      // Website URL validation (optional but if provided should be valid)
       if (formData.websiteUrl.trim() && !urlRegex.test(formData.websiteUrl.trim())) {
         newErrors.websiteUrl = 'Please enter a valid website URL';
         isValid = false;
@@ -290,27 +286,31 @@ export const AddVendorPage = () => {
     
     // Address validation for step 1
     if (activeStep === 1) {
-      if (!formData.addressLine1.trim()) {
-        newErrors.addressLine1 = 'Address Line 1 is required';
-        isValid = false;
-      }
-      
-      if (!formData.city.trim()) {
-        newErrors.city = 'City is required';
-        isValid = false;
-      }
-      
-      if (!formData.state.trim()) {
-        newErrors.state = 'State is required';
-        isValid = false;
-      }
-      
+      // Country validation (REQUIRED - has red asterisk)
       if (!formData.country.trim()) {
         newErrors.country = 'Country is required';
         isValid = false;
       }
       
-      // Pincode validation (6 digits)
+      // State validation (REQUIRED - has red asterisk)
+      if (!formData.state.trim()) {
+        newErrors.state = 'State is required';
+        isValid = false;
+      }
+      
+      // City validation (REQUIRED - has red asterisk)
+      if (!formData.city.trim()) {
+        newErrors.city = 'City is required';
+        isValid = false;
+      }
+      
+      // Address Line1 validation (REQUIRED - has red asterisk)
+      if (!formData.addressLine1.trim()) {
+        newErrors.addressLine1 = 'Address Line 1 is required';
+        isValid = false;
+      }
+      
+      // Optional fields - only validate format if provided
       if (formData.pincode.trim()) {
         const pincodeRegex = /^[0-9]{6}$/;
         if (!pincodeRegex.test(formData.pincode.trim())) {
@@ -320,8 +320,9 @@ export const AddVendorPage = () => {
       }
     }
     
-    // Bank Details validation for step 2
+    // Bank Details validation for step 2 (all optional - no red asterisks)
     if (activeStep === 2) {
+      // Only validate format if provided
       if (formData.accountNumber.trim() && !/^[0-9]{9,18}$/.test(formData.accountNumber.trim())) {
         newErrors.accountNumber = 'Please enter a valid account number (9-18 digits)';
         isValid = false;
@@ -339,41 +340,34 @@ export const AddVendorPage = () => {
     // Contact Person validation for step 3
     if (activeStep === 3) {
       contactPersons.forEach((contact, index) => {
-        // At least first name is required for each contact person
+        // First name validation (REQUIRED - has red asterisk)
         if (!contact.firstName.trim()) {
           newErrors[`contact_${index}_firstName`] = 'First name is required';
           isValid = false;
         }
         
-        // At least last name is required for each contact person
+        // Last name validation (REQUIRED - has red asterisk)
         if (!contact.lastName.trim()) {
           newErrors[`contact_${index}_lastName`] = 'Last name is required';
           isValid = false;
         }
         
-        // At least one email or mobile is required for each contact person
-        const hasEmail = contact.primaryEmail.trim() || contact.secondaryEmail.trim();
-        const hasMobile = contact.primaryMobile.trim() || contact.secondaryMobile.trim();
-        
-        // Primary Mobile validation
+        // Optional fields - only validate format if provided
         if (contact.primaryMobile.trim() && !phoneRegex.test(contact.primaryMobile.trim())) {
           newErrors[`contact_${index}_primaryMobile`] = 'Please enter a valid 10-digit mobile number';
           isValid = false;
         }
         
-        // Secondary Mobile validation
         if (contact.secondaryMobile.trim() && !phoneRegex.test(contact.secondaryMobile.trim())) {
           newErrors[`contact_${index}_secondaryMobile`] = 'Please enter a valid 10-digit mobile number';
           isValid = false;
         }
         
-        // Primary Email validation
         if (contact.primaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
           newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
           isValid = false;
         }
         
-        // Secondary Email validation
         if (contact.secondaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.secondaryEmail)) {
           newErrors[`contact_${index}_secondaryEmail`] = 'Please enter a valid email address';
           isValid = false;
@@ -564,6 +558,7 @@ export const AddVendorPage = () => {
                 />
                 <TextField
                   label="Primary Phone No."
+                  type='numeric'
                   fullWidth
                   value={formData.primaryPhone}
                   onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
@@ -611,9 +606,20 @@ export const AddVendorPage = () => {
                   fullWidth
                   value={formData.supplierType}
                   onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
+                  disabled={loading.suppliers}
+                  InputProps={{
+                    endAdornment: loading.suppliers ? <CircularProgress size={20} /> : null,
+                  }}
                 >
-                  <MenuItem value="type1">Type 1</MenuItem>
-                  <MenuItem value="type2">Type 2</MenuItem>
+                  {loading.suppliers ? (
+                    <MenuItem value="">Loading...</MenuItem>
+                  ) : (
+                    suppliers.map((supplier: any) => (
+                      <MenuItem key={supplier.id} value={supplier.id}>
+                        {supplier.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </TextField>
                 <TextField
                   label="Website Url"
@@ -648,8 +654,20 @@ export const AddVendorPage = () => {
                   fullWidth
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
+                  disabled={loading.services}
+                  InputProps={{
+                    endAdornment: loading.services ? <CircularProgress size={20} /> : null,
+                  }}
                 >
-                  <MenuItem value="service1">Service 1</MenuItem>
+                  {loading.services ? (
+                    <MenuItem value="">Loading...</MenuItem>
+                  ) : (
+                    services.map((service: any) => (
+                      <MenuItem key={service.id} value={service.id}>
+                        {service.name}
+                      </MenuItem>
+                    ))
+                  )}
                 </TextField>
                   <div className="col-span-1 md:col-span-2 lg:col-span-3">
 
