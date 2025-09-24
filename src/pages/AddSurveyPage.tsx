@@ -482,6 +482,38 @@ export const AddSurveyPage = () => {
           }
         }
       }
+
+      // Validate additional fields when "Additional Fields for Negative Selection" is checked
+      if (question.additionalFieldOnNegative) {
+        if (!question.additionalFields || question.additionalFields.length === 0) {
+          toast.error("Validation Error", {
+            description: `When "Additional Fields for Negative Selection" is enabled for Question ${i + 1}, at least one additional field is required`,
+            duration: 3000,
+          });
+          return;
+        }
+
+        // Check that each additional field has both title and file
+        for (let k = 0; k < question.additionalFields.length; k++) {
+          const field = question.additionalFields[k];
+          
+          if (!field.title || !field.title.trim()) {
+            toast.error("Validation Error", {
+              description: `Please enter a title for additional field ${k + 1} in Question ${i + 1}`,
+              duration: 3000,
+            });
+            return;
+          }
+
+          if (!field.files || field.files.length === 0) {
+            toast.error("Validation Error", {
+              description: `Please upload at least one file for additional field ${k + 1} in Question ${i + 1}`,
+              duration: 3000,
+            });
+            return;
+          }
+        }
+      }
     }
 
     // if (questions.some(q => !q.text.trim())) {
@@ -1121,6 +1153,9 @@ export const AddSurveyPage = () => {
                     <div className="space-y-3 pt-2 border-t border-gray-200 mt-4 pt-4">
                       <label className="text-sm font-medium text-gray-700">
                         Additional Fields for Negative Selection
+                        <span className="text-xs text-gray-500 block mt-1">
+                          Both title and file are required for each field
+                        </span>
                       </label>
 
                       <div className="space-y-4">
@@ -1138,7 +1173,12 @@ export const AddSurveyPage = () => {
                                 }`}
                               >
                                 <TextField
-                                  label="Title"
+                                  label={
+                                    <span>
+                                      Title
+                                      <span className="text-red-500 ml-1">*</span>
+                                    </span>
+                                  }
                                   placeholder="Enter title"
                                   value={field.title}
                                   onChange={(e) =>
@@ -1158,7 +1198,12 @@ export const AddSurveyPage = () => {
 
                                 <div className="relative">
                                   <TextField
-                                    label="Upload File"
+                                    label={
+                                      <span>
+                                        Upload File
+                                        <span className="text-red-500 ml-1">*</span>
+                                      </span>
+                                    }
                                     value={
                                       field.files.length > 0
                                         ? `${field.files.length} file(s) selected`
