@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ArrowLeft, Loader2, CheckCircle, XCircle, Edit, Trash2, List, MapPin, QrCode, Shield, Clock, Users, Calendar, Eye, Info, Download } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/sonner';
 import { apiClient } from '@/utils/apiClient';
 import { EnhancedTable } from '@/components/enhanced-table/EnhancedTable';
 import { ColumnConfig } from '@/hooks/useEnhancedTable';
@@ -97,12 +97,13 @@ interface LocationTableItem {
   qr_code: string | null;
   created_by: string;
   created_at: string;
+  active: boolean;
+  survey_id: number;
 }
 
 export const SurveyMappingDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
   
   const [mapping, setMapping] = useState<SurveyMappingDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -124,16 +125,12 @@ export const SurveyMappingDetailsPage = () => {
       }
     } catch (error: unknown) {
       console.error('Error fetching survey mapping details:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch survey mapping details",
-        variant: "destructive"
-      });
+      toast.error("Failed to fetch survey mapping details");
       setMapping(null);
     } finally {
       setLoading(false);
     }
-  }, [id, toast]);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
@@ -169,18 +166,10 @@ export const SurveyMappingDetailsPage = () => {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast({
-        title: "Success",
-        description: "QR Code PDF downloaded successfully",
-        variant: "default"
-      });
+      toast.success("QR Code PDF downloaded successfully");
     } catch (error) {
       console.error('Error downloading QR code:', error);
-      toast({
-        title: "Error",
-        description: "Failed to download QR code PDF",
-        variant: "destructive"
-      });
+      toast.error("Failed to download QR code PDF");
     }
   };
 
@@ -277,6 +266,13 @@ export const SurveyMappingDetailsPage = () => {
       draggable: false,
       defaultVisible: true,
     },
+    {
+      key: "status",
+      label: "Status",
+      sortable: false,
+      draggable: false,
+      defaultVisible: true,
+    },
      {
       key: "qr_code",
       label: "QR Code",
@@ -302,8 +298,45 @@ export const SurveyMappingDetailsPage = () => {
       qr_code: mappingItem.qr_code_url,
       created_by: mappingItem.created_by,
       created_at: mappingItem.created_at,
+      active: mappingItem.active,
+      survey_id: mappingItem.survey_id,
     }));
   }, [mapping]);
+
+  // Handle status toggle for individual mappings
+  const handleStatusToggle = async (item: LocationTableItem) => {
+    const newStatus = !item.active;
+    
+    try {
+      // Call the API to toggle status for individual mapping
+      await apiClient.put(`/survey_mappings/${item.survey_id}/toggle_status.json`, {
+        mapping_id: item.mapping_id,
+        active: newStatus
+      });
+      
+      // Update local state on success - update the mapping in the mappings array
+      setMapping(prev => {
+        if (!prev) return prev;
+        
+        const updatedMappings = prev.mappings.map(mappingItem => 
+          mappingItem.id === item.mapping_id 
+            ? { ...mappingItem, active: newStatus }
+            : mappingItem
+        );
+        
+        return {
+          ...prev,
+          mappings: updatedMappings
+        };
+      });
+      
+      toast.success(`Location mapping status ${item.active ? 'deactivated' : 'activated'}`);
+      
+    } catch (error: unknown) {
+      console.error('Error toggling location mapping status:', error);
+      toast.error("Cannot activate mapping because survey is inactive");
+    }
+  };
 
   // Custom cell renderer for the table
   const renderLocationCell = (item: LocationTableItem, columnKey: string): React.ReactNode => {
@@ -360,6 +393,21 @@ export const SurveyMappingDetailsPage = () => {
         return <span className="text-sm">{item.created_by}</span>;
       case 'created_at':
         return <span className="text-sm">{formatDate(item.created_at)}</span>;
+      case 'status':
+        return (
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => handleStatusToggle(item)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                item.active ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                item.active ? 'translate-x-6' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+        );
       default:
         return item[columnKey as keyof LocationTableItem];
     }

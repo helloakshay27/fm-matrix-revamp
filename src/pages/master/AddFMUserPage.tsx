@@ -185,7 +185,11 @@ export const AddFMUserPage = () => {
       },
     };
     try {
-      await dispatch(createFmUser({ data: payload, baseUrl, token })).unwrap();
+      const response = await dispatch(createFmUser({ data: payload, baseUrl, token })).unwrap(); s
+      if (response?.error && Array.isArray(response?.error)) {
+        toast.error(response?.error[0]);
+        return;
+      }
       toast.success('User added successfully');
       navigate('/master/user/fm-users');
     } catch (error) {
