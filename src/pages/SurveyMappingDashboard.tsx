@@ -110,6 +110,7 @@ export const SurveyMappingDashboard = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   
   const [mappings, setMappings] = useState<SurveyMapping[]>([]);
   const [allMappingsData, setAllMappingsData] = useState<SurveyGroup[]>([]);
@@ -141,70 +142,107 @@ export const SurveyMappingDashboard = () => {
     // { key: 'qr_code', label: 'QR Code', visible: true }
   ]);
 
-  // Initial load
-  useEffect(() => {
-    const fetchSurveyMappingsData = async (page: number) => {
-      try {
-        setLoading(true);
-        
-        // Use the new mappings_list endpoint with pagination
-        const response = await apiClient.get(`/survey_mappings/mappings_list.json?per_page=${perPage}&page=${page}`);
-        console.log('Survey mapping API response:', response.data);
-        
-        const responseData: SurveyMappingApiResponse = response.data;
-        
-        // Flatten the nested survey mappings into individual rows for the table
-        // But group by survey to avoid duplicates - show one row per survey
-        const flattenedMappings: SurveyMapping[] = [];
-        
-        if (responseData.survey_mappings && responseData.survey_mappings.length > 0) {
-          responseData.survey_mappings.forEach((surveyGroup: SurveyGroup) => {
-            if (surveyGroup.mappings && surveyGroup.mappings.length > 0) {
-              // Take the first mapping as the representative for the survey
-              const firstMapping = surveyGroup.mappings[0];
-              
-              // Create a representative mapping that combines survey info with first mapping info
-              const representativeMapping: SurveyMapping = {
-                ...firstMapping,
-                // Add survey-level fields for easy access
-                survey_name: surveyGroup.name,
-                survey_check_type: surveyGroup.check_type,
-                survey_questions_count: surveyGroup.questions_count,
-                survey_no_of_associations: surveyGroup.no_of_associations,
-                survey_active: surveyGroup.active,
-              };
-              flattenedMappings.push(representativeMapping);
-            }
-          });
-        }
-        
-        console.log('Flattened mappings:', flattenedMappings);
-        setMappings(flattenedMappings);
-        setAllMappingsData(responseData.survey_mappings);
-        
-        // Update pagination state
-        if (responseData.pagination) {
-          setCurrentPage(responseData.pagination.current_page);
-          setTotalPages(responseData.pagination.total_pages);
-          setTotalCount(responseData.pagination.total_count);
-        }
-        
-      } catch (error: unknown) {
-        console.error('Error fetching survey mappings:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch survey mappings",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
+  // Fetch function that accepts both page and search parameters
+  const fetchSurveyMappingsData = useCallback(async (page: number, search?: string) => {
+    try {
+      setLoading(true);
+      
+      // Build query parameters
+      let queryParams = `per_page=${perPage}&page=${page}`;
+      
+      // Add search parameter if provided
+      if (search && search.trim()) {
+        queryParams += `&q[name_cont]=${encodeURIComponent(search.trim())}`;
       }
-    };
-
-    fetchSurveyMappingsData(1);
+      
+      // Use the new mappings_list endpoint with pagination and search
+      const response = await apiClient.get(`/survey_mappings/mappings_list.json?${queryParams}`);
+      console.log('Survey mapping API response:', response.data);
+      
+      const responseData: SurveyMappingApiResponse = response.data;
+      
+      // Flatten the nested survey mappings into individual rows for the table
+      // But group by survey to avoid duplicates - show one row per survey
+      const flattenedMappings: SurveyMapping[] = [];
+      
+      if (responseData.survey_mappings && responseData.survey_mappings.length > 0) {
+        responseData.survey_mappings.forEach((surveyGroup: SurveyGroup) => {
+          if (surveyGroup.mappings && surveyGroup.mappings.length > 0) {
+            // Take the first mapping as the representative for the survey
+            const firstMapping = surveyGroup.mappings[0];
+            
+            // Create a representative mapping that combines survey info with first mapping info
+            const representativeMapping: SurveyMapping = {
+              ...firstMapping,
+              // Add survey-level fields for easy access
+              survey_name: surveyGroup.name,
+              survey_check_type: surveyGroup.check_type,
+              survey_questions_count: surveyGroup.questions_count,
+              survey_no_of_associations: surveyGroup.no_of_associations,
+              survey_active: surveyGroup.active,
+            };
+            flattenedMappings.push(representativeMapping);
+          }
+        });
+      }
+      
+      console.log('Flattened mappings:', flattenedMappings);
+      setMappings(flattenedMappings);
+      setAllMappingsData(responseData.survey_mappings);
+      
+      // Update pagination state
+      if (responseData.pagination) {
+        setCurrentPage(responseData.pagination.current_page);
+        setTotalPages(responseData.pagination.total_pages);
+        setTotalCount(responseData.pagination.total_count);
+      }
+      
+      // Note: Don't update searchTerm state here - it should only be updated by user input
+      
+    } catch (error: unknown) {
+      console.error('Error fetching survey mappings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch survey mappings",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [perPage, toast]);
 
-  const handleStatusToggle = (item: SurveyMapping) => {
+  // Initial load
+  useEffect(() => {
+    fetchSurveyMappingsData(1);
+  }, [fetchSurveyMappingsData]);
+
+  // Handle search term changes with debouncing
+  const handleSearchChange = useCallback((newSearchTerm: string) => {
+    // Always update the search term immediately to keep it in the input box
+    setSearchTerm(newSearchTerm);
+    
+    // Clear any existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Set a new timeout for debounced search
+    searchTimeoutRef.current = setTimeout(() => {
+      // Reset to page 1 when searching
+      setCurrentPage(1);
+      // Fetch data with new search term, but don't clear the search term
+      fetchSurveyMappingsData(1, newSearchTerm);
+    }, 500); // 500ms debounce delay
+  }, [fetchSurveyMappingsData]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);  const handleStatusToggle = (item: SurveyMapping) => {
     setMappings(prev => prev.map(mapping => 
       mapping.id === item.id 
         ? { ...mapping, active: !mapping.active }
@@ -310,47 +348,8 @@ export const SurveyMappingDashboard = () => {
     try {
       setLoading(true);
       
-      // Use the new mappings_list endpoint with pagination
-      const response = await apiClient.get(`/survey_mappings/mappings_list.json?per_page=${perPage}&page=${page}`);
-      console.log('Survey mapping API response:', response.data);
-      
-      const responseData: SurveyMappingApiResponse = response.data;
-      
-      // Flatten the nested survey mappings into individual rows for the table
-      // But group by survey to avoid duplicates - show one row per survey
-      const flattenedMappings: SurveyMapping[] = [];
-      
-      if (responseData.survey_mappings && responseData.survey_mappings.length > 0) {
-        responseData.survey_mappings.forEach((surveyGroup: SurveyGroup) => {
-          if (surveyGroup.mappings && surveyGroup.mappings.length > 0) {
-            // Take the first mapping as the representative for the survey
-            const firstMapping = surveyGroup.mappings[0];
-            
-            // Create a representative mapping that combines survey info with first mapping info
-            const representativeMapping: SurveyMapping = {
-              ...firstMapping,
-              // Add survey-level fields for easy access
-              survey_name: surveyGroup.name,
-              survey_check_type: surveyGroup.check_type,
-              survey_questions_count: surveyGroup.questions_count,
-              survey_no_of_associations: surveyGroup.no_of_associations,
-              survey_active: surveyGroup.active,
-            };
-            flattenedMappings.push(representativeMapping);
-          }
-        });
-      }
-      
-      console.log('Flattened mappings:', flattenedMappings);
-      setMappings(flattenedMappings);
-      setAllMappingsData(responseData.survey_mappings);
-      
-      // Update pagination state
-      if (responseData.pagination) {
-        setCurrentPage(responseData.pagination.current_page);
-        setTotalPages(responseData.pagination.total_pages);
-        setTotalCount(responseData.pagination.total_count);
-      }
+      // Fetch data with current search term
+      await fetchSurveyMappingsData(page, searchTerm);
       
     } catch (error: unknown) {
       console.error('Error fetching survey mappings:', error);
@@ -359,8 +358,6 @@ export const SurveyMappingDashboard = () => {
         description: "Failed to fetch survey mappings",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -612,26 +609,13 @@ export const SurveyMappingDashboard = () => {
   };
 
 
-  // Filter mappings based on search term
-  const filteredMappings = mappings.filter(mapping =>
-    mapping.survey_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.survey_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.site_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.building_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (mapping.wing_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (mapping.area_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (mapping.floor_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (mapping.room_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapping.created_by?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Debug logs
-  console.log('Filtered mappings:', filteredMappings);
+  console.log('Mappings:', mappings);
   console.log('Columns state:', columns);
   console.log('Enhanced table columns:', enhancedTableColumns);
   console.log('Dropdown columns:', dropdownColumns);
   console.log('Area column visible?', isColumnVisible('area_name'));
-  console.log('Sample mapping area_name:', filteredMappings[0]?.area_name);
+  console.log('Sample mapping area_name:', mappings[0]?.area_name);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -650,7 +634,7 @@ export const SurveyMappingDashboard = () => {
         /* Enhanced Survey Mapping Table */
         <div>
           <EnhancedTable
-            data={filteredMappings}
+            data={mappings}
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
@@ -659,7 +643,7 @@ export const SurveyMappingDashboard = () => {
             handleExport={handleExport}
             exportFileName="survey-mapping-data"
             searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
+            onSearchChange={handleSearchChange}
             searchPlaceholder="Search survey mappings..."
             pagination={false} // Disable client-side pagination since we're doing server-side
             pageSize={perPage}

@@ -149,6 +149,31 @@ const steps = [
   'Attachments',
 ];
 
+const fieldStyles = {
+  height: '40px',
+  backgroundColor: '#fff',
+  borderRadius: '4px',
+  '& .MuiOutlinedInput-root': {
+    height: '40px',
+    fontSize: '14px',
+    '& fieldset': {
+      borderColor: '#ddd',
+    },
+    '&:hover fieldset': {
+      borderColor: '#C72030',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#C72030',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    fontSize: '14px',
+    '&.Mui-focused': {
+      color: '#C72030',
+    },
+  },
+};
+
 const initialFormData = {
   companyName: '',
   primaryPhone: '',
@@ -203,15 +228,39 @@ export const AddVendorPage = () => {
   const validateStep = () => {
     const newErrors: any = {};
     let isValid = true;
+    
+    // Phone number validation regex (10 digits)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    // PAN validation regex (5 letters, 4 digits, 1 letter)
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    // GST validation regex (15 characters alphanumeric)
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    // URL validation regex
+    const urlRegex = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+    
     if (activeStep === 0) {
+      // Company Name validation
       if (!formData.companyName.trim()) {
         newErrors.companyName = 'Company Name is required';
         isValid = false;
       }
+      
+      // Primary Phone validation
       if (!formData.primaryPhone.trim()) {
         newErrors.primaryPhone = 'Primary Phone is required';
         isValid = false;
+      } else if (!phoneRegex.test(formData.primaryPhone.trim())) {
+        newErrors.primaryPhone = 'Please enter a valid 10-digit phone number';
+        isValid = false;
       }
+      
+      // Secondary Phone validation (optional but if provided should be valid)
+      if (formData.secondaryPhone.trim() && !phoneRegex.test(formData.secondaryPhone.trim())) {
+        newErrors.secondaryPhone = 'Please enter a valid 10-digit phone number';
+        isValid = false;
+      }
+      
+      // Email validation
       if (!formData.email.trim()) {
         newErrors.email = 'Email is required';
         isValid = false;
@@ -219,6 +268,117 @@ export const AddVendorPage = () => {
         newErrors.email = 'Email is invalid';
         isValid = false;
       }
+      
+      // PAN validation (optional but if provided should be valid)
+      if (formData.pan.trim() && !panRegex.test(formData.pan.trim().toUpperCase())) {
+        newErrors.pan = 'Please enter a valid PAN number (e.g., ABCDE1234F)';
+        isValid = false;
+      }
+      
+      // GST validation (optional but if provided should be valid)
+      if (formData.gst.trim() && !gstRegex.test(formData.gst.trim().toUpperCase())) {
+        newErrors.gst = 'Please enter a valid GST number (15 characters)';
+        isValid = false;
+      }
+      
+      // Website URL validation (optional but if provided should be valid)
+      if (formData.websiteUrl.trim() && !urlRegex.test(formData.websiteUrl.trim())) {
+        newErrors.websiteUrl = 'Please enter a valid website URL';
+        isValid = false;
+      }
+    }
+    
+    // Address validation for step 1
+    if (activeStep === 1) {
+      if (!formData.addressLine1.trim()) {
+        newErrors.addressLine1 = 'Address Line 1 is required';
+        isValid = false;
+      }
+      
+      if (!formData.city.trim()) {
+        newErrors.city = 'City is required';
+        isValid = false;
+      }
+      
+      if (!formData.state.trim()) {
+        newErrors.state = 'State is required';
+        isValid = false;
+      }
+      
+      if (!formData.country.trim()) {
+        newErrors.country = 'Country is required';
+        isValid = false;
+      }
+      
+      // Pincode validation (6 digits)
+      if (formData.pincode.trim()) {
+        const pincodeRegex = /^[0-9]{6}$/;
+        if (!pincodeRegex.test(formData.pincode.trim())) {
+          newErrors.pincode = 'Please enter a valid 6-digit pincode';
+          isValid = false;
+        }
+      }
+    }
+    
+    // Bank Details validation for step 2
+    if (activeStep === 2) {
+      if (formData.accountNumber.trim() && !/^[0-9]{9,18}$/.test(formData.accountNumber.trim())) {
+        newErrors.accountNumber = 'Please enter a valid account number (9-18 digits)';
+        isValid = false;
+      }
+      
+      if (formData.ifscCode.trim()) {
+        const ifscRegex = /^[A-Z]{4}0[A-Z0-9]{6}$/;
+        if (!ifscRegex.test(formData.ifscCode.trim().toUpperCase())) {
+          newErrors.ifscCode = 'Please enter a valid IFSC code (e.g., SBIN0001234)';
+          isValid = false;
+        }
+      }
+    }
+    
+    // Contact Person validation for step 3
+    if (activeStep === 3) {
+      contactPersons.forEach((contact, index) => {
+        // At least first name is required for each contact person
+        if (!contact.firstName.trim()) {
+          newErrors[`contact_${index}_firstName`] = 'First name is required';
+          isValid = false;
+        }
+        
+        // At least last name is required for each contact person
+        if (!contact.lastName.trim()) {
+          newErrors[`contact_${index}_lastName`] = 'Last name is required';
+          isValid = false;
+        }
+        
+        // At least one email or mobile is required for each contact person
+        const hasEmail = contact.primaryEmail.trim() || contact.secondaryEmail.trim();
+        const hasMobile = contact.primaryMobile.trim() || contact.secondaryMobile.trim();
+        
+        // Primary Mobile validation
+        if (contact.primaryMobile.trim() && !phoneRegex.test(contact.primaryMobile.trim())) {
+          newErrors[`contact_${index}_primaryMobile`] = 'Please enter a valid 10-digit mobile number';
+          isValid = false;
+        }
+        
+        // Secondary Mobile validation
+        if (contact.secondaryMobile.trim() && !phoneRegex.test(contact.secondaryMobile.trim())) {
+          newErrors[`contact_${index}_secondaryMobile`] = 'Please enter a valid 10-digit mobile number';
+          isValid = false;
+        }
+        
+        // Primary Email validation
+        if (contact.primaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.primaryEmail)) {
+          newErrors[`contact_${index}_primaryEmail`] = 'Please enter a valid email address';
+          isValid = false;
+        }
+        
+        // Secondary Email validation
+        if (contact.secondaryEmail.trim() && !/\S+@\S+\.\S+/.test(contact.secondaryEmail)) {
+          newErrors[`contact_${index}_secondaryEmail`] = 'Please enter a valid email address';
+          isValid = false;
+        }
+      });
     }
 
     setErrors(newErrors);
@@ -227,8 +387,8 @@ export const AddVendorPage = () => {
 
   const handleSave = async () => {
     if (!validateStep()) {
-        toast.error("Please fill all required fields before submitting.");
-        return;
+      toast.error("Please fill all required fields before submitting.");
+      return;
     }
     setIsSubmitting(true);
 
@@ -246,7 +406,7 @@ export const AddVendorPage = () => {
     if (formData.date) {
       apiFormData.append('pms_supplier[signed_on_contract]', "true");
     }
-    if(formData.services) {
+    if (formData.services) {
       apiFormData.append('pms_supplier[services_ids][]', formData.services);
     }
 
@@ -266,21 +426,21 @@ export const AddVendorPage = () => {
 
     // Step 3: Contact Person
     contactPersons.forEach((contact, index) => {
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile);
-        apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][first_name]`, contact.firstName);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][last_name]`, contact.lastName);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email1]`, contact.primaryEmail);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][email2]`, contact.secondaryEmail);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile1]`, contact.primaryMobile);
+      apiFormData.append(`pms_supplier[pms_supplier_contacts_attributes][${index}][mobile2]`, contact.secondaryMobile);
     });
-    
+
     // Step 4: KYC Details
     if (formData.reKyc) {
-        let reKycValue = formData.reKyc;
-        if (reKycValue !== 'custom') {
-            reKycValue = `${formData.reKyc.replace('m', '')}_months`;
-        }
-        apiFormData.append('pms_supplier[re_kyc_in]', reKycValue);
+      let reKycValue = formData.reKyc;
+      if (reKycValue !== 'custom') {
+        reKycValue = `${formData.reKyc.replace('m', '')}_months`;
+      }
+      apiFormData.append('pms_supplier[re_kyc_in]', reKycValue);
     }
 
     // Step 5: Attachments
@@ -296,13 +456,13 @@ export const AddVendorPage = () => {
     apiFormData.append('pms_supplier[active]', 'true');
 
     try {
-        await vendorService.createVendor(apiFormData);
-        toast.success('Vendor created successfully!');
-        navigate('/maintenance/vendor');
+      await vendorService.createVendor(apiFormData);
+      toast.success('Vendor created successfully!');
+      navigate('/maintenance/vendor');
     } catch (error) {
-        // The service handles error toast
+      // The service handles error toast
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -314,7 +474,7 @@ export const AddVendorPage = () => {
       setActiveStep((prev) => Math.min(prev + 1, steps.length - 1));
     }
   };
-  
+
   const handleBack = () => setActiveStep((prev) => Math.max(prev - 1, 0));
 
   const handleStepClick = (step: number) => {
@@ -345,25 +505,41 @@ export const AddVendorPage = () => {
     setContactPersons(newContacts);
   };
 
-  const FileUploadBox = ({ title, onFileSelect }: { title: string, onFileSelect: (files: File[]) => void }) => {
-    const [fileNames, setFileNames] = useState<string[]>([]);
+  const FileUploadBox = ({ title, onFileSelect, currentFiles }: { title: string, onFileSelect: (files: File[]) => void, currentFiles: File[] }) => {
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files) {
-            const files = Array.from(event.target.files);
-            onFileSelect(files);
-            setFileNames(files.map(f => f.name));
-        }
+      if (event.target.files) {
+        const files = Array.from(event.target.files);
+        onFileSelect(files);
+      }
     };
 
+    const fileNames = currentFiles.map(f => f.name);
+
     return (
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <p className="text-gray-600">{title}</p>
-            <label className="cursor-pointer">
-                <p className="text-sm text-gray-500 mt-2">Drag & Drop or <span className="text-[#C72030] font-semibold">Choose Files</span></p>
-                <input type="file" multiple className="hidden" onChange={handleFileChange} />
-            </label>
-            <p className="text-xs text-gray-400 mt-1">{fileNames.length > 0 ? fileNames.join(', ') : 'No file chosen'}</p>
-        </div>
+      <div className={`border-2 border-dashed rounded-lg p-6 text-center ${fileNames.length > 0 ? 'border-[#C72030] bg-red-50' : 'border-gray-300'}`}>
+        <p className="text-gray-600 font-medium mb-2">{title}</p>
+        <label className="cursor-pointer">
+          <div className="flex flex-col items-center">
+            <Upload className="w-8 h-8 text-gray-400 mb-2" />
+            <p className="text-sm text-gray-500">Drag & Drop or <span className="text-[#C72030] font-semibold">Choose Files</span></p>
+          </div>
+          <input type="file" multiple className="hidden" onChange={handleFileChange} />
+        </label>
+        {fileNames.length > 0 ? (
+          <div className="mt-3 p-2 bg-white rounded border">
+            <p className="text-xs text-[#C72030] font-semibold mb-1">{fileNames.length} file(s) selected:</p>
+            <div className="max-h-20 overflow-y-auto">
+              {fileNames.map((fileName, index) => (
+                <p key={index} className="text-xs text-gray-700 truncate" title={fileName}>
+                  📎 {fileName}
+                </p>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-xs text-gray-400 mt-2">No file chosen</p>
+        )}
+      </div>
     );
   };
 
@@ -377,51 +553,61 @@ export const AddVendorPage = () => {
               <SectionTitle>COMPANY INFORMATION</SectionTitle>
             </SectionHeader>
             <Box p={3}>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <TextField 
-                  label="Company Name*" 
-                  fullWidth 
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <TextField
+                  label={<span>Company Name <span style={{ color: 'red' }}>*</span></span>}
+                  fullWidth
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   error={!!errors.companyName}
                   helperText={errors.companyName}
                 />
-                <TextField 
-                  label="Primary Phone No." 
+                <TextField
+                  label="Primary Phone No."
                   fullWidth
                   value={formData.primaryPhone}
                   onChange={(e) => setFormData({ ...formData, primaryPhone: e.target.value })}
+                  error={!!errors.primaryPhone}
+                  helperText={errors.primaryPhone}
                 />
-                <TextField 
-                  label="Secondary Phone No." 
-                  fullWidth 
+                <TextField
+                  label="Secondary Phone No."
+                  fullWidth
                   value={formData.secondaryPhone}
                   onChange={(e) => setFormData({ ...formData, secondaryPhone: e.target.value })}
+                  error={!!errors.secondaryPhone}
+                  helperText={errors.secondaryPhone}
                 />
-                <TextField 
-                  label="Email*" 
-                  type="email" 
-                  fullWidth 
+                <TextField
+                  label={<span>Email <span style={{ color: 'red' }}>*</span></span>}
+                  type="email"
+                  fullWidth
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   error={!!errors.email}
                   helperText={errors.email}
                 />
-                <TextField 
-                  label="PAN" 
-                  fullWidth 
+                <TextField
+                  label="PAN"
+                  fullWidth
                   value={formData.pan}
-                  onChange={(e) => setFormData({ ...formData, pan: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, pan: e.target.value.toUpperCase() })}
+                  error={!!errors.pan}
+                  helperText={errors.pan}
+                  placeholder="ABCDE1234F"
                 />
-                <TextField 
-                  label="GST" 
-                  fullWidth 
+                <TextField
+                  label="GST"
+                  fullWidth
                   value={formData.gst}
-                  onChange={(e) => setFormData({ ...formData, gst: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, gst: e.target.value.toUpperCase() })}
+                  error={!!errors.gst}
+                  helperText={errors.gst}
+                  placeholder="22AAAAA0000A1Z5"
                 />
-                <TextField 
-                  label="Supplier Type" 
-                  select 
+                <TextField
+                  label="Supplier Type"
+                  select
                   fullWidth
                   value={formData.supplierType}
                   onChange={(e) => setFormData({ ...formData, supplierType: e.target.value })}
@@ -429,37 +615,89 @@ export const AddVendorPage = () => {
                   <MenuItem value="type1">Type 1</MenuItem>
                   <MenuItem value="type2">Type 2</MenuItem>
                 </TextField>
-                <TextField 
-                  label="Website Url" 
-                  fullWidth 
+                <TextField
+                  label="Website Url"
+                  fullWidth
                   value={formData.websiteUrl}
                   onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                  error={!!errors.websiteUrl}
+                  helperText={errors.websiteUrl}
+                  placeholder="https://example.com"
                 />
-                <div className="lg:col-span-2">
-                  <TextareaAutosize
-                    minRows={3}
-                    placeholder="Service Description"
-                    className="w-full border rounded p-2"
-                    value={formData.serviceDescription}
-                    onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
-                  />
-                </div>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker 
-                    label="Date" 
-                    value={formData.date}
-                    onChange={(date) => setFormData({ ...formData, date })}
-                  />
-                </LocalizationProvider>
-                <TextField 
-                  label="Services" 
-                  select 
+                <TextField
+                  label={
+                    <span>
+                      Date
+                    </span>
+                  }
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.date}
+                  onChange={(date) => setFormData({ ...formData, date })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  placeholder="Select Date"
+                  inputProps={{
+                    max: formData.date || undefined,
+                  }}
+                />
+                <TextField
+                  label="Services"
+                  select
                   fullWidth
                   value={formData.services}
                   onChange={(e) => setFormData({ ...formData, services: e.target.value })}
                 >
-                    <MenuItem value="service1">Service 1</MenuItem>
+                  <MenuItem value="service1">Service 1</MenuItem>
                 </TextField>
+                  <div className="col-span-1 md:col-span-2 lg:col-span-3">
+
+                  
+                <TextField
+                  label={
+                    <span style={{ fontSize: '16px' }}>
+                      Service Description
+                    </span>
+                  }
+                  placeholder="Enter Service Description"
+                  fullWidth
+                  multiline
+                  minRows={4}
+                  value={formData.serviceDescription}
+                  onChange={(e) => setFormData({ ...formData, serviceDescription: e.target.value })}
+                  sx={{
+                    margin: '0 !important',
+                    marginTop: '0 !important',
+                    marginBottom: '0 !important',
+                    "& .MuiFormControl-root": {
+                      margin: '0 !important',
+                      marginTop: '0 !important',
+                      marginBottom: '0 !important',
+                    },
+                    "& .MuiOutlinedInput-root": {
+                      margin: '0 !important',
+                      marginTop: '0 !important',
+                      marginBottom: '0 !important',
+                    },
+                    "& .MuiInputBase-root": {
+                      margin: '0 !important',
+                      marginTop: '0 !important',
+                      marginBottom: '0 !important',
+                    },
+                    "& textarea": {
+                      width: "100% !important",
+                      resize: "both",
+                      overflow: "auto",
+                      boxSizing: "border-box",
+                      display: "block",
+                      margin: '0 !important',
+                    },
+                    "& textarea[aria-hidden='true']": {
+                      display: "none !important",
+                    },
+                  }}
+                /></div>
               </div>
             </Box>
           </SectionCard>
@@ -473,45 +711,56 @@ export const AddVendorPage = () => {
             </SectionHeader>
             <Box p={3}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <TextField 
-                  label="Country" 
-                  fullWidth 
+                <TextField
+                  label={<span>Country <span style={{ color: 'red' }}>*</span></span>}
+                  fullWidth
                   value={formData.country}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  error={!!errors.country}
+                  helperText={errors.country}
                 />
-                <TextField 
-                  label="State" 
-                  fullWidth 
+                <TextField
+                  label={<span>State <span style={{ color: 'red' }}>*</span></span>}
+                  fullWidth
                   value={formData.state}
                   onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  error={!!errors.state}
+                  helperText={errors.state}
                 />
-                <TextField 
-                  label="City" 
-                  fullWidth 
+                <TextField
+                  label={<span>City <span style={{ color: 'red' }}>*</span></span>}
+                  fullWidth
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  error={!!errors.city}
+                  helperText={errors.city}
                 />
-                <TextField 
-                  label="Pincode" 
-                  fullWidth 
+                <TextField
+                  label="Pincode"
+                  fullWidth
                   value={formData.pincode}
                   onChange={(e) => setFormData({ ...formData, pincode: e.target.value })}
+                  error={!!errors.pincode}
+                  helperText={errors.pincode}
+                  placeholder="123456"
                 />
                 <div className="lg:col-span-2">
-                    <TextField 
-                      label="Address Line1" 
-                      fullWidth 
-                      value={formData.addressLine1}
-                      onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
-                    />
+                  <TextField
+                    label={<span>Address Line1 <span style={{ color: 'red' }}>*</span></span>}
+                    fullWidth
+                    value={formData.addressLine1}
+                    onChange={(e) => setFormData({ ...formData, addressLine1: e.target.value })}
+                    error={!!errors.addressLine1}
+                    helperText={errors.addressLine1}
+                  />
                 </div>
                 <div className="lg:col-span-3">
-                    <TextField 
-                      label="Address Line2" 
-                      fullWidth 
-                      value={formData.addressLine2}
-                      onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
-                    />
+                  <TextField
+                    label="Address Line2"
+                    fullWidth
+                    value={formData.addressLine2}
+                    onChange={(e) => setFormData({ ...formData, addressLine2: e.target.value })}
+                  />
                 </div>
               </div>
             </Box>
@@ -526,29 +775,35 @@ export const AddVendorPage = () => {
             </SectionHeader>
             <Box p={3}>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <TextField 
-                  label="Account Name" 
-                  fullWidth 
+                <TextField
+                  label="Account Name"
+                  fullWidth
                   value={formData.accountName}
                   onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
                 />
-                <TextField 
-                  label="Account Number" 
-                  fullWidth 
+                <TextField
+                  label="Account Number"
+                  fullWidth
                   value={formData.accountNumber}
                   onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
+                  error={!!errors.accountNumber}
+                  helperText={errors.accountNumber}
+                  placeholder="123456789012"
                 />
-                <TextField 
-                  label="Bank & Branch Name" 
-                  fullWidth 
+                <TextField
+                  label="Bank & Branch Name"
+                  fullWidth
                   value={formData.bankBranchName}
                   onChange={(e) => setFormData({ ...formData, bankBranchName: e.target.value })}
                 />
-                <TextField 
-                  label="IFSC Code" 
-                  fullWidth 
+                <TextField
+                  label="IFSC Code"
+                  fullWidth
                   value={formData.ifscCode}
-                  onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value })}
+                  onChange={(e) => setFormData({ ...formData, ifscCode: e.target.value.toUpperCase() })}
+                  error={!!errors.ifscCode}
+                  helperText={errors.ifscCode}
+                  placeholder="SBIN0001234"
                 />
               </div>
             </Box>
@@ -575,43 +830,62 @@ export const AddVendorPage = () => {
                     </Button>
                   )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                    <TextField 
-                      label="First Name" 
-                      fullWidth 
+                    {errors[`contact_${index}_general`] && (
+                      <div className="col-span-full">
+                        <p className="text-red-500 text-sm mt-1">{errors[`contact_${index}_general`]}</p>
+                      </div>
+                    )}
+                    <TextField
+                      label={<span>First Name <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
                       value={contact.firstName}
                       onChange={(e) => handleContactPersonChange(index, 'firstName', e.target.value)}
+                      error={!!errors[`contact_${index}_firstName`]}
+                      helperText={errors[`contact_${index}_firstName`]}
                     />
-                    <TextField 
-                      label="Last Name" 
-                      fullWidth 
+                    <TextField
+                      label={<span>Last Name <span style={{ color: 'red' }}>*</span></span>}
+                      fullWidth
                       value={contact.lastName}
                       onChange={(e) => handleContactPersonChange(index, 'lastName', e.target.value)}
+                      error={!!errors[`contact_${index}_lastName`]}
+                      helperText={errors[`contact_${index}_lastName`]}
                     />
-                    <TextField 
-                      label="Primary Email" 
-                      type="email" 
-                      fullWidth 
+                    <TextField
+                      label="Primary Email"
+                      type="email"
+                      fullWidth
                       value={contact.primaryEmail}
                       onChange={(e) => handleContactPersonChange(index, 'primaryEmail', e.target.value)}
+                      error={!!errors[`contact_${index}_primaryEmail`]}
+                      helperText={errors[`contact_${index}_primaryEmail`]}
                     />
-                    <TextField 
-                      label="Secondary Email" 
-                      type="email" 
-                      fullWidth 
+                    <TextField
+                      label="Secondary Email"
+                      type="email"
+                      fullWidth
                       value={contact.secondaryEmail}
                       onChange={(e) => handleContactPersonChange(index, 'secondaryEmail', e.target.value)}
+                      error={!!errors[`contact_${index}_secondaryEmail`]}
+                      helperText={errors[`contact_${index}_secondaryEmail`]}
                     />
-                    <TextField 
-                      label="Primary Mobile" 
-                      fullWidth 
+                    <TextField
+                      label="Primary Mobile"
+                      fullWidth
                       value={contact.primaryMobile}
                       onChange={(e) => handleContactPersonChange(index, 'primaryMobile', e.target.value)}
+                      error={!!errors[`contact_${index}_primaryMobile`]}
+                      helperText={errors[`contact_${index}_primaryMobile`]}
+                      placeholder="9876543210"
                     />
-                    <TextField 
-                      label="Secondary Mobile" 
-                      fullWidth 
+                    <TextField
+                      label="Secondary Mobile"
+                      fullWidth
                       value={contact.secondaryMobile}
                       onChange={(e) => handleContactPersonChange(index, 'secondaryMobile', e.target.value)}
+                      error={!!errors[`contact_${index}_secondaryMobile`]}
+                      helperText={errors[`contact_${index}_secondaryMobile`]}
+                      placeholder="9876543210"
                     />
                   </div>
                 </div>
@@ -630,8 +904,8 @@ export const AddVendorPage = () => {
               <SectionTitle>KYC DETAILS</SectionTitle>
             </SectionHeader>
             <Box p={3}>
-              <RadioGroup 
-                row 
+              <RadioGroup
+                row
                 name="re-kyc"
                 value={formData.reKyc}
                 onChange={(e) => setFormData({ ...formData, reKyc: e.target.value })}
@@ -643,13 +917,33 @@ export const AddVendorPage = () => {
                 <FormControlLabel value="custom" control={<Radio />} label="Custom date" />
               </RadioGroup>
               {formData.reKyc === 'custom' && (
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  <DatePicker 
-                    label="Custom Date" 
-                    value={formData.customDate}
-                    onChange={(date) => setFormData({ ...formData, customDate: date })}
-                  />
-                </LocalizationProvider>
+                // <LocalizationProvider dateAdapter={AdapterDateFns}>
+                //   <DatePicker
+                //     label="Custom Date"
+                //     value={formData.customDate}
+                //     onChange={(date) => setFormData({ ...formData, customDate: date })}
+                //   />
+                // </LocalizationProvider>
+                <TextField
+                  label={
+                    <span>
+                      Start Date <span style={{ color: 'red' }}>*</span>
+                    </span>
+                  }
+                  id="startFrom"
+                  type="date"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.customDate}
+                  onChange={(e) => setFormData({ ...formData, customDate: e.target.value ? new Date(e.target.value) : null })}
+                  InputLabelProps={{ shrink: true }}
+                  InputProps={{ sx: fieldStyles }}
+                  sx={{ mt: 1 }}
+                  placeholder="Select Date"
+                  inputProps={{
+                    max: formData.customDate || undefined,
+                  }}
+                />
               )}
             </Box>
           </SectionCard>
@@ -663,12 +957,12 @@ export const AddVendorPage = () => {
             </SectionHeader>
             <Box p={3}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FileUploadBox title="PAN Document" onFileSelect={setPanAttachments} />
-                <FileUploadBox title="TAN Document" onFileSelect={setTanAttachments} />
-                <FileUploadBox title="GST Document" onFileSelect={setGstAttachments} />
-                <FileUploadBox title="KYC Document" onFileSelect={setKycAttachments} />
-                <FileUploadBox title="Labour Compliance Document" onFileSelect={setComplianceAttachments} />
-                <FileUploadBox title="Other Document" onFileSelect={setOtherAttachments} />
+                <FileUploadBox title="PAN Document" onFileSelect={setPanAttachments} currentFiles={panAttachments} />
+                <FileUploadBox title="TAN Document" onFileSelect={setTanAttachments} currentFiles={tanAttachments} />
+                <FileUploadBox title="GST Document" onFileSelect={setGstAttachments} currentFiles={gstAttachments} />
+                <FileUploadBox title="KYC Document" onFileSelect={setKycAttachments} currentFiles={kycAttachments} />
+                <FileUploadBox title="Labour Compliance Document" onFileSelect={setComplianceAttachments} currentFiles={complianceAttachments} />
+                <FileUploadBox title="Other Document" onFileSelect={setOtherAttachments} currentFiles={otherAttachments} />
               </div>
             </Box>
           </SectionCard>
@@ -687,15 +981,17 @@ export const AddVendorPage = () => {
         <h1 className="text-2xl font-bold text-gray-900">Add Vendor</h1>
       </div>
 
-      <Box sx={{ mb: 4 }}>
+      <Box sx={{ mb: 4, overflow: 'auto' }}>
         <Box sx={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%'
+          justifyContent: 'flex-start',
+          width: 'fit-content',
+          minWidth: '100%',
+          px: 2
         }}>
           {steps.map((label, index) => (
-            <Box key={`step-${index}`} sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box key={`step-${index}`} sx={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               <Box
                 onClick={() => handleStepClick(index)}
                 sx={{
@@ -703,12 +999,13 @@ export const AddVendorPage = () => {
                   backgroundColor: (index === activeStep || completedSteps.includes(index)) ? '#C72030' : 'white',
                   color: (index === activeStep || completedSteps.includes(index)) ? 'white' : '#C4B89D',
                   border: `2px solid ${(index === activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'}`,
-                  padding: '12px 20px',
-                  fontSize: '13px',
+                  padding: '8px 12px',
+                  fontSize: '11px',
                   fontWeight: 500,
                   textAlign: 'center',
                   minWidth: '140px',
-                  height: '40px',
+                  maxWidth: '140px',
+                  height: '32px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -716,6 +1013,9 @@ export const AddVendorPage = () => {
                   transition: 'all 0.2s ease',
                   fontFamily: 'Work Sans, sans-serif',
                   position: 'relative',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
                   '&:hover': {
                     opacity: 0.9
                   },
@@ -726,10 +1026,11 @@ export const AddVendorPage = () => {
               {index < steps.length - 1 && (
                 <Box
                   sx={{
-                    width: '60px',
+                    width: '30px',
                     height: '2px',
-                    backgroundImage: `repeating-linear-gradient(to right, ${ (index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 0px, ${ (index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 8px, transparent 8px, transparent 16px)`,
-                    margin: '0 0px'
+                    backgroundImage: `repeating-linear-gradient(to right, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 0px, ${(index < activeStep || completedSteps.includes(index)) ? '#C72030' : '#C4B89D'} 6px, transparent 6px, transparent 12px)`,
+                    margin: '0 0px',
+                    flexShrink: 0
                   }}
                 />
               )}
