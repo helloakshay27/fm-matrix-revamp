@@ -200,6 +200,8 @@ interface SurveyMappingForm {
   floorIds: number[];
   areaIds: number[];
   roomIds: number[];
+  // Add flag to track if mapping should be deleted
+  markedForDeletion?: boolean;
 }
 
 // Section component matching PatrollingCreatePage
@@ -577,7 +579,17 @@ export const EditSurveyMapping = () => {
   };
 
   const removeSurveyMapping = (idx: number) => {
-    setSurveyMappings(prev => prev.filter((_, i) => i !== idx));
+    setSurveyMappings(prev => prev.map((mapping, i) => {
+      if (i === idx) {
+        // Instead of removing the mapping, mark it for deletion
+        // This preserves the original mapping ID for proper API handling
+        return {
+          ...mapping,
+          markedForDeletion: true
+        };
+      }
+      return mapping;
+    }));
   };
 
   const handleSurveyChange = (event: SelectChangeEvent<number>) => {
@@ -706,6 +718,7 @@ export const EditSurveyMapping = () => {
     // Validation - check survey selection and each mapping individually
     const invalidMappings = [];
     const validMappings = [];
+    const mappingsToDelete = [];
     
     if (!selectedSurveyId) {
       toast.error('Please select a survey first', {
@@ -716,6 +729,12 @@ export const EditSurveyMapping = () => {
     }
     
     surveyMappings.forEach((mapping, index) => {
+      // Check if mapping is marked for deletion
+      if (mapping.markedForDeletion) {
+        mappingsToDelete.push(mapping);
+        return;
+      }
+
       const hasLocation = mapping.selectedLocation.site || 
                          mapping.selectedLocation.building || 
                          mapping.selectedLocation.wing || 
@@ -790,8 +809,39 @@ export const EditSurveyMapping = () => {
         return mappingData;
       });
 
+      // Add mappings marked for deletion to the payload with location IDs only
+      const deletionPayload = mappingsToDelete.map((mapping) => {
+        const mappingId = mapping.id.replace('sm-', '');
+        const isExistingMapping = !mappingId.startsWith('new-') && !isNaN(parseInt(mappingId));
+        
+        if (isExistingMapping) {
+          console.log(`Marking mapping ${mappingId} for deletion`);
+          return {
+            id: parseInt(mappingId),
+            site_id: parseInt(localStorage.getItem("site_id") || "2189"),
+            ...(mapping.selectedLocation.building && {
+              building_id: parseInt(mapping.selectedLocation.building),
+            }),
+            ...(mapping.selectedLocation.wing && { 
+              wing_id: parseInt(mapping.selectedLocation.wing) 
+            }),
+            ...(mapping.selectedLocation.area && { 
+              area_id: parseInt(mapping.selectedLocation.area) 
+            }),
+            ...(mapping.selectedLocation.floor && { 
+              floor_id: parseInt(mapping.selectedLocation.floor) 
+            }),
+            ...(mapping.selectedLocation.room && { 
+              room_id: parseInt(mapping.selectedLocation.room) 
+            }),
+          };
+        }
+        // If it's a new mapping that hasn't been saved yet, don't include it in deletion
+        return null;
+      }).filter(Boolean); // Remove null entries
+
       const payload = {
-        survey_mappings: surveyMappingsPayload
+        survey_mappings: [...surveyMappingsPayload, ...deletionPayload]
       };
 
       console.log("Updating survey mappings with payload:", payload);
@@ -897,9 +947,9 @@ export const EditSurveyMapping = () => {
           </Button>
         </div>
         <div className="text-sm text-gray-600">
-          {surveyMappings.length === 1 
+          {surveyMappings.filter(m => !m.markedForDeletion).length === 1 
             ? '1 Location Configuration' 
-            : `${surveyMappings.length} Location Configurations`
+            : `${surveyMappings.filter(m => !m.markedForDeletion).length} Location Configurations`
           }
         </div>
       </header>
@@ -970,12 +1020,15 @@ export const EditSurveyMapping = () => {
         icon={<MapPin className="w-3.5 h-3.5" />}
       >
         <div className="space-y-6">
-          {surveyMappings.map((mapping, mappingIdx) => (
+          {surveyMappings.filter(mapping => !mapping.markedForDeletion).map((mapping, mappingIdx) => {
+            // Get the actual index in the original array for proper handling
+            const actualIndex = surveyMappings.findIndex(m => m.id === mapping.id);
+            return (
             <div key={mapping.id} className="relative rounded-md border border-dashed bg-muted/30 p-4">
-              {surveyMappings.length > 1 && (
+              {surveyMappings.filter(m => !m.markedForDeletion).length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removeSurveyMapping(mappingIdx)}
+                  onClick={() => removeSurveyMapping(actualIndex)}
                   className="absolute -right-2 -top-2 rounded-full p-1 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed bg-white border border-gray-200 shadow-sm"
                   aria-label="Remove location configuration"
                   disabled={isSubmitting}
@@ -1003,7 +1056,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Site</InputLabel>
                   <Select
                     value={mapping.selectedLocation.site}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'site', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'site', e.target.value as string)}
                     input={<OutlinedInput label="Site" />}
                     disabled={loading.sites}
                     displayEmpty
@@ -1038,7 +1091,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Building</InputLabel>
                   <Select
                     value={mapping.selectedLocation.building}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'building', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'building', e.target.value as string)}
                     input={<OutlinedInput label="Building" />}
                     disabled={!mapping.selectedLocation.site || loading.buildings}
                     displayEmpty
@@ -1078,7 +1131,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Wing</InputLabel>
                   <Select
                     value={mapping.selectedLocation.wing}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'wing', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'wing', e.target.value as string)}
                     input={<OutlinedInput label="Wing" />}
                     disabled={!mapping.selectedLocation.building || loading.wings}
                     displayEmpty
@@ -1118,7 +1171,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Area</InputLabel>
                   <Select
                     value={mapping.selectedLocation.area}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'area', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'area', e.target.value as string)}
                     input={<OutlinedInput label="Area" />}
                     disabled={!mapping.selectedLocation.wing || loading.areas}
                     displayEmpty
@@ -1158,7 +1211,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Floor</InputLabel>
                   <Select
                     value={mapping.selectedLocation.floor}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'floor', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'floor', e.target.value as string)}
                     input={<OutlinedInput label="Floor" />}
                     disabled={!mapping.selectedLocation.area || loading.floors}
                     displayEmpty
@@ -1198,7 +1251,7 @@ export const EditSurveyMapping = () => {
                   <InputLabel shrink>Room</InputLabel>
                   <Select
                     value={mapping.selectedLocation.room}
-                    onChange={(e) => handleLocationChange(mappingIdx, 'room', e.target.value as string)}
+                    onChange={(e) => handleLocationChange(actualIndex, 'room', e.target.value as string)}
                     input={<OutlinedInput label="Room" />}
                     disabled={!mapping.selectedLocation.floor || loading.rooms}
                     displayEmpty
@@ -1230,7 +1283,8 @@ export const EditSurveyMapping = () => {
                 </FormControl>
               </div>
             </div>
-          ))}
+            );
+          })}
           
           <div className="flex justify-end">
             <Button 

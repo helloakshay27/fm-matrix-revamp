@@ -242,6 +242,13 @@ export function EnhancedTable<T extends Record<string, any>>({
     }
   }, [debouncedSearchInput, externalSearchTerm, enableGlobalSearch, onGlobalSearch, lastProcessedSearch]);
 
+  // Synchronize external search term with internal search input
+  useEffect(() => {
+    if (externalSearchTerm !== undefined && searchInput !== externalSearchTerm) {
+      setSearchInput(externalSearchTerm);
+    }
+  }, [externalSearchTerm, searchInput]);
+
   // Add effect to reset loading state when search completes
   useEffect(() => {
     if (enableGlobalSearch && !loading) {

@@ -90,14 +90,18 @@ export const TestimonialsSetupDashboard = () => {
   const [isEditing, setIsEditing] = useState(false)
   const [record, setRecord] = useState({})
   const [updatingStatus, setUpdatingStatus] = useState<{ [key: string]: boolean }>({});
+  const [loadingData, setLoadingData] = useState(true)
 
   const fetchData = async () => {
+    setLoadingData(true)
     try {
       const response = await dispatch(fetchTestimonials({ baseUrl, token, siteId })).unwrap();
       setTestimonials(response.data);
     } catch (error) {
       console.log(error)
       toast.error(error)
+    } finally {
+      setLoadingData(false)
     }
   }
 
@@ -215,6 +219,7 @@ export const TestimonialsSetupDashboard = () => {
         leftActions={leftActions}
         pagination={true}
         pageSize={10}
+        loading={loadingData}
       />
 
       <AddTestimonialModal

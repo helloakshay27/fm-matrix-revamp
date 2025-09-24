@@ -48,6 +48,10 @@ const MobileLMCPage: React.FC = () => {
     const [usersTotalPages, setUsersTotalPages] = useState(1);
     const [userSearch, setUserSearch] = useState('');
     const [selectedCircle, setSelectedCircle] = useState<string>('');
+    const [circleSelectOpen, setCircleSelectOpen] = useState<boolean>(false);
+    const [circleSearch, setCircleSearch] = useState<string>('');
+    const circleSearchInputRef = useRef<HTMLInputElement>(null);
+    const circleContentRef = useRef<HTMLDivElement>(null);
     const [selectedUser, setSelectedUser] = useState<string>('');
     const [refreshing, setRefreshing] = useState(false);
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -68,6 +72,12 @@ const MobileLMCPage: React.FC = () => {
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [userMobileDialogOpen, setUserMobileDialogOpen] = useState<boolean>(false);
     const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+    const mobileListRef = useRef<HTMLDivElement>(null);
+    const userSelectContentRef = useRef<HTMLDivElement>(null);
+    // Circle mobile dialog state/refs
+    const [circleMobileDialogOpen, setCircleMobileDialogOpen] = useState<boolean>(false);
+    const mobileCircleSearchInputRef = useRef<HTMLInputElement>(null);
+    const mobileCircleListRef = useRef<HTMLDivElement>(null);
     // Token must come from URL only (supports both ?token=... and ?access_token=...)
     const authToken = searchParams.get('token') || searchParams.get('access_token') || '';
 
@@ -359,6 +369,25 @@ const MobileLMCPage: React.FC = () => {
         return () => window.removeEventListener('resize', check);
     }, []);
 
+    // Focus circle search when the select opens
+    useEffect(() => {
+        if (circleSelectOpen) {
+            const t = setTimeout(() => {
+                try { circleSearchInputRef.current?.focus({ preventScroll: true } as any); } catch { /* noop */ }
+            }, 0);
+            return () => clearTimeout(t);
+        }
+    }, [circleSelectOpen]);
+
+    // Maintain focus while typing (Radix may scroll to selected and steal focus)
+    useEffect(() => {
+        if (!circleSelectOpen) return;
+        const t = setTimeout(() => {
+            try { circleSearchInputRef.current?.focus({ preventScroll: true } as any); } catch { /* noop */ }
+        }, 0);
+        return () => clearTimeout(t);
+    }, [circleSearch, circleSelectOpen]);
+
     useEffect(() => {
         if (userMobileDialogOpen) {
             const t = setTimeout(() => {
@@ -368,11 +397,26 @@ const MobileLMCPage: React.FC = () => {
         }
     }, [userMobileDialogOpen]);
 
+    // Focus circle search input when mobile circle dialog opens
+    useEffect(() => {
+        if (circleMobileDialogOpen) {
+            const t = setTimeout(() => {
+                try { mobileCircleSearchInputRef.current?.focus({ preventScroll: true } as any); } catch { /* noop */ }
+            }, 50);
+            return () => clearTimeout(t);
+        }
+    }, [circleMobileDialogOpen]);
+
     const allLoading = circlesLoading || usersLoading || mappingLoading || resolvingUserLoading || resolvingCircleLoading;
     const circleDisabled = !restrictByCircle;
     const userDisabled = restrictByCircle && !selectedCircle;
 
     const userPlaceholder = restrictByCircle ? (userDisabled ? 'Select circle first' : 'Select LMC Manager User') : 'Select LMC Manager User';
+    const filteredCircles = useMemo(() => {
+        const q = circleSearch.trim().toLowerCase();
+        if (!q) return circles;
+        return circles.filter(c => c.name.toLowerCase().includes(q) || String(c.id).toLowerCase().includes(q));
+    }, [circleSearch, circles]);
     const filteredUsers = useMemo(() => {
         const q = userSearch.trim().toLowerCase();
         if (!q) return users;
@@ -474,31 +518,99 @@ const MobileLMCPage: React.FC = () => {
                             </p>
                         </div>
 
-                        {/* Circle Dropdown */}
+                        {/* Circle Dropdown (Desktop) / Mobile Dialog Trigger */}
                         <div className="space-y-2">
                             <Label className={`block text-sm sm:text-base font-medium text-center ${circleDisabled ? 'text-gray-400' : 'text-gray-700'}`}>
                                 Circle
                             </Label>
-                            <Select
-                                value={selectedCircle}
-                                onValueChange={v => setSelectedCircle(v)}
-                                disabled={circleDisabled || circlesLoading || allLoading}
-                            >
-                                <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${circleDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
-                                    }`}>
-                                    <SelectValue placeholder={circlesLoading ? 'Loading circles...' : 'Select circle'} />
-                                </SelectTrigger>
-                                <SelectContent className="max-h-60">
-                                    {circles.map(c => (
-                                        <SelectItem key={c.id} value={c.id} className="text-base py-3">{c.name}</SelectItem>
-                                    ))}
-                                    {!circlesLoading && circles.length === 0 && (
-                                        <div className="px-4 py-8 text-center text-gray-500 text-sm">
-                                            No circles available
+                            {isMobile ? (
+                                <Button
+                                    type="button"
+                                    disabled={circleDisabled || circlesLoading || allLoading}
+                                    onClick={() => setCircleMobileDialogOpen(true)}
+                                    variant="outline"
+                                    className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 ${circleDisabled ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white border-gray-300 hover:border-[#C72030]'} justify-between`}
+                                >
+                                    <span className="truncate text-left">
+                                        {selectedCircle ? (circles.find(c => c.id === selectedCircle)?.name || `Circle ${selectedCircle}`) : (circlesLoading ? 'Loading circles...' : 'Select circle')}
+                                    </span>
+                                    <span className="ml-2 text-gray-400">▼</span>
+                                </Button>
+                            ) : (
+                                <Select
+                                    value={selectedCircle}
+                                    onValueChange={v => { setSelectedCircle(v); setCircleSelectOpen(false); }}
+                                    disabled={circleDisabled || circlesLoading || allLoading}
+                                    open={circleSelectOpen}
+                                    onOpenChange={(o) => { setCircleSelectOpen(o); if (!o) setCircleSearch(''); }}
+                                >
+                                    <SelectTrigger className={`w-full h-12 sm:h-14 text-base rounded-xl border-2 transition-all ${circleDisabled ? 'bg-gray-100 border-gray-200' : 'bg-white border-gray-300 hover:border-[#C72030] focus:border-[#C72030]'
+                                        }`}>
+                                        <SelectValue placeholder={circlesLoading ? 'Loading circles...' : 'Select circle'} />
+                                    </SelectTrigger>
+                                    <SelectContent
+                                        className="max-h-72 w-[var(--radix-select-trigger-width)]"
+                                        ref={circleContentRef}
+                                        onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
+                                        onPointerDownOutside={(e: any) => {
+                                            const target = e.target as HTMLElement | null;
+                                            if (target && target.closest('input')) {
+                                                e.preventDefault();
+                                                // keep focus on the input
+                                                setTimeout(() => circleSearchInputRef.current?.focus({ preventScroll: true } as any), 0);
+                                            }
+                                        }}
+                                    >
+                                        <div className="p-2 sticky top-0 z-10 bg-white border-b">
+                                            <input
+                                                ref={circleSearchInputRef}
+                                                value={circleSearch}
+                                                onChange={(e) => setCircleSearch(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    const k = e.key;
+                                                    if (k === 'Enter') { e.preventDefault(); e.stopPropagation(); return; }
+                                                    if (k === 'ArrowDown' || k === 'ArrowUp') {
+                                                        // Move focus into the list so Radix can take over navigation
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        const root = circleContentRef.current;
+                                                        if (root) {
+                                                            const items = root.querySelectorAll<HTMLElement>('[data-radix-collection-item], [data-radix-select-item], [role="option"], [data-state]');
+                                                            const el = k === 'ArrowDown' ? items[0] : items[items.length - 1];
+                                                            if (el) {
+                                                                el.focus({ preventScroll: true } as any);
+                                                                // Ensure the item is visible behind the sticky header
+                                                                el.scrollIntoView({ block: 'nearest' });
+                                                            }
+                                                        }
+                                                        return;
+                                                    }
+                                                    if (k === 'PageDown' || k === 'PageUp' || k === 'Home' || k === 'End') {
+                                                        // Let Radix handle these after list gets focus
+                                                        return;
+                                                    }
+                                                    // Prevent Select from stealing focus on other keys while typing
+                                                    e.stopPropagation();
+                                                }}
+                                                onMouseDown={(e) => e.stopPropagation()}
+                                                onPointerDown={(e) => e.stopPropagation()}
+                                                onClick={(e) => e.stopPropagation()}
+                                                placeholder="Search circle"
+                                                className="w-full h-9 px-3 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                                                autoFocus
+                                            />
                                         </div>
-                                    )}
-                                </SelectContent>
-                            </Select>
+                                        {filteredCircles.map(c => (
+                                            <SelectItem key={c.id} value={c.id} className="text-base py-3 scroll-mt-14">{c.name}</SelectItem>
+                                        ))}
+                                        {!circlesLoading && filteredCircles.length === 0 && (
+                                            <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                                                No circles found
+                                            </div>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            )}
                         </div>
 
                         {/* User Dropdown with search + infinite scroll */}
@@ -534,6 +646,7 @@ const MobileLMCPage: React.FC = () => {
                                     </SelectTrigger>
                                     <SelectContent
                                         className="w-[var(--radix-select-trigger-width)]"
+                                        ref={userSelectContentRef}
                                         onCloseAutoFocus={(e: any) => { e.preventDefault(); }}
                                         onPointerDownOutside={(e: any) => {
                                             const target = e.target as HTMLElement | null;
@@ -548,10 +661,31 @@ const MobileLMCPage: React.FC = () => {
                                                 value={userSearch}
                                                 onChange={(e) => setUserSearch(e.target.value)}
                                                 onKeyDown={(e) => {
+                                                    const k = e.key;
+                                                    if (k === 'Enter') { e.preventDefault(); e.stopPropagation(); return; }
+                                                    if (k === 'ArrowDown' || k === 'ArrowUp') {
+                                                        // Move focus into the list so Radix can take over navigation
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        const root = userSelectContentRef.current;
+                                                        if (root) {
+                                                            const items = root.querySelectorAll<HTMLElement>('[data-radix-collection-item], [data-radix-select-item], [role="option"], [data-state]');
+                                                            const el = k === 'ArrowDown' ? items[0] : items[items.length - 1];
+                                                            if (el) {
+                                                                el.focus({ preventScroll: true } as any);
+                                                                el.scrollIntoView({ block: 'nearest' });
+                                                            }
+                                                        }
+                                                        return;
+                                                    }
+                                                    if (k === 'PageDown' || k === 'PageUp' || k === 'Home' || k === 'End') {
+                                                        return;
+                                                    }
                                                     e.stopPropagation();
-                                                    if (e.key === 'Enter') e.preventDefault();
                                                 }}
                                                 onKeyDownCapture={(e) => {
+                                                    const k = (e as any).key as string | undefined;
+                                                    if (k && (k === 'ArrowDown' || k === 'ArrowUp' || k === 'PageDown' || k === 'PageUp' || k === 'Home' || k === 'End')) return;
                                                     e.stopPropagation();
                                                 }}
                                                 onFocus={() => setUserSelectOpen(true)}
@@ -665,12 +799,35 @@ const MobileLMCPage: React.FC = () => {
                                 className="w-full h-10 px-3 text-base border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
                                 inputMode="search"
                             />
-                            <div className="max-h-80 overflow-auto rounded-md border" onScroll={handleUserScroll}>
+                            <div
+                                ref={mobileListRef}
+                                className="max-h-80 overflow-auto rounded-md border"
+                                onScroll={handleUserScroll}
+                                onKeyDown={(e) => {
+                                    const k = e.key;
+                                    if (k !== 'ArrowDown' && k !== 'ArrowUp') return;
+                                    e.preventDefault();
+                                    const root = mobileListRef.current;
+                                    if (!root) return;
+                                    const items = Array.from(root.querySelectorAll<HTMLButtonElement>('button[type="button"]'));
+                                    if (!items.length) return;
+                                    const active = document.activeElement as HTMLElement | null;
+                                    const idx = active ? items.findIndex(el => el === active) : -1;
+                                    let nextIdx = idx;
+                                    if (k === 'ArrowDown') nextIdx = Math.min(items.length - 1, idx + 1);
+                                    else nextIdx = Math.max(0, idx <= 0 ? 0 : idx - 1);
+                                    const target = items[nextIdx] || items[0];
+                                    if (target) {
+                                        target.focus({ preventScroll: true } as any);
+                                        target.scrollIntoView({ block: 'nearest' });
+                                    }
+                                }}
+                            >
                                 {filteredUsers.map(u => (
                                     <button
                                         key={u.id}
                                         type="button"
-                                        className="w-full text-left px-3 py-3 border-b last:border-b-0 hover:bg-gray-50"
+                                        className="w-full text-left px-3 py-3 border-b last:border-b-0 hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
                                         onClick={() => {
                                             setSelectedUser(u.id);
                                             // Cache immediately so the mobile label shows correctly even if the list gets reset
@@ -693,6 +850,73 @@ const MobileLMCPage: React.FC = () => {
                             </div>
                             <div className="flex justify-end gap-2 pt-1">
                                 <Button variant="outline" onClick={() => setUserMobileDialogOpen(false)}>Close</Button>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+
+                {/* Mobile Circle Picker Dialog */}
+                <Dialog open={circleMobileDialogOpen} onOpenChange={(o) => { setCircleMobileDialogOpen(o); if (!o) setCircleSearch(''); }}>
+                    <DialogContent className="w-[92vw] max-w-md p-4 rounded-xl">
+                        <DialogHeader>
+                            <DialogTitle className="text-lg">Select Circle</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-3">
+                            <input
+                                ref={mobileCircleSearchInputRef}
+                                value={circleSearch}
+                                onChange={(e) => setCircleSearch(e.target.value)}
+                                placeholder="Search circle"
+                                className="w-full h-10 px-3 text-base border rounded-md focus:outline-none focus:ring-1 focus:ring-[#C72030]"
+                                inputMode="search"
+                            />
+                            <div
+                                ref={mobileCircleListRef}
+                                className="max-h-80 overflow-auto rounded-md border"
+                                onKeyDown={(e) => {
+                                    const k = e.key;
+                                    if (k !== 'ArrowDown' && k !== 'ArrowUp') return;
+                                    e.preventDefault();
+                                    const root = mobileCircleListRef.current;
+                                    if (!root) return;
+                                    const items = Array.from(root.querySelectorAll<HTMLButtonElement>('button[type="button"]'));
+                                    if (!items.length) return;
+                                    const active = document.activeElement as HTMLElement | null;
+                                    const idx = active ? items.findIndex(el => el === active) : -1;
+                                    let nextIdx = idx;
+                                    if (k === 'ArrowDown') nextIdx = Math.min(items.length - 1, idx + 1);
+                                    else nextIdx = Math.max(0, idx <= 0 ? 0 : idx - 1);
+                                    const target = items[nextIdx] || items[0];
+                                    if (target) {
+                                        target.focus({ preventScroll: true } as any);
+                                        target.scrollIntoView({ block: 'nearest' });
+                                    }
+                                }}
+                            >
+                                {filteredCircles.map(c => (
+                                    <button
+                                        key={c.id}
+                                        type="button"
+                                        className="w-full text-left px-3 py-3 border-b last:border-b-0 hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                                        onClick={() => {
+                                            setSelectedCircle(c.id);
+                                            setCircleMobileDialogOpen(false);
+                                            // Clear search on selection for next time
+                                            setCircleSearch('');
+                                        }}
+                                    >
+                                        <div className="text-sm font-medium">{c.name}</div>
+                                    </button>
+                                ))}
+                                {!circlesLoading && filteredCircles.length === 0 && (
+                                    <div className="px-4 py-6 text-center text-gray-500 text-sm">No circles found</div>
+                                )}
+                                {circlesLoading && (
+                                    <div className="px-4 py-3 text-center text-gray-500 text-sm">Loading...</div>
+                                )}
+                            </div>
+                            <div className="flex justify-end gap-2 pt-1">
+                                <Button variant="outline" onClick={() => { setCircleMobileDialogOpen(false); setCircleSearch(''); }}>Close</Button>
                             </div>
                         </div>
                     </DialogContent>
