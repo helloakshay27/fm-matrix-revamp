@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "@/components/ui/sonner";
+import { useToast } from "@/components/ui/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { Switch } from "@/components/ui/switch";
 import { ColumnVisibilityDropdown } from '@/components/ColumnVisibilityDropdown';
@@ -137,7 +138,7 @@ export const SurveyMappingDashboard = () => {
     { key: 'ticket_category', label: 'Ticket Category', visible: true },
     { key: 'assigned_to', label: 'Assigned To', visible: true },
     { key: 'created_by', label: 'Created By', visible: true },
-    // { key: 'status', label: 'Status', visible: true },
+    { key: 'status', label: 'Status', visible: true },
     { key: 'created_at', label: 'Created On', visible: true },
     // { key: 'qr_code', label: 'QR Code', visible: true }
   ]);
@@ -242,16 +243,37 @@ export const SurveyMappingDashboard = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, []);  const handleStatusToggle = (item: SurveyMapping) => {
-    setMappings(prev => prev.map(mapping => 
-      mapping.id === item.id 
-        ? { ...mapping, active: !mapping.active }
-        : mapping
-    ));
-    toast({
-      title: "Status Updated",
-      description: `Survey mapping status ${item.active ? 'deactivated' : 'activated'}`
-    });
+  }, []);
+
+  const handleStatusToggle = async (item: SurveyMapping) => {
+    const newStatus = !item.active;
+    
+    try {
+      // Call the API to toggle status
+      await apiClient.put(`/survey_mappings/${item.survey_id}/toggle_status.json`, {
+        active: newStatus
+      });
+      
+      // Update local state on success
+      setMappings(prev => prev.map(mapping => 
+        mapping.survey_id === item.survey_id 
+          ? { ...mapping, active: newStatus }
+          : mapping
+      ));
+      
+      toast({
+        title: "Success", 
+        description: `Survey mapping status ${item.active ? 'deactivated' : 'activated'}`
+      });
+      
+    } catch (error: unknown) {
+      console.error('Error toggling survey mapping status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update survey mapping status",
+        variant: "destructive"
+      });
+    }
   };
 
   // Column visibility handlers - matching parking page implementation
@@ -275,7 +297,7 @@ export const SurveyMappingDashboard = () => {
       prev.map(col => ({ ...col, visible: true }))
     );
     toast({
-      title: "Columns Reset",
+      title: "Success",
       description: "All columns have been restored to default visibility"
     });
   };
@@ -330,13 +352,13 @@ export const SurveyMappingDashboard = () => {
       window.URL.revokeObjectURL(url);
 
       toast({
-        title: "Export Successful",
-        description: "Survey mappings exported successfully",
+        title: "Success",
+        description: "Survey mappings exported successfully"
       });
     } catch (error: unknown) {
       console.error('Error exporting survey mappings:', error);
       toast({
-        title: "Export Failed",
+        title: "Error", 
         description: "Failed to export survey mappings",
         variant: "destructive"
       });
@@ -358,36 +380,44 @@ export const SurveyMappingDashboard = () => {
         description: "Failed to fetch survey mappings",
         variant: "destructive"
       });
+      toast({
+        title: "Error",
+        description: "Failed to fetch survey mappings", 
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   // Enhanced table columns for EnhancedTable component
   const enhancedTableColumns = React.useMemo(() => {
     const allColumns = [
-      { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, visible: isColumnVisible('actions'), hideable: false },
-      { key: 'survey_title', label: 'Survey Title', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('survey_title'), hideable: true },
-      { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('building_name'), hideable: true },
-      { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('wing_name'), hideable: true },
-      { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('floor_name'), hideable: true },
-      { key: 'area_name', label: 'Area', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('area_name'), hideable: true },
-      { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('room_name'), hideable: true },
-      // { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('check_type'), hideable: true },
-      { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('questions_count'), hideable: true },
-      { key: 'associations_count', label: 'Associations', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('associations_count'), hideable: true },
-      { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('ticket_category'), hideable: true },
-      { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('assigned_to'), hideable: true },
-      { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_by'), hideable: true },
-      // { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('status'), hideable: true },
-      { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true, visible: isColumnVisible('created_at'), hideable: true },
-      // { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, visible: isColumnVisible('qr_code'), hideable: true }
+      { key: 'actions', label: 'Actions', sortable: false, draggable: false, defaultVisible: true, hideable: false },
+      { key: 'survey_title', label: 'Survey Title', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'building_name', label: 'Building', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'wing_name', label: 'Wing', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'floor_name', label: 'Floor', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'area_name', label: 'Area', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'room_name', label: 'Room', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      // { key: 'check_type', label: 'Check Type', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'questions_count', label: 'Questions', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'associations_count', label: 'Associations', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'ticket_category', label: 'Ticket Category', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'assigned_to', label: 'Assigned To', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'created_by', label: 'Created By', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'status', label: 'Status', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      { key: 'created_at', label: 'Created On', sortable: true, draggable: true, defaultVisible: true, hideable: true },
+      // { key: 'qr_code', label: 'QR Code', sortable: false, draggable: true, defaultVisible: true, hideable: true }
     ];
     
     console.log('All columns before filtering:', allColumns);
-    console.log('Area column config:', allColumns.find(col => col.key === 'area_name'));
+    console.log('Status column config:', allColumns.find(col => col.key === 'status'));
     
-    // Filter to only show visible columns
-    const visibleColumns = allColumns.filter(col => col.visible);
+    // Filter to only show columns that are marked as visible in our local state
+    const visibleColumns = allColumns.filter(col => isColumnVisible(col.key));
     console.log('Visible columns after filtering:', visibleColumns);
+    console.log('Status in visible columns:', visibleColumns.find(col => col.key === 'status'));
     
     return visibleColumns;
   }, [isColumnVisible]);
@@ -621,6 +651,8 @@ export const SurveyMappingDashboard = () => {
   console.log('Dropdown columns:', dropdownColumns);
   console.log('Area column visible?', isColumnVisible('area_name'));
   console.log('Sample mapping area_name:', mappings[0]?.area_name);
+  console.log('Status column visible?', isColumnVisible('status'));
+  console.log('Status column in columns array:', columns.find(col => col.key === 'status'));
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -643,7 +675,7 @@ export const SurveyMappingDashboard = () => {
             columns={enhancedTableColumns}
             selectable={false}
             renderCell={renderCell}
-            storageKey="survey-mapping-table"
+            storageKey="survey-mapping-table-v2"
             enableExport={true}
             handleExport={handleExport}
             exportFileName="survey-mapping-data"
