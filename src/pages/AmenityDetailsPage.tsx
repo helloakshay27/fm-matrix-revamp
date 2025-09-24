@@ -1,36 +1,35 @@
-import { useEffect, useState } from 'react'
+import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAppDispatch } from '@/store/hooks';
-import { fetchBannersById } from '@/store/slices/bannerSlice';
+import { fetchAmenityById } from '@/store/slices/amenitySlice';
 import { ArrowLeft, Eye } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { AttachmentPreviewModal } from '@/components/AttachmentPreviewModal';
 
-const BannerDetailsPage = () => {
+const AmenityDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
-    const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
+    const token = localStorage.getItem('token');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedDoc, setSelectedDoc] = useState(null);
-    const [banner, setBanner] = useState({
-        active: '',
-        geo_link: '',
-        url: ''
+    const [amenity, setAmenity] = useState({
+        name: "",
+        document_url: ""
     })
 
     useEffect(() => {
-        const getBanner = async () => {
+        const getAmenity = async () => {
             try {
-                const response = await dispatch(fetchBannersById({ baseUrl, token, id: id })).unwrap();
-                setBanner(response);
+                const response = await dispatch(fetchAmenityById({ baseUrl, token, id: id })).unwrap();
+                setAmenity(response);
             } catch (error) {
                 console.log(error);
             }
         };
-        getBanner();
+        getAmenity();
     }, [])
 
     return (
@@ -48,7 +47,7 @@ const BannerDetailsPage = () => {
             <>
                 <div className="flex items-center gap-4 mb-[20px]">
                     <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
-                        Banner Details
+                        Amenity Details
                     </h1>
                 </div>
 
@@ -71,25 +70,11 @@ const BannerDetailsPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-4">
                                 <div className="flex">
-                                    <span className="text-[#1A1A1A80] w-40 text-14">Site Name</span>
-                                    <span className="font-medium text-16"> {localStorage.getItem("selectedSiteName")}</span>
+                                    <span className="text-[#1A1A1A80] w-40 text-14">Name</span>
+                                    <span className="font-medium text-16"> {amenity.name}</span>
                                 </div>
                                 <div className="flex">
-                                    <span className="text-[#1A1A1A80] w-40 text-14">Status</span>
-                                    <span className="font-medium text-16"> {banner.active ? "Active" : "Inactive"}</span>
-                                </div>
-                            </div>
-
-                            <div className="space-y-4">
-                                <div className="flex">
-                                    <span className="text-[#1A1A1A80] w-40 text-14">Banner URL</span>
-                                    <span className="font-medium text-16">
-                                        {" "}
-                                        {banner.geo_link}
-                                    </span>
-                                </div>
-                                <div className="flex">
-                                    <span className="text-[#1A1A1A80] w-40 text-14">Banner</span>
+                                    <span className="text-[#1A1A1A80] w-40 text-14">Icon</span>
                                     <div
                                         className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
                                     >
@@ -99,8 +84,8 @@ const BannerDetailsPage = () => {
                                             type="button"
                                             onClick={() => {
                                                 setSelectedDoc({
-                                                    url: banner.url,
-                                                    document: "Banner Image"
+                                                    url: amenity.document_url,
+                                                    document: "Icon"
                                                 });
                                                 setIsModalOpen(true);
                                             }}
@@ -108,11 +93,18 @@ const BannerDetailsPage = () => {
                                             <Eye className="w-4 h-4" />
                                         </button>
                                         <img
-                                            src={banner.url}
+                                            src={amenity.document_url}
                                             alt={"Banner Image"}
                                             className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
                                         />
                                     </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex">
+                                    <span className="text-[#1A1A1A80] w-40 text-14">Site Name</span>
+                                    <span className="font-medium text-16"> {localStorage.getItem("selectedSiteName")}</span>
                                 </div>
                             </div>
                         </div>
@@ -130,4 +122,4 @@ const BannerDetailsPage = () => {
     )
 }
 
-export default BannerDetailsPage
+export default AmenityDetailsPage

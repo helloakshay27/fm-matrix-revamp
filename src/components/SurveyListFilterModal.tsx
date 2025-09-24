@@ -158,7 +158,7 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
                       variant="outline"
                       role="combobox"
                       aria-expanded={categoryPopoverOpen}
-                      className="h-10 w-full justify-between text-left font-normal"
+                      className="!h-10 w-full justify-between text-left font-normal !border-gray hover:!border-gray focus:!border-gray focus-visible:!border-black !text-black bg-white hover:bg-white focus:bg-white px-3 py-2 rounded-md shadow-sm sm:!h-10"
                       disabled={loadingCategories}
                     >
                       {filters.categoryId === 'all' 
@@ -168,52 +168,64 @@ export const SurveyListFilterModal: React.FC<FilterModalProps> = ({
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 max-h-80" align="start">
                     <Command>
                       <CommandInput placeholder="Search categories..." className="h-9" />
                       <CommandEmpty>No category found.</CommandEmpty>
-                      <CommandGroup className="max-h-48 overflow-y-auto">
-                        <CommandItem
-                          value="all-categories"
-                          onSelect={() => {
-                            handleInputChange('categoryId', 'all');
-                            setCategoryPopoverOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              filters.categoryId === 'all' ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          All Categories
-                        </CommandItem>
-                        {loadingCategories ? (
-                          <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Loading categories...
-                          </div>
-                        ) : (
-                          Array.isArray(categories) && categories.map((category) => (
-                            <CommandItem
-                              key={category.id}
-                              value={category.name.toLowerCase()}
-                              onSelect={() => {
-                                handleInputChange('categoryId', category.id.toString());
-                                setCategoryPopoverOpen(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  filters.categoryId === category.id.toString() ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                              {category.name}
-                            </CommandItem>
-                          ))
-                        )}
-                      </CommandGroup>
+                      <div className="max-h-60 overflow-y-auto overscroll-contain scroll-smooth" 
+                           style={{ 
+                             scrollbarWidth: 'thin',
+                             scrollBehavior: 'smooth',
+                           }}
+                           onWheel={(e) => {
+                             e.stopPropagation();
+                             const container = e.currentTarget;
+                             container.scrollTop += e.deltaY;
+                           }}
+                      >
+                        <CommandGroup className="h-auto">
+                          <CommandItem
+                            value="all-categories"
+                            onSelect={() => {
+                              handleInputChange('categoryId', 'all');
+                              setCategoryPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                filters.categoryId === 'all' ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            All Categories
+                          </CommandItem>
+                          {loadingCategories ? (
+                            <div className="flex items-center gap-2 p-2 text-sm text-gray-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Loading categories...
+                            </div>
+                          ) : (
+                            Array.isArray(categories) && categories.map((category) => (
+                              <CommandItem
+                                key={category.id}
+                                value={category.name.toLowerCase()}
+                                onSelect={() => {
+                                  handleInputChange('categoryId', category.id.toString());
+                                  setCategoryPopoverOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    filters.categoryId === category.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {category.name}
+                              </CommandItem>
+                            ))
+                          )}
+                        </CommandGroup>
+                      </div>
                     </Command>
                   </PopoverContent>
                 </Popover>

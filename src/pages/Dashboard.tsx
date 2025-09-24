@@ -191,9 +191,9 @@ const SortableChartItem = ({
 };
 
 // Simple loader overlay to show on each section while data is loading
-const SectionLoader: React.FC<{ loading: boolean; children: React.ReactNode }> = ({ loading, children }) => {
+const SectionLoader: React.FC<{ loading: boolean; children: React.ReactNode; className?: string }> = ({ loading, children, className }) => {
   return (
-    <div className="relative">
+    <div className={`relative ${className ?? ''}`}>
       {children}
       {loading && (
         <div className="absolute inset-0 z-10 rounded-lg bg-white/60 backdrop-blur-[2px] flex items-center justify-center">
@@ -2003,8 +2003,13 @@ export const Dashboard = () => {
                     if (!analytic) return null;
                     const card = renderAnalyticsCard(analytic);
                     const perCardLoading = !!loadingMap?.[analytic.module]?.[analytic.endpoint];
+                    const spanClass =
+                      analytic.module === 'consumables_overview' &&
+                      analytic.endpoint === 'consumable_inventory_value_quarterly'
+                        ? 'lg:col-span-2'
+                        : '';
                     return card ? (
-                      <SectionLoader key={chartId} loading={perCardLoading}>
+                      <SectionLoader key={chartId} loading={perCardLoading} className={spanClass}>
                         {card}
                       </SectionLoader>
                     ) : null;

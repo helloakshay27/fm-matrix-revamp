@@ -726,6 +726,7 @@ import BannerSetupDashboard from "./pages/BannerSetupDashboard";
 import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
+import AmenityDetailsPage from "./pages/AmenityDetailsPage";
 
 const queryClient = new QueryClient();
 
@@ -2978,6 +2979,10 @@ function App() {
                     <Route
                       path="/settings/community-modules/amenity-setup"
                       element={<AmenitySetupDashboard />}
+                    />
+                    <Route
+                      path="/settings/community-modules/amenity-setup/:id"
+                      element={<AmenityDetailsPage />}
                     />
                   </Route>
 

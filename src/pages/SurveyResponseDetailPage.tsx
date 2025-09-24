@@ -1765,7 +1765,7 @@ export const SurveyResponseDetailPage = () => {
       setFilteredTabularData([]);
       setFilteredTicketData([]);
     }
-    setShowFilterModal(false);
+    // Keep modal open after clearing filters
   }, [activeFilterTab, refetchSurveyDetailsWithFilters]);
 
   const getActiveFiltersCount = useCallback(() => {

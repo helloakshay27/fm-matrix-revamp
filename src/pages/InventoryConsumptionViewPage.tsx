@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Calendar, X } from 'lucide-react';
+import { ArrowLeft, X, PlusCircle } from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { RootState, AppDispatch } from '@/store/store';
 import { fetchInventoryConsumptionDetails } from '@/store/slices/inventoryConsumptionDetailsSlice';
@@ -275,7 +275,7 @@ const InventoryConsumptionViewPage = () => {
   );
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-4">
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
@@ -287,21 +287,10 @@ const InventoryConsumptionViewPage = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div className="text-lg font-semibold text-gray-800">
-          Inventory Name: <span className="text-gray-900 font-bold">{inventory?.name}</span>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 flex-wrap">
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={handleAddConsume}
-              className="bg-[#22C55E] text-white hover:bg-[#16A34A] rounded-lg px-6 py-3 h-12 font-medium"
-            >
-              Add/Consume
-            </Button>
-          </div>
-        </div>
+      <div className="flex flex-col gap-2">
+        <h2 className="text-lg md:text-xl font-semibold text-gray-900">
+          Inventory Name: <span className="font-bold">{inventory?.name}</span>
+        </h2>
       </div>
 
       {error ? (
@@ -320,6 +309,14 @@ const InventoryConsumptionViewPage = () => {
           pagination={false}
           getItemId={(item) => (item as any)?.id?.toString?.() ?? ''}
           emptyMessage="No consumption data available"
+          leftActions={
+            <Button
+            onClick={handleAddConsume}
+            className="inline-flex items-center gap-1 bg-[#6B2C91] text-white hover:bg-[#5A2479] rounded-md px-3 py-2 h-9 text-sm"
+          >
+            Add / Consume
+          </Button>
+          }
         />
       )}
 
