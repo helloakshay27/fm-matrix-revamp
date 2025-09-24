@@ -85,8 +85,8 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
             }
 
             try {
-                const response = await dispatch(editAmenity({ baseUrl, token, data: payload, id: record.id })).unwrap();
-                toast.success(response.message);
+                await dispatch(editAmenity({ baseUrl, token, data: payload, id: record.id })).unwrap();
+                toast.success("Amenity updated successfully");
                 fetchData();
                 handleClose();
             } catch (error) {
@@ -105,8 +105,8 @@ export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record 
             payload.append('amenity[active]', String(1));
 
             try {
-                const response = await dispatch(createAmenity({ baseUrl, token, data: payload })).unwrap();
-                toast.success(response.message);
+                await dispatch(createAmenity({ baseUrl, token, data: payload })).unwrap();
+                toast.success("Amenity added successfully");
                 fetchData();
                 handleClose();
             } catch (error) {

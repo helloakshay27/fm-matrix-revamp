@@ -92,8 +92,8 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
             }
 
             try {
-                const response = await dispatch(editBanner({ baseUrl, token, data: payload, id: record.id })).unwrap();
-                toast.success(response.message);
+                await dispatch(editBanner({ baseUrl, token, data: payload, id: record.id })).unwrap();
+                toast.success("Banner updated successfully");
                 fetchData();
                 handleClose();
             } catch (error) {
