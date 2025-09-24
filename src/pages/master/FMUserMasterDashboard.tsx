@@ -407,7 +407,7 @@ export const FMUserMasterDashboard = () => {
   }) => {
     setFilters(newFilters);
     const [firstName, lastName = ""] = newFilters.name.trim().split(" ");
-    await fetchUsers(pagination.current_page, {
+    await fetchUsers(1, {
       firstname_cont: firstName,
       lastname_cont: lastName,
       email_cont: newFilters.email,
@@ -494,7 +494,7 @@ export const FMUserMasterDashboard = () => {
     downloaded?: undefined | boolean;
   }) => {
     setFilters(newFilters);
-    await fetchUsers(pagination.current_page, {
+    await fetchUsers(1, {
       lock_user_permission_status_eq: newFilters.status,
       app_downloaded_eq: newFilters.downloaded,
     });
@@ -669,8 +669,8 @@ export const FMUserMasterDashboard = () => {
         );
       case "type":
         return (
-          <Badge variant={user.type === "Internal" ? "default" : "secondary"}>
-            {user.type}
+          <Badge variant="secondary">
+            {user?.type?.split(" ")[1]}
           </Badge>
         );
       case "status":
