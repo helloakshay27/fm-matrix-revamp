@@ -1028,20 +1028,13 @@ function App() {
                       path="/settings/account/roster/create"
                       element={<RosterCreatePage />}
                     />
+             
                     <Route
-                      path="/roster"
-                      element={<AccountRosterDashboard />}
-                    />
-                    <Route
-                      path="/roster/create"
-                      element={<RosterCreatePage />}
-                    />
-                    <Route
-                      path="/roster/detail/:id"
+                      path="/settings/account/roster/detail/:id"
                       element={<RosterDetailPage />}
                     />
                     <Route
-                      path="/roster/edit/:id"
+                      path="/settings/account/roster/edit/:id"
                       element={<RosterEditPage />}
                     />
                     <Route

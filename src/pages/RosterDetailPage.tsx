@@ -273,7 +273,7 @@ export const RosterDetailPage: React.FC = () => {
 
   // Handle edit
   const handleEdit = () => {
-    navigate(`/roster/edit/${id}`);
+    navigate(`/settings/account/roster/edit/${id}`);
   };
 
   // Handle export
@@ -428,7 +428,7 @@ export const RosterDetailPage: React.FC = () => {
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => navigate('/roster')}
+            onClick={() => navigate('/settings/account/roster/')}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
             title="Back to Roster Management"
           >

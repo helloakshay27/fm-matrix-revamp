@@ -720,7 +720,7 @@ export const RosterEditPage: React.FC = () => {
 
   // Handle cancel
   const handleCancel = () => {
-    navigate(`/roster/detail/${id}`);
+    navigate(`/settings/account/roster/detail/${id}`);
   };
 
   if (isLoading) {

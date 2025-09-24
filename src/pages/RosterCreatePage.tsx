@@ -705,7 +705,7 @@ export const RosterCreatePage: React.FC = () => {
 
   // Handle cancel/back
   const handleCancel = () => {
-    navigate("/roster");
+    navigate("/settings/account/roster");
   };
 
   return (
