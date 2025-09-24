@@ -144,7 +144,7 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
           console.log('🚀 Calling OTP verification API:', urlWithParams.toString());
           
           const response = await fetch(urlWithParams.toString(), {
-            method: 'PUT',
+            method: 'GET',
             headers: {
               'Authorization': getAuthHeader(),
               'Content-Type': 'application/json',
@@ -253,35 +253,37 @@ export const VisitorSelectionPanel: React.FC<VisitorSelectionPanelProps> = ({
         try {
           console.log('🚀 Sending OTP for visitor ID:', visitorId);
           
-          // Construct the API URL using the PUT endpoint for resend OTP
-          const url = getFullUrl(`/pms/visitors/${visitorId}.json`);
+          // Construct the API URL using the correct endpoint from ENDPOINTS
+          const url = getFullUrl(ENDPOINTS.RESEND_OTP);
+          const urlWithParams = new URL(url);
           
-          // Create request body for resend OTP - set otp_verified to "0" to trigger new OTP
-          const requestBody = {
-            gatekeeper: {
-              otp_verified: "0",
-              otp: "",
-              guest_entry_time: new Date().toISOString().slice(0, 19) + "+05:30",
-              entry_gate_id: ""
-            }
-          };
+          // Add query parameters
+          urlWithParams.searchParams.append('id', visitorId.toString());
           
-          console.log('🚀 Calling resend OTP API:', url);
-          console.log('📋 Request body:', JSON.stringify(requestBody, null, 2));
+          // Add access token if available
+          if (API_CONFIG.TOKEN) {
+            urlWithParams.searchParams.append('access_token', API_CONFIG.TOKEN);
+          }
           
-          const response = await fetch(url, {
-            method: 'PUT',
+          console.log('🚀 Calling resend OTP API:', urlWithParams.toString());
+          
+          const response = await fetch(urlWithParams.toString(), {
+            method: 'GET',
             headers: {
               'Authorization': getAuthHeader(),
               'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
+            }
           });
           
           if (!response.ok) {
             const errorText = await response.text();
             console.error('API Error Response for visitor', visitorId, ':', errorText);
-            throw new Error(`Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`);
+            
+            if (response.status === 401) {
+              throw new Error('Authentication failed. Please check your access token and try again.');
+            } else {
+              throw new Error(`Failed to resend OTP for visitor ${visitorId}: ${response.status} ${response.statusText}`);
+            }
           }
           
           const data = await response.json();
