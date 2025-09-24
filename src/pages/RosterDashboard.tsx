@@ -559,7 +559,7 @@ export const RosterDashboard = () => {
   };
 
   const handleAdd = () => {
-    navigate('/roster/create');
+    navigate('/settings/account/roster/create');
   };
 
   const handleExport = () => {
