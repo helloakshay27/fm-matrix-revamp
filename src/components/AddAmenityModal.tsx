@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { createBanner, editBanner, fetchBannersById } from '@/store/slices/bannerSlice';
 import { toast } from 'sonner';
 import { Box, Dialog, DialogContent, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { createAmenity, editAmenity } from '@/store/slices/amenitySlice';
 
 interface AddBannerModalProps {
     isOpen: boolean;
@@ -21,7 +22,7 @@ const fieldStyles = {
     },
 };
 
-export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }: AddBannerModalProps) => {
+export const AddAmenityModal = ({ isOpen, onClose, fetchData, isEditing, record }: AddBannerModalProps) => {
     const dispatch = useAppDispatch();
     const token = localStorage.getItem('token');
     const baseUrl = localStorage.getItem('baseUrl');
@@ -29,28 +30,20 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
 
     const [formData, setFormData] = useState({
         site: [],
-        bannerUrl: '',
+        name: '',
     });
 
     const [attachmentPreview, setAttachmentPreview] = useState<{ file?: File; preview: string } | null>(null);
 
     useEffect(() => {
-        if (isEditing && record?.id) {
-            const getBanner = async () => {
-                try {
-                    const response = await dispatch(fetchBannersById({ baseUrl, token, id: record.id })).unwrap();
-                    setFormData({
-                        ...formData,
-                        bannerUrl: response.geo_link,
-                    });
-                    setAttachmentPreview({ file: undefined, preview: response?.url });
-                } catch (error) {
-                    console.log(error);
-                }
-            };
-            getBanner();
+        if (isEditing && record) {
+            setFormData({
+                ...formData,
+                name: record.name,
+            });
+            setAttachmentPreview({ file: undefined, preview: record?.document_url });
         }
-    }, [isEditing, record?.id, dispatch, baseUrl, token]);
+    }, [isEditing, record, dispatch, baseUrl, token]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files.length > 0) {
@@ -75,7 +68,7 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
     const handleClose = () => {
         setFormData({
             site: [],
-            bannerUrl: '',
+            name: '',
         });
         setAttachmentPreview(null);
         onClose();
@@ -86,14 +79,14 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
         const payload = new FormData();
         if (isEditing) {
             payload.append('society_banner[site_ids][]', localStorage.getItem("selectedSiteId") || '');
-            payload.append('society_banner[banner_url]', formData.bannerUrl);
+            payload.append('amenity[name]', formData.name);
             if (attachmentPreview?.file) {
-                payload.append('banner_image', attachmentPreview.file);
+                payload.append('amenity[document]', attachmentPreview.file);
             }
 
             try {
-                await dispatch(editBanner({ baseUrl, token, data: payload, id: record.id })).unwrap();
-                toast.success("Banner updated successfully");
+                await dispatch(editAmenity({ baseUrl, token, data: payload, id: record.id })).unwrap();
+                toast.success("Amenity updated successfully");
                 fetchData();
                 handleClose();
             } catch (error) {
@@ -103,17 +96,17 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
             }
         } else {
             formData.site.forEach((site) => {
-                payload.append('society_banner[site_ids][]', site);
+                payload.append('amenity[site_ids][]', site);
             });
-            payload.append('society_banner[banner_url]', formData.bannerUrl);
+            payload.append('amenity[name]', formData.name);
             if (attachmentPreview?.file) {
-                payload.append('banner_image', attachmentPreview.file);
+                payload.append('amenity[document]', attachmentPreview.file);
             }
-            payload.append('society_banner[active]', String(1));
+            payload.append('amenity[active]', String(1));
 
             try {
-                const response = await dispatch(createBanner({ baseUrl, token, data: payload })).unwrap();
-                toast.success(response.message);
+                await dispatch(createAmenity({ baseUrl, token, data: payload })).unwrap();
+                toast.success("Amenity added successfully");
                 fetchData();
                 handleClose();
             } catch (error) {
@@ -128,7 +121,7 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
         <Dialog open={isOpen} onClose={handleClose} maxWidth="sm" fullWidth>
             <DialogContent>
                 <div>
-                    <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Banner' : 'Add Banner'}</h1>
+                    <h1 className='text-xl mb-6 mt-2 font-semibold'>{isEditing ? 'Edit Amenity' : 'Add Amenity'}</h1>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -162,12 +155,12 @@ export const AddBannerModal = ({ isOpen, onClose, fetchData, isEditing, record }
                     )}
 
                     <TextField
-                        label="Banner Url*"
-                        name="bannerUrl"
+                        label="Name"
+                        name="name"
                         type="text"
                         fullWidth
                         variant="outlined"
-                        value={formData.bannerUrl}
+                        value={formData.name}
                         onChange={handleFormChange}
                         InputLabelProps={{ shrink: true }}
                         InputProps={{ sx: fieldStyles }}

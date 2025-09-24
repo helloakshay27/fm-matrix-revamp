@@ -49,7 +49,7 @@ const TestimonialDetailsPage = () => {
             </div>
 
             <>
-                <div className="flex items-center gap-4 mb-[30px]">
+                <div className="flex items-center gap-4 mb-[20px]">
                     <h1 className="text-[24px] font-semibold text-[#1a1a1a]">
                         Testimonial Details
                     </h1>

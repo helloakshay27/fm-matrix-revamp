@@ -62,6 +62,7 @@ import { createAddressReducer, fetchAddressesReducer, getAddressByIdReducer, upd
 import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from './slices/wbsSlice'
 import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fetchBannersReducers } from './slices/bannerSlice'
 import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
+import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
 
 export const store = configureStore({
   reducer: {
@@ -285,6 +286,12 @@ export const store = configureStore({
     fetchTestimonialById: fetchTestimonialsByIdReucers,
     createTestimonial: createTestimonialReucers,
     editTestimonial: editTestimonialReucers,
+
+    // Amenity
+    fetchAmenity: fetchAmenityReducer,
+    fetchAmenityById: fetchAmenityByIdReducer,
+    createAmenity: createAmenityReducer,
+    editAmenity: editAmenityReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>
