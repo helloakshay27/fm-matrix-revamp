@@ -669,8 +669,8 @@ export const FMUserMasterDashboard = () => {
         );
       case "type":
         return (
-          <Badge variant={user.type === "Internal" ? "default" : "secondary"}>
-            {user.type}
+          <Badge variant="secondary">
+            {user?.type?.split(" ")[1]}
           </Badge>
         );
       case "status":
