@@ -169,6 +169,7 @@ import FillJSAForm from "./pages/FillJSAForm";
 import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
+import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -1413,6 +1414,14 @@ function App() {
                     <Route
                       path="/safety/permit/details/:id"
                       element={<PermitDetails />}
+                    />
+                    <Route
+                      path="/safety/permit/edit/:id"
+                      element={
+                        <ProtectedRoute>
+                          <EditPermitPage />
+                        </ProtectedRoute>
+                      }
                     />
                     <Route
                       path="/safety/permit/vendor-form/:id?"
