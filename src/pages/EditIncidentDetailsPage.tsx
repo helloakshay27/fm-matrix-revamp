@@ -11,6 +11,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Info, FileText, Users, Settings, AlertTriangle, Search, Loader2, Paperclip, Heart, Stethoscope, UserSearch } from 'lucide-react';
 import { FormControl, InputLabel, Select as MuiSelect, MenuItem, TextField, Checkbox, FormControlLabel } from '@mui/material';
 import { incidentService, type Incident } from '@/services/incidentService';
+import { toast } from 'sonner';
 
 export const EditIncidentDetailsPage = () => {
   const { id } = useParams();
@@ -116,6 +117,22 @@ export const EditIncidentDetailsPage = () => {
   useEffect(() => {
     console.log('Form data state updated:', formData);
   }, [formData]);
+
+  // Calculate total cost whenever individual cost fields change
+  useEffect(() => {
+    const calculateTotalCost = () => {
+      const equipmentCost = parseFloat(formData.equipmentPropertyDamagedCost) || 0;
+      const production = parseFloat(formData.productionLoss) || 0;
+      const treatment = parseFloat(formData.treatmentCost) || 0;
+      const absenteeism = parseFloat(formData.absenteeismCost) || 0;
+      const other = parseFloat(formData.otherCost) || 0;
+
+      const total = equipmentCost + production + treatment + absenteeism + other;
+      setFormData(prev => ({ ...prev, totalCost: total.toFixed(2) }));
+    };
+
+    calculateTotalCost();
+  }, [formData.equipmentPropertyDamagedCost, formData.productionLoss, formData.treatmentCost, formData.absenteeismCost, formData.otherCost]);
 
   // Helper to calculate and set incident level based on risk score (same as AddIncidentPage)
   const calculateAndSetIncidentLevel = (severity: string, probability: string) => {
@@ -509,18 +526,22 @@ export const EditIncidentDetailsPage = () => {
       const updatedIncident = await incidentService.updateIncident(id!, updatedFormData);
       console.log('Incident updated successfully:', updatedIncident);
 
+      // Show success message
+      toast.success('Incident updated successfully!');
+
       // Navigate back to the details page
-      navigate(`${basePath}/incident/details/${id}`);
+      navigate(`${basePath}/incident/${id}`);
     } catch (err) {
       setError('Failed to update incident details');
       console.error('Error updating incident:', err);
+      toast.error('Failed to update incident. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    navigate(`${basePath}/incident/details/${id}`);
+    navigate(`${basePath}/incident/${id}`);
   };
 
   if (loading) {
@@ -1656,7 +1677,7 @@ export const EditIncidentDetailsPage = () => {
                       if (e.target.files) {
                         const files = Array.from(e.target.files);
                         setNewAttachments(prev => [...prev, ...files]);
-                        handleInputChange('attachments', e.target.files[0]);
+                        // Don't call handleInputChange with file object
                       }
                     }}
                     className="hidden"

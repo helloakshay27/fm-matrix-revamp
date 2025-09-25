@@ -169,6 +169,7 @@ import FillJSAForm from "./pages/FillJSAForm";
 import { AddPermitChecklist } from "./pages/AddPermitChecklist";
 import { PermitChecklistList } from "./pages/PermitChecklistList";
 import { PermitChecklistDetails } from "./pages/PermitChecklistDetails";
+import { EditPermitPage } from "./pages/EditPermitPage";
 
 import { LeadDashboard } from "./pages/LeadDashboard";
 import { EnergyDashboard } from "./pages/EnergyDashboard";
@@ -703,7 +704,6 @@ import EditInventoryTypePage from "./pages/master/EditInventoryTypePage";
 import AddInventorySubTypePage from "./pages/master/AddInventorySubTypePage";
 import EditInventorySubTypePage from "./pages/master/EditInventorySubTypePage";
 import AddOccupantUserPage from "./pages/master/AddOccupantUserPage";
-import ViewOccupantUserPage from "./pages/master/ViewOccupantUserPage";
 import EditOccupantUserPage from "./pages/master/EditOccupantUserPage";
 import { AddCRMCustomerPage } from "./pages/AddCRMCustomerPage";
 import CheckHierarchy from "./components/CheckHierarchy";
@@ -727,6 +727,7 @@ import AmenitySetupDashboard from "./pages/AmenitySetupDashboard";
 import TestimonialDetailsPage from "./pages/TestimonialDetailsPage";
 import BannerDetailsPage from "./pages/BannerDetailsPage";
 import AmenityDetailsPage from "./pages/AmenityDetailsPage";
+import { ViewOccupantUserPage } from "./pages/master/ViewOccupantUserPage";
 
 const queryClient = new QueryClient();
 
@@ -1027,20 +1028,13 @@ function App() {
                       path="/settings/account/roster/create"
                       element={<RosterCreatePage />}
                     />
+             
                     <Route
-                      path="/roster"
-                      element={<AccountRosterDashboard />}
-                    />
-                    <Route
-                      path="/roster/create"
-                      element={<RosterCreatePage />}
-                    />
-                    <Route
-                      path="/roster/detail/:id"
+                      path="/settings/account/roster/detail/:id"
                       element={<RosterDetailPage />}
                     />
                     <Route
-                      path="/roster/edit/:id"
+                      path="/settings/account/roster/edit/:id"
                       element={<RosterEditPage />}
                     />
                     <Route
@@ -1419,6 +1413,14 @@ function App() {
                     <Route
                       path="/safety/permit/details/:id"
                       element={<PermitDetails />}
+                    />
+                    <Route
+                      path="/safety/permit/edit/:id"
+                      element={
+                        <ProtectedRoute>
+                          <EditPermitPage />
+                        </ProtectedRoute>
+                      }
                     />
                     <Route
                       path="/safety/permit/vendor-form/:id?"

@@ -1,158 +1,209 @@
+import {
+  Dialog,
+  DialogContent,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  TextField,
+  Select as MuiSelect,
+} from "@mui/material";
+import { Button } from "./ui/button";
+import { X } from "lucide-react";
+import { useEffect } from "react";
+import { fetchEntities } from "@/store/slices/entitiesSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
+const fieldStyles = {
+  height: { xs: 28, sm: 36, md: 45 },
+  "& .MuiInputBase-input, & .MuiSelect-select": {
+    padding: { xs: "8px", sm: "10px", md: "12px" },
+  },
+};
 
-interface OccupantUsersFilterDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+interface Filters {
+  name?: string;
+  email?: string;
+  mobile?: string;
+  status?: string;
+  entity?: string;
 }
 
-export const OccupantUsersFilterDialog = ({ open, onOpenChange }: OccupantUsersFilterDialogProps) => {
-  const [filters, setFilters] = useState({
-    name: '',
-    email: '',
-    mobileNumber: '',
-    entity: '',
-    status: ''
-  });
+interface FilterDialogProps {
+  filterDialogOpen: boolean;
+  setFilterDialogOpen: (open: boolean) => void;
+  filters: Filters;
+  setFilters: (filters: Filters | ((prev: Filters) => Filters)) => void;
+  handleApplyFilters: (filters: Filters) => void;
+}
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
+export const OccupantUsersFilterDialog = ({
+  filterDialogOpen,
+  setFilterDialogOpen,
+  filters,
+  setFilters,
+  handleApplyFilters,
+}: FilterDialogProps) => {
+  const { data: entitiesData, loading: entitiesLoading, error: entitiesError } = useAppSelector((state) => state.entities);
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(fetchEntities());
+  }, [dispatch]);
+
+  const handleFilterChange = (field: keyof Filters, value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  const handleReset = () => {
+  const handleResetFilters = () => {
     setFilters({
-      name: '',
-      email: '',
-      mobileNumber: '',
-      entity: '',
-      status: ''
+      name: "",
+      email: "",
+      mobile: "",
+      status: "",
+      entity: "",
     });
   };
 
-  const handleApply = () => {
-    console.log('Applying filters:', filters);
-    onOpenChange(false);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] p-0">
-        <DialogHeader className="px-6 py-4 border-b border-gray-200">
+    <Dialog
+      open={filterDialogOpen}
+      onClose={setFilterDialogOpen}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogContent className="p-0 bg-white">
+        <div className="pb-4 border-b">
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-lg font-medium text-gray-900">FILTER</DialogTitle>
+            <h1 className="text-xl font-semibold">FILTER</h1>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onOpenChange(false)}
+              onClick={() => setFilterDialogOpen(false)}
               className="h-6 w-6 p-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
-        </DialogHeader>
-        
-        <div className="px-6 py-4 space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            {/* Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Name
-              </Label>
-              <Input
-                id="name"
-                value={filters.name}
-                onChange={(e) => handleFilterChange('name', e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email
-              </Label>
-              <Input
-                id="email"
-                value={filters.email}
-                onChange={(e) => handleFilterChange('email', e.target.value)}
-                className="w-full"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Mobile Number */}
-            <div className="space-y-2">
-              <Label htmlFor="mobileNumber" className="text-sm font-medium text-gray-700">
-                Mobile Number
-              </Label>
-              <Input
-                id="mobileNumber"
-                value={filters.mobileNumber}
-                onChange={(e) => handleFilterChange('mobileNumber', e.target.value)}
-                className="w-full"
-              />
-            </div>
-
-            {/* Status */}
-            <div className="space-y-2">
-              <Label className="text-sm font-medium text-gray-700">
-                Status
-              </Label>
-              <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Entity */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium text-gray-700">
-              Entity
-            </Label>
-            <Select value={filters.entity} onValueChange={(value) => handleFilterChange('entity', value)}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Entity" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="lookated-ho">Lookated HO</SelectItem>
-                <SelectItem value="entity1">Entity 1</SelectItem>
-                <SelectItem value="entity2">Entity 2</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={handleReset}
-            className="px-6"
-          >
-            Reset
-          </Button>
-          <Button
-            onClick={handleApply}
-            className="bg-purple-700 hover:bg-purple-800 text-white px-6"
-          >
-            Apply
-          </Button>
+        <div className="py-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <TextField
+                label="Name"
+                placeholder="Name"
+                value={filters.name}
+                onChange={(e) => handleFilterChange("name", e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+
+            <div>
+              <TextField
+                label="Email"
+                placeholder="Email"
+                value={filters.email}
+                onChange={(e) => handleFilterChange("email", e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{ shrink: true }}
+                InputProps={{ sx: fieldStyles }}
+                sx={{ mt: 1 }}
+              />
+            </div>
+
+            <div>
+              <TextField
+                fullWidth
+                label="Mobile Number"
+                variant="outlined"
+                value={filters.mobile}
+                onChange={(e) => handleFilterChange("mobile", e.target.value)}
+                required
+                inputProps={{
+                  maxLength: 10,
+                  inputMode: "numeric",
+                  pattern: "[0-9]*",
+                }}
+                InputLabelProps={{
+                  classes: {
+                    asterisk: "text-red-500",
+                  },
+                  shrink: true,
+                }}
+              />
+            </div>
+
+            <div>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Approval Status</InputLabel>
+                <MuiSelect
+                  label="Approval Status"
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange("status", e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="" disabled>
+                    <em>Select Status</em>
+                  </MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="approved">Approved</MenuItem>
+                  <MenuItem value="rejected">Rejected</MenuItem>
+                </MuiSelect>
+              </FormControl>
+            </div>
+
+            <div className="md:col-span-1">
+              <FormControl fullWidth variant="outlined">
+                <InputLabel shrink>Entity</InputLabel>
+                <MuiSelect
+                  label="Entity"
+                  value={filters.entity}
+                  onChange={(e) => handleFilterChange("entity", e.target.value)}
+                  displayEmpty
+                  sx={fieldStyles}
+                >
+                  <MenuItem value="">Select Entity</MenuItem>
+                  {entitiesLoading && (
+                    <MenuItem value="" disabled>Loading...</MenuItem>
+                  )}
+                  {entitiesError && (
+                    <MenuItem value="" disabled>Error loading entities</MenuItem>
+                  )}
+                  {entitiesData?.entities?.map((entity) => (
+                    <MenuItem key={entity.id} value={String(entity.id)}>
+                      {entity.name}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+              </FormControl>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              onClick={handleResetFilters}
+              variant="outline"
+              className="bg-white text-gray-700 hover:bg-gray-50 border-gray-300 px-6 py-2"
+            >
+              Reset
+            </Button>
+            <Button
+              onClick={() => handleApplyFilters(filters)}
+              className="bg-purple-700 hover:bg-purple-800 text-white px-6 py-2"
+            >
+              Apply
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

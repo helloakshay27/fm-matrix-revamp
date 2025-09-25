@@ -244,41 +244,47 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Shift Timings From <span className="text-red-500">*</span>
             </label>
-            <div className="flex gap-2">
-              <Select value={fromHour} onValueChange={setFromHour} disabled={isLoading}>
-                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="HH" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-60 rounded-none">
-                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
-                    <SelectItem key={hour} value={hour}>
-                      {hour}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="flex items-center text-gray-500">:</span>
-              <Select value={fromMinute} onValueChange={setFromMinute} disabled={isLoading}>
-                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="MM" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-60 rounded-none">
-                  {minutes.map((minute) => (
-                    <SelectItem key={minute} value={minute}>
-                      {minute}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={fromAmPm} onValueChange={setFromAmPm} disabled={isLoading}>
-                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="AM" />
-                </SelectTrigger>
-                <SelectContent className="bg-white rounded-none">
-                  <SelectItem value="AM">AM</SelectItem>
-                  <SelectItem value="PM">PM</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <Select value={fromHour} onValueChange={setFromHour} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="Hr" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-60 rounded-none">
+                    {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="flex items-center text-gray-500 px-1">:</span>
+              <div className="flex-1">
+                <Select value={fromMinute} onValueChange={setFromMinute} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="mm" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-60 rounded-none">
+                    {minutes.map((minute) => (
+                      <SelectItem key={minute} value={minute}>
+                        {minute}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-20">
+                <Select value={fromAmPm} onValueChange={setFromAmPm} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="AM" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white rounded-none">
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -287,41 +293,47 @@ export const EditShiftDialog = ({ open, onOpenChange, shift, onShiftUpdated }: E
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Shift Timings To <span className="text-red-500">*</span>
             </label>
-            <div className="flex gap-2">
-              <Select value={toHour} onValueChange={setToHour} disabled={isLoading}>
-                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="HH" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-60 rounded-none">
-                  {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
-                    <SelectItem key={hour} value={hour}>
-                      {hour}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <span className="flex items-center text-gray-500">:</span>
-              <Select value={toMinute} onValueChange={setToMinute} disabled={isLoading}>
-                <SelectTrigger className="flex-1 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="MM" />
-                </SelectTrigger>
-                <SelectContent className="bg-white max-h-60 rounded-none">
-                  {minutes.map((minute) => (
-                    <SelectItem key={minute} value={minute}>
-                      {minute}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={toAmPm} onValueChange={setToAmPm} disabled={isLoading}>
-                <SelectTrigger className="w-20 rounded-none border border-gray-300 h-10">
-                  <SelectValue placeholder="AM" />
-                </SelectTrigger>
-                <SelectContent className="bg-white rounded-none">
-                  <SelectItem value="AM">AM</SelectItem>
-                  <SelectItem value="PM">PM</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-2 items-center">
+              <div className="flex-1">
+                <Select value={toHour} onValueChange={setToHour} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="Hr" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-60 rounded-none">
+                    {['12', '01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11'].map((hour) => (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <span className="flex items-center text-gray-500 px-1">:</span>
+              <div className="flex-1">
+                <Select value={toMinute} onValueChange={setToMinute} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="mm" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white max-h-60 rounded-none">
+                    {minutes.map((minute) => (
+                      <SelectItem key={minute} value={minute}>
+                        {minute}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-20">
+                <Select value={toAmPm} onValueChange={setToAmPm} disabled={isLoading}>
+                  <SelectTrigger className="w-full rounded-none border border-gray-300 h-10">
+                    <SelectValue placeholder="PM" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-white rounded-none">
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 

@@ -367,18 +367,20 @@ export const AddSurveyMapping = () => {
     }
     
     surveyMappings.forEach((mapping, index) => {
-      const hasLocation = mapping.selectedLocation.site || 
-                         mapping.selectedLocation.building || 
-                         mapping.selectedLocation.wing || 
-                         mapping.selectedLocation.area || 
-                         mapping.selectedLocation.floor || 
-                         mapping.selectedLocation.room;
-      
-      if (!hasLocation) {
-        invalidMappings.push(`Location Configuration ${index + 1}: Please select at least one location`);
-      } else {
-        validMappings.push(mapping);
+      // Check if site is selected (mandatory)
+      if (!mapping.selectedLocation.site) {
+        invalidMappings.push(`Location Configuration ${index + 1}: Site selection is required`);
+        return; // Skip further validation for this mapping
       }
+      
+      // Check if building is selected (mandatory)
+      if (!mapping.selectedLocation.building) {
+        invalidMappings.push(`Location Configuration ${index + 1}: Building selection is required`);
+        return; // Skip further validation for this mapping
+      }
+      
+      // If both site and building are selected, the mapping is valid
+      validMappings.push(mapping);
     });
 
     if (invalidMappings.length > 0) {
@@ -470,9 +472,10 @@ export const AddSurveyMapping = () => {
         navigate('/maintenance/survey/mapping');
       }, 1000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating survey mappings:', error);
-      toast.error(`Failed to create survey mappings: ${error.message || 'Unknown error'}`, {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to create survey mappings: ${errorMessage}`, {
         duration: 5000,
       });
     } finally {
@@ -639,7 +642,7 @@ export const AddSurveyMapping = () => {
                   variant="outlined" 
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>Building</InputLabel>
+                  <InputLabel shrink>Building <span className='text-red-500'>*</span></InputLabel>
                   <Select
                     value={mapping.selectedLocation.building}
                     onChange={(e) => handleLocationChange(mappingIdx, 'building', e.target.value as string)}

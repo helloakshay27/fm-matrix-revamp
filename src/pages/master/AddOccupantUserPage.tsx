@@ -10,6 +10,7 @@ import { fetchAllowedSites } from '@/store/slices/siteSlice';
 import { fetchAllowedCompanies } from '@/store/slices/projectSlice';
 import { RootState } from '@/store/store';
 import { toast } from 'sonner';
+import { ArrowLeft } from 'lucide-react'
 
 export const AddOccupantUserPage: React.FC = () => {
   const navigate = useNavigate();
@@ -200,313 +201,313 @@ export const AddOccupantUserPage: React.FC = () => {
   } as const;
 
   return (
-    <div className="p-6 relative">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#1a1a1a]">Add Occupant User</h1>
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <h1 className="text-2xl font-semibold text-[#1a1a1a]">Add Occupant User</h1>
       </div>
 
       {/* Basic Details */}
-      <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-        <CardHeader className='bg-[#F6F4EE] mb-4'>
-          <CardTitle className="text-lg text-black flex items-center">
-            <span className="w-6 h-6 bg-[#C72030] text-white rounded-full flex items-center justify-center text-sm mr-2">1</span>
-            BASIC DETAILS
-          </CardTitle>
+      <Card>
+        <CardHeader>
+          <CardTitle>User Information</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Box className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <TextField
-              label={<><span>First Name</span><span className='text-red-600'>*</span></>}
-              placeholder="Enter First Name"
-              value={formData.firstName}
-              onChange={(e) => handleInputChange('firstName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              error={errors.firstName}
-              helperText={errors.firstName ? 'First Name is required' : ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <TextField
-              label={<><span>Last Name</span><span className='text-red-600'>*</span></>}
-              placeholder="Enter Last Name"
-              value={formData.lastName}
-              onChange={(e) => handleInputChange('lastName', e.target.value)}
-              fullWidth
-              variant="outlined"
-              error={errors.lastName}
-              helperText={errors.lastName ? 'Last Name is required' : ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <TextField
-              label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
-              placeholder="Enter Mobile Number"
-              value={formData.mobileNumber}
-              onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
-              fullWidth
-              variant="outlined"
-              error={errors.mobileNumber}
-              helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
-            />
-
-            <TextField
-              label={<><span>E-mail ID</span><span className='text-red-600'>*</span></>}
-              placeholder="Enter E-mail ID"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              fullWidth
-              variant="outlined"
-              error={errors.email}
-              helperText={errors.email ? 'E-mail ID is required' : ''}
-              slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Gender</InputLabel>
-              <MuiSelect
-                value={formData.gender}
-                onChange={(e) => handleInputChange('gender', e.target.value as string)}
-                label="Gender"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="">Select Gender</MenuItem>
-                <MenuItem value="Male">Male</MenuItem>
-                <MenuItem value="Female">Female</MenuItem>
-              </MuiSelect>
-            </FormControl>
-            <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>Select Entity</InputLabel>
-              <MuiSelect
-                value={formData.selectEntity}
-                onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
-                label="Select Entity"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="">Select Entity</MenuItem>
-                {entitiesLoading && (
-                  <MenuItem value="" disabled>Loading...</MenuItem>
-                )}
-                {entitiesError && (
-                  <MenuItem value="" disabled>Error loading entities</MenuItem>
-                )}
-                {entitiesData?.entities?.map((entity: Entity) => (
-                  <MenuItem key={entity.id} value={String(entity.id)}>
-                    {entity.name}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-            </FormControl>
-
-            <TextField
-              label="Employee ID"
-              placeholder="Enter Employee ID"
-              value={formData.employeeId}
-              onChange={(e) => handleInputChange('employeeId', e.target.value)}
-              fullWidth
-              variant="outlined"
-              slotProps={{ inputLabel: { shrink: true } }}
-              InputProps={{ sx: fieldStyles }}
-            />
-            <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>
-                Select User Type<span className='text-red-600'>*</span>
-              </InputLabel>
-              <MuiSelect
-                value={formData.userType}
-                onChange={(e) => handleInputChange('userType', e.target.value as string)}
-                label="Select User Type"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="">Select User Type</MenuItem>
-                <MenuItem value="pms_occupant_admin">Admin</MenuItem>
-                <MenuItem value="pms_occupant">Member</MenuItem>
-                <MenuItem value="pms_guest">Guest</MenuItem>
-              </MuiSelect>
-              {errors.userType && (
-                <p className="text-red-600 text-xs mt-1">User Type is required</p>
-              )}
-            </FormControl>
-            <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-              <InputLabel shrink>
-                Select Access Level<span className='text-red-600'>*</span>
-              </InputLabel>
-              <MuiSelect
-                value={formData.accessLevel}
-                onChange={(e) => {
-                  const val = e.target.value as string;
-                  handleInputChange('accessLevel', val);
-                  if (val !== 'Site') handleInputChange('selectedSites', []);
-                  if (val !== 'Company') handleInputChange('selectedCompanies', []);
-                }}
-                label="Select Access Level"
-                displayEmpty
-                notched
-              >
-                <MenuItem value="">Select Access Level</MenuItem>
-                {["Company", "Site"].map((accessLevel) => (
-                  <MenuItem key={accessLevel} value={accessLevel}>
-                    {accessLevel}
-                  </MenuItem>
-                ))}
-              </MuiSelect>
-              {errors.accessLevel && (
-                <p className="text-red-600 text-xs mt-1">Access Level is required</p>
-              )}
-            </FormControl>
-            {formData.accessLevel === 'Site' && (
-              <FormControl fullWidth variant="outlined" error={errors.selectedSites} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>
-                  Select Sites<span className='text-red-600'>*</span>
-                </InputLabel>
-                <MuiSelect
-                  multiple
-                  value={formData.selectedSites}
-                  onChange={(e) => handleInputChange('selectedSites', e.target.value as string[])}
-                  label="Select Sites"
-                  displayEmpty
-                  notched
-                  renderValue={(selected) =>
-                    selected.length > 0
-                      ? sites?.filter(site => selected.includes(site.id.toString())).map(site => site.name).join(', ')
-                      : 'Select Sites'
-                  }
-                >
-                  {sites?.map((site) => (
-                    <MenuItem key={site.id} value={site.id.toString()}>
-                      {site.name}
-                    </MenuItem>
-                  ))}
-                </MuiSelect>
-                {errors.selectedSites && (
-                  <p className="text-red-600 text-xs mt-1">At least one site is required</p>
-                )}
-              </FormControl>
-            )}
-            {formData.accessLevel === 'Company' && (
-              <FormControl fullWidth variant="outlined" error={errors.selectedCompanies} sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>
-                  Select Companies<span className='text-red-600'>*</span>
-                </InputLabel>
-                <MuiSelect
-                  multiple
-                  value={formData.selectedCompanies}
-                  onChange={(e) => handleInputChange('selectedCompanies', e.target.value as string[])}
-                  label="Select Companies"
-                  displayEmpty
-                  notched
-                  renderValue={(selected) =>
-                    selected.length > 0
-                      ? selectedCompany && selected.includes(selectedCompany.id.toString())
-                        ? selectedCompany.name
-                        : 'Select Companies'
-                      : 'Select Companies'
-                  }
-                >
-                  {selectedCompany && (
-                    <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
-                      {selectedCompany.name}
-                    </MenuItem>
-                  )}
-                </MuiSelect>
-                {errors.selectedCompanies && (
-                  <p className="text-red-600 text-xs mt-1">At least one company is required</p>
-                )}
-              </FormControl>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-
-      {/* Additional Info toggle */}
-      <div className="mb-2">
-        <Button
-          variant="outline"
-          className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
-          onClick={() => setShowAdditional((s) => !s)}
-        >
-          {showAdditional ? '− Additional Info' : '+ Additional Info'}
-        </Button>
-      </div>
-
-      {showAdditional && (
-        <Card className="mb-6 border-[#D9D9D9] bg-[#F6F7F7]">
-          <CardHeader className='bg-[#F6F4EE] mb-4'>
-            <CardTitle className="text-lg text-black">ADDITIONAL INFO</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Box className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <CardContent className="space-y-6">
+          <Box component="form" noValidate>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <TextField
-                label="Birth Date"
-                type="date"
-                value={formData.birthDate}
-                onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                label={<><span>First Name</span><span className='text-red-600'>*</span></>}
+                placeholder="Enter First Name"
+                value={formData.firstName}
+                onChange={(e) => handleInputChange('firstName', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={errors.firstName}
+                helperText={errors.firstName ? 'First Name is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Address"
-                placeholder="Enter Address"
-                value={formData.address}
-                onChange={(e) => handleInputChange('address', e.target.value)}
+                label={<><span>Last Name</span><span className='text-red-600'>*</span></>}
+                placeholder="Enter Last Name"
+                value={formData.lastName}
+                onChange={(e) => handleInputChange('lastName', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={errors.lastName}
+                helperText={errors.lastName ? 'Last Name is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
               <TextField
-                label="Alternate Mobile Number"
-                placeholder="Enter Alternate Mobile Number"
-                value={formData.altMobileNumber}
-                onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                label={<><span>Mobile Number</span><span className='text-red-600'>*</span></>}
+                placeholder="Enter Mobile Number"
+                value={formData.mobileNumber}
+                onChange={(e) => handleInputChange('mobileNumber', e.target.value)}
                 fullWidth
                 variant="outlined"
+                error={errors.mobileNumber}
+                helperText={errors.mobileNumber ? 'Mobile Number is required' : ''}
+                slotProps={{ inputLabel: { shrink: true } }}
+                InputProps={{ sx: fieldStyles }}
+              />
+
+              <TextField
+                label={<><span>E-mail ID</span><span className='text-red-600'>*</span></>}
+                placeholder="Enter E-mail ID"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                fullWidth
+                variant="outlined"
+                error={errors.email}
+                helperText={errors.email ? 'E-mail ID is required' : ''}
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
               <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
-                <InputLabel shrink>Select Department</InputLabel>
+                <InputLabel shrink>Gender</InputLabel>
                 <MuiSelect
-                  value={formData.department}
-                  onChange={(e) => handleInputChange('department', e.target.value as string)}
-                  label="Select Department"
+                  value={formData.gender}
+                  onChange={(e) => handleInputChange('gender', e.target.value as string)}
+                  label="Gender"
                   displayEmpty
                   notched
                 >
-                  <MenuItem value="">Select Department</MenuItem>
-                  {departmentsLoading && (
+                  <MenuItem value="">Select Gender</MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                </MuiSelect>
+              </FormControl>
+              <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>Select Entity</InputLabel>
+                <MuiSelect
+                  value={formData.selectEntity}
+                  onChange={(e) => handleInputChange('selectEntity', e.target.value as string)}
+                  label="Select Entity"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select Entity</MenuItem>
+                  {entitiesLoading && (
                     <MenuItem value="" disabled>Loading...</MenuItem>
                   )}
-                  {departmentsError && (
-                    <MenuItem value="" disabled>{departmentsError}</MenuItem>
+                  {entitiesError && (
+                    <MenuItem value="" disabled>Error loading entities</MenuItem>
                   )}
-                  {departments?.map((d: any) => (
-                    <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+                  {entitiesData?.entities?.map((entity: Entity) => (
+                    <MenuItem key={entity.id} value={String(entity.id)}>
+                      {entity.name}
+                    </MenuItem>
                   ))}
                 </MuiSelect>
               </FormControl>
+
               <TextField
-                label="Designation"
-                placeholder="Enter Designation"
-                value={formData.designation}
-                onChange={(e) => handleInputChange('designation', e.target.value)}
+                label="Employee ID"
+                placeholder="Enter Employee ID"
+                value={formData.employeeId}
+                onChange={(e) => handleInputChange('employeeId', e.target.value)}
                 fullWidth
                 variant="outlined"
                 slotProps={{ inputLabel: { shrink: true } }}
                 InputProps={{ sx: fieldStyles }}
               />
-            </Box>
-          </CardContent>
-        </Card>
-      )}
+              <FormControl fullWidth variant="outlined" error={errors.userType} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select User Type<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
+                  value={formData.userType}
+                  onChange={(e) => handleInputChange('userType', e.target.value as string)}
+                  label="Select User Type"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select User Type</MenuItem>
+                  <MenuItem value="pms_occupant_admin">Admin</MenuItem>
+                  <MenuItem value="pms_occupant">Member</MenuItem>
+                  <MenuItem value="pms_guest">Guest</MenuItem>
+                </MuiSelect>
+                {errors.userType && (
+                  <p className="text-red-600 text-xs mt-1">User Type is required</p>
+                )}
+              </FormControl>
+              <FormControl fullWidth variant="outlined" error={errors.accessLevel} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                <InputLabel shrink>
+                  Select Access Level<span className='text-red-600'>*</span>
+                </InputLabel>
+                <MuiSelect
+                  value={formData.accessLevel}
+                  onChange={(e) => {
+                    const val = e.target.value as string;
+                    handleInputChange('accessLevel', val);
+                    if (val !== 'Site') handleInputChange('selectedSites', []);
+                    if (val !== 'Company') handleInputChange('selectedCompanies', []);
+                  }}
+                  label="Select Access Level"
+                  displayEmpty
+                  notched
+                >
+                  <MenuItem value="">Select Access Level</MenuItem>
+                  {["Company", "Site"].map((accessLevel) => (
+                    <MenuItem key={accessLevel} value={accessLevel}>
+                      {accessLevel}
+                    </MenuItem>
+                  ))}
+                </MuiSelect>
+                {errors.accessLevel && (
+                  <p className="text-red-600 text-xs mt-1">Access Level is required</p>
+                )}
+              </FormControl>
+              {formData.accessLevel === 'Site' && (
+                <FormControl fullWidth variant="outlined" error={errors.selectedSites} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>
+                    Select Sites<span className='text-red-600'>*</span>
+                  </InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedSites}
+                    onChange={(e) => handleInputChange('selectedSites', e.target.value as string[])}
+                    label="Select Sites"
+                    displayEmpty
+                    notched
+                    renderValue={(selected) =>
+                      selected.length > 0
+                        ? sites?.filter(site => selected.includes(site.id.toString())).map(site => site.name).join(', ')
+                        : 'Select Sites'
+                    }
+                  >
+                    {sites?.map((site) => (
+                      <MenuItem key={site.id} value={site.id.toString()}>
+                        {site.name}
+                      </MenuItem>
+                    ))}
+                  </MuiSelect>
+                  {errors.selectedSites && (
+                    <p className="text-red-600 text-xs mt-1">At least one site is required</p>
+                  )}
+                </FormControl>
+              )}
+              {formData.accessLevel === 'Company' && (
+                <FormControl fullWidth variant="outlined" error={errors.selectedCompanies} sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>
+                    Select Companies<span className='text-red-600'>*</span>
+                  </InputLabel>
+                  <MuiSelect
+                    multiple
+                    value={formData.selectedCompanies}
+                    onChange={(e) => handleInputChange('selectedCompanies', e.target.value as string[])}
+                    label="Select Companies"
+                    displayEmpty
+                    notched
+                    renderValue={(selected) =>
+                      selected.length > 0
+                        ? selectedCompany && selected.includes(selectedCompany.id.toString())
+                          ? selectedCompany.name
+                          : 'Select Companies'
+                        : 'Select Companies'
+                    }
+                  >
+                    {selectedCompany && (
+                      <MenuItem key={selectedCompany.id} value={selectedCompany.id.toString()}>
+                        {selectedCompany.name}
+                      </MenuItem>
+                    )}
+                  </MuiSelect>
+                  {errors.selectedCompanies && (
+                    <p className="text-red-600 text-xs mt-1">At least one company is required</p>
+                  )}
+                </FormControl>
+              )}
+            </div>
+
+            <div className="my-6">
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-[#f6f4ee] text-[#C72030] hover:bg-[#ede9e0] border-[#C72030]"
+                onClick={() => setShowAdditional((s) => !s)}
+              >
+                {showAdditional ? '− Additional Info' : '+ Additional Info'}
+              </Button>
+            </div>
+
+            {showAdditional && (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <TextField
+                  label="Birth Date"
+                  type="date"
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <TextField
+                  label="Address"
+                  placeholder="Enter Address"
+                  value={formData.address}
+                  onChange={(e) => handleInputChange('address', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <TextField
+                  label="Alternate Mobile Number"
+                  placeholder="Enter Alternate Mobile Number"
+                  value={formData.altMobileNumber}
+                  onChange={(e) => handleInputChange('altMobileNumber', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+                <FormControl fullWidth variant="outlined" sx={{ '& .MuiInputBase-root': fieldStyles }}>
+                  <InputLabel shrink>Select Department</InputLabel>
+                  <MuiSelect
+                    value={formData.department}
+                    onChange={(e) => handleInputChange('department', e.target.value as string)}
+                    label="Select Department"
+                    displayEmpty
+                    notched
+                  >
+                    <MenuItem value="">Select Department</MenuItem>
+                    {departmentsLoading && (
+                      <MenuItem value="" disabled>Loading...</MenuItem>
+                    )}
+                    {departmentsError && (
+                      <MenuItem value="" disabled>{departmentsError}</MenuItem>
+                    )}
+                    {departments?.map((d: any) => (
+                      <MenuItem key={d.id} value={String(d.id)}>{d.department_name}</MenuItem>
+                    ))}
+                  </MuiSelect>
+                </FormControl>
+                <TextField
+                  label="Designation"
+                  placeholder="Enter Designation"
+                  value={formData.designation}
+                  onChange={(e) => handleInputChange('designation', e.target.value)}
+                  fullWidth
+                  variant="outlined"
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  InputProps={{ sx: fieldStyles }}
+                />
+              </div>
+            )}
+          </Box>
+        </CardContent>
+      </Card>
 
       {/* Actions */}
       <div className="flex justify-center gap-4 pt-2">

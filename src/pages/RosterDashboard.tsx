@@ -550,16 +550,16 @@ export const RosterDashboard = () => {
 
   const handleView = (id: number) => {
     console.log('View roster:', id);
-    navigate(`/roster/detail/${id}`);
+    navigate(`/settings/account/roster/detail/${id}`);
   };
 
   const handleEdit = (id: number) => {
     console.log('Edit roster:', id);
-    navigate(`/roster/edit/${id}`);
+    navigate(`/settings/account/roster/edit/${id}`);
   };
 
   const handleAdd = () => {
-    navigate('/roster/create');
+    navigate('/settings/account/roster/create');
   };
 
   const handleExport = () => {

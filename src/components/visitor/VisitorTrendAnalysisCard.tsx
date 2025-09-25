@@ -1,4 +1,5 @@
 import React from 'react';
+import { getPeriodLabels } from '@/lib/periodLabel';
 import { ResponsiveContainer, BarChart, Bar, CartesianGrid, XAxis, YAxis, Tooltip, Legend, LabelList } from 'recharts';
 
 export type VisitorTrendRow = {
@@ -7,7 +8,7 @@ export type VisitorTrendRow = {
   current: number;
 };
 
-const VisitorTrendAnalysisCard: React.FC<{ data: any } > = ({ data }) => {
+const VisitorTrendAnalysisCard: React.FC<{ data: any; dateRange?: { startDate: Date; endDate: Date } } > = ({ data, dateRange }) => {
   const rows: VisitorTrendRow[] = Array.isArray(data)
     ? data
     : Array.isArray(data?.data)
@@ -17,6 +18,10 @@ const VisitorTrendAnalysisCard: React.FC<{ data: any } > = ({ data }) => {
         : [];
 
   const height = Math.max(300, (rows?.length || 0) * 48);
+  const { lastLabel, currentLabel, periodUnit } = getPeriodLabels(
+    dateRange?.startDate ?? new Date(),
+    dateRange?.endDate ?? new Date()
+  );
 
   return (
     <div className="bg-white border rounded-lg shadow p-4">
@@ -38,10 +43,10 @@ const VisitorTrendAnalysisCard: React.FC<{ data: any } > = ({ data }) => {
               <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} />
               <Tooltip />
               <Legend verticalAlign="top" align="right" />
-              <Bar dataKey="last" fill="#dad8cf" name="Last Quarter" barSize={28}>
+              <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
                 <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
               </Bar>
-              <Bar dataKey="current" fill="#c5ae94" name="Current Quarter" barSize={28}>
+              <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
                 <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
               </Bar>
             </BarChart>
@@ -49,7 +54,7 @@ const VisitorTrendAnalysisCard: React.FC<{ data: any } > = ({ data }) => {
         </div>
       )}
       <p className="text-sm text-gray-500 mt-4">
-        <strong>Note:</strong> This graph shows the total visitor count compared to the previous quarter.
+        <strong>Note:</strong> This graph shows the total visitor count compared to the previous {periodUnit.toLowerCase()}.
       </p>
     </div>
   );

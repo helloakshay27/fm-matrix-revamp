@@ -63,6 +63,7 @@ import { createWBSCodeReducer, fetchWBSListReducer, updateWBSCodeReducer } from 
 import { createBannerReducers, editBannerReducers, fetchBannersByIdReducers, fetchBannersReducers } from './slices/bannerSlice'
 import { createTestimonialReucers, editTestimonialReucers, fetchTestimonialsByIdReucers, fetchTestimonialsReucers } from './slices/testimonialSlice'
 import { createAmenityReducer, editAmenityReducer, fetchAmenityByIdReducer, fetchAmenityReducer } from './slices/amenitySlice'
+import { createCompanyPartnerReducers, editCompanyPartnerReducer, fetchCompanyPartnersReducer } from './slices/companyPartnerSlice'
 
 export const store = configureStore({
   reducer: {
@@ -292,6 +293,11 @@ export const store = configureStore({
     fetchAmenityById: fetchAmenityByIdReducer,
     createAmenity: createAmenityReducer,
     editAmenity: editAmenityReducer,
+
+    // Company Partner
+    createCompanyPartner: createCompanyPartnerReducers,
+    fetchCompanyPartners: fetchCompanyPartnersReducer,
+    editCompanyPartner: editCompanyPartnerReducer,
   },
 })
 export type RootState = ReturnType<typeof store.getState>

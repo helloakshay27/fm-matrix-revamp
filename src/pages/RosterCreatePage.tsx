@@ -105,8 +105,8 @@ export const RosterCreatePage: React.FC = () => {
 
   // Period selection state
   const [period, setPeriod] = useState({
-    startDate: new Date(2025, 7, 21), // Month is 0-indexed, so 7 = August
-    endDate: new Date(2025, 8, 19)    // 8 = September
+    startDate: null as Date | null,
+    endDate: null as Date | null
   });
 
   // Loading states
@@ -602,14 +602,14 @@ export const RosterCreatePage: React.FC = () => {
       };
 
       // Common date format (Rails style for all types)
-      const commonDateFields = {
+      const commonDateFields = period.startDate && period.endDate ? {
         "start_date(3i)": period.startDate.getDate().toString(),
         "start_date(2i)": (period.startDate.getMonth() + 1).toString(),
         "start_date(1i)": period.startDate.getFullYear().toString(),
         "end_date(3i)": period.endDate.getDate().toString(),
         "end_date(2i)": (period.endDate.getMonth() + 1).toString(),
         "end_date(1i)": period.endDate.getFullYear().toString(),
-      };
+      } : {};
 
       // Base payload structure (common for all day types)
       const basePayload = {
@@ -705,7 +705,7 @@ export const RosterCreatePage: React.FC = () => {
 
   // Handle cancel/back
   const handleCancel = () => {
-    navigate("/roster");
+    navigate("/settings/account/roster");
   };
 
   return (
@@ -810,7 +810,7 @@ export const RosterCreatePage: React.FC = () => {
 
           <div>
             <Label className="text-sm font-medium text-gray-700 mb-4 block mt-6">
-              Working Days *
+              Working Days <span className="text-red-500">*</span>
             </Label>
 
             {/* Day Type Selection - Compact inline */}
@@ -1105,7 +1105,7 @@ export const RosterCreatePage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div>
               <TextField
-                label="Location *"
+                label="Location"
                 value={formData.location}
                 disabled
                 placeholder="Current site location"
@@ -1131,7 +1131,7 @@ export const RosterCreatePage: React.FC = () => {
                 variant="outlined"
                 sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
-                <InputLabel shrink>Department *</InputLabel>
+                <InputLabel shrink>Department <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   multiple
                   value={formData.departments}
@@ -1142,39 +1142,17 @@ export const RosterCreatePage: React.FC = () => {
                   renderValue={(selected) => {
                     const selectedArray = selected as number[];
                     if (selectedArray.length === 0) return "";
-                    if (selectedArray.length <= 2) {
-                      return (
-                        <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 0.5, overflow: "hidden" }}>
-                          {selectedArray.map((value) => {
-                            const dept = departments.find((d) => d.id === value);
-                            return (
-                              <Chip
-                                key={value}
-                                label={dept?.department_name || `ID: ${value}`}
-                                size="small"
-                                sx={{ 
-                                  backgroundColor: "#C72030", 
-                                  color: "white",
-                                  maxWidth: "150px",
-                                  "& .MuiChip-label": {
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap"
-                                  }
-                                }}
-                              />
-                            );
-                          })}
-                        </Box>
-                      );
+                    if (selectedArray.length === 1) {
+                      const dept = departments.find((d) => d.id === selectedArray[0]);
+                      return dept?.department_name || `ID: ${selectedArray[0]}`;
                     }
-                    return (
-                      <Chip
-                        label={`${selectedArray.length} departments selected`}
-                        size="small"
-                        sx={{ backgroundColor: "#C72030", color: "white" }}
-                      />
-                    );
+                    if (selectedArray.length <= 3) {
+                      return selectedArray.map((value) => {
+                        const dept = departments.find((d) => d.id === value);
+                        return dept?.department_name || `ID: ${value}`;
+                      }).join(", ");
+                    }
+                    return `${selectedArray.length} departments selected`;
                   }}
                   displayEmpty
                   disabled={loadingDepartments || isSubmitting}
@@ -1227,7 +1205,7 @@ export const RosterCreatePage: React.FC = () => {
                 variant="outlined"
                 sx={{ "& .MuiInputBase-root": fieldStyles }}
               >
-                <InputLabel shrink>Shift *</InputLabel>
+                <InputLabel shrink>Shift <span className="text-red-500">*</span></InputLabel>
                 <MuiSelect
                   value={formData.shift || ""}
                   onChange={(e) =>
@@ -1265,7 +1243,7 @@ export const RosterCreatePage: React.FC = () => {
                   variant="outlined"
                   sx={{ "& .MuiInputBase-root": fieldStyles }}
                 >
-                  <InputLabel shrink>List Of Selected Employees *</InputLabel>
+                  <InputLabel shrink>List Of Selected Employees <span className="text-red-500">*</span></InputLabel>
                   <MuiSelect
                     multiple
                     value={formData.selectedEmployees}
@@ -1284,41 +1262,17 @@ export const RosterCreatePage: React.FC = () => {
                     renderValue={(selected) => {
                       const selectedArray = selected as number[];
                       if (selectedArray.length === 0) return "";
-                      if (selectedArray.length <= 2) {
-                        return (
-                          <Box sx={{ display: "flex", flexWrap: "nowrap", gap: 0.5, overflow: "hidden" }}>
-                            {selectedArray.map((value) => {
-                              const user = filteredFMUsers.find(
-                                (u) => u.id === value
-                              );
-                              return (
-                                <Chip
-                                  key={value}
-                                  label={user?.name || `User ${value}`}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: "#C72030",
-                                    color: "white",
-                                    maxWidth: "150px",
-                                    "& .MuiChip-label": {
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap"
-                                    }
-                                  }}
-                                />
-                              );
-                            })}
-                          </Box>
-                        );
+                      if (selectedArray.length === 1) {
+                        const user = filteredFMUsers.find((u) => u.id === selectedArray[0]);
+                        return user?.name || `User ${selectedArray[0]}`;
                       }
-                      return (
-                        <Chip
-                          label={`${selectedArray.length} employees selected`}
-                          size="small"
-                          sx={{ backgroundColor: "#C72030", color: "white" }}
-                        />
-                      );
+                      if (selectedArray.length <= 3) {
+                        return selectedArray.map((value) => {
+                          const user = filteredFMUsers.find((u) => u.id === value);
+                          return user?.name || `User ${value}`;
+                        }).join(", ");
+                      }
+                      return `${selectedArray.length} employees selected`;
                     }}
                     displayEmpty
                     disabled={
@@ -1410,7 +1364,7 @@ export const RosterCreatePage: React.FC = () => {
           <div className="space-y-6">
             <div>
               <Label className="text-sm font-medium text-gray-700 mb-4 block">
-                Roster Period *
+                Roster Period <span className="text-red-500">*</span>
               </Label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Start Date */}
@@ -1420,9 +1374,9 @@ export const RosterCreatePage: React.FC = () => {
                   </Label>
                   <input
                     type="date"
-                    value={period.startDate.toISOString().split('T')[0]}
+                    value={period.startDate ? period.startDate.toISOString().split('T')[0] : ''}
                     onChange={(e) => {
-                      const newDate = new Date(e.target.value);
+                      const newDate = e.target.value ? new Date(e.target.value) : null;
                       setPeriod(prev => ({ ...prev, startDate: newDate }));
                     }}
                     disabled={isSubmitting}
@@ -1441,13 +1395,13 @@ export const RosterCreatePage: React.FC = () => {
                   </Label>
                   <input
                     type="date"
-                    value={period.endDate.toISOString().split('T')[0]}
+                    value={period.endDate ? period.endDate.toISOString().split('T')[0] : ''}
                     onChange={(e) => {
-                      const newDate = new Date(e.target.value);
+                      const newDate = e.target.value ? new Date(e.target.value) : null;
                       setPeriod(prev => ({ ...prev, endDate: newDate }));
                     }}
                     disabled={isSubmitting}
-                    min={period.startDate.toISOString().split('T')[0]}
+                    min={period.startDate ? period.startDate.toISOString().split('T')[0] : ''}
                     className="w-full px-3 py-2 border border-[#e1e5e9] rounded-md bg-[#fafbfc] 
                              focus:outline-none focus:ring-2 focus:ring-[#C72030] focus:border-[#C72030]
                              disabled:opacity-50 disabled:cursor-not-allowed
@@ -1462,26 +1416,32 @@ export const RosterCreatePage: React.FC = () => {
                 <div className="flex items-center gap-2 text-sm text-blue-800">
                   <Calendar className="w-4 h-4" />
                   <span className="font-medium">Selected Period:</span>
-                  <span>
-                    {period.startDate.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </span>
-                  <span className="mx-1">→</span>
-                  <span>
-                    {period.endDate.toLocaleDateString('en-US', {
-                      weekday: 'short',
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric'
-                    })}
-                  </span>
-                  <span className="ml-2 text-blue-600">
-                    ({Math.ceil((period.endDate.getTime() - period.startDate.getTime()) / (1000 * 60 * 60 * 24))} days)
-                  </span>
+                  {period.startDate && period.endDate ? (
+                    <>
+                      <span>
+                        {period.startDate.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      <span className="mx-1">→</span>
+                      <span>
+                        {period.endDate.toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      <span className="ml-2 text-blue-600">
+                        ({Math.ceil((period.endDate.getTime() - period.startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1} days)
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-gray-500 italic">
+                      Please select start and end dates
+                    </span>
+                  )}
                 </div>
               </div>
             </div>

@@ -1191,22 +1191,25 @@ export const InventoryDashboard = () => {
                     };
                     const card = config[id];
                     if (!card) return null;
+                    const spanFull = id === 'current_minimum_stock_non_green';
                     return (
-                      <SortableChartItem id={id} key={id}>
-                        {id === 'inventory_cost_over_month' && !card.data ? (
-                          <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
-                            <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
-                            <div className="flex-1 bg-gray-100 rounded" />
-                          </div>
-                        ) : card.data ? (
-                          <InventoryAnalyticsCard
-                            title={card.title}
-                            data={card.data}
-                            type={card.type}
-                            dateRange={dateRange}
-                          />
-                        ) : null}
-                      </SortableChartItem>
+                      <div key={id} className={spanFull ? 'col-span-1 lg:col-span-2' : ''}>
+                        <SortableChartItem id={id}>
+                          {id === 'inventory_cost_over_month' && !card.data ? (
+                            <div className="p-4 border border-gray-200 rounded mb-4 animate-pulse bg-white h-[420px] flex flex-col">
+                              <div className="h-5 w-48 bg-gray-200 rounded mb-4" />
+                              <div className="flex-1 bg-gray-100 rounded" />
+                            </div>
+                          ) : card.data ? (
+                            <InventoryAnalyticsCard
+                              title={card.title}
+                              data={card.data}
+                              type={card.type}
+                              dateRange={dateRange}
+                            />
+                          ) : null}
+                        </SortableChartItem>
+                      </div>
                     );
                   })}
                 </div>

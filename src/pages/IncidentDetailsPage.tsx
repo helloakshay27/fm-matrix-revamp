@@ -4,7 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Download, Edit, Plus, Loader2, AlertTriangle, Heart, Paperclip, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Edit,
+  Plus,
+  AlertTriangle,
+  Heart,
+  Paperclip,
+  Loader2,
+  Users,
+  Settings
+} from 'lucide-react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { UpdateIncidentModal } from '@/components/UpdateIncidentModal';
 import { AddInjuryModal } from '@/components/AddInjuryModal';
@@ -45,6 +57,8 @@ export const IncidentDetailsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [basicDetailsExpanded, setBasicDetailsExpanded] = useState(true);
   const [descriptionExpanded, setDescriptionExpanded] = useState(true);
+  const [witnessesExpanded, setWitnessesExpanded] = useState(true);
+  const [costExpanded, setCostExpanded] = useState(true);
   const [injuriesExpanded, setInjuriesExpanded] = useState(true);
   const [attachmentsExpanded, setAttachmentsExpanded] = useState(true);
 
@@ -363,6 +377,89 @@ export const IncidentDetailsPage = () => {
               value={incident.assigned_to_user_name}
             />
           )}
+        </div>
+      </CollapsibleSection>
+
+      {/* Witnesses Section */}
+      <CollapsibleSection
+        title={`WITNESSES - ${incident.incident_witnesses?.length || 0}`}
+        icon={Users}
+        isExpanded={witnessesExpanded}
+        onToggle={() => setWitnessesExpanded(!witnessesExpanded)}
+        hasData={incident.incident_witnesses && incident.incident_witnesses.length > 0}
+      >
+        {incident.incident_witnesses && incident.incident_witnesses.length > 0 ? (
+          <div className="bg-white rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Mobile</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {incident.incident_witnesses.map((witness, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      {witness.name || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {witness.mobile || '-'}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        ) : (
+          <p className="text-gray-600">No witnesses reported for this incident.</p>
+        )}
+      </CollapsibleSection>
+
+      {/* Cost of Incident Section */}
+      <CollapsibleSection
+        title="COST OF THE INCIDENT"
+        icon={Settings}
+        isExpanded={costExpanded}
+        onToggle={() => setCostExpanded(!costExpanded)}
+        hasData={Boolean(
+          incident.equipment_property_damaged_cost ||
+          incident.production_loss ||
+          incident.treatment_cost ||
+          incident.absenteeism_cost ||
+          incident.other_cost ||
+          incident.total_cost
+        )}
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <Field
+              label="Equipment / Property Damaged"
+              value={incident.equipment_property_damaged_cost ? `${incident.equipment_property_damaged_cost}.0` : '-'}
+            />
+            <Field
+              label="Treatment Cost"
+              value={incident.treatment_cost ? `${incident.treatment_cost}.0` : '-'}
+            />
+            <Field
+              label="Other Cost"
+              value={incident.other_cost ? `${incident.other_cost}.0` : '-'}
+            />
+          </div>
+          <div className="space-y-4">
+            <Field
+              label="Production Loss"
+              value={incident.production_loss ? `${incident.production_loss}.0` : '-'}
+            />
+            <Field
+              label="Absenteeism Cost"
+              value={incident.absenteeism_cost ? `${incident.absenteeism_cost}.0` : '-'}
+            />
+            <Field
+              label="Total Cost"
+              value={incident.total_cost ? `${incident.total_cost}.0` : '-'}
+            />
+          </div>
         </div>
       </CollapsibleSection>
 
