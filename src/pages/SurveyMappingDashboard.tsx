@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Filter, Edit, Copy, Eye, Share2, ChevronDown, Loader2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EnhancedTable } from '../components/enhanced-table/EnhancedTable';
+import { toast as sonnerToast } from "@/components/ui/sonner";
 import { useToast } from "@/hooks/use-toast";
 import { apiClient } from '@/utils/apiClient';
 import { Switch } from "@/components/ui/switch";
@@ -302,16 +303,40 @@ export const SurveyMappingDashboard = () => {
         clearTimeout(searchTimeoutRef.current);
       }
     };
-  }, []);  const handleStatusToggle = (item: SurveyMapping) => {
-    setMappings(prev => prev.map(mapping => 
-      mapping.id === item.id 
-        ? { ...mapping, active: !mapping.active }
-        : mapping
-    ));
-    toast({
-      title: "Status Updated",
-      description: `Survey mapping status ${item.active ? 'deactivated' : 'activated'}`
-    });
+  }, []);  const handleStatusToggle = async (item: SurveyMapping) => {
+    // Handle both boolean and number (0/1) status values
+    const currentStatus = item.survey_active || item.active;
+    const isCurrentlyActive = currentStatus === 1 || currentStatus === true;
+    const newStatus = !isCurrentlyActive; // Send boolean true/false to API
+
+    try {
+      // Call the API to toggle status
+      await apiClient.put(
+        `/survey_mappings/${item.survey_id}/toggle_status.json`,
+        {
+          active: newStatus,
+        }
+      );
+
+      // Update local state on success
+      setMappings((prev) =>
+        prev.map((mapping) =>
+          mapping.survey_id === item.survey_id
+            ? { ...mapping, survey_active: newStatus ? 1 : 0, active: newStatus }
+            : mapping
+        )
+      );
+
+      // Sonner toast
+      sonnerToast.success(`Survey mapping status ${
+        isCurrentlyActive ? "deactivated" : "activated"
+      }`);
+    } catch (error: unknown) {
+      console.error("Error toggling survey mapping status:", error);
+      
+      // Sonner toast for error
+      sonnerToast.error("Failed to update survey mapping status");
+    }
   };
 
   // Column visibility handlers - matching parking page implementation
@@ -632,21 +657,28 @@ export const SurveyMappingDashboard = () => {
         );
       case 'created_by':
         return <span>{item.created_by}</span>;
-      case 'status':
+      case 'status': {
+        // Handle both boolean and number (0/1) status values
+        const currentStatus = item.survey_active || item.active;
+        const isActive = currentStatus === 1 || currentStatus === true;
+        
         return (
           <div className="flex items-center justify-center">
             <button
               onClick={() => handleStatusToggle(item)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                item.active ? 'bg-green-500' : 'bg-gray-300'
+                isActive ? "bg-green-500" : "bg-gray-300"
               }`}
             >
-              <div className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                item.active ? 'translate-x-6' : 'translate-x-1'
-              }`} />
+              <div
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  isActive ? "translate-x-6" : "translate-x-1"
+                }`}
+              />
             </button>
           </div>
         );
+      }
       case 'created_at':
         return item.created_at ? new Date(item.created_at).toLocaleDateString() : '-';
       case 'qr_code':

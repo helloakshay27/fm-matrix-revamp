@@ -1990,7 +1990,7 @@ const AllContent = () => {
 
                     {/* Center-wise Meeting Room Performance */}
                     <div className="bg-white p-4 mt-4 avoid-break">
-                        <h2 className="text-lg font-semibold text-red-600 mb-4">
+                        <h2 className="text-lg font-semibold text-black-600 mb-4">
                             Center Wise - Meeting Room Performance Overview
                         </h2>
                         <div className="overflow-x-auto print:overflow-visible">
@@ -3498,13 +3498,16 @@ const AllContent = () => {
                                             }
                                         `}</style>
 
-                    {/* Table 1: Checklist Progress Status */}
+                    {/* Tables block: stretch to fill one print page */}
                     <div className={sectionBox}>
-                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px]">
+                    <div className="print:flex print:flex-col print:gap-2 print:h-[calc(100vh-180px)]">
+                    {/* Table 1: Checklist Progress Status */}
+                    <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                         </div>
-                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border print:table-fixed print:w-full print:text-[10px] print:h-full">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 print:py-2 print:px-2 print:w-[16%]">Site Name</th>
@@ -3584,17 +3587,19 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
                             <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
                         </div>
                     </div>
 
                     {/* Table 2: Top 10 Overdue Checklists */}
-                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px]">
+                    <div className="border border-gray-300 px-3 rounded comment overdue-table min-h-[300px] print:flex-1 print:flex print:flex-col print:min-h-0">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
                             Top 10 Overdue Checklists – Center-wise Contribution Comparison
                         </div>
-                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] ">
+                        <div className="print:flex-1">
+                        <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:h-full ">
                             <thead>
                                 <tr className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030] text-left print-bg-red">
                                     <th className="py-4 px-4 site-col print:py-2 print:px-2 print:w-[18%]">Site Name</th>
@@ -3643,10 +3648,12 @@ const AllContent = () => {
                                 )}
                             </tbody>
                         </table>
+                        </div>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
                             <strong>Note :</strong> The table displays the top 10 most overdue checklists, with a center-wise
                             breakdown of their contribution to the overall overdue count, helping identify key areas of concern.
                         </div>
+                    </div>
                     </div>
                     </div>
 
