@@ -169,6 +169,9 @@ interface TicketData {
   heading: string;
   category: string;
   assignee: string;
+  status: string;
+  updated_by: string;
+  created_by: string;
   created_at: string;
   location: string;
 }
@@ -1364,8 +1367,11 @@ export const SurveyResponseDetailPage = () => {
           complaint_id: complaint.complaint_id,
           ticket_number: complaint.ticket_number,
           heading: complaint.heading,
-          category: complaint.category,
-          assignee: complaint.assignee,
+          category: complaint.category || "-",
+          assignee: complaint.assignee || "-",
+          status: complaint.status || "-",
+          updated_by: complaint.updated_by || "-",
+          created_by: "-", // This field is not available in the API response
           created_at: new Date(complaint.created_at).toLocaleDateString(
             "en-GB",
             {
@@ -1456,6 +1462,14 @@ export const SurveyResponseDetailPage = () => {
       });
     }
 
+    // Add final comments column before ticket id
+    baseColumns.push({
+      key: "final_comment",
+      label: "Final Comments",
+      defaultVisible: true,
+      sortable: true,
+    });
+
     // Add final ticket id column at the end
     baseColumns.push({
       key: "ticket_id",
@@ -1482,11 +1496,11 @@ export const SurveyResponseDetailPage = () => {
     // },
     {
       key: "ticket_number",
-      label: "Ticket Number",
+      label: "ID",
       defaultVisible: true,
       sortable: true,
     },
-    { key: "heading", label: "Heading", defaultVisible: true, sortable: true },
+    { key: "heading", label: "Title", defaultVisible: true, sortable: true },
     {
       key: "category",
       label: "Category",
@@ -1499,11 +1513,28 @@ export const SurveyResponseDetailPage = () => {
       defaultVisible: true,
       sortable: true,
     },
+    {
+      key: "status",
+      label: "Status",
+      defaultVisible: true,
+      sortable: true,
+    },
+    {
+      key: "updated_by",
+      label: "Updated By",
+      defaultVisible: true,
+      sortable: true,
+    },
+    // {
+    //   key: "created_by",
+    //   label: "Created By",
+    //   defaultVisible: true,
+    //   sortable: true,
+    // },
     // { key: 'priority', label: 'Priority', defaultVisible: true, sortable: true },
-    // { key: 'status', label: 'Status', defaultVisible: true, sortable: true },
     {
       key: "created_at",
-      label: "Created Date",
+      label: "Created By",
       defaultVisible: true,
       sortable: true,
     },
