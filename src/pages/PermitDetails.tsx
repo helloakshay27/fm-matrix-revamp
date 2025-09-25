@@ -2271,7 +2271,7 @@ export const PermitDetails = () => {
                                             },
                                         }}
                                     >
-                                        <Select<string[]>
+                                        <Select
                                             multiple
                                             value={selectedExtendAssignees}
                                             onChange={handleAssigneeChange}
