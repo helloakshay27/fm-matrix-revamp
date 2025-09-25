@@ -1084,27 +1084,33 @@ function App() {
                       element={<ChecklistGroupsPage />}
                     />
 
-                    {/* Settings Masters Routes */}
                     <Route
-                      path="/settings/masters/checklist"
-                      element={<ChecklistMasterDashboard />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master"
-                      element={<ChecklistMasterDashboard />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master/add"
-                      element={<AddChecklistMasterPage />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master/edit/:id"
-                      element={<EditChecklistMasterPage />}
-                    />
-                    <Route
-                      path="/settings/masters/checklist-master/view/:id"
-                      element={<ViewChecklistMasterPage />}
-                    />
+  path="/master/checklist"
+  element={<ChecklistListPage />}
+/>
+<Route
+  path="/master/checklist-master"
+  element={<ChecklistMasterDashboard />}
+/>
+<Route
+  path="/master/checklist-master/add"
+  element={<ChecklistMasterPage />}
+/>
+<Route
+  path="/master/checklist-master/edit/:id"
+  element={<EditChecklistMasterPage />}
+/>
+<Route
+  path="/master/checklist-master/view/:id"
+  element={<ViewChecklistMasterPage />}
+/>
+<Route
+  path="/master/checklist/create"
+  element={<ChecklistMasterPage />}
+/>
+<Route
+  path="/master/checklist/edit/:id"
+  element={<ChecklistMasterPage />} />
                     <Route
                       path="/settings/masters/unit"
                       element={<UnitMasterPage />}
