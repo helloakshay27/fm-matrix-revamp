@@ -22,10 +22,67 @@ import {
     MessageSquare,
     Upload,
     QrCode,
+    Edit,
+    Printer,
+    Eye,
+    FileSpreadsheet,
+    File,
 } from "lucide-react";
 import { API_CONFIG } from "@/config/apiConfig";
 import { toast } from "sonner";
 import { AddPermitCommentModal } from "@/components/AddPermitCommentModal";
+import { AttachmentPreviewModal } from "@/components/AttachmentPreviewModal";
+import { FormControl, InputLabel, Select, MenuItem, OutlinedInput, Chip, Box, SelectChangeEvent, TextField } from '@mui/material';
+
+// MUI field styles
+const fieldStyles = {
+    '& .MuiInputBase-input, & .MuiSelect-select': {
+        padding: '12px',
+    },
+    '& .MuiOutlinedInput-root': {
+        borderRadius: '8px',
+        backgroundColor: 'white',
+        '& fieldset': {
+            borderColor: '#e5e7eb',
+        },
+        '&:hover fieldset': {
+            borderColor: '#9ca3af',
+        },
+        '&.Mui-focused fieldset': {
+            borderColor: '#C72030',
+        },
+    },
+    '& .MuiInputLabel-root': {
+        color: '#6b7280',
+        '&.Mui-focused': {
+            color: '#C72030',
+        },
+    },
+};
+
+const menuProps = {
+    PaperProps: {
+        style: {
+            maxHeight: 300,
+            zIndex: 9999,
+            backgroundColor: 'white',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        },
+    },
+    MenuListProps: {
+        style: {
+            padding: 0,
+        },
+    },
+    anchorOrigin: {
+        vertical: 'bottom' as const,
+        horizontal: 'left' as const,
+    },
+    transformOrigin: {
+        vertical: 'top' as const,
+        horizontal: 'left' as const,
+    },
+};
 
 // Type definitions for permit details
 interface CreatedBy {
@@ -43,6 +100,7 @@ interface ClosedBy {
 }
 
 interface PermitClosure {
+    id?: number;
     completion_comment: string;
     closed_by: ClosedBy;
     attachments_count: number;
@@ -133,6 +191,7 @@ interface PermitExtend {
     assignees: string;
     attachments_count: number;
     extend_approval_levels: ApprovalLevel[];
+    status?: string;
 }
 
 interface PermitDetailsResponse {
@@ -152,12 +211,20 @@ interface PermitDetailsResponse {
     show_send_mail_button: boolean;
     show_print_form_button: boolean;
     show_print_jsa_button: boolean;
+    show_upload_jsa_form_button: boolean;
+    show_complete_draft_open_button: boolean;
     show_fill_jsa_button: boolean;
     show_complete_form_button: boolean;
-    show_extend_button: boolean;
-    show_resume_button: boolean;
-    show_upload_jsa_button: boolean;
-    show_complete_button: boolean;
+    show_extend_permit_approved_button: boolean;
+    show_complete_approved_button: boolean;
+    show_resume_permit_button: boolean;
+    show_extend_permit_extended_button: boolean;
+    all_buttons_hidden: boolean;
+    // Legacy button flags for backward compatibility
+    show_extend_button?: boolean;
+    show_resume_button?: boolean;
+    show_upload_jsa_button?: boolean;
+    show_complete_button?: boolean;
 }
 
 // API function to fetch permit details
@@ -278,6 +345,7 @@ export const PermitDetails = () => {
     const [extendReason, setExtendReason] = useState("");
     const [extendDate, setExtendDate] = useState("");
     const [extendAttachments, setExtendAttachments] = useState<FileList | null>(null);
+    const [selectedExtendAssignees, setSelectedExtendAssignees] = useState<string[]>([]);
 
     // Upload JSA form states
     const [jsaUploadModalOpen, setJsaUploadModalOpen] = useState(false);
@@ -291,11 +359,33 @@ export const PermitDetails = () => {
     const [completeAttachments, setCompleteAttachments] = useState<File[]>([]);
     const [isCompleting, setIsCompleting] = useState(false);
 
+    // Attachment preview modal states
+    const [selectedDoc, setSelectedDoc] = useState<any | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
     // Check if we came from pending approvals page
     const levelId = searchParams.get('level_id');
     const userId = searchParams.get('user_id');
+    const closureId = searchParams.get('closure_id');
+    const resourceId = searchParams.get('resource_id');
     const isApprovalPage = searchParams.get('type') === 'approval';
+
     const showApprovalButtons = levelId && userId && isApprovalPage;
+    const permitClosure = searchParams.get('resource_type') === 'permit_closure';
+    const permitExtension = searchParams.get('resource_type') === 'permit_extend';
+    const permitMain = searchParams.get('resource_type') === 'permit';
+    console.log(selectedExtendAssignees)
+
+    // Handle multi-select change for assignees
+    const handleAssigneeChange = (event: SelectChangeEvent<typeof selectedExtendAssignees>) => {
+        const {
+            target: { value },
+        } = event;
+        setSelectedExtendAssignees(
+            // On autofill we get a stringified value.
+            typeof value === 'string' ? value.split(',') : value,
+        );
+    };
 
     // Handle adding comment
     const handleAddComment = async (comment: string) => {
@@ -442,6 +532,242 @@ export const PermitDetails = () => {
         }
     };
 
+    // Handle approve permit extension
+    const handleApproveExtension = async (extensionId: string) => {
+        if (!extensionId) {
+            toast.error('Extension ID is required for approval');
+            return;
+        }
+
+        if (!levelId) {
+            toast.error('Level ID is required for approval');
+            return;
+        }
+
+        setIsApproving(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_extends/${extensionId}/status_confirmation.json?approve=true&user_id=${userId}&level_id=${levelId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to approve permit extension: ${response.statusText}`);
+            }
+
+            toast.success('Permit extension approved successfully');
+
+            // Refresh permit details to show updated status
+            const updatedData = await fetchPermitDetails(id!);
+            setPermitData(updatedData);
+
+            // Navigate back to pending approvals after successful approval
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error approving permit extension:', error);
+            toast.error('Failed to approve permit extension. Please try again.');
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
+    // Handle reject permit extension
+    const handleRejectExtension = async (extensionId: string) => {
+        if (!extensionId) {
+            toast.error('Extension ID is required for rejection');
+            return;
+        }
+
+        if (!levelId) {
+            toast.error('Level ID is required for rejection');
+            return;
+        }
+
+        setIsRejecting(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_extends/${extensionId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to reject permit extension: ${response.statusText}`);
+            }
+
+            toast.success('Permit extension rejected successfully');
+
+            // Refresh permit details to show updated status
+            const updatedData = await fetchPermitDetails(id!);
+            setPermitData(updatedData);
+
+            // Navigate back to pending approvals after successful rejection
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error rejecting permit extension:', error);
+            toast.error('Failed to reject permit extension. Please try again.');
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
+    // Handle approve permit closure
+    const handleApproveClosure = async (closureId: string) => {
+        console.log('=== APPROVE CLOSURE DEBUG ===');
+        console.log('Closure ID passed:', closureId);
+        console.log('Permit closure data:', permitData?.permit_closure);
+        console.log('Level ID:', levelId);
+        console.log('User ID:', userId);
+
+        if (!closureId) {
+            console.error('No closure ID provided');
+            toast.error('Closure ID is required for approval');
+            return;
+        }
+
+        if (!levelId) {
+            console.error('No level ID provided');
+            toast.error('Level ID is required for approval');
+            return;
+        }
+
+        setIsApproving(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_closures/${closureId}/status_confirmation.json?approve=true&user_id=${userId}&level_id=${levelId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to approve permit closure: ${response.statusText}`);
+            }
+
+            toast.success('Permit closure approved successfully');
+
+            // Refresh permit details to show updated status
+            const updatedData = await fetchPermitDetails(id!);
+            setPermitData(updatedData);
+
+            // Navigate back to pending approvals after successful approval
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error approving permit closure:', error);
+            toast.error('Failed to approve permit closure. Please try again.');
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
+    // Handle reject permit closure
+    const handleRejectClosure = async (closureId: string) => {
+        console.log('=== REJECT CLOSURE DEBUG ===');
+        console.log('Closure ID passed:', closureId);
+        console.log('Permit closure data:', permitData?.permit_closure);
+        console.log('Level ID:', levelId);
+        console.log('User ID:', userId);
+
+        if (!closureId) {
+            console.error('No closure ID provided');
+            toast.error('Closure ID is required for rejection');
+            return;
+        }
+
+        if (!levelId) {
+            console.error('No level ID provided');
+            toast.error('Level ID is required for rejection');
+            return;
+        }
+
+        setIsRejecting(true);
+        try {
+            let baseUrl = localStorage.getItem('baseUrl');
+            const token = localStorage.getItem('token');
+            const userId = localStorage.getItem('user_id') || localStorage.getItem('userId');
+
+            if (!baseUrl || !token || !userId) {
+                throw new Error("Base URL, token, or user ID not set in localStorage");
+            }
+
+            // Ensure protocol is present
+            if (!/^https?:\/\//i.test(baseUrl)) {
+                baseUrl = `https://${baseUrl}`;
+            }
+
+            const response = await fetch(`${baseUrl}/pms/permit_closures/${closureId}/status_confirmation.json?approve=false&user_id=${userId}&level_id=${levelId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`Failed to reject permit closure: ${response.statusText}`);
+            }
+
+            toast.success('Permit closure rejected successfully');
+
+            // Refresh permit details to show updated status
+            const updatedData = await fetchPermitDetails(id!);
+            setPermitData(updatedData);
+
+            // Navigate back to pending approvals after successful rejection
+            navigate('/safety/permit/pending-approvals');
+        } catch (error) {
+            console.error('Error rejecting permit closure:', error);
+            toast.error('Failed to reject permit closure. Please try again.');
+        } finally {
+            setIsRejecting(false);
+        }
+    };
+
     // Handle extend permit form submission
     const handleExtendPermit = async () => {
         if (!id) {
@@ -456,6 +782,11 @@ export const PermitDetails = () => {
 
         if (!extendDate) {
             toast.error('Please select an extension date');
+            return;
+        }
+
+        if (selectedExtendAssignees.length === 0) {
+            toast.error('Please select at least one assignee');
             return;
         }
 
@@ -478,6 +809,13 @@ export const PermitDetails = () => {
             formData.append('pms_permit_extend[permit_id]', id);
             formData.append('pms_permit_extend[reason_for_extension]', extendReason.trim());
             formData.append('pms_permit_extend[extension_date]', extendDate);
+
+            // Add selected assignees
+            if (selectedExtendAssignees.length > 0) {
+                selectedExtendAssignees.forEach((assigneeId, index) => {
+                    formData.append(`pms_permit_extend[permit_extension_assignees][]`, assigneeId);
+                });
+            }
 
             // Add attachments if any
             if (extendAttachments && extendAttachments.length > 0) {
@@ -505,6 +843,7 @@ export const PermitDetails = () => {
             setExtendReason("");
             setExtendDate("");
             setExtendAttachments(null);
+            setSelectedExtendAssignees([]);
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
@@ -628,7 +967,7 @@ export const PermitDetails = () => {
             // Add attachments if any
             if (completeAttachments && completeAttachments.length > 0) {
                 completeAttachments.forEach((file, index) => {
-                    formData.append('attachments[]', file);
+                    formData.append('closer_attachments[]', file);
                 });
             }
 
@@ -939,131 +1278,155 @@ export const PermitDetails = () => {
                     <ArrowLeft className="w-4 h-4" />
                     <span className="text-sm">Back</span>
                 </button>
-                <div className="flex items-center gap-4">
-                    {permitData.show_edit_button && (
+                {!permitData.all_buttons_hidden && (
+                    <div className="flex items-center gap-4">
+                        {permitData.show_edit_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/safety/permit/edit/${id}`)}
+                                className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                            >
+                                <Edit className="w-4 h-4 mr-2" />
+                                Edit
+                            </Button>
+                        )}
+                        {(permitData.show_extend_permit_approved_button || permitData.show_extend_button) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")}
+                                className="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+                            >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Extend Permit
+                            </Button>
+                        )}
+                        {permitData.show_extend_permit_extended_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")}
+                                className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
+                            >
+                                <Clock className="w-4 h-4 mr-2" />
+                                Extend (Extended)
+                            </Button>
+                        )}
+                        {permitData.show_fill_jsa_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/safety/permit/fill-jsa-form/${id}`)}
+                                className="bg-purple-500 hover:bg-purple-600 text-white border-purple-500"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Fill JSA Form
+                            </Button>
+                        )}
+                        {permitData.show_complete_form_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                            >
+                                <Clipboard className="w-4 h-4 mr-2" />
+                                Complete Form
+                            </Button>
+                        )}
+                        {permitData.show_complete_draft_open_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCompleteModalOpen(true)}
+                                className="bg-teal-500 hover:bg-teal-600 text-white border-teal-500"
+                            >
+                                <FileText className="w-4 h-4 mr-2" />
+                                Complete Draft
+                            </Button>
+                        )}
+                        {(permitData.show_complete_approved_button || permitData.show_complete_button) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCompleteModalOpen(true)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
+                            >
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Complete
+                            </Button>
+                        )}
+                        {(permitData.show_upload_jsa_form_button || permitData.show_upload_jsa_button) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setJsaUploadModalOpen(true)}
+                                className="bg-indigo-500 hover:bg-indigo-600 text-white border-indigo-500"
+                            >
+                                <Upload className="w-4 h-4 mr-2" />
+                                Upload JSA
+                            </Button>
+                        )}
+                        {(permitData.show_resume_permit_button || permitData.show_resume_button) && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setActiveSection(activeSection === "resume-permit" ? "" : "resume-permit")}
+                                className="bg-cyan-500 hover:bg-cyan-600 text-white border-cyan-500"
+                            >
+                                <RefreshCw className="w-4 h-4 mr-2" />
+                                Resume
+                            </Button>
+                        )}
+                        {permitData.show_print_form_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePrintForm}
+                            >
+                                <Printer className="w-4 h-4 mr-2" />
+                                Print Form
+                            </Button>
+                        )}
+                        {permitData.show_print_jsa_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handlePrintJSA}
+                            >
+                                <Printer className="w-4 h-4 mr-2" />
+                                Print JSA
+                            </Button>
+                        )}
+                        {permitData.show_send_mail_button && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => toast.info('Send mail functionality coming soon')}
+                            >
+                                <Mail className="w-4 h-4 mr-2" />
+                                Send Mail
+                            </Button>
+                        )}
+                        {/* <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleRefresh}
+                            title="Refresh permit details"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                        </Button>
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/safety/permit/edit/${id}`)}
-                            className="bg-blue-500 hover:bg-blue-600 text-white border-blue-500"
+                            onClick={handleDownloadQR}
+                            title="Download QR Code"
                         >
-                            <FileText className="w-4 h-4 mr-2" />
-                            Edit
-                        </Button>
-                    )}
-                    {permitData.show_extend_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setActiveSection(activeSection === "permit-extension" ? "" : "permit-extension")}
-                            className="bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-                        >
-                            <Clock className="w-4 h-4 mr-2" />
-                            Extend Permit
-                        </Button>
-                    )}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/safety/permit/vendor-form/${id}`)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white border-orange-500"
-                    >
-                        <FileText className="w-4 h-4 mr-2" />
-                        Fill Form
-                    </Button>
-                    {permitData.show_complete_form_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/safety/permit/fill-form/${id}`)}
-                            className="bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
-                        >
-                            <Clipboard className="w-4 h-4 mr-2" />
-                            Complete Form
-                        </Button>
-                    )}
-                    {permitData.show_fill_jsa_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate(`/safety/permit/fill-jsa-form/${id}`)}
-                            className="bg-orange-600 hover:bg-orange-700 text-white border-orange-600"
-                        >
-                            <Clipboard className="w-4 h-4 mr-2" />
-                            Fill JSA Form
-                        </Button>
-                    )}
-                    {permitData.show_upload_jsa_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setJsaUploadModalOpen(true)}
-                            className="bg-purple-600 hover:bg-purple-700 text-white border-purple-600"
-                        >
-                            <Upload className="w-4 h-4 mr-2" />
-                            Upload JSA
-                        </Button>
-                    )}
-                    {permitData.show_print_form_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handlePrintForm}
-                            className="bg-green-600 hover:bg-green-700 text-white border-green-600"
-                        >
-                            <FileText className="w-4 h-4 mr-2" />
-                            PRINT Form
-                        </Button>
-                    )}
-                    {permitData.show_print_jsa_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handlePrintJSA}
-                            className="bg-green-700 hover:bg-green-800 text-white border-green-700"
-                        >
-                            <FileText className="w-4 h-4 mr-2" />
-                            PRINT JSA
-                        </Button>
-                    )}
-                    {permitData.show_send_mail_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {/* Add send mail functionality */ }}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600"
-                        >
-                            <Mail className="w-4 h-4 mr-2" />
-                            Send Mail
-                        </Button>
-                    )}
-                    {permitData.show_complete_button && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setCompleteModalOpen(true)}
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600"
-                        >
-                            <CheckCircle className="w-4 h-4 mr-2" />
-                            Complete
-                        </Button>
-                    )}
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleRefresh}
-                        disabled={loading}
-                    >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleDownloadQR}
-                    >
-                        <Download className="w-4 h-4" />
-                    </Button>
-                </div>
+                            <Download className="w-4 h-4" />
+                        </Button> */}
+                    </div>
+                )}
             </div>
 
             {/* Approval Levels */}
@@ -1076,7 +1439,7 @@ export const PermitDetails = () => {
                             </div>
                             {level.updated_by && level.status_updated_at && (
                                 <div className="ms-2 text-sm text-gray-600">
-                                    {`${level.updated_by} (${formatDateOnly(level.status_updated_at)})`}
+                                    {/* {`${level.updated_by} (${formatDateOnly(level.status_updated_at)})`} */}
                                 </div>
                             )}
                         </div>
@@ -1145,7 +1508,7 @@ export const PermitDetails = () => {
                 </Section>
 
                 {/* Approval Levels Section */}
-                {permitData.approval_levels && permitData.approval_levels.length > 0 && (
+                {/* {permitData.approval_levels && permitData.approval_levels.length > 0 && (
                     <Section
                         title="APPROVAL LEVELS"
                         icon={<CheckCircle />}
@@ -1169,7 +1532,7 @@ export const PermitDetails = () => {
                             ))}
                         </div>
                     </Section>
-                )}
+                )} */}
 
                 {/* Permit Extensions Section */}
                 {permitData.permit_extends && permitData.permit_extends.length > 0 && (
@@ -1246,6 +1609,47 @@ export const PermitDetails = () => {
                                             </div>
                                         </div>
                                     )}
+                                    {
+                                        permitExtension && (
+                                            <div className="flex items-center gap-4 justify-center mt-4">
+                                                <Button
+                                                    onClick={() => handleApproveExtension(extension.id.toString())}
+                                                    disabled={isApproving || isRejecting}
+                                                    className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                                                >
+                                                    {isApproving ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                            Approving...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <CheckCircle className="w-4 h-4 mr-2" />
+                                                            Approve Extension
+                                                        </>
+                                                    )}
+                                                </Button>
+                                                <Button
+                                                    onClick={() => handleRejectExtension(extension.id.toString())}
+                                                    disabled={isApproving || isRejecting}
+                                                    className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                                                >
+                                                    {isRejecting ? (
+                                                        <>
+                                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                            Rejecting...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <AlertTriangle className="w-4 h-4 mr-2" />
+                                                            Reject Extension
+                                                        </>
+                                                    )}
+                                                </Button>
+                                            </div>
+
+                                        )
+                                    }
                                 </div>
                             ))}
                         </div>
@@ -1301,11 +1705,11 @@ export const PermitDetails = () => {
                                         </div>
                                         <div>
                                             <span className="text-gray-600">Role: </span>
-                                            <span className="text-gray-900">{manpower.role || "N/A"}</span>
+                                            <span className="text-gray-900">{manpower.designation || "N/A"}</span>
                                         </div>
                                         <div>
                                             <span className="text-gray-600">Contact: </span>
-                                            <span className="text-gray-900">{manpower.contact || "N/A"}</span>
+                                            <span className="text-gray-900">{manpower.phone || "N/A"}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1347,130 +1751,457 @@ export const PermitDetails = () => {
                         activeSection={activeSection}
                         setActiveSection={setActiveSection}
                     >
-                        {/* Image Previews Row */}
-                        <div className="flex gap-4 overflow-x-auto mb-4">
-                            {permitData.main_attachments.filter(att => {
-                                const type = att.content_type || att.document_content_type;
-                                return att && type && att.url && type.startsWith('image/');
-                            }).map((att, idx) => (
-                                <div key={att.id} className="flex flex-col items-center min-w-[120px]">
-                                    <img
-                                        src={att.url}
-                                        alt={att.filename || att.document_file_name || 'Attachment'}
-                                        className="rounded border max-h-32 object-contain bg-white"
-                                    />
-                                    <span className="text-xs mt-1 text-gray-700 truncate max-w-[100px]" title={att.filename || att.document_file_name}>{att.filename || att.document_file_name}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <div className="space-y-2">
-                            {permitData.main_attachments.map((attachment: MainAttachment, index: number) => (
-                                attachment ? (
-                                    <div key={attachment.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                        <FileText className="w-5 h-5 text-gray-500" />
-                                        <div className="flex-1">
-                                            {(() => {
-                                                const name = attachment.filename || attachment.document_file_name || 'No Name';
-                                                const fileUrl = attachment.url;
-                                                if (fileUrl) {
-                                                    return (
-                                                        <a
-                                                            href={fileUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-sm text-blue-700 font-medium hover:underline"
-                                                        >
-                                                            {name}
-                                                        </a>
-                                                    );
-                                                } else {
-                                                    return (
-                                                        <span className="text-sm text-gray-700 font-medium">{name}</span>
-                                                    );
-                                                }
-                                            })()}
-                                            <div className="text-xs text-gray-500">
-                                                {(attachment.content_type || attachment.document_content_type) || '-'} • {Number.isFinite(attachment.file_size || attachment.document_file_size) && (attachment.file_size || attachment.document_file_size) > 0
-                                                    ? `${Math.round((attachment.file_size || attachment.document_file_size) / 1024)} KB`
-                                                    : '-'}
+                        <div className="flex items-center flex-wrap gap-4">
+                            {permitData.main_attachments.map((attachment: MainAttachment) => {
+                                const attachmentUrl = attachment.url;
+                                const attachmentName = attachment.filename || attachment.document_file_name || `Document_${attachment.id}`;
+                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                return (
+                                    <div
+                                        key={attachment.id}
+                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                    >
+                                        {isImage ? (
+                                            <>
+                                                <button
+                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                    title="View"
+                                                    onClick={() => {
+                                                        setSelectedDoc(attachment);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                    type="button"
+                                                >
+                                                    {/* <Eye className="w-4 h-4" /> */}
+                                                </button>
+                                                <img
+                                                    src={attachmentUrl}
+                                                    alt={attachmentName}
+                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                    onClick={() => {
+                                                        setSelectedDoc(attachment);
+                                                        setIsModalOpen(true);
+                                                    }}
+                                                />
+                                            </>
+                                        ) : isPdf ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                <FileText className="w-6 h-6" />
                                             </div>
-                                        </div>
-                                        <span className="text-xs text-gray-500">{formatDate(attachment.updated_at || attachment.created_at)}</span>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
-                                        >
-                                            {attachment.url ? (
-                                                <a href={attachment.url} target="_blank" rel="noopener noreferrer">
-                                                    <Download className="w-4 h-4" />
-                                                </a>
-                                            ) : (
-                                                <span>
-                                                    <Download className="w-4 h-4" />
-                                                </span>
-                                            )}
-                                        </Button>
+                                        ) : isExcel ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                <FileSpreadsheet className="w-6 h-6" />
+                                            </div>
+                                        ) : isWord ? (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                <FileText className="w-6 h-6" />
+                                            </div>
+                                        ) : (
+                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                <File className="w-6 h-6" />
+                                            </div>
+                                        )}
+                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                            {attachmentName}
+                                        </span>
+                                        {(isDownloadable || isImage) && (
+                                            <Button
+                                                size="icon"
+                                                variant="ghost"
+                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                onClick={() => {
+                                                    if (isImage) {
+                                                        setSelectedDoc(attachment);
+                                                        setIsModalOpen(true);
+                                                    } else if (attachmentUrl) {
+                                                        window.open(attachmentUrl, '_blank');
+                                                    }
+                                                }}
+                                            >
+                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                            </Button>
+                                        )}
                                     </div>
-                                ) : null
-                            ))}
+                                );
+                            })}
                         </div>
                     </Section>
                 )}
 
                 {/* Vendor Attachments Section */}
                 {permitData.vendor_attachments && (
-                    <Section
-                        title="VENDOR ATTACHMENTS"
-                        icon={<Upload />}
-                        sectionKey="vendor-attachments"
-                        activeSection={activeSection}
-                        setActiveSection={setActiveSection}
-                    >
-                        <div className="space-y-4">
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">List of People</h4>
-                                {permitData.vendor_attachments.list_of_people.length > 0 ? (
-                                    <div className="text-sm text-gray-600">
-                                        {permitData.vendor_attachments.list_of_people.length} attachment(s)
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-gray-500">No attachments</div>
-                                )}
+                    permitData.vendor_attachments.list_of_people.length > 0 ||
+                    permitData.vendor_attachments.esi_wc_policy.length > 0 ||
+                    permitData.vendor_attachments.medical_reports.length > 0 ||
+                    permitData.vendor_attachments.other.length > 0
+                ) && (
+                        <Section
+                            title="VENDOR ATTACHMENTS"
+                            icon={<Upload />}
+                            sectionKey="vendor-attachments"
+                            activeSection={activeSection}
+                            setActiveSection={setActiveSection}
+                        >
+                            <div className="space-y-6">
+                                {/* List of People */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">List of People</h4>
+                                    {permitData.vendor_attachments.list_of_people.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.list_of_people.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {(isDownloadable || isImage) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (isImage) {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    } else if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* ESI WC Policy */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">ESI WC Policy</h4>
+                                    {permitData.vendor_attachments.esi_wc_policy.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.esi_wc_policy.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {(isDownloadable || isImage) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (isImage) {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    } else if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* Medical Reports */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Medical Reports</h4>
+                                    {permitData.vendor_attachments.medical_reports.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.medical_reports.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {(isDownloadable || isImage) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (isImage) {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    } else if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
+
+                                {/* Other */}
+                                <div>
+                                    <h4 className="text-sm font-medium text-gray-700 mb-3">Other</h4>
+                                    {permitData.vendor_attachments.other.length > 0 ? (
+                                        <div className="flex items-center flex-wrap gap-4">
+                                            {permitData.vendor_attachments.other.map((attachment: any, index: number) => {
+                                                const attachmentUrl = attachment.url || attachment.document_url;
+                                                const attachmentName = attachment.filename || attachment.document_file_name || attachment.name || `Document_${index + 1}`;
+                                                const isImage = /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(attachmentUrl || '');
+                                                const isPdf = /\.pdf$/i.test(attachmentUrl || '');
+                                                const isExcel = /\.(xls|xlsx|csv)$/i.test(attachmentUrl || '');
+                                                const isWord = /\.(doc|docx)$/i.test(attachmentUrl || '');
+                                                const isDownloadable = isPdf || isExcel || isWord;
+
+                                                return (
+                                                    <div
+                                                        key={attachment.id || index}
+                                                        className="flex relative flex-col items-center border rounded-lg pt-8 px-3 pb-4 w-full max-w-[150px] bg-[#F6F4EE] shadow-md"
+                                                    >
+                                                        {isImage ? (
+                                                            <>
+                                                                <button
+                                                                    className="absolute top-2 right-2 z-10 p-1 text-gray-600 hover:text-black rounded-full"
+                                                                    title="View"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                    type="button"
+                                                                >
+                                                                    <Eye className="w-4 h-4" />
+                                                                </button>
+                                                                <img
+                                                                    src={attachmentUrl}
+                                                                    alt={attachmentName}
+                                                                    className="w-14 h-14 object-cover rounded-md border mb-2 cursor-pointer"
+                                                                    onClick={() => {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    }}
+                                                                />
+                                                            </>
+                                                        ) : isPdf ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-red-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isExcel ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-green-600 bg-white mb-2">
+                                                                <FileSpreadsheet className="w-6 h-6" />
+                                                            </div>
+                                                        ) : isWord ? (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-blue-600 bg-white mb-2">
+                                                                <FileText className="w-6 h-6" />
+                                                            </div>
+                                                        ) : (
+                                                            <div className="w-14 h-14 flex items-center justify-center border rounded-md text-gray-600 bg-white mb-2">
+                                                                <File className="w-6 h-6" />
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs text-center truncate max-w-[120px] mb-2 font-medium">
+                                                            {attachmentName}
+                                                        </span>
+                                                        {(isDownloadable || isImage) && (
+                                                            <Button
+                                                                size="icon"
+                                                                variant="ghost"
+                                                                className="absolute top-2 right-2 h-5 w-5 p-0 text-gray-600 hover:text-black"
+                                                                onClick={() => {
+                                                                    if (isImage) {
+                                                                        setSelectedDoc(attachment);
+                                                                        setIsModalOpen(true);
+                                                                    } else if (attachmentUrl) {
+                                                                        window.open(attachmentUrl, '_blank');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {isImage ? <Eye className="w-4 h-4" /> : <Download className="w-4 h-4" />}
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="text-sm text-gray-500">No attachments</div>
+                                    )}
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">ESI WC Policy</h4>
-                                {permitData.vendor_attachments.esi_wc_policy.length > 0 ? (
-                                    <div className="text-sm text-gray-600">
-                                        {permitData.vendor_attachments.esi_wc_policy.length} attachment(s)
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-gray-500">No attachments</div>
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Medical Reports</h4>
-                                {permitData.vendor_attachments.medical_reports.length > 0 ? (
-                                    <div className="text-sm text-gray-600">
-                                        {permitData.vendor_attachments.medical_reports.length} attachment(s)
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-gray-500">No attachments</div>
-                                )}
-                            </div>
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 mb-2">Other</h4>
-                                {permitData.vendor_attachments.other.length > 0 ? (
-                                    <div className="text-sm text-gray-600">
-                                        {permitData.vendor_attachments.other.length} attachment(s)
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-gray-500">No attachments</div>
-                                )}
-                            </div>
-                        </div>
-                    </Section>
-                )}
+                        </Section>
+                    )}
 
                 {/* Permit Extension Section */}
                 <Section
@@ -1486,29 +2217,35 @@ export const PermitDetails = () => {
                             <div className="space-y-4">
                                 {/* Reason for Extension */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Reason for Extension<span className="text-red-500">*</span>
-                                    </label>
-                                    <textarea
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent resize-none"
-                                        rows={3}
-                                        placeholder="Enter Reason Here"
+                                    <TextField
+                                        label="Reason for Extension *"
                                         value={extendReason}
                                         onChange={(e) => setExtendReason(e.target.value)}
+                                        fullWidth
+                                        variant="outlined"
+                                        multiline
+                                        rows={3}
+                                        placeholder="Enter Reason Here"
+                                        InputLabelProps={{
+                                            shrink: true
+                                        }}
+                                        sx={fieldStyles}
                                     />
                                 </div>
 
                                 {/* Extension Date & Time */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Extension Date&Time<span className="text-red-500">*</span>
-                                    </label>
-                                    <input
+                                    <TextField
+                                        label="Extension Date & Time *"
                                         type="datetime-local"
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
-                                        placeholder="dd/mm/yyyy, --:--"
                                         value={extendDate}
                                         onChange={(e) => setExtendDate(e.target.value)}
+                                        fullWidth
+                                        variant="outlined"
+                                        InputLabelProps={{
+                                            shrink: true
+                                        }}
+                                        sx={fieldStyles}
                                     />
                                 </div>
                             </div>
@@ -1519,10 +2256,70 @@ export const PermitDetails = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         Assignees<span className="text-red-500">*</span>
                                     </label>
-                                    <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent bg-white">
-                                        <option value="">Select Here</option>
-                                        {/* Add options dynamically here */}
-                                    </select>
+                                    <FormControl
+                                        sx={{
+                                            width: '100%',
+                                            '& .MuiOutlinedInput-root': {
+                                                borderRadius: '8px',
+                                                '&:hover .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#C72030',
+                                                },
+                                                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                                    borderColor: '#C72030',
+                                                    borderWidth: '2px',
+                                                },
+                                            },
+                                        }}
+                                    >
+                                        <Select<string[]>
+                                            multiple
+                                            value={selectedExtendAssignees}
+                                            onChange={handleAssigneeChange}
+                                            input={<OutlinedInput />}
+                                            renderValue={(selected) => {
+                                                if ((selected as string[]).length === 0) {
+                                                    return <span style={{ color: '#9CA3AF' }}>Select assignees</span>;
+                                                }
+                                                return (
+                                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                                        {(selected as string[]).map((value) => {
+                                                            const assignee = permitData?.permit?.permit_assignees?.find(a => a.id.toString() === value);
+                                                            return (
+                                                                <Chip
+                                                                    key={value}
+                                                                    label={assignee?.name || value}
+                                                                    size="small"
+                                                                    sx={{
+                                                                        backgroundColor: '#C72030',
+                                                                        color: 'white',
+                                                                        '& .MuiChip-deleteIcon': {
+                                                                            color: 'white',
+                                                                        },
+                                                                    }}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </Box>
+                                                );
+                                            }}
+                                            displayEmpty
+                                            sx={{
+                                                minHeight: '48px',
+                                                '& .MuiSelect-placeholder': {
+                                                    color: '#9CA3AF',
+                                                },
+                                            }}
+                                        >
+                                            <MenuItem disabled value="">
+                                                <em>Select assignees</em>
+                                            </MenuItem>
+                                            {permitData?.permit?.permit_assignees?.map((assignee) => (
+                                                <MenuItem key={assignee.id} value={assignee.id.toString()}>
+                                                    {assignee.name}
+                                                </MenuItem>
+                                            ))}
+                                        </Select>
+                                    </FormControl>
                                 </div>
 
                                 {/* Attachment */}
@@ -1578,24 +2375,24 @@ export const PermitDetails = () => {
                         </div>
 
                         {/* Extend Permit Button */}
-                        {permitData.show_extend_button && (
-                            <div className="flex justify-center pt-4">
-                                <Button
-                                    className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
-                                    onClick={handleExtendPermit}
-                                    disabled={isExtending}
-                                >
-                                    {isExtending ? (
-                                        <>
-                                            <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                                            Submitting...
-                                        </>
-                                    ) : (
-                                        'Extend Permit'
-                                    )}
-                                </Button>
-                            </div>
-                        )}
+
+                        <div className="flex justify-center pt-4">
+                            <Button
+                                className="bg-[#C72030] hover:bg-[#B01D2A] text-white px-8 py-2 font-medium"
+                                onClick={handleExtendPermit}
+                                disabled={isExtending}
+                            >
+                                {isExtending ? (
+                                    <>
+                                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                        Submitting...
+                                    </>
+                                ) : (
+                                    'Extend Permit'
+                                )}
+                            </Button>
+                        </div>
+
                     </div>
                 </Section>
 
@@ -1614,25 +2411,31 @@ export const PermitDetails = () => {
                                 <div className="space-y-4">
                                     {/* Reason for Resume */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Reason for Resume<span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent resize-none"
+                                        <TextField
+                                            label="Reason for Resume *"
+                                            fullWidth
+                                            variant="outlined"
+                                            multiline
                                             rows={3}
                                             placeholder="Enter Reason Here"
+                                            InputLabelProps={{
+                                                shrink: true
+                                            }}
+                                            sx={fieldStyles}
                                         />
                                     </div>
 
                                     {/* Resume Date & Time */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Resume Date&Time<span className="text-red-500">*</span>
-                                        </label>
-                                        <input
+                                        <TextField
+                                            label="Resume Date & Time *"
                                             type="datetime-local"
-                                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent"
-                                            placeholder="dd/mm/yyyy, --:--"
+                                            fullWidth
+                                            variant="outlined"
+                                            InputLabelProps={{
+                                                shrink: true
+                                            }}
+                                            sx={fieldStyles}
                                         />
                                     </div>
                                 </div>
@@ -1640,13 +2443,24 @@ export const PermitDetails = () => {
                                 <div className="space-y-4">
                                     {/* Assignees */}
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                                            Assignees<span className="text-red-500">*</span>
-                                        </label>
-                                        <select className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#C72030] focus:border-transparent bg-white">
-                                            <option value="">Select Here</option>
-                                            {/* Add options dynamically here */}
-                                        </select>
+                                        <FormControl fullWidth variant="outlined" sx={fieldStyles}>
+                                            <InputLabel shrink>Assignees *</InputLabel>
+                                            <Select
+                                                label="Assignees *"
+                                                defaultValue=""
+                                                displayEmpty
+                                                MenuProps={menuProps}
+                                            >
+                                                <MenuItem value="">
+                                                    <em>Select Here</em>
+                                                </MenuItem>
+                                                {permitData?.permit?.permit_assignees?.map((assignee) => (
+                                                    <MenuItem key={assignee.id} value={assignee.id.toString()}>
+                                                        {assignee.name}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                        </FormControl>
                                     </div>
 
                                     {/* Attachment */}
@@ -1703,15 +2517,78 @@ export const PermitDetails = () => {
                         {permitData.permit_closure.closure_approval_levels && permitData.permit_closure.closure_approval_levels.length > 0 && (
                             <div className="mt-6">
                                 <h4 className="text-sm font-medium text-gray-700 mb-4">Closure Approval Levels</h4>
-                                <div className="space-y-2">
+                                <div className="flex items-start gap-4">
                                     {permitData.permit_closure.closure_approval_levels.map((level: any, index: number) => (
-                                        <div key={index} className="p-3 bg-gray-50 rounded-lg">
-                                            <p className="text-sm text-gray-700">Level {index + 1}: {level.name || level.description}</p>
+                                        <div key={index} className="space-y-2">
+                                            <div className={`px-3 py-1 text-sm rounded-md font-medium w-max ${getStatusColor(level.status)}`}>
+                                                {level.name}: {level.status}
+                                            </div>
+                                            {level.updated_by && level.status_updated_at && (
+                                                <div className="ms-2 text-sm text-gray-600">
+                                                    by {level.updated_by} on {formatDate(level.status_updated_at)}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                 </div>
                             </div>
                         )}
+                        {
+                            permitClosure && (
+                                <div className="flex items-center gap-4 justify-center mt-4">
+                                    <Button
+                                        onClick={() => {
+                                            const actualClosureId = permitData.permit_closure?.id?.toString();
+                                            console.log('Using closure ID for approval:', actualClosureId);
+                                            if (actualClosureId) {
+                                                handleApproveClosure(actualClosureId);
+                                            } else {
+                                                toast.error('Closure ID not found in permit data');
+                                            }
+                                        }}
+                                        disabled={isApproving || isRejecting}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-8 py-2 font-medium"
+                                    >
+                                        {isApproving ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                Approving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                Approve Closure
+                                            </>
+                                        )}
+                                    </Button>
+                                    <Button
+                                        onClick={() => {
+                                            const actualClosureId = permitData.permit_closure?.id?.toString();
+                                            console.log('Using closure ID for rejection:', actualClosureId);
+                                            if (actualClosureId) {
+                                                handleRejectClosure(actualClosureId);
+                                            } else {
+                                                toast.error('Closure ID not found in permit data');
+                                            }
+                                        }}
+                                        disabled={isApproving || isRejecting}
+                                        className="bg-red-600 hover:bg-red-700 text-white px-8 py-2 font-medium"
+                                    >
+                                        {isRejecting ? (
+                                            <>
+                                                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                                                Rejecting...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertTriangle className="w-4 h-4 mr-2" />
+                                                Reject Closure
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            )
+                        }
                     </Section>
                 )}
 
@@ -1877,7 +2754,7 @@ export const PermitDetails = () => {
             </div>
 
             {/* Approve/Reject Buttons - Only show when coming from pending approvals */}
-            {showApprovalButtons && (
+            {permitMain && (
                 <div className="mt-8 p-6 bg-gray-50 rounded-lg border">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Approval Actions</h3>
                     <div className="flex items-center gap-4 justify-center">
@@ -2145,6 +3022,14 @@ export const PermitDetails = () => {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Attachment Preview Modal */}
+            <AttachmentPreviewModal
+                isModalOpen={isModalOpen}
+                setIsModalOpen={setIsModalOpen}
+                selectedDoc={selectedDoc}
+                setSelectedDoc={setSelectedDoc}
+            />
         </div>
     );
 };

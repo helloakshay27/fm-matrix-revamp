@@ -1,14 +1,20 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getPeriodLabels } from '@/lib/periodLabel';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Scatter } from 'recharts';
 
 interface ResolutionTATQuarterlyCardProps {
   data: Array<{ site: string; resolutionLast: number; resolutionCurrent: number }> | null;
   className?: string;
+  dateRange?: { startDate: Date; endDate: Date };
 }
 
-export const ResolutionTATQuarterlyCard: React.FC<ResolutionTATQuarterlyCardProps> = ({ data, className }) => {
+export const ResolutionTATQuarterlyCard: React.FC<ResolutionTATQuarterlyCardProps> = ({ data, className, dateRange }) => {
   const chartData = Array.isArray(data) ? data : [];
+  const { lastLabel, currentLabel } = getPeriodLabels(
+    dateRange?.startDate ?? new Date(),
+    dateRange?.endDate ?? new Date()
+  );
 
   const chartMax = useMemo(() => {
     const values = chartData.flatMap(d => [Number(d.resolutionLast) || 0, Number(d.resolutionCurrent) || 0]);
@@ -23,14 +29,14 @@ export const ResolutionTATQuarterlyCard: React.FC<ResolutionTATQuarterlyCardProp
     <Card className={className}>
       <CardHeader>
         <CardTitle>Resolution Achieved (TAT in Percentage)</CardTitle>
-        <div className="text-xs text-muted-foreground mt-1 flex items-center gap-4">
+    <div className="text-xs text-muted-foreground mt-1 flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-            <span>Last Quarter</span>
+      <span>{lastLabel}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
-            <span>Current Quarter</span>
+      <span>{currentLabel}</span>
           </div>
         </div>
       </CardHeader>
@@ -47,10 +53,10 @@ export const ResolutionTATQuarterlyCard: React.FC<ResolutionTATQuarterlyCardProp
             <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={120} />
             <Tooltip formatter={(value: any) => [`${value}%`, '']} />
             <Legend verticalAlign="top" align="right" />
-            <Bar dataKey="resolutionLast" fill="url(#stripedPattern)" name="Last Quarter" />
-            <Bar dataKey="resolutionCurrent" fill="#C4AE9D" name="Current Quarter" />
-            <Scatter data={scatterDataLast} fill="#000000" name="Last Quarter (Dots)" shape="circle" />
-            <Scatter data={scatterDataCurrent} fill="#FF0000" name="Current Quarter (Dots)" shape="circle" />
+            <Bar dataKey="resolutionLast" fill="url(#stripedPattern)" name={lastLabel} />
+            <Bar dataKey="resolutionCurrent" fill="#C4AE9D" name={currentLabel} />
+            <Scatter data={scatterDataLast} fill="#000000" name={`${lastLabel} (Dots)`} shape="circle" />
+            <Scatter data={scatterDataCurrent} fill="#FF0000" name={`${currentLabel} (Dots)`} shape="circle" />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

@@ -16,21 +16,8 @@ import {
   Users,
   X,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { TextField, Box } from "@mui/material";
+import { TextField, Box, MenuItem, Dialog, DialogContent, FormControl, InputLabel, Select } from "@mui/material";
 import { ImportFmUsers } from "@/components/ImportFmUsers";
 import axios from "axios";
 import { ColumnConfig } from "@/hooks/useEnhancedTable";
@@ -420,7 +407,7 @@ export const FMUserMasterDashboard = () => {
   }) => {
     setFilters(newFilters);
     const [firstName, lastName = ""] = newFilters.name.trim().split(" ");
-    await fetchUsers(pagination.current_page, {
+    await fetchUsers(1, {
       firstname_cont: firstName,
       lastname_cont: lastName,
       email_cont: newFilters.email,
@@ -507,7 +494,7 @@ export const FMUserMasterDashboard = () => {
     downloaded?: undefined | boolean;
   }) => {
     setFilters(newFilters);
-    await fetchUsers(pagination.current_page, {
+    await fetchUsers(1, {
       lock_user_permission_status_eq: newFilters.status,
       app_downloaded_eq: newFilters.downloaded,
     });
@@ -682,8 +669,8 @@ export const FMUserMasterDashboard = () => {
         );
       case "type":
         return (
-          <Badge variant={user.type === "Internal" ? "default" : "secondary"}>
-            {user.type}
+          <Badge variant="secondary">
+            {user?.type?.split(" ")[1]}
           </Badge>
         );
       case "status":
@@ -844,11 +831,11 @@ export const FMUserMasterDashboard = () => {
         context="custom_forms"
       />
 
-      <Dialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0">
-          <DialogHeader className="p-6 pb-4 border-b">
+      <Dialog open={filterDialogOpen} onClose={setFilterDialogOpen}>
+        <DialogContent className="p-0">
+          <div className="px-6 py-3 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Filter</DialogTitle>
+              <h1 className="text-xl font-semibold">Filter</h1>
               <Button
                 variant="ghost"
                 size="sm"
@@ -858,7 +845,7 @@ export const FMUserMasterDashboard = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </DialogHeader>
+          </div>
 
           <div className="p-6">
             <Box className="space-y-6">
@@ -903,13 +890,13 @@ export const FMUserMasterDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 bg-white">
-          <DialogHeader className="px-6 py-4 border-b">
+      <Dialog open={statusDialogOpen} onClose={setStatusDialogOpen} maxWidth="xs" fullWidth>
+        <DialogContent className="p-0 bg-white">
+          <div className="px-6 py-3 border-b mb-3">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">
+              <h1 className="text-xl font-semibold">
                 Update Status
-              </DialogTitle>
+              </h1>
               <Button
                 variant="ghost"
                 size="sm"
@@ -919,28 +906,24 @@ export const FMUserMasterDashboard = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </DialogHeader>
+          </div>
 
           <div className="px-6 py-3 space-y-6">
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className="w-full bg-white">
-                <SelectValue placeholder="Select Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border shadow-lg z-50">
-                <SelectItem value="Select Status" disabled className="text-gray-400">
+            <FormControl fullWidth>
+              <InputLabel id="status-label">Select Status</InputLabel>
+              <Select
+                labelId="status-label"
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+              >
+                <MenuItem value="" disabled>
                   Select Status
-                </SelectItem>
-                <SelectItem value="approved" className="hover:bg-blue-50">
-                  Approved
-                </SelectItem>
-                <SelectItem value="rejected" className="hover:bg-blue-50">
-                  Rejected
-                </SelectItem>
-                <SelectItem value="pending" className="hover:bg-blue-50">
-                  Pending
-                </SelectItem>
-              </SelectContent>
-            </Select>
+                </MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+              </Select>
+            </FormControl>
 
             <div className="flex justify-center">
               <Button
@@ -955,11 +938,11 @@ export const FMUserMasterDashboard = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={cloneRoleDialogOpen} onOpenChange={setCloneRoleDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] p-0 bg-white">
-          <DialogHeader className="p-6 pb-4 border-b">
+      <Dialog open={cloneRoleDialogOpen} onClose={setCloneRoleDialogOpen} maxWidth="sm" fullWidth>
+        <DialogContent className="p-0 bg-white">
+          <div className="px-6 py-3 border-b">
             <div className="flex items-center justify-between">
-              <DialogTitle className="text-xl font-semibold">Clone Role</DialogTitle>
+              <h1 className="text-xl font-semibold">Clone Role</h1>
               <Button
                 variant="ghost"
                 size="sm"
@@ -969,9 +952,9 @@ export const FMUserMasterDashboard = () => {
                 <X className="h-4 w-4" />
               </Button>
             </div>
-          </DialogHeader>
+          </div>
 
-          <div className="p-6">
+          <div className="px-6 pt-4">
             <Tabs
               value={activeTab}
               onValueChange={(value) => setActiveTab(value as "handover" | "clone")}
@@ -994,101 +977,101 @@ export const FMUserMasterDashboard = () => {
 
               <TabsContent value="handover" className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    From User
-                  </label>
-                  <Select value={fromUser} onValueChange={setFromUser}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg z-50">
-                      {fmUsersData.length > 0 ? (
-                        fmUsersData.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.userName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled className="text-gray-400">
-                          No users available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <TextField
+                    select
+                    fullWidth
+                    label="From User"
+                    value={fromUser}
+                    onChange={(e) => setFromUser(e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {fmUsersData.length > 0 ? (
+                      fmUsersData.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          {user.userName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No users available
+                      </MenuItem>
+                    )}
+                  </TextField>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    To User
-                  </label>
-                  <Select value={toUser} onValueChange={setToUser}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg z-50">
-                      {fmUsersData.length > 0 ? (
-                        fmUsersData.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.userName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled className="text-gray-400">
-                          No users available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <TextField
+                    select
+                    fullWidth
+                    label="To User"
+                    value={toUser}
+                    onChange={(e) => setToUser(e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {fmUsersData.length > 0 ? (
+                      fmUsersData.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          {user.userName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No users available
+                      </MenuItem>
+                    )}
+                  </TextField>
                 </div>
               </TabsContent>
 
               <TabsContent value="clone" className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    From User
-                  </label>
-                  <Select value={fromUser} onValueChange={setFromUser}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg z-50">
-                      {fmUsersData.length > 0 ? (
-                        fmUsersData.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.userName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled className="text-gray-400">
-                          No users available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <TextField
+                    select
+                    fullWidth
+                    label="From User"
+                    value={fromUser}
+                    onChange={(e) => setFromUser(e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {fmUsersData.length > 0 ? (
+                      fmUsersData.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          {user.userName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No users available
+                      </MenuItem>
+                    )}
+                  </TextField>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
-                    To User
-                  </label>
-                  <Select value={toUser} onValueChange={setToUser}>
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border shadow-lg z-50">
-                      {fmUsersData.length > 0 ? (
-                        fmUsersData.map((user) => (
-                          <SelectItem key={user.id} value={user.id}>
-                            {user.userName}
-                          </SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="" disabled className="text-gray-400">
-                          No users available
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
+                  <TextField
+                    select
+                    fullWidth
+                    label="To User"
+                    value={toUser}
+                    onChange={(e) => setToUser(e.target.value)}
+                    variant="outlined"
+                    InputLabelProps={{ shrink: true }}
+                  >
+                    {fmUsersData.length > 0 ? (
+                      fmUsersData.map((user) => (
+                        <MenuItem key={user.id} value={user.id}>
+                          {user.userName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem value="" disabled>
+                        No users available
+                      </MenuItem>
+                    )}
+                  </TextField>
                 </div>
               </TabsContent>
             </Tabs>

@@ -107,8 +107,8 @@ const analyticsOptions = {
       { id: 'mr_revenue_overview', endpoint: 'revenue_generation_overview', label: 'Revenue Generation Overview' },
       { id: 'mr_center_performance', endpoint: 'center_performance_overview', label: 'Center Wise - Performance Overview' },
       { id: 'mr_center_wise_utilization', endpoint: 'center_wise_meeting_room_utilization', label: 'Center Wise - Meeting Room Utilization' },
-      { id: 'mr_response_tat_quarterly', endpoint: 'response_tat_performance_quarterly', label: 'Response TAT Performance (Quarterly)' },
-      { id: 'mr_resolution_tat_quarterly', endpoint: 'resolution_tat_performance_quarterly', label: 'Resolution TAT Performance (Quarterly)' },
+  { id: 'mr_response_tat_quarterly', endpoint: 'response_tat_performance_quarterly', label: 'Response TAT Performance' },
+  { id: 'mr_resolution_tat_quarterly', endpoint: 'resolution_tat_performance_quarterly', label: 'Resolution TAT Performance' },
     ]
   },
   community: {
@@ -163,7 +163,7 @@ const analyticsOptions = {
     color: '#C4B89D',
     options: [
       { id: 'consumables_top_center', endpoint: 'top_consumables_center', label: 'Top Consumables – Centre-wise Overview' },
-      { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Quarterly Comparison' },
+  { id: 'consumables_value_quarterly', endpoint: 'consumable_inventory_value_quarterly', label: 'Consumable Inventory Value – Comparison' },
     ]
   },
 
@@ -190,7 +190,7 @@ const analyticsOptions = {
     label: 'Checklist Management',
     color: '#C4B89D',
     options: [
-      { id: 'cm_progress_quarterly', endpoint: 'cm_progress_quarterly', label: 'Checklist Progress Status – Center-Wise Quarterly Comparison' },
+  { id: 'cm_progress_quarterly', endpoint: 'cm_progress_quarterly', label: 'Checklist Progress Status – Center-Wise Comparison' },
       { id: 'cm_overdue_centerwise', endpoint: 'cm_overdue_centerwise', label: 'Top 10 Overdue Checklists – Center-wise Contribution Comparison' },
     ]
   },

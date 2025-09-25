@@ -26,7 +26,7 @@ const calculateStats = (incidents: any[]) => {
   return {
     total: incidents.length,
     open: incidents.filter(i => i.current_status === "Open").length,
-    underInvestigation: incidents.filter(i => i.current_status === "Under Investigation").length,
+    underObservation: incidents.filter(i => i.current_status === "Under Observation").length,
     closed: incidents.filter(i => i.current_status === "Closed").length,
     highRisk: incidents.filter(i => i.inc_level_name === "High Risk").length,
     mediumRisk: incidents.filter(i => i.inc_level_name === "Medium Risk").length,
@@ -46,7 +46,7 @@ const getLevelColor = (level: string) => {
 const getStatusColor = (status: string) => {
   switch (status) {
     case "Open": return "bg-blue-100 text-blue-800";
-    case "Under Investigation": return "bg-yellow-100 text-yellow-800";
+    case "Under Observation": return "bg-yellow-100 text-yellow-800";
     case "Closed": return "bg-green-100 text-green-800";
     default: return "bg-gray-100 text-gray-800";
   }
@@ -183,7 +183,7 @@ export const IncidentDashboard = () => {
       case "id":
         return <span className="font-medium">{item.id}</span>;
       case "description":
-        return <span>{item.description}</span>;
+        return <div className="w-[15rem] overflow-hidden text-ellipsis text-center">{item.description}</div>;
       case "building_name":
         return <span>{item.building_name || "-"}</span>;
       case "region":
@@ -345,11 +345,11 @@ export const IncidentDashboard = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4 gap-4 mb-6">
             <StatCard icon={<AlertTriangle />} label="Total Incidents" value={stats.total} />
             <StatCard icon={<Clock />} label="Open" value={stats.open} />
-            <StatCard icon={<Search />} label="Under Investigation" value={stats.underInvestigation} />
+            <StatCard icon={<Search />} label="Under Observation" value={stats.underObservation} />
             <StatCard icon={<CheckCircle />} label="Closed" value={stats.closed} />
-            <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
+            {/* <StatCard icon={<XCircle />} label="High Risk" value={stats.highRisk} />
             <StatCard icon={<AlertTriangle />} label="Medium Risk" value={stats.mediumRisk} />
-            <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} />
+            <StatCard icon={<CheckCircle />} label="Low Risk" value={stats.lowRisk} /> */}
           </div>
 
           {/* Enhanced Table */}
@@ -401,8 +401,8 @@ export const IncidentDashboard = () => {
                   <span>{stats.total > 0 ? ((stats.open / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Under Investigation: {stats.underInvestigation}</span>
-                  <span>{stats.total > 0 ? ((stats.underInvestigation / stats.total) * 100).toFixed(1) : 0}%</span>
+                  <span>Under Observation: {stats.underObservation}</span>
+                  <span>{stats.total > 0 ? ((stats.underObservation / stats.total) * 100).toFixed(1) : 0}%</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Closed: {stats.closed}</span>

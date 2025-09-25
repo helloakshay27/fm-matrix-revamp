@@ -1,4 +1,5 @@
 import React from 'react';
+import { getPeriodLabels } from '@/lib/periodLabel';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export type ChecklistProgressDetailRow = {
@@ -23,6 +24,7 @@ export interface ChecklistProgressQuarterlyCardProps {
   title?: string;
   rows: ChecklistProgressDetailRow[];
   loading?: boolean;
+  dateRange?: { startDate: Date; endDate: Date };
 }
 
 const fmtPct = (v: number) => {
@@ -41,14 +43,17 @@ const toNum = (v: any) => {
 };
 
 export const ChecklistProgressQuarterlyCard: React.FC<ChecklistProgressQuarterlyCardProps> = ({
-  title = 'Checklist Progress Status – Center-Wise Quarterly Comparison',
+  title,
   rows,
   loading = false,
+  dateRange,
 }) => {
+  const { periodUnit } = getPeriodLabels(dateRange?.startDate ?? new Date(), dateRange?.endDate ?? new Date());
+  const computedTitle = title ?? `Checklist Progress Status – Center-Wise ${periodUnit}ly Comparison`;
   return (
     <Card className="border border-gray-300">
       <CardHeader className="py-4">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
+        <CardTitle className="text-base font-semibold">{computedTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

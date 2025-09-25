@@ -20,6 +20,7 @@ import { ArrowRightLeft } from "lucide-react";
 import logo from "../../assets/pdf/urbon.svg";
 
 // @ts-ignore
+import { getPeriodLabels } from '../../lib/periodLabel';
 import GoPhygital from "../../assets/pdf/Gophygital.svg";
 import axios from 'axios';
 
@@ -32,7 +33,7 @@ const AllContent = () => {
     const auto = params.get('auto') === '1';
 
     const dateQuery = `?start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`;
-    const dateRangeLabel = useMemo(() => {
+        const dateRangeLabel = useMemo(() => {
         if (!startDate || !endDate) return '';
         try {
             const s = new Date(startDate);
@@ -47,6 +48,12 @@ const AllContent = () => {
             return `${startDate} to ${endDate}`;
         }
     }, [startDate, endDate]);
+
+        // Compute dynamic period labels (Weekly/Monthly/Quarterly/Yearly) from selected dates
+        const { periodLabel, periodUnit, lastLabel, currentLabel } = useMemo(
+            () => getPeriodLabels(startDate, endDate),
+            [startDate, endDate]
+        );
 
 
     const [meetingRoomData, setMeetingRoomData] = useState<any>(null);
@@ -731,12 +738,15 @@ const AllContent = () => {
         return Number.isNaN(num) ? '₹ 0' : `₹ ${num.toLocaleString('en-IN')}`;
     };
 
-    // Format numeric values to "k" as per requirement (e.g., 932813.75 -> 93.2k)
+    // Format numeric values to "k" (e.g., 932813.75 -> 93.2k), trimming trailing .0
     const formatToK = (n: any) => {
         const val = Number(n || 0);
         // Divide by 10,000 to match the provided example mapping
         const scaled = val / 10000;
-        return `${scaled.toFixed(1)}k`;
+        if (!Number.isFinite(scaled)) return '0k';
+        // Keep one decimal only when needed
+        const s = scaled.toFixed(1).replace(/\.0$/, '');
+        return `${s}k`;
     };
 
     // Helpers for Overstock Top 10 mapping (new API shape)
@@ -1263,8 +1273,8 @@ const AllContent = () => {
             return (
                 <div className="bg-white border text-sm px-3 py-1 rounded shadow">
                     <p className="font-semibold">{label}</p>
-                    <p>Last Quarter: {payload[0].value}</p>
-                    <p>Current Quarter: {payload[1].value}</p>
+                    <p>{lastLabel}: {payload[0].value}</p>
+                    <p>{currentLabel}: {payload[1].value}</p>
                 </div>
             );
         }
@@ -1747,9 +1757,6 @@ const AllContent = () => {
                         <p>
                             <span className="font-semibold">Company</span>: {localStorage.getItem('selectedCompany') || 'URBZ NWRK'}
                         </p>
-                        <p>
-                            <span className="font-semibold">Industry</span>: Coworking Space
-                        </p>
                     </div>
                 </div>
 
@@ -1890,7 +1897,7 @@ const AllContent = () => {
                                 <li>Ticket Performance Metrics by Category – Volume, Closure Rate & Ageing</li>
                                 <li>Customer Experience Feedback</li>
                                 <li>Site Performance: Customer Rating Overview</li>
-                                <li>Response TAT Performance by Center – Quarterly Comparison</li>
+                                <li>Response TAT Performance by Center – {periodUnit}ly Comparison</li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">2- Asset Management</h3>
@@ -1905,7 +1912,7 @@ const AllContent = () => {
 
                             <h3 className="font-semibold mt-2">3- Checklist Management</h3>
                             <ul className="list-disc list-inside pl-6 print-small">
-                                <li>Checklist Progress Status – Center-wise Quarterly Comparison</li>
+                                <li>Checklist Progress Status – Center-wise {periodUnit}ly Comparison</li>
                                 <li>Top 10 Overdue Checklists – Center-wise Contribution Comparison</li>
                             </ul>
 
@@ -1914,7 +1921,7 @@ const AllContent = () => {
                                 <li>Overview Summary</li>
                                 <li>Overstock Analysis – Top 10 Items</li>
                                 <li>Top Consumables – Centre-wise Overview</li>
-                                <li>Consumable Inventory Value – Quarterly Comparison</li>
+                                <li>Consumable Inventory Value – {periodUnit}ly Comparison</li>
                             </ul>
 
                             <h3 className="font-semibold mt-2">5- Parking Management</h3>
@@ -2039,7 +2046,7 @@ const AllContent = () => {
                         </table>
                         <p className="text-xs text-gray-500 mt-2 print:text-[10px]">
                             <strong>Note:</strong> This table illustrates meeting room utilization, cancellations, and revenue generation,
-                            along with directional arrows indicating growth, decline or neutral trend compared to the previous quarter.
+                            along with directional arrows indicating growth, decline or neutral trend compared to the previous period.
                         </p>
                     </div>
                 </div>
@@ -2077,7 +2084,7 @@ const AllContent = () => {
                         {centerList.map((center: any, siteIndex: number) => (
                             <div key={siteIndex} className="grid grid-cols-9 border-b border-gray-400">
                                 {/* Site Label (NO left border) */}
-                                <div className="p-3 font-medium text-base text-right print:p-2 print:text-sm border-b border-gray-400">
+                                <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words">
                                     {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
                                 </div>
 
@@ -2646,7 +2653,13 @@ const AllContent = () => {
                             <div className="flex items-center justify-between gap-4 flex-wrap text-sm print:text-xs print:gap-2">
                                 <div className="flex items-center gap-1">
                                     <span>% of tickets raised by category</span>
-                                    <ArrowRightLeft className="w-4 h-4 rotate-180 text-gray-500" />
+                                    <span className="mx-1 text-gray-600" aria-hidden>→</span>
+                                    {/* Diagonal split box indicator */}
+                                    <span className="relative inline-block w-5 h-5 border border-gray-300 mx-2 print:w-4 print:h-4" aria-hidden>
+                                        <span className="absolute inset-0 clip-triangle-tr" style={{ backgroundColor: '#DAD6C9' }} />
+                                        <span className="absolute inset-0 clip-triangle-bl" style={{ backgroundColor: '#FFFFFF' }} />
+                                    </span>
+                                    <span className="mx-1 text-gray-600" aria-hidden>←</span>
                                     <span>% of tickets closure by category</span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -2739,17 +2752,17 @@ const AllContent = () => {
                     <h2 className="text-lg font-bold mb-4 print:text-sm print:mb-2">
                         Site Performance: Customer Rating Overview
                     </h2>
-                    <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px]">
+            <table className="min-w-full text-base text-center border print:table-fixed print:w-full print:text-[10px] print:leading-tight">
                         <thead className="bg-[#DAD6C9] text-[#C72030] print:bg-[#DAD6C9] print:text-[#C72030]">
                             <tr>
-                                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]">
+                <th className="border border-gray-200 px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top">
                                     Site Name
                                 </th>
 
                                 {customerExperienceSiteNames.map((name, index) => (
                                     <th
                                         key={index}
-                                        className="border border-gray-200 px-3 py-6 print:px-2 print:py-4 print:min-h-[40px]"
+                    className="border border-gray-200 px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:whitespace-normal print:break-words print:align-top"
                                     >
                                         {name}
                                     </th>
@@ -2766,7 +2779,7 @@ const AllContent = () => {
                                         className={isTotal ? "font-semibold bg-[#DAD6C9]" : ""}
                                     >
                                         <td
-                                            className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] font-medium ${isTotal
+                                            className={`px-3 py-6 print:px-2 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top font-medium ${isTotal
                                                 ? "border border-gray-300"
                                                 : "border-l border-r border-gray-200 bg-[#F3F1EB80] print:bg-[#F3F1EB80]"
                                                 }`}
@@ -2776,8 +2789,8 @@ const AllContent = () => {
                                         {row.values.map((val, vIdx) => (
                                             <td
                                                 key={vIdx}
-                                                className={`px-3 py-6 print:px-2 print:py-4 print:min-h-[40px] ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"
-                                                    }`}
+                                                className={`px-3 py-6 print:px-1 print:py-2 print:min-h-[32px] print:text-[9px] print:leading-snug print:whitespace-normal print:break-words print:align-top ${isTotal ? "border border-gray-300" : "border-l border-r border-gray-200"}
+                                                    `}
                                             >
                                                 {val}
                                             </td>
@@ -2802,7 +2815,7 @@ const AllContent = () => {
 
                     {/* Title */}
                     <h1 className="text-2xl font-bold text-center bg-[#F6F4EE] py-3 mb-2 print:text-xl print:py-2 print:mb-0 border-b border-dashed border-gray-300">
-                        Response TAT Performance by Center – Quarterly Comparison
+                        Response TAT Performance by Center – {periodUnit}ly Comparison
                     </h1>
 
                     {/* Legend Row */}
@@ -2814,11 +2827,11 @@ const AllContent = () => {
 
                             {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-                            <span>Last Quarter</span>
+                            <span>{lastLabel}</span>
 
                             {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
-                            <span>Current Quarter</span>
+                            <span>{currentLabel}</span>
                         </div>
 
                         {/* Row 2: Resolution Achieved */}
@@ -2828,11 +2841,11 @@ const AllContent = () => {
 
                             {/* Striped Circle for Last Quarter */}
                             <div className="w-4 h-4 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-                            <span>Last Quarter</span>
+                            <span>{lastLabel}</span>
 
                             {/* Solid Circle for Current Quarter */}
                             <div className="w-4 h-4 rounded-full bg-[#C4AD98] ml-6" />
-                            <span>Current Quarter</span>
+                            <span>{currentLabel}</span>
                         </div>
                     </div>
 
@@ -2843,7 +2856,89 @@ const AllContent = () => {
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
-                    <div className="w-full overflow-x-auto">
+                    {/* Print-only mini legend to ensure visibility in PDF */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
+                            <span>{lastLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
+                            <span>{currentLabel}</span>
+                        </div>
+                    </div>
+
+                    {/* Screen/Desktop full graph (hidden in print) */}
+                    <div className="w-full hidden md:block print:hidden">
+                        <div
+                            style={{
+                                width: '100%',
+                                height: `${Math.max(400, Math.min(900, ((dynamicResponseAchieved?.length || 1) * 48) + 160))}px`,
+                            }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={dynamicResponseAchieved}
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                                >
+                                    {/* 1. Add pattern defs for striped fill */}
+                                    <defs>
+                                        <pattern
+                                            id="stripedPattern"
+                                            patternUnits="userSpaceOnUse"
+                                            width="6"
+                                            height="6"
+                                            patternTransform="rotate(45)"
+                                        >
+                                            <line x1="0" y="0" x2="0" y2="6" stroke="#C4B89D" strokeWidth="2" />
+                                        </pattern>
+                                    </defs>
+
+                                    <CartesianGrid strokeDasharray="3 3" />
+
+                                    {/* 2. X Axis at top with % */}
+                                    <XAxis
+                                        type="number"
+                                        domain={[0, chartMaxResponse]}
+                                        ticks={Array.from({ length: Math.max(2, chartMaxResponse / 10) }, (_, i) => (i + 1) * 10)}
+                                        tickFormatter={(tick) => `${tick}%`}
+                                        orientation="top"
+                                        tick={{ fontSize: 12 }}
+                                        axisLine={{ stroke: '#000' }}
+                                        tickLine={{ stroke: '#000' }}
+                                    />
+
+                                    <YAxis
+                                        type="category"
+                                        dataKey="site"
+                                        tick={{ fontSize: 12 }}
+                                        width={160}
+                                    />
+
+                                    <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
+                                    <Legend verticalAlign="top" align="right" />
+
+                                    {/* 3. Apply striped pattern to Last Quarter bar */}
+                                    <Bar
+                                        dataKey="responseLast"
+                                        fill="url(#stripedPattern)"
+                                        name={lastLabel}
+                                    />
+
+                                    {/* 4. Solid color for Current Quarter bar */}
+                                    <Bar
+                                        dataKey="responseCurrent"
+                                        fill="#C4AE9D"
+                                        name={currentLabel}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    {/* Print/PDF graph (no in-chart legend to avoid overlap) */}
+                    <div className="w-full overflow-x-auto block print:block md:hidden">
                         <BarChart
                             width={750}
                             height={700}
@@ -2886,20 +2981,19 @@ const AllContent = () => {
                             />
 
                             <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
-                            <Legend verticalAlign="top" align="right" />
 
                             {/* 3. Apply striped pattern to Last Quarter bar */}
                             <Bar
                                 dataKey="responseLast"
                                 fill="url(#stripedPattern)"
-                                name="Last Quarter"
+                                name={lastLabel}
                             />
 
                             {/* 4. Solid color for Current Quarter bar */}
                             <Bar
                                 dataKey="responseCurrent"
                                 fill="#C4AE9D"
-                                name="Current Quarter"
+                                name={currentLabel}
                             />
                         </BarChart>
                     </div>
@@ -2915,7 +3009,87 @@ const AllContent = () => {
                         <div className="border-b border-gray-300 w-full" />
                     </div>
 
-                    <div className="w-full overflow-x-auto">
+                    {/* Print-only mini legend for Resolution section */}
+                    <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
+                            <span>{lastLabel}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
+                            <span>{currentLabel}</span>
+                        </div>
+                    </div>
+
+                    {/* Screen/Desktop full graph (hidden in print) */}
+                    <div className="w-full hidden md:block print:hidden">
+                        <div
+                            style={{
+                                width: '100%',
+                                height: `${Math.max(400, Math.min(900, ((dynamicResolutionAchieved?.length || 1) * 48) + 160))}px`,
+                            }}
+                        >
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart
+                                    data={dynamicResolutionAchieved}
+                                    layout="vertical"
+                                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                                >
+                                    {/* Striped Pattern Def */}
+                                    <defs>
+                                        <pattern
+                                            id="stripedPattern"
+                                            patternUnits="userSpaceOnUse"
+                                            width="6"
+                                            height="6"
+                                            patternTransform="rotate(45)"
+                                        >
+                                            <line x1="0" y1="0" x2="0" y2="6" stroke="#C4B89D" strokeWidth="2" />
+                                        </pattern>
+                                    </defs>
+
+                                    <CartesianGrid strokeDasharray="3 3" />
+
+                                    <XAxis
+                                        type="number"
+                                        domain={[0, chartMaxResolution]}
+                                        ticks={Array.from({ length: Math.max(2, chartMaxResolution / 10) }, (_, i) => (i + 1) * 10)}
+                                        tickFormatter={(tick) => `${tick}%`}
+                                        orientation="top"
+                                        tick={{ fontSize: 12 }}
+                                        axisLine={{ stroke: '#000' }}
+                                        tickLine={{ stroke: '#000' }}
+                                    />
+
+                                    <YAxis
+                                        type="category"
+                                        dataKey="site"
+                                        tick={{ fontSize: 12 }}
+                                        width={160}
+                                    />
+
+                                    <Tooltip content={(props: any) => <CustomTooltip {...props} />} />
+                                    <Legend verticalAlign="top" align="right" />
+
+                                    {/* Last Quarter with Stripes */}
+                                    <Bar
+                                        dataKey="resolutionLast"
+                                        fill="url(#stripedPattern)"
+                                        name={lastLabel}
+                                    />
+
+                                    {/* Current Quarter with Solid Fill */}
+                                    <Bar
+                                        dataKey="resolutionCurrent"
+                                        fill="#C4AE9D"
+                                        name={currentLabel}
+                                    />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
+                    <div className="w-full overflow-x-auto block print:block md:hidden">
                         <BarChart
                             width={780}
                             height={700}
@@ -2957,39 +3131,38 @@ const AllContent = () => {
                             />
 
                             <Tooltip content={(props: any) => <CustomTooltip {...props} />} cursor={{ fill: "rgba(0, 0, 0, 0.05)" }} />
-                            <Legend verticalAlign="top" align="right" />
 
                             {/* Last Quarter with Stripes */}
                             <Bar
                                 dataKey="resolutionLast"
                                 fill="url(#stripedPattern)"
-                                name="Last Quarter"
+                                name={lastLabel}
                             />
 
                             {/* Current Quarter with Solid Fill */}
                             <Bar
                                 dataKey="resolutionCurrent"
                                 fill="#C4AE9D"
-                                name="Current Quarter"
+                                name={currentLabel}
                             />
 
                             {/* Scatter dots (optional, will still render over bars) */}
                             <Scatter
                                 data={scatterDataLast}
                                 fill="#000000"
-                                name="Last Quarter (Dots)"
+                                name={`${lastLabel} (Dots)`}
                                 shape="circle"
                             />
                             <Scatter
                                 data={scatterDataCurrent}
                                 fill="#FF0000"
-                                name="Current Quarter (Dots)"
+                                name={`${currentLabel} (Dots)`}
                                 shape="circle"
                             />
                         </BarChart>
                     </div>
                     <p className="print:text-[12px] text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous quarter,
+                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
                         providing a clear view of trends and changes in footfall over time for performance comparison.
                     </p>
                 </div>
@@ -3314,7 +3487,7 @@ const AllContent = () => {
                     {/* Table 1: Checklist Progress Status */}
                     <div className="border border-gray-300 px-3 rounded mb-10 comment checklist-progress-table print:mb-2 min-h-[300px]">
                         <div className="p-4 text-lg font-semibold border-b border-gray-300 print:p-2 print:text-[13px] ">
-                            Checklist Progress Status – Center-Wise Quarterly Comparison
+                            Checklist Progress Status – Center-Wise {periodUnit}ly Comparison
                         </div>
                         <table className="w-full border print:table-fixed print:w-full print:text-[10px] ">
                             <thead>
@@ -3397,7 +3570,7 @@ const AllContent = () => {
                             </tbody>
                         </table>
                         <div className="text-sm mt-4 px-4 py-2 italic text-gray-700 print:text-[8px] print:mt-2 print:px-2 print:py-1 print:text-black">
-                            <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current and last quarter. The "Change in Closed" column highlights the shift in closed checklists since the previous quarter.
+                            <strong>Note :</strong> This table shows checklist progress by status across centers, comparing the current period with the previous period. The "Change in Closed" column highlights the shift in closed checklists since the prior period.
                         </div>
                     </div>
 
@@ -3621,11 +3794,11 @@ const AllContent = () => {
                                 <table className="w-full border text-sm print:table-fixed print:w-full print:text-[10px] print:leading-relaxed">
                                     <thead>
                                         <tr className="bg-[#DAD6C9] text-[#C72030] text-left print:bg-[#DAD6C9] print:text-[#C72030]">
-                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[20%]">Inventory</th>
+                                            <th className="py-1 px-4 print:py-1 print:px-2 print:w-[22%] print:whitespace-normal print:break-words print:align-top">Inventory</th>
                                             {topConsumableHeaders.map((header, index) => (
                                                 <th
                                                     key={index}
-                                                    className="py-1 px-2 text-left print:py-1 print:px-2"
+                                                    className="py-1 px-2 text-left print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]"
                                                 >
                                                     {header}
                                                 </th>
@@ -3635,11 +3808,11 @@ const AllContent = () => {
                                     <tbody>
                                         {consumablesTableData.map((row, i) => (
                                             <tr key={i} className={i % 2 === 0 ? "bg-gray-50 print:bg-gray-50" : ""}>
-                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE]">
+                                                <td className="py-1 px-4 bg-[#F6F4EE] font-medium print:py-1 print:px-2 print:bg-[#F6F4EE] print:whitespace-normal print:break-words print:align-top">
                                                     {row.inventory}
                                                 </td>
                                                 {row.values.map((value, j) => (
-                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-2">
+                                                    <td key={j} className="py-1 px-2 text-center print:py-1 print:px-1 print:whitespace-normal print:break-words print:align-top print:text-[9px]">
                                                         {value}
                                                     </td>
                                                 ))}
@@ -3655,15 +3828,15 @@ const AllContent = () => {
                             <strong>Note :</strong> This table highlights the top 10 consumable rate used across each
                             centre, helping to monitor usage patterns and manage inventory more effectively.
                             <br />
-                            <strong>Formula:</strong> Total consumable x( Average Sqft (1000) / Site Sqft )
+                            {/* <strong>Formula:</strong> Total consumable x( Average Sqft (1000) / Site Sqft ) */}
                         </div>
                     </div>
 
-                    {/* Consumable Inventory Value – Quarterly Comparison */}
+                    {/* Consumable Inventory Value – {periodUnit}ly Comparison */}
                     {/* Consumable Inventory Value – Quarterly Comparison */}
                     <div className="p-8 bg-white border border-gray-300   print-page-break print:p-3 print:border-gray-300   print:mt-2">
                         <h2 className="text-lg font-bold mb-4 text-gray-900 border-b pb-2 print:text-[14px] print:mb-1 print:pb-1 print:border-gray-300">
-                            Consumable Inventory Value – Quarterly Comparison
+                            Consumable Inventory Value – {periodUnit}ly Comparison
                         </h2>
                         <div className="h-[500px] print:h-[300px]">
                             {loadingConsumableInventoryComparison ? (
@@ -3674,7 +3847,7 @@ const AllContent = () => {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart
                                         data={consumableComparisonRows}
-                                        margin={{ top: 20, right: 20, left: 20, bottom: 80 }}
+                                        margin={{ top: 20, right: 20, left: 70, bottom: 80 }}
                                         barCategoryGap={20}
                                     >
                                         <CartesianGrid stroke="#ddd" strokeDasharray="3 3" />
@@ -3687,6 +3860,7 @@ const AllContent = () => {
                                             tick={{ fontSize: 12 }}
                                         />
                                         <YAxis
+                                            width={80}
                                             domain={[0, consumableMaxRaw || 0]}
                                             ticks={consumableTicks}
                                             tickFormatter={(v) => formatToK(v)}
@@ -3711,14 +3885,14 @@ const AllContent = () => {
                                         <Bar
                                             dataKey="lastQuarter"
                                             fill="#D6BBAF"
-                                            name="Last Quarter"
+                                            name={lastLabel}
                                             barSize={40}
                                             label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
                                         />
                                         <Bar
                                             dataKey="currentQuarter"
                                             fill="#D3D6D4"
-                                            name="Current Quarter"
+                                            name={currentLabel}
                                             barSize={40}
                                             label={{ position: "top", formatter: (val: any) => formatToK(val), fill: "#444" }}
                                         />
@@ -3727,7 +3901,7 @@ const AllContent = () => {
                             )}
                         </div>
                         <p className="text-sm text-gray-700 mt-6 border-t pt-4 print:text-[11px] print:mt-1 print:pt-1 print:border-gray-300">
-                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous quarter, highlighting trends in consumption.
+                            <strong>Note:</strong> This graph illustrates total consumable inventory usage with a comparison to the previous period, highlighting trends in consumption.
                         </p>
                     </div>
 
@@ -3745,52 +3919,102 @@ const AllContent = () => {
                             <div className="border-b border-gray-300 w-full" />
                         </div>
 
+                        {/* Print-only mini legend for Parking section */}
+                        <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#a0b5c1]" />
+                                <span>Free</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                                <span>Paid</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                                <span>Vacant</span>
+                            </div>
+                        </div>
+
                     </div>
 
-                    {/* Chart */}
-                    <div className="w-full overflow-x-auto">
+                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                    <div className="w-full">
                         {loadingParkingDateSiteWise ? (
                             <div className="text-center py-6 text-gray-600">Loading parking data…</div>
                         ) : parkingChartData.length === 0 ? (
                             <div className="text-center py-6 text-gray-600">No parking data available.</div>
                         ) : (
-                            <BarChart
-                                width={800}
-                                height={Math.max(300, parkingChartData.length * 50)}
-                                data={parkingChartData}
-                                layout="vertical"
-                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
-                                barCategoryGap="10%"
-                                barGap={3}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    label={{
-                                        value: "Count of Parking Slots",
-                                        position: "insideBottom",
-                                        offset: -5,
-                                    }}
-                                    tick={{ fontSize: 12 }}
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="site"
-                                    tick={{ fontSize: 12 }}
-                                    width={200}
-                                />
-                                <Tooltip />
-                                <Legend verticalAlign="top" align="right" />
-                                <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
-                                    <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                                <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
-                                    <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                                <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
-                                    <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                            </BarChart>
+                            <>
+                                {/* Desktop-only full graph (hidden in print) */}
+                                <div className="hidden md:block print:hidden">
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: `${Math.max(360, Math.min(900, ((parkingChartData?.length || 1) * 48) + 160))}px`,
+                                        }}
+                                    >
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={parkingChartData}
+                                                layout="vertical"
+                                                margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                                barCategoryGap="10%"
+                                                barGap={3}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis
+                                                    type="number"
+                                                    label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
+                                                    tick={{ fontSize: 12 }}
+                                                />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={220} />
+                                                <Tooltip />
+                                                <Legend verticalAlign="top" align="right" />
+                                                <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                                    <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                                    <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                                    <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+
+                                {/* Print/PDF and mobile fixed-size chart */}
+                                <div className="overflow-x-auto block print:block md:hidden">
+                                    <BarChart
+                                        width={800}
+                                        height={Math.max(300, parkingChartData.length * 50)}
+                                        data={parkingChartData}
+                                        layout="vertical"
+                                        margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
+                                        barCategoryGap="10%"
+                                        barGap={3}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            type="number"
+                                            label={{ value: "Count of Parking Slots", position: "insideBottom", offset: -5 }}
+                                            tick={{ fontSize: 12 }}
+                                        />
+                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} />
+                                        <Tooltip />
+                                        <Bar dataKey="Free" fill="#a0b5c1" name="Free" barSize={28}>
+                                            <LabelList dataKey="Free" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="Paid" fill="#c5ae94" name="Paid" barSize={28}>
+                                            <LabelList dataKey="Paid" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="Vacant" fill="#dad8cf" name="Vacant" barSize={28}>
+                                            <LabelList dataKey="Vacant" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                    </BarChart>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -3813,55 +4037,92 @@ const AllContent = () => {
                             <div className="border-b border-gray-300 w-full" />
                         </div>
 
+                        {/* Print-only mini legend for Visitor section */}
+                        <div className="hidden print:flex items-center justify-end gap-4 px-6 print:px-4 print:py-1 text-xs">
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#dad8cf]" />
+                                <span>{lastLabel}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                                <div className="w-3 h-3 rounded-full bg-[#c5ae94]" />
+                                <span>{currentLabel}</span>
+                            </div>
+                        </div>
+
                     </div>
 
-                    {/* Chart container with max height and scroll in screen if needed */}
-                    <div className="w-full overflow-x-auto">
+                    {/* Chart: Desktop responsive + Print/Mobile fixed */}
+                    <div className="w-full">
                         {loadingVisitorTrendAnalysis ? (
                             <div className="p-4 text-sm text-gray-600">Loading visitor trends…</div>
                         ) : visitorTrendRows.length === 0 ? (
                             <div className="p-4 text-sm text-gray-600">No visitor trend data available.</div>
                         ) : (
-                            <BarChart
-                                width={800}
-                                height={visitorChartHeight}
-                                data={visitorTrendRows}
-                                layout="vertical"
-                                barCategoryGap="10%"
-                                barGap={3}
-                                margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis
-                                    type="number"
-                                    label={{ value: "Counts", position: "insideBottom", offset: -5 }}
-                                    fontSize={15}
-                                />
-                                <YAxis
-                                    type="category"
-                                    dataKey="site"
-                                    tick={{ fontSize: 12 }}
-                                    width={180}
-                                    fontSize={15}
-                                />
-                                <Tooltip />
-                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                            <>
+                                {/* Desktop-only full graph (hidden in print) */}
+                                <div className="hidden md:block print:hidden">
+                                    <div
+                                        style={{
+                                            width: '100%',
+                                            height: `${Math.max(360, Math.min(900, ((visitorTrendRows?.length || 1) * 48) + 160))}px`,
+                                        }}
+                                    >
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={visitorTrendRows}
+                                                layout="vertical"
+                                                barCategoryGap="10%"
+                                                barGap={3}
+                                                margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                                            >
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
+                                                <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={200} fontSize={15} />
+                                                <Tooltip />
+                                                <Legend verticalAlign="top" align="right" style={{ fontSize: 10 }} />
+                                                <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
+                                                    <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                                <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
+                                                    <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
 
-                                <Bar dataKey="last" fill="#dad8cf" name="Last Quarter" barSize={28}>
-                                    <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-
-                                <Bar dataKey="current" fill="#c5ae94" name="Current Quarter" barSize={28}>
-                                    <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
-                                </Bar>
-                            </BarChart>
+                                {/* Print/PDF and mobile fixed-size chart */}
+                                <div className="overflow-x-auto block print:block md:hidden">
+                                    <BarChart
+                                        width={800}
+                                        height={visitorChartHeight}
+                                        data={visitorTrendRows}
+                                        layout="vertical"
+                                        barCategoryGap="10%"
+                                        barGap={3}
+                                        margin={{ top: 5, right: 100, left: 0, bottom: 5 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis type="number" label={{ value: "Counts", position: "insideBottom", offset: -5 }} fontSize={15} />
+                                        <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={180} fontSize={15} />
+                                        <Tooltip />
+                                        {/* Legend removed for print/mobile to avoid overlap; see print-only legend above */}
+                                        <Bar dataKey="last" fill="#dad8cf" name={lastLabel} barSize={28}>
+                                            <LabelList dataKey="last" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                        <Bar dataKey="current" fill="#c5ae94" name={currentLabel} barSize={28}>
+                                            <LabelList dataKey="current" position="right" style={{ fontSize: 10 }} />
+                                        </Bar>
+                                    </BarChart>
+                                </div>
+                            </>
                         )}
                     </div>
 
 
                     {/* Note */}
                     <p className="text-sm text-gray-500 p-4 mt-4 print:mt-4">
-                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous quarter,
+                        <strong>Note:</strong> This graph shows the total visitor count compared to the previous period,
                         providing a clear view of trends and changes in footfall over time for performance comparison.
                     </p>
                 </div>

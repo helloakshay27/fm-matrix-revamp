@@ -1,13 +1,15 @@
 import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getPeriodLabels } from '@/lib/periodLabel';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 
 interface ResponseTATQuarterlyCardProps {
   data: Array<{ site: string; responseLast: number; responseCurrent: number }> | null;
   className?: string;
+  dateRange?: { startDate: Date; endDate: Date };
 }
 
-export const ResponseTATQuarterlyCard: React.FC<ResponseTATQuarterlyCardProps> = ({ data, className }) => {
+export const ResponseTATQuarterlyCard: React.FC<ResponseTATQuarterlyCardProps> = ({ data, className, dateRange }) => {
   const chartData = Array.isArray(data) ? data : [];
 
   const chartMax = useMemo(() => {
@@ -16,6 +18,11 @@ export const ResponseTATQuarterlyCard: React.FC<ResponseTATQuarterlyCardProps> =
     return Math.ceil(Math.max(max, 100) / 10) * 10;
   }, [chartData]);
 
+  const { lastLabel, currentLabel, periodLabel } = getPeriodLabels(
+    dateRange?.startDate ?? new Date(),
+    dateRange?.endDate ?? new Date()
+  );
+
   return (
     <Card className={className}>
       <CardHeader>
@@ -23,11 +30,11 @@ export const ResponseTATQuarterlyCard: React.FC<ResponseTATQuarterlyCardProps> =
         <div className="text-xs text-muted-foreground mt-1 flex items-center gap-4">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full border border-[#8B6D4F] bg-[repeating-linear-gradient(-45deg,#fff,#fff_2px,#8B6D4F_2px,#8B6D4F_4px)]" />
-            <span>Last Quarter</span>
+            <span>{lastLabel}</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-[#C4AD98]" />
-            <span>Current Quarter</span>
+            <span>{currentLabel}</span>
           </div>
         </div>
       </CardHeader>
@@ -44,8 +51,8 @@ export const ResponseTATQuarterlyCard: React.FC<ResponseTATQuarterlyCardProps> =
             <YAxis type="category" dataKey="site" tick={{ fontSize: 12 }} width={120} />
             <Tooltip formatter={(value: any) => [`${value}%`, '']} />
             <Legend verticalAlign="top" align="right" />
-            <Bar dataKey="responseLast" fill="url(#stripedPattern)" name="Last Quarter" />
-            <Bar dataKey="responseCurrent" fill="#C4AE9D" name="Current Quarter" />
+            <Bar dataKey="responseLast" fill="url(#stripedPattern)" name={lastLabel} />
+            <Bar dataKey="responseCurrent" fill="#C4AE9D" name={currentLabel} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
