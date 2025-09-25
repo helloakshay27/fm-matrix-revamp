@@ -1416,9 +1416,10 @@ export const SurveyResponseDetailPage = () => {
 
       allUniqueQuestions.forEach(([questionId, questionName]) => {
         // Truncate question name if too long for column header
-        const truncatedQuestionName = questionName.length > 30 
-          ? questionName.substring(0, 30) + "..." 
-          : questionName;
+        const safeQuestionName = questionName || `Question ${questionId}`;
+        const truncatedQuestionName = safeQuestionName.length > 30 
+          ? safeQuestionName.substring(0, 30) + "..." 
+          : safeQuestionName;
         
         baseColumns.push({
           key: `question_${questionId}`,
