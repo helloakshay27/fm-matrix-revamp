@@ -2082,9 +2082,9 @@ const AllContent = () => {
                     <div className="border border-gray-400 no-break">
                         {/* Data Grid (driven by API when available) */}
                         {centerList.map((center: any, siteIndex: number) => (
-                            <div key={siteIndex} className="grid grid-cols-9 border-b border-gray-400">
+                            <div key={siteIndex} className="grid grid-cols-9 print:grid-cols-10 border-b border-gray-400">
                                 {/* Site Label (NO left border) */}
-                                <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words">
+                                <div className="p-3 font-medium text-base text-right border-b border-gray-400 print:p-2 print:text-[10px] print:leading-tight print:whitespace-normal print:break-words print:text-left print:col-span-2">
                                     {center.center_name || center.site_name || center.name || `Center ${siteIndex + 1}`}
                                 </div>
 
@@ -2095,10 +2095,10 @@ const AllContent = () => {
                                     return (
                                         <div
                                             key={rangeIndex}
-                                            className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px]`}
+                                            className={`border-l border-t border-gray-400 p-2 text-sm font-semibold text-center ${cellColor} min-h-[120px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[80px] print:col-span-1`}
                                         >
                                             {roomName ? (
-                                                <div className="leading-tight">
+                                                <div className="leading-tight print:whitespace-normal print:break-words print:leading-tight print:text-[10px]">
                                                     {roomName.includes(",")
                                                         ? roomName.split(",").map((name: string, i: number) => <div key={i}>{name.trim()}</div>)
                                                         : roomName}
@@ -2111,12 +2111,12 @@ const AllContent = () => {
                         ))}
 
                         {/* Bottom Header Row: Utilization Rate */}
-                        <div className="grid grid-cols-9">
-                            <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base"></div>
+                        <div className="grid grid-cols-9 print:grid-cols-10">
+                            <div className="p-3 font-semibold text-center print:p-2 print:text-sm text-base print:col-span-2 border-t border-gray-400"></div>
                             {rangeList.slice(0, 8).map((range, index) => (
                                 <div
                                     key={index}
-                                    className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px]"
+                                    className="border-t border-l border-gray-400 p-2 text-sm font-semibold text-center min-h-[60px] flex items-center justify-center print:p-1 print:text-xs print:min-h-[40px] print:col-span-1"
                                 >
                                     {range}
                                 </div>
@@ -3751,7 +3751,7 @@ const AllContent = () => {
                                                 {sitesk.map((site, idx) => (
                                                     <th
                                                         key={idx}
-                                                        className="p-2   text-[10px] font-medium text-center bg-white w-20 mx-0 my-0 
+                                                        className="p-2   text-[10px] font-medium text-center bg-white w-28 mx-0 my-0 
                                     print:text-[8px] print:font-medium print:text-center print:bg-white print:w-20 print:mx-1 print:my-1"
                                                     >
                                                         {site}
