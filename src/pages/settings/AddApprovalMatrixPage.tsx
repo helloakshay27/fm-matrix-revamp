@@ -181,7 +181,34 @@ const AddApprovalMatrixPage = () => {
       navigate('/settings/approval-matrix/setup');
     } catch (error) {
       console.error('Error creating approval matrix:', error);
-      toast.error('Failed to create approval matrix. Please try again.');
+      // Try to surface server-side validation errors inline
+      try {
+        // Common axios error shape
+        const data: any = (error as any)?.response?.data ?? {};
+        let handled = false;
+
+        // Support multiple shapes: { approval_type: ["has already been taken"] }
+        // or { errors: { approval_type: ["has already been taken"] } }
+        const firstOf = (v: any) => (Array.isArray(v) && v.length ? String(v[0]) : '');
+        const approvalTypeMsg = firstOf(data?.approval_type) || firstOf(data?.errors?.approval_type);
+        if (approvalTypeMsg) {
+          setFunctionError(approvalTypeMsg);
+          handled = true;
+        }
+
+        // Fallback to a general message if provided by API
+        if (!handled && typeof data?.message === 'string' && data.message.trim()) {
+          toast.error(data.message.trim());
+          handled = true;
+        }
+
+        if (!handled) {
+          toast.error('Failed to create approval matrix. Please try again.');
+        }
+      } catch {
+        // If parsing error shape fails, show a generic message
+        toast.error('Failed to create approval matrix. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }

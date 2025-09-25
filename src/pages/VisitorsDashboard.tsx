@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download, Loader2 } from 'lucide-react';
+import { RefreshCw, Plus, Search, RotateCcw, Eye, Edit, Trash2, Filter, Flag, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { NewVisitorDialog } from '@/components/NewVisitorDialog';
 import { UpdateNumberDialog } from '@/components/UpdateNumberDialog';
@@ -191,7 +191,6 @@ export const VisitorsDashboard = () => {
   const [selectedVisitors, setSelectedVisitors] = useState<number[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [isActionPanelOpen, setIsActionPanelOpen] = useState(false);
-  const [isExportLoading, setIsExportLoading] = useState(false);
   const navigate = useNavigate();
 
   // API State
@@ -1291,7 +1290,10 @@ export const VisitorsDashboard = () => {
   const handleExport = async () => {
     console.log('VisitorsDashboard - Export clicked');
     
-    setIsExportLoading(true);
+    // Show loading toast with infinite duration
+    const loadingToastId = toast.loading("Preparing export file...", {
+      duration: Infinity, // Keep it visible until we dismiss it
+    });
     
     try {
       console.log('📥 Exporting visitor history data');
@@ -1342,10 +1344,16 @@ export const VisitorsDashboard = () => {
       window.URL.revokeObjectURL(downloadUrl);
       
       console.log('✅ Export completed successfully');
-      toast.success('Visitor history exported successfully.');
+      
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToastId);
+      toast.success('Visitor history exported successfully!');
       
     } catch (error) {
       console.error('❌ Export failed:', error);
+      
+      // Dismiss loading toast and show error
+      toast.dismiss(loadingToastId);
       
       // Handle authentication errors specifically
       if (error instanceof Error && error.message.includes('Authentication failed')) {
@@ -1354,8 +1362,6 @@ export const VisitorsDashboard = () => {
       }
       
       toast.error(`Failed to export visitor history: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsExportLoading(false);
     }
   };
 
@@ -1731,6 +1737,7 @@ export const VisitorsDashboard = () => {
               onSelectAll={handleSelectAll}
               getItemId={visitor => visitor.id.toString()}
               // enableExport={true}
+              handleExport={handleExport}
               exportFileName="visitor-history"
               pagination={false}
               storageKey="visitor-history-table"
@@ -1754,22 +1761,11 @@ export const VisitorsDashboard = () => {
                   {/* Export Button */}
                   <Button
                     onClick={handleExport}
-                    disabled={isExportLoading}
                     variant="outline"
                     size="sm"
                     className="h-9 px-3 bg-white hover:bg-gray-50 border-gray-300"
                   >
-                    {isExportLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 " />
-                        
-                      </>
-                    )}
+                    <Download className="w-4 h-4 " />
                   </Button>
                   <ColumnVisibilityMenu
                     columns={visitorHistoryColumns}
